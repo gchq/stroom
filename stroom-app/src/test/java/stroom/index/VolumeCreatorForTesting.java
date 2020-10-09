@@ -76,10 +76,10 @@ class VolumeCreatorForTesting implements VolumeCreator {
     }
 
     @Override
-    public void setup(final Path tempDir) {
+    public void setup(final Path dir) {
         try {
             final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupService.getOrCreate(DEFAULT_VOLUME_GROUP);
-            final List<IndexVolume> initialVolumeList = getInitialVolumeList(tempDir);
+            final List<IndexVolume> initialVolumeList = getInitialVolumeList(dir);
             final List<IndexVolume> existingVolumes = volumeService.find(new ExpressionCriteria()).getValues();
             for (final IndexVolume volume : initialVolumeList) {
                 boolean found = false;

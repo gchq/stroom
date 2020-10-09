@@ -55,7 +55,7 @@ public final class SetupSampleData {
         // Clear the DB and remove all content and data.
         commonTestControl.clear();
         // Setup the DB ready to load content and data.
-        commonTestControl.setup(tempDirProvider.get());
+        commonTestControl.setup(null);
 
         // Load the sample data and content from the 'samples' dirs
         final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);

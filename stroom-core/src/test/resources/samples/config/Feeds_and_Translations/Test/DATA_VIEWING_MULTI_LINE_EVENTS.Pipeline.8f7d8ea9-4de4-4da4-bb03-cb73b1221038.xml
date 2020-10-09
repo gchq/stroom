@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>dsParser</element>
+            <name>textConverter</name>
+            <value>
+               <entity>
+                  <type>TextConverter</type>
+                  <uuid>7e4452ed-bf26-4187-b849-e3e721780cba</uuid>
+                  <name>CSV_WITH_HEADER</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>7c743105-da56-4416-89e4-e908ccdd4f53</uuid>
+                  <name>DATA_VIEWING_MULTI_LINE-EVENTS</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

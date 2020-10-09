@@ -21,6 +21,7 @@ import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
+import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.shared.Clearable;
 
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
@@ -47,7 +49,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeCreator volumeCreator;
     private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
-    private final FsVolumeConfig volumeConfig;
+    private final FsVolumeConfig fsVolumeConfig;
+    private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
 
     private static boolean needsCleanup;
@@ -59,7 +62,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final VolumeCreator volumeCreator,
                               final ProcessorTaskManager processorTaskManager,
                               final Set<Clearable> clearables,
-                              final FsVolumeConfig volumeConfig,
+                              final VolumeConfig volumeConfig,
+                              final FsVolumeConfig fsVolumeConfig,
                               final FsVolumeService fsVolumeService) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
@@ -68,15 +72,31 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.processorTaskManager = processorTaskManager;
         this.clearables = clearables;
         this.volumeConfig = volumeConfig;
+        this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
     }
 
     @Override
     public void setup(final Path tempDir) {
-        LOGGER.debug("Using temp dir: {}", tempDir.toAbsolutePath().toString());
+        LOGGER.debug("temp dir: {}", tempDir);
         Instant startTime = Instant.now();
-        volumeConfig.setDefaultStreamVolumePaths(tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath().toString());
-        volumeCreator.setup(tempDir);
+        Path fsVolDir;
+        Path indexVolDir;
+        if (tempDir == null) {
+            final String fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths().split(",")[0];
+            fsVolDir = handleRelativePath(fsVolPathStr);
+            final String volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",")[0];
+            indexVolDir = handleRelativePath(volGroupPathStr);
+        } else {
+            fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
+            indexVolDir = tempDir;
+        }
+
+        LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
+        fsVolumeConfig.setDefaultStreamVolumePaths(fsVolDir.toString());
+
+        LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
+        volumeCreator.setup(indexVolDir);
 
         // Ensure we can create tasks.
         processorTaskManager.startup();
@@ -85,6 +105,16 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
 
         needsCleanup = true;
+    }
+
+    private Path handleRelativePath(final String pathStr) {
+        if (pathStr.startsWith("/")) {
+            return Paths.get(pathStr);
+        } else {
+            return Paths.get(System.getProperty("user.home"))
+                    .resolve(".stroom")
+                    .resolve(pathStr);
+        }
     }
 
     @Override

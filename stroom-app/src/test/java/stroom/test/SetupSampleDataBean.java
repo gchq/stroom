@@ -45,8 +45,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.testdata.DataGenerator;
-import stroom.testdata.FlatDataWriterBuilder;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
@@ -75,7 +73,7 @@ import java.util.stream.Collectors;
 public final class SetupSampleDataBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupSampleDataBean.class);
 
-    private static final String ROOT_DIR_NAME = "samples";
+    public static final String ROOT_DIR_NAME = "samples";
 
     private static final String STATS_COUNT_FEED_LARGE_NAME = "COUNT_FEED_LARGE";
     private static final String STATS_COUNT_FEED_SMALL_NAME = "COUNT_FEED_SMALL";
@@ -104,6 +102,7 @@ public final class SetupSampleDataBean {
     private final FsVolumeService fsVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
+    private final SampleDataGenerator sampleDataGenerator;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
@@ -119,7 +118,8 @@ public final class SetupSampleDataBean {
                         final IndexVolumeGroupService indexVolumeGroupService,
                         final FsVolumeService fsVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore) {
+                        final StroomStatsStoreStore stroomStatsStoreStore,
+                        final SampleDataGenerator sampleDataGenerator) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.streamStore = streamStore;
@@ -134,6 +134,7 @@ public final class SetupSampleDataBean {
         this.fsVolumeService = fsVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
+        this.sampleDataGenerator = sampleDataGenerator;
     }
 
 //    private void createStreamAttributes() {
@@ -176,6 +177,9 @@ public final class SetupSampleDataBean {
                 coreServerSamplesDir,
                 statisticsSamplesDir};
 
+        // Load various streams that we generate on the fly
+        sampleDataGenerator.generateData(coreServerSamplesDir.resolve("generated").resolve("input"));
+
         // process each root dir in turn, importing content and loading data into feeds
         for (final Path dir : rootDirs) {
             loadDirectory(shutdown, dir);
@@ -198,8 +202,6 @@ public final class SetupSampleDataBean {
                 "LAX_CARGO_VOLUME-INDEX", StreamTypeNames.RECORDS, Optional.of("LAX_CARGO_VOLUME"));
         createIndexingProcessorFilter(
                 "BROADBAND_SPEED_TESTS-INDEX", StreamTypeNames.RECORDS, Optional.of("BROADBAND_SPEED_TESTS"));
-
-        createAndLoadGeneratedData(coreServerSamplesDir.resolve("generated").resolve("input"));
 
         final List<DocRef> feeds = feedStore.list();
         logDocRefs(feeds, "feeds");
@@ -283,47 +285,6 @@ public final class SetupSampleDataBean {
         }
     }
 
-    /**
-     * Generate data for testing viewing of raw/cooked data
-     */
-    private void createAndLoadGeneratedData(final Path inputDir) {
-        int shortLoremText = 4;
-        int longLoremText = 200;
-
-        try {
-            Files.createDirectories(inputDir);
-            LOGGER.info("Clearing contents of {}", inputDir.toAbsolutePath().normalize());
-            FileUtil.deleteContents(inputDir);
-        } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error ensuring directory {} exists",
-                    inputDir.toAbsolutePath().normalize()), e);
-        }
-
-        // Data that has one record per line
-        // One with long lines, one with short
-        generateDataViewRawData(
-                inputDir,
-                1,
-                "DATA_VIEWING_MULTI_LINE",
-                "\n",
-                shortLoremText);
-        generateDataViewRawData(
-                inputDir,
-                2,
-                "DATA_VIEWING_MULTI_LINE",
-                "\n",
-                longLoremText);
-
-        // Data that is all on one massive single line
-        // One with long lines, one with short
-        generateDataViewRawData(
-                inputDir,
-                1,
-                "DATA_VIEWING_SINGLE_LINE",
-                "|",
-                shortLoremText);
-    }
-
     private void createIndexingProcessorFilter(
             final String pipelineName,
             final String sourceStreamType,
@@ -383,12 +344,14 @@ public final class SetupSampleDataBean {
 
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
+        final Path generatedDataDir = importRootDir.resolve("generated").resolve("input");
+
         final Path exampleDataDir = importRootDir.resolve("example_data");
 
 //        createStreamAttributes();
 
         if (Files.exists(configDir)) {
-            // Load config.
+            LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
 //            // Enable all flags for all feeds.
@@ -407,9 +370,10 @@ public final class SetupSampleDataBean {
             LOGGER.info("StatisticDataSource count = " + statisticStoreStore.list().size());
 
         } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", configDir);
+            LOGGER.info("Directory {} doesn't exist so skipping", configDir.toAbsolutePath().normalize());
         }
 
+        LOGGER.info("Checking data dir {}", dataDir.toAbsolutePath().normalize());
         if (Files.exists(dataDir)) {
             // Load data.
             final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
@@ -425,7 +389,8 @@ public final class SetupSampleDataBean {
             // test.
             final String feedName = "DATA_SPLITTER-EVENTS";
             for (int i = 0; i < LOAD_CYCLES; i++) {
-                LOGGER.info("Loading data from {}, iteration {}", dataDir.toAbsolutePath().toString(), i);
+                LOGGER.info("Loading data from {}, iteration {}",
+                        dataDir.toAbsolutePath().normalize().toString(), i);
                 // Load reference data first.
                 dataLoader.read(dataDir, true, startTime);
                 startTime += tenMinMs;
@@ -445,21 +410,24 @@ public final class SetupSampleDataBean {
                 startTime += tenMinMs;
             }
         } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", dataDir);
+            LOGGER.info("Directory {} doesn't exist so skipping", dataDir.toAbsolutePath().normalize());
         }
 
         // Load the example data that we don't want to duplicate as is done above
-        if (Files.exists(exampleDataDir)) {
-            LOGGER.info("Loading example data from {}", exampleDataDir.toAbsolutePath().toString());
-            // Load data.
-            final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
-            long startTime = System.currentTimeMillis();
+        List.of(exampleDataDir, generatedDataDir)
+                .forEach(dir -> {
+                    if (Files.exists(dir)) {
+                        LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize().toString());
+                        // Load data.
+                        final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
+                        long startTime = System.currentTimeMillis();
 
-            // Then load event data.
-            dataLoader.read(exampleDataDir, false, startTime);
-        } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
-        }
+                        // Then load event data.
+                        dataLoader.read(dir, false, startTime);
+                    } else {
+                        LOGGER.info("Directory {} doesn't exist so skipping", dir.toAbsolutePath().normalize());
+                    }
+                });
 
         // processorTaskManager.doCreateTasks();
 
@@ -563,57 +531,6 @@ public final class SetupSampleDataBean {
             sb.append("\n");
         }
         return sb.toString();
-    }
-
-    private Path makeInputFilePath(final Path dir, final int index, final String feedName) {
-        return dir.resolve(feedName + "~" + index + ".in");
-    }
-
-    private void generateDataViewRawData(final Path dir,
-                                         final int fileNo,
-                                         final String feedName,
-                                         final String recordSeparator,
-                                         final int loremWordCount) {
-        final Path file = makeInputFilePath(dir, fileNo, feedName);
-        LOGGER.info("Generating file {}", file.toAbsolutePath().normalize().toString());
-        DataGenerator.buildDefinition()
-                .addFieldDefinition(DataGenerator.uuidField(
-                        "uuid"))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "firstName",
-                        faker -> faker.name().firstName()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "surname",
-                        faker -> faker.name().lastName()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "username",
-                        faker -> faker.name().username()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "bloodGroup",
-                        faker -> faker.name().bloodGroup()))
-                .addFieldDefinition(DataGenerator.randomEmoticonEmojiField(
-                        "emotionalState"))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "address",
-                        faker -> faker.address().fullAddress()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "company",
-                        faker -> faker.company().name()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "companyLogo",
-                        faker -> faker.company().logo()))
-                .addFieldDefinition(DataGenerator.fakerField(
-                        "lorum",
-                        faker -> String.join(" ", faker.lorem().words(loremWordCount))))
-                .setDataWriter(FlatDataWriterBuilder.builder()
-                        .delimitedBy(",")
-                        .enclosedBy("\"")
-                        .outputHeaderRow(true)
-                        .build())
-                .consumedBy(DataGenerator.getFileOutputConsumer(file, recordSeparator))
-                .rowCount(5_000)
-                .withRandomSeed(fileNo)
-                .generate();
     }
 
     private String createNum(final int max) {
