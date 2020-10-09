@@ -80,7 +80,7 @@ appConfig:
   node:
     name: node1a
   path:
-    temp: ${HOME}/.stroom/temp
+    temp: "${HOME}/.stroom/temp"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:
