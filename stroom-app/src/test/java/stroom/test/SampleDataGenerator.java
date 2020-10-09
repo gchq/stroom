@@ -80,9 +80,7 @@ public class SampleDataGenerator {
                         DateTimeFormatter.ISO_DATE_TIME
                 ))
                 .addFieldDefinition(DataGenerator.randomIpV4Field(
-                        "machineIp")
-                        faker -> faker.internet().ipV4Address()
-                ))
+                        "machineIp"))
                 .addFieldDefinition(DataGenerator.fakerField(
                         "machineMacAddress",
                         faker -> faker.internet().macAddress()
