@@ -38,6 +38,14 @@
             <id>streamAppender</id>
             <type>StreamAppender</type>
          </element>
+         <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
+            <id>sourceDecoration</id>
+            <type>XSLTFilter</type>
+         </element>
       </add>
    </elements>
    <properties>
@@ -96,6 +104,17 @@
             <name>streamType</name>
             <value>
                <string>Events</string>
+            </value>
+         </property>
+         <property>
+            <element>sourceDecoration</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>cf964a2a-4fda-4675-b7f0-de306ec9e93c</uuid>
+                  <name>SOURCE_STREAM_DECORATION</name>
+               </entity>
             </value>
          </property>
       </add>
@@ -165,7 +184,7 @@
          </link>
          <link>
             <from>translationFilter</from>
-            <to>schemaFilter</to>
+            <to>sourceDecoration</to>
          </link>
          <link>
             <from>schemaFilter</from>
@@ -182,6 +201,14 @@
          <link>
             <from>xmlWriter</from>
             <to>streamAppender</to>
+         </link>
+         <link>
+            <from>Source</from>
+            <to>combinedParser</to>
+         </link>
+         <link>
+            <from>sourceDecoration</from>
+            <to>schemaFilter</to>
          </link>
       </add>
    </links>

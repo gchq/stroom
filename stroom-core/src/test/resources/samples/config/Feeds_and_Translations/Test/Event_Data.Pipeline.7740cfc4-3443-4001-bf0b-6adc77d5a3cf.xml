@@ -54,6 +54,10 @@
             <id>fileAppender</id>
             <type>FileAppender</type>
          </element>
+         <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
       </add>
    </elements>
    <properties>
@@ -77,6 +81,17 @@
             <name>splitCount</name>
             <value>
                <integer>100</integer>
+            </value>
+         </property>
+         <property>
+            <element>decorationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>cf964a2a-4fda-4675-b7f0-de306ec9e93c</uuid>
+                  <name>SOURCE_STREAM_DECORATION</name>
+               </entity>
             </value>
          </property>
          <property>
@@ -155,16 +170,20 @@
             <to>xmlWriter</to>
          </link>
          <link>
-            <from>xmlWriter</from>
-            <to>streamAppender</to>
-         </link>
-         <link>
             <from>flattenFilter</from>
             <to>textWriter</to>
          </link>
          <link>
+            <from>xmlWriter</from>
+            <to>streamAppender</to>
+         </link>
+         <link>
             <from>textWriter</from>
             <to>fileAppender</to>
+         </link>
+         <link>
+            <from>Source</from>
+            <to>combinedParser</to>
          </link>
       </add>
    </links>
