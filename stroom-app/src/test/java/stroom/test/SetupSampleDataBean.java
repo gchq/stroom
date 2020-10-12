@@ -62,9 +62,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -203,19 +205,35 @@ public final class SetupSampleDataBean {
         createIndexingProcessorFilter(
                 "BROADBAND_SPEED_TESTS-INDEX", StreamTypeNames.RECORDS, Optional.of("BROADBAND_SPEED_TESTS"));
 
-        final List<DocRef> feeds = feedStore.list();
+        final List<DocRef> feeds = getSortedDocRefs(feedStore::list);
+
         logDocRefs(feeds, "feeds");
 
         generateSampleStatisticsData();
 
         // code to check that the statisticsDataSource objects are stored
         // correctly
-        final List<DocRef> statisticsDataSources = statisticStoreStore.list();
+        final List<DocRef> statisticsDataSources = getSortedDocRefs(statisticStoreStore::list);
         logDocRefs(statisticsDataSources, "statisticStores");
 
-        final List<DocRef> stroomStatsStoreEntities = stroomStatsStoreStore.list();
+        final List<DocRef> stroomStatsStoreEntities = getSortedDocRefs(stroomStatsStoreStore::list);
         logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
+        createProcessorFilters(feeds);
+
+//        if (shutdown) {
+//            commonTestControl.shutdown();
+//        }
+    }
+
+    private List<DocRef> getSortedDocRefs(final Supplier<List<DocRef>> docRefsSupplier) {
+        return docRefsSupplier.get()
+                .stream()
+                .sorted(Comparator.comparing(DocRef::getName))
+                .collect(Collectors.toList());
+    }
+
+    private void createProcessorFilters(final List<DocRef> feeds) {
         // Create stream processors for all feeds.
         for (final DocRef feed : feeds) {
             // Find the pipeline for this feed.
@@ -247,6 +265,7 @@ public final class SetupSampleDataBean {
                                 .build())
                         .build();
                 final Processor processor = processorService.create(pipeline, true);
+                LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
                 final ProcessorFilter processorFilter = processorFilterService.create(
                         processor,
                         criteria,
@@ -256,10 +275,6 @@ public final class SetupSampleDataBean {
                 LOGGER.debug(processorFilter.toString());
             }
         }
-
-//        if (shutdown) {
-//            commonTestControl.shutdown();
-//        }
     }
 
     private void checkVolumesExist() {
