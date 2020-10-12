@@ -84,17 +84,6 @@
             </value>
          </property>
          <property>
-            <element>decorationFilter</element>
-            <name>xslt</name>
-            <value>
-               <entity>
-                  <type>XSLT</type>
-                  <uuid>cf964a2a-4fda-4675-b7f0-de306ec9e93c</uuid>
-                  <name>SOURCE_STREAM_DECORATION</name>
-               </entity>
-            </value>
-         </property>
-         <property>
             <element>schemaFilter</element>
             <name>schemaGroup</name>
             <value>
