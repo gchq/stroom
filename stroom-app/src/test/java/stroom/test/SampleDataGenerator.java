@@ -37,6 +37,8 @@ public class SampleDataGenerator {
 
         int shortLoremText = 4;
         int longLoremText = 200;
+        // Increment the random seed each time so each data set has different but predictable data
+        long randomSeed = 0;
 
         // Data that has one record per line
         // One with long lines, one with short
@@ -45,14 +47,18 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
-                shortLoremText);
+                shortLoremText,
+                LocalDateTime.of(2020,6,1,0,0),
+                randomSeed++);
 
         generateDataViewRawData(
                 dir,
                 2,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
-                longLoremText);
+                longLoremText,
+                LocalDateTime.of(2020,7,1,0,0),
+                randomSeed++);
 
         // Data that is all on one massive single line
         // One with long lines, one with short
@@ -61,22 +67,26 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_SINGLE_LINE-EVENTS",
                 "|",
-                shortLoremText);
+                shortLoremText,
+                LocalDateTime.of(2020,8,1,0,0),
+                randomSeed++);
     }
 
     private void generateDataViewRawData(final Path dir,
                                          final int fileNo,
                                          final String feedName,
                                          final String recordSeparator,
-                                         final int loremWordCount) {
+                                         final int loremWordCount,
+                                         final LocalDateTime startDate,
+                                         final long randomSeed) {
         final Path file = makeInputFilePath(dir, fileNo, feedName);
         LOGGER.info("Generating file {}", file.toAbsolutePath().normalize().toString());
 
         DataGenerator.buildDefinition()
                 .addFieldDefinition(DataGenerator.randomDateTimeField(
                         "dateTime",
-                        LocalDateTime.of(2020,06,01,00,00),
-                        LocalDateTime.of(2020,10,01,00,00),
+                        startDate,
+                        startDate.plusDays(28),
                         DateTimeFormatter.ISO_DATE_TIME
                 ))
                 .addFieldDefinition(DataGenerator.randomIpV4Field(
@@ -118,7 +128,7 @@ public class SampleDataGenerator {
                         .build())
                 .consumedBy(DataGenerator.getFileOutputConsumer(file, recordSeparator))
                 .rowCount(5_000)
-                .withRandomSeed(fileNo)
+                .withRandomSeed(randomSeed)
                 .generate();
     }
 
