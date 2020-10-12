@@ -16,19 +16,20 @@
 
 package stroom.headless;
 
+import stroom.content.ContentPack;
+import stroom.content.ContentPacks;
+import stroom.test.ContentPackDownloader;
+import stroom.test.common.ComparisonHelper;
+import stroom.util.io.FileUtil;
+import stroom.util.shared.Version;
+import stroom.util.zip.ZipUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.ContentImportService;
-import stroom.test.ContentImportService.ContentPack;
-import stroom.test.ContentPackDownloader;
-import stroom.test.common.ComparisonHelper;
-import stroom.util.io.FileUtil;
-import stroom.util.shared.Version;
-import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -140,8 +141,8 @@ class TestHeadless {
 
     private void importXmlSchemas(final Path path) {
         importContentPacks(Arrays.asList(
-                ContentImportService.CORE_XML_SCHEMAS_PACK,
-                ContentImportService.EVENT_LOGGING_XML_SCHEMA_PACK
+                ContentPacks.CORE_XML_SCHEMAS_PACK,
+                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK
         ), path);
     }
 

@@ -18,6 +18,7 @@
 package stroom.pipeline.xml.converter;
 
 import stroom.cache.MockSchemaPool;
+import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
@@ -80,7 +81,7 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.SCHEMA_NAME,
                 DS3ParserFactory.NAMESPACE_URI,
                 DS3ParserFactory.SYSTEM_ID,
-                "core-xml-schemas-v2.2",
+                ContentPacks.CORE_XML_SCHEMAS_PACK.getVersionedNameAsStr(),
                 SCHEMAS_BASE + "data-splitter/data-splitter v3.0.XMLSchema.data.xsd");
     }
 
