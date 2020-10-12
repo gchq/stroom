@@ -17,8 +17,6 @@
 
 package stroom.search.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
@@ -30,7 +28,6 @@ import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Sizes;
@@ -39,6 +36,9 @@ import stroom.query.common.v2.StoreFactory;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.SecurityContext;
 import stroom.ui.config.shared.UiConfig;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -49,8 +49,6 @@ import java.util.stream.Collectors;
 
 public class LuceneSearchStoreFactory implements StoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
-    private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
-
 
     private final IndexStore indexStore;
     private final WordListProvider wordListProvider;
@@ -104,9 +102,9 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                searchRequest.getKey(),
                 searchName,
                 query,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
                 coprocessorSettingsMap.getMap(),
                 searchRequest.getDateTimeLocale(),
                 nowEpochMilli);

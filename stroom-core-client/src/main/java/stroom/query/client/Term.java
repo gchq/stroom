@@ -39,6 +39,7 @@ public final class Term extends Item {
 
     public void setCondition(final Condition condition) {
         this.condition = condition;
+        // CONTAINS only supported for legacy content, not for use in UI
         if (Condition.CONTAINS.equals(this.condition)) {
             this.condition = Condition.EQUALS;
         }

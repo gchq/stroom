@@ -37,9 +37,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,7 +55,7 @@ class ExtractionTaskProducer extends TaskProducer {
     private final Queue<Consumer<TaskContext>> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
-    private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
+    private final StreamEventMap streamEventMap;
     private final Topic<Values> topic;
     private final ExtractionProgressTracker tracker;
 
@@ -78,6 +78,7 @@ class ExtractionTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
+        streamEventMap = new StreamEventMap(1000000);
         topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize);
 
 //        // Group coprocessors by extraction pipeline.
@@ -113,7 +114,12 @@ class ExtractionTaskProducer extends TaskProducer {
                             if (values != null) {
                                 try {
                                     // If we have some values then map them.
-                                    streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                    boolean foundData = streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                    if (!foundData) {
+                                        // stream may have been deleted so treat it as complete to avoid a hanging search
+                                        receivers.values().forEach(receiver ->
+                                                receiver.getCompletionCountConsumer().accept(1L));
+                                    }
                                 } catch (final RuntimeException e) {
                                     LOGGER.debug(e.getMessage(), e);
                                     receivers.values().forEach(receiver -> {
@@ -128,11 +134,6 @@ class ExtractionTaskProducer extends TaskProducer {
                             // Tell the supplied executor that we are ready to deliver tasks.
                             signalAvailable();
                         }
-                    }
-
-                    // Clear the event map if we have terminated so that other processing does not occur.
-                    if (Thread.currentThread().isInterrupted()) {
-                        streamEventMap.clear();
                     }
 
                 } catch (final RuntimeException e) {
@@ -183,14 +184,16 @@ class ExtractionTaskProducer extends TaskProducer {
 
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
-        for (final Entry<Long, List<Event>> entry : streamEventMap.entrySet()) {
-            if (streamEventMap.remove(entry.getKey(), entry.getValue())) {
-                final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
-                if (tasksCreated > 0) {
-                    return false;
-                }
-            }
+        final Optional<Entry<Long, List<Event>>> optional = streamEventMap.get();
+
+        if (optional.isPresent()) {
+            final Entry<Long, List<Event>> entry = optional.get();
+            createTasks(entry.getKey(), entry.getValue());
+            return false;
         }
+
+        // If we added no tasks but have completed event mapping then return true to notify the caller that no more
+        // tasks are expected.
         return completedEventMapping;
     }
 
