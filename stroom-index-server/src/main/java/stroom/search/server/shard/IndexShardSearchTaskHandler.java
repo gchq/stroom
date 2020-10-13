@@ -246,7 +246,6 @@ class IndexShardSearchTaskHandler {
             task.getReceiver().getCompletionCountConsumer().accept(1L);
         } catch (final Exception e) {
             error(task, e.getMessage(), e);
-            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
         }
     }
 

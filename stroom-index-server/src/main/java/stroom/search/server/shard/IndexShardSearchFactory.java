@@ -26,7 +26,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskWrapper;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -108,12 +107,11 @@ public class IndexShardSearchFactory {
         }
 
         // Wait until we finish.
-        while (!tracker.isComplete()) {
+        while (!hasTerminate.isTerminated() && !tracker.await()) {
             taskContext.info(
                     "Searching... " +
                             "found " + tracker.getHitCount() + " hits");
             LOGGER.debug(tracker::toString);
-            ThreadUtil.sleep(1000);
         }
     }
 

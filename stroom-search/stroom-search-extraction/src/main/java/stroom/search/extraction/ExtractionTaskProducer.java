@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -183,16 +184,17 @@ class ExtractionTaskProducer extends TaskProducer {
 
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
-        final Map<Long, List<Event>> map = streamEventMap.get();
-        int tasksCreated = 0;
-        for (final Entry<Long, List<Event>> entry : map.entrySet()) {
-            tasksCreated += createTasks(entry.getKey(), entry.getValue());
-        }
-        if (tasksCreated > 0) {
+        final Optional<Entry<Long, List<Event>>> optional = streamEventMap.get();
+
+        if (optional.isPresent()) {
+            final Entry<Long, List<Event>> entry = optional.get();
+            createTasks(entry.getKey(), entry.getValue());
             return false;
-        } else {
-            return completedEventMapping;
         }
+
+        // If we added no tasks but have completed event mapping then return true to notify the caller that no more
+        // tasks are expected.
+        return completedEventMapping;
     }
 
     private int createTasks(final long streamId, final List<Event> events) {

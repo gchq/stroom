@@ -4,33 +4,47 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 class IndexShardSearchProgressTracker {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchProgressTracker.class);
 
-    private final int shardCount;
-    private final AtomicInteger completeShardCount = new AtomicInteger();
+    private final int shardTotal;
+    private final CountDownLatch shardCount;
     private final HitCount hitCount = new HitCount();
     private final HasTerminate hasTerminate;
 
     IndexShardSearchProgressTracker(final HasTerminate hasTerminate,
-                                    final int shardCount) {
+                                    final int shardTotal) {
         this.hasTerminate = hasTerminate;
-        this.shardCount = shardCount;
+        this.shardTotal = shardTotal;
+        this.shardCount = new CountDownLatch(shardTotal);
     }
 
-    int getShardCount() {
-        return shardCount;
+    int getShardTotal() {
+        return shardTotal;
     }
 
     void incrementCompleteShardCount() {
-        completeShardCount.incrementAndGet();
+        shardCount.countDown();
     }
 
     boolean isComplete() {
         LOGGER.debug(this::toString);
-        return hasTerminate.isTerminated() || completeShardCount.get() == shardCount;
+            return hasTerminate.isTerminated() || shardCount.getCount() == 0;
+    }
+
+    boolean await() {
+        LOGGER.debug(this::toString);
+        try {
+            return shardCount.await(1, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            LOGGER.debug(this::toString);
+            // Keep interrupting.
+            Thread.currentThread().interrupt();
+            return true;
+        }
     }
 
     HitCount getHitCount() {
@@ -40,8 +54,8 @@ class IndexShardSearchProgressTracker {
     @Override
     public String toString() {
         return "IndexShardSearchProgressTracker{" +
-                "shardCount=" + shardCount +
-                ", completeShardCount=" + completeShardCount +
+                "shardTotal=" + shardTotal +
+                ", completeShardCount=" + shardCount.getCount() +
                 ", hitCount=" + hitCount +
                 ", hasTerminate=" + hasTerminate +
                 '}';

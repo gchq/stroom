@@ -78,7 +78,6 @@ public class ExtractionDecoratorFactory {
                            final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query,
-                           final AtomicLong totalResults,
                            final HasTerminate hasTerminate) {
         // Update config for extraction task executor.
         extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());

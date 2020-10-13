@@ -4,11 +4,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -50,19 +50,17 @@ class StreamEventMap {
         }
     }
 
-    Map<Long, List<Event>> get() {
-        if (hasTerminate.isTerminated() || Thread.currentThread().isInterrupted()) {
-            return Collections.emptyMap();
+    Optional<Map.Entry<Long, List<Event>>> get() {
+        if (hasTerminate.isTerminated() || !Thread.currentThread().isInterrupted()) {
+            for (final long streamId : storedDataMap.keySet()) {
+                final List<Event> events = storedDataMap.remove(streamId);
+                if (events != null) {
+                    available.release(events.size());
+                    return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
+                }
+            }
         }
 
-        final Map<Long, List<Event>> map = new HashMap<>();
-        storedDataMap.keySet().forEach(streamId -> {
-            final List<Event> events = storedDataMap.remove(streamId);
-            if (events != null) {
-                available.release(events.size());
-                map.put(streamId, events);
-            }
-        });
-        return map;
+        return Optional.empty();
     }
 }
