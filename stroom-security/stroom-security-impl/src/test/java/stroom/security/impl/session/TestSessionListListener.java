@@ -1,5 +1,14 @@
 package stroom.security.impl.session;
 
+import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
+import stroom.security.impl.AuthenticationEventLog;
+import stroom.security.impl.SessionResource;
+import stroom.security.impl.SessionResourceImpl;
+import stroom.task.api.SimpleTaskContextFactory;
+import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,14 +18,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
-import stroom.security.impl.AuthenticationEventLog;
-import stroom.security.impl.SessionResource;
-import stroom.security.impl.SessionResourceImpl;
-import stroom.task.api.SimpleTaskContextFactory;
-import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -128,6 +129,6 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
-        return new SessionResourceImpl(authenticationEventLog, sessionListService, null, null);
+        return new SessionResourceImpl(authenticationEventLog, sessionListService, null);
     }
 }

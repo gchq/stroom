@@ -43,8 +43,10 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,6 +96,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final PooledByteBuffer keyValuePooledKeyBuffer;
     private final PooledByteBuffer rangeValuePooledKeyBuffer;
     private final PooledByteBuffer valueStorePooledKeyBuffer;
+    private final List<PooledByteBuffer> pooledByteBuffers = new ArrayList<>();
 
     private enum LoaderState {
         NEW,
@@ -128,6 +131,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         this.keyValuePooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer();
         this.rangeValuePooledKeyBuffer = rangeStoreDb.getPooledKeyBuffer();
         this.valueStorePooledKeyBuffer = valueStore.getPooledKeyBuffer();
+        pooledByteBuffers.add(keyValuePooledKeyBuffer);
+        pooledByteBuffers.add(rangeValuePooledKeyBuffer);
+        pooledByteBuffers.add(valueStorePooledKeyBuffer);
 
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
@@ -397,9 +403,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             writeTxn.close();
         }
         // release our pooled buffers back to the pool
-        keyValuePooledKeyBuffer.release();
-        rangeValuePooledKeyBuffer.release();
-        valueStorePooledKeyBuffer.release();
+        pooledByteBuffers.forEach(PooledByteBuffer::release);
 
         currentLoaderState = LoaderState.CLOSED;
 
@@ -440,18 +444,32 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private UID getOrCreateUid(final MapDefinition mapDefinition) {
-        // TODO we may have only just started a txn so if the UIDs in the cache wrap LMDB owned
-        //   buffers bad things could happen.  We could clear the cache on commit, or put clones
-        //   into the cache. Have added clone() call below, but needs testing.
 
         // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
         // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
         final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
             LOGGER.trace("MapDefinition not found in local cache so getting it from the store, {}", mapDefinition);
             beginTxnIfRequired();
-            // The returned UID wraps a direct buffer
-            return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef)
-                    .clone();
+
+            // The temporaryUidPooledBuffer may not be used if we find the map def in the DB
+            try (final PooledByteBuffer temporaryUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
+
+                final PooledByteBuffer cachedUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
+                // Add it to the list so it will be released on close
+                pooledByteBuffers.add(cachedUidPooledBuffer);
+
+                // The returned UID wraps a direct buffer that is either owned by LMDB or came from
+                // temporaryUidPooledBuffer so as we don't know when the txn will be closed or what
+                // cursor operations will happen after this and because we want to cache it we will
+                // make a copy of it using a buffer from the pool. The cache only lasts for the life
+                // of the load and will only have a couple of UIDs in it so should be fine to hold on to them.
+                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef, temporaryUidPooledBuffer);
+
+                // Now clone it into a different buffer and wrap in a new UID instance
+                final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());
+
+                return newUidClone;
+            }
         });
         return uid;
     }

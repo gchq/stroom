@@ -27,9 +27,14 @@ import java.util.function.Consumer;
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
     FieldIndexMap fieldIndexes;
     Consumer<Values> consumer;
+    int count;
 
     public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
         this.fieldIndexes = fieldIndexes;
         this.consumer = consumer;
+    }
+
+    public int getCount() {
+        return count;
     }
 }

@@ -16,11 +16,11 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterTaskHandlerBinder;
-import stroom.util.RunnableWrapper;
+import stroom.cluster.api.ClusterServiceBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
@@ -43,8 +43,8 @@ public class SearchModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(StroomIndexQueryResourceImpl.class);
 
-        ClusterTaskHandlerBinder.create(binder())
-                .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);
+        ClusterServiceBinder.create(binder())
+                .bind(RemoteSearchManager.SERVICE_NAME, RemoteSearchManager.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder

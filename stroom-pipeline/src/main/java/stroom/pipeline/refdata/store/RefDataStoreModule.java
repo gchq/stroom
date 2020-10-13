@@ -77,6 +77,8 @@ public class RefDataStoreModule extends AbstractModule {
         // If you switch impl here make sure also to do it in the SystemInfo binder below
         bind(ByteBufferPool.class).to(ByteBufferPoolImpl4.class);
 
+        bind(ValueStoreHashAlgorithm.class).to(XxHashValueStoreHashAlgorithm.class);
+
         HasSystemInfoBinder.create(binder())
                 .bind(ByteBufferPoolImpl4.class)
                 .bind(RefDataOffHeapStore.class);

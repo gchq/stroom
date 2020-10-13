@@ -51,10 +51,9 @@ public class StringValue extends RefDataValue {
     }
 
     @Override
-    public int getValueHashCode() {
-        return Objects.hash(value);
+    public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        return valueStoreHashAlgorithm.hash(value);
     }
-
 
     @Override
     public int getTypeId() {

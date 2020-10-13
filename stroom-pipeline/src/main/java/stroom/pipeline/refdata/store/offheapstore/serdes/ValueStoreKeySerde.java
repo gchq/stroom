@@ -17,19 +17,21 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.util.logging.LogUtil;
+
+import org.apache.hadoop.hbase.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
 public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
     public static final int VALUE_HASH_CODE_OFFSET = 0;
-    public static final int VALUE_HASH_CODE_BYTES = Integer.BYTES;
-    private static final int BUFFER_CAPACITY = Integer.BYTES + Short.BYTES;
-    public static final int ID_OFFSET = Integer.BYTES;
+    public static final int VALUE_HASH_CODE_BYTES = Long.BYTES;
+    public static final int ID_BYTES = Short.BYTES;
+    private static final int BUFFER_CAPACITY = VALUE_HASH_CODE_BYTES + ID_BYTES;
+    public static final int ID_OFFSET = VALUE_HASH_CODE_OFFSET + VALUE_HASH_CODE_BYTES;
 
     @Override
     public int getBufferCapacity() {
@@ -38,7 +40,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
     @Override
     public ValueStoreKey deserialize(final ByteBuffer byteBuffer) {
-        int hashCode = byteBuffer.getInt();
+        long hashCode = byteBuffer.getLong();
         short uniqueId = byteBuffer.getShort();
         byteBuffer.flip();
         return new ValueStoreKey(hashCode, uniqueId);
@@ -47,28 +49,9 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
     @Override
     public void serialize(final ByteBuffer byteBuffer, final ValueStoreKey valueStoreKey) {
         byteBuffer
-                .putInt(valueStoreKey.getValueHashCode())
+                .putLong(valueStoreKey.getValueHashCode())
                 .putShort(valueStoreKey.getUniqueId());
         byteBuffer.flip();
-    }
-
-    /**
-     * Creates a new directly allocated {@link ByteBuffer} from the contents of
-     * source, but with an ID value one greater than the ID value in source.
-     * This method allows for the mutation of the ID part of the {@link ByteBuffer}
-     * without having to fully de-serialise/serialise it.
-     */
-    public static ByteBuffer nextId(final ByteBuffer source) {
-        short currId = source.getShort(ID_OFFSET);
-
-        ByteBuffer output = ByteBuffer.allocateDirect(BUFFER_CAPACITY);
-
-        ByteBuffer sourceDuplicate = source.duplicate();
-        sourceDuplicate.limit(Integer.BYTES);
-        output.put(sourceDuplicate);
-        output.putShort((short) (currId + 1));
-        output.flip();
-        return output;
     }
 
     /**
@@ -92,8 +75,8 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
      * Extracts the valueHashCode part of the {@link ByteBuffer} by one. Does not
      * alter the offset/limit
      */
-    public static int extractValueHashCode(final ByteBuffer byteBuffer) {
-        return byteBuffer.getInt(VALUE_HASH_CODE_OFFSET);
+    public static long extractValueHashCode(final ByteBuffer byteBuffer) {
+        return byteBuffer.getLong(VALUE_HASH_CODE_OFFSET);
     }
 
     /**

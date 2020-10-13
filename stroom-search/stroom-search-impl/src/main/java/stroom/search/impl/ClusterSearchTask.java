@@ -16,42 +16,49 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterTask;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.search.resultsender.NodeResult;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class ClusterSearchTask extends ClusterTask<NodeResult> {
-    private static final long serialVersionUID = -1305243739417365803L;
-
+public class ClusterSearchTask implements Serializable {
+    private final String taskName;
+    private final QueryKey key;
     private final Query query;
     private final List<Long> shards;
     private final String[] storedFields;
-    private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
     private final long now;
 
     public ClusterSearchTask(final String taskName,
+                             final QueryKey key,
                              final Query query,
                              final List<Long> shards,
                              final String[] storedFields,
-                             final int resultSendFrequency,
                              final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                              final String dateTimeLocale,
                              final long now) {
-        super(taskName);
+        this.taskName = taskName;
+        this.key = key;
         this.query = query;
         this.shards = shards;
         this.storedFields = storedFields;
-        this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
+    }
+
+    public String getTaskName() {
+        return taskName;
+    }
+
+    public QueryKey getKey() {
+        return key;
     }
 
     public Query getQuery() {
@@ -64,10 +71,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
 
     public String[] getStoredFields() {
         return storedFields;
-    }
-
-    public int getResultSendFrequency() {
-        return resultSendFrequency;
     }
 
     public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {

@@ -62,6 +62,7 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
 import javax.validation.ValidatorFactory;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,14 +113,19 @@ public class App extends Application<Config> {
 
 
     App(final Path configFile) {
-        super();
         this.configFile = configFile;
         validationOnlyInjector = createValidationInjector();
     }
 
     public static void main(final String[] args) throws Exception {
         final Path yamlConfigFile = getYamlFileFromArgs(args);
-        new App(yamlConfigFile).run(args);
+        try {
+            final Path realConfigFile = yamlConfigFile.toRealPath();
+            LOGGER.info("Using config file: \"" + realConfigFile + "\"");
+            new App(realConfigFile).run(args);
+        } catch (final IOException e) {
+            LOGGER.error("Unable to find location of real config file from \"" + yamlConfigFile + "\"");
+        }
     }
 
     @Override

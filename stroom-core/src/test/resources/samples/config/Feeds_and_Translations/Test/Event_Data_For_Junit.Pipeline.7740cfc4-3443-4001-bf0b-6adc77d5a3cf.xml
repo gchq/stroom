@@ -54,6 +54,10 @@
             <id>fileAppender</id>
             <type>FileAppender</type>
          </element>
+         <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
       </add>
    </elements>
    <properties>
@@ -155,16 +159,20 @@
             <to>xmlWriter</to>
          </link>
          <link>
-            <from>xmlWriter</from>
-            <to>streamAppender</to>
-         </link>
-         <link>
             <from>flattenFilter</from>
             <to>textWriter</to>
          </link>
          <link>
+            <from>xmlWriter</from>
+            <to>streamAppender</to>
+         </link>
+         <link>
             <from>textWriter</from>
             <to>fileAppender</to>
+         </link>
+         <link>
+            <from>Source</from>
+            <to>combinedParser</to>
          </link>
       </add>
    </links>

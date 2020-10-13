@@ -18,9 +18,12 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 
+import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
@@ -45,6 +48,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestValueStore extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStore.class);
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
+    private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
+    private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
     private ValueStore valueStore = null;
     private ValueStoreDb valueStoreDb = null;
@@ -56,7 +61,8 @@ class TestValueStore extends AbstractLmdbDbTest {
                 lmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
-                new GenericRefDataValueSerde(refDataValueSerdeFactory));
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                xxHashAlgorithm);
 
 
         valueStoreMetaDb = new ValueStoreMetaDb(
@@ -64,6 +70,17 @@ class TestValueStore extends AbstractLmdbDbTest {
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new ValueStoreMetaSerde());
+
+        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+    }
+
+    private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        valueStoreDb = new ValueStoreDb(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new ValueStoreKeySerde(),
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                valueStoreHashAlgorithm);
 
         valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
@@ -83,13 +100,18 @@ class TestValueStore extends AbstractLmdbDbTest {
     @Test
     void testGetOrCreate() {
 
+        // We have to set up the DB with the basic hash func so we can be assured of hash clashes
+        setupValueStoreDb(basicHashAlgorithm);
+
+        ValueStoreHashAlgorithm hashAlgorithm = valueStoreDb.getValueStoreHashAlgorithm();
+
         // 1 & 2 have the same hashcode, 3 has a different hashcode
         final String stringValueStr1 = "Aa";
         final String stringValueStr2 = "BB";
         final String stringValueStr3 = "SomethingDifferent";
 
-        assertThat(stringValueStr1.hashCode()).isEqualTo(stringValueStr2.hashCode());
-        assertThat(stringValueStr1.hashCode()).isNotEqualTo(stringValueStr3.hashCode());
+        assertThat(hashAlgorithm.hash(stringValueStr1)).isEqualTo(hashAlgorithm.hash(stringValueStr2));
+        assertThat(hashAlgorithm.hash(stringValueStr1)).isNotEqualTo(hashAlgorithm.hash(stringValueStr3));
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
         assertThat(valueStoreMetaDb.getEntryCount()).isEqualTo(0);

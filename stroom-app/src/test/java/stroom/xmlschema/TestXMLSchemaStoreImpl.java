@@ -18,19 +18,26 @@
 package stroom.xmlschema;
 
 
-import org.junit.jupiter.api.Test;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLSchemaStoreImpl.class);
+
     @Inject
     private XmlSchemaStore xmlSchemaStore;
     @Inject
@@ -51,19 +58,33 @@ class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");
         list = xmlSchemaStore.find(criteria).getValues();
-        assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(2);
+
+        assertThat(list)
+                .isNotNull();
+
+        LOGGER.info("Schemas:\n{}", list.stream()
+                .map(xmlSchemaDoc ->
+                        xmlSchemaDoc.getNamespaceURI() + " "
+                                + xmlSchemaDoc.getSystemId() + " "
+                                + xmlSchemaDoc.getSchemaGroup())
+                .collect(Collectors.joining("\n")));
+
+        assertThat(list.size())
+                .isEqualTo(5);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
         list = xmlSchemaStore.find(criteria).getValues();
-        assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list)
+                .isNotNull();
+        assertThat(list.size())
+                .isEqualTo(1);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSchemaGroup("EVENTS");
         list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list.size())
+                .isEqualTo(5);
     }
 }

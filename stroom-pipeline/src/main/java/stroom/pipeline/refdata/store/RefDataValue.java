@@ -17,18 +17,25 @@
 
 package stroom.pipeline.refdata.store;
 
+/**
+ * Represents a reference data value in the store. The value could be one of
+ * various types, e.g. simple string or fastinfoset serialised XML. The type
+ * of the value is not know until it is read and its typeId is determined.
+ * Each impl will have its own serde that can be used once the type is determined
+ * by inspecting the serialised typeId.
+ */
 public abstract class RefDataValue {
 
     /**
      * @return The hashcode of just the underlying value that this object wraps
      * rather than hashcode of the whole object.
      */
-    public abstract int getValueHashCode();
+    public abstract long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm);
 
     /**
      * @return A code to represent the class of the implementation,
-     * unique within all sub-classes of {@link RefDataValue}
+     * unique within all sub-classes of {@link RefDataValue}. Stored in the DB as a single
+     * byte so values must be in the range -128 to 127.
      */
     public abstract int getTypeId();
-
 }

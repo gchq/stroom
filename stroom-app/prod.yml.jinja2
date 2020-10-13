@@ -185,7 +185,7 @@ appConfig:
     authentication:
       preventLogin: false
     identity:
-      useDefaultOpenIdCredentials: "{{ 'true' | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}"
+      useDefaultOpenIdCredentials: "{{ 'false' | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}"
   serviceDiscovery:
     enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"
     zookeeperUrl: "{{ 'localhost:2181' | envVar('STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL') }}"

@@ -57,6 +57,7 @@ dependencies {
     compile libs.vavr
     compile libs.ws_rs_api
     compile libs.xml_apis
+    compile libs.zero_allocation_hashing
 
     testCompile project(':stroom-cache:stroom-cache-api')
     testCompile project(':stroom-cache:stroom-cache-impl')

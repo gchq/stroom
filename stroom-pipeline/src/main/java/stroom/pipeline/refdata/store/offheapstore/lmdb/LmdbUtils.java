@@ -246,13 +246,6 @@ public class LmdbUtils {
     }
 
     /**
-     * Create an empty {@link ByteBuffer} with the appropriate capacity for an LMDB key
-     */
-    public static ByteBuffer createEmptyKeyBuffer(final Env<ByteBuffer> lmdbEnv) {
-        return ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
-    }
-
-    /**
      * Allocates a new direct {@link ByteBuffer} (of size bufferSize) and
      * serialises the object into that {@link ByteBuffer}
      *

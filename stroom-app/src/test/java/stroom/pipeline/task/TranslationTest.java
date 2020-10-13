@@ -244,7 +244,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
                             //got an error stream so dump it to console
 
-                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
+                            final Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
 //                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
 //                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
@@ -268,7 +268,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                assertThat(processedMeta.size()).isGreaterThan(0);
+                assertThat(processedMeta.size())
+                        .withFailMessage("Processed count should be > 0")
+                        .isGreaterThan(0);
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;

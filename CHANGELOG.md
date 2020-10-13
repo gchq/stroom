@@ -7,6 +7,109 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change dashboard field expression editor to be a bit wider and use a monospace font.
+
+* Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
+
+* Issue **#1877** : Change conditional formatting to support decimals.
+
+* Change conditional formatting to set the available rule operators according to the format type of the column.
+
+* Change conditional formatting to support date terms and date comparisons.
+
+* Issue **#1885** : Fix annotations icon not being enabled on dashboard tables.
+
+* Issue **#1883** : Code now deals with missing streams when performing search extraction.
+
+* Issue **#1882** : Added capacity restriction to the stream event map used in search result extraction. The previous version was causing out of memory exceptions.
+
+* Change names of hidden special table columns on dashboards to avoid name clashes.
+
+* Make dashboard table settings popup bigger to accommodate the conditional formatting.
+
+* Added logic to rename conditional formatting term fields on a column rename.
+
+* Added logic to prevent renaming a column to an existing name.
+
+* Issue **#1872** : Partially fixed to show the 1st 1k chars of the single line raw source. Full fix will come in v7.
+
+* Issue **#1874** : Fixed dashboard tables not showing data if the stream id column is present.
+
+* Issue **#1868** : Stop `Stream not found with id=nnn` errors during searching.
+
+* Issue **#1864** : Added `*` wildcard to conditional formatting matches. 
+
+* Issue **#1865** : Fixed NoSuchMethodError.
+
+* Issue **#1854** : Changed search mechanism to poll for remote results to reduce the chances of hung searches.
+
+* Uplift event-logging-schema content pack to v3.4.2.
+
+* Uplift standard-pipelines content pack to v0.2.
+
+* Uplift template-pipelines content pack to v0.3.
+
+* Change the off-heap ref store to use xxHash for hashing its values.
+
+* Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.
+
+
+## [v7.0-beta.66] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.65] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.64] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.63] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.62] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.61] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.60] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.59] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+* Changed default behaviour of `useDefaultOpenIdCredentials`.
+
+
+## [v7.0-beta.58] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.57] - 2020-09-18
+
+* Failed build.
+
+
+## [v7.0-beta.56] - 2020-09-18
+
+* Added code to authenticate against AWS ALB.
+
 * Remove requirement for Reference stream type in ref data API lookup requests.
 
 
@@ -2644,7 +2747,18 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.55...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.66...HEAD
+[v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
+[v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
+[v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64
+[v7.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v7.0-beta.63
+[v7.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v7.0-beta.62
+[v7.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v7.0-beta.61
+[v7.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v7.0-beta.60
+[v7.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v7.0-beta.59
+[v7.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v7.0-beta.58
+[v7.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v7.0-beta.57
+[v7.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v7.0-beta.56
 [v7.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v7.0-beta.55
 [v7.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v7.0-beta.54
 [v7.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v7.0-beta.53

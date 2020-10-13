@@ -27,6 +27,8 @@ import stroom.test.StoreCreationTool;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
+import org.assertj.core.api.Assertions;
+
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -86,26 +88,32 @@ public class CommonIndexingTestHelper {
         // 3 ref data streams pluss our data streams
         int expectedTaskCount = 3 + dataFileCount;
 
-        assertThat(results.size()).isEqualTo(expectedTaskCount);
-        for (final ProcessorResult result : results) {
-            assertThat(result.getWritten() > 0).as(result.toString()).isTrue();
-            assertThat(result.getRead() <= result.getWritten()).as(result.toString()).isTrue();
-            assertThat(result.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
-        }
+        assertThat(results.size())
+                .isEqualTo(expectedTaskCount);
+        results.forEach(this::assertProcessorResult);
 
         // Add index.
         storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
         // Translate data.
         results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N1);
-        for (final ProcessorResult result : results) {
-            assertThat(result.getWritten() > 0).as(result.toString()).isTrue();
-            assertThat(result.getRead() <= result.getWritten()).as(result.toString()).isTrue();
-            assertThat(result.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
-        }
+
+        results.forEach(this::assertProcessorResult);
 
         // Flush all newly created index shards.
         indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
+    }
+
+    private void assertProcessorResult(final ProcessorResult result) {
+        Assertions.assertThat(result.getMarkerCount(Severity.SEVERITIES))
+                .withFailMessage("Found errors")
+                .isEqualTo(0);
+        Assertions.assertThat(result.getWritten())
+                .withFailMessage("Write count should be > 0")
+                .isGreaterThan(0);
+        Assertions.assertThat(result.getRead())
+                .withFailMessage("Read could should be <= write count")
+                .isLessThanOrEqualTo(result.getWritten());
     }
 
     public int flushIndex() {

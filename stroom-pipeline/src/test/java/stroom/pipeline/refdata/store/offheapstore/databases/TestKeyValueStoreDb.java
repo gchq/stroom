@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,9 +54,9 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     @Test
     void forEachEntry() {
 
-        final UID uid1 = UID.of(1, 0, 0, 1);
-        final UID uid2 = UID.of(2, 0, 0, 2);
-        final UID uid3 = UID.of(3, 0, 0, 3);
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
 
         final KeyValueStoreKey keyValueStoreKey11 = new KeyValueStoreKey(uid1, "key11");
         final KeyValueStoreKey keyValueStoreKey21 = new KeyValueStoreKey(uid2, "key21");

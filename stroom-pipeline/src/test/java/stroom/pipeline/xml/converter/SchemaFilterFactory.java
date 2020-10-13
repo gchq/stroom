@@ -18,6 +18,8 @@
 package stroom.pipeline.xml.converter;
 
 import stroom.cache.MockSchemaPool;
+import stroom.content.ContentPack;
+import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
@@ -38,19 +40,13 @@ import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LogUtil;
-import stroom.util.zip.ZipUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 public class SchemaFilterFactory {
 
@@ -80,7 +76,7 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.SCHEMA_NAME,
                 DS3ParserFactory.NAMESPACE_URI,
                 DS3ParserFactory.SYSTEM_ID,
-                "core-xml-schemas-v2.2",
+                ContentPacks.CORE_XML_SCHEMAS_PACK,
                 SCHEMAS_BASE + "data-splitter/data-splitter v3.0.XMLSchema.data.xsd");
     }
 
@@ -101,21 +97,9 @@ public class SchemaFilterFactory {
                                final String schemaName,
                                final String namespaceURI,
                                final String systemId,
-                               final String packName,
+                               final ContentPack contentPack,
                                final String fileName) {
-        final Path schemaFile = Optional.of(getSchemaFile(packName, fileName))
-                .filter(Files::isRegularFile)
-                .orElseGet(() -> {
-                    explodePack(packName);
-
-                    final Path schemaFile2 = getSchemaFile(packName, fileName);
-
-                    if (!Files.isRegularFile(schemaFile2)) {
-                        throw new RuntimeException(LogUtil.message(
-                                "Expecting to find {}", FileUtil.getCanonicalPath(schemaFile2)));
-                    }
-                    return schemaFile2;
-                });
+        final Path schemaFile = getSchemaFile(contentPack, fileName);
 
         final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
         final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
@@ -127,33 +111,9 @@ public class SchemaFilterFactory {
         xmlSchemaStore.writeDocument(xmlSchema);
     }
 
-    private Path getSchemaFile(final String packName,
+    private Path getSchemaFile(final ContentPack contentPack,
                                final String fileName) {
-        return FileSystemTestUtil.getExplodedContentPacksDir()
-                .resolve(packName)
+        return FileSystemTestUtil.getExplodedContentPackDir(contentPack)
                 .resolve(fileName);
-    }
-
-    private void explodePack(final String packName) {
-        final Path downloadsDir = FileSystemTestUtil.getContentPackDownloadsDir();
-        final Path explodedPackDir = downloadsDir.resolve("exploded")
-                .resolve(packName);
-
-        try {
-            Files.createDirectories(explodedPackDir);
-        } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Unable to create dir {}", FileUtil.getCanonicalPath(explodedPackDir)), e);
-        }
-
-        final Path packZip = downloadsDir.resolve(packName + ".zip");
-
-        try {
-            LOGGER.info("Unzipping {} into {}",
-                    FileUtil.getCanonicalPath(packZip), FileUtil.getCanonicalPath(explodedPackDir));
-            ZipUtil.unzip(packZip, explodedPackDir);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

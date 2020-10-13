@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -451,6 +452,15 @@ class TestByteBufferPool {
         public void doWithBuffer(final int minCapacity, final Consumer<ByteBuffer> work) {
             final ByteBuffer buffer = getBuffer(minCapacity);
             work.accept(buffer);
+        }
+
+        @Override
+        public void doWithBufferPair(final int minKeyCapacity,
+                                     final int minValueCapacity,
+                                     final BiConsumer<ByteBuffer, ByteBuffer> work) {
+            final ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
+            final ByteBuffer valueBuffer = getBuffer(minValueCapacity);
+            work.accept(keyBuffer, valueBuffer);
         }
 
         @Override

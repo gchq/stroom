@@ -16,8 +16,6 @@ import io.vavr.Tuple2;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -35,8 +33,7 @@ import java.util.function.Supplier;
  */
 public class MapDefinitionUIDStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionUIDStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionUIDStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionUIDStore.class);
 
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
@@ -56,11 +53,12 @@ public class MapDefinitionUIDStore {
         this.mapUidReverseDb = mapUidReverseDb;
     }
 
-    Optional<UID> getUid(final MapDefinition mapDefinition) {
+    Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
         // The returned UID is outside the txn so must be a clone of the found one
         return LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
                 getUid(txn, mapDefinition)
-                        .flatMap(uid -> Optional.of(uid.clone())));
+                        .flatMap(uid ->
+                                Optional.of(uid.cloneToBuffer(uidByteBuffer))));
     }
 
     Optional<UID> getUid(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
@@ -77,10 +75,13 @@ public class MapDefinitionUIDStore {
      * direct allocation {@link ByteBuffer} owned by LMDB so it may ONLY be used whilst still inside the passed
      * {@link Txn}.
      */
-    UID getOrCreateUid(final Txn<ByteBuffer> writeTxn, final MapDefinition mapDefinition) {
+    UID getOrCreateUid(final Txn<ByteBuffer> writeTxn,
+                       final MapDefinition mapDefinition,
+                       final PooledByteBuffer uidPooledBuffer) {
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "Must be a write transaction");
 
         try (final PooledByteBuffer mapDefinitionPooledBuffer = mapUidForwardDb.getPooledKeyBuffer()) {
+
             final ByteBuffer mapDefinitionBuffer = mapDefinitionPooledBuffer.getByteBuffer();
 
             mapUidForwardDb.serializeKey(mapDefinitionBuffer, mapDefinition);
@@ -89,12 +90,12 @@ public class MapDefinitionUIDStore {
             // if not, create the pair of entries and return the created UID
             return mapUidForwardDb.getAsBytes(writeTxn, mapDefinitionBuffer)
                     .map(uidBuffer -> {
-                        LAMBDA_LOGGER.trace(() ->
+                        LOGGER.trace(() ->
                                 LogUtil.message("Found existing UID {}", ByteBufferUtils.byteBufferInfo(uidBuffer)));
                         return mapUidForwardDb.deserializeValue(uidBuffer);
                     })
                     .orElseGet(() ->
-                            createForwardReversePair(writeTxn, mapDefinitionBuffer));
+                            createForwardReversePair(writeTxn, mapDefinitionBuffer, uidPooledBuffer));
         }
     }
 
@@ -128,9 +129,12 @@ public class MapDefinitionUIDStore {
                     final UID mapUid) {
         LOGGER.trace("deletePair({})", mapUid);
 
-        final ByteBuffer mapDefinitionBuffer = mapUidReverseDb.getAsBytes(writeTxn, mapUid.getBackingBuffer())
+        final ByteBuffer mapDefinitionBuffer = mapUidReverseDb.getAsBytes(
+                writeTxn,
+                mapUid.getBackingBuffer())
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                        "No entry exists for mapUid {}", ByteBufferUtils.byteBufferInfo(mapUid.getBackingBuffer()))));
+                        "No entry exists for mapUid {}",
+                        ByteBufferUtils.byteBufferInfo(mapUid.getBackingBuffer()))));
 
         // these two MUST be done in the same txn to ensure data consistency
         mapUidForwardDb.delete(writeTxn, mapDefinitionBuffer);
@@ -143,30 +147,33 @@ public class MapDefinitionUIDStore {
         mapUidForwardDb.forEachEntry( txn, KeyRange.all(), entryConsumer);
     }
 
-    private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn, final ByteBuffer mapDefinitionBuffer) {
-        // this is all done in a write txn so we can be sure of consistency between the forward and reverse DBs
+    private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn,
+                                         final ByteBuffer mapDefinitionBuffer,
+                                         final PooledByteBuffer newUidPooledBuffer) {
 
-        LAMBDA_LOGGER.trace(() ->
+        // this is all done in a write txn so we can be sure of consistency
+        // between the forward and reverse DBs
+
+        LOGGER.trace(() ->
                 LogUtil.message("Creating UID mappings for mapDefinition {}",
                         ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
 
-        // get the highest current UID
-        final Optional<ByteBuffer> optHighestUid = mapUidReverseDb.getHighestUid(writeTxn);
+        // get the next UID into our pooled buffer
+        final ByteBuffer nextUidKeyBuffer = mapUidReverseDb.getNextUid(writeTxn, newUidPooledBuffer);
 
-        final ByteBuffer nextUidKeyBuffer = optHighestUid
-                .map(highestUidBuffer ->
-                        UID.wrap(highestUidBuffer).nextUid().getBackingBuffer())
-                .orElseGet(() ->
-                        UID.of(0).getBackingBuffer()
-                );
+        LOGGER.trace(() -> "nextUidKeyBuffer " + ByteBufferUtils.byteBufferToHexAll(nextUidKeyBuffer));
 
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
         // We are not changing the buffers so can just reuse them
 
+        LOGGER.trace(() -> "nextUidKeyBuffer " + ByteBufferUtils.byteBufferToHexAll(nextUidKeyBuffer));
+
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionBuffer, nextUidKeyBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
+
+        LOGGER.trace(() -> "nextUidKeyBuffer " + ByteBufferUtils.byteBufferToHexAll(nextUidKeyBuffer));
 
         // ensure it is ready for reading again as we are returning it
         UID mapUid = UID.wrap(nextUidKeyBuffer);
@@ -180,5 +187,13 @@ public class MapDefinitionUIDStore {
             LOGGER.trace("Creating UID mapping for {}", mapUid);
         }
         return mapUid;
+    }
+
+    public PooledByteBuffer getUidPooledByteBuffer() {
+        return mapUidReverseDb.getPooledKeyBuffer();
+    }
+
+    public PooledByteBuffer getMapDefinitionPooledByteBuffer() {
+        return mapUidForwardDb.getPooledKeyBuffer();
     }
 }
