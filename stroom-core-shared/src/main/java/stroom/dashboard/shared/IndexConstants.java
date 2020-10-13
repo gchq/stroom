@@ -14,13 +14,36 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.shared;
 
 public interface IndexConstants {
+    // Field names in the index, NOT table column names
+    // For the table names use generateObfuscatedColumnName() below
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
     String FEED_ID = "FeedId";
+
     String INDEX_FLUSH_COMMAND = "IndexFlush";
     String INDEX_CLOSE_COMMAND = "IndexClose";
     String INDEX_DELETE_COMMAND = "IndexDelete";
+
+    /**
+     * Convert EventId to __event_id__
+     */
+    static String generateObfuscatedColumnName(final String indexFieldName) {
+        if (indexFieldName != null) {
+            StringBuilder stringBuilder = new StringBuilder("__");
+            for (int i = 0; i < indexFieldName.length(); i++) {
+                char chr = indexFieldName.charAt(i);
+                if (i != 0 && Character.isUpperCase(chr)) {
+                    stringBuilder.append("_");
+                }
+                stringBuilder.append(Character.toLowerCase(chr));
+            }
+            stringBuilder.append("__");
+            return stringBuilder.toString();
+        } else {
+            return null;
+        }
+    }
 }

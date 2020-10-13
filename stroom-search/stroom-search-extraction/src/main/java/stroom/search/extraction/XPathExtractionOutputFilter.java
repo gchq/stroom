@@ -125,6 +125,8 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 topLevelUri = uri;
                 topLevelQName = qName;
                 topLevelAtts = atts;
+                count++;
+
             }else if (depth == 2){
                 if (!secondLevelElementToCreateDocs.equals((localName))) {
                     secondLevelElementToCreateDocs = localName;

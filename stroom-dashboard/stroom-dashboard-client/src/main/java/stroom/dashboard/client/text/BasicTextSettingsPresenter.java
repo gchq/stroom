@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.text;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
@@ -31,6 +27,11 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,13 +89,13 @@ public class BasicTextSettingsPresenter
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getSettings().getFields();
             if (fields != null && fields.size() > 0) {
-                allFields.addAll(fields);
+//                allFields.addAll(fields);
 
-//                for (final Field field : fields) {
-//                    if (!field.isSpecial()) {
-//                        allFields.add(field);
-//                    }
-//                }
+                for (final Field field : fields) {
+                    if (!field.isSpecial()) {
+                        allFields.add(field);
+                    }
+                }
             }
         }
     }

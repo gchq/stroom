@@ -85,9 +85,9 @@ public class EventSearchTaskHandler {
             // Create an asynchronous search task.
             final String searchName = "Event Search";
             final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                    task.getKey(),
                     searchName,
                     query,
-                    task.getResultSendFrequency(),
                     coprocessorMap,
                     null,
                     nowEpochMilli);

@@ -19,8 +19,10 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
+import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ConditionalFormattingRule;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.IntegerField;
@@ -44,6 +46,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RulesPresenter
@@ -97,7 +100,9 @@ public class RulesPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(event -> add()));
+        registerHandler(addButton.addClickHandler(event -> {
+            add();
+        }));
         registerHandler(editButton.addClickHandler(event -> {
             final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
@@ -136,16 +141,17 @@ public class RulesPresenter
                 setDirty(true);
             }
         }));
-        registerHandler(deleteButton.addClickHandler(event ->
-                ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-                    if (ok) {
-                        final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
-                        rules.remove(rule);
-                        listPresenter.getSelectionModel().clear();
-                        update();
-                        setDirty(true);
-                    }
-                })));
+        registerHandler(deleteButton.addClickHandler(event -> {
+            ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
+                if (ok) {
+                    final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+                    rules.remove(rule);
+                    listPresenter.getSelectionModel().clear();
+                    update();
+                    setDirty(true);
+                }
+            });
+        }));
         registerHandler(moveUpButton.addClickHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
@@ -173,9 +179,12 @@ public class RulesPresenter
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
+//                expressionPresenter.read(rule.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
                     edit(rule);
                 }
+            } else {
+//                expressionPresenter.read(null);
             }
             updateButtons();
         }));
@@ -214,8 +223,23 @@ public class RulesPresenter
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(RulesPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
+
+        ShowPopupEvent.fire(
+                RulesPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Edit Rule",
+                new PopupUiHandlers() {
+
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -248,11 +272,33 @@ public class RulesPresenter
     public void read(final ComponentConfig componentConfig) {
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
 
+        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
+
+//        final Function<Field, DataSourceField.DataSourceFieldType> typeMapper = field -> {
+//            switch (field.getFormat().getType()) {
+//                case NUMBER:
+//                    return DataSourceField.DataSourceFieldType.DOUBLE_FIELD;
+//                case DATE_TIME:
+//                    return DataSourceField.DataSourceFieldType.DATE_FIELD;
+//                default:
+//                    return DataSourceField.DataSourceFieldType.TEXT_FIELD;
+//            }
+//        };
+
+        // We have to deal in field names (aka column names) here as all the
+        // exp tree code only has a single field/term name so can't cope with working with
+        // ids and mapping to col name for the ui.
         this.fields = settings
                 .getFields()
                 .stream()
-                .map(field -> new IntegerField(field.getName()))
+                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
+//                .map(field -> new DataSourceField.Builder()
+//                        .type(typeMapper.apply(field))
+//                        .name(field.getName())
+//                        .build())
+                .map(TablePresenter::buildDsField)
                 .collect(Collectors.toList());
+
         if (settings.getConditionalFormattingRules() != null) {
             this.rules = settings.getConditionalFormattingRules();
         } else {
