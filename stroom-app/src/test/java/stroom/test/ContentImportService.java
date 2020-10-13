@@ -3,14 +3,10 @@ package stroom.test;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
-import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.util.io.FileUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -23,8 +19,6 @@ import java.util.List;
  * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
-
-    public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
 
     private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
 
@@ -49,7 +43,7 @@ public class ContentImportService {
 
     public void importVisualisations() {
 
-        final Path contentPackDirPath = getContentPackDirPath();
+        final Path contentPackDirPath = FileSystemTestUtil.getContentPackDownloadsDir();
 
         final Path packPath = VisualisationsDownloader.downloadVisualisations(
                 VISUALISATIONS_VERSION, contentPackDirPath);
@@ -58,22 +52,13 @@ public class ContentImportService {
 
     public void importContentPacks(final List<ContentPack> packs) {
         packs.forEach(pack -> {
-            Path packPath = ContentPackDownloader.downloadContentPack(
-                    pack.getNameAsStr(), pack.getVersion(), getContentPackDirPath());
+            final Path packPath = ContentPackDownloader.downloadContentPack(
+                    pack,
+                    FileSystemTestUtil.getContentPackDownloadsDir());
+
             importExportService.performImportWithoutConfirmation(packPath);
         });
     }
 
-    private Path getContentPackDirPath() {
-        final Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
-                .resolve(CONTENT_PACK_IMPORT_DIR);
-        try {
-            Files.createDirectories(contentPackDir);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(String.format("Error creating directory %s for content packs",
-                    FileUtil.getCanonicalPath(contentPackDir)), e);
-        }
-        return contentPackDir;
-    }
 
 }
