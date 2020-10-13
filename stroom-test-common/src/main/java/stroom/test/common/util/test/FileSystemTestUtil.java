@@ -16,6 +16,12 @@
 
 package stroom.test.common.util.test;
 
+import stroom.content.ContentPack;
+import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -41,11 +47,63 @@ public abstract class FileSystemTestUtil {
         return TEST_PREFIX + "_" + testSuffix;
     }
 
+    /**
+     * @return The directory where content pack zips are downloaded to.
+     * It will ensure it exists.
+     */
     public static Path getContentPackDownloadsDir() {
+        try {
+            Files.createDirectories(CONTENT_PACK_DOWNLOADS_DIR);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error ensuring directory {}",
+                    CONTENT_PACK_DOWNLOADS_DIR.toAbsolutePath()), e);
+        }
         return CONTENT_PACK_DOWNLOADS_DIR;
     }
 
+    /**
+     * @return The directory where content pack zips are unzipped to.
+     * It will ensure it exists.
+     */
     public static Path getExplodedContentPacksDir() {
+        try {
+            Files.createDirectories(EXPLODED_DIR);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error ensuring directory {}",
+                    EXPLODED_DIR.toAbsolutePath()), e);
+        }
         return EXPLODED_DIR;
+    }
+
+    /**
+     * @return The directory of the unziped content pack. If it has not already
+     * been unziped then it will unzip the pack first, which is assumed to exist.
+     */
+    public static Path getExplodedContentPackDir(final ContentPack contentPack) {
+
+        final Path explodedPackDir = getExplodedContentPacksDir()
+                .resolve(contentPack.getVersionedNameAsStr());
+
+        if (!Files.exists(explodedPackDir)) {
+            final Path packZip = getContentPackDownloadsDir()
+                    .resolve(contentPack.getVersionedNameAsStr() + ".zip");
+
+            if (!Files.exists(packZip)) {
+                throw new RuntimeException(LogUtil.message(
+                        "Expecting to find {}", packZip.toAbsolutePath().normalize()));
+            }
+
+            // Unzip the zip file.
+            try {
+                ZipUtil.unzip(packZip, explodedPackDir);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error unzipping {} into {}",
+                        packZip.toAbsolutePath().normalize(),
+                        explodedPackDir.toAbsolutePath().normalize()));
+            }
+        }
+        return explodedPackDir;
     }
 }
