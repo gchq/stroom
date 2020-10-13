@@ -127,13 +127,6 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
      */
     public void incrementReferenceCount(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
 
-        updateReferenceCount(writeTxn, keyBuffer, 1);
-    }
-
-    private void updateReferenceCount(final Txn<ByteBuffer> writeTxn,
-                                      final ByteBuffer keyBuffer,
-                                      final int referenceCountDelta) {
-
         final ByteBuffer currValueBuffer = getAsBytes(writeTxn, keyBuffer)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "keyBuffer {} not found in DB",
@@ -141,13 +134,19 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
         try (PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
             ByteBuffer newValueBuffer = pooledValueBuffer.getByteBuffer();
-            valueSerde.cloneAndUpdateRefCount(currValueBuffer, newValueBuffer, referenceCountDelta);
+            valueSerde.cloneAndIncrementRefCount(currValueBuffer, newValueBuffer);
             boolean didPutSucceed = put(writeTxn, keyBuffer, newValueBuffer, true);
             if (!didPutSucceed) {
                 throw new RuntimeException(LogUtil.message("Put failed for keyBuffer {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
         }
+    }
+
+    private void updateReferenceCount(final Txn<ByteBuffer> writeTxn,
+                                      final ByteBuffer keyBuffer,
+                                      final int referenceCountDelta) {
+
     }
 
     /**
@@ -193,14 +192,19 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                 // other people have a ref to it so just decrement the ref count
                 try (PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
                     final ByteBuffer newValueBuf = pooledNewValueBuffer.getByteBuffer();
-                    int newRefCount = valueSerde.cloneAndUpdateRefCount(
+                    valueSerde.cloneAndDecrementRefCount(
                             valueBuffer,
-                            newValueBuf,
-                            -1);
-                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
-                            "Updating entry with new ref count {} for key {}",
-                            newRefCount,
-                            ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                            newValueBuf);
+
+                    if (LAMBDA_LOGGER.isTraceEnabled()) {
+                        int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
+                        int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
+                        LAMBDA_LOGGER.trace(() -> LogUtil.message(
+                                "Updating entry ref count from {} to {} for key {}",
+                                oldRefCount,
+                                newRefCount,
+                                ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                    }
                     cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
                 }
                 return true;

@@ -1,14 +1,12 @@
 package stroom.test;
 
+import stroom.content.ContentPack;
+import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
-import stroom.test.common.StroomCoreServerTestFileUtil;
-import stroom.util.io.FileUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -21,41 +19,6 @@ import java.util.List;
  * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
-
-    public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
-
-    public enum ContentPackName {
-        CORE_XML_SCHEMAS("core-xml-schemas"),
-        EVENT_LOGGING_XML_SCHEMA("event-logging-xml-schema"),
-        TEMPLATE_PIPELINES("template-pipelines"),
-        STANDARD_PIPELINES("standard-pipelines");
-
-        private final String packName;
-
-        ContentPackName(final String packName) {
-            this.packName = packName;
-        }
-
-        String getPackName() {
-            return packName;
-        }
-    }
-
-    public static final ContentPack CORE_XML_SCHEMAS_PACK = ContentPack.of(
-            ContentPackName.CORE_XML_SCHEMAS,
-            Version.of(1, 1));
-
-    public static final ContentPack EVENT_LOGGING_XML_SCHEMA_PACK = ContentPack.of(
-            ContentPackName.EVENT_LOGGING_XML_SCHEMA,
-            Version.of(3, 1, 1));
-
-    public static final ContentPack TEMPLATE_PIPELINES_PACK = ContentPack.of(
-            ContentPackName.TEMPLATE_PIPELINES,
-            Version.of(0, 2));
-
-    public static final ContentPack STANDARD_PIPELINES_PACK = ContentPack.of(
-            ContentPackName.STANDARD_PIPELINES,
-            Version.of(0, 1));
 
     private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
 
@@ -71,16 +34,16 @@ public class ContentImportService {
      */
     public void importStandardPacks() {
         importContentPacks(Arrays.asList(
-                CORE_XML_SCHEMAS_PACK,
-                EVENT_LOGGING_XML_SCHEMA_PACK,
-                TEMPLATE_PIPELINES_PACK,
-                STANDARD_PIPELINES_PACK
+                ContentPacks.CORE_XML_SCHEMAS_PACK,
+                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK,
+                ContentPacks.TEMPLATE_PIPELINES_PACK,
+                ContentPacks.STANDARD_PIPELINES_PACK
         ));
     }
 
     public void importVisualisations() {
 
-        final Path contentPackDirPath = getContentPackDirPath();
+        final Path contentPackDirPath = FileSystemTestUtil.getContentPackDownloadsDir();
 
         final Path packPath = VisualisationsDownloader.downloadVisualisations(
                 VISUALISATIONS_VERSION, contentPackDirPath);
@@ -89,47 +52,13 @@ public class ContentImportService {
 
     public void importContentPacks(final List<ContentPack> packs) {
         packs.forEach(pack -> {
-            Path packPath = ContentPackDownloader.downloadContentPack(
-                    pack.getNameAsStr(), pack.getVersion(), getContentPackDirPath());
+            final Path packPath = ContentPackDownloader.downloadContentPack(
+                    pack,
+                    FileSystemTestUtil.getContentPackDownloadsDir());
+
             importExportService.performImportWithoutConfirmation(packPath);
         });
     }
 
-    private Path getContentPackDirPath() {
-        final Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
-                .resolve(CONTENT_PACK_IMPORT_DIR);
-        try {
-            Files.createDirectories(contentPackDir);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(String.format("Error creating directory %s for content packs",
-                    FileUtil.getCanonicalPath(contentPackDir)), e);
-        }
-        return contentPackDir;
-    }
 
-    public static class ContentPack {
-        private final ContentPackName name;
-        private final Version version;
-
-        public ContentPack(final ContentPackName name, final Version version) {
-            this.name = name;
-            this.version = version;
-        }
-
-        public static ContentPack of(final ContentPackName name, final Version version) {
-            return new ContentPack(name, version);
-        }
-
-        public String getNameAsStr() {
-            return name.getPackName();
-        }
-
-        ContentPackName getName() {
-            return name;
-        }
-
-        public Version getVersion() {
-            return version;
-        }
-    }
 }

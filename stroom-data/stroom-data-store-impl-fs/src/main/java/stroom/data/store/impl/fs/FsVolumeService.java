@@ -211,6 +211,15 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             set = Collections.singleton(volumeSelector.select(filteredVolumeList));
         }
 
+        if (set.isEmpty()) {
+            LOGGER.warn("No {} volume found, all vols: {}, non-full vols: {}, non-full {} vols: {}",
+                    streamStatus,
+                    allVolumeList.size(),
+                    freeVolumes.size(),
+                    streamStatus,
+                    filteredVolumeList.size());
+        }
+
         return set;
     }
 
@@ -286,6 +295,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
             for (String path : paths) {
                 Path resolvedPath = defaultVolumesPath.get().resolve(path.trim());
+                LOGGER.info("Deleting directory {}", resolvedPath.toAbsolutePath().normalize().toString());
                 FileUtil.deleteDir(resolvedPath);
             }
         }
@@ -442,9 +452,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
                             if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-                                LOGGER.info(() -> "Creating default volumes");
-
-                                String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
+                                final String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
                                 for (String path : paths) {
                                     Path resolvedPath = null;
                                     if (!path.startsWith("/")) {
@@ -457,6 +465,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                                     if (resolvedPath == null) {
                                         resolvedPath = Paths.get(path.trim());
                                     }
+
+                                    LOGGER.info("Creating default data volume with path {}",
+                                            resolvedPath.toAbsolutePath().normalize());
 
                                     createVolume(resolvedPath);
                                 }
@@ -542,6 +553,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         )
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
+                .peek(path -> LOGGER.debug(() -> LogUtil.message("Found base dir for volumes: {}",
+                        path.get().toAbsolutePath().normalize().toString())))
                 .findFirst()
                 .map(Optional::get);
     }

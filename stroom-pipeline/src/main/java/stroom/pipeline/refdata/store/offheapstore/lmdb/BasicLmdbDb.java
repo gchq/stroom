@@ -17,9 +17,11 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
-import org.lmdbjava.Env;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+
+import org.lmdbjava.DbiFlags;
+import org.lmdbjava.Env;
 
 import java.nio.ByteBuffer;
 
@@ -31,8 +33,9 @@ public class BasicLmdbDb<K, V> extends AbstractLmdbDb<K, V> {
                        final ByteBufferPool byteBufferPool,
                        final Serde<K> keySerde,
                        final Serde<V> valueSerde,
-                       final String dbName) {
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, dbName);
+                       final String dbName,
+                       final DbiFlags... dbiFlags) {
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, dbName, dbiFlags);
         this.name = dbName;
     }
 

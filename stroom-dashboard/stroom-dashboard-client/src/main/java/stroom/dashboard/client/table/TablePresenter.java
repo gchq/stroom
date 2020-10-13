@@ -26,7 +26,6 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
-import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -44,6 +43,7 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Field.Builder;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
@@ -53,8 +53,10 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldTypes;
-import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -62,7 +64,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.hyperlink.client.Hyperlink;
+import stroom.processor.shared.ProcessorExpressionUtil;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -106,7 +109,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
@@ -120,7 +122,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -513,6 +518,34 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
+    public static AbstractField buildDsField(final Field field) {
+        Type colType = Optional.ofNullable(field.getFormat())
+                .map(Format::getType)
+                .orElse(Type.GENERAL);
+
+        try {
+            final ExpressionTerm.Condition[] conditions;
+            switch (colType) {
+                case NUMBER:
+                    return new LongField(field.getName(), true);
+
+                case DATE_TIME:
+                    return new DateField(field.getName(), true);
+
+                default:
+                    // CONTAINS only supported for legacy content, not for use in UI
+                    final List<Condition> conditionList = new ArrayList<>();
+                    conditionList.add(Condition.IN);
+                    conditionList.add(Condition.EQUALS);
+                    return new TextField(field.getName(), true, conditionList);
+
+            }
+        } catch (Exception e) {
+            GWT.log(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
     private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
@@ -532,16 +565,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-        final List<Condition> conditions = new ArrayList<>();
-        conditions.add(ExpressionTerm.Condition.EQUALS);
-        conditions.add(ExpressionTerm.Condition.GREATER_THAN);
-        conditions.add(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO);
-        conditions.add(ExpressionTerm.Condition.LESS_THAN);
-        conditions.add(ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO);
-        final Map<String, AbstractField> fieldMap = tableSettings.getFields()
+        final List<Field> nonSpecialNameToFieldMap = tableSettings.getFields()
                 .stream()
-                .collect(Collectors.toMap(Field::getName, field -> new IntegerField(field.getName(), true, conditions)));
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(fieldMap);
+                .filter(field -> !field.isSpecial())
+                .collect(Collectors.toList());
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         int hiddenRowCount = 0;
@@ -556,15 +584,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     for (final ConditionalFormattingRule rule : rules) {
                         try {
                             if (rule.isEnabled()) {
-                                final Map<String, Object> attributeMap = new HashMap<>();
+                                final Map<String, Object> fieldIdToValueMap = new HashMap<>();
                                 for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
                                     final Field field = fields.get(i);
-                                    final String value = row.getValues().get(i);
-                                    attributeMap.put(field.getName(), value);
+                                    // Conditional formatting is not interested in the special invisible
+                                    // EventId/StreamId fields
+                                    if (!field.isSpecial()) {
+                                        final String value = row.getValues().get(i);
+                                        fieldIdToValueMap.put(field.getName(), value);
+                                    }
                                 }
 
                                 final ExpressionOperator operator = rule.getExpression();
-                                final boolean match = expressionMatcher.match(attributeMap, operator);
+                                final boolean match = expressionMatcher.match(fieldIdToValueMap, operator);
                                 if (match) {
                                     matchingRule = rule;
                                     break;
@@ -578,10 +610,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         if (matchingRule.isHide()) {
                             hide = true;
                         } else {
-                            if (matchingRule.getBackgroundColor() != null && !matchingRule.getBackgroundColor().isEmpty()) {
+                            if (matchingRule.getBackgroundColor() != null
+                                    && !matchingRule.getBackgroundColor().isEmpty()) {
                                 rowStyle.trustedBackgroundColor(matchingRule.getBackgroundColor());
                             }
-                            if (matchingRule.getTextColor() != null && !matchingRule.getTextColor().isEmpty()) {
+                            if (matchingRule.getTextColor() != null
+                                    && !matchingRule.getTextColor().isEmpty()) {
                                 rowStyle.trustedColor(matchingRule.getTextColor());
                             }
                         }
@@ -592,15 +626,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
 
             if (!hide) {
-                final Map<String, SafeHtml> safeHtmlMap = new HashMap<>();
+                final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
                 for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
                     final Field field = fields.get(i);
-                    String value = row.getValues().get(i);
-                    if (value == null) {
-                        value = "";
-                    }
+                    final String value = row.getValues().get(i) != null
+                            ? row.getValues().get(i)
+                            : "";
 
-                    final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                     SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
                     stylesBuilder.append(rowStyle.toSafeStyles());
 
@@ -613,15 +645,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                     }
 
-                    String style = stylesBuilder.toSafeStyles().asString();
-                    if (style.length() > 0) {
-                        style = " style=" + style;
-                    }
-                    builder.appendHtmlConstant("<div class=\"cell\"" + style + ">");
-                    append(value, builder);
-                    builder.appendHtmlConstant("</div>");
+                    final String style = stylesBuilder.toSafeStyles().asString();
 
-                    safeHtmlMap.put(field.getId(), builder.toSafeHtml());
+                    final TableRow.Cell cell = new TableRow.Cell(value, style);
+                    cellsMap.put(field.getId(), cell);
                 }
 
                 // Create an expander for the row.
@@ -633,7 +660,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     expander = new Expander(row.getDepth(), false, true);
                 }
 
-                processed.add(new TableRow(expander, row.getGroupKey(), safeHtmlMap));
+                processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
 
             } else {
                 hiddenRowCount++;
@@ -655,66 +682,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;
-    }
-
-    private void append(final String value, final SafeHtmlBuilder sb) {
-        final List<Object> parts = getParts(value);
-        parts.forEach(p -> {
-            if (p instanceof Hyperlink) {
-                final Hyperlink hyperlink = (Hyperlink) p;
-                if (!hyperlink.getText().trim().isEmpty()) {
-                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
-
-//                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
-//                        try {
-//                            long l = Long.parseLong(hyperlink.getText());
-//                            sb.appendEscaped(ClientDateUtil.toISOString(l));
-//                        } catch (final RuntimeException e) {
-//                            sb.appendEscaped(hyperlink.getText());
-//                        }
-//                    } else {
-                    sb.appendEscaped(hyperlink.getText());
-//                    }
-
-                    sb.appendHtmlConstant("</u>");
-                }
-            } else {
-                sb.appendEscaped(p.toString());
-            }
-        });
-    }
-
-    private List<Object> getParts(final String value) {
-        final List<Object> parts = new ArrayList<>();
-
-        final StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < value.length(); i++) {
-            final char c = value.charAt(i);
-
-            if (c == '[') {
-                final Hyperlink hyperlink = Hyperlink.create(value, i);
-                if (hyperlink != null) {
-                    if (sb.length() > 0) {
-                        parts.add(sb.toString());
-                        sb.setLength(0);
-                    }
-                    parts.add(hyperlink);
-                    i += hyperlink.toString().length() - 1;
-                } else {
-                    sb.append(c);
-                }
-
-            } else {
-                sb.append(c);
-            }
-        }
-
-        if (sb.length() > 0) {
-            parts.add(sb.toString());
-        }
-
-        return parts;
     }
 
     private void addExpanderColumn() {
@@ -739,6 +706,55 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
+    }
+
+    void handleFieldRename(final String fieldId,
+                           final String oldName,
+                           final String newName) {
+        if (!Objects.equals(oldName, newName)) {
+            if (tableSettings != null && tableSettings.getConditionalFormattingRules() != null) {
+                final AtomicBoolean wasModified = new AtomicBoolean(false);
+                tableSettings.getConditionalFormattingRules().stream()
+                        .map(ConditionalFormattingRule::getExpression)
+                        .forEach(expressionOperator -> {
+                            boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
+                            if (wasRuleModified) {
+                                wasModified.compareAndSet(false, true);
+                            }
+                        });
+                if (wasModified.get()) {
+                    setDirty(true);
+                }
+            }
+        }
+    }
+
+    private boolean renameField(final ExpressionItem expressionItem,
+                                final String oldTermName,
+                                final String newTermName) {
+        final AtomicBoolean wasModified = new AtomicBoolean(false);
+        ProcessorExpressionUtil.walkExpressionTree(
+                expressionItem,
+                null,
+                (parent, childOffset, oldTerm) -> {
+                    if (Objects.equals(oldTerm.getField(), oldTermName)) {
+                        if (parent == null) {
+                            throw new RuntimeException("Should not have a term without a parent operator");
+                        }
+
+                        final ExpressionTerm newTerm = new ExpressionTerm(
+                                oldTerm.getEnabled(),
+                                newTermName,
+                                oldTerm.getCondition(),
+                                oldTerm.getValue(),
+                                oldTerm.getDocRef());
+
+                        // Replace the old term with the new one
+                        parent.getChildren().set(childOffset, newTerm);
+                        wasModified.compareAndSet(false, true);
+                    }
+                });
+        return wasModified.get();
     }
 
     void redrawHeaders() {
@@ -794,53 +810,63 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
+        // Remove all special fields as we will re-add them with the right names
+        tableSettings.getFields().removeIf(Field::isSpecial);
+
         // See if any of the requested special fields exist in the current data source.
-        final List<AbstractField> foundSpecialFields = new ArrayList<>();
+        final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
+        final List<Field> requiredSpecialFields = new ArrayList<>();
+        // Get all index fields provided by the datasource
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
             for (final String indexFieldName : indexFieldNames) {
                 final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
                 if (indexField != null) {
-                    foundSpecialFields.add(indexField);
+                    requiredSpecialDsFields.add(indexField);
+                    final Field specialField = buildSpecialField(indexFieldName);
+                    requiredSpecialFields.add(specialField);
                 }
             }
         }
 
-        // If the fields we want to make special do exist in the current data source then add them.
-        if (foundSpecialFields.size() > 0) {
-            // Get special field names.
-            final Set<String> specialFieldNames = foundSpecialFields.stream()
-                    .map(AbstractField::getName)
-                    .collect(Collectors.toSet());
+        // If the fields we want to make special do exist in the current data source then
+        // add them.
+        if (requiredSpecialFields.size() > 0) {
 
-            // Are there any existing special fields?
-            final List<Field> existingSpecialFields = tableSettings.getFields()
-                    .stream()
-                    .filter(f -> f.isSpecial() && specialFieldNames.contains(f.getName()))
-                    .collect(Collectors.toList());
-            if (existingSpecialFields.size() == 0) {
-                // Prior to the introduction of the special field concept, special fields were treated as invisible fields.
-                // For this reason we need to remove old invisible fields if we haven't yet turned them into special fields.
-                for (final String specialFieldName : specialFieldNames) {
-                    tableSettings.getFields().removeIf(f -> specialFieldName.equals(f.getName()) && !f.isVisible());
-                }
-            } else {
-                // First remove existing special fields.
-                tableSettings.getFields().removeAll(existingSpecialFields);
-            }
+            // Prior to the introduction of the special field concept, special fields were
+            // treated as invisible fields. For this reason we need to remove old invisible
+            // fields if we haven't yet turned them into special fields.
+            // Also we have changed the name of the special fields from EventId to __event_id__
+            // so we need to remove those old ones too.
+            requiredSpecialDsFields.forEach(requiredSpecialDsField ->
+                    tableSettings.getFields().removeIf(field ->
+                            field.getName().equals(requiredSpecialDsField.getName())
+                                    && (field.isSpecial() || !field.isVisible())));
 
-            // Now make sure special fields exist.
-            for (String specialFieldName : specialFieldNames) {
-                final Field field = new Field.Builder()
-                        .name(specialFieldName)
-                        .id(specialFieldName)
-                        .expression(ParamUtil.makeParam(specialFieldName))
-                        .visible(false)
-                        .special(true)
-                        .build();
-                tableSettings.addField(field);
-            }
+            requiredSpecialFields.forEach(field ->
+                    tableSettings.getFields().add(field));
         }
+
+//        GWT.log(tableSettings.getFields().stream()
+//                .map(field ->
+//                        String.join(
+//                                ", ",
+//                                field.getId(),
+//                                field.getName(),
+//                                Boolean.toString(field.isVisible()),
+//                                Boolean.toString(field.isSpecial())))
+//                .collect(Collectors.joining("\n")));
+    }
+
+    public static Field buildSpecialField(final String indexFieldName) {
+        final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
+        return new Field.Builder()
+                .id(obfuscatedColumnName)
+                .name(obfuscatedColumnName)
+                .expression(ParamUtil.makeParam(indexFieldName))
+                .visible(false)
+                .special(true)
+                .build();
     }
 
     private DataSourceFieldsMap getIndexFieldsMap() {

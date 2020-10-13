@@ -17,6 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
@@ -24,9 +28,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
@@ -38,7 +39,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
 
     @Test
     void serializeDeserialize() {
-        final UID uid = UID.of(0, 1, 2, 3);
+        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
                 "myKey");
@@ -48,7 +49,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
 
     @Test
     void serializeDeserialize_emptyString() {
-        final UID uid = UID.of(0, 1, 2, 3);
+        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
                 "");

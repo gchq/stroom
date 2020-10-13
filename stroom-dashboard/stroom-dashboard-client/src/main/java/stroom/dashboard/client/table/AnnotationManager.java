@@ -24,7 +24,7 @@ import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.client.main.IndexConstants;
+import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -104,11 +104,18 @@ public class AnnotationManager {
         menuListPresenter.setData(menuItems);
     }
 
-    public List<EventId> getEventIdList(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+    public List<EventId> getEventIdList(final TableComponentSettings tableComponentSettings,
+                                        final List<TableRow> selectedItems) {
         final List<EventId> idList = new ArrayList<>();
 
-        final List<String> streamIds = getValues(tableComponentSettings, selectedItems, IndexConstants.STREAM_ID);
-        final List<String> eventIds = getValues(tableComponentSettings, selectedItems, IndexConstants.EVENT_ID);
+        final List<String> streamIds = getValues(
+                tableComponentSettings,
+                selectedItems,
+                IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID));
+        final List<String> eventIds = getValues(
+                tableComponentSettings,
+                selectedItems,
+                IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID));
         final List<String> eventIdLists = getValues(tableComponentSettings, selectedItems, "EventIdList");
 
         for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {

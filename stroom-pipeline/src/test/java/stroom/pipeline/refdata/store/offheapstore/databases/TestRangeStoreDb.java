@@ -56,9 +56,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRangeStoreDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
-    final UID uid1 = UID.of(0, 0, 0, 1);
-    final UID uid2 = UID.of(0, 0, 0, 2);
-    final UID uid3 = UID.of(0, 0, 0, 3);
+    final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);
+    final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 2);
+    final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 3);
     private RangeStoreDb rangeStoreDb;
 
     @BeforeEach
@@ -111,7 +111,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     void testContainsMapDefinition() {
 
         final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
-        final UID uid4 = UID.of(0, 0, 0, 4);
+        final UID uid4 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 4);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
         for (int i = 0; i < uids.size(); i++) {
@@ -187,9 +187,9 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     @Test
     void forEachEntry() {
 
-        final UID uid1 = UID.of(1, 0, 0, 1);
-        final UID uid2 = UID.of(2, 0, 0, 2);
-        final UID uid3 = UID.of(3, 0, 0, 3);
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
 
         final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
         final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));

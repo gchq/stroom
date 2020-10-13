@@ -17,17 +17,18 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
@@ -38,6 +39,10 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
     @Override
     public KeyValueStoreKey deserialize(final ByteBuffer byteBuffer) {
+
+        // Create a bytebuffer that is a view onto the existing buffer
+        // NOTE: if the passed bytebuffer is owned by LMDB then this deserialize method
+        // needs to be used with care
         ByteBuffer dupBuffer = byteBuffer.duplicate();
 
         dupBuffer.limit(byteBuffer.position() + UID.UID_ARRAY_LENGTH);

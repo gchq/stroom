@@ -120,24 +120,24 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         }
     }
 
-    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
-                                                           final ByteBuffer startKeyIncBuffer,
-                                                           final ByteBuffer endKeyExcBuffer) {
-        final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
-
-        keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
-
-        UID nextMapUid = mapUid.nextUid();
-        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
-
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
-                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
-                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
-
-        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
-
-        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
-    }
+//    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
+//                                                           final ByteBuffer startKeyIncBuffer,
+//                                                           final ByteBuffer endKeyExcBuffer) {
+//        final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
+//
+//        keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
+//
+//        UID nextMapUid = mapUid.nextUid();
+//        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
+//
+//        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+//                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
+//                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
+//
+//        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
+//
+//        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
+//    }
 
     public interface Factory {
         KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);

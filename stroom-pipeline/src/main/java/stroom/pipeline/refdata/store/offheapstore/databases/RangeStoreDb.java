@@ -131,7 +131,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                     }
                 }
             }
-            LOGGER.trace(() -> "Value not found for " + mapDefinitionUid + ", key " + key + ", iterations " + cnt.get());
+            LOGGER.trace(() ->
+                    "Value not found for " + mapDefinitionUid + ", key " + key + ", iterations " + cnt.get());
             return Optional.empty();
         }
     }
@@ -241,25 +242,25 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         }
     }
 
-    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
-                                                           final ByteBuffer startKeyIncBuffer,
-                                                           final ByteBuffer endKeyExcBuffer) {
-        Range<Long> dummyRange = Range.of(0L, 1L);
-        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
-
-        keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
-
-        UID nextMapUid = mapUid.nextUid();
-        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
-
-        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
-                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
-                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
-
-        keySerde.serializeWithoutRangePart(endKeyExcBuffer, endKeyExc);
-
-        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
-    }
+//    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
+//                                                           final ByteBuffer startKeyIncBuffer,
+//                                                           final ByteBuffer endKeyExcBuffer) {
+//        Range<Long> dummyRange = Range.of(0L, 1L);
+//        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
+//
+//        keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
+//
+//        UID nextMapUid = mapUid.nextUid();
+//        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
+//
+//        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+//                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
+//                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
+//
+//        keySerde.serializeWithoutRangePart(endKeyExcBuffer, endKeyExc);
+//
+//        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
+//    }
 
     public interface Factory {
         RangeStoreDb create(final Env<ByteBuffer> lmdbEnvironment);

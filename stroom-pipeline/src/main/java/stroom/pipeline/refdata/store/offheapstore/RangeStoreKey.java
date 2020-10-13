@@ -24,6 +24,7 @@ import java.util.Objects;
 
 /**
  * <mapUid><rangeStartInc><rangeEndExc>
+ * <4 bytes><8 bytes><8 bytes>
  */
 public class RangeStoreKey {
 

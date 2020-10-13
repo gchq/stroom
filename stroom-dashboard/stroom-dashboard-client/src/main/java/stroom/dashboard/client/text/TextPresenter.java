@@ -21,14 +21,13 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Row;
-import stroom.dashboard.client.main.IndexConstants;
+import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataRange;
 import stroom.dispatch.client.Rest;
@@ -316,16 +315,24 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //                        request.setStreamRange(currentStreamRange);
 //                        request.setChildStreamType(null);
 
+                        // TODO implement/fix this
                         // If we have a source highlight then use it.
 //                        if (highlight != null) {
-////                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
-////                            currentPageRange = new OffsetRange<>(getStartLine(highlight), getLineCount(highlight));
-////                            request.setLocationFrom(highlight.getFrom());
-////                            request.setLocationTo(highlight.getTo());
+//                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
+//                            // -1 to offset to make zero based
+//                            // +1 to length to make inclusive
+//                            currentPageRange = new OffsetRange<>(
+//                                    highlight.getFrom().getLineNo() - 1L,
+//                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
+//                        } else {
+//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+//                        }
+
+                        // If we have a source highlight then use it.
+//                        if (highlight != null) {
 //                            dataRangeBuilder
 //                                    .fromLocation(highlight.getFrom())
 //                                    .toLocation(highlight.getTo());
-//
 //                        } else {
 //                            // TODO assume this is segmented data
 ////                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
@@ -488,11 +495,17 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         super.read(componentConfig);
         textSettings = getSettings();
 
-        if (textSettings.getStreamIdField() == null) {
-            textSettings.setStreamIdField(new Field.Builder().name(IndexConstants.STREAM_ID).build());
+        // special field names have changed from EventId to __event_id__ so we need to deal
+        // with those and replace them, also rebuild existing special fields just in case
+        if (textSettings.getStreamIdField() == null
+                || IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName())
+                || textSettings.getStreamIdField().isSpecial()) {
+            textSettings.setStreamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
         }
-        if (textSettings.getRecordNoField() == null) {
-            textSettings.setRecordNoField(new Field.Builder().name(IndexConstants.EVENT_ID).build());
+        if (textSettings.getRecordNoField() == null
+                || IndexConstants.EVENT_ID.equals(textSettings.getStreamIdField().getName())
+                || textSettings.getRecordNoField().isSpecial()) {
+            textSettings.setRecordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
     }
 

@@ -1,7 +1,5 @@
 package stroom.search.impl;
 
-import com.caucho.hessian.io.Hessian2Output;
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.ValString;
@@ -17,6 +15,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
@@ -31,6 +30,9 @@ import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
 import stroom.search.resultsender.NodeResult;
 
+import com.caucho.hessian.io.Hessian2Output;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -38,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 class TestHessian {
     @Test
@@ -50,13 +53,12 @@ class TestHessian {
                 .addTerm("test", Condition.EQUALS, "test")
                 .build();
 
+        final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query.Builder()
                 .dataSource("test", "test", "test")
                 .addParam("test", "test")
                 .expression(expression)
                 .build();
-
-        final String nodeName = "node";
 
         final List<IndexField> indexFields = createIndexFields();
         final String[] fields = indexFields.stream().map(IndexField::getFieldName).toArray(String[]::new);
@@ -84,10 +86,10 @@ class TestHessian {
 
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 "test",
+                key,
                 query,
                 Arrays.asList(1L, 2L, 3L),
                 fields,
-                1000,
                 coprocessorMap,
                 "locale",
                 1000);

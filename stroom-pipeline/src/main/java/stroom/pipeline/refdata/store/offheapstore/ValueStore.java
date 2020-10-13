@@ -17,14 +17,15 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+
+import org.lmdbjava.Env;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -82,7 +83,7 @@ public class ValueStore {
 
         // Lookup the passed key in the ValueStoreMetaDb to determine the value type
         // If found use the same key to look up the actual value and return the
-        // deserialised value
+        // de-serialised value
 
         final OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
 
@@ -135,7 +136,7 @@ public class ValueStore {
         // with the type information.
         OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
         if (optTypeId.isPresent()) {
-            ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
+            final ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
                     .orElseThrow(() -> new RuntimeException(
                             "If we have a meta entry we should also have a value entry, data may be corrupted"));
 

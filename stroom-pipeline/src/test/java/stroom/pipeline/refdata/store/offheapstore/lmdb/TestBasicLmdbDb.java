@@ -20,20 +20,29 @@ package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.DbiFlags;
 import org.lmdbjava.KeyRange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,10 +50,13 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicLmdbDb extends AbstractLmdbDbTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicLmdbDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBasicLmdbDb.class);
 
     private BasicLmdbDb<String, String> basicLmdbDb;
     private BasicLmdbDb<String, String> basicLmdbDb2;
+    private BasicLmdbDb<Integer, String> basicLmdbDb3;
+    private BasicLmdbDb<Integer, String> basicLmdbDb4;
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {
@@ -61,30 +73,45 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 new StringSerde(),
                 new StringSerde(),
                 "MyBasicLmdb2");
+
+        basicLmdbDb3 = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new IntegerSerde(),
+                new StringSerde(),
+                "MyBasicLmdb3");
+
+        basicLmdbDb4 = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new IntegerSerde(),
+                new StringSerde(),
+                "MyBasicLmdb4",
+                DbiFlags.MDB_CREATE,
+                DbiFlags.MDB_INTEGERKEY);
     }
 
     @Test
     void testBufferMutationAfterPut() {
 
-        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
-        ByteBuffer valueBuffer = ByteBuffer.allocateDirect(50);
+        byteBufferPool.doWithBufferPair(50, 50, (keyBuffer, valueBuffer) -> {
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
 
-        basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
-        basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
+            });
+            assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
+            // it is ok to mutate the buffers used in the put outside of the txn
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "XX");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "YY");
+
+            // now get the value again and it should be correct
+            String val = basicLmdbDb.get("MyKey").get();
+
+            assertThat(val).isEqualTo("MyValue");
         });
-        assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
-
-        // it is ok to mutate the buffers used in the put outside of the txn
-        basicLmdbDb.getKeySerde().serialize(keyBuffer, "XX");
-        basicLmdbDb.getValueSerde().serialize(valueBuffer, "YY");
-
-        // now get the value again and it should be correct
-        String val = basicLmdbDb.get("MyKey").get();
-
-        assertThat(val).isEqualTo("MyValue");
     }
 
     /**
@@ -271,6 +298,107 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
+    void testKeyReuseAfterCursor() {
+        // key 1 => key2 => value2 & value 3
+        basicLmdbDb.put("key1", "value1", false);
+        basicLmdbDb.put("key2", "value2", false);
+        basicLmdbDb.put("key3", "value3", false);
+
+        // different DB with same key in it so we can test two lookups using same key
+        basicLmdbDb2.put("key2", "value4", false);
+        basicLmdbDb2.put("key3", "value5", false);
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+
+            ByteBuffer cursorKeyBuffer = null;
+            ByteBuffer cursorValueBuffer = null;
+            // Scan backwards
+            try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+                    LOGGER.info("txn key : {}", ByteBufferUtils.byteBufferInfo(txn.key()));
+                    LOGGER.info("txn value : {}", ByteBufferUtils.byteBufferInfo(txn.val()));
+                    LOGGER.info("keyVal.key : {}", ByteBufferUtils.byteBufferInfo(keyVal.key()));
+                    LOGGER.info("keyVal.value : {}", ByteBufferUtils.byteBufferInfo(keyVal.val()));
+                    // Found a key/val so get the key and leave the cursor
+                    cursorKeyBuffer = keyVal.key();
+                    cursorValueBuffer = keyVal.val();
+                    break;
+                }
+            }
+
+            LOGGER.info("txn key : {}", ByteBufferUtils.byteBufferInfo(txn.key()));
+            LOGGER.info("txn value : {}", ByteBufferUtils.byteBufferInfo(txn.val()));
+
+            final ByteBuffer cursorKeyBufferCopy = ByteBufferUtils.copyToDirectBuffer(cursorKeyBuffer);
+            final ByteBuffer cursorValueBufferCopy = ByteBufferUtils.copyToDirectBuffer(cursorValueBuffer);
+
+            Assertions.assertThat(cursorKeyBuffer).isEqualByComparingTo(cursorKeyBufferCopy);
+            Assertions.assertThat(cursorValueBuffer).isEqualByComparingTo(cursorValueBufferCopy);
+
+            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key3");
+            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value3");
+
+            // now use the key from the last get() as the key for a new get()
+            final ByteBuffer valueBuffer2 = basicLmdbDb2.getAsBytes(txn, cursorKeyBuffer).get();
+
+            final String value2 = basicLmdbDb2.deserializeValue(valueBuffer2);
+
+            assertThat(value2).isEqualTo("value5");
+
+            // The cursor buffers are unchanged as we have not used a different cursor on db1
+            // The get on db2 doesn't affect it
+            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key3");
+            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value3");
+
+            // Now do a get on db1, which should move the cursor buffers
+            String value3 = basicLmdbDb.get(txn, "key2").get();
+
+            LOGGER.info("txn key : {}", ByteBufferUtils.byteBufferInfo(txn.key()));
+            LOGGER.info("txn value : {}", ByteBufferUtils.byteBufferInfo(txn.val()));
+
+            Assertions.assertThat(value3)
+                    .isEqualTo("value2");
+
+            LOGGER.info("cursorKeyBuffer : {}", ByteBufferUtils.byteBufferInfo(cursorKeyBuffer));
+            LOGGER.info("cursorKeyBufferCopy : {}", ByteBufferUtils.byteBufferInfo(cursorKeyBufferCopy));
+            LOGGER.info("cursorValueBuffer : {}", ByteBufferUtils.byteBufferInfo(cursorValueBuffer));
+            LOGGER.info("cursorValueBufferCopy : {}", ByteBufferUtils.byteBufferInfo(cursorValueBufferCopy));
+
+            // Cursor buffers are unchanged by the get, maybe the get doesn't use a cursor and thus
+            // doesn't move these.
+            Assertions.assertThat(cursorKeyBuffer).isEqualByComparingTo(cursorKeyBufferCopy);
+            Assertions.assertThat(cursorValueBuffer).isEqualByComparingTo(cursorValueBufferCopy);
+
+            ByteBuffer cursorKeyBuffer2 = null;
+            ByteBuffer cursorValueBuffer2 = null;
+            // Now scan forwards with a new cursor
+            try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.getLmdbDbi().iterate(txn, KeyRange.all())) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+                    LOGGER.info("txn key : {}", ByteBufferUtils.byteBufferInfo(txn.key()));
+                    LOGGER.info("txn value : {}", ByteBufferUtils.byteBufferInfo(txn.val()));
+                    LOGGER.info("keyVal.key : {}", ByteBufferUtils.byteBufferInfo(keyVal.key()));
+                    LOGGER.info("keyVal.value : {}", ByteBufferUtils.byteBufferInfo(keyVal.val()));
+
+                    // Found a key/val so get the key and leave the cursor
+                    cursorKeyBuffer2 = keyVal.key();
+                    cursorValueBuffer2 = keyVal.val();
+                    break;
+                }
+            }
+
+            // The buffers from our original cursor have now moved to point to the entry of the
+            // second cursor
+            // When this test runs on its own these asserts are fine but when run with all the other refdata
+            // tests it fails.
+//            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer)).isEqualTo("key1");
+//            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer)).isEqualTo("value1");
+
+            Assertions.assertThat(basicLmdbDb.deserializeKey(cursorKeyBuffer2)).isEqualTo("key1");
+            Assertions.assertThat(basicLmdbDb.deserializeValue(cursorValueBuffer2)).isEqualTo("value1");
+        });
+    }
+
+    @Test
     void testValueReuse() {
         basicLmdbDb.put("key1", "value1", false);
         basicLmdbDb.put("key2", "value2", false);
@@ -301,6 +429,113 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(value1).isEqualTo("value2");
             assertThat(valueBuffer1Copy).isNotEqualTo(valueBuffer1);
         });
+    }
+
+    @Test
+    void testVerifyNumericKeyOrder() {
+
+        // Ensure entries come back in the right order
+        final List<Tuple2<Integer, String>> data = List.of(
+                Tuple.of(1, "val1"),
+                Tuple.of(2, "val2"),
+                Tuple.of(3, "val3"),
+                Tuple.of(4, "val4"));
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            data.forEach(tuple -> {
+                basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
+            });
+        });
+
+        final KeyRange<Integer> keyRangeAll = KeyRange.all();
+
+        final List<Integer> output = LmdbUtils.getWithReadTxn(lmdbEnv, readTxn ->
+                basicLmdbDb3.streamEntries(readTxn, keyRangeAll, stream ->
+                        stream
+                                .map(Tuple2::_1)
+                                .collect(Collectors.toList())));
+
+        // Verify key order
+        Assertions.assertThat(output)
+                .containsExactlyElementsOf(data.stream()
+                        .map(Tuple2::_1)
+                        .collect(Collectors.toList()));
+    }
+
+    /**
+     * This is more of a manual performance test for comparing the difference between
+     * puts in integer order vs in random order. Also compares the impact of the INTEGER_KEY
+     * dbi flag, which seems to slow things down a fair bit.
+     */
+    @Test
+    void testLoadOrderAndIntKeyPerformance() {
+
+//        final int iterations = 10_000_000;
+        final int iterations = 10;
+
+        LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
+
+        // Ensure entries come back in the right order
+        final List<Tuple2<Integer, String>> ascendingData = IntStream
+                .range(0, iterations)
+                .boxed()
+                .map(i -> Tuple.of(i, String.format("Val %010d", i)))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(ascendingData)
+                .hasSize(iterations);
+
+        Random random = new Random();
+        final List<Tuple2<Integer, String>> randomData = IntStream
+                .range(Integer.MAX_VALUE - iterations, Integer.MAX_VALUE)
+                .boxed()
+                .sorted(Comparator.comparingInt(i -> random.nextInt(iterations)))
+                .map(i -> Tuple.of(i, String.format("Val %010d", i)))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(ascendingData)
+                .hasSize(iterations);
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                ascendingData.forEach(tuple -> {
+                    basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
+                });
+            });
+        }, "Ascending");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                randomData.forEach(tuple -> {
+                    basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
+                });
+            });
+        }, "Random");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                ascendingData.forEach(tuple -> {
+                    basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
+                });
+            });
+        }, "Ascending (INTEGER_KEY)");
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                randomData.forEach(tuple -> {
+                    basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
+                });
+            });
+        }, "Random (INTEGER_KEY)");
+
+        if (iterations < 50) {
+            basicLmdbDb3.logDatabaseContents(LOGGER::info);
+            basicLmdbDb3.logRawDatabaseContents(LOGGER::info);
+            basicLmdbDb4.logDatabaseContents(LOGGER::info);
+            basicLmdbDb4.logRawDatabaseContents(LOGGER::info);
+        }
+        LOGGER.info("entry count: " + basicLmdbDb3.getEntryCount());
+        LOGGER.info("entry count: " + basicLmdbDb4.getEntryCount());
     }
 
     private void populateDb() {
