@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1854** : Changed search mechanism to poll for remote results to reduce the chances of hung searches.
 
+* Uplift event-logging-schema content pack to v3.4.2.
+
+* Uplift standard-pipelines content pack to v0.2.
+
+* Uplift template-pipelines content pack to v0.3.
+
 * Change the off-heap ref store to use xxHash for hashing its values.
 
 * Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.

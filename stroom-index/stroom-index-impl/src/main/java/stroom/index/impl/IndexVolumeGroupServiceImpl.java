@@ -139,14 +139,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
                         if (allVolGroups == null || allVolGroups.size() == 0) {
                             if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
-                                LOGGER.info(() -> "Creating default index volume group");
                                 final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
                                 final String processingUserId = processingUserIdentityProvider.get().getId();
-                                indexVolumeGroup.setName(volumeConfig.getDefaultIndexVolumeGroupName());
+                                final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
+                                indexVolumeGroup.setName(groupName);
                                 AuditUtil.stamp(processingUserId, indexVolumeGroup);
 
+                                LOGGER.info("Creating default index volume group [{}]", groupName);
                                 IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
-
 
                                 //Now create associated volumes within the group
                                 if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
@@ -156,15 +156,18 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                     String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
                                     if (nodes.length == paths.length) {
                                         for (int i = 0; i < paths.length; i++) {
-                                            String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim()).toString();
+                                            Path resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim());
 
-                                            OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath);
+                                            LOGGER.info("Creating index volume with path {}",
+                                                    resolvedPath.toAbsolutePath().normalize());
+
+                                            OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath.toString());
 
                                             IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
                                             indexVolume.setBytesLimit(byteLimitOption.orElse(0l));
                                             indexVolume.setNodeName(nodes[i]);
-                                            indexVolume.setPath(resolvedPath);
+                                            indexVolume.setPath(resolvedPath.toString());
                                             indexVolume.setCreateTimeMs(System.currentTimeMillis());
                                             indexVolume.setUpdateTimeMs(System.currentTimeMillis());
                                             indexVolume.setCreateUser(processingUserId);

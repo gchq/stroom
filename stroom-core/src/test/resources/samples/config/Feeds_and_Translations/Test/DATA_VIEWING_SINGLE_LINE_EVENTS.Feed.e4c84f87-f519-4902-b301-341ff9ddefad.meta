@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "e4c84f87-f519-4902-b301-341ff9ddefad",
+  "name" : "DATA_VIEWING_SINGLE_LINE-EVENTS",
+  "version" : "f5f2fc44-3371-4375-99b9-414aab7c105e",
+  "description" : "DATA_SPLITTER-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

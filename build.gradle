@@ -94,6 +94,7 @@ ext.versions = [
         stroomExpression  : 'v3.0.4',
         stroomQuery       : 'v4.0-beta.75', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
+        stroomTestData    : 'v0.2.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
         // Curator 4 can apparently work with zk 3.4.x as long as you exclude its zk dependency
@@ -144,6 +145,7 @@ ext.libs = [
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
         stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
         stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
+        stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
         aopalliance                    : "aopalliance:aopalliance:1.0",
@@ -299,14 +301,14 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
         'core-xml-schemas'                : 'v2.2',
-        'event-logging-xml-schema'        : 'v3.2.3',
+        'event-logging-xml-schema'        : 'v3.4.2',
         'internal-dashboards'             : 'v1.1',
         'internal-statistics-sql'         : 'v2.1',
         'internal-statistics-stroom-stats': 'v2.1',
-        'standard-pipelines'              : 'v0.1',
+        'standard-pipelines'              : 'v0.2',
         'stroom-101'                      : 'v1.0',
         'stroom-logs'                     : 'v2.0-alpha.5',
-        'template-pipelines'              : 'v0.2'
+        'template-pipelines'              : 'v0.3'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -735,6 +737,7 @@ task downloadStroomContent() {
         if (downloadFile.exists()) {
             println "${url} has already been downloaded"
         } else {
+            println "Downloading ${url} into ${contentPackDownloadDir}"
             download {
                 src url
                 dest new File(contentPackDownloadDir)
