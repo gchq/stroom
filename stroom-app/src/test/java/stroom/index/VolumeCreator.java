@@ -21,5 +21,5 @@ import java.nio.file.Path;
 public interface VolumeCreator {
     String DEFAULT_VOLUME_GROUP = "Default Volume Group";
 
-    void setup(Path tempDir);
+    void setup(Path dir);
 }

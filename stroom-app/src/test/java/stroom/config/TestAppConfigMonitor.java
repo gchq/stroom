@@ -8,10 +8,10 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.GlobalConfigService;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +109,12 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         };
 
         // Make sure the temp prop is in the file
-        Assertions.assertThat(optMatchResult).isPresent();
+        Assertions.assertThat(optMatchResult)
+                .withFailMessage(LogUtil.message(
+                        "Can't find pattern {} in file {}",
+                        pattern.toString(),
+                        devYamlCopyPath.toAbsolutePath().normalize()))
+                .isPresent();
 
         // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
         Thread.sleep(3000);
