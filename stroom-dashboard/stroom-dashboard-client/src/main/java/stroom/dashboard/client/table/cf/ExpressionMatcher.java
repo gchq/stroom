@@ -17,11 +17,10 @@
 
 package stroom.dashboard.client.table.cf;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.regexp.shared.RegExp;
 import stroom.dashboard.shared.DateTimeFormatSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
+import stroom.dashboard.shared.Format.Type;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -29,11 +28,15 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.CompareUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.regexp.shared.RegExp;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,7 +98,7 @@ public class ExpressionMatcher {
             return true;
         }
 
-        switch (operator.getOp()) {
+        switch (operator.op()) {
             case AND:
                 for (final ExpressionItem child : operator.getChildren()) {
                     if (!matchItem(attributeMap, child)) {
@@ -152,9 +155,9 @@ public class ExpressionMatcher {
         }
 
         // Create a query based on the field type and condition.
-        if (Format.Type.NUMBER.equals(field.getFormat().getType())) {
+        if (matchesFormatType(field, Format.Type.NUMBER)) {
             return matchNumericField(condition, termValue, field, fieldName, attribute);
-        } else if (Format.Type.DATE_TIME.equals(field.getFormat().getType())) {
+        } else if (matchesFormatType(field, Format.Type.DATE_TIME)) {
             return matchDateField(condition, termValue, field, fieldName, attribute);
         } else {
             switch (condition) {
@@ -170,6 +173,14 @@ public class ExpressionMatcher {
                             + field.getFormat().getType().getDisplayValue() + " field type");
             }
         }
+    }
+
+    private boolean matchesFormatType(final Field field, final Type type) {
+        return Optional.ofNullable(field)
+                .map(Field::getFormat)
+                .map(Format::getType)
+                .filter(fieldType -> fieldType.equals(type))
+                .isPresent();
     }
 
     private boolean matchDateField(final Condition condition,
