@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 
@@ -23,6 +25,11 @@ public class SearchConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
     private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
+
+    private CacheConfig resultStoreCache = new CacheConfig.Builder()
+            .maximumSize(100L)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
+            .build();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
@@ -67,6 +74,14 @@ public class SearchConfig extends AbstractConfig {
 
     public void setShardConfig(final IndexShardSearchConfig shardConfig) {
         this.shardConfig = shardConfig;
+    }
+
+    public CacheConfig getResultStoreCache() {
+        return resultStoreCache;
+    }
+
+    public void setResultStoreCache(final CacheConfig resultStoreCache) {
+        this.resultStoreCache = resultStoreCache;
     }
 
     @Override

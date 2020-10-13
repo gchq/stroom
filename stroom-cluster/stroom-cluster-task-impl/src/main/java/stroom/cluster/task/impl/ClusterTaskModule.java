@@ -17,10 +17,8 @@
 package stroom.cluster.task.impl;
 
 import stroom.cluster.api.ClusterServiceBinder;
-import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.cluster.task.api.ClusterWorker;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
@@ -34,15 +32,11 @@ import javax.inject.Inject;
 public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
         bind(ClusterResultCollectorCache.class).to(ClusterResultCollectorCacheImpl.class);
         bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
-        bind(ClusterWorker.class).to(ClusterWorkerImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
 
-        ClusterServiceBinder.create(binder())
-                .bind(ClusterDispatchAsyncImpl.SERVICE_NAME, ClusterDispatchAsyncImpl.class)
-                .bind(ClusterWorkerImpl.SERVICE_NAME, ClusterWorkerImpl.class);
+        ClusterServiceBinder.create(binder());
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ClusterResultCollectorCacheImpl.class);
