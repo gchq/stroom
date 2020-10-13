@@ -106,4 +106,6 @@ cache:
     - $HOME/.m2
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+      # They are all versioned so no need to re-download them
+    - $TRAVIS_BUILD_DIR/gchq/stroom/build/contentPackDownload
 

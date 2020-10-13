@@ -185,6 +185,8 @@ else
 fi
 
 # Dump all the travis env vars to the console for debugging
+echo -e "HOME:                          [${GREEN}${HOME}${NC}]"
+echo -e "TRAVIS_BUILD_DIR:              [${GREEN}${TRAVIS_BUILD_DIR}${NC}]"
 echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
 echo -e "TRAVIS_COMMIT:                 [${GREEN}${TRAVIS_COMMIT}${NC}]"
 echo -e "TRAVIS_BRANCH:                 [${GREEN}${TRAVIS_BRANCH}${NC}]"
