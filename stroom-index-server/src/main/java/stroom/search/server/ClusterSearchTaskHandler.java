@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
@@ -61,7 +60,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
     private final RemoteSearchResults remoteSearchResults;
     private final SecurityContext securityContext;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final CompletionState searchCompletionState = new CompletionState();
 
     private ClusterSearchTask task;
 
@@ -88,6 +86,13 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
             this.task = task;
             final stroom.query.api.v2.Query query = task.getQuery();
 
+            // Get the search result factory for this search from the cache.
+            // It should be present if search has been started properly and not been destroyed immediately.
+            final RemoteSearchResultFactory remoteSearchResultFactory = remoteSearchResults.get(task.getKey());
+            if (remoteSearchResultFactory == null) {
+                throw new SearchException("No search result factory can be found");
+            }
+
             try {
                 // Make sure we have been given a query.
                 if (query.getExpression() == null) {
@@ -108,52 +113,24 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
                         this,
                         task);
 
-                // Start forwarding data to target node.
-                final RemoteSearchResultFactory remoteSearchResultFactory = remoteSearchResults.get(task.getKey());
-                if (remoteSearchResultFactory == null) {
-                    throw new SearchException("No search result factory can be found");
-                }
-
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
-                remoteSearchResultFactory.setSearchComplete(searchCompletionState);
                 remoteSearchResultFactory.setErrors(errors);
                 remoteSearchResultFactory.setTaskContext(taskContext);
                 remoteSearchResultFactory.setStarted(true);
 
-//                        final ResultSender resultSender = resultSenderFactory.create();
-//                        sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
                 if (coprocessors.size() > 0 && !taskContext.isTerminated()) {
                     // Start searching.
                     search(task, query, coprocessors);
                 }
 
             } catch (final RuntimeException e) {
-//                    try {
                 errors.add(e.getMessage());
-//                        callback.onFailure(e);
-//                    } catch (final RuntimeException e2) {
-//                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
-//                        LOGGER.info(() -> "Terminating search because we were unable to send result");
-//                        task.terminate();
-//                    }
             } finally {
                 LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                         "counting down searchCompleteLatch");
                 // Tell the client that the search has completed.
-                searchCompletionState.complete();
+                remoteSearchResultFactory.complete();
             }
-
-//            // Now we must wait for results to be sent to the requesting node.
-//            try {
-//                taskContext.info("Sending final results");
-//                while (!task.isTerminated() && !sendingDataCompletionState.isComplete()) {
-//                    sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
-//                }
-//            } catch (InterruptedException e) {
-//                //Don't want to reset interrupt status as this thread will go back into
-//                //the executor's pool. Throwing an exception will terminate the task
-//                throw new RuntimeException("Thread interrupted");
-//            }
         }
 
         return VoidResult.INSTANCE;

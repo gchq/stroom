@@ -30,7 +30,6 @@ import javax.inject.Named;
 @SuppressWarnings("unused") // used by DI
 @Component("luceneSearchResponseCreatorManager")
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager {
-
     private final SearchResponseCreatorCache cache;
 
     @Inject

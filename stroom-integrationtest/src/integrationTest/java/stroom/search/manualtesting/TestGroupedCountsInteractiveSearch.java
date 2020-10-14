@@ -219,7 +219,6 @@ public class TestGroupedCountsInteractiveSearch {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                1_000,
                 5,
                 5,
                 indexService,
@@ -258,13 +257,11 @@ public class TestGroupedCountsInteractiveSearch {
         List<Field> fields = Arrays.asList(groupedUserId, countField);
         final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
 
-        final TableSettings tableSettings = new TableSettings.Builder()
+        return new TableSettings.Builder()
                 .addFields(fields)
                 .extractValues(extractValues)
                 .extractionPipeline(DocRefUtil.create(resultPipeline))
                 .build();
-
-        return tableSettings;
     }
 
 
