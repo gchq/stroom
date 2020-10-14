@@ -57,7 +57,12 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.VerticalAlign;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -79,12 +84,6 @@ import java.util.function.Consumer;
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
-
-    // TODO @AT These need to come from config
-    private static final long MAX_INITIAL_CHARS = 5_000L;
-    private static final long MAX_CHARS_PER_FETCH = 20_000L;
-
-    private static final DataRange DEFAULT_DATA_RANGE = DataRange.from(0, MAX_INITIAL_CHARS);
 
     private static final String META = "Meta";
     private static final String META_DATA = "Meta Data";
@@ -160,6 +159,22 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
     private String lastStreamType;
     private String lastTabName;
+    private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
+            .paddingLeft(0.2, Unit.EM)
+            .trustedColor("#1e88e5")
+            .fontWeight(FontWeight.BOLD)
+            .fontSize(125, Unit.PCT)
+            .toSafeStyles();
+    private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
+            .height(2, Unit.EM)
+            .verticalAlign(VerticalAlign.BOTTOM)
+            .toSafeStyles();
+    private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
+            .paddingLeft(1, Unit.EM)
+            .paddingRight(1, Unit.EM)
+            .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
+            .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
+            .toSafeStyles();
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -199,7 +214,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         viewSourceBtn = view.addButton(SvgPresets.RAW.title("View source data"));
         viewSourceBtn.setEnabled(true);
-        viewSourceBtn.setVisible(false);
+        viewSourceBtn.setVisible(true);
         viewSourceBtn.addClickHandler(event -> {
             openSourcePresenter();
         });
@@ -311,6 +326,31 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 lastTabName = tab.getLabel();
             }
         }
+    }
+
+    private void updateEditorMode(final String streamType, final TabData tabData) {
+       if (tabData != null && streamType != null) {
+           final String tabName = tabData.getLabel();
+           if (INFO.equals(tabName)) {
+               editorMode = AceEditorMode.TEXT;
+               refreshTextPresenterContent();
+           } else if (errorMarkerMode && ERROR.equals(streamType)) {
+               // Not a text editor
+           } else if (!errorMarkerMode && ERROR.equals(streamType)) {
+               editorMode = AceEditorMode.TEXT;
+               refreshTextPresenterContent();
+           } else if (META_DATA.equals(streamType)) {
+               editorMode = AceEditorMode.PROPERTIES;
+               refreshTextPresenterContent();
+           } else if (CONTEXT.equals(streamType)) {
+               editorMode = AceEditorMode.XML;
+               refreshTextPresenterContent();
+           } else {
+               // Default to xml mode
+               editorMode = AceEditorMode.XML;
+               refreshTextPresenterContent();
+           }
+       }
     }
 
     private void showSourceLocationPopup() {
@@ -896,18 +936,23 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             // Highlight the appropriate link.
             if (INFO.equals(lastTabName)) {
                 getView().getTabBar().selectTab(infoTab);
+                updateEditorMode(streamType, infoTab);
                 showHtmlPresenter();
             } else if (errorMarkerMode && ERROR.equals(streamType)) {
                 getView().getTabBar().selectTab(errorTab);
+                updateEditorMode(streamType, errorTab);
                 showMarkerPresenter();
             } else if (META_DATA.equals(streamType)) {
                 getView().getTabBar().selectTab(metaTab);
+                updateEditorMode(streamType, metaTab);
                 showTextPresenter();
             } else if (CONTEXT.equals(streamType)) {
                 getView().getTabBar().selectTab(contextTab);
+                updateEditorMode(streamType, contextTab);
                 showTextPresenter();
             } else {
                 getView().getTabBar().selectTab(dataTab);
+                updateEditorMode(streamType, dataTab);
                 showTextPresenter();
             }
 
@@ -1134,27 +1179,25 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         final TooltipUtil.Builder builder = TooltipUtil.builder();
 
         builder.addTable(tableBuilder -> {
-            for (int i = 0; i < dataInfoSections.size(); i++) {
-                final DataInfoSection section = dataInfoSections.get(i);
+            for (final DataInfoSection section : dataInfoSections) {
                 // Add the section header
+
                 tableBuilder.addRow(
                         new SafeHtmlBuilder()
-                                .appendHtmlConstant("<span style=\"font-size: medium; font-weight: 500\">")
+                                .appendHtmlConstant("<span style=\"" + META_SECTION_HEAD_STYLES.asString() + "\">")
                                 .appendEscaped(section.getTitle())
                                 .appendHtmlConstant("</span>")
                                 .toSafeHtml(),
                         null,
-                        true);
+                        true,
+                        META_SECTION_CELL_STYLES);
 
                 section.getEntries()
                         .forEach(entry ->
                                 tableBuilder.addRow(
-                                        TooltipUtil.boldText(entry.getKey()),
+                                        TooltipUtil.styledSpan(entry.getKey(), META_KEY_STYLES),
                                         replaceJavaLineBreaks(entry.getValue()),
                                         true));
-                if (i < dataInfoSections.size() - 1) {
-                    tableBuilder.addBlankRow();
-                }
             }
             return tableBuilder.build();
         });

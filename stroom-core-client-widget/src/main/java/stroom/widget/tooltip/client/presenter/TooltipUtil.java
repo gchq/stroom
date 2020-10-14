@@ -17,6 +17,7 @@
 package stroom.widget.tooltip.client.presenter;
 
 
+import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -32,6 +33,7 @@ public final class TooltipUtil {
     private static final SafeHtml BOLD_CLOSE = SafeHtmlUtils.fromSafeConstant("</b>");
     private static final SafeHtml CODE_OPEN = SafeHtmlUtils.fromSafeConstant("<code>");
     private static final SafeHtml CODE_CLOSE = SafeHtmlUtils.fromSafeConstant("</code>");
+    private static final SafeHtml SPAN_CLOSE = SafeHtmlUtils.fromSafeConstant("</span>");
     private static final SafeHtml BLANK = SafeHtmlUtils.fromString("");
 
     private TooltipUtil() {
@@ -44,6 +46,13 @@ public final class TooltipUtil {
 
     public static SafeHtml boldText(final Object value) {
         return withFormatting(value, BOLD_OPEN, BOLD_CLOSE);
+    }
+
+    public static SafeHtml styledSpan(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<span style=\"" + safeStyles.asString() + "\">"),
+                SPAN_CLOSE);
     }
 
     public static SafeHtml boldItalicText(final Object value) {
@@ -224,14 +233,24 @@ public final class TooltipUtil {
 
         public TableBuilder addRow(final Object key,
                                    final Object value) {
-            return addRow(key, value, false);
+            return addRow(key, value, false, null);
         }
 
         public TableBuilder addRow(final Object key,
                                    final Object value,
                                    final boolean showBlank) {
+            return addRow(key, value, showBlank, null);
+        }
+
+        public TableBuilder addRow(final Object key,
+                                   final Object value,
+                                   final boolean showBlank,
+                                   final SafeStyles safeStyles) {
             Objects.requireNonNull(key);
             final SafeHtml safeKey = objectToSafeHtml(key);
+            final String cellStyles = safeStyles != null
+                    ? safeStyles.asString()
+                    : "padding-right: 5px;";
 
             if (value != null) {
                 final SafeHtml safeValue = value instanceof SafeHtml
@@ -240,7 +259,7 @@ public final class TooltipUtil {
 
                 if (safeValue.asString().length() > 0 || showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td style=\"padding-right:5px\">")
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td>")
@@ -250,7 +269,7 @@ public final class TooltipUtil {
             } else {
                 if (showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td style=\"padding-right:5px\">")
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td/></tr>");
