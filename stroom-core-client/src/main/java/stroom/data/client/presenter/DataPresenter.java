@@ -41,6 +41,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.HasItems;
 import stroom.util.shared.HasSubStreams;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
@@ -85,6 +86,23 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
+    private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
+            .paddingLeft(0.2, Unit.EM)
+            .trustedColor("#1e88e5")
+            .fontWeight(FontWeight.BOLD)
+            .fontSize(125, Unit.PCT)
+            .toSafeStyles();
+    private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
+            .height(2, Unit.EM)
+            .verticalAlign(VerticalAlign.BOTTOM)
+            .toSafeStyles();
+    private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
+            .paddingLeft(1, Unit.EM)
+            .paddingRight(1, Unit.EM)
+            .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
+            .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
+            .toSafeStyles();
+
     private static final String META = "Meta";
     private static final String META_DATA = "Meta Data";
     private static final String CONTEXT = "Context";
@@ -119,15 +137,18 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private boolean errorMarkerMode = true;
 
+    // TODO @AT Most of these currentXXX vars need to go and we just get/set on the currentSourceLocation
+    //   We may need some concept of a requestedSourceLocation and a currentSourceLocation as what we get back
+    //   may differ from what we asked for
     private Long currentMetaId;
     private String currentStreamType;
     private String currentChildDataType;
-
     private long currentPartNo;
     private long currentSegmentNo;
     private long currentErrorNo;
 
     private DataType curDataType;
+
     private SourceLocation currentSourceLocation;
 
 //    private OffsetRange<Long> currentDataRange = new OffsetRange<>(0L, 1L);
@@ -159,22 +180,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
     private String lastStreamType;
     private String lastTabName;
-    private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
-            .paddingLeft(0.2, Unit.EM)
-            .trustedColor("#1e88e5")
-            .fontWeight(FontWeight.BOLD)
-            .fontSize(125, Unit.PCT)
-            .toSafeStyles();
-    private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
-            .height(2, Unit.EM)
-            .verticalAlign(VerticalAlign.BOTTOM)
-            .toSafeStyles();
-    private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
-            .paddingLeft(1, Unit.EM)
-            .paddingRight(1, Unit.EM)
-            .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
-            .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
-            .toSafeStyles();
+
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -1542,6 +1548,79 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         @Override
         public void refresh() {
             update(false);
+        }
+    }
+
+    private class SegmentedNavigatorData implements HasItems {
+
+        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+
+        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+            this.segmentsCount = segmentsCount;
+        }
+
+        @Override
+        public String getName() {
+            return "Record";
+        }
+
+        @Override
+        public long getItemNo() {
+            return 0;
+        }
+
+        @Override
+        public void setItemNo(final long itemNo) {
+            setSegmentNo(itemNo);
+        }
+
+        @Override
+        public RowCount<Long> getTotalItemsCount() {
+            return segmentsCount;
+        }
+
+        @Override
+        public boolean areNavigationControlsVisible() {
+            return true;
+        }
+
+        @Override
+        public int getMaxItemsPerPage() {
+            return 1;
+        }
+
+        @Override
+        public void firstPage() {
+            setSegmentNo(0);
+        }
+
+        @Override
+        public void nextPage() {
+            setSegmentNo(getCurrentSegmentNo() + 1);
+        }
+
+        @Override
+        public void previousPage() {
+            setSegmentNo(getCurrentSegmentNo() - 1);
+        }
+
+        @Override
+        public void lastPage() {
+            setSegmentNo(getTotalItemsCount().getCount() - 1);
+        }
+
+        @Override
+        public void refresh() {
+            update(false);
+        }
+
+        private void setSegmentNo(final long segmentNo) {
+            currentSegmentNo = segmentNo;
+            update(false);
+        }
+
+        private long getCurrentSegmentNo() {
+            return currentSegmentNo;
         }
     }
 }

@@ -9,12 +9,12 @@ public interface HasItems {
     String getName();
 
     /**
-     * @return The item number, zero based.
+     * @return The first item number on the page, zero based.
      */
     long getItemNo();
 
     /**
-     * @param itemNo The item number, zero based.
+     * @param itemNo The first item number on the page, zero based.
      */
     void setItemNo(final long itemNo);
 
@@ -22,39 +22,46 @@ public interface HasItems {
 
     boolean areNavigationControlsVisible();
 
+    int getMaxItemsPerPage();
+
+    default boolean hasMultipleItemsPerPage() {
+        return getMaxItemsPerPage() > 1;
+    }
+
     /**
      * Called when the user clicks the |< button
      */
-    void firstItem();
+    void firstPage();
 
     /**
      * Called when the user clicks the > button
      */
-    void nextItem();
+    void nextPage();
 
     /**
      * Called when the user clicks the < button
      */
-    void previousItem();
+    void previousPage();
 
     /**
      * Called when the user clicks the >| button
      */
-    void lastItem();
+    void lastPage();
 
     /**
      * Called when the user clicks refresh
      */
     void refresh();
 
-    default boolean isFirstItem() {
+    default boolean isFirstPage() {
         // Zero based
         return getItemNo() == 0;
     }
 
-    default boolean isLastItem() {
+    default boolean isLastPage() {
         // Zero based
+        final long lastPossibleItemNoOnPage = getItemNo() + getMaxItemsPerPage() - 1;
         return getTotalItemsCount().isExact()
-                && getTotalItemsCount().getCount() - 1 == getItemNo();
+                && getTotalItemsCount().getCount() - 1 < lastPossibleItemNoOnPage;
     }
 }

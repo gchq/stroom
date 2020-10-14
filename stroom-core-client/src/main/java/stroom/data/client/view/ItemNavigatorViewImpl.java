@@ -53,13 +53,13 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     Label lblDetail;
 
     @UiField(provided = true)
-    SvgButton firstItemBtn;
+    SvgButton firstPageBtn;
     @UiField(provided = true)
-    SvgButton previousItemBtn;
+    SvgButton previousPageBtn;
     @UiField(provided = true)
-    SvgButton nextItemBtn;
+    SvgButton nextPageBtn;
     @UiField(provided = true)
-    SvgButton lastItemBtn;
+    SvgButton lastPageBtn;
 
     @UiField(provided = true)
     SvgButton refreshBtn;
@@ -87,21 +87,25 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     private void initButtons() {
         // Char buttons
         final String lowerCaseName = display.getName().toLowerCase();
-        firstItemBtn = SvgButton.create(
-                SvgPresets.FAST_BACKWARD_BLUE.title("Show first " + lowerCaseName));
-        previousItemBtn = SvgButton.create(
-                SvgPresets.STEP_BACKWARD_BLUE.title("Previous " + lowerCaseName));
-        nextItemBtn = SvgButton.create(
-                SvgPresets.STEP_FORWARD_BLUE.title("Next " + lowerCaseName));
-        lastItemBtn = SvgButton.create(
-                SvgPresets.FAST_FORWARD_BLUE.title("Last " + lowerCaseName));
+        final String text = display.hasMultipleItemsPerPage()
+                ? "page of " + lowerCaseName + "s"
+                : lowerCaseName;
+
+        firstPageBtn = SvgButton.create(
+                SvgPresets.FAST_BACKWARD_BLUE.title("Show first " + text));
+        previousPageBtn = SvgButton.create(
+                SvgPresets.STEP_BACKWARD_BLUE.title("Previous " + text));
+        nextPageBtn = SvgButton.create(
+                SvgPresets.STEP_FORWARD_BLUE.title("Next " + text));
+        lastPageBtn = SvgButton.create(
+                SvgPresets.FAST_FORWARD_BLUE.title("Last " + text));
         refreshBtn = SvgButton.create(
                 SvgPresets.REFRESH_BLUE);
 
-        setupButton(firstItemBtn, true, false);
-        setupButton(previousItemBtn, true, false);
-        setupButton(nextItemBtn, true, false);
-        setupButton(lastItemBtn, true, false);
+        setupButton(firstPageBtn, true, false);
+        setupButton(previousPageBtn, true, false);
+        setupButton(nextPageBtn, true, false);
+        setupButton(lastPageBtn, true, false);
         setupButton(refreshBtn, true, true);
     }
 
@@ -130,11 +134,11 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             lblDetail.setText(lbl);
 
-            firstItemBtn.setEnabled(!display.isFirstItem());
-            previousItemBtn.setEnabled(!display.isFirstItem());
+            firstPageBtn.setEnabled(!display.isFirstPage());
+            previousPageBtn.setEnabled(!display.isFirstPage());
 
-            nextItemBtn.setEnabled(!display.isLastItem());
-            lastItemBtn.setEnabled(!display.isLastItem());
+            nextPageBtn.setEnabled(!display.isLastPage());
+            lastPageBtn.setEnabled(!display.isLastPage());
 
             setControlVisibility(true);
         } else {
@@ -144,10 +148,10 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
     private void setControlVisibility(final boolean isVisible) {
         lblDetail.setVisible(isVisible);
-        firstItemBtn.setVisible(isVisible);
-        previousItemBtn.setVisible(isVisible);
-        nextItemBtn.setVisible(isVisible);
-        lastItemBtn.setVisible(isVisible);
+        firstPageBtn.setVisible(isVisible);
+        previousPageBtn.setVisible(isVisible);
+        nextPageBtn.setVisible(isVisible);
+        lastPageBtn.setVisible(isVisible);
     }
 
 
@@ -191,28 +195,28 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @UiHandler("firstItemBtn")
     void onClickFirstItem(final ClickEvent event) {
         if (display != null) {
-            display.firstItem();
+            display.firstPage();
         }
     }
 
     @UiHandler("previousItemBtn")
     void onClickNextItem(final ClickEvent event) {
         if (display != null) {
-            display.previousItem();
+            display.previousPage();
         }
     }
 
     @UiHandler("nextItemBtn")
     void onClickPreviousItem(final ClickEvent event) {
         if (display != null) {
-            display.nextItem();
+            display.nextPage();
         }
     }
 
     @UiHandler("lastItemBtn")
     void onClickLastItem(final ClickEvent event) {
         if (display != null) {
-            display.lastItem();
+            display.lastPage();
         }
     }
 
