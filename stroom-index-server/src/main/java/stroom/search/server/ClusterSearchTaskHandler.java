@@ -27,7 +27,6 @@ import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.server.shard.IndexShardSearchFactory;
@@ -43,11 +42,10 @@ import stroom.util.shared.HasTerminate;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -84,9 +82,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
 
     @Override
     public VoidResult exec(final ClusterSearchTask task) {
-//        CompletionState sendingDataCompletionState = new CompletionState();
-//        sendingDataCompletionState.complete();
-
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             taskContext.info("Initialising...");
 
@@ -94,8 +89,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
             final stroom.query.api.v2.Query query = task.getQuery();
 
             try {
-//                    final long frequency = task.getResultSendFrequency();
-
                 // Make sure we have been given a query.
                 if (query.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
@@ -108,7 +101,12 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
                 }
 
                 // Create coprocessors.
-                final Coprocessors coprocessors = coprocessorsFactory.create(task.getCoprocessorMap(), storedFields, query.getParams(), this, task);
+                final Coprocessors coprocessors = coprocessorsFactory.create(
+                        task.getCoprocessorMap(),
+                        storedFields,
+                        query.getParams(),
+                        this,
+                        task);
 
                 // Start forwarding data to target node.
                 final RemoteSearchResultFactory remoteSearchResultFactory = remoteSearchResults.get(task.getKey());
@@ -171,30 +169,42 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
         final HasTerminate hasTerminate = new MonitorImpl(task.getMonitor());
         try {
             if (task.getShards().size() > 0) {
-                final AtomicLong allDocumentCount = new AtomicLong();
-                final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, hasTerminate);
+                final Receiver extractionReceiver = extractionDecoratorFactory.create(
+                        this,
+                        task.getStoredFields(),
+                        coprocessors,
+                        query,
+                        hasTerminate);
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                         .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hasTerminate);
+                final AtomicLong hitCount = new AtomicLong();
+                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate);
 
-                // Wait for index search completion.
-                long extractionCount = getMinExtractions(coprocessors.getSet());
-                long documentCount = allDocumentCount.get();
-                while (!task.isTerminated() && extractionCount < documentCount) {
-                    taskContext.info(
-                            "Searching... " +
-                                    "found " + documentCount + " documents" +
-                                    " performed " + extractionCount + " extractions");
+                // Wait for search completion.
+                boolean allComplete = false;
+                while (!allComplete) {
+                    allComplete = true;
+                    for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                        if (!task.isTerminated()) {
+                            taskContext.info("" +
+                                    "Searching... " +
+                                    "found "
+                                    + hitCount.get() +
+                                    " documents" +
+                                    " performed " +
+                                    coprocessor.getValuesCount().get() +
+                                    " extractions");
 
-                    ThreadUtil.sleep(1000);
-
-                    extractionCount = getMinExtractions(coprocessors.getSet());
-                    documentCount = allDocumentCount.get();
+                            final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                            if (!complete) {
+                                allComplete = false;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -204,10 +214,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
         } finally {
             hasTerminate.terminate();
         }
-    }
-
-    private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {
-        return coprocessorConsumers.stream().mapToLong(NewCoprocessor::getCompletionCount).min().orElse(0);
     }
 
     @Override

@@ -160,7 +160,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public void onSuccess(final Node node, final NodeResult result) {
+    public synchronized void onSuccess(final Node node, final NodeResult result) {
         try {
             final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
             final List<String> errors = result.getErrors();
@@ -197,7 +197,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public void onFailure(final Node node, final Throwable throwable) {
+    public synchronized void onFailure(final Node node, final Throwable throwable) {
         try {
             nodeComplete(node);
             getErrorSet(node).add(throwable.getMessage());

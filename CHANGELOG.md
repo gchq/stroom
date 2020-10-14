@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1894** : Improvements to search performance and fix for hanging searches.
+
+
 ## [v6.1.18] - 2020-10-02
 
 * Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.

@@ -6,18 +6,21 @@ import stroom.util.shared.HasTerminate;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 class IndexShardSearchProgressTracker {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchProgressTracker.class);
 
     private final int shardTotal;
     private final CountDownLatch shardCount;
-    private final HitCount hitCount = new HitCount();
+    private final AtomicLong hitCount;
     private final HasTerminate hasTerminate;
 
     IndexShardSearchProgressTracker(final HasTerminate hasTerminate,
+                                    final AtomicLong hitCount,
                                     final int shardTotal) {
         this.hasTerminate = hasTerminate;
+        this.hitCount = hitCount;
         this.shardTotal = shardTotal;
         this.shardCount = new CountDownLatch(shardTotal);
     }
@@ -30,15 +33,15 @@ class IndexShardSearchProgressTracker {
         shardCount.countDown();
     }
 
-    boolean isComplete() {
+    public boolean isComplete() {
         LOGGER.debug(this::toString);
-            return hasTerminate.isTerminated() || shardCount.getCount() == 0;
+        return hasTerminate.isTerminated() || shardCount.getCount() == 0;
     }
 
-    boolean await() {
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) {
         LOGGER.debug(this::toString);
         try {
-            return shardCount.await(1, TimeUnit.SECONDS);
+            return shardCount.await(timeout, unit);
         } catch (final InterruptedException e) {
             LOGGER.debug(this::toString);
             // Keep interrupting.
@@ -47,7 +50,7 @@ class IndexShardSearchProgressTracker {
         }
     }
 
-    HitCount getHitCount() {
+    AtomicLong getHitCount() {
         return hitCount;
     }
 

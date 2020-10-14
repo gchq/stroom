@@ -42,25 +42,32 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
 
-    private final Receiver parentReceiver;
-    private final Map<DocRef, Receiver> receivers;
+    private final Consumer<Error> parentErrorConsumer;
+    private final Map<DocRef, ExtractionReceiver> receivers;
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
 
+    private final AtomicLong indexSearchTotalValues = new AtomicLong();
+    private final CompletionState indexSearchCompletionState = new CompletionState();
+
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final StreamEventMap streamEventMap;
-    private final Topic<Values> topic;
+    private final LinkedBlockingQueue<Values> storedDataQueue;
     private final ExtractionProgressTracker tracker;
 
     ExtractionTaskProducer(final TaskExecutor taskExecutor,
                            final StreamMapCreator streamMapCreator,
-                           final Receiver parentReceiver,
-                           final Map<DocRef, Receiver> receivers,
+                           final Consumer<Error> parentErrorConsumer,
+                           final Map<DocRef, ExtractionReceiver> receivers,
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
                            final ExecutorProvider executorProvider,
@@ -70,34 +77,14 @@ class ExtractionTaskProducer extends TaskProducer {
                            final ExtractionProgressTracker tracker,
                            final TaskContext taskContext) {
         super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
-        this.parentReceiver = parentReceiver;
+        this.parentErrorConsumer = parentErrorConsumer;
         this.receivers = receivers;
         this.handlerProvider = handlerProvider;
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
         streamEventMap = new StreamEventMap(tracker, 1000000);
-        topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize, tracker);
-
-
-//        // Group coprocessors by extraction pipeline.
-//        final Map<DocRef, Set<NewCoprocessor>> map = new HashMap<>();
-//        coprocessors.getSet().forEach(coprocessor ->
-//                map.computeIfAbsent(coprocessor.getSettings().getExtractionPipeline(), k ->
-//                        new HashSet<>()).add(coprocessor));
-//
-//        receiverMap = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> {
-//            Set<NewCoprocessor> coprocessorSet = e.getValue();
-//
-//            // Create a receiver that will send data to all coprocessors.
-//            Receiver receiver;
-//            if (e.getValue().size() == 1) {
-//                receiver = coprocessorSet.iterator().next();
-//            } else {
-//                receiver = new MultiReceiver(coprocessorSet);
-//            }
-//            return receiver;
-//        }));
+        storedDataQueue = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
 
         // Start mapping streams.
         final Executor executor = executorProvider.getExecutor(ExtractionTaskExecutor.THREAD_POOL);
@@ -109,25 +96,27 @@ class ExtractionTaskProducer extends TaskProducer {
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
                 while (!streamMapCreatorCompletionState.isComplete() && !tracker.isTerminated() && !Thread.currentThread().isInterrupted()) {
+                    // Find out if index searching is complete. If it is then we can assume no more items will be added
+                    // to the values topic.
+                    final boolean indexSearchComplete = indexSearchCompletionState.isComplete();
+
                     try {
                         // Poll for the next set of values.
-                        final Values values = topic.get();
+                        final Values values = storedDataQueue.poll(1, TimeUnit.SECONDS);
                         if (values != null) {
                             try {
                                 // If we have some values then map them.
-                                boolean foundData = streamMapCreator.addEvent(streamEventMap, values.getValues());
-                                if (!foundData) {
-                                    // stream may have been deleted so treat it as complete to avoid a hanging search
-                                    receivers.values().forEach(receiver ->
-                                            receiver.getCompletionCountConsumer().accept(1L));
-                                }
+                                streamMapCreator.addEvent(streamEventMap, values.getValues());
+
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
-                                receivers.values().forEach(receiver -> {
-                                    receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
-                                    receiver.getCompletionCountConsumer().accept(1L);
-                                });
+                                receivers.values().forEach(receiver ->
+                                        receiver.getErrorConsumer().accept(new Error(e.getMessage(), e)));
                             }
+                        } else if (indexSearchComplete) {
+                            // We got no values from the topic so if index search ois complete then we have finished
+                            // mapping too.
+                            streamMapCreatorCompletionState.complete();
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
@@ -137,6 +126,10 @@ class ExtractionTaskProducer extends TaskProducer {
                         signalAvailable();
                     }
                 }
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
+                // Continue to interrupt.
+                Thread.currentThread().interrupt();
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
@@ -158,7 +151,32 @@ class ExtractionTaskProducer extends TaskProducer {
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
 
-        return new ReceiverImpl(topic, parentReceiver.getErrorConsumer(), parentReceiver.getCompletionCountConsumer(), parentReceiver.getFieldIndexMap());
+        return new ReceiverImpl(
+                this::addToStoredDataQueue,
+                parentErrorConsumer,
+                count -> {
+                    indexSearchTotalValues.set(count);
+                    indexSearchCompletionState.complete();
+                });
+    }
+
+    public void addToStoredDataQueue(final Values t) {
+        try {
+            boolean stored = false;
+            while (!tracker.isTerminated() && !stored) {
+                // Loop until item is added or we terminate.
+                stored = storedDataQueue.offer(t, 1, TimeUnit.SECONDS);
+            }
+        } catch (final InterruptedException e) {
+            // Continue to interrupt.
+            Thread.currentThread().interrupt();
+
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
     protected boolean isComplete() {
@@ -169,12 +187,22 @@ class ExtractionTaskProducer extends TaskProducer {
     protected Runnable getNext() {
         Runnable task = null;
 
-        if (!tracker.isComplete()) {
+        if (!isComplete()) {
             task = taskQueue.poll();
             if (task == null) {
-                if (addTasks()) {
+                final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
+                final Optional<Entry<Long, List<Event>>> optional = streamEventMap.get();
+                if (optional.isPresent()) {
+                    final Entry<Long, List<Event>> entry = optional.get();
+                    createTasks(entry.getKey(), entry.getValue());
+
+                } else if (completedEventMapping) {
+                    // if we didn't get any events from the event map and we have completed event mapping then there are
+                    // no more tasks to create.
                     tracker.finishedAddingTasks();
+                    testComplete();
                 }
+
                 task = taskQueue.poll();
             }
         }
@@ -182,22 +210,7 @@ class ExtractionTaskProducer extends TaskProducer {
         return task;
     }
 
-    private boolean addTasks() {
-        final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
-        final Optional<Entry<Long, List<Event>>> optional = streamEventMap.get();
-
-        if (optional.isPresent()) {
-            final Entry<Long, List<Event>> entry = optional.get();
-            createTasks(entry.getKey(), entry.getValue());
-            return false;
-        }
-
-        // If we added no tasks but have completed event mapping then return true to notify the caller that no more
-        // tasks are expected.
-        return completedEventMapping;
-    }
-
-    private int createTasks(final long streamId, final List<Event> events) {
+    private void createTasks(final long streamId, final List<Event> events) {
         final AtomicInteger tasksCreated = new AtomicInteger();
 
         final long[] eventIds = createEventIdArray(events, receivers);
@@ -212,6 +225,7 @@ class ExtractionTaskProducer extends TaskProducer {
                         handler.exec(new ExtractionTask(streamId, eventIds, docRef, receiver));
                     } finally {
                         tracker.incrementTasksCompleted();
+                        testComplete();
                     }
                 };
 
@@ -222,9 +236,9 @@ class ExtractionTaskProducer extends TaskProducer {
                         for (final Event event : events) {
                             receiver.getValuesConsumer().accept(event.getValues());
                         }
-                        receiver.getCompletionCountConsumer().accept((long) events.size());
                     } finally {
                         tracker.incrementTasksCompleted();
+                        testComplete();
                     }
                 };
             }
@@ -232,12 +246,10 @@ class ExtractionTaskProducer extends TaskProducer {
             taskQueue.offer(runnable);
             tasksCreated.incrementAndGet();
         });
-
-        return tasksCreated.get();
     }
 
     private long[] createEventIdArray(final List<Event> events,
-                                      final Map<DocRef, Receiver> receivers) {
+                                      final Map<DocRef, ExtractionReceiver> receivers) {
         // If we don't have any coprocessors that will perform extraction then don't bother sorting events.
         if (receivers.size() == 0 ||
                 (receivers.size() == 1 && receivers.keySet().iterator().next() == null)) {
@@ -252,6 +264,13 @@ class ExtractionTaskProducer extends TaskProducer {
         // Sort the ids as the extraction expects them in order.
         Arrays.sort(eventIds);
         return eventIds;
+    }
+
+    private void testComplete() {
+        if (isComplete()) {
+            receivers.forEach((docRef, receiver) ->
+                    receiver.getCompletionConsumer().accept(indexSearchTotalValues.get()));
+        }
     }
 
     @Override

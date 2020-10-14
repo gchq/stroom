@@ -16,10 +16,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(StroomScope.TASK)
@@ -50,7 +51,12 @@ public class SolrSearchFactory {
         this.solrSearchTaskHandler = solrSearchTaskHandler;
     }
 
-    public void search(final SolrClusterSearchTask task, final ExpressionOperator expression, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
+    public void search(final SolrClusterSearchTask task,
+                       final ExpressionOperator expression,
+                       final Receiver receiver,
+                       final TaskContext taskContext,
+                       final AtomicLong hitCount,
+                       final HasTerminate hasTerminate) {
         // Reload the index.
         final CachedSolrIndex index = task.getCachedSolrIndex();
 
@@ -66,17 +72,21 @@ public class SolrSearchFactory {
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);
 
-        final Tracker tracker = new Tracker();
+        final Tracker tracker = new Tracker(hitCount);
         final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, task.getStoredFields(), receiver, tracker);
         solrSearchTaskHandler.exec(solrSearchTask);
 
         // Wait until we finish.
-        while (!hasTerminate.isTerminated() && (!tracker.isCompleted())) {
-            taskContext.info(
+        while (!hasTerminate.isTerminated() && !tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
+            taskContext.info("" +
                     "Searching... " +
-                            "found " + tracker.getHitCount() + " hits");
-            ThreadUtil.sleep(1000);
+                    "found " +
+                    hitCount.get() +
+                    " hits");
         }
+
+        // Let the receiver know we are complete.
+        receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,

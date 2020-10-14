@@ -21,7 +21,7 @@ class ExtractionProgressTracker implements HasTerminate {
 
     boolean isComplete() {
         LOGGER.debug(this::toString);
-        return isTerminated() || (finishedAddingTasks.get() && (tasksTotal.get() == tasksCompleted.get()));
+        return isTerminated() || (finishedAddingTasks.get() && tasksTotal.get() == tasksCompleted.get());
     }
 
     void finishedAddingTasks() {
