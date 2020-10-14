@@ -13,6 +13,11 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
         return USER_IDENTITY;
     }
 
+    @Override
+    public boolean isProcessingUser(final UserIdentity userIdentity) {
+        return UserIdentity.IDENTITY_COMPARATOR.compare(USER_IDENTITY, userIdentity) == 0;
+    }
+
     private static class MockUserIdentity implements UserIdentity {
         @Override
         public String getId() {
