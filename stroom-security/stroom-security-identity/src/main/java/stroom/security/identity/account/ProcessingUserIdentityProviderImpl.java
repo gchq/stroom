@@ -19,9 +19,12 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 @Singleton
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
     private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
     private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
@@ -32,9 +35,10 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
-    private volatile long lastFetch;
-    private volatile long lastTokenCreation;
+    private AtomicLong lastFetch = new AtomicLong(0);
+    private AtomicLong lastTokenCreation = new AtomicLong(0);
     private volatile UserIdentity userIdentity;
+
 
     @Inject
     ProcessingUserIdentityProviderImpl(final AccountDao accountDao,
@@ -51,14 +55,27 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     public UserIdentity get() {
         final long now = System.currentTimeMillis();
         // Don't cache the user identity for more than a day in case its token expires.
-        if (userIdentity == null || lastFetch < now - ONE_DAY) {
+        if (userIdentity == null || lastFetch.get() < now - ONE_DAY) {
             final Account account = getAccount(now);
             final Token token = getToken(now, account);
             userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token.getData());
-            lastFetch = now;
+            lastFetch.set(now);
         }
 
         return userIdentity;
+    }
+
+    @Override
+    public boolean isProcessingUser(final UserIdentity userIdentity) {
+        // It is possible that the passed user identity has a different jws than our
+        // instance one but this is ok as we are regularly refreshing tokens for the
+        // proc user and it has been authenticated at this point.
+        if (userIdentity != null) {
+            return UserIdentity.IDENTITY_COMPARATOR.compare(userIdentity, get()) == 0;
+        } else {
+            LOGGER.debug("Null userIdentity");
+            return false;
+        }
     }
 
     private Account getAccount(final long now) {
@@ -92,10 +109,23 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
 
     private Token getToken(final long now, final Account account) {
         final List<Token> tokens = tokenDao.getTokensForAccount(account.getId());
-        if (tokens.size() == 0 || lastTokenCreation < now - THIRTY_DAYS) {
-            lastTokenCreation = now;
-            return createToken(now, account);
 
+        final Predicate<List<Token>> shouldCreateToken = tokenList ->
+                tokenList.size() == 0 || lastTokenCreation.get() < now - THIRTY_DAYS;
+
+        if (shouldCreateToken.test(tokens)) {
+            // Synch block to stop this node from creating multiple tokens
+            synchronized (this) {
+                final List<Token> tokens2 = tokenDao.getTokensForAccount(account.getId());
+
+                if (shouldCreateToken.test(tokens2)) {
+                    lastTokenCreation.set(now);
+                    return createToken(now, account);
+                } else {
+                    // Another thread beat us to it so just the latest token
+                    return tokens2.get(tokens.size() - 1);
+                }
+            }
         } else {
             final Token token = tokens.get(tokens.size() - 1);
 
