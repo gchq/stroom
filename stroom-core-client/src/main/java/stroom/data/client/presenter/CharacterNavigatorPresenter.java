@@ -18,8 +18,6 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
     private final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider;
     private CharacterRangeSelectionPresenter characterRangeSelectionPresenter = null;
-//    private DataRange dataRange;
-
     private HasCharacterData display;
 
     @Inject
@@ -83,12 +81,6 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
         void refreshNavigator();
 
-//        DataRange getDataRange();
-//
-//        void setDataRange(final DataRange dataRange);
-//
-//        void setTotalCharsCount(final RowCount<Long> totalCharCount);
-//
         void setLabelClickHandler(final ClickHandler clickHandler);
     }
 }

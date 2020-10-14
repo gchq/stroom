@@ -1154,6 +1154,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         return DataType.SEGMENTED.equals(getCurDataType())
                 || DataType.MARKER.equals(getCurDataType());
     }
+
     private boolean isCurrentDataMultiPart() {
         // For now assume segmented and multi-part are mutually exclusive
         return DataType.NON_SEGMENTED.equals(getCurDataType());
@@ -1542,6 +1543,5 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         public void refresh() {
             update(false);
         }
-
     }
 }
