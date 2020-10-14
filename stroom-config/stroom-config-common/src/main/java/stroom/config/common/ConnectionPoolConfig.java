@@ -47,7 +47,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
     private StroomDuration idleTimeout = StroomDuration.ofMinutes(10);
     private StroomDuration maxLifetime = StroomDuration.ofMinutes(30);
     private int minimumIdle = 10;
-    private int maxPoolSize = 10;
+    private int maxPoolSize = 50;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(

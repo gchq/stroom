@@ -1,12 +1,12 @@
 package stroom.db.util;
 
 import stroom.config.common.HasDbConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 
@@ -16,7 +16,7 @@ import javax.sql.DataSource;
  */
 public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource>
         extends AbstractDataSourceProviderModule<T_Config, T_ConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFlyWayDbModule.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFlyWayDbModule.class);
 
     protected abstract String getFlyWayTableName();
 
@@ -25,7 +25,7 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     @Override
     protected void configure() {
         super.configure();
-        LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
+        LOGGER.debug(() -> "Configure() called on " + this.getClass().getCanonicalName());
     }
 
     @Override

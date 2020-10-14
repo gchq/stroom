@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 @Singleton
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
@@ -35,8 +34,8 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
-    private AtomicLong lastFetch = new AtomicLong(0);
-    private AtomicLong lastTokenCreation = new AtomicLong(0);
+    private AtomicLong lastFetchTime = new AtomicLong(0);
+    private AtomicLong lastTokenCreationTime = new AtomicLong(0);
     private volatile UserIdentity userIdentity;
 
 
@@ -55,11 +54,11 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     public UserIdentity get() {
         final long now = System.currentTimeMillis();
         // Don't cache the user identity for more than a day in case its token expires.
-        if (userIdentity == null || lastFetch.get() < now - ONE_DAY) {
+        if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
             final Account account = getAccount(now);
             final Token token = getToken(now, account);
             userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token.getData());
-            lastFetch.set(now);
+            lastFetchTime.set(now);
         }
 
         return userIdentity;
@@ -110,16 +109,14 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private Token getToken(final long now, final Account account) {
         final List<Token> tokens = tokenDao.getTokensForAccount(account.getId());
 
-        final Predicate<List<Token>> shouldCreateToken = tokenList ->
-                tokenList.size() == 0 || lastTokenCreation.get() < now - THIRTY_DAYS;
-
-        if (shouldCreateToken.test(tokens)) {
+        if (shouldCreateToken(tokens, now)) {
             // Synch block to stop this node from creating multiple tokens
+            // Difficult to stop multiple node doing this though
             synchronized (this) {
                 final List<Token> tokens2 = tokenDao.getTokensForAccount(account.getId());
 
-                if (shouldCreateToken.test(tokens2)) {
-                    lastTokenCreation.set(now);
+                if (shouldCreateToken(tokens, now)) {
+                    lastTokenCreationTime.set(now);
                     return createToken(now, account);
                 } else {
                     // Another thread beat us to it so just the latest token
@@ -127,6 +124,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
                 }
             }
         } else {
+            // Grab the most recent token
             final Token token = tokens.get(tokens.size() - 1);
 
             // Delete old tokens.
@@ -140,6 +138,31 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
 
             return token;
         }
+    }
+
+    private boolean shouldCreateToken(final List<Token> tokens, final long now) {
+        if (tokens.size() == 0) {
+            return true;
+        } else {
+            if (lastTokenCreationTime.get() == 0) {
+                // System just booted up so find out when we last created a token from the
+                // DB tokens
+                final long lastTokenCreationTime = updateLastTokenCreationTime(tokens);
+                return lastTokenCreationTime < now - THIRTY_DAYS;
+            } else {
+                // We have a lastTokenCreationTime so see how old it is
+                return lastTokenCreationTime.get() < now - THIRTY_DAYS;
+            }
+        }
+    }
+
+    private long updateLastTokenCreationTime(final List<Token> tokens) {
+
+        return lastTokenCreationTime.updateAndGet(val -> {
+            // Get latest token
+            long newVal = tokens.get(tokens.size() - 1).getCreateTimeMs();
+            return Math.max(newVal, val);
+        });
     }
 
     private Token createToken(final long now, final Account account) {
