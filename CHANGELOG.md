@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1901** : Create default (index) volume group if it is used prior to UI.
 
+* Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
+
 * Change dashboard field expression editor to be a bit wider and use a monospace font.
 
 * Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
