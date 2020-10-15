@@ -10,6 +10,9 @@ dependencies {
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -20,9 +23,6 @@ dependencies {
     compile project(':stroom-util-shared')
     
     compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
 
     compile libs.commons_pool2
     compile libs.dropwizard_metrics_annotation

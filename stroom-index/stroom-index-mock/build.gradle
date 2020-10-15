@@ -14,6 +14,9 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
@@ -35,9 +38,6 @@ dependencies {
     compile libs.lucene_queryparser
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.xml_apis

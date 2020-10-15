@@ -6,6 +6,8 @@ dependencies {
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
@@ -18,8 +20,6 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
     compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')

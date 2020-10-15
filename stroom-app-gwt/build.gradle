@@ -32,12 +32,13 @@ dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-dashboard:stroom-dashboard-client')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-security:stroom-security-client')
     compile project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
     compile libs.stroomDocRef
-    compile libs.stroomQueryApi
 
     compile libs.gin
     compile libs.guice3
@@ -59,10 +60,10 @@ dependencies {
 
     gwtSourceCompile libs.stroomDocRef
     gwtSourceCompile "${libs.stroomDocRef}:sources"
-    gwtSourceCompile libs.stroomQueryApi
-    gwtSourceCompile "${libs.stroomQueryApi}:sources"
-    gwtSourceCompile libs.stroomQueryCommon
-    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
+//    gwtSourceCompile libs.stroomQueryApi
+//    gwtSourceCompile "${libs.stroomQueryApi}:sources"
+//    gwtSourceCompile libs.stroomQueryCommon
+//    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
 // Create a list of source directories where source for GWT can be found.
@@ -77,6 +78,8 @@ def projList = [
     project(':stroom-core-client-widget'),
     project(':stroom-core-shared'),
     project(':stroom-dashboard:stroom-dashboard-client'),
+    project(':stroom-query:stroom-query-api'),
+    project(':stroom-query:stroom-query-common'),
     project(':stroom-security:stroom-security-client'),
     project(':stroom-security:stroom-security-client-api'),
     project(':stroom-statistics:stroom-statistics-client'),

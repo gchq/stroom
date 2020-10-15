@@ -91,7 +91,6 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
-        stroomExpression  : 'v3.0.4',
         stroomQuery       : 'v4.0-beta.75', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
         stroomTestData    : 'v0.2.2',
@@ -139,11 +138,8 @@ ext.libs = [
         hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
-        stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
-        stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
-        stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
         stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
         stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 

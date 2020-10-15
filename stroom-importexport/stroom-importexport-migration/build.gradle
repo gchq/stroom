@@ -8,7 +8,6 @@ dependencies {
 
 //
     compile libs.stroomDocRef
-//    //compile libs.stroomQueryApi
 //    //compile libs.eventLogging
 ////    compile libs.flyway_core
 //    //compile libs.guice4

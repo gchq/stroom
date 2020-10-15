@@ -158,6 +158,9 @@ include 'stroom-legacy:stroom-legacy-model_6_1'
 include 'stroom-lifecycle:stroom-lifecycle-api'
 include 'stroom-lifecycle:stroom-lifecycle-impl'
 
+// LMDB support
+include 'stroom-lmdb'
+
 // Data Meta projects
 include 'stroom-meta:stroom-meta-api'
 include 'stroom-meta:stroom-meta-impl'
@@ -188,6 +191,11 @@ include 'stroom-processor:stroom-processor-mock'
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-remote-api'
+
+// Query
+include 'stroom-query:stroom-expression'
+include 'stroom-query:stroom-query-api'
+include 'stroom-query:stroom-query-common'
 
 // Resource store
 include 'stroom-resource:stroom-resource-api'

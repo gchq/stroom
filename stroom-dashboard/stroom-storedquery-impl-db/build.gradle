@@ -8,7 +8,6 @@ dependencies {
     compile project(':stroom-db-util')
 
 //    compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
     
     compile libs.flyway_core
     compile libs.guice4

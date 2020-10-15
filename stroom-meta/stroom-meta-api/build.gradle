@@ -5,11 +5,11 @@ dependencies {
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-explorer:stroom-collection-api')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     
     compile libs.stroomDocRef
-    compile libs.stroomQueryApi
 
     compile libs.javax_servlet_api
     compile libs.jackson_annotations

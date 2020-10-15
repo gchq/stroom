@@ -84,6 +84,8 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
@@ -195,7 +197,6 @@ dependencies {
     testCompile libs.lucene_core
     testCompile libs.saxon_he
     testCompile libs.slf4j_api
-    testCompile libs.stroomQueryCommon
     testCompile libs.stroomTestData
     testCompile libs.vavr
 

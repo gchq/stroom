@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+ext.moduleName = 'stroom.search.extraction'
+
 dependencies {
 //    compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
@@ -21,15 +23,15 @@ dependencies {
 //    compile project(':stroom-index-shared')
 //    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
     compile project(':stroom-pipeline')
-    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
-    compile libs.stroomExpression
     compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.xml_apis

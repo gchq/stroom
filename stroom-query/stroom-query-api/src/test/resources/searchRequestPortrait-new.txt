@@ -1,0 +1,428 @@
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.ExpressionOperator$Op; - public native int java.lang.Object.hashCode()
+class [Lstroom.query.api.v2.Format$Type; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.Format$Type; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.Format$Type; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.Format$Type; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.Format$Type; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Format$Type; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Format$Type; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Format$Type; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.Format$Type; - public native int java.lang.Object.hashCode()
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.ResultRequest$Fetch; - public native int java.lang.Object.hashCode()
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.ResultRequest$ResultStyle; - public native int java.lang.Object.hashCode()
+class [Lstroom.query.api.v2.Sort$SortDirection; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Sort$SortDirection; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.Sort$SortDirection; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.Sort$SortDirection; - public native int java.lang.Object.hashCode()
+class [Lstroom.query.api.v2.TimeZone$Use; - public boolean java.lang.Object.equals(java.lang.Object)
+class [Lstroom.query.api.v2.TimeZone$Use; - public final native java.lang.Class<?> java.lang.Object.getClass()
+class [Lstroom.query.api.v2.TimeZone$Use; - public final native void java.lang.Object.notify()
+class [Lstroom.query.api.v2.TimeZone$Use; - public final native void java.lang.Object.notifyAll()
+class [Lstroom.query.api.v2.TimeZone$Use; - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.TimeZone$Use; - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.TimeZone$Use; - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class [Lstroom.query.api.v2.TimeZone$Use; - public java.lang.String java.lang.Object.toString()
+class [Lstroom.query.api.v2.TimeZone$Use; - public native int java.lang.Object.hashCode()
+class stroom.query.api.v2.DateTimeFormat - public boolean stroom.query.api.v2.DateTimeFormat.equals(java.lang.Object)
+class stroom.query.api.v2.DateTimeFormat - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.DateTimeFormat - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.DateTimeFormat - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.DateTimeFormat - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.DateTimeFormat - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.DateTimeFormat - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.DateTimeFormat - public int stroom.query.api.v2.DateTimeFormat.hashCode()
+class stroom.query.api.v2.DateTimeFormat - public java.lang.String stroom.query.api.v2.DateTimeFormat.getPattern()
+class stroom.query.api.v2.DateTimeFormat - public java.lang.String stroom.query.api.v2.DateTimeFormat.toString()
+class stroom.query.api.v2.DateTimeFormat - public stroom.query.api.v2.TimeZone stroom.query.api.v2.DateTimeFormat.getTimeZone()
+class stroom.query.api.v2.DateTimeFormat - public void stroom.query.api.v2.DateTimeFormat.setPattern(java.lang.String)
+class stroom.query.api.v2.DateTimeFormat - public void stroom.query.api.v2.DateTimeFormat.setTimeZone(stroom.query.api.v2.TimeZone)
+class stroom.query.api.v2.ExpressionItem - public boolean stroom.query.api.v2.ExpressionItem.enabled()
+class stroom.query.api.v2.ExpressionItem - public boolean stroom.query.api.v2.ExpressionItem.equals(java.lang.Object)
+class stroom.query.api.v2.ExpressionItem - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ExpressionItem - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ExpressionItem - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ExpressionItem - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionItem - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionItem - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionItem - public int stroom.query.api.v2.ExpressionItem.hashCode()
+class stroom.query.api.v2.ExpressionItem - public java.lang.Boolean stroom.query.api.v2.ExpressionItem.getEnabled()
+class stroom.query.api.v2.ExpressionItem - public java.lang.String stroom.query.api.v2.ExpressionItem.toMultiLineString()
+class stroom.query.api.v2.ExpressionItem - public java.lang.String stroom.query.api.v2.ExpressionItem.toString()
+class stroom.query.api.v2.ExpressionItem - public void stroom.query.api.v2.ExpressionItem.setEnabled(java.lang.Boolean)
+class stroom.query.api.v2.ExpressionOperator - public boolean stroom.query.api.v2.ExpressionItem.enabled()
+class stroom.query.api.v2.ExpressionOperator - public boolean stroom.query.api.v2.ExpressionOperator.equals(java.lang.Object)
+class stroom.query.api.v2.ExpressionOperator - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ExpressionOperator - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ExpressionOperator - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ExpressionOperator - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator - public int stroom.query.api.v2.ExpressionOperator.hashCode()
+class stroom.query.api.v2.ExpressionOperator - public java.lang.Boolean stroom.query.api.v2.ExpressionItem.getEnabled()
+class stroom.query.api.v2.ExpressionOperator - public java.lang.String stroom.query.api.v2.ExpressionItem.toMultiLineString()
+class stroom.query.api.v2.ExpressionOperator - public java.lang.String stroom.query.api.v2.ExpressionItem.toString()
+class stroom.query.api.v2.ExpressionOperator - public java.util.List<stroom.query.api.v2.ExpressionItem> stroom.query.api.v2.ExpressionOperator.getChildren()
+class stroom.query.api.v2.ExpressionOperator - public stroom.query.api.v2.ExpressionOperator$Op stroom.query.api.v2.ExpressionOperator.getOp()
+class stroom.query.api.v2.ExpressionOperator - public stroom.query.api.v2.ExpressionOperator$Op stroom.query.api.v2.ExpressionOperator.op()
+class stroom.query.api.v2.ExpressionOperator - public void stroom.query.api.v2.ExpressionItem.setEnabled(java.lang.Boolean)
+class stroom.query.api.v2.ExpressionOperator - public void stroom.query.api.v2.ExpressionOperator.setChildren(java.util.List<stroom.query.api.v2.ExpressionItem>)
+class stroom.query.api.v2.ExpressionOperator - public void stroom.query.api.v2.ExpressionOperator.setOp(stroom.query.api.v2.ExpressionOperator$Op)
+class stroom.query.api.v2.ExpressionOperator$Op - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.ExpressionOperator$Op - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.ExpressionOperator$Op - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.ExpressionOperator$Op - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.ExpressionOperator$Op - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.ExpressionOperator$Op - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.ExpressionOperator$Op - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.ExpressionOperator$Op - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ExpressionOperator$Op - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ExpressionOperator$Op - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ExpressionOperator$Op - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator$Op - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator$Op - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ExpressionOperator$Op - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.ExpressionOperator$Op - public java.lang.String java.lang.Enum.toString()
+class stroom.query.api.v2.ExpressionOperator$Op - public java.lang.String stroom.query.api.v2.ExpressionOperator$Op.getDisplayValue()
+class stroom.query.api.v2.ExpressionOperator$Op - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.ExpressionOperator$Op - public static stroom.query.api.v2.ExpressionOperator$Op stroom.query.api.v2.ExpressionOperator$Op.valueOf(java.lang.String)
+class stroom.query.api.v2.ExpressionOperator$Op - public static stroom.query.api.v2.ExpressionOperator$Op[] stroom.query.api.v2.ExpressionOperator$Op.values()
+class stroom.query.api.v2.Field - public boolean stroom.query.api.v2.Field.equals(java.lang.Object)
+class stroom.query.api.v2.Field - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Field - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Field - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Field - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Field - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Field - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Field - public int stroom.query.api.v2.Field.hashCode()
+class stroom.query.api.v2.Field - public java.lang.Integer stroom.query.api.v2.Field.getGroup()
+class stroom.query.api.v2.Field - public java.lang.String stroom.query.api.v2.Field.getExpression()
+class stroom.query.api.v2.Field - public java.lang.String stroom.query.api.v2.Field.getId()
+class stroom.query.api.v2.Field - public java.lang.String stroom.query.api.v2.Field.getName()
+class stroom.query.api.v2.Field - public java.lang.String stroom.query.api.v2.Field.toString()
+class stroom.query.api.v2.Field - public stroom.query.api.v2.Field stroom.query.api.v2.Field.copy()
+class stroom.query.api.v2.Field - public stroom.query.api.v2.Filter stroom.query.api.v2.Field.getFilter()
+class stroom.query.api.v2.Field - public stroom.query.api.v2.Format stroom.query.api.v2.Field.getFormat()
+class stroom.query.api.v2.Field - public stroom.query.api.v2.Sort stroom.query.api.v2.Field.getSort()
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setExpression(java.lang.String)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setFilter(stroom.query.api.v2.Filter)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setFormat(stroom.query.api.v2.Format)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setGroup(java.lang.Integer)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setId(java.lang.String)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setName(java.lang.String)
+class stroom.query.api.v2.Field - public void stroom.query.api.v2.Field.setSort(stroom.query.api.v2.Sort)
+class stroom.query.api.v2.Filter - public boolean stroom.query.api.v2.Filter.equals(java.lang.Object)
+class stroom.query.api.v2.Filter - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Filter - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Filter - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Filter - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Filter - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Filter - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Filter - public int stroom.query.api.v2.Filter.hashCode()
+class stroom.query.api.v2.Filter - public java.lang.String stroom.query.api.v2.Filter.getExcludes()
+class stroom.query.api.v2.Filter - public java.lang.String stroom.query.api.v2.Filter.getIncludes()
+class stroom.query.api.v2.Filter - public java.lang.String stroom.query.api.v2.Filter.toString()
+class stroom.query.api.v2.Filter - public void stroom.query.api.v2.Filter.setExcludes(java.lang.String)
+class stroom.query.api.v2.Filter - public void stroom.query.api.v2.Filter.setIncludes(java.lang.String)
+class stroom.query.api.v2.Format - public boolean stroom.query.api.v2.Format.equals(java.lang.Object)
+class stroom.query.api.v2.Format - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Format - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Format - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Format - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Format - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Format - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Format - public int stroom.query.api.v2.Format.hashCode()
+class stroom.query.api.v2.Format - public java.lang.String stroom.query.api.v2.Format.toString()
+class stroom.query.api.v2.Format - public stroom.query.api.v2.DateTimeFormat stroom.query.api.v2.Format.getDateTimeFormat()
+class stroom.query.api.v2.Format - public stroom.query.api.v2.Format$Type stroom.query.api.v2.Format.getType()
+class stroom.query.api.v2.Format - public stroom.query.api.v2.NumberFormat stroom.query.api.v2.Format.getNumberFormat()
+class stroom.query.api.v2.Format - public void stroom.query.api.v2.Format.setDateTimeFormat(stroom.query.api.v2.DateTimeFormat)
+class stroom.query.api.v2.Format - public void stroom.query.api.v2.Format.setNumberFormat(stroom.query.api.v2.NumberFormat)
+class stroom.query.api.v2.Format - public void stroom.query.api.v2.Format.setType(stroom.query.api.v2.Format$Type)
+class stroom.query.api.v2.Format$Type - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.Format$Type - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.Format$Type - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.Format$Type - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.Format$Type - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.Format$Type - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.Format$Type - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.Format$Type - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Format$Type - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Format$Type - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Format$Type - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Format$Type - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Format$Type - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Format$Type - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.Format$Type - public java.lang.String java.lang.Enum.toString()
+class stroom.query.api.v2.Format$Type - public java.lang.String stroom.query.api.v2.Format$Type.getDisplayValue()
+class stroom.query.api.v2.Format$Type - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.Format$Type - public static stroom.query.api.v2.Format$Type stroom.query.api.v2.Format$Type.valueOf(java.lang.String)
+class stroom.query.api.v2.Format$Type - public static stroom.query.api.v2.Format$Type[] stroom.query.api.v2.Format$Type.values()
+class stroom.query.api.v2.NumberFormat - public boolean stroom.query.api.v2.NumberFormat.equals(java.lang.Object)
+class stroom.query.api.v2.NumberFormat - public boolean stroom.query.api.v2.NumberFormat.useSeparator()
+class stroom.query.api.v2.NumberFormat - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.NumberFormat - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.NumberFormat - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.NumberFormat - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.NumberFormat - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.NumberFormat - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.NumberFormat - public int stroom.query.api.v2.NumberFormat.hashCode()
+class stroom.query.api.v2.NumberFormat - public java.lang.Boolean stroom.query.api.v2.NumberFormat.getUseSeparator()
+class stroom.query.api.v2.NumberFormat - public java.lang.Integer stroom.query.api.v2.NumberFormat.getDecimalPlaces()
+class stroom.query.api.v2.NumberFormat - public java.lang.String stroom.query.api.v2.NumberFormat.toString()
+class stroom.query.api.v2.NumberFormat - public void stroom.query.api.v2.NumberFormat.setDecimalPlaces(java.lang.Integer)
+class stroom.query.api.v2.NumberFormat - public void stroom.query.api.v2.NumberFormat.setUseSeparator(java.lang.Boolean)
+class stroom.query.api.v2.OffsetRange - public boolean stroom.query.api.v2.OffsetRange.equals(java.lang.Object)
+class stroom.query.api.v2.OffsetRange - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.OffsetRange - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.OffsetRange - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.OffsetRange - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.OffsetRange - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.OffsetRange - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.OffsetRange - public int stroom.query.api.v2.OffsetRange.hashCode()
+class stroom.query.api.v2.OffsetRange - public java.lang.Long stroom.query.api.v2.OffsetRange.getLength()
+class stroom.query.api.v2.OffsetRange - public java.lang.Long stroom.query.api.v2.OffsetRange.getOffset()
+class stroom.query.api.v2.OffsetRange - public java.lang.String stroom.query.api.v2.OffsetRange.toString()
+class stroom.query.api.v2.OffsetRange - public void stroom.query.api.v2.OffsetRange.setLength(java.lang.Long)
+class stroom.query.api.v2.OffsetRange - public void stroom.query.api.v2.OffsetRange.setOffset(java.lang.Long)
+class stroom.query.api.v2.Param - public boolean stroom.query.api.v2.Param.equals(java.lang.Object)
+class stroom.query.api.v2.Param - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Param - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Param - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Param - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Param - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Param - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Param - public int stroom.query.api.v2.Param.hashCode()
+class stroom.query.api.v2.Param - public java.lang.String stroom.query.api.v2.Param.getKey()
+class stroom.query.api.v2.Param - public java.lang.String stroom.query.api.v2.Param.getValue()
+class stroom.query.api.v2.Param - public java.lang.String stroom.query.api.v2.Param.toString()
+class stroom.query.api.v2.Param - public void stroom.query.api.v2.Param.setKey(java.lang.String)
+class stroom.query.api.v2.Param - public void stroom.query.api.v2.Param.setValue(java.lang.String)
+class stroom.query.api.v2.Query - public boolean stroom.query.api.v2.Query.equals(java.lang.Object)
+class stroom.query.api.v2.Query - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Query - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Query - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Query - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Query - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Query - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Query - public int stroom.query.api.v2.Query.hashCode()
+class stroom.query.api.v2.Query - public java.lang.String stroom.query.api.v2.Query.toString()
+class stroom.query.api.v2.Query - public java.util.List<stroom.query.api.v2.Param> stroom.query.api.v2.Query.getParams()
+class stroom.query.api.v2.Query - public stroom.docref.DocRef stroom.query.api.v2.Query.getDataSource()
+class stroom.query.api.v2.Query - public stroom.query.api.v2.ExpressionOperator stroom.query.api.v2.Query.getExpression()
+class stroom.query.api.v2.Query - public void stroom.query.api.v2.Query.setDataSource(stroom.docref.DocRef)
+class stroom.query.api.v2.Query - public void stroom.query.api.v2.Query.setExpression(stroom.query.api.v2.ExpressionOperator)
+class stroom.query.api.v2.Query - public void stroom.query.api.v2.Query.setParams(java.util.List<stroom.query.api.v2.Param>)
+class stroom.query.api.v2.QueryKey - public boolean stroom.query.api.v2.QueryKey.equals(java.lang.Object)
+class stroom.query.api.v2.QueryKey - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.QueryKey - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.QueryKey - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.QueryKey - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.QueryKey - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.QueryKey - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.QueryKey - public int stroom.query.api.v2.QueryKey.hashCode()
+class stroom.query.api.v2.QueryKey - public java.lang.String stroom.query.api.v2.QueryKey.getUuid()
+class stroom.query.api.v2.QueryKey - public java.lang.String stroom.query.api.v2.QueryKey.toString()
+class stroom.query.api.v2.QueryKey - public void stroom.query.api.v2.QueryKey.setUuid(java.lang.String)
+class stroom.query.api.v2.ResultRequest - public boolean stroom.query.api.v2.ResultRequest.equals(java.lang.Object)
+class stroom.query.api.v2.ResultRequest - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ResultRequest - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ResultRequest - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ResultRequest - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest - public int stroom.query.api.v2.ResultRequest.hashCode()
+class stroom.query.api.v2.ResultRequest - public java.lang.String stroom.query.api.v2.ResultRequest.getComponentId()
+class stroom.query.api.v2.ResultRequest - public java.lang.String stroom.query.api.v2.ResultRequest.toString()
+class stroom.query.api.v2.ResultRequest - public java.util.List<java.lang.String> stroom.query.api.v2.ResultRequest.getOpenGroups()
+class stroom.query.api.v2.ResultRequest - public java.util.List<stroom.query.api.v2.TableSettings> stroom.query.api.v2.ResultRequest.getMappings()
+class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.OffsetRange stroom.query.api.v2.ResultRequest.getRequestedRange()
+class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.ResultRequest$Fetch stroom.query.api.v2.ResultRequest.getFetch()
+class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.ResultRequest$ResultStyle stroom.query.api.v2.ResultRequest.getResultStyle()
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setComponentId(java.lang.String)
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setFetch(stroom.query.api.v2.ResultRequest$Fetch)
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setMappings(java.util.List<stroom.query.api.v2.TableSettings>)
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setOpenGroups(java.util.List<java.lang.String>)
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setRequestedRange(stroom.query.api.v2.OffsetRange)
+class stroom.query.api.v2.ResultRequest - public void stroom.query.api.v2.ResultRequest.setResultStyle(stroom.query.api.v2.ResultRequest$ResultStyle)
+class stroom.query.api.v2.ResultRequest$Fetch - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.ResultRequest$Fetch - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.ResultRequest$Fetch - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.ResultRequest$Fetch - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.ResultRequest$Fetch - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.ResultRequest$Fetch - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.ResultRequest$Fetch - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.ResultRequest$Fetch - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ResultRequest$Fetch - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ResultRequest$Fetch - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ResultRequest$Fetch - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$Fetch - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$Fetch - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$Fetch - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.ResultRequest$Fetch - public java.lang.String java.lang.Enum.toString()
+class stroom.query.api.v2.ResultRequest$Fetch - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.ResultRequest$Fetch - public static stroom.query.api.v2.ResultRequest$Fetch stroom.query.api.v2.ResultRequest$Fetch.valueOf(java.lang.String)
+class stroom.query.api.v2.ResultRequest$Fetch - public static stroom.query.api.v2.ResultRequest$Fetch[] stroom.query.api.v2.ResultRequest$Fetch.values()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$ResultStyle - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.ResultRequest$ResultStyle - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.ResultRequest$ResultStyle - public java.lang.String java.lang.Enum.toString()
+class stroom.query.api.v2.ResultRequest$ResultStyle - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.ResultRequest$ResultStyle - public static stroom.query.api.v2.ResultRequest$ResultStyle stroom.query.api.v2.ResultRequest$ResultStyle.valueOf(java.lang.String)
+class stroom.query.api.v2.ResultRequest$ResultStyle - public static stroom.query.api.v2.ResultRequest$ResultStyle[] stroom.query.api.v2.ResultRequest$ResultStyle.values()
+class stroom.query.api.v2.SearchRequest - public boolean stroom.query.api.v2.SearchRequest.equals(java.lang.Object)
+class stroom.query.api.v2.SearchRequest - public boolean stroom.query.api.v2.SearchRequest.incremental()
+class stroom.query.api.v2.SearchRequest - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.SearchRequest - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.SearchRequest - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.SearchRequest - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.SearchRequest - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.SearchRequest - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.SearchRequest - public int stroom.query.api.v2.SearchRequest.hashCode()
+class stroom.query.api.v2.SearchRequest - public java.lang.Boolean stroom.query.api.v2.SearchRequest.getIncremental()
+class stroom.query.api.v2.SearchRequest - public java.lang.Long stroom.query.api.v2.SearchRequest.getTimeout()
+class stroom.query.api.v2.SearchRequest - public java.lang.String stroom.query.api.v2.SearchRequest.getDateTimeLocale()
+class stroom.query.api.v2.SearchRequest - public java.lang.String stroom.query.api.v2.SearchRequest.toString()
+class stroom.query.api.v2.SearchRequest - public java.util.List<stroom.query.api.v2.ResultRequest> stroom.query.api.v2.SearchRequest.getResultRequests()
+class stroom.query.api.v2.SearchRequest - public stroom.query.api.v2.Query stroom.query.api.v2.SearchRequest.getQuery()
+class stroom.query.api.v2.SearchRequest - public stroom.query.api.v2.QueryKey stroom.query.api.v2.SearchRequest.getKey()
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setDateTimeLocale(java.lang.String)
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setIncremental(java.lang.Boolean)
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setKey(stroom.query.api.v2.QueryKey)
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setQuery(stroom.query.api.v2.Query)
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setResultRequests(java.util.List<stroom.query.api.v2.ResultRequest>)
+class stroom.query.api.v2.SearchRequest - public void stroom.query.api.v2.SearchRequest.setTimeout(java.lang.Long)
+class stroom.query.api.v2.Sort - public boolean stroom.query.api.v2.Sort.equals(java.lang.Object)
+class stroom.query.api.v2.Sort - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Sort - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Sort - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Sort - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort - public int stroom.query.api.v2.Sort.hashCode()
+class stroom.query.api.v2.Sort - public java.lang.Integer stroom.query.api.v2.Sort.getOrder()
+class stroom.query.api.v2.Sort - public java.lang.String stroom.query.api.v2.Sort.toString()
+class stroom.query.api.v2.Sort - public stroom.query.api.v2.Sort$SortDirection stroom.query.api.v2.Sort.getDirection()
+class stroom.query.api.v2.Sort - public void stroom.query.api.v2.Sort.setDirection(stroom.query.api.v2.Sort$SortDirection)
+class stroom.query.api.v2.Sort - public void stroom.query.api.v2.Sort.setOrder(java.lang.Integer)
+class stroom.query.api.v2.Sort$SortDirection - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.Sort$SortDirection - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.Sort$SortDirection - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.Sort$SortDirection - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.Sort$SortDirection - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.Sort$SortDirection - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.Sort$SortDirection - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.Sort$SortDirection - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.Sort$SortDirection - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.Sort$SortDirection - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.Sort$SortDirection - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort$SortDirection - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort$SortDirection - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.Sort$SortDirection - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.Sort$SortDirection - public java.lang.String java.lang.Enum.toString()
+class stroom.query.api.v2.Sort$SortDirection - public java.lang.String stroom.query.api.v2.Sort$SortDirection.getDisplayValue()
+class stroom.query.api.v2.Sort$SortDirection - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.Sort$SortDirection - public static stroom.query.api.v2.Sort$SortDirection stroom.query.api.v2.Sort$SortDirection.valueOf(java.lang.String)
+class stroom.query.api.v2.Sort$SortDirection - public static stroom.query.api.v2.Sort$SortDirection[] stroom.query.api.v2.Sort$SortDirection.values()
+class stroom.query.api.v2.TableSettings - public boolean stroom.query.api.v2.TableSettings.equals(java.lang.Object)
+class stroom.query.api.v2.TableSettings - public boolean stroom.query.api.v2.TableSettings.extractValues()
+class stroom.query.api.v2.TableSettings - public boolean stroom.query.api.v2.TableSettings.showDetail()
+class stroom.query.api.v2.TableSettings - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.TableSettings - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.TableSettings - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.TableSettings - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.TableSettings - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.TableSettings - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.TableSettings - public int stroom.query.api.v2.TableSettings.hashCode()
+class stroom.query.api.v2.TableSettings - public java.lang.Boolean stroom.query.api.v2.TableSettings.getExtractValues()
+class stroom.query.api.v2.TableSettings - public java.lang.Boolean stroom.query.api.v2.TableSettings.getShowDetail()
+class stroom.query.api.v2.TableSettings - public java.lang.String stroom.query.api.v2.TableSettings.getQueryId()
+class stroom.query.api.v2.TableSettings - public java.lang.String stroom.query.api.v2.TableSettings.toString()
+class stroom.query.api.v2.TableSettings - public java.util.List<java.lang.Integer> stroom.query.api.v2.TableSettings.getMaxResults()
+class stroom.query.api.v2.TableSettings - public java.util.List<stroom.query.api.v2.Field> stroom.query.api.v2.TableSettings.getFields()
+class stroom.query.api.v2.TableSettings - public stroom.docref.DocRef stroom.query.api.v2.TableSettings.getExtractionPipeline()
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setExtractValues(java.lang.Boolean)
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setExtractionPipeline(stroom.docref.DocRef)
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setFields(java.util.List<stroom.query.api.v2.Field>)
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setMaxResults(java.util.List<java.lang.Integer>)
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setQueryId(java.lang.String)
+class stroom.query.api.v2.TableSettings - public void stroom.query.api.v2.TableSettings.setShowDetail(java.lang.Boolean)
+class stroom.query.api.v2.TimeZone - public boolean stroom.query.api.v2.TimeZone.equals(java.lang.Object)
+class stroom.query.api.v2.TimeZone - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.TimeZone - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.TimeZone - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.TimeZone - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone - public int stroom.query.api.v2.TimeZone.hashCode()
+class stroom.query.api.v2.TimeZone - public java.lang.Integer stroom.query.api.v2.TimeZone.getOffsetHours()
+class stroom.query.api.v2.TimeZone - public java.lang.Integer stroom.query.api.v2.TimeZone.getOffsetMinutes()
+class stroom.query.api.v2.TimeZone - public java.lang.String stroom.query.api.v2.TimeZone.getId()
+class stroom.query.api.v2.TimeZone - public java.lang.String stroom.query.api.v2.TimeZone.toString()
+class stroom.query.api.v2.TimeZone - public static stroom.query.api.v2.TimeZone stroom.query.api.v2.TimeZone.fromId(java.lang.String)
+class stroom.query.api.v2.TimeZone - public static stroom.query.api.v2.TimeZone stroom.query.api.v2.TimeZone.fromOffset(int,int)
+class stroom.query.api.v2.TimeZone - public static stroom.query.api.v2.TimeZone stroom.query.api.v2.TimeZone.local()
+class stroom.query.api.v2.TimeZone - public static stroom.query.api.v2.TimeZone stroom.query.api.v2.TimeZone.utc()
+class stroom.query.api.v2.TimeZone - public stroom.query.api.v2.TimeZone$Use stroom.query.api.v2.TimeZone.getUse()
+class stroom.query.api.v2.TimeZone - public void stroom.query.api.v2.TimeZone.setId(java.lang.String)
+class stroom.query.api.v2.TimeZone - public void stroom.query.api.v2.TimeZone.setOffsetHours(java.lang.Integer)
+class stroom.query.api.v2.TimeZone - public void stroom.query.api.v2.TimeZone.setOffsetMinutes(java.lang.Integer)
+class stroom.query.api.v2.TimeZone - public void stroom.query.api.v2.TimeZone.setUse(stroom.query.api.v2.TimeZone$Use)
+class stroom.query.api.v2.TimeZone$Use - public final boolean java.lang.Enum.equals(java.lang.Object)
+class stroom.query.api.v2.TimeZone$Use - public final int java.lang.Enum.compareTo(E)
+class stroom.query.api.v2.TimeZone$Use - public final int java.lang.Enum.hashCode()
+class stroom.query.api.v2.TimeZone$Use - public final int java.lang.Enum.ordinal()
+class stroom.query.api.v2.TimeZone$Use - public final java.lang.Class<E> java.lang.Enum.getDeclaringClass()
+class stroom.query.api.v2.TimeZone$Use - public final java.lang.String java.lang.Enum.name()
+class stroom.query.api.v2.TimeZone$Use - public final java.util.Optional<java.lang.Enum$EnumDesc<E>> java.lang.Enum.describeConstable()
+class stroom.query.api.v2.TimeZone$Use - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.TimeZone$Use - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.TimeZone$Use - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.TimeZone$Use - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone$Use - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone$Use - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeZone$Use - public int java.lang.Enum.compareTo(java.lang.Object)
+class stroom.query.api.v2.TimeZone$Use - public java.lang.String stroom.query.api.v2.TimeZone$Use.getDisplayValue()
+class stroom.query.api.v2.TimeZone$Use - public java.lang.String stroom.query.api.v2.TimeZone$Use.toString()
+class stroom.query.api.v2.TimeZone$Use - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
+class stroom.query.api.v2.TimeZone$Use - public static stroom.query.api.v2.TimeZone$Use stroom.query.api.v2.TimeZone$Use.valueOf(java.lang.String)
+class stroom.query.api.v2.TimeZone$Use - public static stroom.query.api.v2.TimeZone$Use[] stroom.query.api.v2.TimeZone$Use.values()
