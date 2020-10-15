@@ -34,6 +34,11 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
         refreshNavigator();
     }
 
+
+    public void setRefreshing(final boolean refreshing) {
+        getView().setRefreshing(refreshing);
+    }
+
     public void refreshNavigator() {
         getView().refreshNavigator();
     }
@@ -69,6 +74,8 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
     public interface ItemNavigatorView extends View {
 
         void setDisplay(final HasItems hasItems);
+
+        void setRefreshing(final boolean refreshing);
 
         void refreshNavigator();
 

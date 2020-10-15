@@ -50,7 +50,7 @@ public class SourceConfig extends AbstractConfig {
     private void setDefaults() {
         maxCharactersInPreviewFetch = setDefaultIfUnset(maxCharactersInPreviewFetch, 20_000L);
         maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 50_000L);
-        maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 5_000L);
+        maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 10_000L);
     }
 
     private long setDefaultIfUnset(final long value, final long defaultValue) {

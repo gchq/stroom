@@ -19,6 +19,7 @@ package stroom.data.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -81,10 +82,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
+
+    private static final int MAX_ERRORS_PER_PAGE = 100;
 
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
             .paddingLeft(0.2, Unit.EM)
@@ -103,12 +107,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
             .toSafeStyles();
 
-    private static final String META = "Meta";
-    private static final String META_DATA = "Meta Data";
+    private static final String CHARACTERS_PAGER_TITLE = "Characters";
     private static final String CONTEXT = "Context";
     private static final String ERROR = "Error";
     private static final String INFO = "Info";
-    private static final String CHARACTERS_PAGER_TITLE = "Characters";
+    private static final String META = "Meta";
+    private static final String META_DATA = "Meta Data";
+    private static final String RECORD = "Record";
+    private static final String PART = "Part";
 
     private final TabData errorTab = new TabDataImpl("Error");
     private final TabData dataTab = new TabDataImpl("Data Preview");
@@ -118,6 +124,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
+    private final ItemNavigatorPresenter itemNavigatorPresenter;
     private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
     private final ContentManager contentManager;
@@ -126,7 +133,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private final RestFactory restFactory;
 //    private final PagerRows dataPagerRows;
-    // TODO @AT rename to commonPagerRows
 //    private final PagerRows segmentPagerRows;
     //    private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
 
@@ -134,6 +140,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final boolean userHasPipelineSteppingPermission;
 
     DataNavigatorData dataNavigatorData = new DataNavigatorData();
+
+    final NoNavigatorData noNavigatorData = new NoNavigatorData();
+    final NavigatorData navigatorData = new NavigatorData();
 
     private boolean errorMarkerMode = true;
 
@@ -185,6 +194,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     @Inject
     public DataPresenter(final EventBus eventBus,
                          final HtmlPresenter htmlPresenter,
+                         final ItemNavigatorPresenter itemNavigatorPresenter,
                          final DataView view,
                          final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter,
@@ -196,6 +206,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final RestFactory restFactory) {
         super(eventBus, view);
         this.htmlPresenter = htmlPresenter;
+        this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
@@ -239,7 +250,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         dataNavigatorData = new DataNavigatorData();
 
-        view.setNavigatorData(dataNavigatorData);
+//        view.setNavigatorData(dataNavigatorData);
 
         addTab(infoTab);
         addTab(errorTab);
@@ -249,7 +260,18 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
-        view.setNavigatorClickHandler(this::showSourceLocationPopup);
+//        view.setNavigatorClickHandler(this::showSourceLocationPopup);
+
+        itemNavigatorPresenter.setDisplay(noNavigatorData);
+        view.setNavigatorView(itemNavigatorPresenter.getView());
+    }
+
+    private void setCurrentSegmentNo(final long segmentNo) {
+        this.currentSegmentNo = segmentNo;
+    }
+
+    public void setCurrentPartNo(final long currentPartNo) {
+        this.currentPartNo = currentPartNo;
     }
 
     private void openSourcePresenter() {
@@ -301,7 +323,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     showHtmlPresenter();
                     fetchMetaInfoData(currentMetaId);
                     viewSourceBtn.setVisible(false);
-                    getView().refreshNavigator();
+                    itemNavigatorPresenter.refreshNavigator();
+//                    getView().refreshNavigator();
                 } else {
                     viewSourceBtn.setVisible(true);
                     if (META.equals(tab.getLabel())) {
@@ -568,7 +591,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                             }
                         })
                         .onFailure(caught ->
-                                getView().setRefreshing(false))
+                                itemNavigatorPresenter.setRefreshing(false))
+//                                getView().setRefreshing(false))
                         .call(VIEW_DATA_RESOURCE)
                         .getChildStreamTypes(currentMetaId, currentPartNo);
             }
@@ -664,7 +688,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
         if (currentMetaId != null) {
-            getView().setRefreshing(true);
+            itemNavigatorPresenter.setRefreshing(true);
+//            getView().setRefreshing(true);
 
             // Create the action queue and delayed refresh timer if we haven't
             // already.
@@ -697,10 +722,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                                     // update the text.
                                     if (actionQueue.size() == 0) {
                                         setPageResponse(result, request.isFireEvents());
-                                        getView().setRefreshing(false);
+                                        itemNavigatorPresenter.setRefreshing(false);
                                     }
                                 })
-                                .onFailure(caught -> getView().setRefreshing(false))
+                                .onFailure(caught -> itemNavigatorPresenter.setRefreshing(false))
                                 .call(VIEW_DATA_RESOURCE)
                                 .fetch(request);
                     }
@@ -736,7 +761,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
 //                getView().setSegmentPagerToVisibleState(true);
 
-                dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
+//                dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
+
+                navigatorData.updateStateForMultiItemsPerPage(
+                        result.getTotalItemCount(),
+                        this::setCurrentSegmentNo,
+                        result::getItemRange,
+                        ERROR,
+                        MAX_ERRORS_PER_PAGE);
 
 //                commonPagerOffset = result.getPageRange().getOffset().intValue();
 
@@ -764,7 +796,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
 //                    getView().setSegmentPagerToVisibleState(false);
 
-                    dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
+//                    dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
+
+                    navigatorData.updateStateForOneItemPerPage(
+                            result.getTotalItemCount(),
+                            this::setCurrentSegmentNo,
+                            this::getCurrentSegmentNo,
+                            RECORD);
 
                 } else {
                     // non-segmented
@@ -777,7 +815,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    getView().setSegmentPagerTitle("Part");
 //                    segmentPagerRows.setVisibleRangeHandler(this::handlePartNoRangeChange);
 
-                    dataNavigatorData.updatePartsCount(result.getTotalItemCount());
+//                    dataNavigatorData.updatePartsCount(result.getTotalItemCount());
+
+                    navigatorData.updateStateForOneItemPerPage(
+                            result.getTotalItemCount(),
+                            this::setCurrentPartNo,
+                            this::getCurrentPartNo,
+                            PART);
                 }
             }
 
@@ -927,6 +971,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             hideTab(contextTab, true);
 
             showHtmlPresenter();
+            itemNavigatorPresenter.setDisplay(noNavigatorData);
 
 //        } else if (steppingSource) {
 //            // Hide all links except data.
@@ -976,21 +1021,26 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 hideTab(contextTab, true);
             }
             // Now we have changed tabs, ensure the nav visibility is right
-            getView().refreshNavigator();
+//            getView().refreshNavigator();
+            itemNavigatorPresenter.refreshNavigator();
         }
 //        lastStreamType = streamType;
         lastTabName = getView().getTabBar().getSelectedTab().getLabel();
     }
 
     private void showHtmlPresenter() {
+        itemNavigatorPresenter.setDisplay(noNavigatorData);
         getView().getLayerContainer().show(htmlPresenter);
     }
 
     private void showTextPresenter() {
+        itemNavigatorPresenter.setDisplay(navigatorData);
         getView().getLayerContainer().show(textPresenter);
     }
 
     private void showMarkerPresenter() {
+        // TODO @AT Need one for marker data
+        itemNavigatorPresenter.setDisplay(navigatorData);
         getView().getLayerContainer().show(markerListPresenter);
     }
 
@@ -1006,7 +1056,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         refreshMetaInfoPresenterContent(result.getSourceLocation().getId());
 
-        getView().refreshNavigator();
+//        getView().refreshNavigator();
+        itemNavigatorPresenter.refreshNavigator();
 
         refreshHighlights(result);
         refreshMarkers(result);
@@ -1256,13 +1307,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         LayerContainer getLayerContainer();
 
-        void setNavigatorData(final HasSubStreams dataNavigatorData);
+//        void setNavigatorData(final HasSubStreams dataNavigatorData);
+//
+//        void refreshNavigator();
+//
+//        void setRefreshing(boolean refreshing);
+//
+//        void setNavigatorClickHandler(final Runnable clickHandler);
 
-        void refreshNavigator();
-
-        void setRefreshing(boolean refreshing);
-
-        void setNavigatorClickHandler(final Runnable clickHandler);
+        void setNavigatorView(ItemNavigatorView itemNavigatorView);
     }
 
 //    private static abstract class PagerRows implements HasRows {
@@ -1492,7 +1545,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             } else if (DataType.MARKER.equals(getCurDataType())) {
                 return Optional.of(ERROR);
             } else if (DataType.SEGMENTED.equals(getCurDataType())) {
-                return Optional.of("Record");
+                return Optional.of(RECORD);
             } else {
                 return Optional.empty();
             }
@@ -1551,32 +1604,208 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-    private class SegmentedNavigatorData implements HasItems {
-
-        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
-
-        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
-            this.segmentsCount = segmentsCount;
-        }
+    private class NoNavigatorData implements HasItems {
 
         @Override
         public String getName() {
-            return "Record";
+            return "";
         }
 
         @Override
-        public long getItemNo() {
-            return 0;
+        public OffsetRange<Long> getItemRange() {
+            return OffsetRange.of(0L,1L);
         }
 
         @Override
         public void setItemNo(final long itemNo) {
-            setSegmentNo(itemNo);
+
         }
 
         @Override
         public RowCount<Long> getTotalItemsCount() {
-            return segmentsCount;
+            return null;
+        }
+
+        @Override
+        public boolean areNavigationControlsVisible() {
+            return false;
+        }
+
+        @Override
+        public int getMaxItemsPerPage() {
+            return 0;
+        }
+
+        @Override
+        public void firstPage() {
+
+        }
+
+        @Override
+        public void nextPage() {
+
+        }
+
+        @Override
+        public void previousPage() {
+
+        }
+
+        @Override
+        public void lastPage() {
+
+        }
+
+        @Override
+        public void refresh() {
+
+        }
+    }
+
+//    private class SegmentedNavigatorData implements HasItems {
+//
+//        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+//
+//        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+//            this.segmentsCount = segmentsCount;
+//        }
+//
+//        @Override
+//        public String getName() {
+//            return RECORD;
+//        }
+//
+//        @Override
+//        public long getItemNo() {
+//            return 0;
+//        }
+//
+//        @Override
+//        public void setItemNo(final long itemNo) {
+//            setSegmentNo(itemNo);
+//        }
+//
+//        @Override
+//        public RowCount<Long> getTotalItemsCount() {
+//            return segmentsCount;
+//        }
+//
+//        @Override
+//        public boolean areNavigationControlsVisible() {
+//            return true;
+//        }
+//
+//        @Override
+//        public int getMaxItemsPerPage() {
+//            return 1;
+//        }
+//
+//        @Override
+//        public void firstPage() {
+//            setSegmentNo(0);
+//        }
+//
+//        @Override
+//        public void nextPage() {
+//            setSegmentNo(getCurrentSegmentNo() + 1);
+//        }
+//
+//        @Override
+//        public void previousPage() {
+//            setSegmentNo(getCurrentSegmentNo() - 1);
+//        }
+//
+//        @Override
+//        public void lastPage() {
+//            setSegmentNo(getTotalItemsCount().getCount() - 1);
+//        }
+//
+//        @Override
+//        public void refresh() {
+//            update(false);
+//        }
+//
+//        private void setSegmentNo(final long segmentNo) {
+//            currentSegmentNo = segmentNo;
+//            update(false);
+//        }
+//
+//        private long getCurrentSegmentNo() {
+//            return currentSegmentNo;
+//        }
+//    }
+
+    private class NavigatorData implements HasItems {
+
+        private RowCount<Long> totalItemCount = RowCount.of(0L, false);
+        private Consumer<Long> itemNoFromConsumer = null;
+        private Supplier<OffsetRange<Long>> itemRangeSupplier = null;
+//        private long previousItemNo = -1;
+        private String name = "";
+        private int maxItemsPerPage = 1;
+
+        private void updateStateForOneItemPerPage(final RowCount<Long> totalItemCount,
+                                                  final Consumer<Long> itemNoConsumer,
+                                                  final Supplier<Long> itemOffsetSupplier,
+                                                  final String name) {
+            this.totalItemCount = totalItemCount;
+            this.itemNoFromConsumer = itemNoConsumer;
+            this.itemRangeSupplier = () -> OffsetRange.of(itemOffsetSupplier.get(), 1L);
+            this.name = name;
+            this.maxItemsPerPage = 1;
+        }
+
+        private void updateStateForMultiItemsPerPage(final RowCount<Long> totalItemCount,
+                                                     final Consumer<Long> itemNoConsumer,
+                                                     final Supplier<OffsetRange<Long>> itemRangeSupplier,
+                                                     final String name,
+                                                     final int maxItemsPerPage ) {
+            this.totalItemCount = totalItemCount;
+            this.itemNoFromConsumer = itemNoConsumer;
+            this.itemRangeSupplier = itemRangeSupplier;
+            this.name = name;
+            this.maxItemsPerPage = maxItemsPerPage;
+        }
+
+        private void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+            this.totalItemCount = segmentsCount;
+        }
+
+        private void setName(final String name) {
+            this.name = name;
+        }
+
+        private void setTotalItemCount(final RowCount<Long> totalItemCount) {
+            this.totalItemCount = totalItemCount;
+        }
+
+        public void setItemNoFromConsumer(final Consumer<Long> itemNoFromConsumer) {
+            this.itemNoFromConsumer = itemNoFromConsumer;
+        }
+
+        public void setItemRangeSupplier(final Supplier<OffsetRange<Long>> itemRangeSupplier) {
+            this.itemRangeSupplier = itemRangeSupplier;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public OffsetRange<Long> getItemRange() {
+            return itemRangeSupplier.get();
+        }
+
+        @Override
+        public void setItemNo(final long itemNo) {
+            itemNoFromConsumer.accept(itemNo);
+            update(false);
+        }
+
+        @Override
+        public RowCount<Long> getTotalItemsCount() {
+            return totalItemCount;
         }
 
         @Override
@@ -1586,41 +1815,45 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public int getMaxItemsPerPage() {
-            return 1;
+            return maxItemsPerPage;
         }
 
         @Override
         public void firstPage() {
-            setSegmentNo(0);
+            setItemNo(0);
         }
 
         @Override
         public void nextPage() {
-            setSegmentNo(getCurrentSegmentNo() + 1);
+            final long itemOffset = itemRangeSupplier.get().getOffset();
+            if (totalItemCount.isExact()) {
+                setItemNo(Math.min(totalItemCount.getCount(), itemOffset + maxItemsPerPage));
+            } else {
+                setItemNo(itemOffset + maxItemsPerPage);
+            }
         }
 
         @Override
         public void previousPage() {
-            setSegmentNo(getCurrentSegmentNo() - 1);
+            final long itemOffset = itemRangeSupplier.get().getOffset();
+            if (totalItemCount.isExact()) {
+                // Zero based pages
+                int currPage = (int) (itemOffset / maxItemsPerPage);
+                int newPage = Math.max(0, currPage - 1);
+                setItemNo(newPage * maxItemsPerPage);
+            } else {
+                setItemNo(Math.max(0, itemOffset - maxItemsPerPage));
+            }
         }
 
         @Override
         public void lastPage() {
-            setSegmentNo(getTotalItemsCount().getCount() - 1);
+            setItemNo(totalItemCount.getCount() - maxItemsPerPage);
         }
 
         @Override
         public void refresh() {
             update(false);
-        }
-
-        private void setSegmentNo(final long segmentNo) {
-            currentSegmentNo = segmentNo;
-            update(false);
-        }
-
-        private long getCurrentSegmentNo() {
-            return currentSegmentNo;
         }
     }
 }

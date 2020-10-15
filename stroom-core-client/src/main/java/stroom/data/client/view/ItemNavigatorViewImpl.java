@@ -82,31 +82,34 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @Override
     public void setDisplay(final HasItems display) {
         this.display = display;
+        refreshControls();
     }
 
     private void initButtons() {
-        // Char buttons
-        final String lowerCaseName = display.getName().toLowerCase();
-        final String text = display.hasMultipleItemsPerPage()
-                ? "page of " + lowerCaseName + "s"
-                : lowerCaseName;
 
-        firstPageBtn = SvgButton.create(
-                SvgPresets.FAST_BACKWARD_BLUE.title("Show first " + text));
-        previousPageBtn = SvgButton.create(
-                SvgPresets.STEP_BACKWARD_BLUE.title("Previous " + text));
-        nextPageBtn = SvgButton.create(
-                SvgPresets.STEP_FORWARD_BLUE.title("Next " + text));
-        lastPageBtn = SvgButton.create(
-                SvgPresets.FAST_FORWARD_BLUE.title("Last " + text));
-        refreshBtn = SvgButton.create(
-                SvgPresets.REFRESH_BLUE);
+        firstPageBtn = SvgButton.create( SvgPresets.FAST_BACKWARD_BLUE);
+        previousPageBtn = SvgButton.create( SvgPresets.STEP_BACKWARD_BLUE);
+        nextPageBtn = SvgButton.create( SvgPresets.STEP_FORWARD_BLUE);
+        lastPageBtn = SvgButton.create( SvgPresets.FAST_FORWARD_BLUE);
+        refreshBtn = SvgButton.create( SvgPresets.REFRESH_BLUE);
 
         setupButton(firstPageBtn, true, false);
         setupButton(previousPageBtn, true, false);
         setupButton(nextPageBtn, true, false);
         setupButton(lastPageBtn, true, false);
         setupButton(refreshBtn, true, true);
+    }
+
+    private void updateButtonTitles() {
+        final String lowerCaseName = display.getName().toLowerCase();
+        final String text = display.hasMultipleItemsPerPage()
+                ? "page of " + lowerCaseName + "s"
+                : lowerCaseName;
+
+        firstPageBtn.setTitle("First " + text);
+        previousPageBtn.setTitle("Previous " + text);
+        nextPageBtn.setTitle("Next " + text);
+        lastPageBtn.setTitle("Last " + text);
     }
 
     private void setupButton(final SvgButton button,
@@ -125,10 +128,17 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     private void refreshControls() {
         if (display != null && display.areNavigationControlsVisible()) {
 
+            final String offsetFromIncStr = getLongValueForLabel(
+                    Optional.of(display.getItemOffsetFrom()),
+                    ZERO_TO_ONE_BASE_INCREMENT);
+
+            final String offsetToIncStr = getLongValueForLabel(
+                    Optional.of(display.getItemOffsetTo()),
+                    ZERO_TO_ONE_BASE_INCREMENT);
+
             final String lbl = display.getName() + " "
-                    + getLongValueForLabel(
-                            Optional.of(display.getItemNo()),
-                            ZERO_TO_ONE_BASE_INCREMENT)
+                    + offsetFromIncStr
+                    + (display.hasMultipleItemsPerPage() ? " to " + offsetToIncStr : "")
                     + " of "
                     + getLongValueForLabel(display.getTotalItemsCount().asOptional());
 
@@ -139,6 +149,8 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             nextPageBtn.setEnabled(!display.isLastPage());
             lastPageBtn.setEnabled(!display.isLastPage());
+
+            updateButtonTitles();
 
             setControlVisibility(true);
         } else {
@@ -162,7 +174,8 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     private String getLongValueForLabel(final Optional<Long> value, final int increment) {
         // Increment allows for switching from zero to one based
         return value
-                .map(val -> val + increment)
+                .map(val ->
+                        val + increment)
                 .map(val -> {
                     final NumberFormat formatter = NumberFormat.getFormat(NUMBER_FORMAT);
                     return formatter.format(val);
@@ -187,34 +200,34 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     // Characters UI handlers
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    @UiHandler("lblCharacters")
+    @UiHandler("lblDetail")
     public void onClickLabel(final ClickEvent event) {
         labelClickHandler.onClick(event);
     }
 
-    @UiHandler("firstItemBtn")
-    void onClickFirstItem(final ClickEvent event) {
+    @UiHandler("firstPageBtn")
+    void onClickFirstPageBtn(final ClickEvent event) {
         if (display != null) {
             display.firstPage();
         }
     }
 
-    @UiHandler("previousItemBtn")
-    void onClickNextItem(final ClickEvent event) {
+    @UiHandler("previousPageBtn")
+    void onClickNextPageBtn(final ClickEvent event) {
         if (display != null) {
             display.previousPage();
         }
     }
 
-    @UiHandler("nextItemBtn")
-    void onClickPreviousItem(final ClickEvent event) {
+    @UiHandler("nextPageBtn")
+    void onClickPreviousPageBtn(final ClickEvent event) {
         if (display != null) {
             display.nextPage();
         }
     }
 
-    @UiHandler("lastItemBtn")
-    void onClickLastItem(final ClickEvent event) {
+    @UiHandler("lastPageBtn")
+    void onClickLastPageBtn(final ClickEvent event) {
         if (display != null) {
             display.lastPage();
         }
@@ -231,6 +244,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         refreshControls();
     }
 
+    @Override
     public void setRefreshing(final boolean refreshing) {
         if (refreshing) {
             refreshBtn.getElement().addClassName("fa-spin");
@@ -239,6 +253,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         }
     }
 
+    @Override
     public void setLabelClickHandler(final ClickHandler labelClickHandler) {
         this.labelClickHandler = labelClickHandler;
     }

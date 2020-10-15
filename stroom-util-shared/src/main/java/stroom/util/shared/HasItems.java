@@ -9,11 +9,31 @@ public interface HasItems {
     String getName();
 
     /**
-     * @return The first item number on the page, zero based.
+     * Called when the navigator needs the item range
+     * @return The range of items on the page, zero based.
      */
-    long getItemNo();
+    OffsetRange<Long> getItemRange();
 
     /**
+     * Called when the navigator needs the item from offset.
+     * Inclusive
+     * @return The first item number on the page, zero based.
+     */
+    default long getItemOffsetFrom() {
+        return getItemRange().getOffset();
+    }
+
+    /**
+     * Called when the navigator needs the item to offset.
+     * Inclusive
+     * @return The last item number on the page, zero based.
+     */
+    default long getItemOffsetTo() {
+        return getItemRange().getOffset() + getItemRange().getLength() - 1;
+    }
+
+    /**
+     * Called when the navigator sets the item no.
      * @param itemNo The first item number on the page, zero based.
      */
     void setItemNo(final long itemNo);
@@ -55,13 +75,16 @@ public interface HasItems {
 
     default boolean isFirstPage() {
         // Zero based
-        return getItemNo() == 0;
+        return getItemRange().getOffset() == 0;
     }
 
     default boolean isLastPage() {
         // Zero based
-        final long lastPossibleItemNoOnPage = getItemNo() + getMaxItemsPerPage() - 1;
-        return getTotalItemsCount().isExact()
-                && getTotalItemsCount().getCount() - 1 < lastPossibleItemNoOnPage;
+        if (getTotalItemsCount().isExact()) {
+            final long lastPossibleItemOffsetOnPage = getItemRange().getOffset() + getMaxItemsPerPage() - 1;
+            return getTotalItemsCount().getCount() - 1 <= lastPossibleItemOffsetOnPage;
+        } else {
+            return false;
+        }
     }
 }

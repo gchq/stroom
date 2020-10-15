@@ -18,6 +18,10 @@ package stroom.data.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.client.presenter.CharacterNavigatorPresenter;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPopupSupport;
@@ -26,6 +30,10 @@ import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.data.client.presenter.ItemNavigatorPresenter;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.presenter.ItemSelectionPresenter;
+import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.StreamView;
@@ -42,9 +50,13 @@ import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.client.view.CharacterNavigatorViewImpl;
+import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
+import stroom.data.client.view.ItemNavigatorViewImpl;
+import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceLocationViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
@@ -52,12 +64,6 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.StreamViewImpl;
 import stroom.data.client.view.TextViewImpl;
-import stroom.data.client.view.CharacterNavigatorViewImpl;
-import stroom.data.client.view.CharacterRangeSelectionViewImpl;
-import stroom.data.client.presenter.CharacterNavigatorPresenter;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -127,6 +133,14 @@ public class StreamStoreModule extends PluginModule {
                 CharacterNavigatorPresenter.class,
                 CharacterNavigatorView.class,
                 CharacterNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemNavigatorPresenter.class,
+                ItemNavigatorView.class,
+                ItemNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemSelectionPresenter.class,
+                ItemSelectionView.class,
+                ItemSelectionViewImpl.class);
         bind(MetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);

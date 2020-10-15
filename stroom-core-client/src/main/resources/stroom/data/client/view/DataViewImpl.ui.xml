@@ -36,7 +36,7 @@
 		padding-top: 1px;
 		}
 
-		.subStreamNavigator {
+		.navigatorContainer {
 		float: right;
 		text-align: right;
 		}
@@ -49,14 +49,21 @@
 		</g:center>
 		<g:north size="20">
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
-				<g:east size="650">
-					<v:ResizeFlowPanel width="100%" height="100%">
-						<pager:SubStreamNavigator
-                                ui:field="subStreamNavigator"
-								styleName="{style.subStreamNavigator}"
-								visible="false"/>
+				<g:east size="250">
+                    <g:HorizontalPanel width="100%" height="100%">
 						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
-					</v:ResizeFlowPanel>
+						<v:ResizeSimplePanel ui:field="navigatorContainer" width="100%" height="100%" />
+					</g:HorizontalPanel>
+<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
+<!--					</v:ResizeFlowPanel>-->
+
+<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
+<!--						<pager:SubStreamNavigator-->
+<!--                                ui:field="subStreamNavigator"-->
+<!--								styleName="{style.subStreamNavigator}"-->
+<!--								visible="false"/>-->
+<!--						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>-->
+<!--					</v:ResizeFlowPanel>-->
 				</g:east>
 				<g:center>
 					<v:ResizeFlowPanel styleName="{style.tabBarOuter}">

@@ -29,13 +29,13 @@ public class ItemSelectionPresenter extends MyPresenterWidget<ItemSelectionView>
 
     private void write() {
         final long newItemNo = getView().getItemNo();
-        if (newItemNo != display.getItemNo()) {
+        if (newItemNo != display.getItemRange().getOffset()) {
             display.setItemNo(getView().getItemNo());
         }
     }
 
     private void read() {
-        getView().setItemNo(display.getItemNo());
+        getView().setItemNo(display.getItemRange().getOffset());
         getView().setTotalItemsCount(display.getTotalItemsCount());
     }
 

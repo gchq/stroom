@@ -1,0 +1,40 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:btn="urn:import:stroom.widget.button.client">
+    <ui:style>
+        .itemNavigator {
+        position: relative;
+        text-align: right;
+        }
+
+        .label {
+        display: inline-block;
+        margin: 0px;
+        margin-top: 2px;
+        cursor: pointer;
+        padding-left: 0.75em;
+        padding-right: 0.75em;
+        }
+
+        .label:hover {
+        text-decoration: underline;
+        }
+
+        .button {
+        padding: 1px;
+        text-align: center;
+        }
+    </ui:style>
+
+    <g:FlowPanel styleName="{style.itemNavigator}">
+
+        <g:Label ui:field="lblDetail" styleName="{style.label}"/>
+        <btn:SvgButton ui:field="firstPageBtn"/>
+        <btn:SvgButton ui:field="previousPageBtn"/>
+        <btn:SvgButton ui:field="nextPageBtn"/>
+        <btn:SvgButton ui:field="lastPageBtn"/>
+
+        <btn:SvgButton ui:field="refreshBtn" />
+    </g:FlowPanel>
+</ui:UiBinder>

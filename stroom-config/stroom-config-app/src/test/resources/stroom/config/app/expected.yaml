@@ -797,6 +797,10 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    source:
+      maxCharactersInPreviewFetch: 20000
+      maxCharactersPerFetch: 50000
+      maxCharactersToCompleteLine: 10000
     splash:
       enabled: false
       title: "Splash Screen"

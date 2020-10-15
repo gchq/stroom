@@ -17,12 +17,12 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
-import stroom.data.pager.client.SubStreamNavigator;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.svg.client.SvgPreset;
-import stroom.util.shared.HasSubStreams;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,8 +44,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @UiField
     ButtonPanel buttonPanel;
 
+//    @UiField
+//    SubStreamNavigator subStreamNavigator;
+
     @UiField
-    SubStreamNavigator subStreamNavigator;
+    ResizeSimplePanel navigatorContainer;
 
 //    @UiField
 //    Pager segmentPager;
@@ -63,7 +66,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //        rawBtn = SvgButton.create(SvgPresets.RAW.title("View Raw"));
 //        formattedBtn = SvgButton.create(SvgPresets.FORMAT.title("View Formatted"));
 
-        subStreamNavigator.setVisible(false);
+//        subStreamNavigator.setVisible(false);
 //        dataNavigator.setDisplay(new HasCharacterData() {
 //            @Override
 //            public boolean isMultiPart() {
@@ -129,7 +132,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //
 //            }
 //        });
-        subStreamNavigator.refresh();
+//        subStreamNavigator.refresh();
     }
 
     @Override
@@ -198,24 +201,29 @@ public class DataViewImpl extends ViewImpl implements DataView {
         return layerContainer;
     }
 
-    @Override
-    public void setRefreshing(final boolean refreshing) {
-        subStreamNavigator.setRefreshing(refreshing);
-    }
+//    @Override
+//    public void setRefreshing(final boolean refreshing) {
+//        subStreamNavigator.setRefreshing(refreshing);
+//    }
+//
+//    @Override
+//    public void setNavigatorData(final HasSubStreams dataNavigatorData) {
+//        subStreamNavigator.setDisplay(dataNavigatorData);
+//    }
+//
+//    @Override
+//    public void refreshNavigator() {
+//        subStreamNavigator.refresh();
+//    }
+//
+//    @Override
+//    public void setNavigatorClickHandler(final Runnable clickHandler) {
+//        subStreamNavigator.setClickHandler(clickHandler);
+//    }
 
     @Override
-    public void setNavigatorData(final HasSubStreams dataNavigatorData) {
-        subStreamNavigator.setDisplay(dataNavigatorData);
-    }
-
-    @Override
-    public void refreshNavigator() {
-        subStreamNavigator.refresh();
-    }
-
-    @Override
-    public void setNavigatorClickHandler(final Runnable clickHandler) {
-        subStreamNavigator.setClickHandler(clickHandler);
+    public void setNavigatorView(final ItemNavigatorView itemNavigatorView) {
+        navigatorContainer.setWidget(itemNavigatorView.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {
