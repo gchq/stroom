@@ -109,6 +109,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final String META = "Meta";
     private static final String META_DATA = "Meta Data";
     private static final String RECORD = "Record";
+    private static final String PAGE = "Page";
     private static final String PART = "Part";
 
     private final TabData errorTab = new TabDataImpl("Error");
@@ -649,6 +650,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         doWithConfig(sourceConfig -> {
             final DataRange dataRange;
+            // Error markers are a bit different
             if (errorMarkerMode) {
                 dataRange = DataRange.from(0);
             } else {
@@ -763,12 +765,21 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
 //                dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
 
-                navigatorData.updateStateForMultiItemsPerPage(
-                        result.getTotalItemCount(),
-                        this::setCurrentSegmentNo,
-                        result::getItemRange,
-                        ERROR,
-                        SourceLocation.MAX_ERRORS_PER_PAGE);
+//                navigatorData.updateStateForMultiItemsPerPage(
+//                        result.getTotalItemCount(),
+//                        this::setCurrentSegmentNo,
+//                        result::getItemRange,
+//                        ERROR,
+//                        SourceLocation.MAX_ERRORS_PER_PAGE);
+
+                final RowCount<Long> totalPageCount = RowCount.of(result.getTotalItemCount().getCount()
+                        / SourceLocation.MAX_ERRORS_PER_PAGE + 1, true);
+
+                navigatorData.updateStateForOneItemPerPage(
+                        totalPageCount,
+                        this::setCurrentErrorsPageOffset,
+                        this::getCurrentErrorsPageOffset,
+                        PAGE);
 
 //                commonPagerOffset = result.getPageRange().getOffset().intValue();
 
@@ -869,6 +880,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        currentSegmentNo = range.getStart();
 //        update(false);
 //    }
+
+    long getCurrentErrorsPageOffset() {
+        return currentSegmentNo / SourceLocation.MAX_ERRORS_PER_PAGE;
+    }
+
+    void setCurrentErrorsPageOffset(final long pageOffset) {
+        currentSegmentNo = pageOffset * SourceLocation.MAX_ERRORS_PER_PAGE;
+    }
 
     private void setPageResponse(final AbstractFetchDataResult result,
                                  final boolean fireEvents) {
