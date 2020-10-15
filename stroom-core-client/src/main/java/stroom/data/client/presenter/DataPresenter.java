@@ -43,7 +43,6 @@ import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasItems;
-import stroom.util.shared.HasSubStreams;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -52,7 +51,6 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -88,8 +86,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
-    private static final int MAX_ERRORS_PER_PAGE = 100;
-
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
             .paddingLeft(0.2, Unit.EM)
             .trustedColor("#1e88e5")
@@ -107,7 +103,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
             .toSafeStyles();
 
-    private static final String CHARACTERS_PAGER_TITLE = "Characters";
     private static final String CONTEXT = "Context";
     private static final String ERROR = "Error";
     private static final String INFO = "Info";
@@ -125,7 +120,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
-    private final SourceLocationPresenter sourceLocationPresenter;
+//    private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
     private final ContentManager contentManager;
     private final SourceTabPlugin sourceTabPlugin;
@@ -139,7 +134,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //    private final Map<String, DataRange> dataTypeRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
 
-    DataNavigatorData dataNavigatorData = new DataNavigatorData();
+//    DataNavigatorData dataNavigatorData = new DataNavigatorData();
 
     final NoNavigatorData noNavigatorData = new NoNavigatorData();
     final NavigatorData navigatorData = new NavigatorData();
@@ -198,7 +193,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final DataView view,
                          final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter,
-                         final SourceLocationPresenter sourceLocationPresenter,
+//                         final SourceLocationPresenter sourceLocationPresenter,
                          final ContentManager contentManager,
                          final SourceTabPlugin sourceTabPlugin,
                          final UiConfigCache uiConfigCache,
@@ -210,7 +205,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.textPresenter = textPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
-        this.sourceLocationPresenter = sourceLocationPresenter;
+//        this.sourceLocationPresenter = sourceLocationPresenter;
         this.contentManager = contentManager;
         this.sourceTabPlugin = sourceTabPlugin;
         this.uiConfigCache = uiConfigCache;
@@ -248,7 +243,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        view.setSegmentPagerToVisibleState(false);
 //        view.setDataPagerTitle(CHARACTERS_PAGER_TITLE);
 
-        dataNavigatorData = new DataNavigatorData();
+//        dataNavigatorData = new DataNavigatorData();
 
 //        view.setNavigatorData(dataNavigatorData);
 
@@ -382,55 +377,55 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
        }
     }
 
-    private void showSourceLocationPopup() {
-        if (lastResult != null && lastResult.getSourceLocation() != null) {
-            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
-
-            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
-            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
-
-            if (isCurrentDataMultiPart()) {
-                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
-            } else {
-                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
-            }
-
-            if (isCurrentDataSegmented()) {
-                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
-            } else {
-                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
-            }
-            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
-            sourceLocationPresenter.setCharacterControlsVisible(! (lastResult instanceof FetchMarkerResult));
-        }
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                sourceLocationPresenter.hide(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
-                    currentPartNo = newSourceLocation.getPartNo();
-                    currentSegmentNo = newSourceLocation.getSegmentNo();
-//                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
-
-                    update(false);
-
-                    // TODO @AT set all the values
-
-//                    final String schedule = schedulePresenter.getScheduleString();
-//                    jobNode.setSchedule(schedule);
-//                    final Rest<JobNode> rest = restFactory.create();
-//                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(), schedule);
-                }
-            }
-        };
-        sourceLocationPresenter.show(popupUiHandlers);
-    }
+//    private void showSourceLocationPopup() {
+//        if (lastResult != null && lastResult.getSourceLocation() != null) {
+//            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
+//
+//            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
+//            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
+//
+//            if (isCurrentDataMultiPart()) {
+//                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
+//            } else {
+//                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
+//            }
+//
+//            if (isCurrentDataSegmented()) {
+//                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
+//            } else {
+//                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
+//            }
+//            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
+//            sourceLocationPresenter.setCharacterControlsVisible(! (lastResult instanceof FetchMarkerResult));
+//        }
+//
+//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+//            @Override
+//            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                sourceLocationPresenter.hide(autoClose, ok);
+//            }
+//
+//            @Override
+//            public void onHide(final boolean autoClose, final boolean ok) {
+//                if (ok) {
+//                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
+//                    currentPartNo = newSourceLocation.getPartNo();
+//                    currentSegmentNo = newSourceLocation.getSegmentNo();
+////                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
+//
+//                    update(false);
+//
+//                    // TODO @AT set all the values
+//
+////                    final String schedule = schedulePresenter.getScheduleString();
+////                    jobNode.setSchedule(schedule);
+////                    final Rest<JobNode> rest = restFactory.create();
+////                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(), schedule);
+//                }
+//            }
+//        };
+//        sourceLocationPresenter.show(popupUiHandlers);
+//    }
 
     @Override
     public void clear() {
@@ -653,8 +648,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    : 0;
 
         doWithConfig(sourceConfig -> {
-            final DataRange dataRange = DataRange.from(0,
-                    sourceConfig.getMaxCharactersInPreviewFetch());
+            final DataRange dataRange;
+            if (errorMarkerMode) {
+                dataRange = DataRange.from(0);
+            } else {
+                dataRange = DataRange.from(0,
+                        sourceConfig.getMaxCharactersInPreviewFetch());
+            }
 
             // TODO @AT Do we need to pass the highlight?
             final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
@@ -768,7 +768,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         this::setCurrentSegmentNo,
                         result::getItemRange,
                         ERROR,
-                        MAX_ERRORS_PER_PAGE);
+                        SourceLocation.MAX_ERRORS_PER_PAGE);
 
 //                commonPagerOffset = result.getPageRange().getOffset().intValue();
 
@@ -1445,166 +1445,125 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        }
 //    }
 
-    private class DataNavigatorData implements HasSubStreams {
-
-        private RowCount<Long> partsCount = RowCount.of(0L, false);
-        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
-
-        public void updatePartsCount(final RowCount<Long> partsCount) {
-            this.partsCount = partsCount;
-        }
-
-        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
-            this.segmentsCount = segmentsCount;
-        }
-
-        @Override
-        public boolean areNavigationControlsVisible() {
-            if (getView().getTabBar() != null && getView().getTabBar().getSelectedTab() != null) {
-                return !INFO.equals(getView().getTabBar().getSelectedTab().getLabel());
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public boolean isMultiPart() {
-            // For now assume segmented and multi-part are mutually exclusive
-            return isCurrentDataMultiPart();
-        }
-
-        @Override
-        public Optional<Long> getPartNo() {
-            return Optional.of(getCurrentPartNo());
-//            return Optional.ofNullable(currentSourceLocation)
-//                    .map(SourceLocation::getPartNo);
-        }
-
-        @Override
-        public Optional<Long> getTotalParts() {
-            return Optional.ofNullable(partsCount)
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
-        }
-
-        @Override
-        public void setPartNo(final long partNo) {
-            currentPartNo = partNo;
-            update(false);
-        }
-
-        @Override
-        public boolean isSegmented() {
-            return isCurrentDataSegmented();
-        }
-
-        @Override
-        public boolean canDisplayMultipleSegments() {
-            return isCurrentDataSegmented()
-                    && getCurDataType().equals(DataType.MARKER);
-        }
-
-        @Override
-        public Optional<Long> getSegmentNoFrom() {
-            final AbstractFetchDataResult lastResult = getLastResult();
-
-            if (lastResult != null && isSegmented()) {
-                return Optional.ofNullable(lastResult)
-                        .map(AbstractFetchDataResult::getItemRange)
-                        .map(OffsetRange::getOffset);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<Long> getSegmentNoTo() {
-            final AbstractFetchDataResult lastResult = getLastResult();
-
-            if (lastResult != null && isSegmented()) {
-                return Optional.ofNullable(lastResult)
-                        .map(AbstractFetchDataResult::getItemRange)
-                        .map(range -> range.getOffset() + range.getLength() - 1);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<Long> getTotalSegments() {
-            return Optional.ofNullable(segmentsCount)
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
-        }
-
-        @Override
-        public Optional<String> getSegmentName() {
-            final AbstractFetchDataResult lastResult = getLastResult();
-            if (lastResult == null) {
-                return Optional.empty();
-            } else if (DataType.MARKER.equals(getCurDataType())) {
-                return Optional.of(ERROR);
-            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
-                return Optional.of(RECORD);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public void setSegmentNoFrom(final long segmentNoFrom) {
-            currentSegmentNo = segmentNoFrom;
-            update(false);
-        }
-
-//        @Override
-//        public boolean canNavigateCharacterData() {
-//            // We are only previewing formatted data so don't want to page around the data
-//            return false;
+//    private class DataNavigatorData implements HasSubStreams {
+//
+//        private RowCount<Long> partsCount = RowCount.of(0L, false);
+//        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+//
+//        public void updatePartsCount(final RowCount<Long> partsCount) {
+//            this.partsCount = partsCount;
+//        }
+//
+//        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+//            this.segmentsCount = segmentsCount;
 //        }
 //
 //        @Override
-//        public Optional<Long> getCharFrom() {
-//            return Optional.empty();
+//        public boolean areNavigationControlsVisible() {
+//            if (getView().getTabBar() != null && getView().getTabBar().getSelectedTab() != null) {
+//                return !INFO.equals(getView().getTabBar().getSelectedTab().getLabel());
+//            } else {
+//                return false;
+//            }
 //        }
 //
 //        @Override
-//        public Optional<Long> getCharTo() {
-//            return Optional.empty();
+//        public boolean isMultiPart() {
+//            // For now assume segmented and multi-part are mutually exclusive
+//            return isCurrentDataMultiPart();
 //        }
 //
 //        @Override
-//        public Optional<Long> getTotalChars() {
-//            return Optional.empty();
+//        public Optional<Long> getPartNo() {
+//            return Optional.of(getCurrentPartNo());
+////            return Optional.ofNullable(currentSourceLocation)
+////                    .map(SourceLocation::getPartNo);
 //        }
 //
 //        @Override
-//        public Optional<Long> getTotalLines() {
-//            return Optional.empty();
+//        public Optional<Long> getTotalParts() {
+//            return Optional.ofNullable(partsCount)
+//                    .filter(RowCount::isExact)
+//                    .map(RowCount::getCount);
 //        }
 //
 //        @Override
-//        public void showHeadCharacters() {
-//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        public void setPartNo(final long partNo) {
+//            currentPartNo = partNo;
+//            update(false);
 //        }
 //
 //        @Override
-//        public void advanceCharactersForward() {
-//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        public boolean isSegmented() {
+//            return isCurrentDataSegmented();
 //        }
 //
 //        @Override
-//        public void advanceCharactersBackwards() {
-//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        public boolean canDisplayMultipleSegments() {
+//            return isCurrentDataSegmented()
+//                    && getCurDataType().equals(DataType.MARKER);
 //        }
+//
+//        @Override
+//        public Optional<Long> getSegmentNoFrom() {
+//            final AbstractFetchDataResult lastResult = getLastResult();
+//
+//            if (lastResult != null && isSegmented()) {
+//                return Optional.ofNullable(lastResult)
+//                        .map(AbstractFetchDataResult::getItemRange)
+//                        .map(OffsetRange::getOffset);
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public Optional<Long> getSegmentNoTo() {
+//            final AbstractFetchDataResult lastResult = getLastResult();
+//
+//            if (lastResult != null && isSegmented()) {
+//                return Optional.ofNullable(lastResult)
+//                        .map(AbstractFetchDataResult::getItemRange)
+//                        .map(range -> range.getOffset() + range.getLength() - 1);
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public Optional<Long> getTotalSegments() {
+//            return Optional.ofNullable(segmentsCount)
+//                    .filter(RowCount::isExact)
+//                    .map(RowCount::getCount);
+//        }
+//
+//        @Override
+//        public Optional<String> getSegmentName() {
+//            final AbstractFetchDataResult lastResult = getLastResult();
+//            if (lastResult == null) {
+//                return Optional.empty();
+//            } else if (DataType.MARKER.equals(getCurDataType())) {
+//                return Optional.of(ERROR);
+//            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
+//                return Optional.of(RECORD);
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public void setSegmentNoFrom(final long segmentNoFrom) {
+//            currentSegmentNo = segmentNoFrom;
+//            update(false);
+//        }
+//
+//        @Override
+//        public void refresh() {
+//            update(false);
+//        }
+//    }
 
-        @Override
-        public void refresh() {
-            update(false);
-        }
-    }
-
-    private class NoNavigatorData implements HasItems {
+    private static class NoNavigatorData implements HasItems {
 
         @Override
         public String getName() {
@@ -1618,7 +1577,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setItemNo(final long itemNo) {
-
         }
 
         @Override
@@ -1638,102 +1596,24 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void firstPage() {
-
         }
 
         @Override
         public void nextPage() {
-
         }
 
         @Override
         public void previousPage() {
-
         }
 
         @Override
         public void lastPage() {
-
         }
 
         @Override
         public void refresh() {
-
         }
     }
-
-//    private class SegmentedNavigatorData implements HasItems {
-//
-//        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
-//
-//        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
-//            this.segmentsCount = segmentsCount;
-//        }
-//
-//        @Override
-//        public String getName() {
-//            return RECORD;
-//        }
-//
-//        @Override
-//        public long getItemNo() {
-//            return 0;
-//        }
-//
-//        @Override
-//        public void setItemNo(final long itemNo) {
-//            setSegmentNo(itemNo);
-//        }
-//
-//        @Override
-//        public RowCount<Long> getTotalItemsCount() {
-//            return segmentsCount;
-//        }
-//
-//        @Override
-//        public boolean areNavigationControlsVisible() {
-//            return true;
-//        }
-//
-//        @Override
-//        public int getMaxItemsPerPage() {
-//            return 1;
-//        }
-//
-//        @Override
-//        public void firstPage() {
-//            setSegmentNo(0);
-//        }
-//
-//        @Override
-//        public void nextPage() {
-//            setSegmentNo(getCurrentSegmentNo() + 1);
-//        }
-//
-//        @Override
-//        public void previousPage() {
-//            setSegmentNo(getCurrentSegmentNo() - 1);
-//        }
-//
-//        @Override
-//        public void lastPage() {
-//            setSegmentNo(getTotalItemsCount().getCount() - 1);
-//        }
-//
-//        @Override
-//        public void refresh() {
-//            update(false);
-//        }
-//
-//        private void setSegmentNo(final long segmentNo) {
-//            currentSegmentNo = segmentNo;
-//            update(false);
-//        }
-//
-//        private long getCurrentSegmentNo() {
-//            return currentSegmentNo;
-//        }
-//    }
 
     private class NavigatorData implements HasItems {
 

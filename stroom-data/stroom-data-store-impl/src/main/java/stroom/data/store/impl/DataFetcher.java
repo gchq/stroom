@@ -100,9 +100,6 @@ public class DataFetcher {
      */
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
-    // Max chars we can return
-    private static final int MAX_ERRORS_ON_PAGE = 500; // TODO get from config
-
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
 
@@ -371,13 +368,13 @@ public class DataFetcher {
         if (pageOffset >= markersList.size()) {
             pageOffset = markersList.size() - 1;
         }
-        final long max = pageOffset + MAX_ERRORS_ON_PAGE;
-//        final long max = pageOffset + 1;  // TODO do we only want one error at a time?
+        final long max = pageOffset + SourceLocation.MAX_ERRORS_PER_PAGE;
         final long totalResults = markersList.size();
         final long nonSummaryResults = markersList.stream()
                 .filter(marker -> !(marker instanceof Summary))
                 .count();
         final List<Marker> resultList = new ArrayList<>();
+
         for (long i = pageOffset; i < max && i < totalResults; i++) {
             resultList.add(markersList.get((int) i));
         }
@@ -390,9 +387,6 @@ public class DataFetcher {
 //                (long) resultList.size());
         final RowCount<Long> totalCharCount = new RowCount<>(0L, true);
 
-//        return new FetchMarkerResult(streamTypeName, classification, resultStreamsRange,
-//                streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
-//                new ArrayList<>(resultList));
         return new FetchMarkerResult(
                 feedName,
                 streamTypeName,
