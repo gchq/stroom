@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1894** : Improvements to search performance and fix for hanging searches.
+
 * Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
 
 * Change dashboard field expression editor to be a bit wider and use a monospace font.

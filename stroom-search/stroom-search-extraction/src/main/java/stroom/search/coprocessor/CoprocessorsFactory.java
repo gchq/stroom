@@ -2,6 +2,7 @@ package stroom.search.coprocessor;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -54,7 +55,12 @@ public class CoprocessorsFactory {
                 final Coprocessor coprocessor = coprocessorFactory.create(coprocessorSettings, fieldIndexMap, paramMap);
 
                 if (coprocessor != null) {
-                    final NewCoprocessor newCoprocessor = new NewCoprocessor(coprocessorKey, coprocessorSettings, fieldIndexMap, errorConsumer, coprocessor);
+                    final NewCoprocessor newCoprocessor = new NewCoprocessor(
+                            coprocessorKey,
+                            coprocessorSettings,
+                            errorConsumer,
+                            coprocessor,
+                            fieldIndexMap);
                     coprocessors.add(newCoprocessor);
                 }
             }
