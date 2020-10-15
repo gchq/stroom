@@ -79,7 +79,7 @@ jar {
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
-    dependsOn test
+//    dependsOn test
 
     // Allows us to build fat jars with lots of files
     zip64 true

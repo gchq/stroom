@@ -246,7 +246,7 @@ jar {
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
-    dependsOn test
+//    dependsOn test
     // We want to compile all GWT and React content before we build the fat jar.
     dependsOn ":stroom-ui:copyYarnBuild"
     dependsOn ":stroom-app-gwt:gwtCompile"
@@ -528,20 +528,20 @@ task buildDistribution(type: Zip) {
     from releaseBuildDir
 }
 
-// Ensure that the test task for this project runs after all other test tasks as
-// this project has all the lengthy int tests so we want it to fail fast
-def thisProject = project;
-rootProject.subprojects { subProj ->
-    //println "subProj ${subProj.name} project ${thisProject.name}"
-    if (!subProj.name.equals(thisProject.name)) {
-        subProj.tasks.withType(Test) { otherTestTask ->
-            //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
-            thisProject.tasks.test.mustRunAfter otherTestTask.path
-            thisProject.tasks.jar.mustRunAfter otherTestTask.path
-            thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
-        }
-    }
-}
+//// Ensure that the test task for this project runs after all other test tasks as
+//// this project has all the lengthy int tests so we want it to fail fast
+//def thisProject = project;
+//rootProject.subprojects { subProj ->
+//    //println "subProj ${subProj.name} project ${thisProject.name}"
+//    if (!subProj.name.equals(thisProject.name)) {
+////        subProj.tasks.withType(Test) { otherTestTask ->
+//            //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
+////            thisProject.tasks.test.mustRunAfter otherTestTask.path
+////            thisProject.tasks.jar.mustRunAfter otherTestTask.path
+////            thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
+////        }
+//    }
+//}
 
 // Ensure all projects have built their jars so swagger can see them
 tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
