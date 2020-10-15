@@ -49,8 +49,6 @@ class ClusterSearchTaskHandler implements Consumer<Error> {
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final CompletionState searchCompletionState = new CompletionState();
-
     private ClusterSearchTask task;
 
     @Inject
@@ -109,7 +107,7 @@ class ClusterSearchTaskHandler implements Consumer<Error> {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    searchCompletionState.complete();
+                    remoteSearchResultFactory.complete();
                 }
             }
         });
