@@ -25,15 +25,8 @@ class Tracker {
         hitCount.incrementAndGet();
     }
 
-    boolean awaitCompletion(final long timeout, final TimeUnit unit) {
-        try {
-            return completed.await(timeout, unit);
-        } catch (final InterruptedException e) {
-            LOGGER.debug(this::toString);
-            // Keep interrupting.
-            Thread.currentThread().interrupt();
-            return true;
-        }
+    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completed.await(timeout, unit);
     }
 
     void complete() {

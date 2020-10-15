@@ -26,7 +26,6 @@ import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.shard.IndexShardSearchFactory;
@@ -37,8 +36,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -89,11 +88,13 @@ class ClusterSearchTaskHandler implements Consumer<Error> {
                     }
 
                     // Create coprocessors.
-                    final Coprocessors coprocessors = coprocessorsFactory.create(task.getCoprocessorMap(), storedFields, query.getParams(), this);
-
+                    final Coprocessors coprocessors = coprocessorsFactory.create(
+                            task.getCoprocessorMap(),
+                            storedFields,
+                            query.getParams(),
+                            this);
                     // Start forwarding data to target node.
                     remoteSearchResultFactory.setCoprocessors(coprocessors);
-                    remoteSearchResultFactory.setSearchComplete(searchCompletionState);
                     remoteSearchResultFactory.setErrors(errors);
                     remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
                     remoteSearchResultFactory.setStarted(true);
@@ -123,32 +124,46 @@ class ClusterSearchTaskHandler implements Consumer<Error> {
 
         try {
             if (task.getShards().size() > 0) {
-                final AtomicLong allDocumentCount = new AtomicLong();
-                final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, rootReceiver, task.getStoredFields(), coprocessors, query);
+                final Receiver extractionReceiver = extractionDecoratorFactory.create(
+                        taskContext,
+                        this,
+                        task.getStoredFields(),
+                        coprocessors,
+                        query);
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                         .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-                indexShardSearchFactory.search(taskContext, task, expression, extractionReceiver);
+                final AtomicLong hitCount = new AtomicLong();
+                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
 
-                // Wait for index search completion.
-                long extractionCount = getMinExtractions(coprocessors.getSet());
-                long documentCount = allDocumentCount.get();
-                while (!Thread.currentThread().isInterrupted() && extractionCount < documentCount) {
-                    log(taskContext, documentCount, extractionCount);
+                // Wait for search completion.
+                boolean allComplete = false;
+                while (!allComplete) {
+                    allComplete = true;
+                    for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                        if (!Thread.currentThread().isInterrupted()) {
+                            taskContext.info(() -> "" +
+                                    "Searching... " +
+                                    "found "
+                                    + hitCount.get() +
+                                    " documents" +
+                                    " performed " +
+                                    coprocessor.getValuesCount().get() +
+                                    " extractions");
 
-                    Thread.sleep(1000);
-
-                    extractionCount = getMinExtractions(coprocessors.getSet());
-                    documentCount = allDocumentCount.get();
+                            final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                            if (!complete) {
+                                allComplete = false;
+                            }
+                        }
+                    }
                 }
-
-                LOGGER.debug(() -> "Complete");
-                Thread.currentThread().interrupt();
             }
+
+            LOGGER.debug(() -> "Complete");
         } catch (final RuntimeException pEx) {
             throw SearchException.wrap(pEx);
         } catch (final InterruptedException pEx) {
@@ -156,17 +171,6 @@ class ClusterSearchTaskHandler implements Consumer<Error> {
             Thread.currentThread().interrupt();
             throw SearchException.wrap(pEx);
         }
-    }
-
-    private void log(final TaskContext taskContext, final long documentCount, final long extractionCount) {
-        taskContext.info(() ->
-                "Searching... " +
-                        "found " + documentCount + " documents" +
-                        " performed " + extractionCount + " extractions");
-    }
-
-    private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {
-        return coprocessorConsumers.stream().mapToLong(NewCoprocessor::getCompletionCount).min().orElse(0);
     }
 
     @Override

@@ -60,13 +60,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 new SearchResponseCreatorCache.Key(searchRequest));
 
         SearchResponse response = searchResponseCreator.create(searchRequest);
-        try {
-            while (!response.complete()) {
-                response = searchResponseCreator.create(searchRequest);
-            }
-        } finally {
-            searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
+        if (!response.complete()) {
+            throw new RuntimeException("NOT COMPLETE");
         }
+        searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(searchRequest.getKey()));
 
         return response;
     }
@@ -78,8 +75,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final int maxShardTasks,
-            final int maxExtractionTasks,
             final IndexStore indexStore,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
@@ -146,11 +141,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final int maxShardTasks,
-            final int maxExtractionTasks,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, maxShardTasks,
-                maxExtractionTasks, indexStore, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
     }
 }

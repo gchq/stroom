@@ -58,13 +58,18 @@ public class SolrSearchFactory {
         solrSearchTaskHandler.exec(taskContext, solrSearchTask);
 
         // Wait until we finish.
-        while (!Thread.currentThread().isInterrupted() &&
-                !tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-            taskContext.info(() -> "" +
-                    "Searching... " +
-                    "found " +
-                    hitCount.get() +
-                    " hits");
+        try {
+            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
+                taskContext.info(() -> "" +
+                        "Searching... " +
+                        "found " +
+                        hitCount.get() +
+                        " hits");
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.debug(this::toString);
+            // Keep interrupting.
+            Thread.currentThread().interrupt();
         }
 
         // Let the receiver know we are complete.

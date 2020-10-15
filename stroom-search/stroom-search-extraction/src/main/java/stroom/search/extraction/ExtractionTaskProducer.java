@@ -43,7 +43,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -58,11 +57,10 @@ class ExtractionTaskProducer extends TaskProducer {
     private final Queue<Consumer<TaskContext>> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final AtomicLong indexSearchTotalValues = new AtomicLong();
-    private final CompletionState indexSearchCompletionState = new CompletionState();
 
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final StreamEventMap streamEventMap;
-    private final LinkedBlockingQueue<Values> storedDataQueue;
+    private final LinkedBlockingQueue<Optional<Values>> storedDataQueue;
     private final ExtractionProgressTracker tracker;
 
     ExtractionTaskProducer(final TaskExecutor taskExecutor,
@@ -94,28 +92,33 @@ class ExtractionTaskProducer extends TaskProducer {
                 LOGGER.debug("Starting extraction task producer");
                 try {
                     while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
-                        // Find out if index searching is complete. If it is then we can assume no more items will be added
-                        // to the values topic.
-                        final boolean indexSearchComplete = indexSearchCompletionState.isComplete();
-
                         try {
                             // Poll for the next set of values.
-                            final Values values = storedDataQueue.poll();
-                            if (values != null) {
+                            final Optional<Values> optional = storedDataQueue.take();
+
+                            // We will have a value here unless index search has finished adding values in which case we
+                            // will have an empty optional.
+                            if (optional.isPresent()) {
                                 try {
                                     // If we have some values then map them.
-                                    streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                    streamMapCreator.addEvent(streamEventMap, optional.get().getValues());
 
                                 } catch (final RuntimeException e) {
                                     LOGGER.debug(e.getMessage(), e);
                                     receivers.values().forEach(receiver ->
                                             receiver.getErrorConsumer().accept(new Error(e.getMessage(), e)));
                                 }
-                            } else if (indexSearchComplete) {
-                                // We got no values from the topic so if index search ois complete then we have finished
-                                // mapping too.
+                            } else {
+                                // We got no values from the topic so index search must have completed and we have also
+                                // completed mapping.
                                 streamMapCreatorCompletionState.complete();
                             }
+                        } catch (final InterruptedException e) {
+                            // Continue to interrupt.
+                            Thread.currentThread().interrupt();
+
+                            LOGGER.debug(e.getMessage(), e);
+                            throw new RuntimeException(e.getMessage(), e);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             throw e;
@@ -152,17 +155,15 @@ class ExtractionTaskProducer extends TaskProducer {
                 parentErrorConsumer,
                 count -> {
                     indexSearchTotalValues.set(count);
-                    indexSearchCompletionState.complete();
+
+                    // Add null values to signal completion.
+                    addToStoredDataQueue(null);
                 });
     }
 
     public void addToStoredDataQueue(final Values t) {
         try {
-            boolean stored = false;
-            while (!tracker.isTerminated() && !stored) {
-                // Loop until item is added or we terminate.
-                stored = storedDataQueue.offer(t, 1, TimeUnit.SECONDS);
-            }
+            storedDataQueue.put(Optional.ofNullable(t));
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();
