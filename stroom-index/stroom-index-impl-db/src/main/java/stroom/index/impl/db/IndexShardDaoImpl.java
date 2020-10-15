@@ -201,7 +201,8 @@ class IndexShardDaoImpl implements IndexShardDao {
             //Check again.
             if (indexVolumes == null || indexVolumes.size() == 0) {
                 throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-                        " available: " + groupNames.stream().collect(Collectors.joining(", ")));
+                        ((groupNames == null || groupNames.size() == 0)? " No index groups defined." :
+                        " Available index volume groups: " + groupNames.stream().collect(Collectors.joining(", "))));
             }
         }
 
