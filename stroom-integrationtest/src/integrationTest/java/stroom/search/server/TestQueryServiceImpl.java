@@ -78,11 +78,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         refQuery.setDashboardId(dashboard.getId());
         refQuery.setQueryId(QUERY_COMPONENT);
         refQuery.setQuery(new Query(dataSourceRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
-        queryService.save(refQuery);
-
-        // Ensure the two query creation times are separated by one second so that ordering by time works correctly in
-        // the test.
-        ThreadUtil.sleep(1000);
+        refQuery = queryService.save(refQuery);
 
         final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
         root.addTerm("Some field", Condition.EQUALS, "Some value");
@@ -90,6 +86,9 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         LOGGER.info(root.toString());
 
         testQuery = queryService.create("Test query");
+        // Ensure the two query creation times are separated by one second so that ordering by time works correctly in
+        // the test.
+        testQuery.setCreateTime(refQuery.getCreateTime() + 1000);
         testQuery.setDashboardId(dashboard.getId());
         testQuery.setQueryId(QUERY_COMPONENT);
         testQuery.setQuery(new Query(dataSourceRef, root.build()));

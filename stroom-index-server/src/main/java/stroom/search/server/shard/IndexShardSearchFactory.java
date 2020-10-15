@@ -26,13 +26,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskWrapper;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Component
@@ -72,7 +73,12 @@ public class IndexShardSearchFactory {
         this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
-    public void search(final ClusterSearchTask task, final ExpressionOperator expression, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
+    public void search(final ClusterSearchTask task,
+                       final ExpressionOperator expression,
+                       final Receiver receiver,
+                       final TaskContext taskContext,
+                       final AtomicLong hitCount,
+                       final HasTerminate hasTerminate) {
         // Reload the index.
         final Index index = indexService.loadByUuid(task.getQuery().getDataSource().getUuid());
 
@@ -84,7 +90,7 @@ public class IndexShardSearchFactory {
         // Create a map of index fields keyed by name.
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
 
-        final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(hasTerminate, task.getShards().size());
+        final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(hasTerminate, hitCount, task.getShards().size());
         if (task.getShards().size() > 0) {
             // Update config for the index shard search task executor.
             indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
@@ -108,13 +114,17 @@ public class IndexShardSearchFactory {
         }
 
         // Wait until we finish.
-        while (!tracker.isComplete()) {
-            taskContext.info(
+        while (!hasTerminate.isTerminated() && !tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
+            taskContext.info("" +
                     "Searching... " +
-                            "found " + tracker.getHitCount() + " hits");
+                    "found "
+                    + hitCount.get() +
+                    " hits");
             LOGGER.debug(tracker::toString);
-            ThreadUtil.sleep(1000);
         }
+
+        // Let the receiver know we are complete.
+        receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task,

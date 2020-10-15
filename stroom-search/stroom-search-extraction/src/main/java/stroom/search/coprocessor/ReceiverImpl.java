@@ -1,23 +1,18 @@
 package stroom.search.coprocessor;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-
 import java.util.function.Consumer;
 
 public class ReceiverImpl implements Receiver {
     private final Consumer<Values> valuesConsumer;
     private final Consumer<Error> errorConsumer;
-    private final Consumer<Long> completionCountConsumer;
-    private final FieldIndexMap fieldIndexMap;
+    private final Consumer<Long> completionConsumer;
 
     public ReceiverImpl(final Consumer<Values> valuesConsumer,
                         final Consumer<Error> errorConsumer,
-                        final Consumer<Long> completionCountConsumer,
-                        final FieldIndexMap fieldIndexMap) {
+                        final Consumer<Long> completionConsumer) {
         this.valuesConsumer = valuesConsumer;
         this.errorConsumer = errorConsumer;
-        this.completionCountConsumer = completionCountConsumer;
-        this.fieldIndexMap = fieldIndexMap;
+        this.completionConsumer = completionConsumer;
     }
 
     @Override
@@ -31,12 +26,7 @@ public class ReceiverImpl implements Receiver {
     }
 
     @Override
-    public Consumer<Long> getCompletionCountConsumer() {
-        return completionCountConsumer;
-    }
-
-    @Override
-    public FieldIndexMap getFieldIndexMap() {
-        return fieldIndexMap;
+    public Consumer<Long> getCompletionConsumer() {
+        return completionConsumer;
     }
 }

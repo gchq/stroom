@@ -12,11 +12,10 @@ import stroom.index.shared.IndexConstants;
 import stroom.process.shared.ExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
+import stroom.search.extraction.ExtractionReceiver;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.ExpressionMatcherFactory;
@@ -87,7 +86,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     @Override
-    public Receiver create(final Receiver receiver, final Query query) {
+    public ExtractionReceiver create(final ExtractionReceiver receiver, final Query query) {
         final FieldIndexMap fieldIndexMap = receiver.getFieldIndexMap();
         final Integer annotationIdIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ID);
         final Integer streamIdIndex = fieldIndexMap.getMap().get(IndexConstants.STREAM_ID);
@@ -156,7 +155,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in which
         // case we would increment the completion count after providing values.
-        return new ReceiverImpl(valuesConsumer, receiver.getErrorConsumer(), receiver.getCompletionCountConsumer(), fieldIndexMap);
+        return new ExtractionReceiver(valuesConsumer, receiver.getErrorConsumer(), receiver.getCompletionConsumer(), fieldIndexMap);
     }
 
     private Annotation createDefaultAnnotation() {

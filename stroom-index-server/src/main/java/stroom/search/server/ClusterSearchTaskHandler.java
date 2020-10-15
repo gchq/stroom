@@ -21,13 +21,11 @@ import org.springframework.context.annotation.Scope;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.server.shard.IndexShardSearchFactory;
@@ -43,11 +41,10 @@ import stroom.util.shared.HasTerminate;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -63,7 +60,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
     private final RemoteSearchResults remoteSearchResults;
     private final SecurityContext securityContext;
     private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final CompletionState searchCompletionState = new CompletionState();
 
     private ClusterSearchTask task;
 
@@ -84,18 +80,20 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
 
     @Override
     public VoidResult exec(final ClusterSearchTask task) {
-//        CompletionState sendingDataCompletionState = new CompletionState();
-//        sendingDataCompletionState.complete();
-
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             taskContext.info("Initialising...");
 
             this.task = task;
             final stroom.query.api.v2.Query query = task.getQuery();
 
-            try {
-//                    final long frequency = task.getResultSendFrequency();
+            // Get the search result factory for this search from the cache.
+            // It should be present if search has been started properly and not been destroyed immediately.
+            final RemoteSearchResultFactory remoteSearchResultFactory = remoteSearchResults.get(task.getKey());
+            if (remoteSearchResultFactory == null) {
+                throw new SearchException("No search result factory can be found");
+            }
 
+            try {
                 // Make sure we have been given a query.
                 if (query.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
@@ -108,54 +106,31 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
                 }
 
                 // Create coprocessors.
-                final Coprocessors coprocessors = coprocessorsFactory.create(task.getCoprocessorMap(), storedFields, query.getParams(), this, task);
-
-                // Start forwarding data to target node.
-                final RemoteSearchResultFactory remoteSearchResultFactory = remoteSearchResults.get(task.getKey());
-                if (remoteSearchResultFactory == null) {
-                    throw new SearchException("No search result factory can be found");
-                }
+                final Coprocessors coprocessors = coprocessorsFactory.create(
+                        task.getCoprocessorMap(),
+                        storedFields,
+                        query.getParams(),
+                        this,
+                        task);
 
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
-                remoteSearchResultFactory.setSearchComplete(searchCompletionState);
                 remoteSearchResultFactory.setErrors(errors);
                 remoteSearchResultFactory.setTaskContext(taskContext);
                 remoteSearchResultFactory.setStarted(true);
 
-//                        final ResultSender resultSender = resultSenderFactory.create();
-//                        sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
                 if (coprocessors.size() > 0 && !taskContext.isTerminated()) {
                     // Start searching.
                     search(task, query, coprocessors);
                 }
 
             } catch (final RuntimeException e) {
-//                    try {
                 errors.add(e.getMessage());
-//                        callback.onFailure(e);
-//                    } catch (final RuntimeException e2) {
-//                        // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
-//                        LOGGER.info(() -> "Terminating search because we were unable to send result");
-//                        task.terminate();
-//                    }
             } finally {
                 LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                         "counting down searchCompleteLatch");
                 // Tell the client that the search has completed.
-                searchCompletionState.complete();
+                remoteSearchResultFactory.complete();
             }
-
-//            // Now we must wait for results to be sent to the requesting node.
-//            try {
-//                taskContext.info("Sending final results");
-//                while (!task.isTerminated() && !sendingDataCompletionState.isComplete()) {
-//                    sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
-//                }
-//            } catch (InterruptedException e) {
-//                //Don't want to reset interrupt status as this thread will go back into
-//                //the executor's pool. Throwing an exception will terminate the task
-//                throw new RuntimeException("Thread interrupted");
-//            }
         }
 
         return VoidResult.INSTANCE;
@@ -171,30 +146,42 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
         final HasTerminate hasTerminate = new MonitorImpl(task.getMonitor());
         try {
             if (task.getShards().size() > 0) {
-                final AtomicLong allDocumentCount = new AtomicLong();
-                final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, allDocumentCount, hasTerminate);
+                final Receiver extractionReceiver = extractionDecoratorFactory.create(
+                        this,
+                        task.getStoredFields(),
+                        coprocessors,
+                        query,
+                        hasTerminate);
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                         .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hasTerminate);
+                final AtomicLong hitCount = new AtomicLong();
+                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate);
 
-                // Wait for index search completion.
-                long extractionCount = getMinExtractions(coprocessors.getSet());
-                long documentCount = allDocumentCount.get();
-                while (!task.isTerminated() && extractionCount < documentCount) {
-                    taskContext.info(
-                            "Searching... " +
-                                    "found " + documentCount + " documents" +
-                                    " performed " + extractionCount + " extractions");
+                // Wait for search completion.
+                boolean allComplete = false;
+                while (!allComplete) {
+                    allComplete = true;
+                    for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                        if (!task.isTerminated()) {
+                            taskContext.info("" +
+                                    "Searching... " +
+                                    "found "
+                                    + hitCount.get() +
+                                    " documents" +
+                                    " performed " +
+                                    coprocessor.getValuesCount().get() +
+                                    " extractions");
 
-                    ThreadUtil.sleep(1000);
-
-                    extractionCount = getMinExtractions(coprocessors.getSet());
-                    documentCount = allDocumentCount.get();
+                            final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                            if (!complete) {
+                                allComplete = false;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -204,10 +191,6 @@ class ClusterSearchTaskHandler extends AbstractTaskHandler<ClusterSearchTask, Vo
         } finally {
             hasTerminate.terminate();
         }
-    }
-
-    private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {
-        return coprocessorConsumers.stream().mapToLong(NewCoprocessor::getCompletionCount).min().orElse(0);
     }
 
     @Override

@@ -53,6 +53,10 @@ public class NodeResult implements SharedObject {
 
     @Override
     public String toString() {
-        return "search result";
+        return "NodeResult{" +
+                "payloadMap=" + payloadMap +
+                ", errors=" + errors +
+                ", complete=" + complete +
+                '}';
     }
 }

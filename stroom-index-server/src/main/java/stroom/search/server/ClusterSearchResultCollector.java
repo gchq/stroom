@@ -34,8 +34,6 @@ import stroom.task.cluster.CollectorIdFactory;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
@@ -47,20 +45,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();
-    private final Map<Node, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
-    private final AtomicInteger remainingNodeCount = new AtomicInteger();
     private final CompletionState completionState = new CompletionState();
     private final TaskManager taskManager;
     private final Task<VoidResult> task;
@@ -160,7 +153,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public void onSuccess(final Node node, final NodeResult result) {
+    public synchronized void onSuccess(final Node node, final NodeResult result) {
         try {
             final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
             final List<String> errors = result.getErrors();
@@ -172,46 +165,14 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             if (errors != null) {
                 getErrorSet(node).addAll(errors);
             }
-
-            if (result.isComplete()) {
-                nodeComplete(node);
-            }
         } catch (final RuntimeException e) {
             getErrorSet(node).add(e.getMessage());
-            nodeComplete(node);
-
-        } finally {
-            if (remainingNodeCount.compareAndSet(0, 0)) {
-                // All the results are in but we may still have work pending, so wait
-                waitForPendingWork();
-                complete();
-            }
         }
-    }
-
-    public void waitForPendingWork() {
-        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
-            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-            resultHandler.waitForPendingWork(task);
-        }, "Waiting for resultHandler to finish pending work");
     }
 
     @Override
-    public void onFailure(final Node node, final Throwable throwable) {
-        try {
-            nodeComplete(node);
-            getErrorSet(node).add(throwable.getMessage());
-        } finally {
-            if (remainingNodeCount.compareAndSet(0, 0)) {
-                completionState.complete();
-            }
-        }
-    }
-
-    private void nodeComplete(final Node node) {
-        if (remainingNodes.remove(node) != null) {
-            remainingNodeCount.decrementAndGet();
-        }
+    public synchronized void onFailure(final Node node, final Throwable throwable) {
+        getErrorSet(node).add(throwable.getMessage());
     }
 
     public Set<String> getErrorSet(final Node node) {
@@ -281,10 +242,5 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 "task=" + task +
                 ", complete=" + completionState.isComplete() +
                 '}';
-    }
-
-    void setExpectedNodes(final Set<Node> expectedNodes) {
-        expectedNodes.forEach(node -> remainingNodes.put(node, new AtomicLong()));
-        remainingNodeCount.set(expectedNodes.size());
     }
 }

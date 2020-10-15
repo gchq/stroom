@@ -28,7 +28,6 @@ import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.resultsender.NodeResult;
@@ -44,10 +43,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.MonitorImpl;
-import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -161,30 +158,37 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
             // Create a monitor to terminate all sub tasks on completion.
             final HasTerminate hasTerminate = new MonitorImpl();
 
-            final AtomicLong allDocumentCount = new AtomicLong();
-            final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, allDocumentCount, hasTerminate);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(this, task.getStoredFields(), coprocessors, query, hasTerminate);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                     .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-            solrSearchFactory.search(task, expression, extractionReceiver, taskContext, hasTerminate);
+            final AtomicLong hitCount = new AtomicLong();
+            solrSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate);
 
-            // Wait for index search completion.
-            long extractionCount = getMinExtractions(coprocessors.getSet());
-            long documentCount = allDocumentCount.get();
-            while (!task.isTerminated() && extractionCount < documentCount) {
-                taskContext.info(
-                        "Searching... " +
-                                "found " + documentCount + " documents" +
-                                " performed " + extractionCount + " extractions");
+            // Wait for search completion.
+            boolean allComplete = false;
+            while (!allComplete) {
+                allComplete = true;
+                for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                    if (!task.isTerminated()) {
+                        taskContext.info("" +
+                                "Searching... " +
+                                "found " +
+                                hitCount.get() +
+                                " documents" +
+                                " performed "
+                                + coprocessor.getValuesCount().get() +
+                                " extractions");
 
-                ThreadUtil.sleep(1000);
-
-                extractionCount = getMinExtractions(coprocessors.getSet());
-                documentCount = allDocumentCount.get();
+                        final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                        if (!complete) {
+                            allComplete = false;
+                        }
+                    }
+                }
             }
 
             LOGGER.debug(() -> "Complete");
@@ -192,10 +196,6 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         } catch (final Exception pEx) {
             throw SearchException.wrap(pEx);
         }
-    }
-
-    private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {
-        return coprocessorConsumers.stream().mapToLong(NewCoprocessor::getCompletionCount).min().orElse(0);
     }
 
     @Override

@@ -10,7 +10,6 @@ import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
@@ -27,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Component
@@ -74,11 +72,10 @@ public class ExtractionDecoratorFactory {
         this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
     }
 
-    public Receiver create(final Receiver parentReceiver,
+    public Receiver create(final Consumer<Error> parentErrorConsumer,
                            final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query,
-                           final AtomicLong totalResults,
                            final HasTerminate hasTerminate) {
         // Update config for extraction task executor.
         extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
@@ -98,25 +95,25 @@ public class ExtractionDecoratorFactory {
             map.computeIfAbsent(extractionPipeline, k -> new HashSet<>()).add(coprocessor);
         });
 
-        final Map<DocRef, Receiver> receivers = new HashMap<>();
+        final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();
         map.forEach((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            Receiver receiver;
+            ExtractionReceiver receiver;
             if (coprocessorSet.size() == 1) {
                 final NewCoprocessor coprocessor = coprocessorSet.iterator().next();
                 final FieldIndexMap fieldIndexMap = coprocessor.getFieldIndexMap();
                 final Consumer<Values> valuesConsumer = coprocessor.getValuesConsumer();
                 final Consumer<Error> errorConsumer = coprocessor.getErrorConsumer();
-                final Consumer<Long> completionCountConsumer = coprocessor.getCompletionCountConsumer();
-                receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
+                final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
+                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndexMap);
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
                 final FieldIndexMap fieldIndexMap = coprocessorSet.iterator().next().getFieldIndexMap();
                 final Consumer<Values> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
                 final Consumer<Error> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
-                final Consumer<Long> completionCountConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionCountConsumer().accept(delta));
-                receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
+                final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));
+                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndexMap);
             }
 
             // Decorate result with annotations.
@@ -130,7 +127,7 @@ public class ExtractionDecoratorFactory {
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
                 streamMapCreator,
-                parentReceiver,
+                parentErrorConsumer,
                 receivers,
                 maxStoredDataQueueSize,
                 extractionTaskProperties.getMaxThreadsPerTask(),
