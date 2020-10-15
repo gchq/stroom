@@ -133,7 +133,7 @@ public class SolrSearchTaskHandler {
                 task.getSolrIndex().getFieldsMap(),
                 task.getReceiver().getValuesConsumer(),
                 task.getReceiver().getErrorConsumer(),
-                task.getReceiver().getCompletionCountConsumer());
+                task.getReceiver().getCompletionConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
                 final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(), task.getSolrParams(), callback);
@@ -149,8 +149,7 @@ public class SolrSearchTaskHandler {
                 task.getTracker(),
                 task.getFieldNames(),
                 task.getReceiver().getValuesConsumer(),
-                task.getReceiver().getErrorConsumer(),
-                task.getReceiver().getCompletionCountConsumer());
+                task.getReceiver().getErrorConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
                 final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(), task.getSolrParams(), callback);
@@ -190,20 +189,17 @@ public class SolrSearchTaskHandler {
         private final String[] fieldNames;
         private final Consumer<Values> valuesConsumer;
         private final Consumer<Error> errorConsumer;
-        private final Consumer<Long> countConsumer;
 
         private DocListInfo docListInfo;
 
         Callback(final Tracker tracker,
                  final String[] fieldNames,
                  final Consumer<Values> valuesConsumer,
-                 final Consumer<Error> errorConsumer,
-                 final Consumer<Long> countConsumer) {
+                 final Consumer<Error> errorConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
             this.valuesConsumer = valuesConsumer;
             this.errorConsumer = errorConsumer;
-            this.countConsumer = countConsumer;
         }
 
         @Override
@@ -238,7 +234,6 @@ public class SolrSearchTaskHandler {
 
                 if (values != null) {
                     valuesConsumer.accept(new Values(values));
-                    countConsumer.accept(1L);
                 }
             } catch (final RuntimeException e) {
                 error(e.getMessage(), e);

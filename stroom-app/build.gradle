@@ -196,6 +196,7 @@ dependencies {
     testCompile libs.saxon_he
     testCompile libs.slf4j_api
     testCompile libs.stroomQueryCommon
+    testCompile libs.stroomTestData
     testCompile libs.vavr
 
     testRuntimeOnly libs.javax_activation

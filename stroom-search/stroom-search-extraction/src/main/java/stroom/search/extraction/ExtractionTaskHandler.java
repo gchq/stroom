@@ -164,12 +164,13 @@ class ExtractionTaskHandler {
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);
 
+            // Ensure count is the same.
+            if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
+                LOGGER.debug("Extraction count mismatch");
+            }
+
         } catch (final RuntimeException e) {
             task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
-
-        } finally {
-            // Let the receiver know we have finished extracting data.
-            task.getReceiver().getCompletionCountConsumer().accept((long) task.getEventIds().length);
         }
     }
 

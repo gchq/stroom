@@ -16,16 +16,18 @@
 
 package stroom.search.impl.shard;
 
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.SimpleCollector;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.SimpleCollector;
+
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 class IndexShardHitCollector extends SimpleCollector {
@@ -34,12 +36,12 @@ class IndexShardHitCollector extends SimpleCollector {
     private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
     private final LinkedBlockingQueue<OptionalInt> docIdStore;
-    private final HitCount hitCount;
+    private final AtomicLong hitCount;
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
                            final LinkedBlockingQueue<OptionalInt> docIdStore,
-                           final HitCount hitCount) {
+                           final AtomicLong hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
@@ -72,7 +74,7 @@ class IndexShardHitCollector extends SimpleCollector {
         }
 
         // Add to the hit count.
-        hitCount.increment();
+        hitCount.getAndIncrement();
     }
 
     private void info(final Supplier<String> message) {

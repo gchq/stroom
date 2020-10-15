@@ -16,15 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.Field;
@@ -42,6 +33,16 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +78,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             getView().setExpression("");
         }
 
-        final PopupSize popupSize = new PopupSize(500, 300, 300, 300, true);
+        final PopupSize popupSize = new PopupSize(700, 300, 300, 300, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Set Expression For '" + field.getName() + "'", this);
         Scheduler.get().scheduleDeferred(() -> getView().focus());

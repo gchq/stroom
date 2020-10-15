@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.store.offheapstore.serdes.UnsignedLongSerde;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LogUtil;
 
@@ -39,8 +40,16 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
 
     private final int len;
     private final long maxVal;
+    private final UnsignedLongSerde serde;
 
     private final byte[] ZERO_BYTES = new byte[0];
+    private static final UnsignedBytes[] INSTANCES = new UnsignedBytesInstances[9];
+
+    static {
+        for (final UnsignedBytesInstances instance : values()) {
+            INSTANCES[instance.len] = instance;
+        }
+    }
 
     UnsignedBytesInstances(final int len) {
         if (len > 8) {
@@ -52,6 +61,17 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         }
         this.len = len;
         maxVal = computeMaxVal(len);
+        serde = new UnsignedLongSerde(len, this);
+    }
+
+    public static UnsignedBytes of(final int len) {
+        if (len == 0) {
+            throw new IllegalArgumentException("Length of zero not allowed");
+        }
+        if (len > 8) {
+            throw new IllegalArgumentException("Lengths > 8 not allowed");
+        }
+        return INSTANCES[len];
     }
 
     @Override
@@ -225,4 +245,9 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
                             val, maxVal, len));
         }
     }
+
+    public UnsignedLongSerde getSerde() {
+        return serde;
+    }
+
 }

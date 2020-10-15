@@ -5,6 +5,8 @@ import com.google.inject.Provides;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexVolumeGroupService;
+import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.db.ForceCoreMigration;
@@ -28,6 +30,7 @@ class TestModule extends AbstractModule {
         when(securityContext.getUserId()).thenReturn(TEST_USER);
         bind(SecurityContext.class).toInstance(securityContext);
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() { });
+        bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
     }
 
     @Provides

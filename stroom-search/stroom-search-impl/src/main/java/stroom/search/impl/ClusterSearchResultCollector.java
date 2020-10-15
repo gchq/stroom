@@ -30,8 +30,6 @@ import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,19 +46,14 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
-    private final Map<String, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
-    private final AtomicInteger remainingNodeCount = new AtomicInteger();
     private final CompletionState completionState = new CompletionState();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -165,7 +158,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public void onSuccess(final String nodeName, final NodeResult result) {
+    public synchronized void onSuccess(final String nodeName, final NodeResult result) {
         try {
             final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
             final List<String> errors = result.getErrors();
@@ -177,60 +170,14 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             if (errors != null) {
                 getErrorSet(nodeName).addAll(errors);
             }
-
-            if (result.isComplete()) {
-                nodeComplete(nodeName);
-            } else {
-                final AtomicLong atomicLong = remainingNodes.get(nodeName);
-                if (atomicLong == null) {
-                    LOGGER.error("Received an unexpected node result from " + nodeName);
-                } else {
-                    atomicLong.set(System.currentTimeMillis());
-                }
-            }
-
         } catch (final RuntimeException e) {
             getErrorSet(nodeName).add(e.getMessage());
-            nodeComplete(nodeName);
-
-        } finally {
-            if (remainingNodeCount.compareAndSet(0, 0)) {
-                // All the results are in but we may still have work pending, so wait
-                waitForPendingWork();
-                completionState.complete();
-            }
         }
-    }
-
-    private void waitForPendingWork() {
-        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
-            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-            try {
-                resultHandler.waitForPendingWork();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
-                // we will just let it complete as we have been interrupted
-            }
-        }, "Waiting for resultHandler to finish pending work");
     }
 
     @Override
-    public void onFailure(final String nodeName, final Throwable throwable) {
-        try {
-            nodeComplete(nodeName);
-            getErrorSet(nodeName).add(throwable.getMessage());
-        } finally {
-            if (remainingNodeCount.compareAndSet(0, 0)) {
-                completionState.complete();
-            }
-        }
-    }
-
-    private void nodeComplete(final String nodeName) {
-        if (remainingNodes.remove(nodeName) != null) {
-            remainingNodeCount.decrementAndGet();
-        }
+    public synchronized void onFailure(final String nodeName, final Throwable throwable) {
+        getErrorSet(nodeName).add(throwable.getMessage());
     }
 
     public Set<String> getErrorSet(final String nodeName) {
@@ -300,10 +247,5 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 "task=" + task +
                 ", complete=" + completionState.isComplete() +
                 '}';
-    }
-
-    void setExpectedNodes(final Set<String> expectedNodes) {
-        expectedNodes.forEach(node -> remainingNodes.put(node, new AtomicLong()));
-        remainingNodeCount.set(expectedNodes.size());
     }
 }

@@ -85,7 +85,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        return processingUserIdentityProvider.get().equals(userIdentity);
+        return processingUserIdentityProvider.isProcessingUser(userIdentity);
     }
 
     String getUserUuid(final UserIdentity userIdentity) {
@@ -122,7 +122,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (processingUserIdentityProvider.get().equals(userIdentity)) {
+        if (processingUserIdentityProvider.isProcessingUser(userIdentity)) {
             return true;
         }
 

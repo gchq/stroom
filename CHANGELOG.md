@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+<<<<<<< HEAD
+* Issue **#1894** : Improvements to search performance and fix for hanging searches.
+=======
+
+## [v7.0-beta.67] - 2020-10-15
+
+* Issue **#1901** : Create default (index) volume group if it is used prior to UI.
+>>>>>>> c98f99306ce1ba44518c853227f2ae4033831acc
+
+* Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
+
+* Change dashboard field expression editor to be a bit wider and use a monospace font.
+
+* Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
+
+* Issue **#1877** : Change conditional formatting to support decimals.
+
+* Change conditional formatting to set the available rule operators according to the format type of the column.
+
+* Change conditional formatting to support date terms and date comparisons.
+
+* Issue **#1885** : Fix annotations icon not being enabled on dashboard tables.
+
+* Issue **#1883** : Code now deals with missing streams when performing search extraction.
+
+* Issue **#1882** : Added capacity restriction to the stream event map used in search result extraction. The previous version was causing out of memory exceptions.
+
+* Change names of hidden special table columns on dashboards to avoid name clashes.
+
+* Make dashboard table settings popup bigger to accommodate the conditional formatting.
+
+* Added logic to rename conditional formatting term fields on a column rename.
+
+* Added logic to prevent renaming a column to an existing name.
+
+* Issue **#1872** : Partially fixed to show the 1st 1k chars of the single line raw source. Full fix will come in v7.
+
+* Issue **#1874** : Fixed dashboard tables not showing data if the stream id column is present.
+
+* Issue **#1868** : Stop `Stream not found with id=nnn` errors during searching.
+
+* Issue **#1864** : Added `*` wildcard to conditional formatting matches. 
+
+* Issue **#1865** : Fixed NoSuchMethodError.
+
+* Issue **#1854** : Changed search mechanism to poll for remote results to reduce the chances of hung searches.
+
+* Uplift event-logging-schema content pack to v3.4.2.
+
+* Uplift standard-pipelines content pack to v0.2.
+
+* Uplift template-pipelines content pack to v0.3.
+
 * Change the off-heap ref store to use xxHash for hashing its values.
 
 * Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.
@@ -2691,7 +2744,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.66...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.67...HEAD
+[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
 [v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64

@@ -63,6 +63,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
             consumer.accept(new Values(values));
+            count++;
             values = null;
         }
 

@@ -92,3 +92,7 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 }
+
+clean {
+    delete "${projectDir}/src/test/resources/samples/generated"
+}

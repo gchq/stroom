@@ -48,6 +48,6 @@ class Event implements Comparable<Event> {
 
     @Override
     public String toString() {
-        return String.valueOf(streamId);
+        return streamId + ":" + eventId;
     }
 }

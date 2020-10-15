@@ -88,13 +88,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void beforeTest() {
-
         LOGGER.info("Setting temp dir to {}", testDir.toAbsolutePath().toString());
-
-//        StroomProperties.setOverrideProperty(
-//                StroomProperties.STROOM_TEMP,
-//                testDir.toFile().getCanonicalPath(),
-//                StroomProperties.Source.TEST);
     }
 
     //    @Override
@@ -170,8 +164,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                5,
-                5,
                 indexStore,
                 searchResponseCreatorManager);
 
@@ -209,14 +201,4 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
         return tableSettings;
     }
-
-//    @Test
-//    @Disabled
-//    void tearDownAndSetupOnly(@TempDir final Path tempDir) {
-//        LOGGER.info("before() - commonTestControl.setup()");
-//        commonTestControl.teardown();
-//        commonTestControl.setup(tempDir);
-//
-//        onAfterSetup();
-//    }
 }

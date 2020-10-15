@@ -17,11 +17,12 @@
 
 package stroom.test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
@@ -29,6 +30,7 @@ import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.impl.IndexStore;
+import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.meta.shared.MetaFields;
@@ -47,6 +49,9 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,9 +62,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +75,7 @@ import java.util.stream.Collectors;
 public final class SetupSampleDataBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupSampleDataBean.class);
 
-    private static final String ROOT_DIR_NAME = "samples";
+    public static final String ROOT_DIR_NAME = "samples";
 
     private static final String STATS_COUNT_FEED_LARGE_NAME = "COUNT_FEED_LARGE";
     private static final String STATS_COUNT_FEED_SMALL_NAME = "COUNT_FEED_SMALL";
@@ -93,8 +100,11 @@ public final class SetupSampleDataBean {
     private final DashboardStore dashboardStore;
     private final IndexStore indexStore;
     private final IndexVolumeService indexVolumeService;
+    private final IndexVolumeGroupService indexVolumeGroupService;
+    private final FsVolumeService fsVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
+    private final SampleDataGenerator sampleDataGenerator;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
@@ -107,8 +117,11 @@ public final class SetupSampleDataBean {
                         final DashboardStore dashboardStore,
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
+                        final IndexVolumeGroupService indexVolumeGroupService,
+                        final FsVolumeService fsVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore) {
+                        final StroomStatsStoreStore stroomStatsStoreStore,
+                        final SampleDataGenerator sampleDataGenerator) {
         this.feedStore = feedStore;
         this.feedProperties = feedProperties;
         this.streamStore = streamStore;
@@ -119,8 +132,11 @@ public final class SetupSampleDataBean {
         this.dashboardStore = dashboardStore;
         this.indexStore = indexStore;
         this.indexVolumeService = indexVolumeService;
+        this.indexVolumeGroupService = indexVolumeGroupService;
+        this.fsVolumeService = fsVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
+        this.sampleDataGenerator = sampleDataGenerator;
     }
 
 //    private void createStreamAttributes() {
@@ -149,22 +165,31 @@ public final class SetupSampleDataBean {
 
 //        createRandomExplorerNode(null, "", 0, 2);
 
+        checkVolumesExist();
+
         // Sample data/config can exist in many projects so here we define all
         // the root directories that we want to
         // process
-        final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(ROOT_DIR_NAME),
-                Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources").resolve(ROOT_DIR_NAME)};
+        final Path coreServerSamplesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+                .resolve(ROOT_DIR_NAME);
+        final Path statisticsSamplesDir = Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources")
+                .resolve(ROOT_DIR_NAME);
 
-        // process each root dir in turn
+        final Path[] rootDirs = new Path[] {
+                coreServerSamplesDir,
+                statisticsSamplesDir};
+
+        // Load various streams that we generate on the fly
+        sampleDataGenerator.generateData(coreServerSamplesDir.resolve("generated").resolve("input"));
+
+        // process each root dir in turn, importing content and loading data into feeds
         for (final Path dir : rootDirs) {
             loadDirectory(shutdown, dir);
         }
 
         //Additional content is loaded by the gradle build in task downloadStroomContent
 
-
         // Add volumes to all indexes.
-        final List<IndexVolume> volumeList = indexVolumeService.find(new ExpressionCriteria()).getValues();
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
 
@@ -180,23 +205,43 @@ public final class SetupSampleDataBean {
         createIndexingProcessorFilter(
                 "BROADBAND_SPEED_TESTS-INDEX", StreamTypeNames.RECORDS, Optional.of("BROADBAND_SPEED_TESTS"));
 
-        final List<DocRef> feeds = feedStore.list();
+        final List<DocRef> feeds = getSortedDocRefs(feedStore::list);
+
         logDocRefs(feeds, "feeds");
 
         generateSampleStatisticsData();
 
         // code to check that the statisticsDataSource objects are stored
         // correctly
-        final List<DocRef> statisticsDataSources = statisticStoreStore.list();
+        final List<DocRef> statisticsDataSources = getSortedDocRefs(statisticStoreStore::list);
         logDocRefs(statisticsDataSources, "statisticStores");
 
-        final List<DocRef> stroomStatsStoreEntities = stroomStatsStoreStore.list();
+        final List<DocRef> stroomStatsStoreEntities = getSortedDocRefs(stroomStatsStoreStore::list);
         logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
+        createProcessorFilters(feeds);
+
+//        if (shutdown) {
+//            commonTestControl.shutdown();
+//        }
+    }
+
+    private List<DocRef> getSortedDocRefs(final Supplier<List<DocRef>> docRefsSupplier) {
+        return docRefsSupplier.get()
+                .stream()
+                .sorted(Comparator.comparing(DocRef::getName))
+                .collect(Collectors.toList());
+    }
+
+    private void createProcessorFilters(final List<DocRef> feeds) {
         // Create stream processors for all feeds.
         for (final DocRef feed : feeds) {
             // Find the pipeline for this feed.
-            final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> feed.getName().equals(docRef.getName())).collect(Collectors.toList());
+            final List<DocRef> pipelines = pipelineStore.list().stream()
+                    .filter(docRef -> feed.getName()
+                            .equals(docRef.getName()))
+                    .collect(Collectors.toList());
+
             if (pipelines == null || pipelines.size() == 0) {
                 LOGGER.warn("No pipeline found for feed '" + feed.getName() + "'");
             } else if (pipelines.size() > 1) {
@@ -210,20 +255,49 @@ public final class SetupSampleDataBean {
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaFields.TYPE_NAME,
+                                                ExpressionTerm.Condition.EQUALS,
+                                                StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaFields.TYPE_NAME,
+                                                ExpressionTerm.Condition.EQUALS,
+                                                StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();
                 final Processor processor = processorService.create(pipeline, true);
-                final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, false, true);
+                LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
+                final ProcessorFilter processorFilter = processorFilterService.create(
+                        processor,
+                        criteria,
+                        10,
+                        false,
+                        true);
                 LOGGER.debug(processorFilter.toString());
             }
         }
+    }
 
-//        if (shutdown) {
-//            commonTestControl.shutdown();
-//        }
+    private void checkVolumesExist() {
+        final List<IndexVolume> indexVolumes = indexVolumeGroupService.getNames()
+                        .stream()
+                .flatMap(groupName -> indexVolumeService.find(new ExpressionCriteria()).stream())
+                .collect(Collectors.toList());
+
+        LOGGER.info("Checking available index volumes, found:\n{}",
+                indexVolumes.stream()
+                .map(IndexVolume::getPath)
+                .collect(Collectors.joining("\n")));
+
+        final List<FsVolume> dataVolumes = fsVolumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        LOGGER.info("Checking available data volumes, found:\n{}",
+                dataVolumes.stream()
+                        .map(FsVolume::getPath)
+                        .collect(Collectors.joining("\n")));
+
+        if (dataVolumes.isEmpty() || indexVolumes.isEmpty()) {
+            LOGGER.error("Missing volumes, quiting");
+            System.exit(1);
+        }
     }
 
     private void createIndexingProcessorFilter(
@@ -232,7 +306,10 @@ public final class SetupSampleDataBean {
             final Optional<String> optFeedName) {
 
         // Find the pipeline for this index.
-        final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> pipelineName.equals(docRef.getName())).collect(Collectors.toList());
+        final List<DocRef> pipelines = pipelineStore.list()
+                .stream()
+                .filter(docRef -> pipelineName.equals(docRef.getName()))
+                .collect(Collectors.toList());
 
         if (pipelines == null || pipelines.size() == 0) {
             throw new RuntimeException(LogUtil.message(
@@ -259,7 +336,12 @@ public final class SetupSampleDataBean {
                     .build();
 
             final Processor processor = processorService.create(pipeline, true);
-            final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, false, true);
+            final ProcessorFilter processorFilter = processorFilterService.create(
+                    processor,
+                    criteria,
+                    10,
+                    false,
+                    true);
             LOGGER.debug(processorFilter.toString());
         }
     }
@@ -277,12 +359,14 @@ public final class SetupSampleDataBean {
 
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
+        final Path generatedDataDir = importRootDir.resolve("generated").resolve("input");
+
         final Path exampleDataDir = importRootDir.resolve("example_data");
 
 //        createStreamAttributes();
 
         if (Files.exists(configDir)) {
-            // Load config.
+            LOGGER.info("Loading config from {}", configDir.toAbsolutePath().normalize());
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
 //            // Enable all flags for all feeds.
@@ -301,9 +385,10 @@ public final class SetupSampleDataBean {
             LOGGER.info("StatisticDataSource count = " + statisticStoreStore.list().size());
 
         } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", configDir);
+            LOGGER.info("Directory {} doesn't exist so skipping", configDir.toAbsolutePath().normalize());
         }
 
+        LOGGER.info("Checking data dir {}", dataDir.toAbsolutePath().normalize());
         if (Files.exists(dataDir)) {
             // Load data.
             final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
@@ -319,7 +404,8 @@ public final class SetupSampleDataBean {
             // test.
             final String feedName = "DATA_SPLITTER-EVENTS";
             for (int i = 0; i < LOAD_CYCLES; i++) {
-                LOGGER.info("Loading data from {}, iteration {}", dataDir.toAbsolutePath().toString(), i);
+                LOGGER.info("Loading data from {}, iteration {}",
+                        dataDir.toAbsolutePath().normalize().toString(), i);
                 // Load reference data first.
                 dataLoader.read(dataDir, true, startTime);
                 startTime += tenMinMs;
@@ -330,25 +416,33 @@ public final class SetupSampleDataBean {
 
                 // Load some randomly generated data.
                 final String randomData = createRandomData();
-                dataLoader.loadInputStream(feedName, "Gen data", StreamUtil.stringToStream(randomData), false, startTime);
+                dataLoader.loadInputStream(
+                        feedName,
+                        "Gen data",
+                        StreamUtil.stringToStream(randomData),
+                        false,
+                        startTime);
                 startTime += tenMinMs;
             }
         } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", dataDir);
+            LOGGER.info("Directory {} doesn't exist so skipping", dataDir.toAbsolutePath().normalize());
         }
 
         // Load the example data that we don't want to duplicate as is done above
-        if (Files.exists(exampleDataDir)) {
-            LOGGER.info("Loading example data from {}", exampleDataDir.toAbsolutePath().toString());
-            // Load data.
-            final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
-            long startTime = System.currentTimeMillis();
+        List.of(exampleDataDir, generatedDataDir)
+                .forEach(dir -> {
+                    if (Files.exists(dir)) {
+                        LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize().toString());
+                        // Load data.
+                        final DataLoader dataLoader = new DataLoader(feedProperties, streamStore);
+                        long startTime = System.currentTimeMillis();
 
-            // Then load event data.
-            dataLoader.read(exampleDataDir, false, startTime);
-        } else {
-            LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
-        }
+                        // Then load event data.
+                        dataLoader.read(dir, false, startTime);
+                    } else {
+                        LOGGER.info("Directory {} doesn't exist so skipping", dir.toAbsolutePath().normalize());
+                    }
+                });
 
         // processorTaskManager.doCreateTasks();
 
@@ -432,7 +526,8 @@ public final class SetupSampleDataBean {
 
     private String createRandomData() {
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy,HH:mm:ss");
-        final ZonedDateTime refDateTime = ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+        final ZonedDateTime refDateTime = ZonedDateTime.of(
+                2010, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
         final StringBuilder sb = new StringBuilder();
         sb.append("Date,Time,FileNo,LineNo,User,Message\n");

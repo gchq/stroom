@@ -185,6 +185,8 @@ else
 fi
 
 # Dump all the travis env vars to the console for debugging
+echo -e "HOME:                          [${GREEN}${HOME}${NC}]"
+echo -e "TRAVIS_BUILD_DIR:              [${GREEN}${TRAVIS_BUILD_DIR}${NC}]"
 echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
 echo -e "TRAVIS_COMMIT:                 [${GREEN}${TRAVIS_COMMIT}${NC}]"
 echo -e "TRAVIS_BRANCH:                 [${GREEN}${TRAVIS_BRANCH}${NC}]"
@@ -253,12 +255,13 @@ else
     # travis. At time of writing a sudo VM in travis has 7.5gb ram.
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
+    # Don't clean as this is a fresh clone and clean will wipe the cached
+    # content pack zips
     ./gradlew \
       --scan \
       --stacktrace \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      clean \
       build \
       -x shadowJar \
       -x generateSwaggerDocumentation \

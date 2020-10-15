@@ -219,10 +219,8 @@ public class IndexShardSearchTaskHandler {
             }
 
             task.getReceiver().getValuesConsumer().accept(new Values(values));
-            task.getReceiver().getCompletionCountConsumer().accept(1L);
         } catch (final IOException | RuntimeException e) {
             error(task, e.getMessage(), e);
-            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
         }
     }
 
@@ -233,20 +231,4 @@ public class IndexShardSearchTaskHandler {
             task.getReceiver().getErrorConsumer().accept(new Error(message, t));
         }
     }
-
-//    private int getIntProperty(final String propertyName, final int defaultValue) {
-//        int value = defaultValue;
-//
-//        final String string = propertyService.getProperty(propertyName);
-//        if (string != null && string.length() > 0) {
-//            try {
-//                value = Integer.parseInt(string);
-//            } catch (final NumberFormatException e) {
-//                LOGGER.error(() -> "Unable to parse property '" + propertyName + "' value '" + string
-//                        + "', using default of '" + defaultValue + "' instead", e);
-//            }
-//        }
-//
-//        return value;
-//    }
 }
