@@ -42,8 +42,6 @@ import stroom.data.client.presenter.ProcessChoicePresenter.ProcessChoiceView;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
-import stroom.data.client.presenter.SourceLocationPresenter;
-import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
@@ -58,7 +56,6 @@ import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.ProcessChoiceViewImpl;
-import stroom.data.client.view.SourceLocationViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
@@ -113,10 +110,6 @@ public class StreamStoreModule extends PluginModule {
                 ProcessChoiceView.class,
                 ProcessChoiceViewImpl.class);
         bindPresenterWidget(
-                SourceLocationPresenter.class,
-                SourceLocationView.class,
-                SourceLocationViewImpl.class);
-        bindPresenterWidget(
                 SourceTabPresenter.class,
                 SourceTabView.class,
                 SourceTabViewImpl.class);
@@ -128,7 +121,6 @@ public class StreamStoreModule extends PluginModule {
                 CharacterRangeSelectionPresenter.class,
                 CharacterRangeSelectionView.class,
                 CharacterRangeSelectionViewImpl.class);
-        // TODO @AT Should this be bound elsewhere?
         bindPresenterWidget(
                 CharacterNavigatorPresenter.class,
                 CharacterNavigatorView.class,

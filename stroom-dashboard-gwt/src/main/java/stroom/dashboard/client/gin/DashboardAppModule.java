@@ -26,17 +26,32 @@ import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.data.client.presenter.CharacterNavigatorPresenter;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
-import stroom.data.client.presenter.SourceLocationPresenter;
-import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
+import stroom.data.client.presenter.ItemNavigatorPresenter;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.presenter.ItemSelectionPresenter;
+import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
+import stroom.data.client.presenter.SourcePresenter;
+import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.client.view.CharacterNavigatorViewImpl;
+import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.SourceLocationViewImpl;
+import stroom.data.client.view.ItemNavigatorViewImpl;
+import stroom.data.client.view.ItemSelectionViewImpl;
+import stroom.data.client.view.SourceTabViewImpl;
+import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -88,6 +103,30 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
-        bindPresenterWidget(SourceLocationPresenter.class, SourceLocationView.class, SourceLocationViewImpl.class);
+
+        bindPresenterWidget(
+                SourceTabPresenter.class,
+                SourceTabView.class,
+                SourceTabViewImpl.class);
+        bindPresenterWidget(
+                SourcePresenter.class,
+                SourceView.class,
+                SourceViewImpl.class);
+        bindPresenterWidget(
+                CharacterRangeSelectionPresenter.class,
+                CharacterRangeSelectionView.class,
+                CharacterRangeSelectionViewImpl.class);
+        bindPresenterWidget(
+                CharacterNavigatorPresenter.class,
+                CharacterNavigatorView.class,
+                CharacterNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemNavigatorPresenter.class,
+                ItemNavigatorView.class,
+                ItemNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemSelectionPresenter.class,
+                ItemSelectionView.class,
+                ItemSelectionViewImpl.class);
     }
 }
