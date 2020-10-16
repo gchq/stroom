@@ -366,6 +366,12 @@ public class DefaultProperties {
                 .description("The maximum number of threads per search, per node, used to extract search results from streams using a pipeline")
                 .editable(true)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.search.extraction.maxStreamEventMapSize")
+                .value("1000000")
+                .description("The maximum size of the stream event map used to queue events prior to extraction")
+                .editable(true)
+                .build());
 
         // SEARCH SENDER 
         list.add(new GlobalProperty.Builder()

@@ -25,6 +25,7 @@ import javax.inject.Inject;
 public class ExtractionTaskProperties {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
+    private static final int DEFAULT_MAX_STREAM_EVENT_MAP_SIZE = 1000000;
 
     private final StroomPropertyService propertyService;
 
@@ -39,5 +40,9 @@ public class ExtractionTaskProperties {
 
     public int getMaxThreadsPerTask() {
         return propertyService.getIntProperty("stroom.search.extraction.maxThreadsPerTask", DEFAULT_MAX_THREADS_PER_TASK);
+    }
+
+    public int getMaxStreamEventMapSize() {
+        return propertyService.getIntProperty("stroom.search.extraction.maxStreamEventMapSize", DEFAULT_MAX_STREAM_EVENT_MAP_SIZE);
     }
 }

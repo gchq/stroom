@@ -70,6 +70,7 @@ class ExtractionTaskProducer extends TaskProducer {
                            final Map<DocRef, ExtractionReceiver> receivers,
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
+                           final int maxStreamEventMapSize,
                            final ExecutorProvider executorProvider,
                            final Provider<TaskWrapper> taskWrapperProvider,
                            final Provider<ExtractionTaskHandler> handlerProvider,
@@ -83,7 +84,7 @@ class ExtractionTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
-        streamEventMap = new StreamEventMap(tracker, 1000000);
+        streamEventMap = new StreamEventMap(tracker, maxStreamEventMapSize);
         storedDataQueue = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
 
         // Start mapping streams.
