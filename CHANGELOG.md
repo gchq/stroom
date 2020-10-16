@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1907** : Fixed NPE.
+
 
 ## [v6.1.20] - 2020-10-15
 
