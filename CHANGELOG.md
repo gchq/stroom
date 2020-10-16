@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1906** : Fixed node task nesting.
+
 * Issue **#1906** : The maximum size of the stream event map is now configurable with the `stroom.search.extraction.maxStreamEventMapSize` property.
 
 * Issue **#1906** : Improved the way search extractions events are grouped so we can extract more events per stream and therefore improve performance.

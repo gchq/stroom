@@ -63,8 +63,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 @Scope(value = StroomScope.TASK)
@@ -123,6 +123,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    taskMonitor.setName("Search");
                     taskMonitor.info(task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
@@ -159,18 +160,30 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
 
                     // Start remote cluster search execution.
-                    final Executor executor = executorProvider.getExecutor(task.getThreadPool());
-                    final TaskWrapper taskWrapper = taskWrapperProvider.get();
-                    final List<CompletableFuture<Void>> futures = new ArrayList<>();
+                    final CountDownLatch countDownLatch = new CountDownLatch(shardMap.size());
                     for (final Entry<Node, List<Long>> entry : shardMap.entrySet()) {
                         final Node node = entry.getKey();
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(node)) {
-                            Runnable runnable = () -> searchNode(sourceNode, node, shards, task, query, storedFields, taskContext);
-                            runnable = taskWrapper.wrap(runnable);
-                            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                            futures.add(completableFuture);
+                            final GenericServerTask nodeSearchTask = GenericServerTask.create(
+                                    task, "Node search", "Searching node " + node.getName());
+                            nodeSearchTask.setRunnable(() -> {
+                                try {
+                                    searchNode(
+                                            sourceNode,
+                                            node,
+                                            shards,
+                                            task,
+                                            nodeSearchTask, query,
+                                            storedFields,
+                                            taskContext);
+                                } finally {
+                                    countDownLatch.countDown();
+                                }
+                            });
+                            taskManager.execAsync(nodeSearchTask, task.getThreadPool());
                         } else {
+                            countDownLatch.countDown();
                             resultCollector.onFailure(node,
                                     new SearchException("Node is not enabled or active. Some search results may be missing."));
                         }
@@ -178,8 +191,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Wait for all nodes to finish.
                     LOGGER.debug(() -> "Waiting for completion");
-                    final CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-                    all.join();
+                    boolean complete = false;
+                    while (!task.isTerminated() && !complete) {
+                        complete = countDownLatch.await(1, TimeUnit.SECONDS);
+                    }
                     LOGGER.debug(() -> "Done waiting for completion");
 
                 } catch (final Exception e) {
@@ -208,6 +223,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                             final Node targetNode,
                             final List<Long> shards,
                             final AsyncSearchTask task,
+                            final GenericServerTask nodeSearchTask,
                             final Query query,
                             final String[] storedFields,
                             final TaskContext taskContext) {
@@ -218,7 +234,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         // Start remote cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
                 securityContext.getUserIdentity(),
-                "Cluster Search",
+                "Node search worker",
                 task.getKey(),
                 query,
                 shards,
@@ -231,7 +247,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             final boolean success = (Boolean) clusterCallService.call(sourceNode, targetNode, RemoteSearchManager.BEAN_NAME,
                     RemoteSearchManager.START_SEARCH,
                     new Class[]{UserIdentity.class, TaskId.class, ClusterSearchTask.class},
-                    new Object[]{securityContext.getUserIdentity(), task.getId(), clusterSearchTask});
+                    new Object[]{securityContext.getUserIdentity(), nodeSearchTask.getId(), clusterSearchTask});
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode.getName());
                 final SearchException searchException = new SearchException("Failed to start remote search on node: " + targetNode.getName());
