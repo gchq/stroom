@@ -277,8 +277,10 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         new Object[]{securityContext.getUserIdentity(), task.getKey()});
                 if (nodeResult != null) {
                     LOGGER.debug(() -> "Receive result for node: " + targetNode.getName() + " " + nodeResult);
-                    resultCollector.onSuccess(targetNode, nodeResult);
-                    if (nodeResult.isComplete()) {
+                    final boolean success = resultCollector.onSuccess(targetNode, nodeResult);
+                    // If the result collector returns false it is because we have already collected enough data and can
+                    // therefore consider search complete.
+                    if (nodeResult.isComplete() || !success) {
                         complete = true;
                     }
                 }

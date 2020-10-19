@@ -24,7 +24,7 @@ public interface ClusterResultCollector<R extends SharedObject> {
 
     boolean onReceive();
 
-    void onSuccess(Node node, R r);
+    boolean onSuccess(Node node, R r);
 
     void onFailure(Node node, Throwable throwable);
 }

@@ -93,7 +93,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
     }
 
     @Override
-    public void onSuccess(final Node node, final R r) {
+    public boolean onSuccess(final Node node, final R r) {
         responseMap.put(node, new ClusterCallEntry<>(r, null, System.currentTimeMillis() - startTimeMs));
         lock.lock();
         try {
@@ -101,6 +101,7 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
         } finally {
             lock.unlock();
         }
+        return true;
     }
 
     @Override

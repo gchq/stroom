@@ -166,7 +166,6 @@ class SearchableStore implements Store {
             processPayloads(resultHandler, coprocessorMap);
             taskContext.info(searchKey + " - complete");
             LOGGER.debug(() -> "completeSearch called");
-            resultHandler.waitForPendingWork(taskContext);
             complete();
 
             LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));

@@ -137,17 +137,8 @@ public class SolrSearchResultCollector implements Store, TaskCallback<NodeResult
             getErrorSet().addAll(errors);
         }
         if (result.isComplete()) {
-            // All the results are in but we may still have work pending, so wait
-            waitForPendingWork();
             complete();
         }
-    }
-
-    private void waitForPendingWork() {
-        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
-            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-            resultHandler.waitForPendingWork(task);
-        }, "Waiting for resultHandler to finish pending work");
     }
 
     @Override
