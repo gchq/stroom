@@ -10,29 +10,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class StreamEventMap {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamEventMap.class);
 
     private final HasTerminate hasTerminate;
     private final ConcurrentHashMap<Long, List<Event>> storedDataMap;
-    private final ConcurrentHashMap<Long, Long> insertionOrderMap;
-    private final AtomicLong writePos;
-    private final AtomicLong readPos;
+    private final LinkedBlockingQueue<Long> streamIdQueue;
     private final Semaphore available;
+    private final AtomicInteger size;
 
     StreamEventMap(final HasTerminate hasTerminate,
                    final int capacity) {
         this.hasTerminate = hasTerminate;
         storedDataMap = new ConcurrentHashMap<>();
-        insertionOrderMap = new ConcurrentHashMap<>();
-        writePos = new AtomicLong();
-        readPos = new AtomicLong();
+        streamIdQueue = new LinkedBlockingQueue<>();
         available = new Semaphore(capacity);
+        size = new AtomicInteger();
     }
 
     void add(final Event event) {
@@ -60,8 +59,11 @@ class StreamEventMap {
                 // i.e. outside of the compute method, as we must be able to rely on it's presence when retrieving
                 // values in the get() method.
                 if (newEntry.get()) {
-                    insertionOrderMap.put(writePos.getAndIncrement(), event.getStreamId());
+                    streamIdQueue.add(event.getStreamId());
                 }
+
+                // Increment the size.
+                size.getAndIncrement();
             }
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
@@ -72,19 +74,24 @@ class StreamEventMap {
 
     Optional<Map.Entry<Long, List<Event>>> get() {
         if (hasTerminate.isTerminated() || !Thread.currentThread().isInterrupted()) {
-            final long currentWritePos = writePos.get();
-            final long currentReadPos = readPos.get();
-            for (long i = currentReadPos; i < currentWritePos; i++) {
-                final Long streamId = insertionOrderMap.remove(i);
-                if (streamId != null) {
-                    readPos.compareAndSet(currentReadPos, i);
-                    final List<Event> events = storedDataMap.remove(streamId);
-                    available.release(events.size());
-                    return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
-                }
+            final Long streamId = streamIdQueue.poll();
+            if (streamId != null) {
+                final List<Event> events = storedDataMap.remove(streamId);
+
+                // Release permits.
+                available.release(events.size());
+
+                // Decrement the size.
+                size.addAndGet(-events.size());
+
+                return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
             }
         }
 
         return Optional.empty();
+    }
+
+    int size() {
+        return size.get();
     }
 }
