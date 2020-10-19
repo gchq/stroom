@@ -152,11 +152,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                 if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
                                         volumeConfig.getDefaultIndexVolumeGroupNodes() != null) {
 
-                                    String[] paths = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",");
-                                    String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
-                                    if (nodes.length == paths.length) {
-                                        for (int i = 0; i < paths.length; i++) {
-                                            Path resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim());
+                                    final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
+                                    final List<String> nodes = volumeConfig.getDefaultIndexVolumeGroupNodes();
+                                    if (nodes.size() == paths.size()) {
+                                        int i = 0;
+                                        for (String path : paths) {
+                                            Path resolvedPath = getDefaultVolumesPath().get().resolve(path.trim());
 
                                             LOGGER.info("Creating index volume with path {}",
                                                     resolvedPath.toAbsolutePath().normalize());
@@ -166,7 +167,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                             IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
                                             indexVolume.setBytesLimit(byteLimitOption.orElse(0l));
-                                            indexVolume.setNodeName(nodes[i]);
+                                            indexVolume.setNodeName(nodes.get(i++));
                                             indexVolume.setPath(resolvedPath.toString());
                                             indexVolume.setCreateTimeMs(System.currentTimeMillis());
                                             indexVolume.setUpdateTimeMs(System.currentTimeMillis());

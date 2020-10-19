@@ -18,6 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.hadoopcommonshaded.com.google.common.collect.Lists;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -83,17 +85,17 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         Path fsVolDir;
         Path indexVolDir;
         if (tempDir == null) {
-            final String fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths().split(",")[0];
-            fsVolDir = handleRelativePath(fsVolPathStr);
-            final String volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",")[0];
-            indexVolDir = handleRelativePath(volGroupPathStr);
+            final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
+            fsVolDir = handleRelativePath(fsVolPathStr.get(0));
+            final List<String> volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths();
+            indexVolDir = handleRelativePath(volGroupPathStr.get(0));
         } else {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;
         }
 
         LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
-        fsVolumeConfig.setDefaultStreamVolumePaths(fsVolDir.toString());
+        fsVolumeConfig.setDefaultStreamVolumePaths(Lists.asList(fsVolDir.toString(), new String []{}));
 
         LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
         volumeCreator.setup(indexVolDir);

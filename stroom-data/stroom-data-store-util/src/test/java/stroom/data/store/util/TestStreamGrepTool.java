@@ -28,6 +28,7 @@ import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.TempDirProviderImpl;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,7 +74,7 @@ class TestStreamGrepTool {
                 .resolve("volumes/defaultStreamVolume")
                 .toAbsolutePath()
                 .toString();
-        volumeConfig.setDefaultStreamVolumePaths(path);
+        volumeConfig.setDefaultStreamVolumePaths(Lists.asList(path, new String[]{}));
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
