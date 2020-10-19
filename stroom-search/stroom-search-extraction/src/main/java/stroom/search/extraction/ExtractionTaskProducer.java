@@ -97,9 +97,9 @@ class ExtractionTaskProducer extends TaskProducer {
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
                 while (!streamMapCreatorCompletionState.isComplete() && !tracker.isTerminated() && !Thread.currentThread().isInterrupted()) {
                     taskContext.info("" +
-                            "Creating extraction tasks - stored data queue: " +
+                            "Creating extraction tasks - stored data queue size: " +
                             storedDataQueue.size() +
-                            " stream event map: " +
+                            " stream event map size: " +
                             streamEventMap.size());
 
                     // Find out if index searching is complete. If it is then we can assume no more items will be added
