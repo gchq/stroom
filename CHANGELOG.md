@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1906** : Added info about queue sizes to extraction task.
+
 * Issue **#1906** : Made changes to allow early termination of searches if we have enough data.
 
 * Issue **#1906** : Fixed node task nesting.

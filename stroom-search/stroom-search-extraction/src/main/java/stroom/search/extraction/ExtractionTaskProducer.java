@@ -92,11 +92,16 @@ class ExtractionTaskProducer extends TaskProducer {
         final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
             LOGGER.debug("Starting extraction task producer");
             taskContext.setName("Extraction Task Producer");
-            taskContext.info("Adding extraction tasks");
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
                 while (!streamMapCreatorCompletionState.isComplete() && !tracker.isTerminated() && !Thread.currentThread().isInterrupted()) {
+                    taskContext.info("" +
+                            "Creating extraction tasks - stored data queue: " +
+                            storedDataQueue.size() +
+                            " stream event map: " +
+                            streamEventMap.size());
+
                     // Find out if index searching is complete. If it is then we can assume no more items will be added
                     // to the values topic.
                     final boolean indexSearchComplete = indexSearchCompletionState.isComplete();
@@ -135,7 +140,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 streamMapCreatorCompletionState.complete();
-                taskContext.info("Finished adding extraction tasks");
+                taskContext.info("Finished creating extraction tasks");
 
                 // Tell the supplied executor that we are ready to deliver final tasks.
                 signalAvailable();
