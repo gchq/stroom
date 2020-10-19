@@ -74,6 +74,7 @@ class StreamEventMap {
     }
 
     Optional<Map.Entry<Long, List<Event>>> get() {
+        Map.Entry<Long, List<Event>> entry = null;
         if (hasTerminate.isTerminated() || !Thread.currentThread().isInterrupted()) {
             final Long streamId = streamIdQueue.poll();
             if (streamId != null) {
@@ -85,12 +86,11 @@ class StreamEventMap {
                     // Decrement the size.
                     size.addAndGet(-events.size());
 
-                    return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
+                    entry = new AbstractMap.SimpleEntry<>(streamId, events);
                 }
             }
         }
-
-        return Optional.empty();
+        return Optional.ofNullable(entry);
     }
 
     int size() {
