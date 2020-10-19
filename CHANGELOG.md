@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1.21] - 2020-10-19
+
 * Issue **#1906** : Added info about queue sizes to extraction task.
 
 * Issue **#1906** : Made changes to allow early termination of searches if we have enough data.
@@ -2255,7 +2257,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.20...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.21...6.1
+[v6.1.21]: https://github.com/gchq/stroom/compare/v6.1.20...v6.1.21
 [v6.1.20]: https://github.com/gchq/stroom/compare/v6.1.19...v6.1.20
 [v6.1.19]: https://github.com/gchq/stroom/compare/v6.1.18...v6.1.19
 [v6.1.18]: https://github.com/gchq/stroom/compare/v6.1.17...v6.1.18
