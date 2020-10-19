@@ -54,10 +54,11 @@ class StreamEventMap {
                     return v;
                 });
 
-                // If we added a new stream to the map then create an entry in the insertion order map so we can read it
-                // back. Note that it is important to do this after the entry has been added to the stored data map,
-                // i.e. outside of the compute method, as we must be able to rely on it's presence when retrieving
-                // values in the get() method.
+                // If we added a new stream to the map then create an entry in the stream id queue so we know to
+                // retrieve it in the get method. The stream id queue is used to ensure we get stream data in the order
+                // it was added to the stream event map. Note that it is important to do this after the entry has been
+                // added to the stream data map, i.e. outside of the compute method, as we must be able to rely on it's
+                // presence when retrieving values in the get() method.
                 if (newEntry.get()) {
                     streamIdQueue.add(event.getStreamId());
                 }
@@ -77,14 +78,15 @@ class StreamEventMap {
             final Long streamId = streamIdQueue.poll();
             if (streamId != null) {
                 final List<Event> events = storedDataMap.remove(streamId);
+                if (events != null) {
+                    // Release permits.
+                    available.release(events.size());
 
-                // Release permits.
-                available.release(events.size());
+                    // Decrement the size.
+                    size.addAndGet(-events.size());
 
-                // Decrement the size.
-                size.addAndGet(-events.size());
-
-                return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
+                    return Optional.of(new AbstractMap.SimpleEntry<>(streamId, events));
+                }
             }
         }
 
