@@ -18,7 +18,6 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
-import stroom.hadoopcommonshaded.com.google.common.collect.Lists;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
@@ -95,7 +94,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         }
 
         LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
-        fsVolumeConfig.setDefaultStreamVolumePaths(Lists.asList(fsVolDir.toString(), new String []{}));
+        fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
 
         LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
         volumeCreator.setup(indexVolDir);

@@ -1,13 +1,11 @@
 package stroom.index.impl.selection;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.google.common.collect.Lists;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
-import javax.inject.Singleton;
-import javax.validation.constraints.Pattern;
+import javax.inject.Singleton;;
 import java.util.List;
 
 @Singleton
@@ -17,8 +15,8 @@ public class VolumeConfig extends AbstractConfig {
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
-    private List<String> defaultIndexVolumeGroupPaths = Lists.asList("volumes/defaultIndexVolume", new String[] {});
-    private List<String> defaultIndexVolumeGroupNodes = Lists.asList("node1a", new String[]{});
+    private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/defaultIndexVolume");
+    private List<String> defaultIndexVolumeGroupNodes = List.of("node1a");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
 
     @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")

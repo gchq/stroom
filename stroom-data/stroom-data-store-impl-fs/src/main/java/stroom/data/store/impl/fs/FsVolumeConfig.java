@@ -1,7 +1,6 @@
 package stroom.data.store.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.google.common.collect.Lists;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
@@ -18,7 +17,7 @@ public class FsVolumeConfig extends AbstractConfig {
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
 
-    private List<String> defaultStreamVolumePaths = Lists.asList("volumes/defaultStreamVolume",new String[]{});
+    private List<String> defaultStreamVolumePaths = List.of("volumes/defaultStreamVolume");
     private double defaultStreamVolumeFilesystemUtilisation = 0.9;
     private boolean createDefaultStreamVolumesOnStart = true;
 
