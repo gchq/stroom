@@ -1,6 +1,8 @@
 package stroom.data.store.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.collect.Lists;
+
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
@@ -8,15 +10,15 @@ import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
+import java.util.List;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
-    private static final String PATH_LIST_PATTERN = "^[^,]+(,[ ]?[^,]+)*$";
 //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
 
-    private String defaultStreamVolumePaths = "volumes/defaultStreamVolume";
+    private List<String> defaultStreamVolumePaths = Lists.asList("volumes/defaultStreamVolume",new String[]{});
     private double defaultStreamVolumeFilesystemUtilisation = 0.9;
     private boolean createDefaultStreamVolumesOnStart = true;
 
@@ -99,14 +101,12 @@ public class FsVolumeConfig extends AbstractConfig {
         this.typePathCache = typePathCache;
     }
 
-    @JsonPropertyDescription("Comma delimited list of the paths used " +
-            "if the default stream volumes are created on application start.")
-    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths")
-    public String getDefaultStreamVolumePaths() {
+    @JsonPropertyDescription("The paths used if the default stream volumes are created on application start.")
+    public List<String >getDefaultStreamVolumePaths() {
         return defaultStreamVolumePaths;
     }
 
-    public void setDefaultStreamVolumePaths(final String defaultStreamVolumePaths) {
+    public void setDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
     }
 

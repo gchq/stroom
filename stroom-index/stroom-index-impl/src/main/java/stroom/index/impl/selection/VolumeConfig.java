@@ -1,24 +1,24 @@
 package stroom.index.impl.selection;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.collect.Lists;
+
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
+import java.util.List;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
-    private static final String PATH_LIST_PATTERN = "^[^,]+(,[ ]?[^,]+)*$";
-    private static final String NODE_LIST_PATTERN = "^[^ ,:@]+(,[ ]?[^ ,:@]+)*$";
-
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
-    private String defaultIndexVolumeGroupPaths = "volumes/defaultIndexVolume";
-    private String defaultIndexVolumeGroupNodes = "node1a";
+    private List<String> defaultIndexVolumeGroupPaths = Lists.asList("volumes/defaultIndexVolume", new String[] {});
+    private List<String> defaultIndexVolumeGroupNodes = Lists.asList("node1a", new String[]{});
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
 
     @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
@@ -77,12 +77,11 @@ public class VolumeConfig extends AbstractConfig {
             "on the defined list of nodes if the default index is created on application start. " +
             "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
             "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
-    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths")
-    public String getDefaultIndexVolumeGroupPaths(){
+    public List<String> getDefaultIndexVolumeGroupPaths(){
         return defaultIndexVolumeGroupPaths;
     }
 
-    public void setDefaultIndexVolumeGroupPaths(final String defaultIndexVolumeGroupPaths) {
+    public void setDefaultIndexVolumeGroupPaths(final List<String> defaultIndexVolumeGroupPaths) {
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
     }
 
@@ -90,12 +89,11 @@ public class VolumeConfig extends AbstractConfig {
             "the default index is created on application start." +
             "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
             "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
-    @Pattern(regexp = NODE_LIST_PATTERN, message = "Value must be a comma delimited string of node names")
-    public String getDefaultIndexVolumeGroupNodes() {
+    public List<String> getDefaultIndexVolumeGroupNodes() {
         return defaultIndexVolumeGroupNodes;
     }
 
-    public void setDefaultIndexVolumeGroupNodes(final String defaultIndexVolumeGroupNodes) {
+    public void setDefaultIndexVolumeGroupNodes(final List<String> defaultIndexVolumeGroupNodes) {
         this.defaultIndexVolumeGroupNodes = defaultIndexVolumeGroupNodes;
     }
 
