@@ -7,14 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-<<<<<<< HEAD
 * Issue **#1894** : Improvements to search performance and fix for hanging searches.
-=======
+
 
 ## [v7.0-beta.67] - 2020-10-15
 
 * Issue **#1901** : Create default (index) volume group if it is used prior to UI.
->>>>>>> c98f99306ce1ba44518c853227f2ae4033831acc
 
 * Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
 
