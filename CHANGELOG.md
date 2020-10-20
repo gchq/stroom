@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1893** : Change delimited string volume properties to lists of strings
+
 * Issue **#1848** : Fix NPE when importing certain processor filters.
 
 * Issue **#1894** : Improvements to search performance and fix for hanging searches.

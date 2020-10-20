@@ -73,7 +73,8 @@ appConfig:
     enabled: true
   data:
     filesystemVolume:
-      defaultStreamVolumePaths: ${HOME}/.stroom/volumes/defaultStreamVolume
+      defaultStreamVolumePaths:
+        - ${HOME}/.stroom/volumes/defaultStreamVolume
   job:
     enabled: true
     executionInterval: "10s"
@@ -116,5 +117,6 @@ appConfig:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
   volumes:
-    defaultIndexVolumeGroupPaths: ${HOME}/.stroom/volumes/defaultIndexVolume
+    defaultIndexVolumeGroupPaths:
+      - ${HOME}/.stroom/volumes/defaultIndexVolume
 
