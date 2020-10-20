@@ -117,6 +117,5 @@ appConfig:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
   volumes:
-    defaultIndexVolumeGroupPaths:
-      - ${HOME}/.stroom/volumes/defaultIndexVolume
+    defaultIndexVolumeGroupPaths: ["${HOME}/.stroom/volumes/defaultIndexVolume"]
 

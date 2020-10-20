@@ -196,12 +196,9 @@ appConfig:
       enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
   volumes:
     createDefaultIndexVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_INDEX_VOLUMES') }}"
-    defaultIndexVolumeGroupPaths:
-    - "{{ (rootPath + 'volumes/defaultIndexVolume') | envVar('STROOM_DEFAULT_INDEX_VOLUME_PATHS') }}"
-    defaultIndexVolumeGroupNodes:
-    - "{{ 'node1a' | envVar('STROOM_DEFAULT_INDEX_VOLUME_NODES') }}"
+    defaultIndexVolumeGroupPaths: {{ ('[ \"' + rootPath + 'volumes/defaultIndexVolume\"]') | envVar('STROOM_DEFAULT_INDEX_VOLUME_PATHS') }}
+    defaultIndexVolumeGroupNodes: {{ ('[ \"' + 'node1a' + '\"]' )| envVar('STROOM_DEFAULT_INDEX_VOLUME_NODES') }}
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_STREAM_VOLUMES') }}"
-      defaultStreamVolumePaths:
-      - "{{ (rootPath + 'volumes/defaultStreamVolume') | envVar('STROOM_DEFAULT_STREAM_VOLUME_PATHS') }}"
+      defaultStreamVolumePaths: {{ ('[ \"' + rootPath + 'volumes/defaultStreamVolume\"]') | envVar('STROOM_DEFAULT_STREAM_VOLUME_PATHS') }}
