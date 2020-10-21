@@ -17,18 +17,17 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
-import stroom.search.coprocessor.Receiver;
 
 class ExtractionTask {
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;
-    private final Receiver receiver;
+    private final ExtractionReceiver receiver;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final Receiver receiver) {
+                   final ExtractionReceiver receiver) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
@@ -47,7 +46,7 @@ class ExtractionTask {
         return pipelineRef;
     }
 
-    Receiver getReceiver() {
+    ExtractionReceiver getReceiver() {
         return receiver;
     }
 }

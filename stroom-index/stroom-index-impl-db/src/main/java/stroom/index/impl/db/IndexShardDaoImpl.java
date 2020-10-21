@@ -4,6 +4,7 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
+import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.selection.RoundRobinVolumeSelector;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
@@ -79,14 +81,17 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final IndexVolumeDao indexVolumeDao;
+    private final IndexVolumeGroupService indexVolumeGroupService;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
     private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
 
     @Inject
     IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
-                      final IndexVolumeDao indexVolumeDao) {
+                      final IndexVolumeDao indexVolumeDao,
+                      final IndexVolumeGroupService indexVolumeGroupService) {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
+        this.indexVolumeGroupService = indexVolumeGroupService;
         genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_SHARD_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_SHARD_TO_RECORD_MAPPER);
@@ -187,9 +192,18 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String ownerNodeName,
                              final String indexVersion) {
         // TODO : @66 Add some caching here. Maybe do this as part of volume selection.
-        final List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+        List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
         if (indexVolumes == null || indexVolumes.size() == 0) {
-            throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName);
+            //Could be due to default volume groups not having been created - but this will force as side effect
+            List <String> groupNames = indexVolumeGroupService.getNames();
+            indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
+
+            //Check again.
+            if (indexVolumes == null || indexVolumes.size() == 0) {
+                throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
+                        ((groupNames == null || groupNames.size() == 0)? " No index groups defined." :
+                        " Available index volume groups: " + groupNames.stream().collect(Collectors.joining(", "))));
+            }
         }
 
         // TODO : @66 Add volume selection based on strategy for using least full etc, like we do for data store.

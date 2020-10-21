@@ -54,6 +54,10 @@ public class NodeResult implements Serializable {
 
     @Override
     public String toString() {
-        return "search result";
+        return "NodeResult{" +
+                "payloadMap=" + payloadMap +
+                ", errors=" + errors +
+                ", complete=" + complete +
+                '}';
     }
 }

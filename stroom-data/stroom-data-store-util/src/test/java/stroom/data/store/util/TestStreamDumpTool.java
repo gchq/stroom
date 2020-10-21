@@ -23,7 +23,6 @@ import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.meta.api.MetaProperties;
-import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -44,6 +43,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @ExtendWith({MockitoExtension.class})
 class TestStreamDumpTool {
@@ -75,7 +75,7 @@ class TestStreamDumpTool {
                 .resolve("volumes/defaultStreamVolume")
                 .toAbsolutePath()
                 .toString();
-        volumeConfig.setDefaultStreamVolumePaths(path);
+        volumeConfig.setDefaultStreamVolumePaths(List.of(path));
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())

@@ -445,8 +445,6 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 this::createTableSettings,
                 extractValues,
                 resultMapConsumer,
-                1,
-                1,
                 indexStore);
 
         while (executorProvider.getCurrentTaskCount() > 0) {

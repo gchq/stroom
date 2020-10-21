@@ -1,11 +1,21 @@
 package stroom.search.solr.search;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 class Tracker {
-    private final AtomicLong hitCount = new AtomicLong();
-    private final AtomicBoolean completed = new AtomicBoolean();
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Tracker.class);
+
+    private final AtomicLong hitCount;
+    private final CountDownLatch completed = new CountDownLatch(1);
+
+    Tracker(final AtomicLong hitCount) {
+        this.hitCount = hitCount;
+    }
 
     long getHitCount() {
         return hitCount.get();
@@ -15,11 +25,11 @@ class Tracker {
         hitCount.incrementAndGet();
     }
 
-    boolean isCompleted() {
-        return completed.get();
+    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completed.await(timeout, unit);
     }
 
     void complete() {
-        completed.set(true);
+        completed.countDown();
     }
 }

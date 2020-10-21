@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
 
+* Issue **#1733** : Support xsl:output options for XML output from pipeline (XMLWriter)
+
+* Issue **#1893** : Change delimited string volume properties to lists of strings
+
+* Issue **#1848** : Fix NPE when importing certain processor filters.
+
+* Issue **#1894** : Improvements to search performance and fix for hanging searches.
+
+
+## [v7.0-beta.67] - 2020-10-15
+
+* Issue **#1901** : Create default (index) volume group if it is used prior to UI.
+
+* Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
+
+* Change dashboard field expression editor to be a bit wider and use a monospace font.
+
 * Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
 
 * Issue **#1877** : Change conditional formatting to support decimals.
@@ -2749,7 +2766,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.66...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.67...HEAD
+[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
 [v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64

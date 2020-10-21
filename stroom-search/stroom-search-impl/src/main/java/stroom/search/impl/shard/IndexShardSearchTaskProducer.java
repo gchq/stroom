@@ -85,7 +85,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
             task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();
-                task.getTask().setShardTotal(tracker.getShardCount());
+                task.getTask().setShardTotal(tracker.getShardTotal());
                 task.getTask().setShardNumber(no);
             }
         }

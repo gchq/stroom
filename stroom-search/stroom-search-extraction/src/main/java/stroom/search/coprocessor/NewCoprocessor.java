@@ -7,27 +7,31 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.PayloadFactory;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class NewCoprocessor implements Receiver, PayloadFactory {
+    private final CountDownLatch completionState = new CountDownLatch(1);
     private final CoprocessorKey key;
     private final CoprocessorSettings settings;
-    private final FieldIndexMap fieldIndexMap;
     private final Consumer<Error> errorConsumer;
     private final Coprocessor coprocessor;
+    private final FieldIndexMap fieldIndexMap;
+    private final AtomicLong valuesCount = new AtomicLong();
     private final AtomicLong completionCount = new AtomicLong();
 
     NewCoprocessor(final CoprocessorKey key,
                    final CoprocessorSettings settings,
-                   final FieldIndexMap fieldIndexMap,
                    final Consumer<Error> errorConsumer,
-                   final Coprocessor coprocessor) {
+                   final Coprocessor coprocessor,
+                   final FieldIndexMap fieldIndexMap) {
         this.key = key;
         this.settings = settings;
-        this.fieldIndexMap = fieldIndexMap;
         this.errorConsumer = errorConsumer;
         this.coprocessor = coprocessor;
+        this.fieldIndexMap = fieldIndexMap;
     }
 
     public CoprocessorKey getKey() {
@@ -40,7 +44,10 @@ public class NewCoprocessor implements Receiver, PayloadFactory {
 
     @Override
     public Consumer<Values> getValuesConsumer() {
-        return values -> coprocessor.receive(values.getValues());
+        return values -> {
+            valuesCount.incrementAndGet();
+            coprocessor.receive(values.getValues());
+        };
     }
 
     @Override
@@ -49,13 +56,11 @@ public class NewCoprocessor implements Receiver, PayloadFactory {
     }
 
     @Override
-    public Consumer<Long> getCompletionCountConsumer() {
-        return completionCount::addAndGet;
-    }
-
-    @Override
-    public FieldIndexMap getFieldIndexMap() {
-        return fieldIndexMap;
+    public Consumer<Long> getCompletionConsumer() {
+        return count -> {
+            completionCount.set(count);
+            completionState.countDown();
+        };
     }
 
     @Override
@@ -63,7 +68,15 @@ public class NewCoprocessor implements Receiver, PayloadFactory {
         return coprocessor.createPayload();
     }
 
-    public long getCompletionCount() {
-        return completionCount.get();
+    public AtomicLong getValuesCount() {
+        return valuesCount;
+    }
+
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.await(timeout, unit);
+    }
+
+    public FieldIndexMap getFieldIndexMap() {
+        return fieldIndexMap;
     }
 }

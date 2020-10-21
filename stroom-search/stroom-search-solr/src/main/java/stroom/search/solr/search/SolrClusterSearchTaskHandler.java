@@ -26,7 +26,6 @@ import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.resultsender.NodeResult;
@@ -39,7 +38,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -146,31 +144,40 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final AtomicLong allDocumentCount = new AtomicLong();
-            final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, rootReceiver, task.getStoredFields(), coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, this, task.getStoredFields(), coprocessors, query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-            solrSearchFactory.search(task, expression, extractionReceiver, taskContext);
+            final AtomicLong hitCount = new AtomicLong();
+            solrSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
 
-            // Wait for index search completion.
-            long extractionCount = getMinExtractions(coprocessors.getSet());
-            long documentCount = allDocumentCount.get();
-            while (!Thread.currentThread().isInterrupted() && extractionCount < documentCount) {
-                log(taskContext, extractionCount, documentCount);
+            // Wait for search completion.
+            boolean allComplete = false;
+            while (!allComplete) {
+                allComplete = true;
+                for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        taskContext.info(() -> "" +
+                                "Searching... " +
+                                "found " +
+                                hitCount.get() +
+                                " documents" +
+                                " performed "
+                                + coprocessor.getValuesCount().get() +
+                                " extractions");
 
-                Thread.sleep(1000);
-
-                extractionCount = getMinExtractions(coprocessors.getSet());
-                documentCount = allDocumentCount.get();
+                        final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                        if (!complete) {
+                            allComplete = false;
+                        }
+                    }
+                }
             }
 
             LOGGER.debug(() -> "Complete");
-
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();
@@ -178,17 +185,6 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
-    }
-
-    private void log(final TaskContext taskContext, final long extractionCount, final long documentCount) {
-        taskContext.info(() ->
-                "Searching... " +
-                        "found " + documentCount + " documents" +
-                        " performed " + extractionCount + " extractions");
-    }
-
-    private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {
-        return coprocessorConsumers.stream().mapToLong(NewCoprocessor::getCompletionCount).min().orElse(0);
     }
 
     @Override

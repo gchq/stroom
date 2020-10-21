@@ -32,30 +32,31 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 import stroom.search.resultsender.NodeResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 class AsyncSearchTaskHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ClusterCallService clusterCallService;
@@ -64,6 +65,8 @@ class AsyncSearchTaskHandler {
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
@@ -72,7 +75,9 @@ class AsyncSearchTaskHandler {
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final ExecutorProvider executorProvider,
+                           final TaskContextFactory taskContextFactory) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.clusterCallService = clusterCallService;
         this.indexStore = indexStore;
@@ -80,9 +85,11 @@ class AsyncSearchTaskHandler {
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
-    public void exec(final TaskContext taskContext, final AsyncSearchTask task) {
+    public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
@@ -91,12 +98,10 @@ class AsyncSearchTaskHandler {
                 final Map<String, List<Long>> shardMap = new HashMap<>();
 
                 try {
-                    final Set<String> remainingNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                    taskContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     // Reload the index.
@@ -131,144 +136,141 @@ class AsyncSearchTaskHandler {
                     }
 
                     // Start remote cluster search execution.
-                    final Map<String, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
-                            .filter(entry -> {
-                                final String nodeName = entry.getKey();
-                                if (targetNodes.contains(nodeName)) {
-                                    return true;
-                                } else {
-                                    resultCollector.onFailure(nodeName,
-                                            new SearchException("Node is not enabled or active. Some search results may be missing."));
-                                    return false;
-                                }
-                            })
-                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-                    // Tell the result collector which nodes we expect to get results from.
-                    resultCollector.setExpectedNodes(filteredShardNodes.keySet());
-
-                    // Now send out distributed search tasks to each worker node.
-                    filteredShardNodes.forEach((node, shards) -> {
-                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                                "Cluster Search",
-                                task.getKey(),
-                                query,
-                                shards,
-                                storedFields,
-                                task.getCoprocessorMap(),
-                                task.getDateTimeLocale(),
-                                task.getNow());
-                        LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
-
-                        try {
-                            final boolean success = (Boolean) clusterCallService.call(sourceNode, node, securityContext.getUserIdentity(), RemoteSearchManager.SERVICE_NAME,
-                                    RemoteSearchManager.START_SEARCH,
-                                    new Class[]{UserIdentity.class, TaskId.class, ClusterSearchTask.class},
-                                    new Object[]{securityContext.getUserIdentity(), taskContext.getTaskId(), clusterSearchTask});
-                            if (!success) {
-                                resultCollector.onFailure(node, new SearchException("Failed to start remote search"));
-                            } else {
-                                remainingNodes.add(node);
-                            }
-
-                        } catch (final Throwable e) {
-                            resultCollector.onFailure(node, new SearchException(e.getMessage(), e));
+                    final Executor executor = executorProvider.get(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final List<CompletableFuture<Void>> futures = new ArrayList<>();
+                    for (final Entry<String, List<Long>> entry : shardMap.entrySet()) {
+                        final String nodeName = entry.getKey();
+                        final List<Long> shards = entry.getValue();
+                        if (targetNodes.contains(nodeName)) {
+                            final Runnable runnable = taskContextFactory.context(parentContext, "Async Search Task", taskContext ->
+                                    searchNode(sourceNode, nodeName, shards, task, query, storedFields, taskContext));
+                            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
+                            futures.add(completableFuture);
+                        } else {
+                            resultCollector.onFailure(nodeName,
+                                    new SearchException("Node is not enabled or active. Some search results may be missing."));
                         }
-                    });
-                    taskContext.info(() -> task.getSearchName() + " - searching...");
-
-                    // Await completion.
-                    while (!Thread.currentThread().isInterrupted() &&
-                            remainingNodes.size() > 0) {
-
-                        final long start = System.currentTimeMillis();
-
-                        for (String node : remainingNodes) {
-                            final NodeResult nodeResult = (NodeResult) clusterCallService.call(
-                                    sourceNode,
-                                    node,
-                                    securityContext.getUserIdentity(),
-                                    RemoteSearchManager.SERVICE_NAME,
-                                    RemoteSearchManager.POLL,
-                                    new Class[]{UserIdentity.class, QueryKey.class},
-                                    new Object[]{securityContext.getUserIdentity(), task.getKey()});
-                            if (nodeResult != null) {
-                                resultCollector.onSuccess(node, nodeResult);
-                                if (nodeResult.isComplete()) {
-                                    remainingNodes.remove(node);
-                                }
-                            }
-                        }
-
-                        final long elapsed = System.currentTimeMillis() - start;
-                        if (elapsed < 1000) {
-                            Thread.sleep(1000 - elapsed);
-                        }
-
-//                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-//                                () -> {
-//                                    try {
-//                                        // block and wait for up to 10s for our search to be completed/terminated
-//                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
-//                                    } catch (InterruptedException e) {
-//                                        //Don't reset the interrupt status as we are at the top level of
-//                                        //the task execution
-//                                        throw new RuntimeException("Thread interrupted");
-//                                    }
-//                                },
-//                                "waiting for completion condition");
-//
-//                        LOGGER.trace("await finished with result {}", awaitResult);
-//
-//                        // If the collector is no longer in the cache then terminate
-//                        // this search task.
-//                        if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
-//                            terminateTasks(task);
-//                        }
                     }
 
-                    // Perform a final wait for the result collector to do final merges.
-                    resultCollector.waitForPendingWork();
-                    taskContext.info(() -> task.getSearchName() + " - complete");
+                    // Wait for all nodes to finish.
+                    LOGGER.debug(() -> "Waiting for completion");
+                    final CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    all.join();
+                    LOGGER.debug(() -> "Done waiting for completion");
 
-                } catch (final NullClusterStateException | NodeNotFoundException | RuntimeException e) {
-                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
-                } catch (final InterruptedException e) {
+                } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
 
-                    // Continue to interrupt this thread.
-                    Thread.currentThread().interrupt();
                 } finally {
-                    // Destroy remote search results.
-                    for (final String node : shardMap.keySet()) {
-                        try {
-                            final boolean success = (Boolean) clusterCallService.call(
-                                    sourceNode,
-                                    node,
-                                    securityContext.getUserIdentity(),
-                                    RemoteSearchManager.SERVICE_NAME,
-                                    RemoteSearchManager.DESTROY,
-                                    new Class[]{UserIdentity.class, QueryKey.class},
-                                    new Object[]{securityContext.getUserIdentity(), task.getKey()});
-
-                        } catch (final Throwable e) {
-                            resultCollector.onFailure(node, new SearchException(e.getMessage(), e));
-                        }
-                    }
-
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task, taskContext.getTaskId());
+                    terminateTasks(task, parentContext.getTaskId());
 
                     // Ensure search is complete even if we had errors.
+                    LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
+                    parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
         }));
+    }
+
+    private void searchNode(final String sourceNode,
+                            final String targetNode,
+                            final List<Long> shards,
+                            final AsyncSearchTask task,
+                            final Query query,
+                            final String[] storedFields,
+                            final TaskContext taskContext) {
+        LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
+        taskContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
+        final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+
+        // Start remote cluster search execution.
+        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                "Cluster Search",
+                task.getKey(),
+                query,
+                shards,
+                storedFields,
+                task.getCoprocessorMap(),
+                task.getDateTimeLocale(),
+                task.getNow());
+        LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);
+        try {
+            final boolean success = (Boolean) clusterCallService.call(
+                    sourceNode,
+                    targetNode,
+                    securityContext.getUserIdentity(),
+                    RemoteSearchManager.SERVICE_NAME,
+                    RemoteSearchManager.START_SEARCH,
+                    new Class[]{UserIdentity.class, TaskId.class, ClusterSearchTask.class},
+                    new Object[]{securityContext.getUserIdentity(), taskContext.getTaskId(), clusterSearchTask});
+            if (!success) {
+                LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
+                final SearchException searchException = new SearchException("Failed to start remote search on node: " + targetNode);
+                resultCollector.onFailure(targetNode, searchException);
+                throw searchException;
+            }
+
+        } catch (final Throwable e) {
+            final SearchException searchException = new SearchException(e.getMessage(), e);
+            resultCollector.onFailure(targetNode, searchException);
+            throw searchException;
+        }
+
+        try {
+            LOGGER.debug(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
+            taskContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
+
+            // Poll for results until completion.
+            boolean complete = false;
+            while (!Thread.currentThread().isInterrupted() && !complete) {
+                final NodeResult nodeResult = (NodeResult) clusterCallService.call(
+                        sourceNode,
+                        targetNode,
+                        securityContext.getUserIdentity(),
+                        RemoteSearchManager.SERVICE_NAME,
+                        RemoteSearchManager.POLL,
+                        new Class[]{UserIdentity.class, QueryKey.class},
+                        new Object[]{securityContext.getUserIdentity(), task.getKey()});
+                if (nodeResult != null) {
+                    LOGGER.debug(() -> "Receive result for node: " + targetNode + " " + nodeResult);
+                    resultCollector.onSuccess(targetNode, nodeResult);
+                    if (nodeResult.isComplete()) {
+                        complete = true;
+                    }
+                }
+            }
+
+        } catch (final RuntimeException e) {
+            resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+
+        } finally {
+            LOGGER.debug(() -> task.getSearchName() + " - finished searching node: " + targetNode);
+            taskContext.info(() -> task.getSearchName() + " - finished searching node: " + targetNode);
+
+            // Destroy remote search results.
+            try {
+                final boolean success = (Boolean) clusterCallService.call(
+                        sourceNode,
+                        targetNode,
+                        securityContext.getUserIdentity(),
+                        RemoteSearchManager.SERVICE_NAME,
+                        RemoteSearchManager.DESTROY,
+                        new Class[]{UserIdentity.class, QueryKey.class},
+                        new Object[]{securityContext.getUserIdentity(), task.getKey()});
+                if (!success) {
+                    LOGGER.debug(() -> "Failed to destroy remote search on node: " + targetNode);
+                    resultCollector.onFailure(targetNode, new SearchException("Failed to destroy remote search"));
+                }
+            } catch (final Throwable e) {
+                resultCollector.onFailure(targetNode, new SearchException(e.getMessage(), e));
+            }
+        }
     }
 
     private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {

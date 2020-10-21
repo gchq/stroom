@@ -16,32 +16,52 @@
 
 package stroom.pipeline.writer;
 
+import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactory;
+import stroom.pipeline.cache.PoolItem;
+import stroom.pipeline.cache.StoredXsltExecutable;
+import stroom.pipeline.cache.XsltPool;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.filter.NullXMLFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.util.CharBuffer;
+import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
@@ -61,6 +81,11 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     private final LocationFactory locationFactory;
 
+    //Injected props required for finding and compiling XSLT
+    private final PathCreator pathCreator;
+    final Provider<FeedHolder> feedHolder;
+    final Provider<PipelineHolder> pipelineHolder;
+
     private ContentHandler handler = NullXMLFilter.INSTANCE;
 
     private boolean doneElement;
@@ -68,6 +93,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private String rootElement;
 
     private boolean indentOutput = false;
+
+    //XSL related props in order to support <xsl:output>
+    private final XsltStore xsltStore;
+    private final XsltPool xsltPool;
+    private DocRef xsltRef;
+    private String xsltNamePattern;
+    private boolean suppressXSLTNotFoundWarnings;
 
     private byte[] header;
     private byte[] footer;
@@ -79,25 +111,73 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public XMLWriter() {
         this.locationFactory = null;
+        this.xsltStore = null;
+        this.xsltPool = null;
+        this.pathCreator = null;
+        this.feedHolder = null;
+        this.pipelineHolder = null;
     }
 
     @Inject
     public XMLWriter(final ErrorReceiverProxy errorReceiverProxy,
-                     final LocationFactory locationFactory) {
+                     final LocationFactory locationFactory,
+                     final XsltStore xsltStore,
+                     final XsltPool xsltPool,
+                     final PathCreator pathCreator,
+                     final Provider<FeedHolder> feedHolder,
+                     final Provider<PipelineHolder> pipelineHolder) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
+        this.xsltStore = xsltStore;
+        this.xsltPool = xsltPool;
+        this.pathCreator = pathCreator;
+        this.feedHolder = feedHolder;
+        this.pipelineHolder = pipelineHolder;
     }
 
     @Override
     public void startProcessing() {
         //LOGGER.trace("startProcessing called");
         try {
+            Properties outputProperties = null;
+
+            final XsltDoc xslt = loadXsltDoc();
+            // If we have found XSLT then get a template.
+            if (xslt != null) {
+
+                // If no XSLT has been provided then don't try and get compiled
+                // XSLT for it.
+                if (xslt.getData() != null && xslt.getData().trim().length() > 0) {
+                    // Get compiled XSLT from the pool.
+                    final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
+                            getErrorReceiver());
+                    PoolItem<StoredXsltExecutable> poolItem = xsltPool.borrowConfiguredTemplate(xslt, errorReceiver,
+                            locationFactory, List.of(), true);
+                    final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
+                    // Get the errors.
+                    final StoredErrorReceiver storedErrors = storedXsltExecutable.getErrorReceiver();
+                    // Get the XSLT executable.
+                    XsltExecutable xsltExecutable = storedXsltExecutable.getXsltExecutable();
+                    if (storedErrors.getTotalErrors() > 0) {
+                        // Replay any exceptions that were created when
+                        // compiling the XSLT into the pipeline error handler.
+                        storedErrors.replay(errorReceiver);
+                    }
+
+                    outputProperties = xsltExecutable.getUnderlyingCompiledStylesheet().getOutputProperties();
+                }
+            }
+
             stringWriter = new CharBufferWriter();
             bufferedWriter = new BufferedWriter(stringWriter);
 
             final ErrorListener errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory,
                     getErrorReceiver());
             final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, indentOutput);
+
+            if (outputProperties != null) {
+                th.getTransformer().setOutputProperties(outputProperties);
+            }
             th.setResult(new StreamResult(bufferedWriter));
             handler = th;
             startedDocument = false;
@@ -108,6 +188,33 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         }
 
         super.startProcessing();
+    }
+
+    public XsltDoc loadXsltDoc() {
+
+        final DocFinder<XsltDoc> docHelper = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        final DocRef docRef =
+                docHelper.findDoc(
+                        xsltRef,
+                        xsltNamePattern,
+                        getFeedName(),
+                        getPipelineName(),
+                        message -> getErrorReceiver().log(Severity.WARNING, null, getElementId(), message, null),
+                        suppressXSLTNotFoundWarnings);
+
+        if (docRef != null) {
+            final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
+            if (xsltDoc == null) {
+                final String message = "XSLT \"" +
+                        docRef.getName() +
+                        "\" appears to have been deleted";
+                throw new ProcessException(message);
+            }
+
+            return xsltDoc;
+        }
+
+        return null;
     }
 
     @Override
@@ -415,6 +522,55 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             displayPriority = 2)
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
+    }
+
+
+    @PipelineProperty(description = "A previously saved XSLT, used to modify the output via xsl:output attributes.", displayPriority = 1)
+    @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
+    public void setXslt(final DocRef xsltRef) {
+        this.xsltRef = xsltRef;
+    }
+
+    @PipelineProperty(description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via xsl:output attributes.", displayPriority = 2)
+    public void setXsltNamePattern(final String xsltNamePattern) {
+        this.xsltNamePattern = xsltNamePattern;
+    }
+
+    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false", displayPriority = 3)
+    public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
+        this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
+    }
+
+    /**
+     * Used when XSLT is supplied (for xsl:output)
+     * @return
+     */
+    private String getFeedName() {
+        if (feedHolder != null) {
+            final FeedHolder fh = feedHolder.get();
+            if (fh != null) {
+                return fh.getFeedName();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Used when XSLT is supplied (for xsl:output)
+     * @return
+     */
+    private String getPipelineName() {
+        if (pipelineHolder != null) {
+            final PipelineHolder ph = pipelineHolder.get();
+            if (ph != null) {
+                final DocRef pipeline = ph.getPipeline();
+                if (pipeline != null) {
+                    return pipeline.getName();
+                }
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unused") //useful for debugging

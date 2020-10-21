@@ -16,7 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;

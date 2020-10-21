@@ -20,12 +20,14 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import stroom.search.coprocessor.Receiver;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 class IndexShardSearchTask {
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
     private final String[] fieldNames;
     private final Receiver receiver;
-    private final HitCount hitCount;
+    private final AtomicLong hitCount;
     private int shardNumber;
     private int shardTotal;
 
@@ -33,7 +35,7 @@ class IndexShardSearchTask {
                          final long indexShardId,
                          final String[] fieldNames,
                          final Receiver receiver,
-                         final HitCount hitCount) {
+                         final AtomicLong hitCount) {
         this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
         this.fieldNames = fieldNames;
@@ -57,7 +59,7 @@ class IndexShardSearchTask {
         return receiver;
     }
 
-    HitCount getHitCount() {
+    AtomicLong getHitCount() {
         return hitCount;
     }
 

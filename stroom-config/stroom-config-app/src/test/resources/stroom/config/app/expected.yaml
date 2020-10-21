@@ -16,7 +16,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   annotation:
     db:
       connection:
@@ -32,7 +32,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     statusValues:
     - "New"
     - "Assigned"
@@ -59,7 +59,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   clusterTask:
     clusterResultCollectorCache:
       maximumSize: 1000000
@@ -79,7 +79,7 @@ appConfig:
       idleTimeout: "PT10M"
       maxLifetime: "PT30M"
       minimumIdle: 10
-      maxPoolSize: 10
+      maxPoolSize: 30
   contentPackImport:
     enabled: false
     importDirectory: null
@@ -98,7 +98,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   dashboard:
     activeQueriesCache:
       maximumSize: 100
@@ -133,7 +133,7 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
       metaValue:
         addAsync: true
         deleteAge: "P30D"
@@ -162,10 +162,11 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
     filesystemVolume:
       volumeSelector: "RoundRobin"
-      defaultStreamVolumePaths: "volumes/defaultStreamVolume"
+      defaultStreamVolumePaths:
+      - "volumes/defaultStreamVolume"
       defaultStreamVolumeFilesystemUtilisation: 0.9
       createDefaultStreamVolumesOnStart: true
       feedPathCache:
@@ -196,7 +197,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   explorer:
     db:
       connection:
@@ -212,7 +213,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     docRefInfoCache:
       maximumSize: 1000
       expireAfterAccess: "PT10M"
@@ -246,7 +247,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     writer:
       cache:
         timeToLive: "PT0S"
@@ -271,7 +272,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     enableDistributedJobsOnBootstrap: true
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
@@ -323,7 +324,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -426,7 +427,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   properties:
     db:
       connection:
@@ -442,7 +443,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
     proxyThreads: 10
@@ -537,7 +538,7 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
     webContent:
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
@@ -562,7 +563,7 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
       email:
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
@@ -656,7 +657,7 @@ appConfig:
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
           minimumIdle: 10
-          maxPoolSize: 10
+          maxPoolSize: 30
       search:
         storeSize: "1000000,100,10,1"
         resultHandlerBatchSize: 5000
@@ -770,7 +771,7 @@ appConfig:
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
         minimumIdle: 10
-        maxPoolSize: 10
+        maxPoolSize: 30
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
@@ -836,6 +837,8 @@ appConfig:
     volumeSelector: "RoundRobin"
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeGroupName: "Default Volume Group"
-    defaultIndexVolumeGroupPaths: "volumes/defaultIndexVolume"
-    defaultIndexVolumeGroupNodes: "node1a"
+    defaultIndexVolumeGroupPaths:
+    - "volumes/defaultIndexVolume"
+    defaultIndexVolumeGroupNodes:
+    - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9

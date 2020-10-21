@@ -15,7 +15,7 @@ class ExtractionProgressTracker {
 
     boolean isComplete() {
         LOGGER.debug(this::toString);
-        return finishedAddingTasks.get() && (tasksTotal.get() == tasksCompleted.get());
+        return finishedAddingTasks.get() && tasksTotal.get() == tasksCompleted.get();
     }
 
     void finishedAddingTasks() {

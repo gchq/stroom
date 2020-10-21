@@ -14,6 +14,8 @@ import org.apache.solr.client.solrj.SolrQuery;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SolrSearchFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchFactory.class);
@@ -31,39 +33,47 @@ public class SolrSearchFactory {
         this.solrSearchTaskHandler = solrSearchTaskHandler;
     }
 
-    public void search(final SolrClusterSearchTask task, final ExpressionOperator expression, final Receiver receiver, final TaskContext taskContext) {
+    public void search(final SolrClusterSearchTask task,
+                       final ExpressionOperator expression,
+                       final Receiver receiver,
+                       final TaskContext taskContext,
+                       final AtomicLong hitCount) {
+        // Reload the index.
+        final CachedSolrIndex index = task.getCachedSolrIndex();
+
+        // Make sure we have a search index.
+        if (index == null) {
+            throw new SearchException("Search index has not been set");
+        }
+
+        // Create a map of index fields keyed by name.
+        final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
+        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
+        final String queryString = searchExpressionQuery.getQuery().toString();
+        final SolrQuery solrQuery = new SolrQuery(queryString);
+        solrQuery.setRows(Integer.MAX_VALUE);
+
+        final Tracker tracker = new Tracker(hitCount);
+        final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, task.getStoredFields(), receiver, tracker);
+        solrSearchTaskHandler.exec(taskContext, solrSearchTask);
+
+        // Wait until we finish.
         try {
-            // Reload the index.
-            final CachedSolrIndex index = task.getCachedSolrIndex();
-
-            // Make sure we have a search index.
-            if (index == null) {
-                throw new SearchException("Search index has not been set");
-            }
-
-            // Create a map of index fields keyed by name.
-            final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-            final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
-            final String queryString = searchExpressionQuery.getQuery().toString();
-            final SolrQuery solrQuery = new SolrQuery(queryString);
-            solrQuery.setRows(Integer.MAX_VALUE);
-
-            final Tracker tracker = new Tracker();
-            final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, task.getStoredFields(), receiver, tracker);
-            solrSearchTaskHandler.exec(taskContext, solrSearchTask);
-
-            // Wait until we finish.
-            while (!Thread.currentThread().isInterrupted() && (!tracker.isCompleted())) {
-                taskContext.info(() ->
+            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
+                taskContext.info(() -> "" +
                         "Searching... " +
-                                "found " + tracker.getHitCount() + " hits");
-                Thread.sleep(1000);
+                        "found " +
+                        hitCount.get() +
+                        " hits");
             }
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
+            LOGGER.debug(this::toString);
+            // Keep interrupting.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
         }
+
+        // Let the receiver know we are complete.
+        receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,
