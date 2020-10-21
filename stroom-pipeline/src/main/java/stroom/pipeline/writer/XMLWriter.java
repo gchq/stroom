@@ -165,11 +165,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     }
 
                     outputProperties = xsltExecutable.getUnderlyingCompiledStylesheet().getOutputProperties();
-
-                    if (outputProperties != null){
-                        String cd = outputProperties.getProperty("cdata-section-elements");
-                        System.out.println("Got props" + cd);
-                    }
                 }
             }
 
@@ -180,8 +175,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     getErrorReceiver());
             final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, indentOutput);
 
-
-            th.getTransformer().setOutputProperties(outputProperties);
+            if (outputProperties != null) {
+                th.getTransformer().setOutputProperties(outputProperties);
+            }
             th.setResult(new StreamResult(bufferedWriter));
             handler = th;
             startedDocument = false;
