@@ -944,8 +944,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
                     // This may conflict with what the user has selected with the right click menu
                     if (lineCount == 1) {
+                        // No line breaks so we need to wrap else the line could be massive
                         textPresenter.setWrapLines(true);
                     } else {
+                        // probably one record per line so for csv type data easier to read non-wrapped
                         textPresenter.setWrapLines(false);
                     }
                 }

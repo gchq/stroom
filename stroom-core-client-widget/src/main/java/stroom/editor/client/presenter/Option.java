@@ -21,6 +21,8 @@ public class Option {
     private String text;
     private boolean on;
     private boolean available;
+    private boolean defaultValue;
+    private boolean defaultAvailability;
 
     public Option(final String text,
                   final boolean on,
@@ -28,8 +30,14 @@ public class Option {
                   final ChangeHandler changeHandler) {
         this.text = text;
         this.on = on;
+        this.defaultValue = on;
         this.available = available;
+        this.defaultAvailability = available;
         this.changeHandler = changeHandler;
+        // Ensure the change handler is in sync with our state
+        if (changeHandler != null) {
+            changeHandler.onChange(on);
+        }
     }
 
     public boolean isOn() {
@@ -37,7 +45,7 @@ public class Option {
     }
 
     public void setOn(final boolean on, final boolean force) {
-        if (this.on != on || force) {
+        if (force || this.on != on) {
             this.on = on;
             if (changeHandler != null) {
                 changeHandler.onChange(on);
@@ -49,12 +57,36 @@ public class Option {
         setOn(on, false);
     }
 
+    public void setOn() {
+        setOn(true, false);
+    }
+
+    public void setOff() {
+        setOn(false, false);
+    }
+
+    public void setToDefaultState() {
+        setOn(defaultValue, false);
+    }
+
     public boolean isAvailable() {
         return available;
     }
 
     public void setAvailable(final boolean available) {
         this.available = available;
+    }
+
+    public void setAvailable() {
+        this.available = true;
+    }
+
+    public void setUnavailable() {
+        this.available = false;
+    }
+
+    public void setToDefaultAvailability() {
+        setAvailable(defaultAvailability);
     }
 
     public String getText() {

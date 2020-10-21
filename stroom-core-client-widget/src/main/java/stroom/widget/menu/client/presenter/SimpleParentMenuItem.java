@@ -25,12 +25,19 @@ import java.util.List;
 public class SimpleParentMenuItem extends IconMenuItem implements HasChildren {
     private final List<Item> children;
 
-    public SimpleParentMenuItem(final int priority, final String text, final List<Item> children) {
+    public SimpleParentMenuItem(final int priority,
+                                final String text,
+                                final List<Item> children) {
         this(priority, null, null, text, null, true, children);
     }
 
-    public SimpleParentMenuItem(final int priority, final Icon enabledIcon, final Icon disabledIcon,
-                                final String text, final String shortcut, final boolean enabled, final List<Item> children) {
+    public SimpleParentMenuItem(final int priority,
+                                final Icon enabledIcon,
+                                final Icon disabledIcon,
+                                final String text,
+                                final String shortcut,
+                                final boolean enabled,
+                                final List<Item> children) {
         super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null);
         this.children = children;
     }

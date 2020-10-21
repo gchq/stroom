@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Change dashboard field expression editor to be a bit wider and use a monospace font.
+* Add completion and snippets to dashboard expression builder.
+
+* Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
 
 * Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
 

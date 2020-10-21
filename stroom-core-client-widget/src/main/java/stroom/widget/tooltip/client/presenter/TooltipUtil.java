@@ -27,6 +27,7 @@ import java.util.function.Function;
 
 public final class TooltipUtil {
     private static final SafeHtml BREAK = SafeHtmlUtils.fromSafeConstant("<br/>");
+    private static final SafeHtml SEPARATOR = SafeHtmlUtils.fromSafeConstant("<hr/>");
     private static final SafeHtml ITAlIC_OPEN = SafeHtmlUtils.fromSafeConstant("<i>");
     private static final SafeHtml ITAlIC_CLOSE = SafeHtmlUtils.fromSafeConstant("</i>");
     private static final SafeHtml BOLD_OPEN = SafeHtmlUtils.fromSafeConstant("<b>");
@@ -144,6 +145,11 @@ public final class TooltipUtil {
 
         public Builder addBreak() {
             buffer.append(BREAK);
+            return this;
+        }
+
+        public Builder addSeparator() {
+            buffer.append(SEPARATOR);
             return this;
         }
 

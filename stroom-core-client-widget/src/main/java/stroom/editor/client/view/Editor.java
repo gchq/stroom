@@ -22,11 +22,14 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Editor extends Composite implements HasValueChangeHandlers<String> {
@@ -45,8 +48,13 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean modeDirty = true;
     private AceEditorTheme theme = AceEditorTheme.CHROME;
     private boolean themeDirty = true;
+//    private Queue<AceCompletionProvider> localCompletionProviders = new LinkedList<>();
+    private List<AceCompletionProvider> localCompletionProviders = new ArrayList<>();
+    private boolean localCompletionProvidersDirty;
     private boolean showGutter = true;
     private boolean showGutterDirty;
+    private boolean highlightActiveLine = true;
+    private boolean highlightActiveLineDirty;
     private int gotoLine;
     private boolean gotoLineDirty;
     private Rect scrollMargin;
@@ -59,38 +67,56 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean useVimBindingsDirty;
     private boolean useCodeCompletion = false;
     private boolean useCodeCompletionDirty;
+    private boolean useLiveCodeCompletion = false;
+    private boolean useLiveCodeCompletionDirty;
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
     private boolean started;
 
     public Editor() {
         editor = new AceEditor();
+
+        // Use an attach handler to set up the editor as we can't start it
+        // until it is attached.
         editor.addAttachHandler(event -> {
             if (event.isAttached()) {
+//                GWT.log("RThe fix is simply to force the listeners to be active for those elements.unning attach handler");
                 if (!started) {
+                    // Can only be started once attached
                     editor.startEditor();
                     editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
                     started = true;
                 }
-                updateText();
-                updateFirstLineNumber();
                 updateAnnotations();
-                updateMarkers();
-                updateReadOnly();
-                updateMode();
-                updateTheme();
-                updateShowGutter();
-                updateGotoLine();
-                updateScrollMargin();
-                updateUseWrapMode();
                 updateChangeHandler();
+                updateFirstLineNumber();
+                updateGotoLine();
+                updateHighlightActiveLine();
+                updateLocalCompletionProviders();
+                updateMarkers();
+                updateMode();
+                updateReadOnly();
+                updateScrollMargin();
+                updateShowGutter();
+                updateShowGutter();
+                updateShowInvisibles();
+                updateText();
+                updateTheme();
+                updateUseCodeCompletion();
+                updateUseLiveCodeCompletion();
+                updateUseVimBindings();
+                updateUseWrapMode();
             }
         });
 
         editor.getElement().setClassName("editor");
         initWidget(editor);
+    }
+
+    public String getId() {
+        return editor.getId();
     }
 
     public String getText() {
@@ -111,6 +137,22 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         updateText();
 
         gotoLineDirty = false;
+    }
+
+    public void insertTextAtCursor(final String text) {
+        if (started) {
+            textDirty = true;
+            editor.insertAtCursor(text);
+            this.text = editor.getText();
+        }
+    }
+
+    public void replaceSelectedText(String text) {
+        if (started) {
+            textDirty = true;
+            editor.replaceSelectedText(text);
+            this.text = editor.getText();
+        }
     }
 
     private void updateText() {
@@ -199,6 +241,45 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 }
             }
             modeDirty = false;
+        }
+    }
+
+    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
+        if (completionProvider != null) {
+            localCompletionProvidersDirty = true;
+            localCompletionProviders.add(completionProvider);
+            updateLocalCompletionProviders();
+        }
+    }
+
+    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
+        if (completionProviders!= null) {
+            localCompletionProvidersDirty = true;
+            localCompletionProviders.addAll(Arrays.asList(completionProviders));
+            updateLocalCompletionProviders();
+        }
+    }
+
+    private void updateLocalCompletionProviders() {
+        if (started
+                && localCompletionProvidersDirty
+                && localCompletionProviders != null
+                && !localCompletionProviders.isEmpty()) {
+            // Clear out the existing ones
+            editor.removeAllExistingLocalCompleters();
+            // Now add
+            localCompletionProviders.forEach(editor::addLocalCompletionProvider);
+
+            localCompletionProvidersDirty = false;
+
+//            while (true) {
+//                AceCompletionProvider completionProvider = localCompletionProviders.poll();
+//                if (completionProvider != null) {
+//                    editor.addLocalCompletionProvider(completionProvider);
+//                } else {
+//                    break;
+//                }
+//            }
         }
     }
 
@@ -313,10 +394,35 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private void updateUseCodeCompletion() {
-//        if (useCodeCompletionDirty) {
         if (editor.isAttached() && useCodeCompletionDirty) {
             editor.setAutocompleteEnabled(useCodeCompletion);
             useCodeCompletionDirty = false;
+        }
+    }
+
+    public void setUseLiveCodeCompletion(final boolean useLiveCodeCompletion) {
+        useLiveCodeCompletionDirty = true;
+        this.useLiveCodeCompletion = useLiveCodeCompletion;
+        updateUseLiveCodeCompletion();
+    }
+
+    private void updateUseLiveCodeCompletion() {
+        if (editor.isAttached() && useLiveCodeCompletionDirty) {
+            editor.setLiveAutocompleteEnabled(useLiveCodeCompletion);
+            useLiveCodeCompletionDirty = false;
+        }
+    }
+
+    public void setHighlightActiveLine(final boolean highlightActiveLine) {
+        this.highlightActiveLineDirty = true;
+        this.highlightActiveLine = highlightActiveLine;
+        updateHighlightActiveLine();
+    }
+
+    private void updateHighlightActiveLine() {
+        if (editor.isAttached() && highlightActiveLineDirty) {
+            editor.setHighlightActiveLine(highlightActiveLine);
+            highlightActiveLineDirty = false;
         }
     }
 

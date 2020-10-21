@@ -16,7 +16,7 @@ The replacement needed to allow custom annotation class names:
             rowInfo.className = " " + annotation.type;
 ```
 
-Also to make code snippets work this was changed:
+Also to make code snippets work this was changed in AceEditor.java:
 
 ``` java 
     public native void setAutocompleteEnabled(boolean b) /*-{
@@ -39,7 +39,8 @@ Also to make code snippets work this was changed:
 	}-*/;
 ```
 
-These methods were added to expose ace features to java
+These methods were added to expose ace features to java (in AceEditor.java)
+Search for `Added for Stroom by at055612 START`
 
 ``` java 
     /**
@@ -64,4 +65,23 @@ These methods were added to expose ace features to java
             editor.setKeyboardHandler(null);
         }
 	}-*/;
+
+    /**
+     * Replace the selected text with the passed text
+     *
+     * @param text text to use in place of the selected text
+     */
+    public native void replaceSelectedText(String text) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        selectedContent = editor.getSelectedText();
+        range = editor.selection.getRange();
+        editor.session.replace(range, text);
+	}-*/;
 ```
+
+The file mode-stroom_expression.js was added.
+
+The mode STROOM_EXPRESSION was added to AceEditorMode.
+
+To use other ACE modes you need to include them in here `stroom-core/src/main/resources/stroom/core/servlet/app.html`
+

@@ -56,11 +56,165 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
     private AceCommandLine commandLine = null;
 
+    // =====================================================================
+    // Added for Stroom by at055612 START
+    // =====================================================================
+
+    /**
+     * Get the editor's ID
+     */
+    public native String getId() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        return editor.id;
+	}-*/;
+
+    /**
+     * Get the current mode
+     */
+    public AceEditorMode getMode() {
+        final String shortModeName = getModeShortName();
+        return AceEditorMode.fromName(shortModeName);
+    }
+
+    /**
+     * Get the mode
+     */
+    public native String getModeShortName() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		var shortModeName = editor.getSession()
+            .$modeId
+            .replace('ace\/mode\/', '');
+        return shortModeName;
+	}-*/;
+
+    /**
+     * Set whether to show hidden chars or not
+     *
+     * @param showInvisibles true if hidden chars should be displayed
+     */
+    public native void setShowInvisibles(boolean showInvisibles) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (showInvisibles) {
+			editor.setOptions({ showInvisibles: true });
+		} else {
+			editor.setOptions({ showInvisibles: false });
+		}
+	}-*/;
+
+    public native void setUseVimBindings(boolean useVimBindings) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (useVimBindings) {
+            editor.setKeyboardHandler('ace/keyboard/vim');
+        } else {
+            editor.setKeyboardHandler(null);
+        }
+	}-*/;
+
+    /**
+     * Set or unset highlighting of current line.
+     *
+     * @param highlightActiveLine true to highlight current line
+     */
+    public native void setHighlightActiveLine(boolean highlightActiveLine) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setHighlightActiveLine(highlightActiveLine);
+	}-*/;
+
+
+    /**
+     * Set whether or not live autocomplete is enabled.
+     *
+     * @param liveAutocompleteEnabled true if live autocomplete should be enabled, false if not
+     */
+    public native void setLiveAutocompleteEnabled(boolean liveAutocompleteEnabled) /*-{
+		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (liveAutocompleteEnabled) {
+			$wnd.ace.require("ace/ext/language_tools");
+			editor.setOption("enableLiveAutocompletion", true)
+		} else {
+			editor.setOption("enableLiveAutocompletion", false)
+		}
+//		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
+//		console.log("enableSnippets " + editor.getOption("enableSnippets"))
+//		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
+	}-*/;
+
+    /**
+     * Replace the selected text with the passed text
+     *
+     * @param text text to use in place of the selected text
+     */
+    public native void replaceSelectedText(String text) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        selectedContent = editor.getSelectedText();
+        range = editor.selection.getRange();
+        if (range.isEmpty()) {
+            editor.insert(text);
+        } else {
+            editor.session.replace(range, text);
+        }
+	}-*/;
+
+    /**
+     * Removes all existing completers from the editor instance
+     */
+    public native void removeAllExistingLocalCompleters() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (typeof editor.completers === 'undefined') {
+            editor.completers = [];
+		}
+    }-*/;
+
+    /**
+     * Add an {@link AceCompletionProvider} to provide
+     * custom code completions in the editor instance
+     * <p>
+     * <strong>Warning</strong>: this is an experimental feature of AceGWT.
+     * It is possible that the API will change in an incompatible way
+     * in future releases.
+     *
+     * @param provider the {@link AceCompletionProvider}
+     */
+    public native void addLocalCompletionProvider(AceCompletionProvider provider) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		var completer = {
+			getCompletions: function(editor, session, pos, prefix, callback) {
+				var callbackWrapper =
+					@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::wrapCompletionCallback(Lcom/google/gwt/core/client/JavaScriptObject;)(callback);
+				var aceEditor = editor._aceGWTAceEditor;
+				provider.@edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider::getProposals(Ledu/ycp/cs/dh/acegwt/client/ace/AceEditor;Ledu/ycp/cs/dh/acegwt/client/ace/AceEditorCursorPosition;Ljava/lang/String;Ledu/ycp/cs/dh/acegwt/client/ace/AceCompletionCallback;)(
+					aceEditor,
+					@edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition::create(II)( pos.row, pos.column ),
+					prefix,
+					callbackWrapper
+				);
+			},
+		    getDocTooltip: function(item) {
+		    	if ( (!item.docHTML) && item.aceGwtHtmlTooltip != null) {
+		        	item.docHTML = item.aceGwtHtmlTooltip;
+		    	}
+		    }
+		};
+		// Add our completer
+		if (typeof editor.completers === 'undefined') {
+            editor.completers = [ completer ];
+		} else {
+            editor.completers.push(completer);
+		}
+	}-*/;
+
+    // =====================================================================
+    // Added for Stroom by at055612 FINISH
+    // =====================================================================
+
     /**
      * Preferred constructor.
      */
     public AceEditor() {
         elementId = "_aceGWT" + nextId;
+//        GWT.log("Initialising editor with elementId " + elementId);
+
         nextId++;
         FlowPanel div = new FlowPanel();
         div.getElement().setId(elementId);
@@ -133,6 +287,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * before calling this method.
      */
     public native void startEditor() /*-{
+
         var editor = $wnd.ace.edit(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::divElement);
 		editor.getSession().setUseWorker(false);
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = editor;
@@ -141,11 +296,20 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		// JavaScript editor object.
 		editor._aceGWTAceEditor = this;
 
+//        console.log("starting editor")
+
 		// I have been noticing sporadic failures of the editor
 		// to display properly and receive key/mouse events.
 		// Try to force the editor to resize and display itself fully.  See:
 		//    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
 		editor.resize();
+
+
+//		if (typeof editor.completers === 'undefined') {
+//            console.log("Completers: undefined")
+//		} else {
+//            console.log("Completers: " + editor.completers.length)
+//		}
 	}-*/;
 
     /**
@@ -673,32 +837,6 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
 
 
-	// Added by at055612 START
-
-    /**
-     * Set whether to show hidden chars or not
-     *
-     * @param showInvisibles true if hidden chars should be displayed
-     */
-    public native void setShowInvisibles(boolean showInvisibles) /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (showInvisibles) {
-			editor.setOptions({ showInvisibles: true });
-		} else {
-			editor.setOptions({ showInvisibles: false });
-		}
-	}-*/;
-
-    public native void setUseVimBindings(boolean useVimBindings) /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (useVimBindings) {
-            editor.setKeyboardHandler('ace/keyboard/vim');
-        } else {
-            editor.setKeyboardHandler(null);
-        }
-	}-*/;
-
-    // Added by at055612 END
 
 
 
@@ -733,16 +871,17 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 			$wnd.ace.require("ace/ext/language_tools");
 			editor.setOptions({
                 enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
                 enableSnippets: true
             });
 		} else {
 			editor.setOptions({
                 enableBasicAutocompletion: false,
-                enableLiveAutocompletion: false,
                 enableSnippets: false
             });
 		}
+//		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
+//		console.log("enableSnippets " + editor.getOption("enableSnippets"))
+//		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
 	}-*/;
 
     /**

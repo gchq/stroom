@@ -61,6 +61,7 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.StreamViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -76,6 +77,8 @@ public class StreamStoreModule extends PluginModule {
         bind(DataPopupSupport.class).asEagerSingleton();
 
         bindPlugin(SourceTabPlugin.class);
+
+        bind(DelegatingAceCompleter.class).asEagerSingleton();
 
         bindPresenterWidget(
                 ClassificationWrapperPresenter.class,

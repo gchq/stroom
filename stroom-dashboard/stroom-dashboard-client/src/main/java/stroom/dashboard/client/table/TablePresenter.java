@@ -856,7 +856,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    private DataSourceFieldsMap getIndexFieldsMap() {
+    DataSourceFieldsMap getIndexFieldsMap() {
         if (currentSearchModel != null
                 && currentSearchModel.getIndexLoader() != null
                 && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {

@@ -22,6 +22,8 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.EditorView;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -33,26 +35,46 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionSnippet;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements ExpressionUiHandlers {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
 
     private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
+    private final EditorPresenter editorPresenter;
+    private final List<AceCompletion> functionCompletions = new ArrayList<>();
+//    private List<AceCompletion> fieldCompletions = new ArrayList<>();
+//    private AceCompletion[] aceCompletionsArr;
+    final AceCompletionProvider functionsCompletionProvider;
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
     private Field field;
@@ -61,11 +83,113 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
                                final MenuListPresenter menuListPresenter,
-                               final RestFactory restFactory) {
+                               final RestFactory restFactory,
+                               final EditorPresenter editorPresenter) {
         super(eventBus, view);
         this.menuListPresenter = menuListPresenter;
         this.restFactory = restFactory;
+        this.editorPresenter = editorPresenter;
         view.setUiHandlers(this);
+        view.setEditor(editorPresenter.getView());
+
+        if (menuItems == null) {
+            functionCompletions.clear();
+            menuItems = createMenuItemsAndSnippets();
+        }
+        functionsCompletionProvider = buildFunctionsCompletionProvider();
+
+
+
+    }
+
+//    private AceCompletion[] getAceCompletionsArr() {
+//        return aceCompletionsArr;
+//    }
+
+
+
+    private AceCompletionProvider buildFunctionsCompletionProvider() {
+
+        return buildCompletionProvider(functionCompletions);
+
+//        final AceCompletion[] completionsArr = functionCompletions.toArray(
+//                new AceCompletion[functionCompletions.size()]);
+//
+//        return (editor, pos, prefix, callback) -> {
+//
+//            // Recreate the array of all completers, combining the static function ones with
+//            // our just created field ones
+////            AceCompletion[] aceCompletionsArr = Stream.concat(
+////                    functionCompletions.stream(),
+////                    fieldCompletions.stream())
+////                    .toArray(size -> new AceCompletion[size]);
+//
+//            callback.invokeWithCompletions(completionsArr);
+//        };
+    }
+
+    private AceCompletionProvider buildFieldsCompletionProvider() {
+
+        final List<AceCompletion> fieldCompletions;
+        if (tablePresenter != null && tablePresenter.getIndexFieldsMap() != null) {
+            fieldCompletions = tablePresenter.getIndexFieldsMap()
+                    .keySet()
+                    .stream()
+                    .map(fieldName -> {
+                        return new AceCompletionValue(
+                                fieldName,
+                                "${" + fieldName + "}",
+                                "Field",
+                                DEFAULT_COMPLETION_SCORE);
+                    })
+                    .collect(Collectors.toList());
+
+        } else {
+            fieldCompletions = Collections.emptyList();
+        }
+
+        return buildCompletionProvider(fieldCompletions);
+    }
+
+    private AceCompletionProvider buildCompletionProvider(List<AceCompletion> completions) {
+
+        final AceCompletion[] completionsArr = completions.toArray(
+                new AceCompletion[completions.size()]);
+
+        return (editor, pos, prefix, callback) -> {
+
+            // Recreate the array of all completers, combining the static function ones with
+            // our just created field ones
+//            AceCompletion[] aceCompletionsArr = Stream.concat(
+//                    functionCompletions.stream(),
+//                    fieldCompletions.stream())
+//                    .toArray(size -> new AceCompletion[size]);
+
+            if (AceEditorMode.STROOM_EXPRESSION.getName().equals(editor.getModeShortName())) {
+                callback.invokeWithCompletions(completionsArr);
+            }
+        };
+    }
+
+    private void setupEditor() {
+
+        editorPresenter.setMode(AceEditorMode.STROOM_EXPRESSION);
+        editorPresenter.setReadOnly(false);
+
+        // Need to explicitly set some of these as the defaults don't
+        // seem to work, maybe due to timing
+        editorPresenter.getLineNumbersOption().setOff();
+        editorPresenter.getLineWrapOption().setOn();
+        editorPresenter.getHighlightActiveLineOption().setOff();
+        editorPresenter.getCodeCompletionOption().setOn();
+
+        editorPresenter.registerCompletionProviders(
+                functionsCompletionProvider,
+                buildFieldsCompletionProvider());
+
+//        editorPresenter.setLocalCompletionProviders(
+//                functionsCompletionProvider,
+//                buildFieldsCompletionProvider());
     }
 
     public void show(final TablePresenter tablePresenter, final Field field) {
@@ -73,21 +197,58 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         this.field = field;
 
         if (field.getExpression() != null) {
-            getView().setExpression(field.getExpression());
+            editorPresenter.setText(field.getExpression());
         } else {
-            getView().setExpression("");
+            editorPresenter.setText("");
         }
 
-        final PopupSize popupSize = new PopupSize(700, 300, 300, 300, true);
-        ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
-                "Set Expression For '" + field.getName() + "'", this);
-        Scheduler.get().scheduleDeferred(() -> getView().focus());
+        final PopupSize popupSize = new PopupSize(
+                700,
+                300,
+                300,
+                300,
+                true);
+
+        ShowPopupEvent.fire(
+                tablePresenter,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Set Expression For '" + field.getName() + "'",
+                this);
+
+        Scheduler.get().scheduleDeferred(editorPresenter::focus);
+
+        // If this is done without the scheduler then we get weired behaviour when you click
+        // in the text area if line wrap is set to on.  If it is initially set to off and the user
+        // manually sets it to on all is fine. Confused.
+        Scheduler.get().scheduleDeferred(this::setupEditor);
     }
+
+//    private void buildCompletersForIndexFields() {
+//        if (tablePresenter != null && tablePresenter.getIndexFieldsMap() != null) {
+//            fieldCompletions = tablePresenter.getIndexFieldsMap()
+//                    .keySet()
+//                    .stream()
+//                    .map(fieldName -> {
+//                        return new AceCompletionValue(
+//                                fieldName,
+//                                "${" + fieldName + "}",
+//                                "Field",
+//                                DEFAULT_COMPLETION_SCORE);
+//                    })
+//                    .collect(Collectors.toList());
+//
+//        } else {
+//            fieldCompletions = Collections.emptyList();
+//        }
+//    }
 
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-            final String expression = getView().getExpression();
+//            final String expression = getView().getExpression();
+            final String expression = editorPresenter.getText();
             if (EqualsUtil.isEquals(expression, field.getExpression())) {
                 HidePopupEvent.fire(tablePresenter, this);
             } else {
@@ -121,6 +282,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
+        editorPresenter.deRegisterCompletionProviders();
     }
 
     @Override
@@ -137,21 +299,61 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 }
             };
 
-            if (menuItems == null) {
-                menuItems = createMenuItems();
-            }
-
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
+            final PopupPosition popupPosition = new PopupPosition(
+                    target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
 
             menuListPresenter.setData(menuItems);
 
-            ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+            ShowPopupEvent.fire(
+                    this,
+                    menuListPresenter,
+                    PopupType.POPUP,
+                    popupPosition,
+                    popupUiHandlers);
         }
     }
 
-    private List<Item> createMenuItems() {
+    private BiFunction<FunctionDef, Ancestors, Command> createLeafBuilder() {
+        return (functionDef, ancestors) -> {
+            final String func = functionDef.toString();
+            final String meta = ancestors.getAncestry(" ");
+
+            functionCompletions.add(createAceCompletion(functionDef, meta));
+
+//            createAceCompletion(func, func, meta)
+//                    .ifPresent(functionCompletions::add);
+
+            return () -> addFunction(func);
+        };
+    }
+
+//    private LeafCommandBuilder createLeafBuilder(final String func) {
+//        return (text, ancestors) -> {
+//            final String meta = ancestors.getAncestry(" ");
+//
+//            createAceCompletion(text, func, meta)
+//                    .ifPresent(functionCompletions::add);
+//
+//            return () -> addFunction(func);
+//        };
+//    }
+
+    private List<Item> createMenuItemsAndSnippets() {
+
+        // TODO Once we have function definitions (name, desc, args) on the actual functions in
+        //  stroom-expression we need to reinstate a variant of this to build the menu.
+//        return new MenuBuilder()
+//                .addBranch("Aggregate", childBuilder -> childBuilder
+//                        .addLeaf(FunctionDef.AVERAGE, createLeafBuilder())
+//                        .addLeaf(FunctionDef.COUNT, createLeafBuilder()))
+//                .addBranch("Cast", childBuilder -> childBuilder
+//                        .addLeaf(FunctionDef.TO_BOOLEAN, createLeafBuilder()))
+//                .build();
+
+
+
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createAggregateFunctons(item++, "Aggregate"));
@@ -356,49 +558,340 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private Item createFunction(final int pos, final String text, final String func) {
-        return new IconMenuItem(pos, text, null, true, () -> addFunction(func));
+
+        // TODO @AT This is a stop gap till we can get all the info needed to make the snippet
+        //   defined in stroom-expression
+        createAceCompletionSnippet(text, func, "")
+                .ifPresent(functionCompletions::add);
+
+        return new IconMenuItem(
+                pos,
+                text,
+                null,
+                true,
+                () -> addFunction(func));
     }
 
-    private void addFunction(final String func) {
-        String expression = getView().getExpression();
-        if (expression != null && expression.trim().length() > 0) {
-            final int cursorPos = getView().getCursorPos();
-            final int selectionLength = getView().getSelectionLength();
-            if (cursorPos >= 0) {
-                if (cursorPos >= expression.length()) {
-                    expression = expression + func;
-                    getView().setExpression(expression);
-                    getView().setCursorPos(expression.length());
-                } else {
-                    final String before = expression.substring(0, cursorPos);
-                    final String after = expression.substring(cursorPos + selectionLength);
-                    expression = before + func + after;
-                    getView().setExpression(expression);
-                    getView().setCursorPos((before + func).length());
-                }
-            } else {
-                expression = func + expression;
-                getView().setExpression(expression);
-                getView().setCursorPos(func.length());
-            }
+    private Optional<AceCompletion> createAceCompletion(final String text,
+                                                        final String func,
+                                                        final String metaPrefix) {
+
+        if (text.endsWith("()")) {
+            return Optional.of(createAceCompletionValue(text, func, metaPrefix));
+        } else if (func.endsWith(")")) {
+            return createAceCompletionSnippet(text, func, metaPrefix);
         } else {
-            expression = func;
-            getView().setExpression(expression);
-            getView().setCursorPos(expression.length());
+            GWT.log("Unknown func " + func);
+            return Optional.empty();
         }
     }
 
+    private AceCompletion createAceCompletion(final FunctionDef functionDef,
+                                              final String metaPrefix) {
+        final String name = functionDef.toString();
+        final String snippetText = getSnippetFromFunction(functionDef);
+
+        final String html = TooltipUtil.builder()
+                .addHeading(name)
+                .addSeparator()
+                .addLine(functionDef.getDescription())
+                .build()
+                .asString();
+
+        return new AceCompletionSnippet(
+                name,
+                snippetText,
+                DEFAULT_COMPLETION_SCORE,
+                metaPrefix + " Function",
+                html);
+    }
+
+    private String getSnippetFromFunction(final FunctionDef functionDef) {
+            // replace($,regex,replacement) ==> replace(${1}, ${2:regex}, ${3:replacement})$0
+
+            final StringBuilder stringBuilder = new StringBuilder()
+                    .append(functionDef.getName())
+                    .append("(");
+
+            for (int i = 0; i < functionDef.getArgs().size(); i++) {
+                final String arg = functionDef.getArgs().get(i);
+                final int snippetArgNo = i + 1;
+                if (i != 0) {
+                    // put commas back in
+                    stringBuilder
+                            .append(", ");
+                }
+                stringBuilder
+                        .append("${")
+                        .append(snippetArgNo);
+
+                if (!arg.equals("$")) {
+                    stringBuilder
+                            .append(":")
+                            .append(arg);
+                }
+                stringBuilder
+                        .append("}");
+            }
+
+            stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
+
+            return stringBuilder.toString();
+    }
+
+    private AceCompletion createAceCompletionValue(final String text,
+                                                   final String func,
+                                                   final String metaPrefix) {
+        return new AceCompletionValue(
+                getSnippetNameFromText(text),
+                func,
+                metaPrefix + " Value",
+                DEFAULT_COMPLETION_SCORE);
+    }
+
+    private Optional<AceCompletion> createAceCompletionSnippet(final String text,
+                                                               final String func,
+                                                               final String metaPrefix) {
+        return getSnippetFromText(text)
+                .map(snippetText -> {
+                    final String name = getSnippetNameFromText(text);
+                    final String html = SafeHtmlUtils.htmlEscape(text);
+//                    GWT.log(name + " - " + snippetText);
+                    return new AceCompletionSnippet(
+                            name,
+                            snippetText,
+                            DEFAULT_COMPLETION_SCORE,
+                            metaPrefix + " Function",
+                            html);
+                });
+    }
+
+    private String getSnippetNameFromText(final String text) {
+//         replace($,regex,replacement) ==> replace($, $, $)
+//        return text.substring(0, text.indexOf("("));
+        final String funcName = text.substring(0, text.indexOf("("));
+        try {
+            String argsStr = text.substring(text.indexOf("(") + 1);
+            argsStr = argsStr.substring(0, argsStr.length() -1);
+            final String[] args = argsStr.split(",");
+            final StringBuilder stringBuilder = new StringBuilder()
+                    .append(funcName)
+                    .append("(");
+
+            for (int i = 0; i < args.length; i++) {
+                final String arg = args[i];
+                final int snippetArgNo = i + 1;
+                if (i != 0) {
+                    // put commas back in
+                    stringBuilder
+                            .append(", ");
+                }
+                stringBuilder
+                        .append("$");
+            }
+
+            stringBuilder.append(")"); // cursor pos after all args are tabbed through
+
+            return stringBuilder.toString();
+        } catch (Exception e) {
+            GWT.log("Error parsing " + text + " - " + e.getMessage());
+            return funcName + "(...)";
+        }
+}
+
+    private Optional<String> getSnippetFromText(final String text) {
+        try {
+            // replace($,regex,replacement) ==> replace(${1}, ${2:regex}, ${3:replacement})$0
+
+            final String funcName = text.substring(0, text.indexOf("("));
+            String argsStr = text.substring(text.indexOf("(") + 1);
+            argsStr = argsStr.substring(0, argsStr.length() -1);
+            final String[] args = argsStr.split(",");
+            final StringBuilder stringBuilder = new StringBuilder()
+                .append(funcName)
+                    .append("(");
+
+            for (int i = 0; i < args.length; i++) {
+                final String arg = args[i];
+                final int snippetArgNo = i + 1;
+                if (i != 0) {
+                    // put commas back in
+                    stringBuilder
+                            .append(", ");
+                }
+                stringBuilder
+                        .append("${")
+                        .append(snippetArgNo);
+
+                if (!arg.equals("$")) {
+                    stringBuilder
+                            .append(":")
+                            .append(arg);
+                }
+                stringBuilder
+                        .append("}");
+            }
+
+            stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
+
+            return Optional.of(stringBuilder.toString());
+        } catch (Exception e) {
+            GWT.log("Error parsing " + text + " - " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private void addFunction(final String func) {
+        // will insert if there is no selection
+        editorPresenter.replaceSelectedText(func);
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
-        String getExpression();
 
-        void setExpression(String expression);
+        void setEditor(final EditorView editor);
+    }
 
-        int getCursorPos();
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        void setCursorPos(int pos);
+    public static enum FunctionDef {
+        // TODO @AT This could do with being auto-generated from annotations on the actual
+        //   functions in stroom-expression, or maybe each AbstractFunction in stroom-expression
+        //   should have static getName(), getDescription(), getArgs(), etc. then we would not need
+        //   this enum.
+        // Aggregate functions
+        AVERAGE( "average", "The mean of all values in the group.",
+                "field"),
+        COUNT( "count", "The count of all values in the group."),
+        COUNT_GROUPS("countGroups", ""),
+        COUNT_UNIQUE("countUnique", "", "field"),
+        JOINING("joining", "", "field", "delimiter", "limit"),
+        MAX("max", "", "field"),
+        MIN("min", "", "field"),
+        ST_DEV("stDev", "", "field"),
+        SUM("sum", "", "field"),
+        VARIANCE("variance", "", "field"),
 
-        int getSelectionLength();
+        // Cast functions
+        TO_BOOLEAN( "toBoolean", "Case the value to a boolean type.",
+                "value");
 
-        void focus();
+        private final String name;
+        private final List<String> args;
+        private final String description;
+
+        FunctionDef(final String name, final String description, final String... args) {
+            this.name = name;
+            this.args = Arrays.asList(args);
+            this.description = description;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<String> getArgs() {
+            return args;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String toString() {
+            // i.e. concat(value1, value2)
+            return name +
+                    "(" +
+                    String.join(", ", args) +
+                    ")";
+        }
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public interface LeafCommandBuilder {
+
+        Command apply(final FunctionDef functionDef,
+                      final Ancestors ancestors);
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class Ancestors {
+        private final List<String> ancestors;
+
+        public Ancestors() {
+            this.ancestors = new ArrayList<>();
+        }
+
+        public Ancestors(final Ancestors ancestors) {
+            this.ancestors = new ArrayList<>(ancestors.ancestors);
+        }
+
+        public Optional<String> getImmediateParent() {
+            if (ancestors.isEmpty()) {
+                return Optional.empty();
+            } else {
+                return Optional.of(ancestors.get(ancestors.size() - 1));
+            }
+        }
+
+        public void add(final String parent) {
+            ancestors.add(parent);
+        }
+
+        public List<String> getAncestors() {
+            return ancestors;
+        }
+
+        public String getAncestry(final String delimiter) {
+            return String.join(delimiter, ancestors);
+        }
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * TODO Once we have function definitions (name, desc, args) on the actual functions in
+     *   stroom-expression we need to reinstate a variant of this to build the menu.
+     */
+    public static class MenuBuilder {
+
+        private final List<Item> items = new ArrayList<>();
+        private final Ancestors ancestors;
+
+        public MenuBuilder() {
+            ancestors = new Ancestors();
+        }
+
+        private MenuBuilder(final Ancestors ancestors) {
+            this.ancestors = new Ancestors(ancestors);
+        }
+
+        public MenuBuilder addBranch(final String text,
+                                     final Consumer<MenuBuilder> branchBuilder) {
+            GWT.log("Adding branch " + text);
+            final Ancestors childsAncestors = new Ancestors(ancestors);
+            childsAncestors.add(text);
+            final MenuBuilder childMenuBuilder = new MenuBuilder(childsAncestors);
+            branchBuilder.accept(childMenuBuilder);
+            final List<Item> childItems = childMenuBuilder.build();
+
+            items.add(new SimpleParentMenuItem(items.size(), text, childItems));
+            return this;
+        }
+
+        public MenuBuilder addLeaf(final FunctionDef functionDef,
+                                   final BiFunction<FunctionDef, Ancestors, Command> commandBuilder) {
+
+            final Command command = commandBuilder.apply(functionDef, ancestors);
+            items.add(new IconMenuItem(items.size(), functionDef.toString(), null, true, command));
+            return this;
+        }
+
+        public List<Item> build() {
+            return items;
+        }
     }
 }

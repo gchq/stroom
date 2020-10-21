@@ -55,6 +55,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         editorPresenter.getLineNumbersOption().setOn(false);
 
         editorPresenter.getLineWrapOption().setAvailable(true);
+        editorPresenter.getLineWrapOption().setOn(true);
         editorPresenter.getShowInvisiblesOption().setAvailable(true);
         editorPresenter.getUseVimBindingsOption().setAvailable(true);
 

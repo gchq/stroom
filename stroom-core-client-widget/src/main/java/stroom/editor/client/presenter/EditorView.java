@@ -25,17 +25,27 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
-        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String> {
+        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String>, RequiresResize {
+
+    String getEditorId();
+
+    void focus();
 
     void setText(String text);
+
+    void insertTextAtCursor(final String text);
+
+    void replaceSelectedText(final String text);
 
     void setFirstLineNumber(int firstLineNumber);
 
@@ -65,9 +75,17 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     Option getCodeCompletionOption();
 
+    Option getLiveCodeCompletionOption();
+
+    Option getHighlighActiveLineOption();
+
     void showFilterButton(boolean show);
 
     void setFilterActive(boolean active);
 
     void setControlsVisible(boolean visible);
+
+    void addLocalCompletionProvider(final AceCompletionProvider completionProvider);
+
+    void setLocalCompletionProviders(final AceCompletionProvider... completionProviders);
 }

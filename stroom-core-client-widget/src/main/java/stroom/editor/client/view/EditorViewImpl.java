@@ -23,10 +23,10 @@ import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
-import stroom.util.shared.TextRange;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -52,6 +52,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
@@ -71,6 +72,7 @@ import java.util.Set;
  */
 public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> implements EditorView {
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
+    private static final boolean SHOW_INDICATORS_DEFAULT = false;
     private static volatile Binder binder;
     private static volatile Resources resources;
     private final Action formatAction;
@@ -81,6 +83,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option showInvisiblesOption;
     private final Option useVimBindingsOption;
     private final Option codeCompletionOption;
+    private final Option liveCodeCompletionOption;
+    private final Option highlightActiveLineOption;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
@@ -111,7 +115,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             @Override
             public void onResize() {
                 super.onResize();
-                doLayout();
+                doLayout(SHOW_INDICATORS_DEFAULT);
             }
         };
 
@@ -137,12 +141,13 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
         formatAction = new Action("Format", false, this::format);
 
+        // Don't forget to add any new options into EditorPresenter
         stylesOption = new Option(
-                "Styles", true, true, (on) -> setMode(mode));
+                "Styles", true, true, (on) -> setMode(mode, on));
         lineNumbersOption = new Option(
-                "Line Numbers", true, true, (on) -> updateGutter());
+                "Line Numbers", true, true, (on) -> editor.setShowGutter(on));
         indicatorsOption = new Option(
-                "Indicators", false, false, (on) -> doLayout());
+                "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
         lineWrapOption = new Option(
                 "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
         showInvisiblesOption = new Option(
@@ -150,8 +155,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         useVimBindingsOption = new Option(
                 "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
         codeCompletionOption = new Option(
-                "Code Completion", false, true, (on) -> editor.setUseCodeCompletion(on));
-
+                "Auto Completion", true, true, (on) -> editor.setUseCodeCompletion(on));
+        liveCodeCompletionOption = new Option(
+                "Live Auto Completion", false, true, (on) -> editor.setUseLiveCodeCompletion(on));
+        highlightActiveLineOption = new Option(
+                "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -172,14 +180,28 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         return layout;
     }
 
-    private void updateGutter() {
-        editor.setShowGutter(lineNumbersOption.isOn());
+    private void updateGutter(final boolean showLineNumbers) {
+        editor.setShowGutter(showLineNumbers);
     }
 
     private void doLayout() {
-        rightBar.render(indicators, indicatorsOption.isOn());
+        doLayout(indicatorsOption.isOn());
+    }
+
+    private void doLayout(final boolean showIndicators) {
+        rightBar.render(indicators, showIndicators);
         layout.setWidgetSize(rightBar, rightBar.getWidth());
         editor.onResize();
+    }
+
+    @Override
+    public String getEditorId() {
+        return editor.getId();
+    }
+
+    @Override
+    public void focus() {
+        editor.focus();
     }
 
     @Override
@@ -190,6 +212,16 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public void setText(final String text) {
         editor.setText(text);
+    }
+
+    @Override
+    public void insertTextAtCursor(final String text) {
+        editor.insertTextAtCursor(text);
+    }
+
+    @Override
+    public void replaceSelectedText(final String text) {
+        editor.replaceSelectedText(text);
     }
 
     @Override
@@ -247,7 +279,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         }
 
         editor.setAnnotations(annotations);
-        doLayout();
+        doLayout(indicatorsOption.isOn());
     }
 
     @Override
@@ -283,6 +315,15 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     public void setMode(final AceEditorMode mode) {
         this.mode = mode;
         if (stylesOption.isOn()) {
+            editor.setMode(mode);
+        } else {
+            editor.setMode(AceEditorMode.TEXT);
+        }
+    }
+
+    public void setMode(final AceEditorMode mode, final boolean areStylesEnabled) {
+        this.mode = mode;
+        if (areStylesEnabled) {
             editor.setMode(mode);
         } else {
             editor.setMode(AceEditorMode.TEXT);
@@ -363,6 +404,16 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
+    public Option getLiveCodeCompletionOption() {
+        return liveCodeCompletionOption;
+    }
+
+    @Override
+    public Option getHighlighActiveLineOption() {
+        return highlightActiveLineOption;
+    }
+
+    @Override
     public void showFilterButton(final boolean show) {
         filterActive.setVisible(false);
         filterButtons.setVisible(show);
@@ -410,6 +461,21 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         layout.fireEvent(event);
+    }
+
+    @Override
+    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
+        editor.addLocalCompletionProvider(completionProvider);
+    }
+
+    @Override
+    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
+        editor.setLocalCompletionProviders(completionProviders);
+    }
+
+    @Override
+    public void onResize() {
+        doLayout();
     }
 
     /**

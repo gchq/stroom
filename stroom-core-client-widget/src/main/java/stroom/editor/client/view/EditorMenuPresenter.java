@@ -74,8 +74,10 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getCodeCompletionOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveCodeCompletionOption());
 
         addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
 

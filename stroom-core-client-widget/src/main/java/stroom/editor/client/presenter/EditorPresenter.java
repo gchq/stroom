@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
@@ -44,6 +45,7 @@ public class EditorPresenter
         HasValueChangeHandlers<String> {
 
     private final EditorMenuPresenter contextMenu;
+    private final DelegatingAceCompleter delegatingAceCompleter;
 
     private boolean showFilterSettings;
     private boolean input;
@@ -51,9 +53,11 @@ public class EditorPresenter
     @Inject
     public EditorPresenter(final EventBus eventBus,
                            final EditorView view,
-                           final EditorMenuPresenter contextMenu) {
+                           final EditorMenuPresenter contextMenu,
+                           final DelegatingAceCompleter delegatingAceCompleter) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
+        this.delegatingAceCompleter = delegatingAceCompleter;
         view.setUiHandlers(this);
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
@@ -64,6 +68,14 @@ public class EditorPresenter
                 eventBus.fireEvent(event);
             }
         }));
+    }
+
+    public String getEditorId() {
+        return getView().getEditorId();
+    }
+
+    public void focus() {
+        getView().focus();
     }
 
     @Override
@@ -78,6 +90,14 @@ public class EditorPresenter
     @Override
     public void setText(final String text) {
         setText(text, false);
+    }
+
+    public void insertTextAtCursor(final String text) {
+        getView().insertTextAtCursor(text);
+    }
+
+    public void replaceSelectedText(final String text) {
+        getView().replaceSelectedText(text);
     }
 
     public void setText(final String text, final boolean format) {
@@ -125,6 +145,14 @@ public class EditorPresenter
         return getView().getCodeCompletionOption();
     }
 
+    public Option getLiveCodeCompletionOption() {
+        return getView().getLiveCodeCompletionOption();
+    }
+
+    public Option getHighlightActiveLineOption() {
+        return getView().getHighlighActiveLineOption();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         getView().setFirstLineNumber(firstLineNumber);
     }
@@ -151,6 +179,18 @@ public class EditorPresenter
     }
 
     public void setReadOnly(final boolean readOnly) {
+        if (readOnly) {
+            getCodeCompletionOption().setOff();
+            getCodeCompletionOption().setUnavailable();
+            getLiveCodeCompletionOption().setOff();
+            getLiveCodeCompletionOption().setUnavailable();
+        } else {
+            getCodeCompletionOption().setToDefaultState();
+            getCodeCompletionOption().setToDefaultAvailability();
+            getLiveCodeCompletionOption().setToDefaultState();
+            getLiveCodeCompletionOption().setToDefaultAvailability();
+        }
+
         getView().setReadOnly(readOnly);
     }
 
@@ -197,5 +237,36 @@ public class EditorPresenter
     public com.google.web.bindery.event.shared.HandlerRegistration addChangeFilterHandler(
             final ChangeFilterHandler handler) {
         return addHandlerToSource(ChangeFilterEvent.TYPE, handler);
+    }
+
+    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
+        getView().addLocalCompletionProvider(completionProvider);
+    }
+
+    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
+        getView().setLocalCompletionProviders(completionProviders);
+    }
+
+    /**
+     * Registers completion providers specific to this editor instance and mode
+     */
+    public void registerCompletionProviders(final AceEditorMode aceEditorMode, final AceCompletionProvider... completionProviders) {
+        delegatingAceCompleter.registerCompletionProviders(
+                getEditorId(), aceEditorMode, completionProviders);
+    }
+
+    /**
+     * Registers mode agnostic completion providers specific to this editor instance
+     */
+    public void registerCompletionProviders(final AceCompletionProvider... completionProviders) {
+        delegatingAceCompleter.registerCompletionProviders(
+                getEditorId(), completionProviders);
+    }
+
+    /**
+     * Removes all completion providers specific to this editor instance
+     */
+    public void deRegisterCompletionProviders() {
+        delegatingAceCompleter.deRegisterCompletionProviders(getEditorId());
     }
 }
