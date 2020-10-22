@@ -18,24 +18,76 @@
 
 package stroom.security.identity.token;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 // TODO make this immutable with a builder for the optional stuff
 //   and a JsonCreator on the ctor, then get rid of as many boxed primitives as
 //   possible
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class Token {
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private String updateUser;
 
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private String userEmail;
+    @JsonProperty
     private String tokenType;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private Long expiresOnMs;
+    @JsonProperty
     private String comments;
+    @JsonProperty
     private boolean enabled;
+
+    public Token() {
+    }
+
+    @JsonCreator
+    public Token(@JsonProperty("id") final Integer id,
+                 @JsonProperty("version") final Integer version,
+                 @JsonProperty("createTimeMs") final Long createTimeMs,
+                 @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                 @JsonProperty("createUser") final String createUser,
+                 @JsonProperty("updateUser") final String updateUser,
+                 @JsonProperty("userId") final String userId,
+                 @JsonProperty("userEmail") final String userEmail,
+                 @JsonProperty("tokenType") final String tokenType,
+                 @JsonProperty("data") final String data,
+                 @JsonProperty("expiresOnMs") final Long expiresOnMs,
+                 @JsonProperty("comments") final String comments,
+                 @JsonProperty("enabled") final boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.updateTimeMs = updateTimeMs;
+        this.createUser = createUser;
+        this.updateUser = updateUser;
+        this.userId = userId;
+        this.userEmail = userEmail;
+        this.tokenType = tokenType;
+        this.data = data;
+        this.expiresOnMs = expiresOnMs;
+        this.comments = comments;
+        this.enabled = enabled;
+    }
 
     public Integer getId() {
         return id;
