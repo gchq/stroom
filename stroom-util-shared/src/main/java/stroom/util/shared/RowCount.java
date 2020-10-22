@@ -17,7 +17,6 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -53,14 +52,12 @@ public class RowCount<T extends Number> {
         return exact;
     }
 
-    @JsonIgnore
     public T orElse(final T other) {
         return exact
                 ? count
                 : other;
     }
 
-    @JsonIgnore
     public Optional<T> asOptional() {
         return exact
                 ? Optional.of(count)
