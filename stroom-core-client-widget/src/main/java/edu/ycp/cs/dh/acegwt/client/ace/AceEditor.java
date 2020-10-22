@@ -60,6 +60,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     // Added for Stroom by at055612 START
     // =====================================================================
 
+
+    // To disable the local words from the completions we can do something like
+    //    componentDidMount() {
+    //        let langTools = ace.acequire('ace/ext/language_tools')
+    //        langTools.setCompleters([langTools.snippetCompleter, langTools.keyWordCompleter])
+    //    }
+    // but that applies globally so we would need to maybe add a local variable enabled
+    // state to this class then we could make a wrapper completer that wraps the local one
+    // and checks the state first.
+
     /**
      * Get the editor's ID
      */
@@ -120,21 +130,55 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		editor.setHighlightActiveLine(highlightActiveLine);
 	}-*/;
 
+    /**
+     * Set whether or not live autocomplete is enabled.
+     *
+     * @param basicAutoCompleteEnabled true if basic autocomplete should be enabled, false if not
+     */
+    public native void setBasicAutoCompleteEnabled(boolean basicAutoCompleteEnabled) /*-{
+		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (basicAutoCompleteEnabled) {
+			$wnd.ace.require("ace/ext/language_tools");
+		}
+        editor.setOption("enableBasicAutocompletion", basicAutoCompleteEnabled)
+
+//		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
+//		console.log("enableSnippets " + editor.getOption("enableSnippets"))
+//		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
+	}-*/;
+
 
     /**
      * Set whether or not live autocomplete is enabled.
      *
-     * @param liveAutocompleteEnabled true if live autocomplete should be enabled, false if not
+     * @param liveAutoCompleteEnabled true if live autocomplete should be enabled, false if not
      */
-    public native void setLiveAutocompleteEnabled(boolean liveAutocompleteEnabled) /*-{
+    public native void setLiveAutoCompleteEnabled(boolean liveAutoCompleteEnabled) /*-{
 		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (liveAutocompleteEnabled) {
+		if (liveAutoCompleteEnabled) {
 			$wnd.ace.require("ace/ext/language_tools");
-			editor.setOption("enableLiveAutocompletion", true)
-		} else {
-			editor.setOption("enableLiveAutocompletion", false)
 		}
+        editor.setOption("enableLiveAutocompletion", liveAutoCompleteEnabled)
+
+//		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
+//		console.log("enableSnippets " + editor.getOption("enableSnippets"))
+//		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
+	}-*/;
+
+    /**
+     * Set whether or not completion snippets are enabled.
+     *
+     * @param snippetsEnabled true if snippets should be enabled, false if not
+     */
+    public native void setSnippetsEnabled(boolean snippetsEnabled) /*-{
+		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (snippetsEnabled) {
+			$wnd.ace.require("ace/ext/language_tools");
+		}
+        editor.setOption("enableSnippets", snippetsEnabled)
 //		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
 //		console.log("enableSnippets " + editor.getOption("enableSnippets"))
 //		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
@@ -154,54 +198,6 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         } else {
             editor.session.replace(range, text);
         }
-	}-*/;
-
-    /**
-     * Removes all existing completers from the editor instance
-     */
-    public native void removeAllExistingLocalCompleters() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (typeof editor.completers === 'undefined') {
-            editor.completers = [];
-		}
-    }-*/;
-
-    /**
-     * Add an {@link AceCompletionProvider} to provide
-     * custom code completions in the editor instance
-     * <p>
-     * <strong>Warning</strong>: this is an experimental feature of AceGWT.
-     * It is possible that the API will change in an incompatible way
-     * in future releases.
-     *
-     * @param provider the {@link AceCompletionProvider}
-     */
-    public native void addLocalCompletionProvider(AceCompletionProvider provider) /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		var completer = {
-			getCompletions: function(editor, session, pos, prefix, callback) {
-				var callbackWrapper =
-					@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::wrapCompletionCallback(Lcom/google/gwt/core/client/JavaScriptObject;)(callback);
-				var aceEditor = editor._aceGWTAceEditor;
-				provider.@edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider::getProposals(Ledu/ycp/cs/dh/acegwt/client/ace/AceEditor;Ledu/ycp/cs/dh/acegwt/client/ace/AceEditorCursorPosition;Ljava/lang/String;Ledu/ycp/cs/dh/acegwt/client/ace/AceCompletionCallback;)(
-					aceEditor,
-					@edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition::create(II)( pos.row, pos.column ),
-					prefix,
-					callbackWrapper
-				);
-			},
-		    getDocTooltip: function(item) {
-		    	if ( (!item.docHTML) && item.aceGwtHtmlTooltip != null) {
-		        	item.docHTML = item.aceGwtHtmlTooltip;
-		    	}
-		    }
-		};
-		// Add our completer
-		if (typeof editor.completers === 'undefined') {
-            editor.completers = [ completer ];
-		} else {
-            editor.completers.push(completer);
-		}
 	}-*/;
 
     // =====================================================================
@@ -712,7 +708,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * Execute a command with arguments (in case args is not null).
      *
      * @param command one word command
-     * @param args    command argument
+     * @param arg    command argument
      */
     public void execCommand(String command, String arg) {
         execCommandHidden(command, arg);
@@ -859,30 +855,30 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         this.setText(value);
     }
 
-    /**
-     * Set whether or not autocomplete is enabled.
-     *
-     * @param b true if autocomplete should be enabled, false if not
-     */
-    public native void setAutocompleteEnabled(boolean b) /*-{
-		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (b) {
-			$wnd.ace.require("ace/ext/language_tools");
-			editor.setOptions({
-                enableBasicAutocompletion: true,
-                enableSnippets: true
-            });
-		} else {
-			editor.setOptions({
-                enableBasicAutocompletion: false,
-                enableSnippets: false
-            });
-		}
-//		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
-//		console.log("enableSnippets " + editor.getOption("enableSnippets"))
-//		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
-	}-*/;
+//    /**
+//     * Set whether or not autocomplete is enabled.
+//     *
+//     * @param b true if autocomplete should be enabled, false if not
+//     */
+//    public native void setAutocompleteEnabled(boolean b) /*-{
+//		// See: https://github.com/ajaxorg/ace/wiki/How-to-enable-Autocomplete-in-the-Ace-editor
+//		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+//		if (b) {
+//			$wnd.ace.require("ace/ext/language_tools");
+//			editor.setOptions({
+//                enableBasicAutocompletion: true,
+//                enableSnippets: true
+//            });
+//		} else {
+//			editor.setOptions({
+//                enableBasicAutocompletion: false,
+//                enableSnippets: false
+//            });
+//		}
+////		console.log("enableBasicAutocompletion " + editor.getOption("enableBasicAutocompletion"))
+////		console.log("enableSnippets " + editor.getOption("enableSnippets"))
+////		console.log("enableLiveAutocompletion " + editor.getOption("enableLiveAutocompletion"))
+//	}-*/;
 
     /**
      * Set the first line number that will be shown in the editor.

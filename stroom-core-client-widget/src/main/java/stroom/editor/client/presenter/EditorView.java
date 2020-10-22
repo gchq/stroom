@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
@@ -73,19 +72,17 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     Option getUseVimBindingsOption();
 
-    Option getCodeCompletionOption();
+    Option getBasicAutoCompletionOption();
 
-    Option getLiveCodeCompletionOption();
+    Option getSnippetsOption();
 
-    Option getHighlighActiveLineOption();
+    Option getLiveAutoCompletionOption();
+
+    Option getHighlightActiveLineOption();
 
     void showFilterButton(boolean show);
 
     void setFilterActive(boolean active);
 
     void setControlsVisible(boolean visible);
-
-    void addLocalCompletionProvider(final AceCompletionProvider completionProvider);
-
-    void setLocalCompletionProviders(final AceCompletionProvider... completionProviders);
 }

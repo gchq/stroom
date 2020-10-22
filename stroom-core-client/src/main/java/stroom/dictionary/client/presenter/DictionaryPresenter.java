@@ -137,8 +137,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         codePresenter.setReadOnly(readOnly);
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
-            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
-            codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
     }
 

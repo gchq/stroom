@@ -76,8 +76,9 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getCodeCompletionOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveCodeCompletionOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
 
         addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
 

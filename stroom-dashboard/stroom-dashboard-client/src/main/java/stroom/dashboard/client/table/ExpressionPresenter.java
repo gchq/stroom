@@ -72,8 +72,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
-//    private List<AceCompletion> fieldCompletions = new ArrayList<>();
-//    private AceCompletion[] aceCompletionsArr;
     final AceCompletionProvider functionsCompletionProvider;
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
@@ -96,36 +94,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             functionCompletions.clear();
             menuItems = createMenuItemsAndSnippets();
         }
-        functionsCompletionProvider = buildFunctionsCompletionProvider();
-
-
-
-    }
-
-//    private AceCompletion[] getAceCompletionsArr() {
-//        return aceCompletionsArr;
-//    }
-
-
-
-    private AceCompletionProvider buildFunctionsCompletionProvider() {
-
-        return buildCompletionProvider(functionCompletions);
-
-//        final AceCompletion[] completionsArr = functionCompletions.toArray(
-//                new AceCompletion[functionCompletions.size()]);
-//
-//        return (editor, pos, prefix, callback) -> {
-//
-//            // Recreate the array of all completers, combining the static function ones with
-//            // our just created field ones
-////            AceCompletion[] aceCompletionsArr = Stream.concat(
-////                    functionCompletions.stream(),
-////                    fieldCompletions.stream())
-////                    .toArray(size -> new AceCompletion[size]);
-//
-//            callback.invokeWithCompletions(completionsArr);
-//        };
+        functionsCompletionProvider = buildCompletionProvider(functionCompletions);
     }
 
     private AceCompletionProvider buildFieldsCompletionProvider() {
@@ -157,17 +126,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 new AceCompletion[completions.size()]);
 
         return (editor, pos, prefix, callback) -> {
-
-            // Recreate the array of all completers, combining the static function ones with
-            // our just created field ones
-//            AceCompletion[] aceCompletionsArr = Stream.concat(
-//                    functionCompletions.stream(),
-//                    fieldCompletions.stream())
-//                    .toArray(size -> new AceCompletion[size]);
-
-            if (AceEditorMode.STROOM_EXPRESSION.getName().equals(editor.getModeShortName())) {
-                callback.invokeWithCompletions(completionsArr);
-            }
+            callback.invokeWithCompletions(completionsArr);
         };
     }
 
@@ -181,15 +140,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         editorPresenter.getLineNumbersOption().setOff();
         editorPresenter.getLineWrapOption().setOn();
         editorPresenter.getHighlightActiveLineOption().setOff();
-        editorPresenter.getCodeCompletionOption().setOn();
+        editorPresenter.getBasicAutoCompletionOption().setOn();
+        editorPresenter.getSnippetsOption().setOn();
 
         editorPresenter.registerCompletionProviders(
                 functionsCompletionProvider,
                 buildFieldsCompletionProvider());
-
-//        editorPresenter.setLocalCompletionProviders(
-//                functionsCompletionProvider,
-//                buildFieldsCompletionProvider());
     }
 
     public void show(final TablePresenter tablePresenter, final Field field) {
@@ -247,7 +203,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
-//            final String expression = getView().getExpression();
             final String expression = editorPresenter.getText();
             if (EqualsUtil.isEquals(expression, field.getExpression())) {
                 HidePopupEvent.fire(tablePresenter, this);

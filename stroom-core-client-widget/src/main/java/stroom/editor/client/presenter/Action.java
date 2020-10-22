@@ -20,10 +20,12 @@ public class Action {
     private Runnable executeHandler;
     private String text;
     private boolean available;
+    private boolean defaultAvailability;
 
     public Action(final String text, final boolean available, final Runnable executeHandler) {
         this.text = text;
         this.available = available;
+        this.defaultAvailability = available;
         this.executeHandler = executeHandler;
     }
 
@@ -39,6 +41,18 @@ public class Action {
 
     public void setAvailable(final boolean available) {
         this.available = available;
+    }
+
+    public void setAvailable() {
+        this.available = true;
+    }
+
+    public void setUnavailable() {
+        this.available = false;
+    }
+
+    public void setToDefaultAvailability() {
+        setAvailable(defaultAvailability);
     }
 
     public String getText() {

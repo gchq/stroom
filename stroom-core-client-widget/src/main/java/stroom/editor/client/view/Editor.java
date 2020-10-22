@@ -22,14 +22,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
-import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Editor extends Composite implements HasValueChangeHandlers<String> {
@@ -48,9 +45,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean modeDirty = true;
     private AceEditorTheme theme = AceEditorTheme.CHROME;
     private boolean themeDirty = true;
-//    private Queue<AceCompletionProvider> localCompletionProviders = new LinkedList<>();
-    private List<AceCompletionProvider> localCompletionProviders = new ArrayList<>();
-    private boolean localCompletionProvidersDirty;
     private boolean showGutter = true;
     private boolean showGutterDirty;
     private boolean highlightActiveLine = true;
@@ -65,10 +59,12 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean showInvisiblesDirty;
     private boolean useVimBindings = false;
     private boolean useVimBindingsDirty;
-    private boolean useCodeCompletion = false;
-    private boolean useCodeCompletionDirty;
-    private boolean useLiveCodeCompletion = false;
-    private boolean useLiveCodeCompletionDirty;
+    private boolean useBasicAutoCompletion = false;
+    private boolean useBasicAutoCompletionDirty;
+    private boolean useLiveAutoCompletion = false;
+    private boolean useLiveAutoCompletionDirty;
+    private boolean useSnippets = false;
+    private boolean useSnippetsDirty;
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
     private boolean started;
@@ -94,7 +90,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 updateFirstLineNumber();
                 updateGotoLine();
                 updateHighlightActiveLine();
-                updateLocalCompletionProviders();
                 updateMarkers();
                 updateMode();
                 updateReadOnly();
@@ -104,8 +99,9 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 updateShowInvisibles();
                 updateText();
                 updateTheme();
-                updateUseCodeCompletion();
-                updateUseLiveCodeCompletion();
+                updateUseBasicAutoCompletion();
+                updateUseLiveAutoCompletion();
+                updateUseSnippets();
                 updateUseVimBindings();
                 updateUseWrapMode();
             }
@@ -244,45 +240,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         }
     }
 
-    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
-        if (completionProvider != null) {
-            localCompletionProvidersDirty = true;
-            localCompletionProviders.add(completionProvider);
-            updateLocalCompletionProviders();
-        }
-    }
-
-    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
-        if (completionProviders!= null) {
-            localCompletionProvidersDirty = true;
-            localCompletionProviders.addAll(Arrays.asList(completionProviders));
-            updateLocalCompletionProviders();
-        }
-    }
-
-    private void updateLocalCompletionProviders() {
-        if (started
-                && localCompletionProvidersDirty
-                && localCompletionProviders != null
-                && !localCompletionProviders.isEmpty()) {
-            // Clear out the existing ones
-            editor.removeAllExistingLocalCompleters();
-            // Now add
-            localCompletionProviders.forEach(editor::addLocalCompletionProvider);
-
-            localCompletionProvidersDirty = false;
-
-//            while (true) {
-//                AceCompletionProvider completionProvider = localCompletionProviders.poll();
-//                if (completionProvider != null) {
-//                    editor.addLocalCompletionProvider(completionProvider);
-//                } else {
-//                    break;
-//                }
-//            }
-        }
-    }
-
     public void setTheme(final AceEditorTheme theme) {
         themeDirty = true;
         this.theme = theme;
@@ -387,29 +344,42 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         }
     }
 
-    public void setUseCodeCompletion(final boolean useCodeCompletion) {
-        useCodeCompletionDirty = true;
-        this.useCodeCompletion = useCodeCompletion;
-        updateUseCodeCompletion();
+    public void setUseBasicAutoCompletion(final boolean useBasicAutoCompletion) {
+        useBasicAutoCompletionDirty = true;
+        this.useBasicAutoCompletion = useBasicAutoCompletion;
+        updateUseBasicAutoCompletion();
     }
 
-    private void updateUseCodeCompletion() {
-        if (editor.isAttached() && useCodeCompletionDirty) {
-            editor.setAutocompleteEnabled(useCodeCompletion);
-            useCodeCompletionDirty = false;
+    private void updateUseBasicAutoCompletion() {
+        if (editor.isAttached() && useBasicAutoCompletionDirty) {
+            editor.setBasicAutoCompleteEnabled(useBasicAutoCompletion);
+            useBasicAutoCompletionDirty = false;
         }
     }
 
-    public void setUseLiveCodeCompletion(final boolean useLiveCodeCompletion) {
-        useLiveCodeCompletionDirty = true;
-        this.useLiveCodeCompletion = useLiveCodeCompletion;
-        updateUseLiveCodeCompletion();
+    public void setUseLiveAutoCompletion(final boolean useLiveAutoCompletion) {
+        useLiveAutoCompletionDirty = true;
+        this.useLiveAutoCompletion = useLiveAutoCompletion;
+        updateUseLiveAutoCompletion();
     }
 
-    private void updateUseLiveCodeCompletion() {
-        if (editor.isAttached() && useLiveCodeCompletionDirty) {
-            editor.setLiveAutocompleteEnabled(useLiveCodeCompletion);
-            useLiveCodeCompletionDirty = false;
+    private void updateUseLiveAutoCompletion() {
+        if (editor.isAttached() && useLiveAutoCompletionDirty) {
+            editor.setLiveAutoCompleteEnabled(useLiveAutoCompletion);
+            useLiveAutoCompletionDirty = false;
+        }
+    }
+
+    public void setUseSnippets(final boolean useSnippets) {
+        useSnippetsDirty = true;
+        this.useSnippets = useSnippets;
+        updateUseSnippets();
+    }
+
+    private void updateUseSnippets() {
+        if (editor.isAttached() && useSnippetsDirty) {
+            editor.setSnippetsEnabled(useSnippets);
+            useSnippetsDirty = false;
         }
     }
 

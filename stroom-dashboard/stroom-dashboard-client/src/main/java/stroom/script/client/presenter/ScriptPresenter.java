@@ -113,8 +113,6 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
             codePresenter.getFormatAction().setAvailable(!readOnly);
-            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
-            codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
     }
 

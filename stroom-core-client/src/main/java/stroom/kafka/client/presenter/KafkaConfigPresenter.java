@@ -137,8 +137,6 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         if (editorPresenter != null) {
             editorPresenter.setReadOnly(readOnly);
             editorPresenter.getFormatAction().setAvailable(!readOnly);
-            editorPresenter.getCodeCompletionOption().setOn(!readOnly);
-            editorPresenter.getCodeCompletionOption().setAvailable(!readOnly);
         }
     }
 

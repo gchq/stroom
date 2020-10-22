@@ -210,8 +210,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             codePresenter.setIndicators(codeIndicators);
 
             // Done here to ensure the editor is attached
-            codePresenter.getCodeCompletionOption().setAvailable(true);
-            codePresenter.getCodeCompletionOption().setOn(true, true);
+            codePresenter.getBasicAutoCompletionOption().setAvailable();
+            codePresenter.getBasicAutoCompletionOption().setOn();
+            codePresenter.getSnippetsOption().setAvailable();
+            codePresenter.getSnippetsOption().setOn();
+            codePresenter.getLiveAutoCompletionOption().setAvailable();
+            codePresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -236,8 +240,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
             inputPresenter.setIndicators(inputIndicators);
 
-            inputPresenter.getCodeCompletionOption().setAvailable(false);
-            inputPresenter.getCodeCompletionOption().setOn(false);
+            inputPresenter.getBasicAutoCompletionOption().setUnavailable();
+            inputPresenter.getBasicAutoCompletionOption().setOff();
+            inputPresenter.getSnippetsOption().setUnavailable();
+            inputPresenter.getSnippetsOption().setOff();
+            inputPresenter.getLiveAutoCompletionOption().setUnavailable();
+            inputPresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -255,8 +263,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
             outputPresenter.setIndicators(outputIndicators);
 
-            outputPresenter.getCodeCompletionOption().setAvailable(false);
-            outputPresenter.getCodeCompletionOption().setOn(false);
+            outputPresenter.getBasicAutoCompletionOption().setUnavailable();
+            outputPresenter.getBasicAutoCompletionOption().setOff();
+            outputPresenter.getSnippetsOption().setUnavailable();
+            outputPresenter.getSnippetsOption().setOff();
+            outputPresenter.getLiveAutoCompletionOption().setUnavailable();
+            outputPresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 

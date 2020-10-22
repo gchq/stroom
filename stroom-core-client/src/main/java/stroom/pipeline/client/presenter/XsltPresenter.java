@@ -98,8 +98,6 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
         settingsPresenter.onReadOnly(readOnly);
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getCodeCompletionOption().setOn(!readOnly, true);
-            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
         }
     }
 

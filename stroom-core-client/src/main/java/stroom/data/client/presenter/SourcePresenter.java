@@ -92,7 +92,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.getLineNumbersOption().setOn(true);
         textPresenter.getStylesOption().setOn(true);
 
-        textPresenter.getCodeCompletionOption().setAvailable(false);
+        textPresenter.getBasicAutoCompletionOption().setAvailable(false);
         textPresenter.getUseVimBindingsOption().setAvailable(true);
         textPresenter.getFormatAction().setAvailable(false);
     }

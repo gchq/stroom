@@ -46,7 +46,6 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         super(eventBus, view);
         this.editorPresenter = editorPresenter;
 
-        editorPresenter.getCodeCompletionOption().setAvailable(false);
         editorPresenter.getIndicatorsOption().setAvailable(false);
         editorPresenter.getIndicatorsOption().setOn(false);
 
@@ -107,12 +106,24 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         return editorPresenter.getShowInvisiblesOption();
     }
 
+    public Option getShowActiveLineOption() {
+        return editorPresenter.getHighlightActiveLineOption();
+    }
+
     public Option getUseVimBindingsOption() {
         return editorPresenter.getUseVimBindingsOption();
     }
 
-    public Option getCodeCompletionOption() {
-        return editorPresenter.getCodeCompletionOption();
+    public Option getBasicAutoCompletionOption() {
+        return editorPresenter.getBasicAutoCompletionOption();
+    }
+
+    public Option getSnippetsOption() {
+        return editorPresenter.getSnippetsOption();
+    }
+
+    public Option getLiveAutoCompletionOption() {
+        return editorPresenter.getLiveAutoCompletionOption();
     }
 
     public void setIndicators(final IndicatorLines indicators) {

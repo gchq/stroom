@@ -141,16 +141,20 @@ public class EditorPresenter
         return getView().getUseVimBindingsOption();
     }
 
-    public Option getCodeCompletionOption() {
-        return getView().getCodeCompletionOption();
+    public Option getBasicAutoCompletionOption() {
+        return getView().getBasicAutoCompletionOption();
     }
 
-    public Option getLiveCodeCompletionOption() {
-        return getView().getLiveCodeCompletionOption();
+    public Option getSnippetsOption() {
+        return getView().getSnippetsOption();
+    }
+
+    public Option getLiveAutoCompletionOption() {
+        return getView().getLiveAutoCompletionOption();
     }
 
     public Option getHighlightActiveLineOption() {
-        return getView().getHighlighActiveLineOption();
+        return getView().getHighlightActiveLineOption();
     }
 
     public void setFirstLineNumber(final int firstLineNumber) {
@@ -180,15 +184,21 @@ public class EditorPresenter
 
     public void setReadOnly(final boolean readOnly) {
         if (readOnly) {
-            getCodeCompletionOption().setOff();
-            getCodeCompletionOption().setUnavailable();
-            getLiveCodeCompletionOption().setOff();
-            getLiveCodeCompletionOption().setUnavailable();
+            getFormatAction().setUnavailable();
+            getBasicAutoCompletionOption().setOff();
+            getBasicAutoCompletionOption().setUnavailable();
+            getSnippetsOption().setOff();
+            getSnippetsOption().setUnavailable();
+            getLiveAutoCompletionOption().setOff();
+            getLiveAutoCompletionOption().setUnavailable();
         } else {
-            getCodeCompletionOption().setToDefaultState();
-            getCodeCompletionOption().setToDefaultAvailability();
-            getLiveCodeCompletionOption().setToDefaultState();
-            getLiveCodeCompletionOption().setToDefaultAvailability();
+            getFormatAction().setToDefaultAvailability();
+            getBasicAutoCompletionOption().setToDefaultState();
+            getBasicAutoCompletionOption().setToDefaultAvailability();
+            getSnippetsOption().setToDefaultState();
+            getSnippetsOption().setToDefaultAvailability();
+            getLiveAutoCompletionOption().setToDefaultState();
+            getLiveAutoCompletionOption().setToDefaultAvailability();
         }
 
         getView().setReadOnly(readOnly);
@@ -237,14 +247,6 @@ public class EditorPresenter
     public com.google.web.bindery.event.shared.HandlerRegistration addChangeFilterHandler(
             final ChangeFilterHandler handler) {
         return addHandlerToSource(ChangeFilterEvent.TYPE, handler);
-    }
-
-    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
-        getView().addLocalCompletionProvider(completionProvider);
-    }
-
-    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
-        getView().setLocalCompletionProviders(completionProviders);
     }
 
     /**

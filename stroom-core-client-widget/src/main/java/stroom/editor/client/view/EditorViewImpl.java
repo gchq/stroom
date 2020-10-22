@@ -52,7 +52,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
-import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
@@ -82,8 +81,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option lineWrapOption;
     private final Option showInvisiblesOption;
     private final Option useVimBindingsOption;
-    private final Option codeCompletionOption;
-    private final Option liveCodeCompletionOption;
+    private final Option basicAutoCompletionOption;
+    private final Option snippetsOption;
+    private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
 
     @UiField(provided = true)
@@ -154,10 +154,12 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
         useVimBindingsOption = new Option(
                 "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
-        codeCompletionOption = new Option(
-                "Auto Completion", true, true, (on) -> editor.setUseCodeCompletion(on));
-        liveCodeCompletionOption = new Option(
-                "Live Auto Completion", false, true, (on) -> editor.setUseLiveCodeCompletion(on));
+        basicAutoCompletionOption = new Option(
+                "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
+        liveAutoCompletionOption = new Option(
+                "Live Auto Completion", false, true, (on) -> editor.setUseLiveAutoCompletion(on));
+        snippetsOption = new Option(
+                "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
                 "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
 
@@ -399,17 +401,22 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
-    public Option getCodeCompletionOption() {
-        return codeCompletionOption;
+    public Option getBasicAutoCompletionOption() {
+        return basicAutoCompletionOption;
     }
 
     @Override
-    public Option getLiveCodeCompletionOption() {
-        return liveCodeCompletionOption;
+    public Option getSnippetsOption() {
+        return snippetsOption;
     }
 
     @Override
-    public Option getHighlighActiveLineOption() {
+    public Option getLiveAutoCompletionOption() {
+        return liveAutoCompletionOption;
+    }
+
+    @Override
+    public Option getHighlightActiveLineOption() {
         return highlightActiveLineOption;
     }
 
@@ -461,16 +468,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         layout.fireEvent(event);
-    }
-
-    @Override
-    public void addLocalCompletionProvider(final AceCompletionProvider completionProvider) {
-        editor.addLocalCompletionProvider(completionProvider);
-    }
-
-    @Override
-    public void setLocalCompletionProviders(final AceCompletionProvider... completionProviders) {
-        editor.setLocalCompletionProviders(completionProviders);
     }
 
     @Override

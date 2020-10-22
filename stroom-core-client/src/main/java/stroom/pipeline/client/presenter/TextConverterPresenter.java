@@ -101,8 +101,6 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
         settingsPresenter.onReadOnly(readOnly);
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
-            codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
     }
 
