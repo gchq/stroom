@@ -22,7 +22,6 @@ import java.util.List;
 
 public class RefParser {
     public static final char REF_CHAR = '$';
-    public static final String REF_NO_DELIMITERS = "$1";
     public static final char QUOTE = '\'';
     private static final char COMPOSITE_DELIMITER = '+';
     private static final char ARRAY_START = '[';
@@ -138,9 +137,6 @@ public class RefParser {
                     throw new RuntimeException("Malformed lookup group '" + num + "' specified at position " + pos
                             + " in reference '" + reference + "'");
                 }
-            } else if (reference.equals(REF_NO_DELIMITERS)){
-                //Use the ref without delimiters (id = 1) by default, rather than with delimiters (id = 0)
-                refGroup = 1;
             } else {
                 refGroup = 0;
             }
