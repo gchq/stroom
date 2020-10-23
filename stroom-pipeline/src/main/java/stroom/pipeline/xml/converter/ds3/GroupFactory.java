@@ -16,6 +16,7 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
+import stroom.pipeline.xml.converter.ds3.ref.Ref;
 import stroom.pipeline.xml.converter.ds3.ref.RefParser;
 import stroom.pipeline.xml.converter.ds3.ref.RefResolver;
 import stroom.pipeline.xml.converter.ds3.ref.VarFactoryMap;
@@ -51,8 +52,30 @@ public class GroupFactory extends StoreFactory {
 
         // As this is a group make sure we at least reference ourselves.
         if (this.value == null) {
-            this.value = String.valueOf(RefParser.REF_CHAR);
+            if (needsTrim(parent)){
+                this.value = RefParser.REF_NO_DELIMITERS;
+            } else {
+                this.value = String.valueOf(RefParser.REF_CHAR);
+            }
         }
+    }
+
+    private static boolean needsTrim(NodeFactory parent) {
+        //Don't include the delimiters of the parent split for the processing of this group.
+        if (parent == null || !parent.getNodeType().equals(NodeType.SPLIT)) {
+        return false;
+        }
+
+        SplitFactory parentSplit = (SplitFactory) parent;
+        char [] delim = parentSplit.getDelimiter();
+        for (char c : delim){
+            //Splits that have whitespace delimiters are not a problem as groups are trimmed of whitespace anyway
+            if (c > ' ') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public String getValue() {
