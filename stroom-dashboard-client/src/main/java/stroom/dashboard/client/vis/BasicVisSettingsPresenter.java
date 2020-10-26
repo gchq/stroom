@@ -41,6 +41,7 @@ import stroom.visualisation.shared.Visualisation;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,19 +87,19 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private void updateFieldNames(final Component component) {
         fieldNames = new ArrayList<>();
-        fieldNames.add("");
-
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getSettings().getFields();
             if (fields != null && fields.size() > 0) {
                 for (final Field field : fields) {
-                    if (!field.isSpecial()) {
+                    if (!fieldNames.contains(field.getName())) {
                         fieldNames.add(field.getName());
                     }
                 }
             }
         }
+        fieldNames.sort(Comparator.naturalOrder());
+        fieldNames.add(0, "");
 
         for (final DynamicSettingsPane dynamicSettings : dynamicSettingsMap.values()) {
             dynamicSettings.setFieldNames(fieldNames);

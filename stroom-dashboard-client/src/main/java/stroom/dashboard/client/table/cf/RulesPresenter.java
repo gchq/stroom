@@ -272,7 +272,7 @@ public class RulesPresenter
     public void read(final ComponentConfig componentConfig) {
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
 
-        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
+//        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
 
 //        final Function<Field, DataSourceField.DataSourceFieldType> typeMapper = field -> {
 //            switch (field.getFormat().getType()) {
@@ -291,7 +291,7 @@ public class RulesPresenter
         this.fields = settings
                 .getFields()
                 .stream()
-                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
+//                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
 //                .map(field -> new DataSourceField.Builder()
 //                        .type(typeMapper.apply(field))
 //                        .name(field.getName())

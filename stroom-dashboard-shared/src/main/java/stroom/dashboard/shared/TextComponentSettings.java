@@ -49,7 +49,7 @@ public class TextComponentSettings extends ComponentSettings {
     @XmlElement(name = "showAsHtml")
     private boolean showAsHtml;
     @XmlElement(name = "showStepping")
-    private boolean showStepping = true;
+    private boolean showStepping;
 
     public TextComponentSettings() {
         // Default constructor necessary for GWT serialisation.

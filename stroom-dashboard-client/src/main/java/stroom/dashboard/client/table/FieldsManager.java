@@ -312,7 +312,6 @@ public class FieldsManager implements HeadingListener {
     private long getVisibleFieldCount() {
         final List<Field> fields = tableSettings.getFields();
         return fields.stream()
-                .filter(field -> !field.isSpecial())
                 .filter(Field::isVisible)
                 .count();
     }

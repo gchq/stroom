@@ -245,6 +245,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private void update(final TablePresenter tablePresenter) {
         boolean updating = false;
+        String message = "";
 
         final String permissionCheck = checkPermissions();
         if (permissionCheck != null) {
@@ -271,7 +272,21 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentLineTo = getLong(textSettings.getLineToField(), selected);
                     final Long currentColTo = getLong(textSettings.getColToField(), selected);
 
-                    if (currentStreamId != null) {
+                    // Validate settings.
+                    if (textSettings.getStreamIdField() == null) {
+                        message = "No stream id field is configured";
+
+                    } else if (textSettings.getStreamIdField() != null && currentStreamId == null) {
+                        message = "No stream id found in selection";
+
+                    } else if (textSettings.getRecordNoField() == null &&
+                            !(textSettings.getLineFromField() != null && textSettings.getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                        message = "No record number field is configured";
+
+                    } else if (textSettings.getRecordNoField() != null && currentRecordNo == null) {
+                        message = "No record number field found in selection";
+
+                    } else {
                         Highlight highlight = null;
                         if (currentLineFrom != null && currentColFrom != null && currentLineTo != null && currentColTo != null) {
                             highlight = new Highlight(
@@ -334,7 +349,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
         // If we aren't updating the data display then clear it.
         if (!updating) {
-            showData("", null, null, isHtml);
+            showData(message, null, null, isHtml);
         }
     }
 

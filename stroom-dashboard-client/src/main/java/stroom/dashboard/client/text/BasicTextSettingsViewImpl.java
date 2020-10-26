@@ -34,6 +34,7 @@ import stroom.item.client.ItemListBox;
 import stroom.util.shared.HasDisplayValue;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -146,7 +147,9 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         final HasDisplayValue selected = ctrl.getSelectedItem();
         ctrl.clear();
         ctrl.addItem(NONE);
-        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e).collect(Collectors.toList());
+        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e)
+                .sorted(Comparator.comparing(HasDisplayValue::getDisplayValue))
+                .collect(Collectors.toList());
         ctrl.addItems(newList);
         ctrl.setSelectedItem(selected);
     }

@@ -519,7 +519,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             ExpressionTerm.Condition.GREATER_THAN,
                             ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
                             ExpressionTerm.Condition.LESS_THAN,
-                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO };
+                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO};
                     break;
                 case DATE_TIME:
                     conditions = new ExpressionTerm.Condition[]{
@@ -528,7 +528,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             ExpressionTerm.Condition.GREATER_THAN,
                             ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
                             ExpressionTerm.Condition.LESS_THAN,
-                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO };
+                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO};
                     break;
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
@@ -569,15 +569,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-//        final Map<String, DataSourceField> nonSpecialNameToFieldMap = tableSettings.getFields()
-//                .stream()
-//                .filter(field -> !field.isSpecial())
-//                .collect(Collectors.toMap(Field::getName, TablePresenter::buildDsField));
-        final List<Field> nonSpecialNameToFieldMap = tableSettings.getFields()
-                .stream()
-                .filter(field -> !field.isSpecial())
-                .collect(Collectors.toList());
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(tableSettings.getFields());
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         int hiddenRowCount = 0;
@@ -595,12 +587,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                 final Map<String, Object> fieldIdToValueMap = new HashMap<>();
                                 for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
                                     final Field field = fields.get(i);
-                                    // Conditional formatting is not interested in the special invisible
-                                    // EventId/StreamId fields
-                                    if (!field.isSpecial()) {
-                                        final String value = row.getValues().get(i);
-                                        fieldIdToValueMap.put(field.getName(), value);
-                                    }
+                                    final String value = row.getValues().get(i);
+                                    fieldIdToValueMap.put(field.getName(), value);
                                 }
 
                                 final ExpressionOperator operator = rule.getExpression();
@@ -721,20 +709,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                            final String oldName,
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
-           if (tableSettings != null && tableSettings.getConditionalFormattingRules() != null) {
-               final AtomicBoolean wasModified = new AtomicBoolean(false);
-               tableSettings.getConditionalFormattingRules().stream()
-                       .map(ConditionalFormattingRule::getExpression)
-                       .forEach(expressionOperator -> {
-                           boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
-                           if (wasRuleModified) {
-                               wasModified.compareAndSet(false, true);
-                           }
-                       });
-               if (wasModified.get()) {
-                   setDirty(true);
-               }
-           }
+            if (tableSettings != null && tableSettings.getConditionalFormattingRules() != null) {
+                final AtomicBoolean wasModified = new AtomicBoolean(false);
+                tableSettings.getConditionalFormattingRules().stream()
+                        .map(ConditionalFormattingRule::getExpression)
+                        .forEach(expressionOperator -> {
+                            boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
+                            if (wasRuleModified) {
+                                wasModified.compareAndSet(false, true);
+                            }
+                        });
+                if (wasModified.get()) {
+                    setDirty(true);
+                }
+            }
         }
     }
 
