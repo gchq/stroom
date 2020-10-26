@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.22] - 2020-10-26
+
 * Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
 
 * Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
+
 
 ## [v6.1.21] - 2020-10-19
 
@@ -2261,7 +2265,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.21...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.22...6.1
+[v6.1.22]: https://github.com/gchq/stroom/compare/v6.1.21...v6.1.22
 [v6.1.21]: https://github.com/gchq/stroom/compare/v6.1.20...v6.1.21
 [v6.1.20]: https://github.com/gchq/stroom/compare/v6.1.19...v6.1.20
 [v6.1.19]: https://github.com/gchq/stroom/compare/v6.1.18...v6.1.19

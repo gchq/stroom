@@ -5,6 +5,7 @@
     <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server dev.yml" />
+    <option name="VM_PARAMETERS" value="-XX:+UseG1GC -Xmx5G" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
     <method v="2">
       <option name="Make" enabled="true" />
