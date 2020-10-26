@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
+
 * Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
 
 ## [v6.1.21] - 2020-10-19

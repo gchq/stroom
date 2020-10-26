@@ -105,6 +105,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -1043,9 +1044,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         @Override
         public void onSelectionChange(final SelectionChangeEvent event) {
-            final Field field = presenter.getSelectedObject();
+            Field field = presenter.getSelectedObject();
             if (field != null) {
                 HidePopupEvent.fire(TablePresenter.this, presenter);
+
+                final String fieldName = field.getName();
+                String suffix = "";
+                int count = 1;
+                final Set<String> currentFields = tableSettings.getFields().stream().map(Field::getName).collect(Collectors.toSet());
+                while (currentFields.contains(fieldName + suffix)) {
+                    count++;
+                    suffix = " " + count;
+                }
+
+                field = field.copy();
+                field.setName(fieldName + suffix);
                 field.setId(createRandomFieldId());
                 fieldsManager.addField(field);
             }
