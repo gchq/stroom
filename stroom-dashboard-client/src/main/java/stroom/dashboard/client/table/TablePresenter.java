@@ -105,7 +105,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -807,10 +806,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-        // Remove all special fields as we will re-add them with the right names
-        tableSettings.getFields().removeIf(Field::isSpecial);
+        // Find out if we have any special fields.
+        final boolean hasSpecialFields = tableSettings.getFields().stream().anyMatch(Field::isSpecial);
 
-        // See if any of the requested special fields exist in the current data source.
+        // Get special fields from the current data source.
         final List<DataSourceField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
         // Get all index fields provided by the datasource
@@ -826,20 +825,28 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }
 
+        // Remove all special fields as we will re-add them with the right names if there are any.
+        tableSettings.getFields().removeIf(Field::isSpecial);
+
         // If the fields we want to make special do exist in the current data source then
         // add them.
         if (requiredSpecialFields.size() > 0) {
-
             // Prior to the introduction of the special field concept, special fields were
             // treated as invisible fields. For this reason we need to remove old invisible
             // fields if we haven't yet turned them into special fields.
-            // Also we have changed the name of the special fields from EventId to __event_id__
-            // so we need to remove those old ones too.
+            if (!hasSpecialFields) {
+                requiredSpecialDsFields.forEach(requiredSpecialDsField ->
+                        tableSettings.getFields().removeIf(field ->
+                                !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+            }
+
+            // We have changed the name of the special fields from EventId to __event_id__
+            // so we need to remove those old ones.
             requiredSpecialDsFields.forEach(requiredSpecialDsField ->
                     tableSettings.getFields().removeIf(field ->
-                            field.getName().equals(requiredSpecialDsField.getName())
-                                    && (field.isSpecial() || !field.isVisible())));
+                            field.isSpecial() && field.getName().equals(requiredSpecialDsField.getName())));
 
+            // Add special fields.
             requiredSpecialFields.forEach(field ->
                     tableSettings.getFields().add(field));
         }
