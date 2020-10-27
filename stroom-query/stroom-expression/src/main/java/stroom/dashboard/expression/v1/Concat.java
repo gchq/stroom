@@ -28,7 +28,7 @@ class Concat extends AbstractManyChildFunction {
         return new Gen(childGenerators);
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

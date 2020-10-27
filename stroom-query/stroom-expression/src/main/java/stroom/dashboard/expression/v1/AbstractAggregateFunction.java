@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 abstract class AbstractAggregateFunction extends AbstractManyChildFunction implements AggregateFunction {
     private final Calculator calculator;
 
@@ -46,7 +50,7 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         return functions.length == 1;
     }
 
-    private static class AggregateGen extends AbstractSingleChildGenerator {
+    private static final class AggregateGen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -5622353515345145314L;
 
         private final Calculator calculator;
@@ -75,9 +79,21 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
             current = calculator.calc(current, aggregateGen.current);
             super.merge(generator);
         }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            super.read(kryo, input);
+            current = (Val) kryo.readClassAndObject(input);
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            super.write(kryo, output);
+            kryo.writeClassAndObject(output, current);
+        }
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = -5622353515345145314L;
 
         private final Calculator calculator;

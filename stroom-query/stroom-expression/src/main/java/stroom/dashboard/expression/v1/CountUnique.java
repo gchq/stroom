@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
@@ -71,7 +75,7 @@ class CountUnique extends AbstractFunction {
         return isAggregate();
     }
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    private static final class Gen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Set<Val> uniqueValues = new HashSet<>();
@@ -99,6 +103,23 @@ class CountUnique extends AbstractFunction {
             final Gen gen = (Gen) generator;
             uniqueValues.addAll(gen.uniqueValues);
             super.merge(generator);
+        }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            uniqueValues.clear();
+            final int length = input.readInt(true);
+            for (int i = 0; i < length; i++) {
+                uniqueValues.add((Val) kryo.readClassAndObject(input));
+            }
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            output.writeInt(uniqueValues.size(), true);
+            for (final Val val : uniqueValues) {
+                kryo.writeClassAndObject(output, val);
+            }
         }
     }
 }

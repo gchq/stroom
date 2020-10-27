@@ -66,7 +66,7 @@ abstract class AbstractIsFunction extends AbstractFunction implements Serializab
         Val test(Val val);
     }
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    private static final class Gen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = 8153777070911893616L;
 
         private final Test test;

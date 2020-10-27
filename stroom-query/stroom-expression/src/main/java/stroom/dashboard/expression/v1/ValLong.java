@@ -18,14 +18,11 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Objects;
 
-public class ValLong implements ValNumber {
+public final class ValLong implements ValNumber {
     private static final Type TYPE = new LongType();
-    private long value;
+    private final long value;
 
-    ValLong() {
-    }
-
-    ValLong(final long value) {
+    private ValLong(final long value) {
         this.value = value;
     }
 
@@ -102,7 +99,7 @@ public class ValLong implements ValNumber {
         }
     }
 
-    private static class LongType implements Type {
+    private static final class LongType implements Type {
         private static final String NAME = "long";
 
         @Override

@@ -18,15 +18,12 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Objects;
 
-public class ValInteger implements ValNumber {
+public final class ValInteger implements ValNumber {
     private static final Type TYPE = new IntegerType();
 
-    private int value;
+    private final int value;
 
-    ValInteger() {
-    }
-
-    ValInteger(final int value) {
+    private ValInteger(final int value) {
         this.value = value;
     }
 
@@ -103,7 +100,7 @@ public class ValInteger implements ValNumber {
         }
     }
 
-    private static class IntegerType implements Type {
+    private static final class IntegerType implements Type {
         private static final String NAME = "integer";
 
         @Override

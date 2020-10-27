@@ -20,17 +20,14 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ValString implements Val {
+public final class ValString implements Val {
     static final ValString EMPTY = new ValString("");
     private static final Type TYPE = new StringType();
-    private String value;
+    private final String value;
     private transient Optional<Double> optionalDouble;
     private transient Optional<Long> optionalLong;
 
-    ValString() {
-    }
-
-    ValString(final String value) {
+    private ValString(final String value) {
         this.value = value;
     }
 
@@ -133,7 +130,7 @@ public class ValString implements Val {
         return value.compareToIgnoreCase(((ValString) o).value);
     }
 
-    private static class StringType implements Type {
+    private static final class StringType implements Type {
         private static final String NAME = "string";
 
         @Override

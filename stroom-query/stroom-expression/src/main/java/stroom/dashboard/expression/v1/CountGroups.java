@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +45,7 @@ class CountGroups extends AbstractFunction {
         return isAggregate();
     }
 
-    private static class Gen extends AbstractNoChildGenerator {
+    private static final class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = -9130548669643582369L;
 
         private final Set<Key> childGroups = new HashSet<>();
@@ -72,6 +76,25 @@ class CountGroups extends AbstractFunction {
             nonGroupedChildCount += countGen.nonGroupedChildCount;
             childGroups.addAll(countGen.childGroups);
             super.merge(generator);
+        }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            childGroups.clear();
+            final int length = input.readInt(true);
+            for (int i = 0; i < length; i++) {
+                childGroups.add((Key) kryo.readClassAndObject(input));
+            }
+            nonGroupedChildCount = input.readLong(true);
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            output.writeInt(childGroups.size(), true);
+            for (final Key key : childGroups) {
+                kryo.writeClassAndObject(output, key);
+            }
+            output.writeLong(nonGroupedChildCount, true);
         }
     }
 }

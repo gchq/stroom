@@ -16,12 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-class RoundGenerator extends AbstractSingleChildGenerator {
+final class RoundGenerator extends AbstractSingleChildGenerator {
     private static final long serialVersionUID = -5360650022530956741L;
 
     private final RoundCalculator calculator;
 
-    public RoundGenerator(final Generator childGenerator, final RoundCalculator calculator) {
+    RoundGenerator(final Generator childGenerator, final RoundCalculator calculator) {
         super(childGenerator);
         this.calculator = calculator;
     }

@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.io.Serializable;
 import java.text.ParseException;
 
@@ -79,7 +83,7 @@ class LastIndexOf extends AbstractFunction implements Serializable {
         return hasAggregate;
     }
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    private static final class Gen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;
@@ -114,6 +118,18 @@ class LastIndexOf extends AbstractFunction implements Serializable {
             }
 
             return ValNull.INSTANCE;
+        }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            super.read(kryo, input);
+            stringGenerator.read(kryo, input);
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            super.write(kryo, output);
+            stringGenerator.write(kryo, output);
         }
     }
 }

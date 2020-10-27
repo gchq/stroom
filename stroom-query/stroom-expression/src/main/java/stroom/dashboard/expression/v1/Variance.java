@@ -16,9 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 class Variance extends AbstractManyChildFunction implements AggregateFunction {
@@ -61,10 +64,10 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
         return functions.length == 1;
     }
 
-    private static class AggregateGen extends AbstractSingleChildGenerator {
+    private static final class AggregateGen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
-        private final List<Double> list = Collections.synchronizedList(new ArrayList<>());
+        private final List<Double> list = new ArrayList<>();
 
         AggregateGen(final Generator childGenerator) {
             super(childGenerator);
@@ -101,9 +104,28 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
             list.addAll(aggregateGen.list);
             super.merge(generator);
         }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            super.read(kryo, input);
+            final int size = input.readInt(true);
+            list.clear();
+            for (int i = 0; i < size; i++) {
+                list.add(input.readDouble());
+            }
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            super.write(kryo, output);
+            output.writeInt(list.size(), true);
+            for (final double d : list) {
+                output.writeDouble(d);
+            }
+        }
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
         Gen(final Generator[] generators) {

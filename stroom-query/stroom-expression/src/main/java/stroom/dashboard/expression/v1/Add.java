@@ -44,7 +44,7 @@ class Add extends NumericFunction {
         }
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = 217968020285584214L;
 
         private final Calculator calculator;

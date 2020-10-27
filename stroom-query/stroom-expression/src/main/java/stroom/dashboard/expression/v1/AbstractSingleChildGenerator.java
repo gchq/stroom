@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 abstract class AbstractSingleChildGenerator extends AbstractGenerator {
     private static final long serialVersionUID = 513621715143449935L;
 
@@ -43,5 +47,15 @@ abstract class AbstractSingleChildGenerator extends AbstractGenerator {
 
     private void addChildren(final AbstractSingleChildGenerator generator) {
         childGenerator.merge(generator.childGenerator);
+    }
+
+    @Override
+    public void read(final Kryo kryo, final Input input) {
+        childGenerator.read(kryo, input);
+    }
+
+    @Override
+    public void write(final Kryo kryo, final Output output) {
+        childGenerator.write(kryo, output);
     }
 }

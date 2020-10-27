@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.io.Serializable;
 import java.text.ParseException;
 
@@ -80,7 +84,7 @@ class SubstringAfter extends AbstractFunction implements Serializable {
         return hasAggregate;
     }
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    private static final class Gen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;
@@ -116,6 +120,18 @@ class SubstringAfter extends AbstractFunction implements Serializable {
             }
 
             return ValString.create(value.substring(index + str.length()));
+        }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            super.read(kryo, input);
+            stringGenerator.read(kryo, input);
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            super.write(kryo, output);
+            stringGenerator.write(kryo, output);
         }
     }
 }

@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 class Average extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "average";
     static final String ALIAS = "mean";
@@ -47,7 +51,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         return functions.length == 1;
     }
 
-    private static class AggregateGen extends AbstractSingleChildGenerator {
+    private static final class AggregateGen extends AbstractSingleChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Calculator calculator;
@@ -87,9 +91,23 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
 
             super.merge(generator);
         }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            super.read(kryo, input);
+            current = (Val) kryo.readClassAndObject(input);
+            count = input.readInt(true);
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            super.write(kryo, output);
+            kryo.writeClassAndObject(output, current);
+            output.writeInt(count, true);
+        }
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final Calculator calculator;

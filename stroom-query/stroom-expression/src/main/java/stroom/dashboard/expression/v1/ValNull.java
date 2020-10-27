@@ -16,11 +16,11 @@
 
 package stroom.dashboard.expression.v1;
 
-public class ValNull implements Val {
+public final class ValNull implements Val {
     public static final ValNull INSTANCE = new ValNull();
     private static final Type TYPE = new NullType();
 
-    ValNull() {
+    private ValNull() {
         // Use instance only
     }
 
@@ -75,7 +75,7 @@ public class ValNull implements Val {
         return 0;
     }
 
-    private static class NullType implements Type {
+    private static final class NullType implements Type {
         private static final String NAME = "null";
 
         @Override

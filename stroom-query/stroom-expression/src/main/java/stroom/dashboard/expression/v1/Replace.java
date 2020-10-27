@@ -90,7 +90,7 @@ class Replace extends AbstractManyChildFunction implements Serializable {
         return super.hasAggregate();
     }
 
-    private static class Gen extends AbstractManyChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {

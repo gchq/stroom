@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.io.Serializable;
 
 abstract class AbstractGenerator implements Generator, Serializable, Comparable<Generator> {
@@ -24,9 +28,17 @@ abstract class AbstractGenerator implements Generator, Serializable, Comparable<
     private static final ValComparator COMPARATOR = new ValComparator();
 
     @Override
-    public int compareTo(final Generator gen) {
+    public final int compareTo(final Generator gen) {
         final Val o1 = eval();
         final Val o2 = gen.eval();
         return COMPARATOR.compare(o1, o2);
+    }
+
+    @Override
+    public void read(final Kryo kryo, final Input input) {
+    }
+
+    @Override
+    public void write(final Kryo kryo, final Output output) {
     }
 }

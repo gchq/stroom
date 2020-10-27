@@ -36,7 +36,7 @@ class Include extends AbstractIncludeExclude implements Serializable {
         return new Gen(childGenerators);
     }
 
-    private static class Gen extends AbstractGen {
+    private static final class Gen extends AbstractGen {
         Gen(final Generator[] childGenerators) {
             super(childGenerators);
         }

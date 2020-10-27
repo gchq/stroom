@@ -18,16 +18,13 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Objects;
 
-public class ValBoolean implements Val {
+public final class ValBoolean implements Val {
     static final ValBoolean TRUE = new ValBoolean(true);
     static final ValBoolean FALSE = new ValBoolean(false);
     private static final Type TYPE = new BooleanType();
-    private boolean value;
+    private final boolean value;
 
-    ValBoolean() {
-    }
-
-    ValBoolean(final boolean value) {
+    private ValBoolean(final boolean value) {
         this.value = value;
     }
 
@@ -91,7 +88,7 @@ public class ValBoolean implements Val {
         return Boolean.compare(value, ((ValBoolean) o).value);
     }
 
-    private static class BooleanType implements Type {
+    private static final class BooleanType implements Type {
         private static final String NAME = "boolean";
 
         @Override

@@ -16,12 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-class ExtractionGenerator extends AbstractSingleChildGenerator {
+final class ExtractionGenerator extends AbstractSingleChildGenerator {
     private static final long serialVersionUID = -5360650022530956741L;
 
     private final Extractor extractor;
 
-    public ExtractionGenerator(final Generator childGenerator, final Extractor extractor) {
+    ExtractionGenerator(final Generator childGenerator, final Extractor extractor) {
         super(childGenerator);
         this.extractor = extractor;
     }

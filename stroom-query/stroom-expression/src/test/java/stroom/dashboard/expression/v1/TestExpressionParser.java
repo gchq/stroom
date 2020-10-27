@@ -16,12 +16,15 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +41,7 @@ class TestExpressionParser {
     private final ExpressionParser parser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
 
     @Test
-    void testBasic() throws ParseException {
+    void testBasic() {
         test("${val1}");
         test("min(${val1})");
         test("max(${val1})");
@@ -74,33 +78,33 @@ class TestExpressionParser {
         test("dashboard('title', 'someuuid', 'param1=value1')");
     }
 
-    private void test(final String expression) throws ParseException {
-        final Expression exp = createExpression(expression);
-        System.out.println(exp.toString());
+    private void test(final String expression) {
+        createExpression(expression, exp ->
+                System.out.println(exp.toString()));
     }
 
     @Test
-    void testMin1() throws ParseException {
-        final Generator gen = createGenerator("min(${val1})");
+    void testMin1() {
+        createGenerator("min(${val1})", gen -> {
+            gen.set(getVal(300D));
+            gen.set(getVal(180D));
 
-        gen.set(getVal(300D));
-        gen.set(getVal(180D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
+            gen.set(getVal(500D));
 
-        gen.set(getVal(500D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
 
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(180D, Offset.offset(0D));
+            gen.set(getVal(600D));
+            gen.set(getVal(13D));
+            gen.set(getVal(99.3D));
+            gen.set(getVal(87D));
 
-        gen.set(getVal(600D));
-        gen.set(getVal(13D));
-        gen.set(getVal(99.3D));
-        gen.set(getVal(87D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(13D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(13D, Offset.offset(0D));
+        });
     }
 
     private Val[] getVal(final String... str) {
@@ -120,1243 +124,1252 @@ class TestExpressionParser {
     }
 
     @Test
-    void testMinUngrouped2() throws ParseException {
-        final Generator gen = createGenerator("min(${val1}, 100, 30, 8)");
+    void testMinUngrouped2() {
+        createGenerator("min(${val1}, 100, 30, 8)", gen -> {
+            gen.set(getVal(300D));
 
-        gen.set(getVal(300D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMinGrouped2() throws ParseException {
-        final Generator gen = createGenerator("min(min(${val1}), 100, 30, 8)");
+    void testMinGrouped2() {
+        createGenerator("min(min(${val1}), 100, 30, 8)", gen -> {
+            gen.set(getVal(300D));
+            gen.set(getVal(180D));
 
-        gen.set(getVal(300D));
-        gen.set(getVal(180D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMin3() throws ParseException {
-        final Generator gen = createGenerator("min(min(${val1}), 100, 30, 8, count(), 55)");
+    void testMin3() {
+        createGenerator("min(min(${val1}), 100, 30, 8, count(), 55)", gen -> {
+            gen.set(getVal(300D));
+            gen.set(getVal(180D));
 
-        gen.set(getVal(300D));
-        gen.set(getVal(180D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            gen.set(getVal(300D));
+            gen.set(getVal(180D));
 
-        gen.set(getVal(300D));
-        gen.set(getVal(180D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMax1() throws ParseException {
-        final Generator gen = createGenerator("max(${val1})");
+    void testMax1() {
+        createGenerator("max(${val1})", gen -> {
+            gen.set(getVal(300D));
+            gen.set(getVal(180D));
 
-        gen.set(getVal(300D));
-        gen.set(getVal(180D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300D, Offset.offset(0D));
+            gen.set(getVal(500D));
 
-        gen.set(getVal(500D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(500D, Offset.offset(0D));
 
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(500D, Offset.offset(0D));
+            gen.set(getVal(600D));
+            gen.set(getVal(13D));
+            gen.set(getVal(99.3D));
+            gen.set(getVal(87D));
 
-        gen.set(getVal(600D));
-        gen.set(getVal(13D));
-        gen.set(getVal(99.3D));
-        gen.set(getVal(87D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(600D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(600D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMaxUngrouped2() throws ParseException {
-        final Generator gen = createGenerator("max(${val1}, 100, 30, 8)");
+    void testMaxUngrouped2() {
+        createGenerator("max(${val1}, 100, 30, 8)", gen -> {
+            gen.set(getVal(10D));
 
-        gen.set(getVal(10D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMaxGrouped2() throws ParseException {
-        final Generator gen = createGenerator("max(max(${val1}), 100, 30, 8)");
+    void testMaxGrouped2() {
+        createGenerator("max(max(${val1}), 100, 30, 8)", gen -> {
+            gen.set(getVal(10D));
+            gen.set(getVal(40D));
 
-        gen.set(getVal(10D));
-        gen.set(getVal(40D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(100D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMax3() throws ParseException {
-        final Generator gen = createGenerator("max(max(${val1}), count())");
+    void testMax3() {
+        createGenerator("max(max(${val1}), count())", gen -> {
+            gen.set(getVal(3D));
+            gen.set(getVal(2D));
 
-        gen.set(getVal(3D));
-        gen.set(getVal(2D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testSum() throws ParseException {
+    void testSum() {
         // This is a bad usage of functions as ${val1} will produce the last set
         // value when we evaluate the sum. As we are effectively grouping and we
         // don't have any control over the order that cell values are inserted
         // we will end up with indeterminate behaviour.
-        final Generator gen = createGenerator("sum(${val1}, count())");
+        createGenerator("sum(${val1}, count())", gen -> {
+            gen.set(getVal(3D));
+            gen.set(getVal(2D));
 
-        gen.set(getVal(3D));
-        gen.set(getVal(2D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(5D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(5D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testSumOfSum() throws ParseException {
-        final Generator gen = createGenerator("sum(sum(${val1}), count())");
+    void testSumOfSum() {
+        createGenerator("sum(sum(${val1}), count())", gen -> {
+            gen.set(getVal(3D));
+            gen.set(getVal(2D));
 
-        gen.set(getVal(3D));
-        gen.set(getVal(2D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(11D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(11D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAverageUngrouped() throws ParseException {
+    void testAverageUngrouped() {
         // This is a bad usage of functions as ${val1} will produce the last set
         // value when we evaluate the sum. As we are effectively grouping and we
         // don't have any control over the order that cell values are inserted
         // we will end up with indeterminate behaviour.
-        final Generator gen = createGenerator("average(${val1}, count())");
+        createGenerator("average(${val1}, count())", gen -> {
+            gen.set(getVal(3D));
+            gen.set(getVal(4D));
 
-        gen.set(getVal(3D));
-        gen.set(getVal(4D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(8D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(8D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAverageGrouped() throws ParseException {
-        final Generator gen = createGenerator("average(${val1})");
+    void testAverageGrouped() {
+        createGenerator("average(${val1})", gen -> {
+            gen.set(getVal(3D));
+            gen.set(getVal(4D));
 
-        gen.set(getVal(3D));
-        gen.set(getVal(4D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.5D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.5D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(8D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(8D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMatch1() throws ParseException {
-        final Generator gen = createGenerator("match('this', 'this')");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isTrue();
+    void testMatch1() {
+        createGenerator("match('this', 'this')", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isTrue();
+        });
     }
 
     @Test
-    void testMatch2() throws ParseException {
-        final Generator gen = createGenerator("match('this', 'that')");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isFalse();
+    void testMatch2() {
+        createGenerator("match('this', 'that')", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isFalse();
+        });
     }
 
     @Test
-    void testMatch3() throws ParseException {
-        final Generator gen = createGenerator("match(${val1}, 'this')");
+    void testMatch3() {
+        createGenerator("match(${val1}, 'this')", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isTrue();
+        });
     }
 
     @Test
-    void testMatch4() throws ParseException {
-        final Generator gen = createGenerator("match(${val1}, 'that')");
-
-        gen.set(getVal("this"));
+    void testMatch4() {
+        createGenerator("match(${val1}, 'that')", gen -> {
+            gen.set(getVal("this"));
 
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isFalse();
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isFalse();
+        });
     }
 
     @Test
-    void testTrue() throws ParseException {
-        final Generator gen = createGenerator("true()");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isTrue();
+    void testTrue() {
+        createGenerator("true()", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isTrue();
+        });
     }
 
     @Test
-    void testFalse() throws ParseException {
-        final Generator gen = createGenerator("false()");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isFalse();
+    void testFalse() {
+        createGenerator("false()", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isFalse();
+        });
     }
 
     @Test
-    void testNull() throws ParseException {
-        final Generator gen = createGenerator("null()");
-
-        final Val out = gen.eval();
-        assertThat(out).isInstanceOf(ValNull.class);
+    void testNull() {
+        createGenerator("null()", gen -> {
+            final Val out = gen.eval();
+            assertThat(out).isInstanceOf(ValNull.class);
+        });
     }
 
     @Test
-    void testErr() throws ParseException {
-        final Generator gen = createGenerator("err()");
-
-        final Val out = gen.eval();
-        assertThat(out).isInstanceOf(ValErr.class);
+    void testErr() {
+        createGenerator("err()", gen -> {
+            final Val out = gen.eval();
+            assertThat(out).isInstanceOf(ValErr.class);
+        });
     }
 
     @Test
-    void testNotTrue() throws ParseException {
-        final Generator gen = createGenerator("not(true())");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isFalse();
+    void testNotTrue() {
+        createGenerator("not(true())", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isFalse();
+        });
     }
 
     @Test
-    void testNotFalse() throws ParseException {
-        final Generator gen = createGenerator("not(false())");
-
-        final Val out = gen.eval();
-        assertThat(out.toBoolean()).isTrue();
+    void testNotFalse() {
+        createGenerator("not(false())", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toBoolean()).isTrue();
+        });
     }
 
     @Test
-    void testIf1() throws ParseException {
-        final Generator gen = createGenerator("if(true(), 'this', 'that')");
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+    void testIf1() {
+        createGenerator("if(true(), 'this', 'that')", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testIf2() throws ParseException {
-        final Generator gen = createGenerator("if(false(), 'this', 'that')");
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+    void testIf2() {
+        createGenerator("if(false(), 'this', 'that')", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testIf3() throws ParseException {
-        final Generator gen = createGenerator("if(${val1}, 'this', 'that')");
-
-        gen.set(getVal("true"));
+    void testIf3() {
+        createGenerator("if(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("true"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testIf4() throws ParseException {
-        final Generator gen = createGenerator("if(${val1}, 'this', 'that')");
+    void testIf4() {
+        createGenerator("if(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("false"));
 
-        gen.set(getVal("false"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testIf5() throws ParseException {
-        final Generator gen = createGenerator("if(match(${val1}, 'foo'), 'this', 'that')");
+    void testIf5() {
+        createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
+            gen.set(getVal("foo"));
 
-        gen.set(getVal("foo"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testIf6() throws ParseException {
-        final Generator gen = createGenerator("if(match(${val1}, 'foo'), 'this', 'that')");
-
-        gen.set(getVal("bar"));
+    void testIf6() {
+        createGenerator("if(match(${val1}, 'foo'), 'this', 'that')", gen -> {
+            gen.set(getVal("bar"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testNotIf() throws ParseException {
-        final Generator gen = createGenerator("if(not(${val1}), 'this', 'that')");
+    void testNotIf() {
+        createGenerator("if(not(${val1}), 'this', 'that')", gen -> {
+            gen.set(getVal("false"));
 
-        gen.set(getVal("false"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testIf_nullHandling() throws ParseException {
-        final Generator gen = createGenerator("if(${val1}=null(), true(), false())");
+    void testIf_nullHandling() {
+        createGenerator("if(${val1}=null(), true(), false())", gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testReplace1() throws ParseException {
-        final Generator gen = createGenerator("replace('this', 'is', 'at')");
-
-        gen.set(getVal(3D));
+    void testReplace1() {
+        createGenerator("replace('this', 'is', 'at')", gen -> {
+            gen.set(getVal(3D));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testReplace2() throws ParseException {
-        final Generator gen = createGenerator("replace(${val1}, 'is', 'at')");
+    void testReplace2() {
+        createGenerator("replace(${val1}, 'is', 'at')", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testConcat1() throws ParseException {
-        final Generator gen = createGenerator("concat('this', ' is ', 'it')");
+    void testConcat1() {
+        createGenerator("concat('this', ' is ', 'it')", gen -> {
+            gen.set(getVal(3D));
 
-        gen.set(getVal(3D));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this is it");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this is it");
+        });
     }
 
 
     @Test
-    void testConcat1Plus() throws ParseException {
-        final Generator gen = createGenerator("'this'+' is '+'it'");
-
-        gen.set(getVal(3D));
+    void testConcat1Plus() {
+        createGenerator("'this'+' is '+'it'", gen -> {
+            gen.set(getVal(3D));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this is it");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this is it");
+        });
     }
 
     @Test
-    void testConcat2() throws ParseException {
-        final Generator gen = createGenerator("concat(${val1}, ' is ', 'it')");
+    void testConcat2() {
+        createGenerator("concat(${val1}, ' is ', 'it')", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this is it");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this is it");
+        });
     }
 
     @Test
-    void testConcatSingle1() throws ParseException {
-        final Generator gen = createGenerator("concat(${val1})");
+    void testConcatSingle1() {
+        createGenerator("concat(${val1})", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testConcatSingle2() throws ParseException {
-        final Generator gen = createGenerator("concat('hello')");
-
-        gen.set(getVal("this"));
+    void testConcatSingle2() {
+        createGenerator("concat('hello')", gen -> {
+            gen.set(getVal("this"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("hello");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("hello");
+        });
     }
 
     @Test
-    void testConcatNUll() throws ParseException {
-        final Generator gen = createGenerator("concat(${val1}, ${val2})", 2);
+    void testConcatNUll() {
+        createGenerator("concat(${val1}, ${val2})", 2, gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("");
+        });
     }
 
     @Test
-    void testConcatNullPlus1() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}", 2);
+    void testConcatNullPlus1() {
+        createGenerator("${val1}+${val2}", 2, gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out).isEqualTo(ValNull.INSTANCE);
+            final Val out = gen.eval();
+            assertThat(out).isEqualTo(ValNull.INSTANCE);
+        });
     }
 
     @Test
-    void testConcatNullPlus2() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}+'test'", 2);
-
-        gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
+    void testConcatNullPlus2() {
+        createGenerator("${val1}+${val2}+'test'", 2, gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("test");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("test");
+        });
     }
 
     @Test
-    void testConcatNullPlus3() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}+''", 2);
+    void testConcatNullPlus3() {
+        createGenerator("${val1}+${val2}+''", 2, gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("");
+        });
     }
 
     @Test
-    void testConcatBooleanPlus1() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}", 2);
+    void testConcatBooleanPlus1() {
+        createGenerator("${val1}+${val2}", 2, gen -> {
+            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-        gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2");
+        });
     }
 
     @Test
-    void testConcatBooleanPlus2() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}+''", 2);
-
-        gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
+    void testConcatBooleanPlus2() {
+        createGenerator("${val1}+${val2}+''", 2, gen -> {
+            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2");
+        });
     }
 
 
     @Test
-    void testConcatBooleanPlus3() throws ParseException {
-        final Generator gen = createGenerator("${val1}+${val2}+'test'", 2);
+    void testConcatBooleanPlus3() {
+        createGenerator("${val1}+${val2}+'test'", 2, gen -> {
+            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-        gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2test");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2test");
+        });
     }
 
     @Test
-    void testConcatBooleanPlus4() throws ParseException {
-        final Generator gen = createGenerator("${val1}+'test'+${val2}", 2);
+    void testConcatBooleanPlus4() {
+        createGenerator("${val1}+'test'+${val2}", 2, gen -> {
+            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
 
-        gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("truetesttrue");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("truetesttrue");
+        });
     }
 
     @Test
-    void testLink1() throws ParseException {
-        final Generator gen = createGenerator("link('Title', 'http://www.somehost.com/somepath')");
-
-        final String expectedText = "Title";
-        final String expectedUrl = "http://www.somehost.com/somepath";
+    void testLink1() {
+        createGenerator("link('Title', 'http://www.somehost.com/somepath')", gen -> {
+            final String expectedText = "Title";
+            final String expectedUrl = "http://www.somehost.com/somepath";
 
-        gen.set(getVal("this"));
+            gen.set(getVal("this"));
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath)");
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath)");
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
 
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+        });
     }
 
     @Test
-    void testLink2() throws ParseException {
-        final Generator gen = createGenerator("link('Title', 'http://www.somehost.com/somepath', 'browser')");
+    void testLink2() {
+        createGenerator("link('Title', 'http://www.somehost.com/somepath', 'browser')", gen -> {
+            final String expectedText = "Title";
+            final String expectedUrl = "http://www.somehost.com/somepath";
+            final String expectedType = "browser";
 
-        final String expectedText = "Title";
-        final String expectedUrl = "http://www.somehost.com/somepath";
-        final String expectedType = "browser";
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath){browser}");
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[Title](http%3A%2F%2Fwww.somehost.com%2Fsomepath){browser}");
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-        final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+        });
     }
 
     @Test
-    void testLink3() throws ParseException {
-        final Generator gen = createGenerator("link(${val1}, ${val2}, 'browser')", 2);
+    void testLink3() {
+        createGenerator("link(${val1}, ${val2}, 'browser')", 2, gen -> {
+            final String expectedText = "t}his [is] a tit(le w{it}h (brack[ets)";
+            final String expectedUrl = "http://www.somehost.com/somepath?k1=v1&k[2]={v2}";
+            final String expectedType = "browser";
 
-        final String expectedText = "t}his [is] a tit(le w{it}h (brack[ets)";
-        final String expectedUrl = "http://www.somehost.com/somepath?k1=v1&k[2]={v2}";
-        final String expectedType = "browser";
+            gen.set(getVal(expectedText, expectedUrl));
 
-        gen.set(getVal(expectedText, expectedUrl));
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[t%7Dhis+%5Bis%5D+a+tit%28le+w%7Bit%7Dh+%28brack%5Bets%29](http%3A%2F%2Fwww.somehost.com%2Fsomepath%3Fk1%3Dv1%26k%5B2%5D%3D%7Bv2%7D){browser}");
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-        final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+        });
     }
 
     @Test
-    void testDashboard() throws ParseException {
-        final Generator gen = createGenerator("dashboard('blah', 'abcdefg', 'dt='+formatDate(roundDay(${val1}))+'+1h')");
-
-        final String expectedText = "blah";
-        final String expectedUrl = "?uuid=abcdefg&params=dt%3D2014-02-23T00%3A00%3A00.000Z%2B1h";
+    void testDashboard() {
+        createGenerator("dashboard('blah', 'abcdefg', 'dt='+formatDate(roundDay(${val1}))+'+1h')", gen -> {
+            final String expectedText = "blah";
+            final String expectedUrl = "?uuid=abcdefg&params=dt%3D2014-02-23T00%3A00%3A00.000Z%2B1h";
 
-        gen.set(getVal("2014-02-22T12:12:12.000Z"));
+            gen.set(getVal("2014-02-22T12:12:12.000Z"));
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[blah](%3Fuuid%3Dabcdefg%26params%3Ddt%253D2014-02-23T00%253A00%253A00.000Z%252B1h){dashboard}");
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
 
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+        });
     }
 
     @Test
-    void testLink4() throws ParseException {
-        final Generator gen = createGenerator("link('blah', '?annotationId=1&streamId=2&eventId=3&title='+encodeUrl('this is a title')+'&subject='+encodeUrl('this is a subject')+'&status=New&assignedTo='+encodeUrl('test user')+'&comment='+encodeUrl('new comment'), 'annotation')", 2);
+    void testLink4() {
+        createGenerator("link('blah', '?annotationId=1&streamId=2&eventId=3&title='+encodeUrl('this is a title')+'&subject='+encodeUrl('this is a subject')+'&status=New&assignedTo='+encodeUrl('test user')+'&comment='+encodeUrl('new comment'), 'annotation')", 2, gen -> {
+            final String expectedText = "blah";
+            final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
+            final String expectedType = "annotation";
 
-        final String expectedText = "blah";
-        final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-        final String expectedType = "annotation";
+            gen.set(getVal(expectedText, expectedUrl));
 
-        gen.set(getVal(expectedText, expectedUrl));
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-        final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+        });
     }
 
     @Test
-    void testAnnotation() throws ParseException {
-        final Generator gen = createGenerator("annotation('blah', '1', '2', '3', 'this is a title', 'this is a subject', 'New', 'test user', 'new comment')");
+    void testAnnotation() {
+        createGenerator("annotation('blah', '1', '2', '3', 'this is a title', 'this is a subject', 'New', 'test user', 'new comment')", gen -> {
+            final String expectedText = "blah";
+            final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
+            final String expectedType = "annotation";
 
-        final String expectedText = "blah";
-        final String expectedUrl = "?annotationId=1&streamId=2&eventId=3&title=this+is+a+title&subject=this+is+a+subject&status=New&assignedTo=test+user&comment=new+comment";
-        final String expectedType = "annotation";
+            gen.set(getVal(expectedText, expectedUrl));
 
-        gen.set(getVal(expectedText, expectedUrl));
+            final Val out = gen.eval();
+            final String str = out.toString();
+            assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
 
-        final Val out = gen.eval();
-        final String str = out.toString();
-        assertThat(str).isEqualTo("[blah](%3FannotationId%3D1%26streamId%3D2%26eventId%3D3%26title%3Dthis%2Bis%2Ba%2Btitle%26subject%3Dthis%2Bis%2Ba%2Bsubject%26status%3DNew%26assignedTo%3Dtest%2Buser%26comment%3Dnew%2Bcomment){annotation}");
+            final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
+            final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
+            final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
 
-        final String text = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
-        final String url = str.substring(str.indexOf("(") + 1, str.indexOf(")"));
-        final String type = str.substring(str.indexOf("{") + 1, str.indexOf("}"));
-
-        assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
-        assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
-        assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+            assertThat(EncodingUtil.decodeUrl(text)).isEqualTo(expectedText);
+            assertThat(EncodingUtil.decodeUrl(url)).isEqualTo(expectedUrl);
+            assertThat(EncodingUtil.decodeUrl(type)).isEqualTo(expectedType);
+        });
     }
 
     @Test
-    void testStaticString1() throws ParseException {
-        final Generator gen = createGenerator("'hello'");
-
-        gen.set(getVal("this"));
+    void testStaticString1() {
+        createGenerator("'hello'", gen -> {
+            gen.set(getVal("this"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("hello");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("hello");
+        });
     }
 
     @Test
-    void testStaticString2() throws ParseException {
-        final Generator gen = createGenerator("'[Click Here](http://www.somehost.com/somepath){DIALOG}'");
+    void testStaticString2() {
+        createGenerator("'[Click Here](http://www.somehost.com/somepath){DIALOG}'", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("[Click Here](http://www.somehost.com/somepath){DIALOG}");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("[Click Here](http://www.somehost.com/somepath){DIALOG}");
+        });
     }
 
     @Test
-    void testStaticNumber() throws ParseException {
-        final Generator gen = createGenerator("50");
+    void testStaticNumber() {
+        createGenerator("50", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("50");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("50");
+        });
     }
 
     @Test
-    void testStringLength1() throws ParseException {
-        final Generator gen = createGenerator("stringLength(${val1})");
-
-        gen.set(getVal("this"));
+    void testStringLength1() {
+        createGenerator("stringLength(${val1})", gen -> {
+            gen.set(getVal("this"));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testSubstring1() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, 1, 2)");
+    void testSubstring1() {
+        createGenerator("substring(${val1}, 1, 2)", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("h");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("h");
+        });
     }
 
     @Test
-    void testSubstring3() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, 2, 99)");
+    void testSubstring3() {
+        createGenerator("substring(${val1}, 2, 99)", gen -> {
+            gen.set(getVal("his"));
 
-        gen.set(getVal("his"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("s");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("s");
+        });
     }
 
     @Test
-    void testSubstring4() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, 1+1, 99-1)");
-
-        gen.set(getVal("his"));
+    void testSubstring4() {
+        createGenerator("substring(${val1}, 1+1, 99-1)", gen -> {
+            gen.set(getVal("his"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("s");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("s");
+        });
     }
 
     @Test
-    void testSubstring5() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, 2+5, 99-1)");
+    void testSubstring5() {
+        createGenerator("substring(${val1}, 2+5, 99-1)", gen -> {
+            gen.set(getVal("his"));
 
-        gen.set(getVal("his"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEmpty();
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEmpty();
+        });
     }
 
     @Test
-    void testSubstringBefore1() throws ParseException {
-        final Generator gen = createGenerator("substringBefore(${val1}, '-')");
+    void testSubstringBefore1() {
+        createGenerator("substringBefore(${val1}, '-')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("aa");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("aa");
+        });
     }
 
     @Test
-    void testSubstringBefore2() throws ParseException {
-        final Generator gen = createGenerator("substringBefore(${val1}, 'a')");
-
-        gen.set(getVal("aa-bb"));
+    void testSubstringBefore2() {
+        createGenerator("substringBefore(${val1}, 'a')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEmpty();
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEmpty();
+        });
     }
 
     @Test
-    void testSubstringBefore3() throws ParseException {
-        final Generator gen = createGenerator("substringBefore(${val1}, 'b')");
+    void testSubstringBefore3() {
+        createGenerator("substringBefore(${val1}, 'b')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("aa-");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("aa-");
+        });
     }
 
     @Test
-    void testSubstringBefore4() throws ParseException {
-        final Generator gen = createGenerator("substringBefore(${val1}, 'q')");
+    void testSubstringBefore4() {
+        createGenerator("substringBefore(${val1}, 'q')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEmpty();
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEmpty();
+        });
     }
 
     @Test
-    void testSubstringAfter1() throws ParseException {
-        final Generator gen = createGenerator("substringAfter(${val1}, '-')");
-
-        gen.set(getVal("aa-bb"));
+    void testSubstringAfter1() {
+        createGenerator("substringAfter(${val1}, '-')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("bb");
+        });
     }
 
     @Test
-    void testSubstringAfter2() throws ParseException {
-        final Generator gen = createGenerator("substringAfter(${val1}, 'a')");
+    void testSubstringAfter2() {
+        createGenerator("substringAfter(${val1}, 'a')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("a-bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("a-bb");
+        });
     }
 
     @Test
-    void testSubstringAfter3() throws ParseException {
-        final Generator gen = createGenerator("substringAfter(${val1}, 'b')");
+    void testSubstringAfter3() {
+        createGenerator("substringAfter(${val1}, 'b')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("b");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("b");
+        });
     }
 
     @Test
-    void testSubstringAfter4() throws ParseException {
-        final Generator gen = createGenerator("substringAfter(${val1}, 'q')");
-
-        gen.set(getVal("aa-bb"));
+    void testSubstringAfter4() {
+        createGenerator("substringAfter(${val1}, 'q')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEmpty();
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEmpty();
+        });
     }
 
     @Test
-    void testIndexOf() throws ParseException {
-        final Generator gen = createGenerator("indexOf(${val1}, '-')");
+    void testIndexOf() {
+        createGenerator("indexOf(${val1}, '-')", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toInteger().intValue()).isEqualTo(2);
+            final Val out = gen.eval();
+            assertThat(out.toInteger().intValue()).isEqualTo(2);
+        });
     }
 
     @Test
-    void testIndexOf1() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, indexOf(${val1}, '-'), stringLength(${val1}))");
+    void testIndexOf1() {
+        createGenerator("substring(${val1}, indexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("-bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("-bb");
+        });
     }
 
     @Test
-    void testIndexOf2() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, indexOf(${val1}, 'a'), stringLength(${val1}))");
-
-        gen.set(getVal("aa-bb"));
+    void testIndexOf2() {
+        createGenerator("substring(${val1}, indexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("aa-bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("aa-bb");
+        });
     }
 
     @Test
-    void testIndexOf3() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, indexOf(${val1}, 'b'), stringLength(${val1}))");
+    void testIndexOf3() {
+        createGenerator("substring(${val1}, indexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("bb");
+        });
     }
 
     @Test
-    void testIndexOf4() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))");
+    void testIndexOf4() {
+        createGenerator("substring(${val1}, indexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testLastIndexOf1() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, lastIndexOf(${val1}, '-'), stringLength(${val1}))");
-
-        gen.set(getVal("aa-bb"));
+    void testLastIndexOf1() {
+        createGenerator("substring(${val1}, lastIndexOf(${val1}, '-'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("-bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("-bb");
+        });
     }
 
     @Test
-    void testLastIndexOf2() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, lastIndexOf(${val1}, 'a'), stringLength(${val1}))");
+    void testLastIndexOf2() {
+        createGenerator("substring(${val1}, lastIndexOf(${val1}, 'a'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("a-bb");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("a-bb");
+        });
     }
 
     @Test
-    void testLastIndexOf3() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, lastIndexOf(${val1}, 'b'), stringLength(${val1}))");
+    void testLastIndexOf3() {
+        createGenerator("substring(${val1}, lastIndexOf(${val1}, 'b'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        gen.set(getVal("aa-bb"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("b");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("b");
+        });
     }
 
     @Test
-    void testLastIndexOf4() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))");
-
-        gen.set(getVal("aa-bb"));
+    void testLastIndexOf4() {
+        createGenerator("substring(${val1}, lastIndexOf(${val1}, 'q'), stringLength(${val1}))", gen -> {
+            gen.set(getVal("aa-bb"));
 
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testDecode1() throws ParseException {
-        final Generator gen = createGenerator("decode(${val1}, 'hullo', 'hello', 'goodbye')");
+    void testDecode1() {
+        createGenerator("decode(${val1}, 'hullo', 'hello', 'goodbye')", gen -> {
+            gen.set(getVal("hullo"));
 
-        gen.set(getVal("hullo"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("hello");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("hello");
+        });
     }
 
     @Test
-    void testDecode2() throws ParseException {
-        final Generator gen = createGenerator("decode(${val1}, 'h.+o', 'hello', 'goodbye')");
+    void testDecode2() {
+        createGenerator("decode(${val1}, 'h.+o', 'hello', 'goodbye')", gen -> {
+            gen.set(getVal("hullo"));
 
-        gen.set(getVal("hullo"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("hello");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("hello");
+        });
     }
 
     @Test
-    void testInclude1() throws ParseException {
-        final Generator gen = createGenerator("include(${val1}, 'this', 'that')");
-        gen.set(getVal("this"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+    void testInclude1() {
+        createGenerator("include(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("this"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testInclude2() throws ParseException {
-        final Generator gen = createGenerator("include(${val1}, 'this', 'that')");
-        gen.set(getVal("that"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("that");
+    void testInclude2() {
+        createGenerator("include(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("that"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("that");
+        });
     }
 
     @Test
-    void testInclude3() throws ParseException {
-        final Generator gen = createGenerator("include(${val1}, 'this', 'that')");
-        gen.set(getVal("other"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isNull();
+    void testInclude3() {
+        createGenerator("include(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("other"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isNull();
+        });
     }
 
     @Test
-    void testExclude1() throws ParseException {
-        final Generator gen = createGenerator("exclude(${val1}, 'this', 'that')");
-        gen.set(getVal("this"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isNull();
+    void testExclude1() {
+        createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("this"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isNull();
+        });
     }
 
     @Test
-    void testExclude2() throws ParseException {
-        final Generator gen = createGenerator("exclude(${val1}, 'this', 'that')");
-        gen.set(getVal("that"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isNull();
+    void testExclude2() {
+        createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("that"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isNull();
+        });
     }
 
     @Test
-    void testExclude3() throws ParseException {
-        final Generator gen = createGenerator("exclude(${val1}, 'this', 'that')");
-        gen.set(getVal("other"));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("other");
+    void testExclude3() {
+        createGenerator("exclude(${val1}, 'this', 'that')", gen -> {
+            gen.set(getVal("other"));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("other");
+        });
     }
 
     @Test
-    void testEncodeUrl() throws ParseException {
-        final Generator gen = createGenerator("encodeUrl('https://www.somesite.com:8080/this/path?query=string')");
-        gen.set(getVal(""));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring");
+    void testEncodeUrl() {
+        createGenerator("encodeUrl('https://www.somesite.com:8080/this/path?query=string')", gen -> {
+            gen.set(getVal(""));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring");
+        });
     }
 
     @Test
-    void testDecodeUrl() throws ParseException {
-        final Generator gen = createGenerator("decodeUrl('https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring')");
-        gen.set(getVal(""));
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("https://www.somesite.com:8080/this/path?query=string");
+    void testDecodeUrl() {
+        createGenerator("decodeUrl('https%3A%2F%2Fwww.somesite.com%3A8080%2Fthis%2Fpath%3Fquery%3Dstring')", gen -> {
+            gen.set(getVal(""));
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("https://www.somesite.com:8080/this/path?query=string");
+        });
     }
 
     @Test
-    void testEquals1() throws ParseException {
-        final Generator gen = createGenerator("equals(${val1}, 'plop')");
-
-        gen.set(getVal("plop"));
+    void testEquals1() {
+        createGenerator("equals(${val1}, 'plop')", gen -> {
+            gen.set(getVal("plop"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testEquals2() throws ParseException {
-        final Generator gen = createGenerator("equals(${val1}, ${val1})");
+    void testEquals2() {
+        createGenerator("equals(${val1}, ${val1})", gen -> {
+            gen.set(getVal("plop"));
 
-        gen.set(getVal("plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testEquals3() throws ParseException {
-        final Generator gen = createGenerator("equals(${val1}, 'plip')");
+    void testEquals3() {
+        createGenerator("equals(${val1}, 'plip')", gen -> {
+            gen.set(getVal("plop"));
 
-        gen.set(getVal("plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testEquals4() throws ParseException {
-        final Generator gen = createGenerator("equals(${val1}, ${val2})", 2);
-
-        gen.set(getVal("plop", "plip"));
+    void testEquals4() {
+        createGenerator("equals(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("plop", "plip"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testEquals5() throws ParseException {
-        final Generator gen = createGenerator("equals(${val1}, ${val2})", 2);
+    void testEquals5() {
+        createGenerator("equals(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("plop", "plop"));
 
-        gen.set(getVal("plop", "plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testEquals6() throws ParseException {
-        final Generator gen = createGenerator("${val1}=${val2}", 2);
+    void testEquals6() {
+        createGenerator("${val1}=${val2}", 2, gen -> {
+            gen.set(getVal("plop", "plop"));
 
-        gen.set(getVal("plop", "plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testEqualsNull1() throws ParseException {
-        final Generator gen = createGenerator("${val1}=null()");
-
-        gen.set(new Val[]{ValNull.INSTANCE});
+    void testEqualsNull1() {
+        createGenerator("${val1}=null()", gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE});
 
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testEqualsNull2() throws ParseException {
-        final Generator gen = createGenerator("${val1}=null()");
+    void testEqualsNull2() {
+        createGenerator("${val1}=null()", gen -> {
+            gen.set(getVal("plop"));
 
-        gen.set(getVal("plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testEqualsNull3() throws ParseException {
-        final Generator gen = createGenerator("null()=null()");
+    void testEqualsNull3() {
+        createGenerator("null()=null()", gen -> {
+            gen.set(getVal("plop"));
 
-        gen.set(getVal("plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testEqualsNull4() throws ParseException {
-        final Generator gen = createGenerator("if(${val1}=null(), true(), false())");
-
-        gen.set(new Val[]{ValNull.INSTANCE});
+    void testEqualsNull4() {
+        createGenerator("if(${val1}=null(), true(), false())", gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE});
 
-        final Val out = gen.eval();
-        assertThat(out.type().isError()).isTrue();
+            final Val out = gen.eval();
+            assertThat(out.type().isError()).isTrue();
+        });
     }
 
     @Test
-    void testIsNull1() throws ParseException {
-        final Generator gen = createGenerator("isNull(${val1})");
+    void testIsNull1() {
+        createGenerator("isNull(${val1})", gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testIsNull2() throws ParseException {
-        final Generator gen = createGenerator("isNull(${val1})");
+    void testIsNull2() {
+        createGenerator("isNull(${val1})", gen -> {
+            gen.set(getVal("plop"));
 
-        gen.set(getVal("plop"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testIsNull3() throws ParseException {
-        final Generator gen = createGenerator("isNull(null())");
-
-        gen.set(getVal("plop"));
+    void testIsNull3() {
+        createGenerator("isNull(null())", gen -> {
+            gen.set(getVal("plop"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testIsNull4() throws ParseException {
-        final Generator gen = createGenerator("if(isNull(${val1}), true(), false())");
+    void testIsNull4() {
+        createGenerator("if(isNull(${val1}), true(), false())", gen -> {
+            gen.set(new Val[]{ValNull.INSTANCE});
 
-        gen.set(new Val[]{ValNull.INSTANCE});
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThan1() throws ParseException {
-        final Generator gen = createGenerator("lessThan(1, 0)", 2);
+    void testLessThan1() {
+        createGenerator("lessThan(1, 0)", 2, gen -> {
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testLessThan2() throws ParseException {
-        final Generator gen = createGenerator("lessThan(1, 1)", 2);
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+    void testLessThan2() {
+        createGenerator("lessThan(1, 1)", 2, gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testLessThan3() throws ParseException {
-        final Generator gen = createGenerator("lessThan(${val1}, ${val2})", 2);
-
-        gen.set(getVal(1D, 2D));
+    void testLessThan3() {
+        createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal(1D, 2D));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThan4() throws ParseException {
-        final Generator gen = createGenerator("lessThan(${val1}, ${val2})", 2);
+    void testLessThan4() {
+        createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred", "fred"));
 
-        gen.set(getVal("fred", "fred"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testLessThan5() throws ParseException {
-        final Generator gen = createGenerator("lessThan(${val1}, ${val2})", 2);
+    void testLessThan5() {
+        createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred", "fred1"));
 
-        gen.set(getVal("fred", "fred1"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThan6() throws ParseException {
-        final Generator gen = createGenerator("lessThan(${val1}, ${val2})", 2);
-
-        gen.set(getVal("fred1", "fred"));
+    void testLessThan6() {
+        createGenerator("lessThan(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred1", "fred"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo1() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(1, 0)", 2);
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+    void testLessThanOrEqualTo1() {
+        createGenerator("lessThanOrEqualTo(1, 0)", 2, gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo2() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(1, 1)", 2);
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+    void testLessThanOrEqualTo2() {
+        createGenerator("lessThanOrEqualTo(1, 1)", 2, gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo3() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2);
-
-        gen.set(getVal(1D, 2D));
+    void testLessThanOrEqualTo3() {
+        createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal(1D, 2D));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo3_mk2() throws ParseException {
-        final Generator gen = createGenerator("(${val1}<=${val2})", 2);
+    void testLessThanOrEqualTo3_mk2() {
+        createGenerator("(${val1}<=${val2})", 2, gen -> {
+            gen.set(getVal(1D, 2D));
 
-        gen.set(getVal(1D, 2D));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo4() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2);
+    void testLessThanOrEqualTo4() {
+        createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred", "fred"));
 
-        gen.set(getVal("fred", "fred"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo5() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2);
-
-        gen.set(getVal("fred", "fred1"));
+    void testLessThanOrEqualTo5() {
+        createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred", "fred1"));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testLessThanOrEqualTo6() throws ParseException {
-        final Generator gen = createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2);
+    void testLessThanOrEqualTo6() {
+        createGenerator("lessThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal("fred1", "fred"));
 
-        gen.set(getVal("fred1", "fred"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("false");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("false");
+        });
     }
 
     @Test
-    void testGreaterThanOrEqualTo1() throws ParseException {
-        final Generator gen = createGenerator("greaterThanOrEqualTo(${val1}, ${val2})", 2);
+    void testGreaterThanOrEqualTo1() {
+        createGenerator("greaterThanOrEqualTo(${val1}, ${val2})", 2, gen -> {
+            gen.set(getVal(2D, 1D));
 
-        gen.set(getVal(2D, 1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testGreaterThanOrEqualTo1_mk2() throws ParseException {
-        final Generator gen = createGenerator("(${val1}>=${val2})", 2);
-
-        gen.set(getVal(2D, 1D));
+    void testGreaterThanOrEqualTo1_mk2() {
+        createGenerator("(${val1}>=${val2})", 2, gen -> {
+            gen.set(getVal(2D, 1D));
 
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("true");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("true");
+        });
     }
 
     @Test
-    void testBooleanExpressions() throws ParseException {
+    void testBooleanExpressions() {
         ValBoolean vTrue = ValBoolean.TRUE;
         ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
         ValNull vNull = ValNull.INSTANCE;
@@ -1625,438 +1638,457 @@ class TestExpressionParser {
     }
 
     @Test
-    void testSubstring2() throws ParseException {
-        final Generator gen = createGenerator("substring(${val1}, 0, 99)");
+    void testSubstring2() {
+        createGenerator("substring(${val1}, 0, 99)", gen -> {
+            gen.set(getVal("this"));
 
-        gen.set(getVal("this"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this");
+        });
     }
 
     @Test
-    void testHash1() throws ParseException {
-        final Generator gen = createGenerator("hash(${val1})");
+    void testHash1() {
+        createGenerator("hash(${val1})", gen -> {
+            gen.set(getVal("test"));
 
-        gen.set(getVal("test"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+        });
     }
 
     @Test
-    void testHash2() throws ParseException {
-        final Generator gen = createGenerator("hash(${val1}, 'SHA-512')");
+    void testHash2() {
+        createGenerator("hash(${val1}, 'SHA-512')", gen -> {
+            gen.set(getVal("test"));
 
-        gen.set(getVal("test"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
+        });
     }
 
     @Test
-    void testHash3() throws ParseException {
-        final Generator gen = createGenerator("hash(${val1}, 'SHA-512', 'mysalt')");
+    void testHash3() {
+        createGenerator("hash(${val1}, 'SHA-512', 'mysalt')", gen -> {
+            gen.set(getVal("test"));
 
-        gen.set(getVal("test"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("af2910d4d8acf3fcf9683d3ca4425327cb1b4b48bc690f566e27b0e0144c17af82066cf6af14d3a30312ed9df671e0e24b1c66ed3973d1a7836899d75c4d6bb8");
+        });
     }
 
     @Test
-    void testJoining1() throws ParseException {
-        final Generator gen = createGenerator("joining(${val1}, ',')");
+    void testJoining1() {
+        createGenerator("joining(${val1}, ',')", gen -> {
+            gen.set(getVal("one"));
+            gen.set(getVal("two"));
+            gen.set(getVal("three"));
 
-        gen.set(getVal("one"));
-        gen.set(getVal("two"));
-        gen.set(getVal("three"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("one,two,three");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("one,two,three");
+        });
     }
 
     @Test
-    void testJoining2() throws ParseException {
-        final Generator gen = createGenerator("joining(${val1})");
+    void testJoining2() {
+        createGenerator("joining(${val1})", gen -> {
+            gen.set(getVal("one"));
+            gen.set(getVal("two"));
+            gen.set(getVal("three"));
 
-        gen.set(getVal("one"));
-        gen.set(getVal("two"));
-        gen.set(getVal("three"));
-
-        final Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("onetwothree");
+            final Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("onetwothree");
+        });
     }
 
     @Test
-    void testCount() throws ParseException {
-        final Generator gen = createGenerator("count()");
+    void testCount() {
+        createGenerator("count()", gen -> {
+            gen.set(getVal(122D));
+            gen.set(getVal(133D));
 
-        gen.set(getVal(122D));
-        gen.set(getVal(133D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            gen.set(getVal(11D));
+            gen.set(getVal(122D));
 
-        gen.set(getVal(11D));
-        gen.set(getVal(122D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCountUnique() throws ParseException {
-        final Generator gen = createGenerator("countUnique(${val1})");
+    void testCountGroups() {
+        createGenerator("countGroups()", gen -> {
+            gen.set(getVal(122D));
+            gen.set(getVal(133D));
 
-        gen.set(getVal(122D));
-        gen.set(getVal(133D));
+            final GroupKey parent = new GroupKey(ValString.create("parent"));
+            gen.addChildKey(new GroupKey(parent, ValString.create("val1")));
+            gen.addChildKey(new GroupKey(parent, ValString.create("val1")));
+            gen.addChildKey(new GroupKey(parent, ValString.create("val2")));
+            gen.addChildKey(new GroupKey(parent, ValString.create("val2")));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
-
-        gen.set(getVal(11D));
-        gen.set(getVal(122D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            Val out = gen.eval();
+            assertThat(out.toInteger()).isEqualTo(2);
+        });
     }
 
     @Test
-    void testCountUniqueStaticValue() throws ParseException {
-        final Generator gen = createGenerator("countUnique('test')");
+    void testCountUnique() {
+        createGenerator("countUnique(${val1})", gen -> {
+            gen.set(getVal(122D));
+            gen.set(getVal(133D));
 
-        gen.set(getVal(122D));
-        gen.set(getVal(133D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            gen.set(getVal(11D));
+            gen.set(getVal(122D));
 
-        gen.set(getVal(11D));
-        gen.set(getVal(122D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAdd1() throws ParseException {
-        final Generator gen = createGenerator("3+4");
+    void testCountUniqueStaticValue() {
+        createGenerator("countUnique('test')", gen -> {
+            gen.set(getVal(122D));
+            gen.set(getVal(133D));
 
-        gen.set(getVal(1D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
+            gen.set(getVal(11D));
+            gen.set(getVal(122D));
+
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAdd2() throws ParseException {
-        final Generator gen = createGenerator("3+4+5");
+    void testAdd1() {
+        createGenerator("3+4", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(7D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAdd3() throws ParseException {
-        final Generator gen = createGenerator("2+count()");
+    void testAdd2() {
+        createGenerator("3+4+5", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testSubtract1() throws ParseException {
-        final Generator gen = createGenerator("3-4");
+    void testAdd3() {
+        createGenerator("2+count()", gen -> {
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(-1D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
+
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testSubtract2() throws ParseException {
-        final Generator gen = createGenerator("2-count()");
+    void testSubtract1() {
+        createGenerator("3-4", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(0D, Offset.offset(0D));
-
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(-2D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(-1D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMultiply1() throws ParseException {
-        final Generator gen = createGenerator("3*4");
+    void testSubtract2() {
+        createGenerator("2-count()", gen -> {
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(0D, Offset.offset(0D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
+
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(-2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testMultiply2() throws ParseException {
-        final Generator gen = createGenerator("2*count()");
+    void testMultiply1() {
+        createGenerator("3*4", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
-
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testDivide1() throws ParseException {
-        final Generator gen = createGenerator("8/4");
+    void testMultiply2() {
+        createGenerator("2*count()", gen -> {
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
+
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
+    }
+
+    @Test
+    void testDivide1() {
+        createGenerator("8/4", gen -> {
 //        gen.set(getVal(1D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testDivide2() throws ParseException {
-        final Generator gen = createGenerator("8/count()");
+    void testDivide2() {
+        createGenerator("8/count()", gen -> {
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
 
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            gen.set(getVal(1D));
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-        gen.set(getVal(1D));
-
-        out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testDivide_byZero() throws ParseException {
-        final Generator gen = createGenerator("8/0");
-
-        final Val out = gen.eval();
-        assertThat(out instanceof ValErr).isTrue();
-        System.out.println("Error message: " + ((ValErr) out).getMessage());
+    void testDivide_byZero() {
+        createGenerator("8/0", gen -> {
+            final Val out = gen.eval();
+            assertThat(out instanceof ValErr).isTrue();
+            System.out.println("Error message: " + ((ValErr) out).getMessage());
+        });
     }
 
     @Test
-    void testFloorNum1() throws ParseException {
-        final Generator gen = createGenerator("floor(8.4234)");
+    void testFloorNum1() {
+        createGenerator("floor(8.4234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFloorNum2() throws ParseException {
-        final Generator gen = createGenerator("floor(8.5234)");
+    void testFloorNum2() {
+        createGenerator("floor(8.5234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFloorNum3() throws ParseException {
-        final Generator gen = createGenerator("floor(${val1})");
+    void testFloorNum3() {
+        createGenerator("floor(${val1})", gen -> {
+            gen.set(getVal(1.34D));
 
-        gen.set(getVal(1.34D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFloorNum4() throws ParseException {
-        final Generator gen = createGenerator("floor(${val1}+count())");
+    void testFloorNum4() {
+        createGenerator("floor(${val1}+count())", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFloorNum5() throws ParseException {
-        final Generator gen = createGenerator("floor(${val1}+count(), 1)");
+    void testFloorNum5() {
+        createGenerator("floor(${val1}+count(), 1)", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFloorNum6() throws ParseException {
-        final Generator gen = createGenerator("floor(${val1}+count(), 2)");
+    void testFloorNum6() {
+        createGenerator("floor(${val1}+count(), 2)", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.86D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.86D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum1() throws ParseException {
-        final Generator gen = createGenerator("ceiling(8.4234)");
+    void testCeilNum1() {
+        createGenerator("ceiling(8.4234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum2() throws ParseException {
-        final Generator gen = createGenerator("ceiling(8.5234)");
+    void testCeilNum2() {
+        createGenerator("ceiling(8.5234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum3() throws ParseException {
-        final Generator gen = createGenerator("ceiling(${val1})");
+    void testCeilNum3() {
+        createGenerator("ceiling(${val1})", gen -> {
+            gen.set(getVal(1.34D));
 
-        gen.set(getVal(1.34D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum4() throws ParseException {
-        final Generator gen = createGenerator("ceiling(${val1}+count())");
+    void testCeilNum4() {
+        createGenerator("ceiling(${val1}+count())", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum5() throws ParseException {
-        final Generator gen = createGenerator("ceiling(${val1}+count(), 1)");
+    void testCeilNum5() {
+        createGenerator("ceiling(${val1}+count(), 1)", gen -> {
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testCeilNum6() throws ParseException {
-        final Generator gen = createGenerator("ceiling(${val1}+count(), 2)");
+    void testCeilNum6() {
+        createGenerator("ceiling(${val1}+count(), 2)", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum1() throws ParseException {
-        final Generator gen = createGenerator("round(8.4234)");
+    void testRoundNum1() {
+        createGenerator("round(8.4234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum2() throws ParseException {
-        final Generator gen = createGenerator("round(8.5234)");
+    void testRoundNum2() {
+        createGenerator("round(8.5234)", gen -> {
+            gen.set(getVal(1D));
 
-        gen.set(getVal(1D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(9D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum3() throws ParseException {
-        final Generator gen = createGenerator("round(${val1})");
+    void testRoundNum3() {
+        createGenerator("round(${val1})", gen -> {
 
-        gen.set(getVal(1.34D));
+            gen.set(getVal(1.34D));
 
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(1D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum4() throws ParseException {
-        final Generator gen = createGenerator("round(${val1}+count())");
+    void testRoundNum4() {
+        createGenerator("round(${val1}+count())", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(4D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum5() throws ParseException {
-        final Generator gen = createGenerator("round(${val1}+count(), 1)");
+    void testRoundNum5() {
+        createGenerator("round(${val1}+count(), 1)", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.9D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testRoundNum6() throws ParseException {
-        final Generator gen = createGenerator("round(${val1}+count(), 2)");
+    void testRoundNum6() {
+        createGenerator("round(${val1}+count(), 2)", gen -> {
+            gen.set(getVal(1.34D));
+            gen.set(getVal(1.8655D));
 
-        gen.set(getVal(1.34D));
-        gen.set(getVal(1.8655D));
-
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(3.87D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testTime() throws ParseException {
+    void testTime() {
         testTime("floorSecond", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:12.000Z");
         testTime("floorMinute", "2014-02-22T12:12:12.888Z", "2014-02-22T12:12:00.000Z");
         testTime("floorHour", "2014-02-22T12:12:12.888Z", "2014-02-22T12:00:00.000Z");
@@ -2079,477 +2111,507 @@ class TestExpressionParser {
         testTime("roundYear", "2014-02-22T12:12:12.888Z", "2014-01-01T00:00:00.000Z");
     }
 
-    private void testTime(final String function, final String in, final String expected) throws ParseException {
+    private void testTime(final String function, final String in, final String expected) {
         final double expectedMs = DateUtil.parseNormalDateTimeString(expected);
         final String expression = function + "(${val1})";
-        final Generator gen = createGenerator(expression);
-
-        gen.set(getVal(in));
-        final Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(expectedMs, Offset.offset(0D));
+        createGenerator(expression, gen -> {
+            gen.set(getVal(in));
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(expectedMs, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testBODMAS1() throws ParseException {
-        final Generator gen = createGenerator("4+4/2+2");
+    void testBODMAS1() {
+        createGenerator("4+4/2+2", gen -> {
+            final Val out = gen.eval();
 
-        final Val out = gen.eval();
-
-        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 8.
-        assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 8.
+            assertThat(out.toDouble()).isEqualTo(8D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testBODMAS2() throws ParseException {
-        final Generator gen = createGenerator("(4+4)/2+2");
+    void testBODMAS2() {
+        createGenerator("(4+4)/2+2", gen -> {
+            final Val out = gen.eval();
 
-        final Val out = gen.eval();
-
-        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 6.
-        assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 6.
+            assertThat(out.toDouble()).isEqualTo(6D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testBODMAS3() throws ParseException {
-        final Generator gen = createGenerator("(4+4)/(2+2)");
+    void testBODMAS3() {
+        createGenerator("(4+4)/(2+2)", gen -> {
+            final Val out = gen.eval();
 
-        final Val out = gen.eval();
-
-        // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 2.
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+            // Non BODMAS would evaluate as 6 or even 4 - BODMAS should be 2.
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testBODMAS4() throws ParseException {
-        final Generator gen = createGenerator("4+4/2+2*3");
+    void testBODMAS4() {
+        createGenerator("4+4/2+2*3", gen -> {
+            final Val out = gen.eval();
 
-        final Val out = gen.eval();
-
-        // Non BODMAS would evaluate as 18 - BODMAS should be 12.
-        assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+            // Non BODMAS would evaluate as 18 - BODMAS should be 12.
+            assertThat(out.toDouble()).isEqualTo(12D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testBODMAS5() throws ParseException {
-        final Generator gen = createGenerator("8%3");
-
-        final Val out = gen.eval();
-
-        assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+    void testBODMAS5() {
+        createGenerator("8%3", gen -> {
+            final Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(2D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testExtractAuthorityFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractAuthorityFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("www.example.com:1234");
+    void testExtractAuthorityFromUri() {
+        createGenerator("extractAuthorityFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("www.example.com:1234");
+        });
     }
 
     @Test
-    void testExtractFragmentFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractFragmentFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path#frag"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("frag");
+    void testExtractFragmentFromUri() {
+        createGenerator("extractFragmentFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path#frag"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("frag");
+        });
     }
 
     @Test
-    void testExtractHostFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractHostFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("www.example.com");
+    void testExtractHostFromUri() {
+        createGenerator("extractHostFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("www.example.com");
+        });
     }
 
     @Test
-    void testExtractPathFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractPathFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("/this/is/a/path");
+    void testExtractPathFromUri() {
+        createGenerator("extractPathFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("/this/is/a/path");
+        });
     }
 
     @Test
-    void testExtractPortFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractPortFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("1234");
+    void testExtractPortFromUri() {
+        createGenerator("extractPortFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("1234");
+        });
     }
 
     @Test
-    void testExtractQueryFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractQueryFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("this=that&foo=bar");
+    void testExtractQueryFromUri() {
+        createGenerator("extractQueryFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path?this=that&foo=bar"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("this=that&foo=bar");
+        });
     }
 
     @Test
-    void testExtractSchemeFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractSchemeFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("http");
+    void testExtractSchemeFromUri() {
+        createGenerator("extractSchemeFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("http");
+        });
     }
 
     @Test
-    void testExtractSchemeSpecificPartFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractSchemeSpecificPartFromUri(${val1})");
-
-        gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
+    void testExtractSchemeSpecificPartFromUri() {
+        createGenerator("extractSchemeSpecificPartFromUri(${val1})", gen -> {
+            gen.set(getVal("http://www.example.com:1234/this/is/a/path"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("//www.example.com:1234/this/is/a/path");
+        });
     }
 
     @Test
-    void testExtractUserInfoFromUri() throws ParseException {
-        final Generator gen = createGenerator("extractUserInfoFromUri(${val1})");
-
-        gen.set(getVal("http://john:doe@example.com:81/"));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("john:doe");
+    void testExtractUserInfoFromUri() {
+        createGenerator("extractUserInfoFromUri(${val1})", gen -> {
+            gen.set(getVal("http://john:doe@example.com:81/"));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("john:doe");
+        });
     }
 
     @Test
-    void testParseDate1() throws ParseException {
-        final Generator gen = createGenerator("parseDate(${val1})");
-
-        gen.set(getVal("2014-02-22T12:12:12.888Z"));
-        Val out = gen.eval();
-        assertThat(out.toLong().longValue()).isEqualTo(1393071132888L);
+    void testParseDate1() {
+        createGenerator("parseDate(${val1})", gen -> {
+            gen.set(getVal("2014-02-22T12:12:12.888Z"));
+            Val out = gen.eval();
+            assertThat(out.toLong().longValue()).isEqualTo(1393071132888L);
+        });
     }
 
     @Test
-    void testParseDate2() throws ParseException {
-        final Generator gen = createGenerator("parseDate(${val1}, 'yyyy MM dd')");
-
-        gen.set(getVal("2014 02 22"));
-        Val out = gen.eval();
-        assertThat(out.toLong().longValue()).isEqualTo(1393027200000L);
+    void testParseDate2() {
+        createGenerator("parseDate(${val1}, 'yyyy MM dd')", gen -> {
+            gen.set(getVal("2014 02 22"));
+            Val out = gen.eval();
+            assertThat(out.toLong().longValue()).isEqualTo(1393027200000L);
+        });
     }
 
     @Test
-    void testParseDate3() throws ParseException {
-        final Generator gen = createGenerator("parseDate(${val1}, 'yyyy MM dd', '+0400')");
-
-        gen.set(getVal("2014 02 22"));
-        Val out = gen.eval();
-        assertThat(out.toLong().longValue()).isEqualTo(1393012800000L);
+    void testParseDate3() {
+        createGenerator("parseDate(${val1}, 'yyyy MM dd', '+0400')", gen -> {
+            gen.set(getVal("2014 02 22"));
+            Val out = gen.eval();
+            assertThat(out.toLong().longValue()).isEqualTo(1393012800000L);
+        });
     }
 
     @Test
-    void testFormatDate1() throws ParseException {
-        final Generator gen = createGenerator("formatDate(${val1})");
-
-        gen.set(getVal(1393071132888L));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2014-02-22T12:12:12.888Z");
+    void testFormatDate1() {
+        createGenerator("formatDate(${val1})", gen -> {
+            gen.set(getVal(1393071132888L));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2014-02-22T12:12:12.888Z");
+        });
     }
 
     @Test
-    void testFormatDate2() throws ParseException {
-        final Generator gen = createGenerator("formatDate(${val1}, 'yyyy MM dd')");
-
-        gen.set(getVal(1393071132888L));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2014 02 22");
+    void testFormatDate2() {
+        createGenerator("formatDate(${val1}, 'yyyy MM dd')", gen -> {
+            gen.set(getVal(1393071132888L));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2014 02 22");
+        });
     }
 
     @Test
-    void testFormatDate3() throws ParseException {
-        final Generator gen = createGenerator("formatDate(${val1}, 'yyyy MM dd', '+1200')");
-
-        gen.set(getVal(1393071132888L));
-        Val out = gen.eval();
-        assertThat(out.toString()).isEqualTo("2014 02 23");
+    void testFormatDate3() {
+        createGenerator("formatDate(${val1}, 'yyyy MM dd', '+1200')", gen -> {
+            gen.set(getVal(1393071132888L));
+            Val out = gen.eval();
+            assertThat(out.toString()).isEqualTo("2014 02 23");
+        });
     }
 
     @Test
-    void testVariance1() throws ParseException {
-        final Generator gen = createGenerator("variance(600, 470, 170, 430, 300)");
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
+    void testVariance1() {
+        createGenerator("variance(600, 470, 170, 430, 300)", gen -> {
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testVariance2() throws ParseException {
-        final Generator gen = createGenerator("variance(${val1})");
+    void testVariance2() {
+        createGenerator("variance(${val1})", gen -> {
+            gen.set(getVal(600));
+            gen.set(getVal(470));
+            gen.set(getVal(170));
+            gen.set(getVal(430));
+            gen.set(getVal(300));
 
-        gen.set(getVal(600));
-        gen.set(getVal(470));
-        gen.set(getVal(170));
-        gen.set(getVal(430));
-        gen.set(getVal(300));
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testStDev1() throws ParseException {
-        final Generator gen = createGenerator("round(stDev(600, 470, 170, 430, 300))");
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
+    void testStDev1() {
+        createGenerator("round(stDev(600, 470, 170, 430, 300))", gen -> {
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testStDev2() throws ParseException {
-        final Generator gen = createGenerator("round(stDev(${val1}))");
+    void testStDev2() {
+        createGenerator("round(stDev(${val1}))", gen -> {
+            gen.set(getVal(600));
+            gen.set(getVal(470));
+            gen.set(getVal(170));
+            gen.set(getVal(430));
+            gen.set(getVal(300));
 
-        gen.set(getVal(600));
-        gen.set(getVal(470));
-        gen.set(getVal(170));
-        gen.set(getVal(430));
-        gen.set(getVal(300));
-
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testAny() throws ParseException {
-        final Generator gen = createGenerator("any(${val1})");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testAny() {
+        createGenerator("any(${val1})", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("any(${val1})");
-            child.set(getVal(300));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("any(${val1})", child -> {
+                    child.set(getVal(300));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toDouble()).isEqualTo(300, Offset.offset(0D));
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toDouble()).isEqualTo(300, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testFirst() throws ParseException {
-        final Generator gen = createGenerator("first(${val1})");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testFirst() {
+        createGenerator("first(${val1})", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("first(${val1})");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("first(${val1})", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toDouble()).isEqualTo(1, Offset.offset(0D));
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toDouble()).isEqualTo(1, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testLast() throws ParseException {
-        final Generator gen = createGenerator("last(${val1})");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testLast() {
+        createGenerator("last(${val1})", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("last(${val1})");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("last(${val1})", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toDouble()).isEqualTo(10, Offset.offset(0D));
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toDouble()).isEqualTo(10, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testNth() throws ParseException {
-        final Generator gen = createGenerator("nth(${val1}, 7)");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testNth() {
+        createGenerator("nth(${val1}, 7)", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("nth(${val1}, 7)");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("nth(${val1}, 7)", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toDouble()).isEqualTo(7, Offset.offset(0D));
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toDouble()).isEqualTo(7, Offset.offset(0D));
+        });
     }
 
     @Test
-    void testTop() throws ParseException {
-        final Generator gen = createGenerator("top(${val1}, ',', 3)");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testTop() {
+        createGenerator("top(${val1}, ',', 3)", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("top(${val1}, ',', 3)");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("top(${val1}, ',', 3)", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toString()).isEqualTo("1,2,3");
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toString()).isEqualTo("1,2,3");
+        });
     }
 
     @Test
-    void testTopSmall() throws ParseException {
-        final Generator gen = createGenerator("top(${val1}, ',', 3)");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testTopSmall() {
+        createGenerator("top(${val1}, ',', 3)", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[2];
-        for (int i = 0; i < 2; i++) {
-            final Generator child = createGenerator("top(${val1}, ',', 3)");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[2];
+            for (int i = 0; i < 2; i++) {
+                final int idx = i;
+                createGenerator("top(${val1}, ',', 3)", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toString()).isEqualTo("1,2");
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toString()).isEqualTo("1,2");
+        });
     }
 
     @Test
-    void testBottom() throws ParseException {
-        final Generator gen = createGenerator("bottom(${val1}, ',', 3)");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testBottom() {
+        createGenerator("bottom(${val1}, ',', 3)", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[10];
-        for (int i = 0; i < 10; i++) {
-            final Generator child = createGenerator("bottom(${val1}, ',', 3)");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[10];
+            for (int i = 0; i < 10; i++) {
+                final int idx = i;
+                createGenerator("bottom(${val1}, ',', 3)", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toString()).isEqualTo("8,9,10");
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toString()).isEqualTo("8,9,10");
+        });
     }
 
     @Test
-    void testBottomSmall() throws ParseException {
-        final Generator gen = createGenerator("bottom(${val1}, ',', 3)");
-        gen.set(getVal(300));
-        Val out = gen.eval();
-        assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
+    void testBottomSmall() {
+        createGenerator("bottom(${val1}, ',', 3)", gen -> {
+            gen.set(getVal(300));
+            Val out = gen.eval();
+            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
 
-        final Generator[] children = new Generator[2];
-        for (int i = 0; i < 2; i++) {
-            final Generator child = createGenerator("bottom(${val1}, ',', 3)");
-            child.set(getVal(i + 1));
-            children[i] = child;
-        }
+            final Generator[] children = new Generator[2];
+            for (int i = 0; i < 2; i++) {
+                final int idx = i;
+                createGenerator("bottom(${val1}, ',', 3)", child -> {
+                    child.set(getVal(idx + 1));
+                    children[idx] = child;
+                });
+            }
 
-        final Selector selector = (Selector) gen;
-        final Val selected = selector.select(children);
-        assertThat(selected.toString()).isEqualTo("1,2");
+            final Selector selector = (Selector) gen;
+            final Val selected = selector.select(children);
+            assertThat(selected.toString()).isEqualTo("1,2");
+        });
     }
 
     @Test
-    void testToBoolean1() throws ParseException {
-        final Generator gen = createGenerator("toBoolean('true')");
-        assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE);
+    void testToBoolean1() {
+        createGenerator("toBoolean('true')", gen ->
+                assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE));
     }
 
     @Test
-    void testToBoolean2() throws ParseException {
-        final Generator gen = createGenerator("toBoolean(${val1})");
-        gen.set(getVal("true"));
-        assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE);
+    void testToBoolean2() {
+        createGenerator("toBoolean(${val1})", gen -> {
+            gen.set(getVal("true"));
+            assertThat(gen.eval()).isEqualTo(ValBoolean.TRUE);
+        });
     }
 
     @Test
-    void testToDouble1() throws ParseException {
-        final Generator gen = createGenerator("toDouble('100')");
-        assertThat(gen.eval()).isEqualTo(ValDouble.create(100));
+    void testToDouble1() {
+        createGenerator("toDouble('100')", gen ->
+                assertThat(gen.eval()).isEqualTo(ValDouble.create(100)));
     }
 
     @Test
-    void testToDouble2() throws ParseException {
-        final Generator gen = createGenerator("toDouble(${val1})");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValDouble.create(100));
+    void testToDouble2() {
+        createGenerator("toDouble(${val1})", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValDouble.create(100));
+        });
     }
 
     @Test
-    void testToInteger1() throws ParseException {
-        final Generator gen = createGenerator("toInteger('100')");
-        assertThat(gen.eval()).isEqualTo(ValInteger.create(100));
+    void testToInteger1() {
+        createGenerator("toInteger('100')", gen ->
+                assertThat(gen.eval()).isEqualTo(ValInteger.create(100)));
     }
 
     @Test
-    void testToInteger2() throws ParseException {
-        final Generator gen = createGenerator("toInteger(${val1})");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValInteger.create(100));
+    void testToInteger2() {
+        createGenerator("toInteger(${val1})", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValInteger.create(100));
+        });
     }
 
     @Test
-    void testToLong1() throws ParseException {
-        final Generator gen = createGenerator("toLong('100')");
-        assertThat(gen.eval()).isEqualTo(ValLong.create(100));
+    void testToLong1() {
+        createGenerator("toLong('100')", gen ->
+                assertThat(gen.eval()).isEqualTo(ValLong.create(100)));
     }
 
     @Test
-    void testToLong2() throws ParseException {
-        final Generator gen = createGenerator("toLong(${val1})");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValLong.create(100));
+    void testToLong2() {
+        createGenerator("toLong(${val1})", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValLong.create(100));
+        });
     }
 
     @Test
-    void testToString1() throws ParseException {
-        final Generator gen = createGenerator("toString('100')");
-        assertThat(gen.eval()).isEqualTo(ValString.create("100"));
+    void testToString1() {
+        createGenerator("toString('100')", gen ->
+                assertThat(gen.eval()).isEqualTo(ValString.create("100")));
     }
 
     @Test
-    void testToString2() throws ParseException {
-        final Generator gen = createGenerator("toString(${val1})");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValString.create("100"));
+    void testToString2() {
+        createGenerator("toString(${val1})", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValString.create("100"));
+        });
     }
 
     @Test
-    void testMappedValues1() throws ParseException {
-        final Generator gen = createGenerator("param('testkey')");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValString.create("testvalue"));
+    void testMappedValues1() {
+        createGenerator("param('testkey')", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValString.create("testvalue"));
+        });
     }
 
     @Test
-    void testMappedValues2() throws ParseException {
-        final Generator gen = createGenerator("params()");
-        gen.set(getVal("100"));
-        assertThat(gen.eval()).isEqualTo(ValString.create("testkey=\"testvalue\""));
+    void testMappedValues2() {
+        createGenerator("params()", gen -> {
+            gen.set(getVal("100"));
+            assertThat(gen.eval()).isEqualTo(ValString.create("testkey=\"testvalue\""));
+        });
     }
 
     @Test
-    void testErrorHandling1() throws ParseException {
+    void testErrorHandling1() {
         ValLong valLong = ValLong.create(10);
         assertThatItEvaluatesToValErr("(${val1}=err())", valLong);
         assertThatItEvaluatesToValErr("(err()=${val1})", valLong);
@@ -2587,19 +2649,20 @@ class TestExpressionParser {
         assertThatItEvaluatesToValErr("(${val1}<null())", valLong);
     }
 
-    private void assertThatItEvaluatesToValErr(final String expression, final Val... values) throws ParseException {
-        Generator gen = createGenerator(expression);
-        gen.set(values);
-        Val out = gen.eval();
-        System.out.println(expression + " - " +
-                out.getClass().getSimpleName() + ": " +
-                out.toString() +
-                (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
-        assertThat(out).isInstanceOf(ValErr.class);
+    private void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
+        createGenerator(expression, gen -> {
+            gen.set(values);
+            Val out = gen.eval();
+            System.out.println(expression + " - " +
+                    out.getClass().getSimpleName() + ": " +
+                    out.toString() +
+                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+            assertThat(out).isInstanceOf(ValErr.class);
+        });
     }
 
     @Test
-    void testTypeOf() throws ParseException {
+    void testTypeOf() {
         ValBoolean vTrue = ValBoolean.TRUE;
         ValBoolean vFals = ValBoolean.FALSE; // intentional typo to keep var name length consistent
         ValNull vNull = ValNull.INSTANCE;
@@ -2654,27 +2717,36 @@ class TestExpressionParser {
         testMap.forEach((k, v) -> types.forEach(type -> assertIsExpression(type, k, ValBoolean.create(v.contains(type)))));
     }
 
-    private Generator createGenerator(final String expression) throws ParseException {
-        return createGenerator(expression, 1);
+    private void createGenerator(final String expression, final Consumer<Generator> consumer) {
+        createGenerator(expression, 1, consumer);
     }
 
-    private Expression createExpression(final String expression) throws ParseException {
-        return createExpression(expression, 1);
+    private void createExpression(final String expression, final Consumer<Expression> consumer) {
+        createExpression(expression, 1, consumer);
     }
 
-    private Generator createGenerator(final String expression, final int valueCount) throws ParseException {
-        final Expression exp = createExpression(expression, valueCount);
-        final Generator gen = exp.createGenerator();
-        return gen;
+    private void createGenerator(final String expression, final int valueCount, final Consumer<Generator> consumer) {
+        createExpression(expression, valueCount, exp -> {
+            final Generator gen = exp.createGenerator();
+            consumer.accept(gen);
+
+            final Generator generator2 = exp.createGenerator();
+            testKryo(gen, generator2);
+        });
     }
 
-    private Expression createExpression(final String expression, final int valueCount) throws ParseException {
+    private void createExpression(final String expression, final int valueCount, final Consumer<Expression> consumer) {
         final FieldIndexMap fieldIndexMap = new FieldIndexMap();
         for (int i = 1; i <= valueCount; i++) {
             fieldIndexMap.create("val" + i, true);
         }
 
-        final Expression exp = parser.parse(fieldIndexMap, expression);
+        Expression exp;
+        try {
+            exp = parser.parse(fieldIndexMap, expression);
+        } catch (final ParseException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
 
         final Map<String, String> mappedValues = new HashMap<>();
         mappedValues.put("testkey", "testvalue");
@@ -2683,89 +2755,117 @@ class TestExpressionParser {
         final String actual = exp.toString();
         assertThat(actual).isEqualTo(expression);
 
-        return exp;
+        consumer.accept(exp);
     }
 
-    private void assertBooleanExpression(final Val val1, final String operator, final Val val2, final Val expectedOutput)
-            throws ParseException {
-
+    private void assertBooleanExpression(final Val val1, final String operator, final Val val2, final Val expectedOutput) {
         final String expression = String.format("(${val1}%s${val2})", operator);
-        final Expression exp = createExpression(expression, 2);
-        final Generator gen = exp.createGenerator();
-        gen.set(new Val[]{val1, val2});
-        Val out = gen.eval();
-
-        System.out.println(String.format("[%s: %s] %s [%s: %s] => [%s: %s%s]",
-                val1.getClass().getSimpleName(), val1.toString(),
-                operator,
-                val2.getClass().getSimpleName(), val2.toString(),
-                out.getClass().getSimpleName(), out.toString(),
-                (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : "")));
-
-        if (!(expectedOutput instanceof ValErr)) {
-            assertThat(out).isEqualTo(expectedOutput);
-        }
-        assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
-    }
-
-    private void assertTypeOf(final String expression, final String expectedType) throws ParseException {
-        final Expression exp = createExpression(expression);
-        final Generator gen = exp.createGenerator();
-        Val out = gen.eval();
-
-        System.out.println(String.format("%s => [%s:%s%s]",
-                expression,
-                out.getClass().getSimpleName(), out.toString(),
-                (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : "")));
-
-        // The output type is always wrapped in a ValString
-        assertThat(out.type().toString()).isEqualTo("string");
-
-        assertThat(out).isInstanceOf(ValString.class);
-        assertThat(out.toString()).isEqualTo(expectedType);
-    }
-
-    private void assertTypeOf(final Val val1, final String expectedType) throws ParseException {
-
-        final String expression = "typeOf(${val1})";
-        final Expression exp = createExpression(expression);
-        final Generator gen = exp.createGenerator();
-        gen.set(new Val[]{val1});
-        Val out = gen.eval();
-
-        System.out.println(String.format("%s - [%s:%s] => [%s:%s%s]",
-                expression,
-                val1.getClass().getSimpleName(), val1.toString(),
-                out.getClass().getSimpleName(), out.toString(),
-                (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : "")));
-
-        // The output type is always wrapped in a ValString
-        assertThat(out.type().toString()).isEqualTo("string");
-
-        assertThat(out).isInstanceOf(ValString.class);
-        assertThat(out.toString()).isEqualTo(expectedType);
-    }
-
-    private void assertIsExpression(final Val val1, final String function, final Val expectedOutput) {
-        try {
-            final String expression = String.format("%s(${val1})", function);
-            final Expression exp = createExpression(expression, 2);
-            final Generator gen = exp.createGenerator();
-            gen.set(new Val[]{val1});
+        createGenerator(expression, 2, gen -> {
+            gen.set(new Val[]{val1, val2});
             Val out = gen.eval();
 
-            System.out.println(String.format("%s([%s: %s]) => [%s: %s%s]",
-                    function,
+            System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
                     val1.getClass().getSimpleName(), val1.toString(),
+                    operator,
+                    val2.getClass().getSimpleName(), val2.toString(),
                     out.getClass().getSimpleName(), out.toString(),
-                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : "")));
+                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
 
             if (!(expectedOutput instanceof ValErr)) {
                 assertThat(out).isEqualTo(expectedOutput);
             }
             assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
-        } catch (final ParseException e) {
-            throw new RuntimeException(e.getMessage(), e);
+        });
+    }
+
+    private void assertTypeOf(final String expression, final String expectedType) {
+        createGenerator(expression, gen -> {
+            Val out = gen.eval();
+
+            System.out.printf("%s => [%s:%s%s]%n",
+                    expression,
+                    out.getClass().getSimpleName(), out.toString(),
+                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+
+            // The output type is always wrapped in a ValString
+            assertThat(out.type().toString()).isEqualTo("string");
+
+            assertThat(out).isInstanceOf(ValString.class);
+            assertThat(out.toString()).isEqualTo(expectedType);
+        });
+    }
+
+    private void assertTypeOf(final Val val1, final String expectedType) {
+        final String expression = "typeOf(${val1})";
+        createGenerator(expression, gen -> {
+            gen.set(new Val[]{val1});
+            Val out = gen.eval();
+
+            System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
+                    expression,
+                    val1.getClass().getSimpleName(), val1.toString(),
+                    out.getClass().getSimpleName(), out.toString(),
+                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+
+            // The output type is always wrapped in a ValString
+            assertThat(out.type().toString()).isEqualTo("string");
+
+            assertThat(out).isInstanceOf(ValString.class);
+            assertThat(out.toString()).isEqualTo(expectedType);
+        });
+    }
+
+    private void assertIsExpression(final Val val1, final String function, final Val expectedOutput) {
+        final String expression = String.format("%s(${val1})", function);
+        createGenerator(expression, 2, gen -> {
+            gen.set(new Val[]{val1});
+            Val out = gen.eval();
+
+            System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
+                    function,
+                    val1.getClass().getSimpleName(), val1.toString(),
+                    out.getClass().getSimpleName(), out.toString(),
+                    (out instanceof ValErr ? (" - " + ((ValErr) out).getMessage()) : ""));
+
+            if (!(expectedOutput instanceof ValErr)) {
+                assertThat(out).isEqualTo(expectedOutput);
+            }
+            assertThat(out.getClass()).isEqualTo(expectedOutput.getClass());
+        });
+    }
+
+    private void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
+        final Val val = inputGenerator.eval();
+
+        Kryo kryo = new Kryo();
+        kryo.setRegistrationRequired(true);
+        ValSerialisers.register(kryo);
+
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+
+        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
+            inputGenerator.write(kryo, output);
+            output.flush();
+            buffer.flip();
         }
+
+        print(buffer);
+
+        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
+            outputGenerator.read(kryo, input);
+        }
+
+        final Val newVal = outputGenerator.eval();
+
+        assertThat(newVal).isEqualTo(val);
+    }
+
+    private void print(final ByteBuffer byteBuffer) {
+        final ByteBuffer copy = byteBuffer.duplicate();
+        byte[] bytes = new byte[copy.limit()];
+        for (int i = 0; i < copy.limit(); i++) {
+            bytes[i] = copy.get();
+        }
+        System.out.println(Arrays.toString(bytes));
     }
 }

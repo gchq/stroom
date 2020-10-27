@@ -18,15 +18,12 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Objects;
 
-public class ValErr implements Val {
+public final class ValErr implements Val {
     public static final ValErr INSTANCE = new ValErr("Err");
     private static final Type TYPE = new ErrType();
-    private String message;
+    private final String message;
 
-    ValErr() {
-    }
-
-    ValErr(final String message) {
+    private ValErr(final String message) {
         this.message = message;
     }
 
@@ -115,7 +112,7 @@ public class ValErr implements Val {
         return 0;
     }
 
-    private static class ErrType implements Type {
+    private static final class ErrType implements Type {
         private static final String NAME = "error";
 
         @Override

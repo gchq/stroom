@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.io.Serializable;
 
 public interface Generator extends Serializable, Comparable<Generator> {
@@ -50,4 +54,8 @@ public interface Generator extends Serializable, Comparable<Generator> {
      * @param generator The generator to merge with this one.
      */
     void merge(Generator generator);
+
+    void read(Kryo kryo, Input input);
+
+    void write(Kryo kryo, Output output);
 }

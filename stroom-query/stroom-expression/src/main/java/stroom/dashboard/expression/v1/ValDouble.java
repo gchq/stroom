@@ -20,15 +20,12 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ValDouble implements ValNumber {
+public final class ValDouble implements ValNumber {
     private static final Type TYPE = new DoubleType();
-    private double value;
+    private final double value;
     private transient Optional<String> optionalString;
 
-    ValDouble() {
-    }
-
-    ValDouble(final double value) {
+    private ValDouble(final double value) {
         this.value = value;
     }
 
@@ -98,7 +95,7 @@ public class ValDouble implements ValNumber {
         return Double.compare(value, ((ValDouble) o).value);
     }
 
-    private static class DoubleType implements Type {
+    private static final class DoubleType implements Type {
         private static final String NAME = "double";
 
         @Override

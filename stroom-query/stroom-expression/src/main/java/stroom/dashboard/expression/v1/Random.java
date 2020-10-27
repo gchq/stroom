@@ -16,6 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 class Random extends AbstractFunction {
     static final String NAME = "random";
 
@@ -33,7 +37,7 @@ class Random extends AbstractFunction {
         return false;
     }
 
-    private static class Gen extends AbstractNoChildGenerator {
+    private static final class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = -7551073465232523106L;
 
         private Val value;
@@ -46,6 +50,16 @@ class Random extends AbstractFunction {
         @Override
         public Val eval() {
             return value;
+        }
+
+        @Override
+        public void read(final Kryo kryo, final Input input) {
+            value = ValDouble.create(input.readDouble());
+        }
+
+        @Override
+        public void write(final Kryo kryo, final Output output) {
+            output.writeDouble(value.toDouble());
         }
     }
 }
