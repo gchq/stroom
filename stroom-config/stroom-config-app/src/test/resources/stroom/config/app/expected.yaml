@@ -474,6 +474,7 @@ appConfig:
       maxStoredDataQueueSize: 1000
       maxThreads: 4
       maxThreadsPerTask: 2
+      maxStreamEventMapSize: 1000000
     shard:
       maxDocIdQueueSize: 1000000
       maxThreads: 4
@@ -634,6 +635,7 @@ appConfig:
         maxStoredDataQueueSize: 1000
         maxThreads: 4
         maxThreadsPerTask: 2
+        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"
