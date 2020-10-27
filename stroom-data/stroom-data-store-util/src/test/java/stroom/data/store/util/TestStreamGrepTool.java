@@ -42,6 +42,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {
@@ -73,7 +74,7 @@ class TestStreamGrepTool {
                 .resolve("volumes/defaultStreamVolume")
                 .toAbsolutePath()
                 .toString();
-        volumeConfig.setDefaultStreamVolumePaths(path);
+        volumeConfig.setDefaultStreamVolumePaths(List.of(path));
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())

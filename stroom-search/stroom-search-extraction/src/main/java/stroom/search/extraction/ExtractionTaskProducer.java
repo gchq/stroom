@@ -69,6 +69,7 @@ class ExtractionTaskProducer extends TaskProducer {
                            final Map<DocRef, ExtractionReceiver> receivers,
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
+                           final int maxStreamEventMapSize,
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
                            final TaskContext parentContext,
@@ -82,7 +83,7 @@ class ExtractionTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
-        streamEventMap = new StreamEventMap(1000000);
+        streamEventMap = new StreamEventMap(maxStreamEventMapSize);
         storedDataQueue = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
 
         // Start mapping streams.
@@ -92,10 +93,16 @@ class ExtractionTaskProducer extends TaskProducer {
                 LOGGER.debug("Starting extraction task producer");
                 try {
                     while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
-                        try {
-                            // Poll for the next set of values.
-                            final Optional<Values> optional = storedDataQueue.take();
+                        tc.info(() -> "" +
+                                "Creating extraction tasks - stored data queue size: " +
+                                storedDataQueue.size() +
+                                " stream event map size: " +
+                                streamEventMap.size());
 
+                        // Poll for the next set of values.
+                        final Optional<Values> optional = storedDataQueue.take();
+
+                        try {
                             // We will have a value here unless index search has finished adding values in which case we
                             // will have an empty optional.
                             if (optional.isPresent()) {
@@ -109,16 +116,10 @@ class ExtractionTaskProducer extends TaskProducer {
                                             receiver.getErrorConsumer().accept(new Error(e.getMessage(), e)));
                                 }
                             } else {
-                                // We got no values from the topic so index search must have completed and we have also
-                                // completed mapping.
+                                // We got no values from the topic so if index search ois complete then we have finished
+                                // mapping too.
                                 streamMapCreatorCompletionState.complete();
                             }
-                        } catch (final InterruptedException e) {
-                            // Continue to interrupt.
-                            Thread.currentThread().interrupt();
-
-                            LOGGER.debug(e.getMessage(), e);
-                            throw new RuntimeException(e.getMessage(), e);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             throw e;
@@ -127,11 +128,16 @@ class ExtractionTaskProducer extends TaskProducer {
                             signalAvailable();
                         }
                     }
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Continue to interrupt.
+                    Thread.currentThread().interrupt();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
                     streamMapCreatorCompletionState.complete();
-                    LOGGER.debug("Finished adding extraction tasks");
+                    tc.info(() -> "Finished creating extraction tasks");
+                    LOGGER.debug("Finished creating extraction tasks");
 
                     // Tell the supplied executor that we are ready to deliver final tasks.
                     signalAvailable();

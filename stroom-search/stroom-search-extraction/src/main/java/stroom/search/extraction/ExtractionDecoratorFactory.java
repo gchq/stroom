@@ -110,6 +110,7 @@ public class ExtractionDecoratorFactory {
                 receivers,
                 extractionConfig.getMaxStoredDataQueueSize(),
                 extractionConfig.getMaxThreadsPerTask(),
+                extractionConfig.getMaxStreamEventMapSize(),
                 executorProvider,
                 taskContextFactory,
                 parentContext,

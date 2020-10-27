@@ -160,26 +160,12 @@ public class SolrSearchResultCollector implements Store {
             }
             if (result.isComplete()) {
                 // All the results are in but we may still have work pending, so wait
-                waitForPendingWork();
-                completionState.complete();
+                complete();
             }
         } catch (final RuntimeException e) {
             getErrorSet().add(e.getMessage());
-            completionState.complete();
+            complete();
         }
-    }
-
-    private void waitForPendingWork() {
-        LOGGER.logDurationIfTraceEnabled(() -> {
-            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-            try {
-                resultHandler.waitForPendingWork();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
-                // we will just let it complete as we have been interrupted
-            }
-        }, "Waiting for resultHandler to finish pending work");
     }
 
     public void onFailure(final Throwable throwable) {

@@ -7,14 +7,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-<<<<<<< HEAD
+* Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
+
+* Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
+
+* Issue **#1906** : Added info about queue sizes to extraction task.
+
+* Issue **#1906** : Made changes to allow early termination of searches if we have enough data.
+
+* Issue **#1906** : Fixed node task nesting.
+
+* Issue **#1906** : The maximum size of the stream event map is now configurable with the `stroom.search.extraction.maxStreamEventMapSize` property.
+
+* Issue **#1906** : Improved the way search extractions events are grouped so we can extract more events per stream and therefore improve performance.
+
+* Issue **#1907** : Fixed NPE.
+
+
+## [v7.0-beta.68] - 2020-10-22
+
+* Issue **#1733** : Support xsl:output options for XML output from pipeline (XMLWriter)
+
+* Issue **#1893** : Change delimited string volume properties to lists of strings
+
+* Issue **#1848** : Fix NPE when importing certain processor filters.
+
 * Issue **#1894** : Improvements to search performance and fix for hanging searches.
-=======
+
 
 ## [v7.0-beta.67] - 2020-10-15
 
 * Issue **#1901** : Create default (index) volume group if it is used prior to UI.
->>>>>>> c98f99306ce1ba44518c853227f2ae4033831acc
 
 * Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
 
@@ -2744,7 +2767,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.67...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.68...HEAD
+[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.68
 [v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65

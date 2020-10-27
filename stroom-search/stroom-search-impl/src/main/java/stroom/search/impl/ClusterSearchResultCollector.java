@@ -158,13 +158,14 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public synchronized void onSuccess(final String nodeName, final NodeResult result) {
+    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
+        boolean success = true;
         try {
             final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
             final List<String> errors = result.getErrors();
 
             if (payloadMap != null) {
-                resultHandler.handle(payloadMap);
+                success = resultHandler.handle(payloadMap);
             }
 
             if (errors != null) {
@@ -173,6 +174,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         } catch (final RuntimeException e) {
             getErrorSet(nodeName).add(e.getMessage());
         }
+        return success;
     }
 
     @Override
