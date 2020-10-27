@@ -16,6 +16,13 @@
 
 package stroom.dashboard.client.text;
 
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
+import stroom.dashboard.shared.Field;
+import stroom.docref.HasDisplayValue;
+import stroom.item.client.ItemListBox;
+import stroom.widget.tickbox.client.view.TickBox;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,13 +34,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
-import stroom.docref.HasDisplayValue;
-import stroom.dashboard.shared.Field;
-import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -146,7 +148,9 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         final HasDisplayValue selected = ctrl.getSelectedItem();
         ctrl.clear();
         ctrl.addItem(NONE);
-        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e).collect(Collectors.toList());
+        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e)
+                .sorted(Comparator.comparing(HasDisplayValue::getDisplayValue))
+                .collect(Collectors.toList());
         ctrl.addItems(newList);
         ctrl.setSelectedItem(selected);
     }

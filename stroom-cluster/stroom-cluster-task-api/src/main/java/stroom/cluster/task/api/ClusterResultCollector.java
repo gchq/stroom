@@ -21,7 +21,7 @@ public interface ClusterResultCollector<R> {
 
     boolean onReceive();
 
-    void onSuccess(String nodeName, R r);
+    boolean onSuccess(String nodeName, R r);
 
     void onFailure(String nodeName, Throwable throwable);
 }

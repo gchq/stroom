@@ -181,13 +181,6 @@ class SearchableStore implements Store {
         // data we have gathered so far
         processPayloads(resultHandler, coprocessorMap);
         taskContext.info(() -> searchKey + " - complete");
-
-        try {
-            resultHandler.waitForPendingWork();
-        } catch (final InterruptedException e) {
-            LOGGER.trace(e.getMessage(), e);
-        }
-
         LOGGER.debug(() -> "completeSearch called");
         complete();
 

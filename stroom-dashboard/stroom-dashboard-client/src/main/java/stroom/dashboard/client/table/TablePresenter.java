@@ -552,11 +552,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-        final List<Field> nonSpecialNameToFieldMap = tableSettings.getFields()
-                .stream()
-                .filter(field -> !field.isSpecial())
-                .collect(Collectors.toList());
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(tableSettings.getFields());
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         int hiddenRowCount = 0;
@@ -574,12 +570,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                 final Map<String, Object> fieldIdToValueMap = new HashMap<>();
                                 for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
                                     final Field field = fields.get(i);
-                                    // Conditional formatting is not interested in the special invisible
-                                    // EventId/StreamId fields
-                                    if (!field.isSpecial()) {
-                                        final String value = row.getValues().get(i);
-                                        fieldIdToValueMap.put(field.getName(), value);
-                                    }
+                                    final String value = row.getValues().get(i);
+                                    fieldIdToValueMap.put(field.getName(), value);
                                 }
 
                                 final ExpressionOperator operator = rule.getExpression();
@@ -797,10 +789,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-        // Remove all special fields as we will re-add them with the right names
-        tableSettings.getFields().removeIf(Field::isSpecial);
+        // Find out if we have any special fields.
+        final boolean hasSpecialFields = tableSettings.getFields().stream().anyMatch(Field::isSpecial);
 
-        // See if any of the requested special fields exist in the current data source.
+        // Get special fields from the current data source.
         final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
         // Get all index fields provided by the datasource
@@ -816,20 +808,28 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }
 
+        // Remove all special fields as we will re-add them with the right names if there are any.
+        tableSettings.getFields().removeIf(Field::isSpecial);
+
         // If the fields we want to make special do exist in the current data source then
         // add them.
         if (requiredSpecialFields.size() > 0) {
-
             // Prior to the introduction of the special field concept, special fields were
             // treated as invisible fields. For this reason we need to remove old invisible
             // fields if we haven't yet turned them into special fields.
-            // Also we have changed the name of the special fields from EventId to __event_id__
-            // so we need to remove those old ones too.
+            if (!hasSpecialFields) {
+                requiredSpecialDsFields.forEach(requiredSpecialDsField ->
+                        tableSettings.getFields().removeIf(field ->
+                                !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+            }
+
+            // We have changed the name of the special fields from EventId to __event_id__
+            // so we need to remove those old ones.
             requiredSpecialDsFields.forEach(requiredSpecialDsField ->
                     tableSettings.getFields().removeIf(field ->
-                            field.getName().equals(requiredSpecialDsField.getName())
-                                    && (field.isSpecial() || !field.isVisible())));
+                            field.isSpecial() && field.getName().equals(requiredSpecialDsField.getName())));
 
+            // Add special fields.
             requiredSpecialFields.forEach(field ->
                     tableSettings.getFields().add(field));
         }
@@ -1027,10 +1027,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         @Override
         public void onSelectionChange(final SelectionChangeEvent event) {
-            final Field field = presenter.getSelectedObject();
+            Field field = presenter.getSelectedObject();
             if (field != null) {
                 HidePopupEvent.fire(TablePresenter.this, presenter);
-                field.setId(createRandomFieldId());
+
+                final String fieldName = field.getName();
+                String suffix = "";
+                int count = 1;
+                final Set<String> currentFields = tableSettings.getFields().stream().map(Field::getName).collect(Collectors.toSet());
+                while (currentFields.contains(fieldName + suffix)) {
+                    count++;
+                    suffix = " " + count;
+                }
+
+                field = new Field.Builder()
+                        .copy(field)
+                        .name(fieldName + suffix)
+                        .id(createRandomFieldId())
+                        .build();
                 fieldsManager.addField(field);
             }
         }
