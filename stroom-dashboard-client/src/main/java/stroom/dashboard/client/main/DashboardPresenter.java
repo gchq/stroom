@@ -27,6 +27,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
@@ -379,13 +380,17 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabConfig) {
-        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
-            if (ok) {
-                layoutPresenter.closeTab(tabConfig);
-                components.remove(tabConfig.getId(), true);
-            }
-        });
+    public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        if (tabLayoutConfig.getVisibleTabCount() <= 1) {
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
+        } else {
+            ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+                if (ok) {
+                    layoutPresenter.closeTab(tabConfig);
+                    components.remove(tabConfig.getId(), true);
+                }
+            });
+        }
     }
 
     @Override

@@ -120,7 +120,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
-                    changeHandler.requestTabClose(component.getTabConfig());
+                    changeHandler.requestTabClose(tabLayoutConfig, component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));
