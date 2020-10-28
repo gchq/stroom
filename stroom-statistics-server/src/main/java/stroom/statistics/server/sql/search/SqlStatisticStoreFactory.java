@@ -18,6 +18,7 @@ import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private final StroomPropertyService stroomPropertyService;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContext taskContext;
+    private final TaskWrapper taskWrapper;
     private final ExecutorProvider executorProvider;
 
     @Inject
@@ -47,11 +49,13 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                                     final StroomPropertyService stroomPropertyService,
                                     final StatisticsSearchService statisticsSearchService,
                                     final TaskContext taskContext,
+                                    final TaskWrapper taskWrapper,
                                     final ExecutorProvider executorProvider) {
         this.statisticStoreCache = statisticStoreCache;
         this.stroomPropertyService = stroomPropertyService;
         this.statisticsSearchService = statisticsSearchService;
         this.taskContext = taskContext;
+        this.taskWrapper = taskWrapper;
         this.executorProvider = executorProvider;
     }
 
@@ -89,6 +93,12 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         // TODO do we want to limit this with a thread pool?
         final Executor executor = executorProvider.getExecutor();
 
+        // We have to create a wrapped executor so that the task context references a managed task.
+        final Executor wrappedExecutor = command -> {
+            final Runnable wrappedRunnable = taskWrapper.wrap(command);
+            executor.execute(wrappedRunnable);
+        };
+
         //wrap the resultHandler in a new store, initiating the search in the process
         final SqlStatisticsStore store = new SqlStatisticsStore(
                 searchRequest,
@@ -97,7 +107,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 defaultMaxResultsSizes,
                 storeSize,
                 resultHandlerBatchSize,
-                executor,
+                wrappedExecutor,
                 taskContext);
 
         return store;
