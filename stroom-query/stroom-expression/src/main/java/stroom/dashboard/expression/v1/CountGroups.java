@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -48,7 +47,7 @@ class CountGroups extends AbstractFunction {
     private static final class Gen extends AbstractNoChildGenerator {
         private static final long serialVersionUID = -9130548669643582369L;
 
-        private final Set<Key> childGroups = new HashSet<>();
+        private final Set<GroupKey> childGroups = new HashSet<>();
         private long nonGroupedChildCount;
 
         @Override
@@ -62,7 +61,7 @@ class CountGroups extends AbstractFunction {
         }
 
         @Override
-        public void addChildKey(final Key key) {
+        public void addChildKey(final GroupKey key) {
             if (key == null) {
                 nonGroupedChildCount++;
             } else {
@@ -79,20 +78,20 @@ class CountGroups extends AbstractFunction {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
+        public void read(final Input input) {
             childGroups.clear();
             final int length = input.readInt(true);
             for (int i = 0; i < length; i++) {
-                childGroups.add((Key) kryo.readClassAndObject(input));
+                childGroups.add(GroupKeySerialiser.read(input));
             }
             nonGroupedChildCount = input.readLong(true);
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
+        public void write(final Output output) {
             output.writeInt(childGroups.size(), true);
-            for (final Key key : childGroups) {
-                kryo.writeClassAndObject(output, key);
+            for (final GroupKey key : childGroups) {
+                GroupKeySerialiser.write(output, key);
             }
             output.writeLong(nonGroupedChildCount, true);
         }

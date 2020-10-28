@@ -16,13 +16,14 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -38,6 +39,8 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionParser {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParser.class);
+
     private final ExpressionParser parser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
 
     @Test
@@ -2837,22 +2840,17 @@ class TestExpressionParser {
     private void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
         final Val val = inputGenerator.eval();
 
-        Kryo kryo = new Kryo();
-        kryo.setRegistrationRequired(true);
-        ValSerialisers.register(kryo);
-
         ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
 
         try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
-            inputGenerator.write(kryo, output);
-            output.flush();
-            buffer.flip();
+            inputGenerator.write(output);
         }
 
+        buffer.flip();
         print(buffer);
 
         try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
-            outputGenerator.read(kryo, input);
+            outputGenerator.read(input);
         }
 
         final Val newVal = outputGenerator.eval();
@@ -2866,6 +2864,6 @@ class TestExpressionParser {
         for (int i = 0; i < copy.limit(); i++) {
             bytes[i] = copy.get();
         }
-        System.out.println(Arrays.toString(bytes));
+        LOGGER.info(Arrays.toString(bytes));
     }
 }

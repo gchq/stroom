@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public final class ValErr implements Val {
     public static final ValErr INSTANCE = new ValErr("Err");
-    private static final Type TYPE = new ErrType();
+    public static final Type TYPE = Type.ERR;
     private final String message;
 
     private ValErr(final String message) {
@@ -110,34 +110,5 @@ public final class ValErr implements Val {
     @Override
     public int compareTo(final Val o) {
         return 0;
-    }
-
-    private static final class ErrType implements Type {
-        private static final String NAME = "error";
-
-        @Override
-        public boolean isValue() {
-            return false;
-        }
-
-        @Override
-        public boolean isNumber() {
-            return false;
-        }
-
-        @Override
-        public boolean isError() {
-            return true;
-        }
-
-        @Override
-        public boolean isNull() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return NAME;
-        }
     }
 }

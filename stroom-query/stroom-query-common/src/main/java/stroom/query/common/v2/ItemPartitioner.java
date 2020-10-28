@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.mapreduce.v2.OutputCollector;
 import stroom.mapreduce.v2.Reducer;
 import stroom.mapreduce.v2.SimplePartitioner;

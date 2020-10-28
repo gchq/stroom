@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ValDouble implements ValNumber {
-    private static final Type TYPE = new DoubleType();
+    public static final Type TYPE = Type.DOUBLE;
     private final double value;
     private transient Optional<String> optionalString;
 
@@ -93,34 +93,5 @@ public final class ValDouble implements ValNumber {
     @Override
     public int compareTo(final Val o) {
         return Double.compare(value, ((ValDouble) o).value);
-    }
-
-    private static final class DoubleType implements Type {
-        private static final String NAME = "double";
-
-        @Override
-        public boolean isValue() {
-            return true;
-        }
-
-        @Override
-        public boolean isNumber() {
-            return true;
-        }
-
-        @Override
-        public boolean isError() {
-            return false;
-        }
-
-        @Override
-        public boolean isNull() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return NAME;
-        }
     }
 }

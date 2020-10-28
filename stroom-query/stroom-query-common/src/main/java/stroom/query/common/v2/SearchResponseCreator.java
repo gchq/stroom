@@ -217,7 +217,7 @@ public class SearchResponseCreator {
                             result = resultCreator.create(data, resultRequest);
                         }
                     } catch (final RuntimeException e) {
-                        result = new TableResult(componentId, null, null, null, e.getMessage());
+                        result = new TableResult(componentId, null, null, null, 0, e.getMessage());
                     }
                 }
 

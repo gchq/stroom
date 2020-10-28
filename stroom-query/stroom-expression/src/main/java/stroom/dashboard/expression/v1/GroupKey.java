@@ -20,30 +20,37 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 
-public final class GroupKey implements Key, Serializable {
+public final class GroupKey implements Serializable {
     private final int depth;
     private final GroupKey parent;
-    private final List<Val> values;
+    private final Val[] values;
 
-    public GroupKey(final Val value) {
-        this(Collections.singletonList(value));
+    public GroupKey(final int depth,
+                    final GroupKey parent,
+                    final Val[] values) {
+        this.depth = depth;
+        this.parent = parent;
+        this.values = values;
     }
 
-    public GroupKey(final List<Val> values) {
+    public GroupKey(final Val value) {
+        this(new Val[]{value});
+    }
+
+    public GroupKey(final Val[] values) {
         this.depth = 0;
         this.parent = null;
         this.values = values;
     }
 
     public GroupKey(final GroupKey parent, final Val value) {
-        this(parent, Collections.singletonList(value));
+        this(parent, new Val[]{value});
     }
 
-    public GroupKey(final GroupKey parent, final List<Val> values) {
+    public GroupKey(final GroupKey parent, final Val[] values) {
         if (parent != null) {
             this.depth = parent.getDepth() + 1;
         } else {
@@ -71,7 +78,7 @@ public final class GroupKey implements Key, Serializable {
             @XmlElement(name = "err", type = ValErr.class),
             @XmlElement(name = "null", type = ValNull.class)
     })
-    public List<Val> getValues() {
+    public Val[] getValues() {
         return values;
     }
 
@@ -79,15 +86,17 @@ public final class GroupKey implements Key, Serializable {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final GroupKey key = (GroupKey) o;
-        return depth == key.depth &&
-                Objects.equals(parent, key.parent) &&
-                Objects.equals(values, key.values);
+        final GroupKey groupKey = (GroupKey) o;
+        return depth == groupKey.depth &&
+                Objects.equals(parent, groupKey.parent) &&
+                Arrays.equals(values, groupKey.values);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(depth, parent, values);
+        int result = Objects.hash(depth, parent);
+        result = 31 * result + Arrays.hashCode(values);
+        return result;
     }
 
     private void append(final StringBuilder sb) {
@@ -96,10 +105,10 @@ public final class GroupKey implements Key, Serializable {
             sb.append("/");
         }
 
-        if (values != null && values.size() > 0) {
-            for (final Val o : values) {
-                if (o != null) {
-                    sb.append(o.toString());
+        if (values != null && values.length > 0) {
+            for (final Val val : values) {
+                if (val != null) {
+                    sb.append(val.toString());
                 }
                 sb.append("|");
             }

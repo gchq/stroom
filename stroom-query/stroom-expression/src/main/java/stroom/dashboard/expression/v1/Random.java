@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -53,12 +52,12 @@ class Random extends AbstractFunction {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
+        public void read(final Input input) {
             value = ValDouble.create(input.readDouble());
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
+        public void write(final Output output) {
             output.writeDouble(value.toDouble());
         }
     }

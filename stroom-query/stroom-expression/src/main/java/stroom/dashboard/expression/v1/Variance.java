@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -106,8 +105,8 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
-            super.read(kryo, input);
+        public void read(final Input input) {
+            super.read(input);
             final int size = input.readInt(true);
             list.clear();
             for (int i = 0; i < size; i++) {
@@ -116,8 +115,8 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
-            super.write(kryo, output);
+        public void write(final Output output) {
+            super.write(output);
             output.writeInt(list.size(), true);
             for (final double d : list) {
                 output.writeDouble(d);

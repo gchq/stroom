@@ -21,7 +21,7 @@ import java.util.Objects;
 public final class ValBoolean implements Val {
     static final ValBoolean TRUE = new ValBoolean(true);
     static final ValBoolean FALSE = new ValBoolean(false);
-    private static final Type TYPE = new BooleanType();
+    public static final Type TYPE = Type.BOOLEAN;
     private final boolean value;
 
     private ValBoolean(final boolean value) {
@@ -86,34 +86,5 @@ public final class ValBoolean implements Val {
     @Override
     public int compareTo(final Val o) {
         return Boolean.compare(value, ((ValBoolean) o).value);
-    }
-
-    private static final class BooleanType implements Type {
-        private static final String NAME = "boolean";
-
-        @Override
-        public boolean isValue() {
-            return true;
-        }
-
-        @Override
-        public boolean isNumber() {
-            return false;
-        }
-
-        @Override
-        public boolean isError() {
-            return false;
-        }
-
-        @Override
-        public boolean isNull() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return NAME;
-        }
     }
 }

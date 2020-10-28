@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -168,17 +167,17 @@ class Substring extends AbstractFunction implements Serializable {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
-            super.read(kryo, input);
-            startPosGenerator.read(kryo, input);
-            endPosGenerator.read(kryo, input);
+        public void read(final Input input) {
+            super.read(input);
+            startPosGenerator.read(input);
+            endPosGenerator.read(input);
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
-            super.write(kryo, output);
-            startPosGenerator.write(kryo, output);
-            endPosGenerator.write(kryo, output);
+        public void write(final Output output) {
+            super.write(output);
+            startPosGenerator.write(output);
+            endPosGenerator.write(output);
         }
     }
 }

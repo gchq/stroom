@@ -16,10 +16,9 @@
 
 package stroom.query.common.v2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.Field;
@@ -30,6 +29,9 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,12 +89,12 @@ public class FlatResultCreator implements ResultCreator {
         GroupKey k = key;
         while (k != null && k.getValues() != null) {
             final List<Field> fields = groupFields.get(k.getDepth());
-            final List<Val> values = k.getValues();
+            final Val[] values = k.getValues();
 
-            if (values.size() == 0) {
+            if (values.length == 0) {
                 result.addFirst(null);
-            } else if (values.size() == 1) {
-                final Val val = values.get(0);
+            } else if (values.length == 1) {
+                final Val val = values[0];
                 if (val == null) {
                     result.addFirst(null);
                 } else {

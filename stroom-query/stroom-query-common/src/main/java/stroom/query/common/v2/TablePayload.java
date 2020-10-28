@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.mapreduce.v2.UnsafePairQueue;
 
 import java.util.Objects;

@@ -16,8 +16,7 @@
 
 package stroom.query.common.v2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
@@ -27,8 +26,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class SearchResultHandler implements ResultHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchResultHandler.class);
-
     private final CoprocessorSettingsMap coprocessorSettingsMap;
     private final Map<CoprocessorKey, TablePayloadHandler> handlerMap;
 
@@ -50,9 +47,17 @@ public class SearchResultHandler implements ResultHandler {
                 }));
     }
 
+    /**
+     * Handle a set of search result payloads from a node.
+     *
+     * @param payloadMap
+     * @return
+     */
     @Override
-    public void handle(final Map<CoprocessorKey, Payload> payloadMap) {
-        if (payloadMap != null) {
+    public boolean handle(final Map<CoprocessorKey, Payload> payloadMap) {
+        boolean partialSuccess = true;
+        if (payloadMap != null && payloadMap.size() > 0) {
+            partialSuccess = false;
             for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                 final Payload payload = entry.getValue();
                 if (payload instanceof TablePayload) {
@@ -61,11 +66,15 @@ public class SearchResultHandler implements ResultHandler {
                     final TablePayloadHandler payloadHandler = handlerMap.get(entry.getKey());
                     final UnsafePairQueue<GroupKey, Item> newQueue = tablePayload.getQueue();
                     if (newQueue != null) {
-                        payloadHandler.addQueue(newQueue);
+                        final boolean success = payloadHandler.addQueue(newQueue);
+                        if (success) {
+                            partialSuccess = true;
+                        }
                     }
                 }
             }
         }
+        return partialSuccess;
     }
 
     private TablePayloadHandler getPayloadHandler(final String componentId) {
@@ -84,15 +93,5 @@ public class SearchResultHandler implements ResultHandler {
             return tablePayloadHandler.getData();
         }
         return null;
-    }
-
-    @Override
-    public void waitForPendingWork() throws InterruptedException {
-        // Wait for each handler to complete any outstanding work
-        // We have been told the search is complete but the TablePayloadHandlers may still be doing work so wait for them.
-        for (final TablePayloadHandler handler : handlerMap.values()) {
-            LOGGER.trace("About to wait for handler {}", handler);
-            handler.waitForPendingWork();
-        }
     }
 }

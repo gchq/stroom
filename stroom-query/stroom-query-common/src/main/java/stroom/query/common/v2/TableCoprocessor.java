@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.v2.BlockingPairQueue;
 import stroom.mapreduce.v2.PairQueue;

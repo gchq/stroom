@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.mapreduce.v2.MapperBase;
 import stroom.mapreduce.v2.OutputCollector;
@@ -53,7 +54,7 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
         // Process list into fields.
         final Generator[] generators = new Generator[fields.size()];
 
-        List<Val> groupValues = null;
+        final List<Val> groupValues = new ArrayList<>();
         int pos = 0;
         for (final CompiledField compiledField : fields) {
             Val value = null;
@@ -95,9 +96,6 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
             // If this field is being grouped at this depth then add the value
             // to the group key for this depth.
             if (compiledField.getGroupDepth() == depth) {
-                if (groupValues == null) {
-                    groupValues = new ArrayList<>();
-                }
                 groupValues.add(value);
             }
 
@@ -106,8 +104,8 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
 
         // Are we grouping this item?
         GroupKey key = null;
-        if (parentKey != null || groupValues != null) {
-            key = new GroupKey(parentKey, groupValues);
+        if (parentKey != null) {
+            key = new GroupKey(parentKey, groupValues.toArray(new Val[0]));
         }
 
         // If the popToWhenComplete row has child group key sets then add this child group

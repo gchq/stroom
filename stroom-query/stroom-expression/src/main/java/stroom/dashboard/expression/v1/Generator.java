@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -28,7 +27,7 @@ public interface Generator extends Serializable, Comparable<Generator> {
      *
      * @param key The key of a child group.
      */
-    void addChildKey(Key key);
+    void addChildKey(GroupKey key);
 
     /**
      * Set values that can be used to source whatever data is required by value
@@ -55,7 +54,7 @@ public interface Generator extends Serializable, Comparable<Generator> {
      */
     void merge(Generator generator);
 
-    void read(Kryo kryo, Input input);
+    void read(Input input);
 
-    void write(Kryo kryo, Output output);
+    void write(Output output);
 }

@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -81,15 +80,15 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
-            super.read(kryo, input);
-            current = (Val) kryo.readClassAndObject(input);
+        public void read(final Input input) {
+            super.read(input);
+            current = ValSerialisers.read(input);
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
-            super.write(kryo, output);
-            kryo.writeClassAndObject(output, current);
+        public void write(final Output output) {
+            super.write(output);
+            ValSerialisers.write(output, current);
         }
     }
 

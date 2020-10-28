@@ -16,6 +16,9 @@
 
 package stroom.dashboard.expression.v1;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,6 +110,23 @@ class Joining extends AbstractFunction {
                 }
             }
             super.merge(generator);
+        }
+
+        @Override
+        public void read(final Input input) {
+            list.clear();
+            final int length = input.readInt();
+            for (int i = 0; i < length; i++) {
+                list.add(input.readString());
+            }
+        }
+
+        @Override
+        public void write(final Output output) {
+            output.writeInt(list.size());
+            for (final String string : list) {
+                output.writeString(string);
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ import java.util.Optional;
 
 public final class ValString implements Val {
     static final ValString EMPTY = new ValString("");
-    private static final Type TYPE = new StringType();
+    public static final Type TYPE = Type.STRING;
     private final String value;
     private transient Optional<Double> optionalDouble;
     private transient Optional<Long> optionalLong;
@@ -128,34 +128,5 @@ public final class ValString implements Val {
             }
         }
         return value.compareToIgnoreCase(((ValString) o).value);
-    }
-
-    private static final class StringType implements Type {
-        private static final String NAME = "string";
-
-        @Override
-        public boolean isValue() {
-            return true;
-        }
-
-        @Override
-        public boolean isNumber() {
-            return false;
-        }
-
-        @Override
-        public boolean isError() {
-            return false;
-        }
-
-        @Override
-        public boolean isNull() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return NAME;
-        }
     }
 }

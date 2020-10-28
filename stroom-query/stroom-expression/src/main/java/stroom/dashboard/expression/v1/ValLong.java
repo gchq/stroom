@@ -19,7 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.util.Objects;
 
 public final class ValLong implements ValNumber {
-    private static final Type TYPE = new LongType();
+    public static final Type TYPE = Type.LONG;
     private final long value;
 
     private ValLong(final long value) {
@@ -96,35 +96,6 @@ public final class ValLong implements ValNumber {
         }
 
         private ValLongCache() {
-        }
-    }
-
-    private static final class LongType implements Type {
-        private static final String NAME = "long";
-
-        @Override
-        public boolean isValue() {
-            return true;
-        }
-
-        @Override
-        public boolean isNumber() {
-            return true;
-        }
-
-        @Override
-        public boolean isError() {
-            return false;
-        }
-
-        @Override
-        public boolean isNull() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return NAME;
         }
     }
 }

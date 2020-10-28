@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -106,19 +105,19 @@ class CountUnique extends AbstractFunction {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
+        public void read(final Input input) {
             uniqueValues.clear();
             final int length = input.readInt(true);
             for (int i = 0; i < length; i++) {
-                uniqueValues.add((Val) kryo.readClassAndObject(input));
+                uniqueValues.add(ValSerialisers.read(input));
             }
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
+        public void write(final Output output) {
             output.writeInt(uniqueValues.size(), true);
             for (final Val val : uniqueValues) {
-                kryo.writeClassAndObject(output, val);
+                ValSerialisers.write(output, val);
             }
         }
     }

@@ -16,8 +16,7 @@
 
 package stroom.query.common.v2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.mapreduce.v2.PairQueue;
 import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.Field;
@@ -25,22 +24,16 @@ import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class TablePayloadHandler implements PayloadHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TablePayloadHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TablePayloadHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TablePayloadHandler.class);
 
     private final CompiledSorter compiledSorter;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final Sizes storeSize;
     private final AtomicLong totalResults = new AtomicLong();
-    private final LinkedBlockingQueue<UnsafePairQueue<GroupKey, Item>> pendingMerges = new LinkedBlockingQueue<>();
-    private final Lock lock = new ReentrantLock();
 
     private volatile PairQueue<GroupKey, Item> currentQueue;
     private volatile Data data;
@@ -59,105 +52,58 @@ public class TablePayloadHandler implements PayloadHandler {
 
     void clear() {
         totalResults.set(0);
-        pendingMerges.clear();
         currentQueue = null;
         data = new ResultStoreCreator(compiledSorter).create(0, 0);
     }
 
-    void addQueue(final UnsafePairQueue<GroupKey, Item> newQueue) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("addQueue called for {} items", newQueue.size()));
-        if (newQueue != null) {
-            if (Thread.currentThread().isInterrupted() || hasEnoughData) {
-                // Clear the queue if we should terminate.
-                pendingMerges.clear();
-
-            } else {
-                // Add the new queue to the pending merge queue ready for
-                // merging.
-                try {
-                    pendingMerges.put(newQueue);
-                } catch (final InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    LOGGER.warn("Thread interrupted while trying to put an item onto pendingMerges queue");
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                if (!Thread.currentThread().isInterrupted()) {
-                    // Try and merge all of the items on the pending merge queue.
-                    tryMergePending();
-                    LOGGER.trace("Finished merging items");
-                }
-            }
+    /**
+     * Add items to the merge queue. If we already have enough data or are terminating then return false.
+     *
+     * @param newQueue The items to add to the queue.
+     * @return False if we are terminating or have enough data, true otherwise.
+     */
+    synchronized boolean addQueue(final UnsafePairQueue<GroupKey, Item> newQueue) {
+        LOGGER.trace(() -> LambdaLogger.buildMessage("addQueue called for {} items", newQueue.size()));
+        if (Thread.currentThread().isInterrupted() || hasEnoughData) {
+            return false;
         }
 
-        LAMBDA_LOGGER.trace(() -> "Finished adding items to the queue");
-    }
+        try {
+            if (newQueue != null) {
+                // Update the total number of results that we have received.
+                totalResults.getAndAdd(newQueue.size());
 
-    private void tryMergePending() {
-        // Only 1 thread will get to do a merge.
-        if (lock.tryLock()) {
-            try {
-                mergePending();
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            LOGGER.trace("Another thread is busy merging, so will let it merge my items");
-        }
-    }
+                if (currentQueue == null) {
+                    currentQueue = updateResultStore(newQueue);
 
-    private void mergePending() {
-        UnsafePairQueue<GroupKey, Item> queue = pendingMerges.poll();
-        while (queue != null) {
-            if (Thread.currentThread().isInterrupted() || hasEnoughData) {
-                // Clear the queue if we are done.
-                pendingMerges.clear();
+                } else {
+                    final PairQueue<GroupKey, Item> outputQueue = new UnsafePairQueue<>();
 
-            } else {
-                try {
-                    mergeQueue(queue);
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw e;
+                    // Create a partitioner to perform result reduction if needed.
+                    final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
+                            compiledDepths.getMaxDepth());
+                    partitioner.setOutputCollector(outputQueue);
+
+                    // First deal with the current queue.
+                    if (currentQueue != null) {
+                        partitioner.read(currentQueue);
+                    }
+
+                    // New deal with the new queue.
+                    partitioner.read(newQueue);
+
+                    // Perform partitioning and reduction.
+                    partitioner.partition();
+
+                    currentQueue = updateResultStore(outputQueue);
                 }
             }
-
-            // Poll the next item.
-            queue = pendingMerges.poll();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
-    }
 
-    private void mergeQueue(final UnsafePairQueue<GroupKey, Item> newQueue) {
-        /*
-         * Update the total number of results that we have received.
-         */
-        totalResults.getAndAdd(newQueue.size());
-
-        if (currentQueue == null) {
-            currentQueue = updateResultStore(newQueue);
-
-        } else {
-            final PairQueue<GroupKey, Item> outputQueue = new UnsafePairQueue<>();
-
-            /*
-             * Create a partitioner to perform result reduction if needed.
-             */
-            final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
-                    compiledDepths.getMaxDepth());
-            partitioner.setOutputCollector(outputQueue);
-
-            /* First deal with the current queue. */
-            partitioner.read(currentQueue);
-
-            /* New deal with the new queue. */
-            partitioner.read(newQueue);
-
-            /* Perform partitioning and reduction. */
-            partitioner.partition();
-
-            currentQueue = updateResultStore(outputQueue);
-        }
+        LOGGER.trace(() -> "Finished adding items to the queue");
+        return true;
     }
 
     private PairQueue<GroupKey, Item> updateResultStore(final PairQueue<GroupKey, Item> queue) {
@@ -188,8 +134,6 @@ public class TablePayloadHandler implements PayloadHandler {
             // the client
             if (maxResults != null && data.getTotalSize() >= maxResults.size(0)) {
                 hasEnoughData = true;
-                // Clear the queue if we have enough data.
-                pendingMerges.clear();
             }
         }
 
@@ -199,17 +143,5 @@ public class TablePayloadHandler implements PayloadHandler {
 
     public Data getData() {
         return data;
-    }
-
-    public void waitForPendingWork() {
-        // This assumes that when this method has been called, all calls to addQueue
-        // have been made, thus we will lock and perform a final merge.
-        lock.lock();
-        try {
-            // Perform final merge.
-            mergePending();
-        } finally {
-            lock.unlock();
-        }
     }
 }

@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.mapreduce.v2.Pair;
 import stroom.mapreduce.v2.Reader;
 import stroom.mapreduce.v2.Source;

@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import org.junit.jupiter.api.Disabled;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValString;

@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 
 import java.io.Serializable;
 
@@ -26,9 +27,6 @@ public class Item implements Serializable {
     GroupKey key;
     Generator[] generators;
     int depth;
-
-    Item() {
-    }
 
     public Item(final GroupKey key,
                 final Generator[] generators,

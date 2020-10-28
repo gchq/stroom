@@ -17,6 +17,8 @@
 package stroom.query.common.v2;
 
 import org.junit.jupiter.api.Test;
+
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.mapreduce.v2.UnsafePairQueue;

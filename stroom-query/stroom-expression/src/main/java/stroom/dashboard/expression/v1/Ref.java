@@ -16,7 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -90,14 +89,13 @@ class Ref extends AbstractFunction {
         }
 
         @Override
-        public void read(final Kryo kryo, final Input input) {
-            Object object = kryo.readClassAndObject(input);
-            current = (Val) object;
+        public void read(final Input input) {
+            current = ValSerialisers.read(input);
         }
 
         @Override
-        public void write(final Kryo kryo, final Output output) {
-            kryo.writeClassAndObject(output, current);
+        public void write(final Output output) {
+            ValSerialisers.write(output, current);
         }
     }
 }
