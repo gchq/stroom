@@ -37,15 +37,23 @@ import stroom.query.api.v2.TableResult;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
+import stroom.task.server.TaskContext;
 import stroom.task.server.TaskHandlerBean;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 @TaskHandlerBean(task = SearchBusPollAction.class)
 @Scope(value = StroomScope.TASK)
@@ -58,6 +66,9 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final ActiveQueriesManager activeQueriesManager;
     private final SearchRequestMapper searchRequestMapper;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
+    private final TaskContext taskContext;
 
     @Inject
     SearchBusPollActionHandler(final QueryService queryService,
@@ -65,13 +76,19 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                                final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                                final ActiveQueriesManager activeQueriesManager,
                                final SearchRequestMapper searchRequestMapper,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final ExecutorProvider executorProvider,
+                               final Provider<TaskWrapper> taskWrapperProvider,
+                               final TaskContext taskContext) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.activeQueriesManager = activeQueriesManager;
         this.searchRequestMapper = searchRequestMapper;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
+        this.taskWrapperProvider = taskWrapperProvider;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -92,7 +109,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             final String searchSessionId = action.getUserIdentity() + "_" + action.getApplicationInstanceId();
             final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
-            final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
+            final Map<DashboardQueryKey, SearchResponse> searchResultMap = new ConcurrentHashMap<>();
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
@@ -105,25 +122,45 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             activeQueries.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
             // Get query results for every active query.
+            final Executor executor = executorProvider.getExecutor();
+            final CountDownLatch countDownLatch = new CountDownLatch(action.getSearchActionMap().size());
             for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
-                final DashboardQueryKey queryKey = entry.getKey();
-
-                final SearchRequest searchRequest = entry.getValue();
-
-                if (searchRequest != null && searchRequest.getSearch() != null) {
-                    final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
-                    if (searchResponse != null) {
-                        searchResultMap.put(queryKey, searchResponse);
+                Runnable runnable = () -> {
+                    try {
+                        final DashboardQueryKey queryKey = entry.getKey();
+                        final SearchRequest searchRequest = entry.getValue();
+                        if (searchRequest != null && searchRequest.getSearch() != null) {
+                            taskContext.setName("Executing search request");
+                            taskContext.info(queryKey.toString());
+                            final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
+                            if (searchResponse != null) {
+                                searchResultMap.put(queryKey, searchResponse);
+                            }
+                        }
+                    } finally {
+                        countDownLatch.countDown();
                     }
-                }
+                };
+                runnable = taskWrapperProvider.get().wrap(runnable);
+                executor.execute(runnable);
             }
 
-            return new SearchBusPollResult(searchResultMap);
+            // Wait for all results to come back.
+            try {
+                while (!countDownLatch.await(1, TimeUnit.SECONDS) && !action.isTerminated()) {
+                    LOGGER.debug("Waiting");
+                }
+            } catch (final InterruptedException e) {
+                // Keep interrupting.
+                Thread.currentThread().interrupt();
+            }
+
+            return new SearchBusPollResult(new HashMap<>(searchResultMap));
         }
     }
 
     private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {
-        SearchResponse result = null;
+        SearchResponse result;
 
         boolean newSearch = false;
         final Search search = searchRequest.getSearch();
@@ -167,7 +204,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 if (paramMap != null) {
                     paramMap = new HashMap<>(paramMap);
                 } else {
-                    paramMap= new HashMap<>();
+                    paramMap = new HashMap<>();
                 }
                 paramMap.put("currentUser()", securityContext.getUserId());
                 searchRequest.getSearch().setParamMap(paramMap);

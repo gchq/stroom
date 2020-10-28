@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
+
 * Issue **#1915** : Fixed task context user identity for statistics searches.
 
 
