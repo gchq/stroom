@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.24] - 2020-10-28
+
 * Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
 
 * Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
@@ -2276,7 +2279,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.23...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.24...6.1
+[v6.1.24]: https://github.com/gchq/stroom/compare/v6.1.23...v6.1.24
 [v6.1.23]: https://github.com/gchq/stroom/compare/v6.1.22...v6.1.23
 [v6.1.22]: https://github.com/gchq/stroom/compare/v6.1.21...v6.1.22
 [v6.1.21]: https://github.com/gchq/stroom/compare/v6.1.20...v6.1.21
