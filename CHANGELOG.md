@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1915** : Fixed task context user identity for statistics searches.
+
 
 ## [v6.1.23] - 2020-10-28
 
