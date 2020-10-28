@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.25] - 2020-10-28
+
 * Removed rxjava.
 
 
@@ -2281,7 +2284,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.24...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.25...6.1
+[v6.1.25]: https://github.com/gchq/stroom/compare/v6.1.24...v6.1.25
 [v6.1.24]: https://github.com/gchq/stroom/compare/v6.1.23...v6.1.24
 [v6.1.23]: https://github.com/gchq/stroom/compare/v6.1.22...v6.1.23
 [v6.1.22]: https://github.com/gchq/stroom/compare/v6.1.21...v6.1.22
