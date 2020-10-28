@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.23] - 2020-10-28
+
 * Issue **#1915** : Fixed task context for statistics searches.
 
 
@@ -2267,7 +2270,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.22...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.23...6.1
+[v6.1.23]: https://github.com/gchq/stroom/compare/v6.1.22...v6.1.23
 [v6.1.22]: https://github.com/gchq/stroom/compare/v6.1.21...v6.1.22
 [v6.1.21]: https://github.com/gchq/stroom/compare/v6.1.20...v6.1.21
 [v6.1.20]: https://github.com/gchq/stroom/compare/v6.1.19...v6.1.20
