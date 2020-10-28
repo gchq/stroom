@@ -2,7 +2,6 @@ package stroom.statistics.server.sql.search;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -16,6 +15,10 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.server.util.PreparedStatementUtil;
 import stroom.entity.server.util.SqlBuilder;
 import stroom.node.server.StroomPropertyService;
+import stroom.query.common.v2.CompletionState;
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.Values;
 import stroom.statistics.server.sql.SQLStatisticConstants;
 import stroom.statistics.server.sql.SQLStatisticNames;
 import stroom.statistics.server.sql.rollup.RollUpBitMask;
@@ -86,19 +89,24 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     @Override
-    public Flowable<Val[]> search(final StatisticStoreEntity statisticStoreEntity,
-                                  final FindEventCriteria criteria,
-                                  final FieldIndexMap fieldIndexMap) {
+    public void search(final StatisticStoreEntity statisticStoreEntity,
+                       final FindEventCriteria criteria,
+                       final FieldIndexMap fieldIndexMap,
+                       final Receiver receiver,
+                       final CompletionState completionState) {
+        try {
+            List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
+            SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
 
-        List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
-        SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
+            // build a mapper function to convert a resultSet row into a String[] based on the fields
+            // required by all coprocessors
+            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
-        // build a mapper function to convert a resultSet row into a String[] based on the fields
-        // required by all coprocessors
-        Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
-
-        // the query will not be executed until somebody subscribes to the flowable
-        return getFlowableQueryResults(sql, resultSetMapper);
+            // the query will not be executed until somebody subscribes to the flowable
+            getFlowableQueryResults(sql, resultSetMapper, receiver, completionState);
+        } catch (final RuntimeException e) {
+            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+        }
     }
 
     private List<String> getSelectColumns(final StatisticStoreEntity statisticStoreEntity,
@@ -359,57 +367,81 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<Val[]> getFlowableQueryResults(final SqlBuilder sql,
-                                                    final Function<ResultSet, Val[]> resultSetMapper) {
+    private void getFlowableQueryResults(final SqlBuilder sql,
+                                         final Function<ResultSet, Val[]> resultSetMapper,
+                                         final Receiver receiver,
+                                         final CompletionState completionState) {
+        long count = 0;
 
-        //Not thread safe as each onNext will get the same ResultSet instance, however its position
-        // will have mode on each time.
-        Flowable<Val[]> resultSetFlowable = Flowable
-                .using(
-                        () -> new PreparedStatementResourceHolder(statisticsDataSource, sql, propertyService),
-                        factory -> {
-                            LOGGER.debug("Converting factory to a flowable");
-                            Preconditions.checkNotNull(factory);
-                            PreparedStatement ps = factory.getPreparedStatement();
-                            return Flowable.generate(
-                                    () -> {
-                                        final String message = String.format("Executing query %s", sql.toString());
-                                        taskContext.setName(SqlStatisticsStore.TASK_NAME);
-                                        taskContext.info(message);
-                                        LAMBDA_LOGGER.debug(() -> message);
+        try (final Connection connection = statisticsDataSource.getConnection()) {
 
-                                        try {
-                                            return ps.executeQuery();
-                                        } catch (SQLException e) {
-                                            throw new RuntimeException(String.format("Error executing query %s, %s",
-                                                    ps.toString(), e.getMessage()), e);
-                                        }
-                                    },
-                                    (rs, emitter) -> {
-                                        // The line below can be un-commented in development debugging to slow down the
-                                        // return of all results to test iterative results and dashboard polling.
-                                        // LockSupport.parkNanos(200_000);
+            //settings ot prevent mysql from reading the whole resultset into memory
+            //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
+            //Also needs 'useCursorFetch=true' on the jdbc connect string
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    sql.toString(),
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
 
-                                        //advance the resultSet, if it is a row emit it, else finish the flow
-                                        // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
-                                            LOGGER.debug("Task is terminated/interrupted, calling onComplete");
-                                            emitter.onComplete();
-                                        } else {
-                                            if (rs.next()) {
-                                                LOGGER.trace("calling onNext");
-                                                Val[] values = resultSetMapper.apply(rs);
-                                                emitter.onNext(values);
-                                            } else {
-                                                LOGGER.debug("End of resultSet, calling onComplete");
-                                                emitter.onComplete();
-                                            }
-                                        }
-                                    });
-                        },
-                        PreparedStatementResourceHolder::dispose);
+                final String fetchSizeStr = propertyService.getProperty(PROP_KEY_SQL_SEARCH_FETCH_SIZE);
+                if (fetchSizeStr != null && !fetchSizeStr.isEmpty()) {
+                    try {
+                        final int fetchSize = Integer.valueOf(fetchSizeStr);
+                        LOGGER.debug("Setting fetch size to {}", fetchSize);
+                        preparedStatement.setFetchSize(fetchSize);
+                    } catch (NumberFormatException e) {
+                        throw new RuntimeException(String.format("Error converting value [%s] for property %s to an integer",
+                                fetchSizeStr, PROP_KEY_SQL_SEARCH_FETCH_SIZE), e);
+                    }
+                }
 
-        return resultSetFlowable;
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
+
+                final String message = String.format("Executing query %s", sql.toString());
+                taskContext.setName(SqlStatisticsStore.TASK_NAME);
+                taskContext.info(message);
+                LAMBDA_LOGGER.debug(() -> message);
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                    // TODO prob needs to change in 6.1
+                    while (resultSet.next() &&
+                            !Thread.currentThread().isInterrupted() &&
+                            !taskContext.isTerminated() &&
+                            !completionState.isComplete()) {
+                        LOGGER.trace("Adding resultt");
+                        final Val[] values = resultSetMapper.apply(resultSet);
+                        receiver.getValuesConsumer().accept(new Values(values));
+                        count++;
+                    }
+
+                    if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                        LOGGER.debug("Task is terminated/interrupted, calling onComplete");
+                    } else {
+                        LOGGER.debug("End of resultSet, calling onComplete");
+                    }
+
+                } catch (SQLException e) {
+                    throw new RuntimeException(String.format("Error executing query %s, %s",
+                            preparedStatement.toString(), e.getMessage()), e);
+
+                } finally {
+                    receiver.getCompletionConsumer().accept(count);
+                }
+
+
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
+            }
+
+        } catch (final SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+
+        } finally {
+            receiver.getCompletionConsumer().accept(count);
+        }
     }
 
     /**
@@ -488,76 +520,4 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                      final Val[] data,
                      final Map<String, Val> fieldValueCache);
     }
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    private static class PreparedStatementResourceHolder {
-        private Connection connection;
-        private PreparedStatement preparedStatement;
-
-        PreparedStatementResourceHolder(final DataSource dataSource,
-                                        final SqlBuilder sql,
-                                        final StroomPropertyService propertyService) {
-            try {
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                throw new RuntimeException("Error getting connection", e);
-            }
-            try {
-                //settings ot prevent mysql from reading the whole resultset into memory
-                //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
-                //Also needs 'useCursorFetch=true' on the jdbc connect string
-                preparedStatement = connection.prepareStatement(
-                        sql.toString(),
-                        ResultSet.TYPE_FORWARD_ONLY,
-                        ResultSet.CONCUR_READ_ONLY,
-                        ResultSet.CLOSE_CURSORS_AT_COMMIT);
-
-                String fetchSizeStr = propertyService.getProperty(PROP_KEY_SQL_SEARCH_FETCH_SIZE);
-                if (fetchSizeStr != null && !fetchSizeStr.isEmpty()) {
-                    try {
-                        int fetchSize = Integer.valueOf(fetchSizeStr);
-                        LOGGER.debug("Setting fetch size to {}", fetchSize);
-                        preparedStatement.setFetchSize(fetchSize);
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeException(String.format("Error converting value [%s] for property %s to an integer",
-                                fetchSizeStr, PROP_KEY_SQL_SEARCH_FETCH_SIZE), e);
-                    }
-                }
-
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
-
-            } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
-            }
-        }
-
-        PreparedStatement getPreparedStatement() {
-            return preparedStatement;
-        }
-
-        void dispose() {
-            LOGGER.debug("dispose called");
-            if (preparedStatement != null) {
-                try {
-                    LOGGER.debug("Closing preparedStatement");
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing preparedStatement", e);
-                }
-                preparedStatement = null;
-            }
-            if (connection != null) {
-                try {
-                    LOGGER.debug("Closing connection");
-                    connection.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing connection", e);
-                }
-                connection = null;
-            }
-        }
-    }
-
 }

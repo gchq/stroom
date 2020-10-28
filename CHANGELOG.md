@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Removed rxjava.
+
 
 ## [v6.1.23] - 2020-10-28
 

@@ -89,7 +89,6 @@ ext.versions = [
     jooq: '3.11.9',
     logback: '1.2.3', //in line with dropwizard 1.3.14
     lucene: '5.5.3',
-    rxjava: '2.1.10',
     slf4j: '1.7.26', //in line with dropwizard 1.3.14
     spring: '4.3.4.RELEASE',
     swagger: '1.5.16',
@@ -198,9 +197,7 @@ ext.libs = [
     okhttp: "com.squareup.okhttp3:okhttp:4.3.0",
     poi: "org.apache.poi:poi:3.17",
     poi_ooxml: "org.apache.poi:poi-ooxml:3.17",
-    reactivestreams: "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
     restygwt: "org.fusesource.restygwt:restygwt:2.2.6",
-    rxjava: "io.reactivex.rxjava2:rxjava:$versions.rxjava",
     saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-21",
     slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
     solrj: "org.apache.solr:solr-solrj:8.2.0",

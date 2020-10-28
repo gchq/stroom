@@ -21,6 +21,7 @@ import stroom.util.shared.HasTerminate;
 import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,7 +42,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private final StroomPropertyService stroomPropertyService;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContext taskContext;
-    private final TaskWrapper taskWrapper;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final ExecutorProvider executorProvider;
 
     @Inject
@@ -49,13 +50,13 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                                     final StroomPropertyService stroomPropertyService,
                                     final StatisticsSearchService statisticsSearchService,
                                     final TaskContext taskContext,
-                                    final TaskWrapper taskWrapper,
+                                    final Provider<TaskWrapper> taskWrapperProvider,
                                     final ExecutorProvider executorProvider) {
         this.statisticStoreCache = statisticStoreCache;
         this.stroomPropertyService = stroomPropertyService;
         this.statisticsSearchService = statisticsSearchService;
         this.taskContext = taskContext;
-        this.taskWrapper = taskWrapper;
+        this.taskWrapperProvider = taskWrapperProvider;
         this.executorProvider = executorProvider;
     }
 
@@ -76,8 +77,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(statisticStoreEntity, "Statistic configuration could not be found for uuid "
                 + docRef.getUuid());
 
-        final Store store = buildStore(searchRequest, statisticStoreEntity);
-        return store;
+        return buildStore(searchRequest, statisticStoreEntity);
     }
 
     private Store buildStore(final SearchRequest searchRequest,
@@ -93,24 +93,17 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         // TODO do we want to limit this with a thread pool?
         final Executor executor = executorProvider.getExecutor();
 
-        // We have to create a wrapped executor so that the task context references a managed task.
-        final Executor wrappedExecutor = command -> {
-            final Runnable wrappedRunnable = taskWrapper.wrap(command);
-            executor.execute(wrappedRunnable);
-        };
-
         //wrap the resultHandler in a new store, initiating the search in the process
-        final SqlStatisticsStore store = new SqlStatisticsStore(
+        return new SqlStatisticsStore(
                 searchRequest,
                 statisticStoreEntity,
                 statisticsSearchService,
                 defaultMaxResultsSizes,
                 storeSize,
                 resultHandlerBatchSize,
-                wrappedExecutor,
+                executor,
+                taskWrapperProvider,
                 taskContext);
-
-        return store;
     }
 
 
