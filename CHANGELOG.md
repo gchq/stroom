@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
+
 * Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
 
 * Issue **#1915** : Fixed task context user identity for statistics searches.
