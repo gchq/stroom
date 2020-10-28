@@ -21,6 +21,8 @@ package stroom.security.identity.config;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -29,6 +31,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig {
 
@@ -62,6 +65,23 @@ public class TokenConfig extends AbstractConfig {
     @JsonPropertyDescription("The cryptographic algorithm used in the Json Web Signatures. " +
             "Valid values can be found at https://openid.net/specs/draft-jones-json-web-signature-04.html#Signing")
     private String algorithm = "RS256";
+
+
+    public TokenConfig() {
+    }
+
+    @JsonCreator
+    public TokenConfig(@JsonProperty("timeUntilExpirationForUserToken") final StroomDuration timeUntilExpirationForUserToken,
+                       @JsonProperty("timeUntilExpirationForEmailResetToken") final StroomDuration timeUntilExpirationForEmailResetToken,
+                       @JsonProperty("defaultApiKeyExpiryInMinutes") final Long defaultApiKeyExpiryInMinutes,
+                       @JsonProperty("jwsIssuer") final String jwsIssuer,
+                       @JsonProperty("algorithm") final String algorithm) {
+        this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
+        this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
+        this.defaultApiKeyExpiryInMinutes = defaultApiKeyExpiryInMinutes;
+        this.jwsIssuer = jwsIssuer;
+        this.algorithm = algorithm;
+    }
 
     public StroomDuration getTimeUntilExpirationForUserToken() {
         return timeUntilExpirationForUserToken;

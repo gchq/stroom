@@ -18,33 +18,53 @@
 
 package stroom.security.identity.account;
 
-/**
- * This POJO binds to the response from the database, and to the JSON.
- * <p>
- * The names are database-style to reduce mapping code. This looks weird in Java but it's sensible for the database
- * and it's sensible for the json.
- */
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account {
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private String email;
+    @JsonProperty
     private String firstName;
+    @JsonProperty
     private String lastName;
+    @JsonProperty
     private String comments;
+    @JsonProperty
     private int loginCount;
+    @JsonProperty
     private int loginFailures;
+    @JsonProperty
     private Long lastLoginMs;
+    @JsonProperty
     private Long reactivatedMs;
+    @JsonProperty
     private boolean forcePasswordChange;
+    @JsonProperty
     private boolean neverExpires;
+    @JsonProperty
     private boolean enabled;
+    @JsonProperty
     private boolean inactive;
+    @JsonProperty
     private boolean locked;
+    @JsonProperty
     private boolean processingAccount;
 
 //    public Account() {
@@ -77,6 +97,54 @@ public class Account {
 //        return Pair.of(isValid, validationMessages);
 //    }
 
+
+    public Account() {
+    }
+
+    @JsonCreator
+    public Account(@JsonProperty("id") final Integer id,
+                   @JsonProperty("version") final Integer version,
+                   @JsonProperty("createTimeMs") final Long createTimeMs,
+                   @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                   @JsonProperty("createUser") final String createUser,
+                   @JsonProperty("updateUser") final String updateUser,
+                   @JsonProperty("userId") final String userId,
+                   @JsonProperty("email") final String email,
+                   @JsonProperty("firstName") final String firstName,
+                   @JsonProperty("lastName") final String lastName,
+                   @JsonProperty("comments") final String comments,
+                   @JsonProperty("loginCount") final int loginCount,
+                   @JsonProperty("loginFailures") final int loginFailures,
+                   @JsonProperty("lastLoginMs") final Long lastLoginMs,
+                   @JsonProperty("reactivatedMs") final Long reactivatedMs,
+                   @JsonProperty("forcePasswordChange") final boolean forcePasswordChange,
+                   @JsonProperty("neverExpires") final boolean neverExpires,
+                   @JsonProperty("enabled") final boolean enabled,
+                   @JsonProperty("inactive") final boolean inactive,
+                   @JsonProperty("locked") final boolean locked,
+                   @JsonProperty("processingAccount") final boolean processingAccount) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.updateTimeMs = updateTimeMs;
+        this.createUser = createUser;
+        this.updateUser = updateUser;
+        this.userId = userId;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.comments = comments;
+        this.loginCount = loginCount;
+        this.loginFailures = loginFailures;
+        this.lastLoginMs = lastLoginMs;
+        this.reactivatedMs = reactivatedMs;
+        this.forcePasswordChange = forcePasswordChange;
+        this.neverExpires = neverExpires;
+        this.enabled = enabled;
+        this.inactive = inactive;
+        this.locked = locked;
+        this.processingAccount = processingAccount;
+    }
 
     public Integer getId() {
         return id;
