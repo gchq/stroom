@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
+
 * Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
 
 * Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.

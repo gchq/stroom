@@ -92,7 +92,7 @@ public class RenameFieldPresenter
 
                 // Need to ensure any conditional formatting rules that use this field name
                 // are renamed too.
-                tablePresenter.handleFieldRename(field.getId(), field.getName(), newFieldName);
+                tablePresenter.handleFieldRename(field.getName(), newFieldName);
 
                 final boolean isNameInUse = tablePresenter.getSettings()
                         .getFields()
