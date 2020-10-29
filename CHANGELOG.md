@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.26] - 2020-10-29
+
 * Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
 
 * Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
@@ -2290,7 +2293,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.25...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.26...6.1
+[v6.1.26]: https://github.com/gchq/stroom/compare/v6.1.25...v6.1.26
 [v6.1.25]: https://github.com/gchq/stroom/compare/v6.1.24...v6.1.25
 [v6.1.24]: https://github.com/gchq/stroom/compare/v6.1.23...v6.1.24
 [v6.1.23]: https://github.com/gchq/stroom/compare/v6.1.22...v6.1.23
