@@ -59,8 +59,8 @@ import stroom.svg.client.SvgIcon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ImageUtil;
-import stroom.util.shared.RandomId;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -381,7 +381,20 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        if (tabLayoutConfig.getVisibleTabCount() <= 1) {
+        // Figure out what tabs would remain after removal.
+        int hiddenCount = 0;
+        int totalCount = 0;
+        for (final TabConfig tab : tabLayoutConfig.getTabs()) {
+            if (tab != tabConfig) {
+                if (!tab.isVisible()) {
+                    hiddenCount++;
+                }
+                totalCount++;
+            }
+        }
+
+        // If all remaining tabs are hidden the we can't allow removal.
+        if (totalCount > 0 && totalCount == hiddenCount) {
             AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
         } else {
             ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {

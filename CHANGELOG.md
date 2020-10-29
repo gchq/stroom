@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.
+
 
 ## [v6.1.25] - 2020-10-28
 
