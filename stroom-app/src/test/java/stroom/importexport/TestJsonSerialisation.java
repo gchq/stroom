@@ -1,7 +1,6 @@
 package stroom.importexport;
 
 import stroom.util.json.JsonUtil;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.RestResource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -24,8 +23,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -319,16 +318,13 @@ class TestJsonSerialisation {
                 }
 
                 SoftAssertions.assertSoftly(softly -> {
-                    constructorPropNames.stream()
-                            .filter(constructorPropName -> !fieldPropNames.contains(constructorPropName))
-                            .forEach(propName ->
-                                    softly.fail(LogUtil.message(
-                                            "JsonProperty {} is defined in the constructor but there is no " +
-                                                    "corresponding field. Found fields: {}",
-                                            propName, fieldPropNames)));
+                    softly.assertThat(constructorPropNames)
+                            .describedAs("JsonProperties defined in the constructor must have a" +
+                                    "corresponding JsonProperty on the field.")
+                            .containsExactlyInAnyOrderElementsOf(fieldPropNames);
 
                     softly.assertThat(hasJsonInclude)
-                            .withFailMessage("No JsonInclude")
+                            .describedAs("Missing JsonInclude annotation.")
                             .isTrue();
 //                                softly.assertThat(hasJsonPropertyOrder)
 //                                        .withFailMessage("No JsonPropertyOrder")

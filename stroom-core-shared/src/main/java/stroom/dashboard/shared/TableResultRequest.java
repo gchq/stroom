@@ -16,13 +16,15 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.OffsetRange;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.OffsetRange;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -58,7 +60,9 @@ public class TableResultRequest extends ComponentResultRequest {
     @JsonCreator
     public TableResultRequest(@JsonProperty("tableSettings") final TableComponentSettings tableSettings,
                               @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
-                              @JsonProperty("openGroups") final Set<String> openGroups) {
+                              @JsonProperty("openGroups") final Set<String> openGroups,
+                              @JsonProperty("fetch") final Fetch fetch) {
+        super(fetch);
         this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
