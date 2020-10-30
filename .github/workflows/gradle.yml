@@ -15,9 +15,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: set Environment Variables
+      id: set_env_var
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        if [[ $VERSION == *"beta"* ]]; then IS_PRE='true'; else IS_PRE='false'; fi
+        echo ::set-output name=version::${VERSION}
+        echo ::set-output name=prerelease::${IS_PRE}
+      #  echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+      #  echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+      #  echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      env:
+        REPOSITORY: ${{ github.event.repository.name }}
+    #          VERSION: ${{ github.ref }}
 
-    # We need to run a script to setup some stuff for tests to run
+    #          VERSION=$(sed 's/[^0-9|.]//g' _Release.h)  # zb. 2.4.2
+    #          if [ $REPOSITORY = "master" ]; then POSTFIX=''    ; else POSTFIX='PRE';    fi
+    #          RELEASEBODY=$(awk -v RS='Release ' '/'$VERSION':(.*)/ {print $0}' ChangeLog.h)
+    #          RELEASEBODY="${RELEASEBODY//'%'/'%25'}"
+    #          RELEASEBODY="${RELEASEBODY//$'\n'/'%0A'}"
+    #          RELEASEBODY="${RELEASEBODY//$'\r'/'%0D'}"
+    #          echo "::set-output name=version::${VERSION}"
+    #          echo "::set-output name=IS_PRERELEASE::${IS_PRE}"
+    #          echo "::set-output name=RELEASENAME_POSTFIX::${POSTFIX}"
+    #          echo "::set-output name=RELEASEBODY::${RELEASEBODY}"
+    #          echo "::set-env name=body::${RELEASEBODY}"
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+      # Ensure we have a local.yml file as the integration tests will need it
     - name: Grant execute permission for local.yml.sh
       run: chmod +x local.yml.sh
     - name: Execute local.yml.sh
@@ -30,4 +57,24 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build
+      run: |
+        ./gradlew \
+        --scan \
+        --stacktrace \
+        -PdumpFailedTestXml=true \
+        -Pversion="SNAPSHOT" \
+        build \
+        -x shadowJar \
+        -x generateSwaggerDocumentation \
+        -x copyFilesForStroomDockerBuild \
+        -x copyFilesForProxyDockerBuild \
+        -x buildDistribution
+
+
+      # Do the gradle build
+      # Use custom gwt compile jvm settings to avoid blowing the ram limit in
+      # travis. At time of writing a sudo VM in travis has 7.5gb ram.
+      # Each work will chew up the maxHeap value and we have to allow for
+      # our docker services as well.
+      # Don't clean as this is a fresh clone and clean will wipe the cached
+      # content pack zips
