@@ -36,6 +36,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.TableResult;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
+import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskContext;
 import stroom.task.server.TaskHandlerBean;
@@ -45,6 +46,7 @@ import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +71,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
     private final ExecutorProvider executorProvider;
     private final Provider<TaskWrapper> taskWrapperProvider;
     private final TaskContext taskContext;
+    private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
     SearchBusPollActionHandler(final QueryService queryService,
@@ -79,7 +82,8 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                                final SecurityContext securityContext,
                                final ExecutorProvider executorProvider,
                                final Provider<TaskWrapper> taskWrapperProvider,
-                               final TaskContext taskContext) {
+                               final TaskContext taskContext,
+                               final HttpServletRequestHolder httpServletRequestHolder) {
         this.queryService = queryService;
         this.searchEventLog = searchEventLog;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
@@ -89,6 +93,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
         this.executorProvider = executorProvider;
         this.taskWrapperProvider = taskWrapperProvider;
         this.taskContext = taskContext;
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     @Override
@@ -122,11 +127,13 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
             activeQueries.destroyUnusedQueries(action.getSearchActionMap().keySet());
 
             // Get query results for every active query.
+            final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
             final Executor executor = executorProvider.getExecutor();
             final CountDownLatch countDownLatch = new CountDownLatch(action.getSearchActionMap().size());
             for (final Entry<DashboardQueryKey, SearchRequest> entry : action.getSearchActionMap().entrySet()) {
                 Runnable runnable = () -> {
                     try {
+                        httpServletRequestHolder.set(httpServletRequest);
                         final DashboardQueryKey queryKey = entry.getKey();
                         final SearchRequest searchRequest = entry.getValue();
                         if (searchRequest != null && searchRequest.getSearch() != null) {
@@ -139,6 +146,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                         }
                     } finally {
                         countDownLatch.countDown();
+                        httpServletRequestHolder.set(null);
                     }
                 };
                 runnable = taskWrapperProvider.get().wrap(runnable);

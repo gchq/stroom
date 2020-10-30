@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1925** : Fixed logging error that was happening on search.
+
 
 ## [v6.1.26] - 2020-10-29
 

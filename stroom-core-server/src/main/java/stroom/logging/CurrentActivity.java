@@ -16,6 +16,8 @@
 
 package stroom.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -28,19 +30,25 @@ import javax.servlet.http.HttpSession;
 
 @Component
 public class CurrentActivity implements BeanFactoryAware {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CurrentActivity.class);
+
     private static final String NAME = "SESSION_ACTIVITY";
     private BeanFactory beanFactory;
 
     public Activity getActivity() {
         Activity activity = null;
 
-        final HttpServletRequest request = getRequest();
-        if (request != null) {
-            final HttpSession session = request.getSession();
-            final Object object = session.getAttribute(NAME);
-            if (object instanceof Activity) {
-                activity = (Activity) object;
+        try {
+            final HttpServletRequest request = getRequest();
+            if (request != null) {
+                final HttpSession session = request.getSession();
+                final Object object = session.getAttribute(NAME);
+                if (object instanceof Activity) {
+                    activity = (Activity) object;
+                }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
 
         return activity;
