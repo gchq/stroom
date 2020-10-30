@@ -171,7 +171,8 @@ public final class MappingUtil {
                 map(value.getExtractionPipeline()),
                 value.getMaxResults(),
                 value.getShowDetail(),
-                mapList(value.getConditionalFormattingRules(), MappingUtil::map));
+                mapList(value.getConditionalFormattingRules(), MappingUtil::map),
+                value.getModelVersion());
     }
 
     public static stroom.dashboard.shared.ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {
@@ -216,7 +217,8 @@ public final class MappingUtil {
                 map(value.getColToField()),
                 map(value.getPipeline()),
                 value.isShowAsHtml(),
-                value.isShowStepping());
+                value.isShowStepping(),
+                value.getModelVersion());
     }
 
     public static stroom.query.api.v2.ExpressionItem map(stroom.legacy.model_6_1.ExpressionItem value) {

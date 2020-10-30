@@ -127,12 +127,8 @@ public class TabManager {
         }
     }
 
-    private void deleteTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        if (tabLayoutConfig.getVisibleTabCount() <= 1) {
-            AlertEvent.fireError(dashboardPresenter, "You cannot remove or hide all tabs", null);
-        } else {
-            dashboardPresenter.requestTabClose(tabConfig);
-        }
+    private void closeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.requestTabClose(tabLayoutConfig, tabConfig);
     }
 
     private void showTab(final TabConfig tabConfig) {
@@ -212,6 +208,6 @@ public class TabManager {
     }
 
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Close", null, true, () -> deleteTab(tabLayoutConfig, tabConfig));
+        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Close", null, true, () -> closeTab(tabLayoutConfig, tabConfig));
     }
 }
