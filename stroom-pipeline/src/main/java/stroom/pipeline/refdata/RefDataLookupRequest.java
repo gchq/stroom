@@ -44,7 +44,7 @@ public class RefDataLookupRequest {
     public RefDataLookupRequest(@JsonProperty("mapName") final String mapName,
                                 @JsonProperty("key") final String key,
                                 @JsonProperty("effectiveTimeEpochMs") final Long effectiveTimeEpochMs,
-                                @JsonProperty("pipelines") final List<ReferenceLoader> referenceLoaders) {
+                                @JsonProperty("referenceLoaders") final List<ReferenceLoader> referenceLoaders) {
         this.mapName = mapName;
         this.key = key;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs != null

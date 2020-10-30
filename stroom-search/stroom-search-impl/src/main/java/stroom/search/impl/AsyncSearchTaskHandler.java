@@ -142,7 +142,7 @@ class AsyncSearchTaskHandler {
                         final String nodeName = entry.getKey();
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
-                            final Runnable runnable = taskContextFactory.context(parentContext, "Async Search Task", taskContext ->
+                            final Runnable runnable = taskContextFactory.context(parentContext, "Node search", taskContext ->
                                     searchNode(sourceNode, nodeName, shards, task, query, storedFields, taskContext));
                             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                             futures.add(completableFuture);
@@ -239,8 +239,10 @@ class AsyncSearchTaskHandler {
                         new Object[]{securityContext.getUserIdentity(), task.getKey()});
                 if (nodeResult != null) {
                     LOGGER.debug(() -> "Receive result for node: " + targetNode + " " + nodeResult);
-                    resultCollector.onSuccess(targetNode, nodeResult);
-                    if (nodeResult.isComplete()) {
+                    final boolean success = resultCollector.onSuccess(targetNode, nodeResult);
+                    // If the result collector returns false it is because we have already collected enough data and can
+                    // therefore consider search complete.
+                    if (nodeResult.isComplete() || !success) {
                         complete = true;
                     }
                 }

@@ -16,12 +16,13 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -70,7 +71,6 @@ public class TextComponentSettings extends ComponentSettings {
     private boolean showStepping;
 
     public TextComponentSettings() {
-        showStepping = true;
     }
 
     @JsonCreator

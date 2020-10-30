@@ -59,6 +59,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -253,6 +264,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private void update(final TablePresenter tablePresenter) {
         boolean updating = false;
+        String message = "";
 
         final String permissionCheck = checkPermissions();
         if (permissionCheck != null) {
@@ -279,7 +291,21 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentLineTo = getLong(textSettings.getLineToField(), selected);
                     final Long currentColTo = getLong(textSettings.getColToField(), selected);
 
-                    if (currentStreamId != null) {
+                    // Validate settings.
+                    if (textSettings.getStreamIdField() == null) {
+                        message = "No stream id field is configured";
+
+                    } else if (textSettings.getStreamIdField() != null && currentStreamId == null) {
+                        message = "No stream id found in selection";
+
+                    } else if (textSettings.getRecordNoField() == null &&
+                            !(textSettings.getLineFromField() != null && textSettings.getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                        message = "No record number field is configured";
+
+                    } else if (textSettings.getRecordNoField() != null && currentRecordNo == null) {
+                        message = "No record number field found in selection";
+
+                    } else {
                         DataRange dataRange = null;
                         TextRange highlight = null;
                         if (currentLineFrom != null
@@ -358,7 +384,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
         // If we aren't updating the data display then clear it.
         if (!updating) {
-            showData("", null, null, isHtml);
+            showData(message, null, null, isHtml);
         }
     }
 
