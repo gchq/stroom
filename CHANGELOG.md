@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.27] - 2020-10-30
+
 * Issue **#1925** : Fixed logging error that was happening on search.
 
 
@@ -2295,7 +2298,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.26...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.27...6.1
+[v6.1.27]: https://github.com/gchq/stroom/compare/v6.1.26...v6.1.27
 [v6.1.26]: https://github.com/gchq/stroom/compare/v6.1.25...v6.1.26
 [v6.1.25]: https://github.com/gchq/stroom/compare/v6.1.24...v6.1.25
 [v6.1.24]: https://github.com/gchq/stroom/compare/v6.1.23...v6.1.24
