@@ -29,22 +29,46 @@ public class DataPopupSupport {
     @Inject
     public DataPopupSupport(final EventBus eventBus,
                             final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider) {
+
         eventBus.addHandler(ShowDataEvent.getType(), e -> {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
+
             dataPresenter.setFormatOnLoad(true);
             dataPresenter.fetchData(e.getSourceLocation());
+
             final PopupSize popupSize = new PopupSize(
+                    1400,
                     800,
-                    600,
-                    800,
+                    1000,
                     600,
                     true);
+
+//            final String locationInfo;
+//            if (e.getSourceLocation().getDataRange() != null
+//                    && e.getSourceLocation().getDataRange().getLocationFrom() != null
+//                    && e.getSourceLocation().getDataRange().getLocationTo() != null) {
+//                final DataRange dataRange = e.getSourceLocation().getDataRange();
+//                locationInfo = " (Line:Col Range: "
+//                        + dataRange.getLocationFrom().toString() + " to "
+//                        + dataRange.getLocationTo().toString()
+//                        + ")";
+//            } else {
+//                locationInfo = "";
+//            }
+
+            // Convert to one based for UI;
+            final String caption = "Data Preview "
+                    + e.getSourceLocation().getId() + ":"
+                    + (e.getSourceLocation().getPartNo() + 1) + ":"
+                    + (e.getSourceLocation().getSegmentNo() + 1);
+//                    + locationInfo;
+
             ShowPopupEvent.fire(
                     dataPresenter,
                     dataPresenter,
                     PopupType.OK_CANCEL_DIALOG,
                     popupSize,
-                    "Data",
+                    caption,
                     null);
         });
     }

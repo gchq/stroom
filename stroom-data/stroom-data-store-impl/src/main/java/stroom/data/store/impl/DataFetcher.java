@@ -207,7 +207,10 @@ public class DataFetcher {
             final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
 
             // Get the stream source.
-            try (final Source source = streamStore.openSource(fetchDataRequest.getSourceLocation().getId(), true)) {
+            try (final Source source = streamStore.openSource(
+                    fetchDataRequest.getSourceLocation().getId(),
+                    true)) {
+
                 // If we have no stream then let the client know it has been
                 // deleted.
                 if (source == null) {
@@ -380,7 +383,9 @@ public class DataFetcher {
         }
 
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> itemRange = new OffsetRange<>(sourceLocation.getSegmentNo(), (long) resultList.size());
+        final OffsetRange<Long> itemRange = new OffsetRange<>(
+                sourceLocation.getSegmentNo(),
+                (long) resultList.size());
 //        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
         final RowCount<Long> totalItemCount = new RowCount<>((long) totalResults, true);
 //        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
@@ -840,35 +845,6 @@ public class DataFetcher {
         return inclusiveFromPredicate;
     }
 
-//    private NonSegmentedIncludeCharPredicate buildInclusiveToPredicate(final DataRange dataRange) {
-//        // TO (inclusive)
-//        final NonSegmentedIncludeCharPredicate inclusiveToPredicate;
-//        if (dataRange == null || !dataRange.hasBoundedEnd()) {
-//            // No end bound
-//            LOGGER.debug("Unbounded to predicate");
-//            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
-//        } else if (dataRange.getOptLength().isPresent()) {
-//            final long dataLength = dataRange.getOptLength().getAsLong();
-//            LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
-//            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-//                    charCount <= dataLength;
-//        } else if (dataRange.getOptCharOffsetTo().isPresent()) {
-//            final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
-//            LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
-//            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-//                    currCharOffset <= charOffsetTo;
-//        } else if (dataRange.getOptLocationTo().isPresent()) {
-//            final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
-//            final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
-//            LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
-//            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-//                    currLineNo < lineNoTo || (currLineNo == lineNoTo && currColNo <= colNoTo);
-//        } else {
-//            throw new RuntimeException("No start point specified");
-//        }
-//        return inclusiveToPredicate;
-//    }
-
     /**
      * @return True if we have gone past our desired range
      */
@@ -1017,19 +993,6 @@ public class DataFetcher {
 
     private Set<String> getAvailableChildStreamTypes(
             final InputStreamProvider inputStreamProvider) throws IOException {
-
-//        final List<String> availableChildStreamTypes = new ArrayList<>();
-//        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-//            if (inputStream != null) {
-//                availableChildStreamTypes.add(StreamTypeNames.META);
-//            }
-//        }
-//        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-//            if (inputStream != null) {
-//                availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
-//            }
-//        }
-//        return availableChildStreamTypes;
 
         return inputStreamProvider.getChildTypes();
     }

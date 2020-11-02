@@ -155,6 +155,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private DataType curDataType;
 
     private SourceLocation currentSourceLocation;
+    // The data range for the data preview tab initially requested by the caller
+    private DataRange requestedDataDataRange;
 
 //    private OffsetRange<Long> currentDataRange = new OffsetRange<>(0L, 1L);
 //    private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
@@ -183,7 +185,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean ignoreActions;
     private ButtonView viewSourceBtn;
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
-    private String lastStreamType;
     private String lastTabName;
 
 
@@ -465,6 +466,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void fetchData(final SourceLocation sourceLocation) {
+        if (sourceLocation.getDataRange() != null) {
+            // We are displaying a specific range of the data so hide the
+            // nav controls
+            getView().setNavigatorView(null);
+        }
         this.highlights = new ArrayList<>();
 
         if (sourceLocation.getHighlight() != null) {
@@ -474,6 +480,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.highlightId = sourceLocation.getId();
         this.highlightPartNo = sourceLocation.getPartNo();
         this.highlightChildDataType = sourceLocation.getChildType();
+
+        // Hold onto the range of data requested so when we switch tabs
+        // back we can show the right range of data.
+        this.requestedDataDataRange = sourceLocation.getDataRange();
 
         // Make sure the right page is shown when the source is displayed.
 //        final long oldPartNo = currentDataRange.getOffset() + 1;
@@ -651,20 +661,30 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         doWithConfig(sourceConfig -> {
             final DataRange dataRange;
             // Error markers are a bit different
-            if (errorMarkerMode) {
+            if (StreamTypeNames.ERROR.equals(currentStreamType)) {
                 dataRange = DataRange.from(0);
+            } else if (StreamTypeNames.META.equals(currentChildDataType)) {
+                dataRange = DataRange.from(0);
+            } else if (currentSourceLocation != null && currentSourceLocation.getDataRange() != null) {
+                // We have a specific range of data, i.e. when using the data() dash func.
+                dataRange = currentSourceLocation.getDataRange();
             } else {
                 dataRange = DataRange.from(0,
                         sourceConfig.getMaxCharactersInPreviewFetch());
             }
 
             // TODO @AT Do we need to pass the highlight?
-            final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
-                    .withPartNo(currentPartNo)
-                    .withSegmentNumber(currentSegmentNo)
-                    .withDataRange(dataRange)
-//                    .withHighlight(highlights.get(0))
-                    .withChildStreamType(currentChildDataType));
+            final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> {
+                builder
+                        .withPartNo(currentPartNo)
+                        .withSegmentNumber(currentSegmentNo)
+                        .withDataRange(dataRange)
+                        .withChildStreamType(currentChildDataType);
+
+                if (highlights != null && !highlights.isEmpty()) {
+                        builder.withHighlight(highlights.get(0));
+                }
+            });
 
 //            request.setStreamId(currentMetaId);
 //            request.setStreamRange(currentDataRange);
@@ -1003,17 +1023,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             showHtmlPresenter();
             itemNavigatorPresenter.setDisplay(noNavigatorData);
-
-//        } else if (steppingSource) {
-//            // Hide all links except data.
-//            hideTab(infoTab, true);
-//            hideTab(errorTab, true);
-//            hideTab(dataTab, false);
-//            hideTab(metaTab, true);
-//            hideTab(contextTab, true);
-//            showTextPresenter();
-//            getView().getTabBar().selectTab(dataTab);
-
         } else {
             // Highlight the appropriate link.
             if (INFO.equals(lastTabName)) {
@@ -1052,10 +1061,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 hideTab(contextTab, true);
             }
             // Now we have changed tabs, ensure the nav visibility is right
-//            getView().refreshNavigator();
             itemNavigatorPresenter.refreshNavigator();
         }
-//        lastStreamType = streamType;
         lastTabName = getView().getTabBar().getSelectedTab().getLabel();
     }
 

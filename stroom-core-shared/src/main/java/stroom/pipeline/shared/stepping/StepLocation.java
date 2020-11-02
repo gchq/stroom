@@ -28,9 +28,12 @@ import java.util.Objects;
 public class StepLocation {
     @JsonProperty
     private final long id;
-    // The part No stream number is 1 based and not 0 based as in the stream store.
+
+    // Zero based, one based for presentation only
     @JsonProperty
     private final long partNo;
+
+    // Zero based, one based for presentation only
     @JsonProperty
     private final long recordNo;
 

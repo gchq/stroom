@@ -103,6 +103,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
 //        characterNavigator.refresh();
 //    }
 
+
     @Override
     public void setTextView(final TextView textView) {
         container.setWidget(textView.asWidget());
@@ -110,7 +111,11 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
 
     @Override
     public void setNavigatorView(final CharacterNavigatorView characterNavigatorView) {
-        navigatorContainer.setWidget(characterNavigatorView.asWidget());
+        if (characterNavigatorView != null) {
+            navigatorContainer.setWidget(characterNavigatorView.asWidget());
+        } else {
+            navigatorContainer.clear();
+        }
     }
 
     @Override

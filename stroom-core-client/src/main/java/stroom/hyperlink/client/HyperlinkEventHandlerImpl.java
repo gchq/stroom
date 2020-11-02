@@ -97,50 +97,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case TAB: {
-                    final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
-                    presenter.setUrl(hyperlink.getHref());
-                    presenter.setCustomTitle(customTitle);
-                    presenter.setIcon(hyperlink.getIcon());
-                    contentManager.open(callback ->
-                                    ConfirmEvent.fire(this,
-                                            "Are you sure you want to close?",
-                                            res -> {
-                                                if (res) {
-                                                    presenter.close();
-                                                }
-                                                callback.closeTab(res);
-                                            })
-                            , presenter, presenter);
+                    openTab(hyperlink, customTitle);
                     break;
                 }
                 case DIALOG: {
-                    final PopupSize popupSize = new PopupSize(800, 600, true);
-                    final IFramePresenter presenter = iFramePresenterProvider.get();
-                    final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 -> RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
-                    presenter.setUrl(hyperlink.getHref());
-                    presenter.setCustomTitle(customTitle);
-
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            handlerRegistration.removeHandler();
-                            presenter.close();
-                        }
-                    };
-
-                    ShowPopupEvent.fire(this,
-                            presenter,
-                            PopupType.CLOSE_DIALOG,
-                            null,
-                            popupSize,
-                            presenter.getLabel(),
-                            popupUiHandlers,
-                            null);
+                    openDialog(hyperlink, customTitle);
                     break;
                 }
                 case BROWSER: {
@@ -148,62 +109,15 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case STEPPING: {
-                    final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 0);
-                    final long recordNo = getParam(href, "recordNo", 0);
-                    BeginPipelineSteppingEvent.fire(this, id, null, null, new StepLocation(id, partNo, recordNo), null);
+                    openStepping(href);
                     break;
                 }
                 case DATA: {
-                    final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 1);
-                    final long recordNo = getParam(href, "recordNo", 0);
-                    final int lineFrom = (int) getParam(href, "lineFrom", -1);
-                    final int colFrom = (int) getParam(href, "colFrom", -1);
-                    final int lineTo = (int) getParam(href, "lineTo", -1);
-                    final int colTo = (int) getParam(href, "colTo", -1);
-
-//                    Highlight highlight = null;
-                    final SourceLocation sourceLocation = SourceLocation.builder(id)
-                            .withPartNo(partNo)
-                            .withSegmentNumber(recordNo)
-                            .withDataRangeBuilder(dataRangeBuilder -> {
-                                if (lineFrom != -1 && colFrom != -1) {
-                                    dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
-                                }
-                                if (lineTo != -1 && colTo != -1) {
-                                    dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
-                                }
-                            })
-                            .build();
-
-                    ShowDataEvent.fire(this, sourceLocation);
+                    openData(href);
                     break;
                 }
                 case ANNOTATION: {
-                    final Long annotationId = getLongParam(href, "annotationId");
-                    final Long streamId = getLongParam(href, "streamId");
-                    final Long eventId = getLongParam(href, "eventId");
-                    final String title = getParam(href, "title");
-                    final String subject = getParam(href, "subject");
-                    final String status = getParam(href, "status");
-                    final String assignedTo = getParam(href, "assignedTo");
-                    final String comment = getParam(href, "comment");
-
-                    final Annotation annotation = new Annotation();
-                    annotation.setId(annotationId);
-                    annotation.setTitle(title);
-                    annotation.setSubject(subject);
-                    annotation.setStatus(status);
-                    annotation.setAssignedTo(assignedTo);
-                    annotation.setComment(comment);
-
-                    final List<EventId> linkedEvents = new ArrayList<>();
-                    if (streamId != null && eventId != null) {
-                        linkedEvents.add(new EventId(streamId, eventId));
-                    }
-
-                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+                    openAnnotation(href);
                     break;
                 }
                 default:
@@ -212,6 +126,127 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         } else {
             Window.open(href, "_blank", "");
         }
+    }
+
+    private void openAnnotation(final String href) {
+        final Long annotationId = getLongParam(href, "annotationId");
+        final Long streamId = getLongParam(href, "streamId");
+        final Long eventId = getLongParam(href, "eventId");
+        final String title = getParam(href, "title");
+        final String subject = getParam(href, "subject");
+        final String status = getParam(href, "status");
+        final String assignedTo = getParam(href, "assignedTo");
+        final String comment = getParam(href, "comment");
+
+        final Annotation annotation = new Annotation();
+        annotation.setId(annotationId);
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+        annotation.setAssignedTo(assignedTo);
+        annotation.setComment(comment);
+
+        final List<EventId> linkedEvents = new ArrayList<>();
+        if (streamId != null && eventId != null) {
+            linkedEvents.add(new EventId(streamId, eventId));
+        }
+
+        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+    }
+
+    private void openData(final String href) {
+        final long id = getParam(href, "id", -1);
+        final long partNo = getParam(href, "partNo", 1) - 1; // convert to zero based
+        final long recordNo = getParam(href, "recordNo", 1) - 1; // convert to zero based
+        final int lineFrom = (int) getParam(href, "lineFrom", -1);
+        final int colFrom = (int) getParam(href, "colFrom", -1);
+        final int lineTo = (int) getParam(href, "lineTo", -1);
+        final int colTo = (int) getParam(href, "colTo", -1);
+
+        final SourceLocation.Builder builder = SourceLocation.builder(id)
+                .withPartNo(partNo)
+                .withSegmentNumber(recordNo)
+                .withDataRangeBuilder(dataRangeBuilder -> {
+                    if (lineFrom != -1 && colFrom != -1) {
+                        dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
+                    }
+                    if (lineTo != -1 && colTo != -1) {
+                        dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
+                    }
+                });
+
+//        if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+//            builder.withHighlight(new TextRange(
+//                    new DefaultLocation(lineFrom, colFrom),
+//                    new DefaultLocation(lineTo, colTo)));
+//        }
+
+        final SourceLocation sourceLocation = builder.build();
+
+        ShowDataEvent.fire(this, sourceLocation);
+    }
+
+    private void openStepping(final String href) {
+        final long id = getParam(href, "id", -1);
+        final long partNo = getParam(href, "partNo", 0);
+        final long recordNo = getParam(href, "recordNo", 0);
+        BeginPipelineSteppingEvent.fire(
+                this,
+                id,
+                null,
+                null,
+                new StepLocation(id, partNo, recordNo),
+                null);
+    }
+
+    private void openDialog(final Hyperlink hyperlink, final String customTitle) {
+        final PopupSize popupSize = new PopupSize(800, 600, true);
+        final IFramePresenter presenter = iFramePresenterProvider.get();
+        final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
+                RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
+        presenter.setUrl(hyperlink.getHref());
+        presenter.setCustomTitle(customTitle);
+
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                handlerRegistration.removeHandler();
+                presenter.close();
+            }
+        };
+
+        ShowPopupEvent.fire(this,
+                presenter,
+                PopupType.CLOSE_DIALOG,
+                null,
+                popupSize,
+                presenter.getLabel(),
+                popupUiHandlers,
+                null);
+    }
+
+    private void openTab(final Hyperlink hyperlink, final String customTitle) {
+        final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
+        presenter.setUrl(hyperlink.getHref());
+        presenter.setCustomTitle(customTitle);
+        presenter.setIcon(hyperlink.getIcon());
+        contentManager.open(
+                callback ->
+                        ConfirmEvent.fire(this,
+                                "Are you sure you want to close?",
+                                res -> {
+                                    if (res) {
+                                        presenter.close();
+                                    }
+                                    callback.closeTab(res);
+                                }),
+                presenter,
+                presenter);
     }
 
     private long getParam(final String href, final String paramName, final long def) {

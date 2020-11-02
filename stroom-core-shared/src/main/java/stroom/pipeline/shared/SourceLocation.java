@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 @JsonInclude(Include.NON_NULL)
 public class SourceLocation {
 
-    public static final int MAX_ERRORS_PER_PAGE = 10;
+    public static final int MAX_ERRORS_PER_PAGE = 100;
 
     @JsonProperty
     private final long id; // The meta ID

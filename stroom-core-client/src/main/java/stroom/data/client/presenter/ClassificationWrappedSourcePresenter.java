@@ -55,4 +55,7 @@ public class ClassificationWrappedSourcePresenter
         sourcePresenter.setSteppingSource(isSteppingSource);
     }
 
+    public void setNavigatorControlsVisible(final boolean isVisible) {
+        sourcePresenter.setNavigatorControlsVisible(isVisible);
+    }
 }

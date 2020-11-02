@@ -121,6 +121,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         setSourceLocation(sourceLocation, false);
     }
 
+    public void setNavigatorControlsVisible(final boolean isVisible) {
+        if (isVisible) {
+            getView().setNavigatorView(characterNavigatorPresenter.getView());
+        } else {
+            getView().setNavigatorView(null);
+        }
+    }
+
     public void setSteppingSource(final boolean isSteppingSource) {
         this.isSteppingSource = isSteppingSource;
     }

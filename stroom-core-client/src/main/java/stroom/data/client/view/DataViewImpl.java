@@ -223,7 +223,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
 
     @Override
     public void setNavigatorView(final ItemNavigatorView itemNavigatorView) {
-        navigatorContainer.setWidget(itemNavigatorView.asWidget());
+        if (itemNavigatorView != null) {
+            navigatorContainer.setWidget(itemNavigatorView.asWidget());
+        } else {
+            navigatorContainer.clear();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {
