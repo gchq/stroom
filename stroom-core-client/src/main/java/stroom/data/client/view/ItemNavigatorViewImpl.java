@@ -164,6 +164,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         previousPageBtn.setVisible(isVisible);
         nextPageBtn.setVisible(isVisible);
         lastPageBtn.setVisible(isVisible);
+        refreshBtn.setVisible(isVisible);
     }
 
 
