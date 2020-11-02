@@ -680,8 +680,18 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private boolean isSameStreamAndPartAsLastTime() {
         if (lastResult != null) {
-            return Objects.equals(currentMetaId, lastResult.getSourceLocation().getId())
-                    && Objects.equals(currentPartNo, lastResult.getSourceLocation().getId());
+
+            final Long lastId = Optional.ofNullable(lastResult)
+                    .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
+                    .map(SourceLocation::getId)
+                    .orElse(null);
+            final Long lastPartNo = Optional.ofNullable(lastResult)
+                    .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
+                    .map(SourceLocation::getPartNo)
+                    .orElse(null);
+
+            return Objects.equals(currentMetaId, lastId)
+                    && Objects.equals(currentPartNo, lastPartNo);
         } else {
             return false;
         }
@@ -1075,7 +1085,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         refreshTextPresenterContent();
 
-        refreshMetaInfoPresenterContent(result.getSourceLocation().getId());
+        refreshMetaInfoPresenterContent(result != null
+                ? result.getSourceLocation().getId()
+                : null);
 
 //        getView().refreshNavigator();
         itemNavigatorPresenter.refreshNavigator();
@@ -1094,8 +1106,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         textPresenter.setControlsVisible(playButtonVisible);
     }
 
-    private void refreshMetaInfoPresenterContent(final long metaId) {
-        fetchMetaInfoData(metaId);
+    private void refreshMetaInfoPresenterContent(final Long metaId) {
+
+        if (metaId != null) {
+            fetchMetaInfoData(metaId);
+        } else {
+            htmlPresenter.setHtml(null);
+        }
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
