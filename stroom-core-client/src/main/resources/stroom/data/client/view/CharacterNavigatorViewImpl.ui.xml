@@ -29,6 +29,7 @@
 
     <g:FlowPanel styleName="{style.characterNavigator}">
 
+        <g:Label ui:field="lblLines" styleName="{style.label}"/>
         <g:Label ui:field="lblCharacters" styleName="{style.label}"/>
         <btn:SvgButton ui:field="showHeadCharactersBtn"/>
         <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>

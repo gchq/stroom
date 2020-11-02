@@ -53,6 +53,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     // Selection controls for the char data in the selected record and/or part
     // Always visible
     @UiField
+    Label lblLines;
+    @UiField
     Label lblCharacters;
     @UiField(provided = true)
     SvgButton showHeadCharactersBtn;
@@ -116,17 +118,17 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                 && display.getCharFrom().isPresent()
                 && display.getCharTo().isPresent()) {
 
-            String lbl = "";
+            String linesLbl = "";
             if (display.getLineFrom().isPresent() && display.getLineTo().isPresent()) {
-                lbl += LINES_TITLE
+                linesLbl += LINES_TITLE
                         + " "
                         + getIntValueForLabel(display.getLineFrom())
                         + " to "
-                        + getIntValueForLabel(display.getLineTo())
-                        + ", ";
+                        + getIntValueForLabel(display.getLineTo());
             }
+            lblLines.setText(linesLbl);
 
-            lbl += CHARACTERS_TITLE
+            final String charactersLbl = CHARACTERS_TITLE
                     + " "
                     + getLongValueForLabel(display.getCharFrom(), ZERO_TO_ONE_BASE_INCREMENT)
                     + " to "
@@ -134,7 +136,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                     + " of "
                     + getLongValueForLabel(display.getTotalChars());
 
-            lblCharacters.setText(lbl);
+            lblCharacters.setText(charactersLbl);
 
             final long charFrom = display.getCharFrom().get();
             final long charTo = display.getCharTo().get();
@@ -194,6 +196,11 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     // Characters UI handlers
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    @UiHandler("lblLines")
+    public void onClickLinesLabel(final ClickEvent event) {
+        labelClickHandler.onClick(event);
+    }
 
     @UiHandler("lblCharacters")
     public void onClickCharactersLabel(final ClickEvent event) {
