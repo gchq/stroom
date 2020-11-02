@@ -37,7 +37,7 @@
       }, {
         "id" : "table-IIO1T|KM4VR",
         "name" : "src-partNo",
-        "expression" : "${src-PartNo}",
+        "expression" : "${src-partNo}",
         "width" : 89,
         "visible" : true,
         "special" : false
@@ -142,13 +142,13 @@
     "settings" : {
       "type" : "text",
       "streamIdField" : {
-        "name" : "StreamId",
+        "name" : "__stream_id__",
         "width" : 200,
         "visible" : true,
         "special" : false
       },
       "recordNoField" : {
-        "name" : "EventId",
+        "name" : "__event_id__",
         "width" : 200,
         "visible" : true,
         "special" : false
