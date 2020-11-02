@@ -740,13 +740,14 @@ public class DataFetcher {
 
         final StringBuilder strBuilderResultRange = new StringBuilder();
 
-        if (isMultiLine && startLineNo != 1) {
-            // TODO @AT See TODO next to TRUNCATED_TEXT declaration
-//            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
-            startLineNo--;
-        } else if (!isMultiLine && startCharOffset != 0) {
-            strBuilderResultRange.append(TRUNCATED_TEXT);
-        }
+
+//        if (isMultiLine && startLineNo != 1) {
+//            // TODO @AT See TODO next to TRUNCATED_TEXT declaration
+////            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
+////            startLineNo--;
+//        } else if (!isMultiLine && startCharOffset != 0) {
+//            strBuilderResultRange.append(TRUNCATED_TEXT);
+//        }
 
         if (isMultiLine && strBuilderRange.length() > 0 && strBuilderRange.charAt(0) != '\n') {
             startCharOffset = startOfCurrLineCharOffset;
@@ -774,7 +775,9 @@ public class DataFetcher {
 
         final String charData = strBuilderResultRange.toString();
 
-        currCharOffset = currCharOffset - 1; // undo the last ++ op
+        if (currChar != '\n') {
+            currCharOffset = currCharOffset - 1; // undo the last ++ op
+        }
 
         final RowCount<Long> totalCharCount = RowCount.of(
                 startCharOffset + charData.length(),
