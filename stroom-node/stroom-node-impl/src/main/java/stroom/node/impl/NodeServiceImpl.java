@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -70,7 +71,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     Node update(final Node node) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this node");
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update nodes");
         }
         AuditUtil.stamp(securityContext.getUserId(), node);
         final Node updated = nodeDao.update(node);
@@ -82,11 +83,11 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     ResultPage<Node> find(final FindNodeCriteria criteria) {
-        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to find nodes");
-        }
-        ensureNodeCreated();
-        return nodeDao.find(criteria);
+        return securityContext.secureResult(() -> {
+            ensureNodeCreated();
+            return nodeDao.find(criteria);
+        });
+
     }
 
     @Override
@@ -126,12 +127,10 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to get this node");
-        }
-
-        ensureNodeCreated();
-        return nodeDao.getNode(nodeName);
+        return securityContext.secureResult(() -> {
+            ensureNodeCreated();
+            return nodeDao.getNode(nodeName);
+        });
     }
 
     private void ensureNodeCreated() {

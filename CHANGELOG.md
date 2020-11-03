@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
 * Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
 
 * Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
