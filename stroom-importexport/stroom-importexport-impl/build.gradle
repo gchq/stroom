@@ -18,7 +18,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 

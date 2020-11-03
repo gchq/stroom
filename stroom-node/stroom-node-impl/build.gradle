@@ -23,7 +23,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.validation_api
     
     testCompile project(':stroom-test-common')

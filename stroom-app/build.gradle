@@ -64,8 +64,8 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-dropwizard-common')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-elastic:stroom-elastic-impl-http')
+//    compile project(':stroom-elastic:stroom-elastic-impl')
+//    compile project(':stroom-elastic:stroom-elastic-impl-http')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-explorer:stroom-explorer-impl')
     compile project(':stroom-feed:stroom-feed-impl')
@@ -132,7 +132,7 @@ dependencies {
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.validation_api
     compile libs.ws_rs_api
 
@@ -155,7 +155,7 @@ dependencies {
     testCompile project(':stroom-docstore:stroom-docstore-api')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-elastic:stroom-elastic-impl')
+//    testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
     testCompile project(':stroom-explorer:stroom-collection-mock')

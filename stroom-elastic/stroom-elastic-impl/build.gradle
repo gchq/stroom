@@ -16,7 +16,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.jetty_http
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.stroomQueryAudit
     compile libs.stroomQueryAuthorisation
     compile libs.ws_rs_api

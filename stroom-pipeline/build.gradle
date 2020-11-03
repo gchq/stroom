@@ -52,7 +52,7 @@ dependencies {
     compile libs.okhttp
     compile libs.saxon_he
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api

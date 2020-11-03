@@ -92,6 +92,9 @@ include 'stroom-dictionary:stroom-dictionary-api'
 include 'stroom-dictionary:stroom-dictionary-impl'
 include 'stroom-dictionary:stroom-dictionary-mock'
 
+// Docref
+include 'stroom-docref'
+
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-impl'
@@ -102,10 +105,10 @@ include 'stroom-docstore:stroom-docstore-impl-memory'
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
 
-// Elastic
-include 'stroom-elastic:stroom-elastic-api'
-include 'stroom-elastic:stroom-elastic-impl'
-include 'stroom-elastic:stroom-elastic-impl-http'
+//// Elastic
+//include 'stroom-elastic:stroom-elastic-api'
+//include 'stroom-elastic:stroom-elastic-impl'
+//include 'stroom-elastic:stroom-elastic-impl-http'
 
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'

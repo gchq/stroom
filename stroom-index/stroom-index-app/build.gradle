@@ -57,7 +57,7 @@ dependencies {
     compile libs.lucene_core
     compile libs.lucene_queryparser
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.xml_apis

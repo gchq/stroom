@@ -18,7 +18,7 @@ ext.moduleName = 'stroom.query.api'
 
 dependencies {
     //--------Stroom libs------
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     //--------3rd party--------
     compile libs.jackson_annotations

@@ -5,7 +5,7 @@ dependencies {
     compile libs.jaxb_api
     compile libs.validation_api
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     testCompile libs.assertj_core
     testCompile libs.jackson_databind

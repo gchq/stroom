@@ -37,7 +37,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.gin
     compile libs.guice3
@@ -57,8 +57,8 @@ dependencies {
     gwtSourceCompile libs.restygwt
     gwtSourceCompile libs.ws_rs_api
 
-    gwtSourceCompile libs.stroomDocRef
-    gwtSourceCompile "${libs.stroomDocRef}:sources"
+//    gwtSourceCompile libs.stroomDocRef
+//    gwtSourceCompile "${libs.stroomDocRef}:sources"
 //    gwtSourceCompile libs.stroomQueryApi
 //    gwtSourceCompile "${libs.stroomQueryApi}:sources"
 //    gwtSourceCompile libs.stroomQueryCommon

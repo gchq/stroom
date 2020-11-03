@@ -6,7 +6,7 @@ dependencies {
 //    compile project(':stroom-statistics:stroom-statistics-api')
 //    compile project(':stroom-util-shared')
     compile project(':stroom-util')
-//    compile libs.stroomDocRef
+//    compile project(':stroom-docref')
 
 //    compile libs.guava
 

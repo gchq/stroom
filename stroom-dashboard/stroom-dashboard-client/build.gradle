@@ -11,7 +11,7 @@ dependencies {
 
     runtimeOnly project(':stroom-security:stroom-security-client')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.gin
     compile libs.guice3
