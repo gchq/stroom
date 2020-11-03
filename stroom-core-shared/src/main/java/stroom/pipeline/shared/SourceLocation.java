@@ -154,7 +154,6 @@ public class SourceLocation {
         return truncateToWholeLines;
     }
 
-    @JsonIgnore
     public boolean isSameSource(final SourceLocation other) {
         if (other == null) {
             return false;
@@ -165,7 +164,6 @@ public class SourceLocation {
         }
     }
 
-    @JsonIgnore
     public boolean isSameLocation(final SourceLocation other) {
         if (other == null) {
             return false;

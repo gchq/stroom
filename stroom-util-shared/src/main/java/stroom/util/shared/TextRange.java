@@ -116,7 +116,6 @@ public class TextRange implements Comparable<TextRange> {
      * @return True if all of this range is inside or is identical to
      * the other range.
      */
-    @JsonIgnore
     public boolean isInsideRange(final TextRange other) {
         if (other == null) {
             return false;
@@ -125,7 +124,6 @@ public class TextRange implements Comparable<TextRange> {
         }
     }
 
-    @JsonIgnore
     public boolean isInsideRange(final Location from, final Location to) {
         final boolean result;
         if (this.from == null
