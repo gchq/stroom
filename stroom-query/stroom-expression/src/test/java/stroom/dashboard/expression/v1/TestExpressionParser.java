@@ -1727,11 +1727,11 @@ class TestExpressionParser {
             gen.set(getVal(122D));
             gen.set(getVal(133D));
 
-            final GroupKey parent = new GroupKey(ValString.create("parent"));
-            gen.addChildKey(new GroupKey(parent, ValString.create("val1")));
-            gen.addChildKey(new GroupKey(parent, ValString.create("val1")));
-            gen.addChildKey(new GroupKey(parent, ValString.create("val2")));
-            gen.addChildKey(new GroupKey(parent, ValString.create("val2")));
+            final GroupKey parent = new GroupKey(0, null, new Val[]{ValString.create("parent")});
+            gen.addChildKey(new GroupKey(1, parent, new Val[]{ValString.create("val1")}));
+            gen.addChildKey(new GroupKey(1, parent, new Val[]{ValString.create("val1")}));
+            gen.addChildKey(new GroupKey(1, parent, new Val[]{ValString.create("val2")}));
+            gen.addChildKey(new GroupKey(1, parent, new Val[]{ValString.create("val2")}));
 
             Val out = gen.eval();
             assertThat(out.toInteger()).isEqualTo(2);

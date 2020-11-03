@@ -54,7 +54,7 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
         // Process list into fields.
         final Generator[] generators = new Generator[fields.size()];
 
-        final List<Val> groupValues = new ArrayList<>();
+        List<Val> groupValues = null;
         int pos = 0;
         for (final CompiledField compiledField : fields) {
             Val value = null;
@@ -96,6 +96,9 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
             // If this field is being grouped at this depth then add the value
             // to the group key for this depth.
             if (compiledField.getGroupDepth() == depth) {
+                if (groupValues == null) {
+                    groupValues = new ArrayList<>();
+                }
                 groupValues.add(value);
             }
 
@@ -104,8 +107,12 @@ public class ItemMapper extends MapperBase<GroupKey, Val[], GroupKey, Item> {
 
         // Are we grouping this item?
         GroupKey key = null;
-        if (parentKey != null) {
-            key = new GroupKey(parentKey, groupValues.toArray(new Val[0]));
+        if (parentKey != null || groupValues != null) {
+            Val[] arr = null;
+            if (groupValues != null) {
+                arr = groupValues.toArray(new Val[0]);
+            }
+            key = new GroupKey(depth, parentKey, arr);
         }
 
         // If the popToWhenComplete row has child group key sets then add this child group

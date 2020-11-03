@@ -36,30 +36,6 @@ public final class GroupKey implements Serializable {
         this.values = values;
     }
 
-    public GroupKey(final Val value) {
-        this(new Val[]{value});
-    }
-
-    public GroupKey(final Val[] values) {
-        this.depth = 0;
-        this.parent = null;
-        this.values = values;
-    }
-
-    public GroupKey(final GroupKey parent, final Val value) {
-        this(parent, new Val[]{value});
-    }
-
-    public GroupKey(final GroupKey parent, final Val[] values) {
-        if (parent != null) {
-            this.depth = parent.getDepth() + 1;
-        } else {
-            this.depth = 0;
-        }
-        this.parent = parent;
-        this.values = values;
-    }
-
     public int getDepth() {
         return depth;
     }
