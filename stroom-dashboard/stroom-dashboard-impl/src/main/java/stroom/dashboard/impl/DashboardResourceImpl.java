@@ -52,8 +52,11 @@ import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.storedquery.api.StoredQueryService;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -62,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -70,13 +74,16 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -95,6 +102,9 @@ class DashboardResourceImpl implements DashboardResource {
     private final ActiveQueriesManager activeQueriesManager;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final SecurityContext securityContext;
+    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final ExecutorProvider executorProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     DashboardResourceImpl(final DashboardStore dashboardStore,
@@ -105,7 +115,10 @@ class DashboardResourceImpl implements DashboardResource {
                           final SearchEventLog searchEventLog,
                           final ActiveQueriesManager activeQueriesManager,
                           final DataSourceProviderRegistry searchDataSourceProviderRegistry,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final HttpServletRequestHolder httpServletRequestHolder,
+                          final ExecutorProvider executorProvider,
+                          final TaskContextFactory taskContextFactory) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -115,6 +128,9 @@ class DashboardResourceImpl implements DashboardResource {
         this.activeQueriesManager = activeQueriesManager;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.securityContext = securityContext;
+        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.executorProvider = executorProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -330,7 +346,7 @@ class DashboardResourceImpl implements DashboardResource {
                 }
 
                 final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
-                final Set<SearchResponse> searchResults = new HashSet<>();
+                final Set<SearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
@@ -345,14 +361,34 @@ class DashboardResourceImpl implements DashboardResource {
                 activeQueries.destroyUnusedQueries(keys);
 
                 // Get query results for every active query.
+                final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
+                final Executor executor = executorProvider.get();
+                final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final SearchRequest searchRequest : request.getSearchRequests()) {
-                    final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
-                    if (searchRequest.getSearch() != null) {
-                        final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
-                        if (searchResponse != null) {
-                            searchResults.add(searchResponse);
+                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                        try {
+                            httpServletRequestHolder.set(httpServletRequest);
+                            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
+                            if (searchRequest.getSearch() != null) {
+                                final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
+                                if (searchResponse != null) {
+                                    searchResults.add(searchResponse);
+                                }
+                            }
+                        } finally {
+                            countDownLatch.countDown();
+                            httpServletRequestHolder.set(null);
                         }
-                    }
+                    });
+                    executor.execute(runnable);
+                }
+
+                // Wait for all results to come back.
+                try {
+                    countDownLatch.await();
+                } catch (final InterruptedException e) {
+                    // Keep interrupting.
+                    Thread.currentThread().interrupt();
                 }
 
                 return searchResults;

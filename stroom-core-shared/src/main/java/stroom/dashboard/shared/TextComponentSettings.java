@@ -31,10 +31,36 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
+@JsonPropertyOrder({
+        "tableId",
+        "streamIdField",
+        "partNoField",
+        "recordNoField",
+        "lineFromField",
+        "colFromField",
+        "lineToField",
+        "colToField",
+        "pipeline",
+        "showAsHtml",
+        "showStepping",
+        "modelVersion"
+})
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "text")
-@XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
+@XmlType(name = "text", propOrder = {
+        "tableId",
+        "streamIdField",
+        "partNoField",
+        "recordNoField",
+        "lineFromField",
+        "colFromField",
+        "lineToField",
+        "colToField",
+        "pipeline",
+        "showAsHtml",
+        "showStepping",
+        "modelVersion"
+})
 public class TextComponentSettings extends ComponentSettings {
     @XmlElement(name = "tableId")
     @JsonProperty("tableId")
@@ -69,6 +95,9 @@ public class TextComponentSettings extends ComponentSettings {
     @XmlElement(name = "showStepping")
     @JsonProperty
     private boolean showStepping;
+    @XmlElement(name = "modelVersion")
+    @JsonProperty
+    private String modelVersion;
 
     public TextComponentSettings() {
     }
@@ -84,7 +113,8 @@ public class TextComponentSettings extends ComponentSettings {
                                  @JsonProperty("colToField") final Field colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
                                  @JsonProperty("showAsHtml") final boolean showAsHtml,
-                                 @JsonProperty("showStepping") final boolean showStepping) {
+                                 @JsonProperty("showStepping") final boolean showStepping,
+                                 @JsonProperty("modelVersion") final String modelVersion) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
         this.partNoField = partNoField;
@@ -96,6 +126,7 @@ public class TextComponentSettings extends ComponentSettings {
         this.pipeline = pipeline;
         this.showAsHtml = showAsHtml;
         this.showStepping = showStepping;
+        this.modelVersion = modelVersion;
     }
 
     public String getTableId() {
@@ -184,5 +215,13 @@ public class TextComponentSettings extends ComponentSettings {
 
     public void setShowStepping(final boolean showStepping) {
         this.showStepping = showStepping;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(final String modelVersion) {
+        this.modelVersion = modelVersion;
     }
 }
