@@ -154,6 +154,28 @@ public class SourceLocation {
         return truncateToWholeLines;
     }
 
+    @JsonIgnore
+    public boolean isSameSource(final SourceLocation other) {
+        if (other == null) {
+            return false;
+        } else {
+            return this.id == other.id
+                    && this.partNo == other.partNo
+                    && Objects.equals(this.childType, other.childType);
+        }
+    }
+
+    @JsonIgnore
+    public boolean isSameLocation(final SourceLocation other) {
+        if (other == null) {
+            return false;
+        } else {
+            return this.isSameSource(other)
+                    && this.segmentNo == other.segmentNo
+                    && Objects.equals(this.dataRange, other.dataRange);
+        }
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

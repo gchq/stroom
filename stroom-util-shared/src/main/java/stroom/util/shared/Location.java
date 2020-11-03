@@ -20,6 +20,8 @@ package stroom.util.shared;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.Comparator;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -29,6 +31,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = DefaultLocation.class, name = "default")
 })
 public interface Location extends Comparable<Location> {
+
+    Comparator<Location> LINE_COL_COMPARATOR = Comparator
+            .comparingInt(Location::getLineNo)
+            .thenComparingInt(Location::getColNo);
     /**
      * @return The line number of the location, one based.
      */
@@ -38,4 +44,5 @@ public interface Location extends Comparable<Location> {
      * @return The column number of the location, one based.
      */
     int getColNo();
+
 }

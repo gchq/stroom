@@ -77,11 +77,7 @@ public class DefaultLocation implements Location {
             return 1;
         }
 
-        final DefaultLocation location = (DefaultLocation) o;
-        final CompareBuilder builder = new CompareBuilder();
-        builder.append(lineNo, location.lineNo);
-        builder.append(colNo, location.colNo);
-        return builder.toComparison();
+        return LINE_COL_COMPARATOR.compare(this, o);
     }
 
     @Override

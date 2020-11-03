@@ -203,23 +203,14 @@ public class SteppingController {
     StepData createStepData(final TextRange textRange) {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
-            DataRange dataRange;
 
-            if (textRange != null) {
-                // TODO @AT Need to get the highlighted range + some context either side
-                //   or if there is no highlight then get default range
-
-//                dataRange = DataRange.between(highlight.getFrom(), highlight.getTo());
-                dataRange = DataRange.from(DefaultLocation.of(1, 1));
-            } else {
-                dataRange = DataRange.from(DefaultLocation.of(1, 1));
-            }
-
+            // Will rely on SourcePresenter to adjust the data range to fit the
+            // highlight
             sourceLocation = SourceLocation.builder(stepLocation.getId())
                     .withChildStreamType(metaHolder.getChildDataType())
                     .withPartNo(stepLocation.getPartNo())
                     .withSegmentNumber(stepLocation.getRecordNo())
-                    .withDataRange(dataRange)
+                    .withDataRange(DataRange.from(DefaultLocation.of(1, 1)))
                     .withHighlight(textRange)
                     .build();
         }

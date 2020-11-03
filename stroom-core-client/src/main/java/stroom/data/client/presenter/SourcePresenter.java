@@ -1,9 +1,9 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
@@ -21,9 +21,11 @@ import stroom.svg.client.SvgPreset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.DataRange;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
 import stroom.util.shared.RowCount;
+import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -37,11 +39,14 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers {
 
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+    private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_000;
+    private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 3;
 
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
@@ -54,6 +59,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
+    // This is the highlight range for the editor, not the source data. For single line
+    // data they will differ if the editor is not displaying from offset zero.
+    private TextRange currentHighlight = null;
+    private int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
 
@@ -98,14 +107,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     public void setSourceLocation(final SourceLocation sourceLocation, final boolean force) {
-        final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
-                PermissionNames.STEPPING_PERMISSION);
-
-        if (hasStepPermission && !isSteppingSource) {
-            textPresenter.setControlsVisible(true);
-        } else {
-            textPresenter.setControlsVisible(false);
-        }
+        updateStepControlVisibility();
 
         if (force || !Objects.equals(sourceLocation, requestedSourceLocation)) {
             // Keep a record of what data was asked for, which may differ from what we get back
@@ -115,6 +117,91 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 fetchSource(sourceLocation, sourceConfig);
             });
         }
+    }
+
+    private void updateStepControlVisibility() {
+        final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
+                PermissionNames.STEPPING_PERMISSION);
+
+        if (hasStepPermission && !isSteppingSource) {
+            textPresenter.setControlsVisible(true);
+        } else {
+            textPresenter.setControlsVisible(false);
+        }
+    }
+
+    public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
+        if (sourceLocation.getHighlight() == null || receivedSourceLocation == null) {
+            // no highlight or no previous data so just get the requested data.
+            setSourceLocation(sourceLocation);
+        } else {
+            updateStepControlVisibility();
+            final TextRange highlight = sourceLocation.getHighlight();
+            if (isCurrentSourceSuitable(sourceLocation)) {
+                // The requested highlight is inside the currently held data so just update
+                // the highlight in the editor
+                GWT.log("Using existing source");
+
+                // Update the highlight in case refresh is called
+                requestedSourceLocation = receivedSourceLocation.clone()
+                        .withHighlight(highlight)
+                        .build();
+
+                currentHighlight = highlight;
+                updateEditorHighlights();
+            } else {
+                // Highlight is outside the currently held data so we need to fetch data
+                // that contains the highlight.
+                final Location newSourceStart;
+                final Location highlightStart = highlight.getFrom();
+
+                // Define the new range as starting at the beginning of the highlight
+//                newSourceStart = highlightStart;
+
+                if (receivedSourceLocation.getDataRange().getLineCount().filter(i -> i == 1).isPresent()
+                    && highlight.isOnOneLine()
+                    && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
+                    // single line data and highligt
+                    newSourceStart = DefaultLocation.of(
+                            1,
+                            highlightStart.getColNo() - HIGHLIGHT_CONTEXT_CHARS_BEFORE);
+                } else if (highlightStart.getLineNo() > HIGHLIGHT_CONTEXT_LINES_BEFORE) {
+                    newSourceStart = DefaultLocation.of(
+                            highlightStart.getLineNo() - HIGHLIGHT_CONTEXT_LINES_BEFORE,
+                            1);
+                } else {
+                    newSourceStart = DefaultLocation.of(1,1);
+                }
+
+                GWT.log("Highlight: " + highlight.toString()
+                        + " new start: " + newSourceStart.toString());
+
+                final SourceLocation newSourceLocation = sourceLocation.clone()
+                        .withDataRange(DataRange.from(newSourceStart))
+                        .build();
+
+                setSourceLocation(newSourceLocation, true);
+            }
+        }
+    }
+
+    private boolean isCurrentSourceSuitable(final SourceLocation sourceLocation) {
+        final boolean result;
+        if (receivedSourceLocation == null) {
+            result = false;
+        } else {
+
+            result = receivedSourceLocation.isSameSource(sourceLocation)
+                    && sourceLocation.getHighlight().isInsideRange(
+                        receivedSourceLocation.getDataRange().getLocationFrom(),
+                        receivedSourceLocation.getDataRange().getLocationTo());
+
+            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
+                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
+                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
+                    + " result: " + result);
+        }
+        return result;
     }
 
     public void setSourceLocation(final SourceLocation sourceLocation) {
@@ -171,6 +258,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         if (result instanceof FetchDataResult) {
             lastResult = (FetchDataResult) result;
             receivedSourceLocation = lastResult.getSourceLocation();
+            // hold this separately as we may change the highlight without fetching new data
+            currentHighlight = receivedSourceLocation.getHighlight();
 
             setTitle(lastResult);
             classificationUiHandlers.setClassification(result.getClassification());
@@ -195,8 +284,32 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         setEditorMode(lastResult);
 
-        if (receivedSourceLocation.getHighlight() != null) {
-            textPresenter.setHighlights(Collections.singletonList(receivedSourceLocation.getHighlight()));
+        updateEditorHighlights();
+    }
+
+    private void updateEditorHighlights() {
+        if (currentHighlight != null) {
+            final BooleanSupplier isSingleLineData = () -> receivedSourceLocation.getOptDataRange()
+                    .flatMap(DataRange::getLineCount)
+                    .filter(lineCount -> lineCount == 1)
+                    .isPresent();
+
+            final BooleanSupplier isNonZeroCharOffset = () -> receivedSourceLocation.getOptDataRange()
+                    .flatMap(DataRange::getOptCharOffsetFrom)
+                    .filter(charOffset -> charOffset > 0)
+                    .isPresent();
+
+            final TextRange editorHighlight;
+            if (isSingleLineData.getAsBoolean() && isNonZeroCharOffset.getAsBoolean()) {
+                final long startOffset = receivedSourceLocation.getDataRange().getCharOffsetFrom();
+
+                editorHighlight = currentHighlight.withNewStartPosition(DefaultLocation.of(
+                        1,
+                        (int) (currentHighlight.getTo().getColNo() - startOffset)));
+            } else {
+                editorHighlight = currentHighlight;
+            }
+            textPresenter.setHighlights(Collections.singletonList(editorHighlight));
         } else {
             textPresenter.setHighlights(null);
         }
@@ -213,13 +326,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 .map(SourceLocation::getDataRange)
                 .orElse(null);
 
-//        if (dataRange != null) {
-//            dataNavigatorData.setDataRange(dataRange);
-//        }
-
         characterNavigatorPresenter.refreshNavigator();
-
-//        characterNavigatorPresenter.setDisplay(dataNavigatorData);
     }
 
     private void setTitle(final FetchDataResult fetchDataResult) {
@@ -244,18 +351,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.setMode(mode);
     }
 
-//    public void setSourceKey(final SourceKey sourceKey) {
-//        this.sourceKey = sourceKey;
-//    }
-
     @Override
     protected void onBind() {
 
     }
-
-
-
-
 
     private boolean isCurrentDataSegmented() {
         return lastResult != null
@@ -274,57 +373,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 ? lastResult.getDataType()
                 : null;
     }
-
-//    private void showSourceLocationPopup() {
-//        if (lastResult != null && lastResult.getSourceLocation() != null) {
-//            final SourceLocationPresenter sourceLocationPresenter = getSourceLocationPresenter();
-//            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
-//
-//            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
-//            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
-//
-//            if (isCurrentDataMultiPart()) {
-//                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
-//            } else {
-//                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
-//            }
-//
-//            if (isCurrentDataSegmented()) {
-//                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
-//            } else {
-//                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
-//            }
-//            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
-//            sourceLocationPresenter.setCharacterControlsVisible(true);
-//        }
-//
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                sourceLocationPresenter.hide(autoClose, ok);
-//            }
-//
-//            @Override
-//            public void onHide(final boolean autoClose, final boolean ok) {
-//                if (ok) {
-//                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
-////                    currentPartNo = newSourceLocation.getPartNo();
-////                    currentSegmentNo = newSourceLocation.getSegmentNo();
-////                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
-//
-//                    setSourceLocation(newSourceLocation);
-//                }
-//            }
-//        };
-//        sourceLocationPresenter.show(popupUiHandlers);
-//    }
-
-//    private SourceLocationPresenter getSourceLocationPresenter() {
-//        if (sourceLocationPresenter == null) {
-//            sourceLocationPresenter = sourceLocationPresenterProvider.get();
-//        }
-//        return sourceLocationPresenter;
-//    }
 
     private void beginStepping(ClickEvent clickEvent) {
         beginStepping();
@@ -366,104 +414,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         public boolean areNavigationControlsVisible() {
             return !isSteppingSource;
         }
-
-//        @Override
-//        public boolean isMultiPart() {
-//            return isCurrentDataMultiPart();
-//        }
-//
-//        @Override
-//        public Optional<Long> getPartNo() {
-//            return Optional.ofNullable(receivedSourceLocation)
-//                    .map(SourceLocation::getPartNo);
-//        }
-//
-//        @Override
-//        public Optional<Long> getTotalParts() {
-//            return Optional.ofNullable(partsCount)
-//                    .filter(RowCount::isExact)
-//                    .map(RowCount::getCount);
-//        }
-//
-//        @Override
-//        public void setPartNo(final long partNo) {
-//            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
-//                    .withPartNo(partNo)
-//                    .withDataRange(null) // different part so clear previous location range
-//                    .build();
-//
-//            setSourceLocation(newSourceLocation);
-//        }
-//
-//        @Override
-//        public boolean isSegmented() {
-//            return isCurrentDataSegmented();
-//        }
-//
-//        @Override
-//        public boolean canDisplayMultipleSegments() {
-//            return isCurrentDataSegmented()
-//                    && lastResult != null
-//                    && DataType.MARKER.equals(lastResult.getDataType());
-//        }
-//
-//        @Override
-//        public Optional<Long> getSegmentNoFrom() {
-//            if (lastResult != null && isSegmented()) {
-//                return Optional.ofNullable(lastResult)
-//                        .map(AbstractFetchDataResult::getItemRange)
-//                        .map(OffsetRange::getOffset);
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public Optional<Long> getSegmentNoTo() {
-//            if (lastResult != null && isSegmented()) {
-//                return Optional.ofNullable(lastResult)
-//                        .map(AbstractFetchDataResult::getItemRange)
-//                        .map(range -> range.getOffset() + range.getLength() - 1);
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public Optional<Long> getTotalSegments() {
-//            return Optional.ofNullable(segmentsCount)
-//                    .filter(RowCount::isExact)
-//                    .map(RowCount::getCount);
-//        }
-//
-//        @Override
-//        public Optional<String> getSegmentName() {
-//            if (lastResult == null) {
-//                return Optional.empty();
-//            } else if (DataType.MARKER.equals(getCurDataType())) {
-//                return Optional.of("Error");
-//            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
-//                return Optional.of("Record");
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public void setSegmentNoFrom(final long segmentNoFrom) {
-//            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
-//                    .withSegmentNumber(segmentNoFrom)
-//                    .withDataRange(null) // different segment so clear previous location range
-//                    .build();
-//
-//            setSourceLocation(newSourceLocation);
-//        }
-//
-//        @Override
-//        public boolean canNavigateCharacterData() {
-//            return true;
-//        }
-
 
         @Override
         public DataRange getDataRange() {

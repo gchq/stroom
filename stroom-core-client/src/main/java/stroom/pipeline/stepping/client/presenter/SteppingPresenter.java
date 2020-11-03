@@ -124,7 +124,12 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         // Create the translation request to use.
         request = new PipelineStepRequest();
 
-        stepControlPresenter.setEnabledButtons(false, request.getStepType(), true, showingData, foundRecord);
+        stepControlPresenter.setEnabledButtons(
+                false,
+                request.getStepType(),
+                true,
+                showingData,
+                foundRecord);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
     }
@@ -137,8 +142,10 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             .getSelectedObject();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
-        registerHandler(stepControlPresenter.addStepControlHandler(event -> step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepLocationPresenter.addStepControlHandler(event ->
+                step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepControlPresenter.addStepControlHandler(event ->
+                step(event.getStepType(), event.getStepLocation())));
         registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
@@ -392,7 +399,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //                // Set the source selection and highlight.
 //                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
 //                        childStreamType, result.getStepData().getSourceHighlights());
-                sourcePresenter.setSourceLocation(result.getStepData().getSourceLocation());
+                sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
 
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
@@ -411,11 +418,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     sb.append("\n");
                 }
 
-                AlertEvent.fireError(this, "Some errors occurred during stepping", sb.toString(), null);
+                AlertEvent.fireError(
+                        this,
+                        "Some errors occurred during stepping",
+                        sb.toString(),
+                        null);
             }
 
         } finally {
-            stepControlPresenter.setEnabledButtons(true, request.getStepType(), true, showingData, foundRecord);
+            stepControlPresenter.setEnabledButtons(
+                    true,
+                    request.getStepType(),
+                    true,
+                    showingData,
+                    foundRecord);
             busyTranslating = false;
         }
     }

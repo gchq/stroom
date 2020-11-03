@@ -17,16 +17,23 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 @JsonPropertyOrder({"from", "to"})
 @JsonInclude(Include.NON_NULL)
 public class TextRange implements Comparable<TextRange> {
+
+    private static final Comparator<TextRange> COMPARATOR = Comparator
+            .comparing(TextRange::getFrom, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(TextRange::getTo, Comparator.nullsFirst(Comparator.naturalOrder()));
+
     @JsonProperty
     private final Location from;
     @JsonProperty
@@ -69,10 +76,7 @@ public class TextRange implements Comparable<TextRange> {
 
     @Override
     public int compareTo(final TextRange o) {
-        final CompareBuilder builder = new CompareBuilder();
-        builder.append(from, o.from);
-        builder.append(to, o.to);
-        return builder.toComparison();
+        return COMPARATOR.compare(this, o);
     }
 
     @Override
@@ -85,29 +89,54 @@ public class TextRange implements Comparable<TextRange> {
     }
 
     /**
-     * @param lineNo One based.
-     * @param colNo One based.
+     * Move the highlight forwards or backwards only the same line by charDelta chars
      */
-    public boolean isOnOrAfterFromLocation(final int lineNo, int colNo) {
-        return lineNo > from.getLineNo()
-                || (lineNo == from.getLineNo() && colNo >= from.getColNo());
+    public TextRange advance(final int delta) {
+        return new TextRange(
+                DefaultLocation.of(from.getLineNo(), from.getColNo() + delta),
+                DefaultLocation.of(to.getLineNo(), to.getColNo() + delta));
     }
 
     /**
-     * @param lineNo One based.
-     * @param colNo One based.
+     * Move a highlight on the same line
      */
-    public boolean isOnOrBeforeToLocation(final int lineNo, int colNo) {
-        return lineNo < to.getLineNo()
-                || (lineNo == to.getLineNo() && colNo >= to.getColNo());
+    public TextRange withNewStartPosition(final Location from) {
+        final int highlightLen = this.to.getColNo() - this.from.getColNo() + 1;
+        return new TextRange(
+                from,
+                DefaultLocation.of(from.getLineNo(), from.getColNo() + highlightLen - 1));
+    }
+
+    @JsonIgnore
+    public boolean isOnOneLine() {
+        return from.getLineNo() == to.getLineNo();
     }
 
     /**
-     * Inclusive at both ends.
-     * One based.
+     * @return True if all of this range is inside or is identical to
+     * the other range.
      */
-    public boolean isInsideRange(final int lineNo, int colNo) {
-        return isOnOrAfterFromLocation(lineNo, colNo)
-                && isOnOrBeforeToLocation(lineNo, colNo);
+    @JsonIgnore
+    public boolean isInsideRange(final TextRange other) {
+        if (other == null) {
+            return false;
+        } else {
+            return isInsideRange(other.from, other.to);
+        }
+    }
+
+    @JsonIgnore
+    public boolean isInsideRange(final Location from, final Location to) {
+        final boolean result;
+        if (this.from == null
+                || this.to == null
+                || from == null
+                || to == null) {
+            result = false;
+        } else {
+            result = this.getFrom().compareTo(from) >= 0
+                    && this.getTo().compareTo(to) <= 0;
+        }
+        return result;
     }
 }
