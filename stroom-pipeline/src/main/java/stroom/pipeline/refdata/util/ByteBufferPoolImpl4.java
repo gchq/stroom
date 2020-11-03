@@ -179,7 +179,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                     Thread.currentThread().interrupt();
                 }
             }
-            Objects.requireNonNull(buffer);
+            Objects.requireNonNull(buffer, "Something has gone wrong, we should have a non-null buffer");
             // Ensure the buffer is ready for use with limits/positions/marks cleared
             buffer.clear();
             return buffer;

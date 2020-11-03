@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.Instant;
+
 @JsonInclude(Include.NON_NULL)
 public class RefStoreEntry {
 
@@ -43,5 +45,15 @@ public class RefStoreEntry {
 
     public RefDataProcessingInfo getRefDataProcessingInfo() {
         return refDataProcessingInfo;
+    }
+
+    @Override
+    public String toString() {
+        return "RefStoreEntry{" +
+                "map=" + mapDefinition.getMapName() +
+                ", key='" + key + '\'' +
+                ", value='" + value + '\'' +
+                ", effectiveData=" + Instant.ofEpochMilli(refDataProcessingInfo.getEffectiveTimeEpochMs()) +
+                '}';
     }
 }

@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-query:stroom-query-common')
+    compile project(':stroom-search:stroom-search-extraction') // TODO : @66 Move Receiver so we can get rid of this
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -32,8 +33,6 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
-    compile libs.reactivestreams
-    compile libs.rxjava
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.vavr

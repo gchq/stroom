@@ -1,7 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
@@ -17,6 +16,10 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.ReceiverImpl;
+import stroom.search.coprocessor.Values;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -26,11 +29,6 @@ import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +43,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SqlStatisticsStore implements Store {
@@ -62,8 +61,6 @@ public class SqlStatisticsStore implements Store {
     private final CompletionState completionState = new CompletionState();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final String searchKey;
-    private final TaskContextFactory taskContextFactory;
-    private CompositeDisposable compositeDisposable;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreDoc statisticStoreDoc,
@@ -77,7 +74,6 @@ public class SqlStatisticsStore implements Store {
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
         this.searchKey = searchRequest.getKey().toString();
-        this.taskContextFactory = taskContextFactory;
         this.resultHandlerBatchSize = resultHandlerBatchSize;
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
@@ -94,28 +90,24 @@ public class SqlStatisticsStore implements Store {
 
         resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
-        taskContextFactory.context(TASK_NAME, parentTaskContext -> {
+        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            // Create the object that will receive results.
+            final Receiver receiver = createReceiver(coprocessorMap, taskContext);
 
-            //get the flowable for the search results
-            final Flowable<Val[]> searchResultsFlowable = statisticsSearchService.search(parentTaskContext,
-                    statisticStoreDoc, criteria, fieldIndexMap);
+            // Execute the search asynchronously.
+            // We have to create a wrapped runnable so that the task context references a managed task.
+            statisticsSearchService.search(
+                    taskContext, statisticStoreDoc, criteria, fieldIndexMap, receiver, completionState);
+        });
+        executor.execute(runnable);
 
-            this.compositeDisposable = startAsyncSearch(parentTaskContext, searchResultsFlowable, coprocessorMap, executor);
-
-            LOGGER.debug("Async search task started for key {}", searchKey);
-
-        }).run();
+        LOGGER.debug("Async search task started for key {}", searchKey);
     }
 
     @Override
     public void destroy() {
         LOGGER.debug("destroy called");
-
-        completionState.complete();
-
-        //terminate the search
-        // TODO this may need to change in 6.1
-        compositeDisposable.clear();
+        complete();
     }
 
     public void complete() {
@@ -141,7 +133,7 @@ public class SqlStatisticsStore implements Store {
 
     @Override
     public Data getData(String componentId) {
-        LOGGER.debug("getMeta called for componentId {}", componentId);
+        LOGGER.debug("getData called for componentId {}", componentId);
 
         return resultHandler.getResultStore(componentId);
     }
@@ -188,83 +180,63 @@ public class SqlStatisticsStore implements Store {
         return paramMap;
     }
 
-    private CompositeDisposable startAsyncSearch(final TaskContext parentContext,
-                                                 final Flowable<Val[]> searchResultsFlowable,
-                                                 final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
-                                                 final Executor executor) {
+    private Receiver createReceiver(
+            final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
+            final TaskContext taskContext) {
+
         LOGGER.debug("Starting search with key {}", searchKey);
-        parentContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
+        taskContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
 
         final LongAdder counter = new LongAdder();
-        // subscribe to the flowable, mapping each resultSet to a String[]
-        // Every n secs or m records process the results so far to send them to the result handler
-        // If the task is canceled, the flowable produced by search() will stop emitting
-        // Set up the results flowable, the search wont be executed until subscribe is called
-        final Scheduler scheduler = Schedulers.from(executor);
         final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
         final AtomicLong countSinceLastSend = new AtomicLong(0);
         final Instant queryStart = Instant.now();
 
-        // TODO this may need to change in 6.1 due to differences in task termination
-        // concatMapping a just() is a bit of a hack to ensure we have a single thread for task
-        // monitoring and termination purposes.
-        final CompositeDisposable compositeDisposable = new CompositeDisposable();
+        final Consumer<Values> valuesConsumer = values -> {
+            counter.increment();
+            countSinceLastSend.incrementAndGet();
+            LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values.getValues())));
 
-        final Disposable searchResultsDisposable = Flowable.just(0)
-                .subscribeOn(scheduler)
-                .concatMap(val -> searchResultsFlowable)
-                .doOnSubscribe(subscription -> LOGGER.debug("doOnSubscribeCalled"))
-                .subscribe(
-                        data ->
-                                taskContextFactory.context(parentContext, TASK_NAME, taskContext -> {
-                                    counter.increment();
-                                    countSinceLastSend.incrementAndGet();
-                                    LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+            // give the data array to each of our coprocessors
+            coprocessorMap.values().forEach(coprocessor ->
+                    coprocessor.receive(values.getValues()));
+            // send what we have every 1s or when the batch reaches a set size
+            long now = System.currentTimeMillis();
+            if (now >= nextProcessPayloadsTime.get() ||
+                    countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                                    // give the data array to each of our coprocessors
-                                    coprocessorMap.values().forEach(coprocessor ->
-                                            coprocessor.receive(data));
-                                    // send what we have every 1s or when the batch reaches a set size
-                                    long now = System.currentTimeMillis();
-                                    if (now >= nextProcessPayloadsTime.get() ||
-                                            countSinceLastSend.get() >= resultHandlerBatchSize) {
+                LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
+                        now, nextProcessPayloadsTime,
+                        countSinceLastSend.get(), resultHandlerBatchSize));
 
-                                        LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
-                                                now, nextProcessPayloadsTime,
-                                                countSinceLastSend.get(), resultHandlerBatchSize));
+                processPayloads(resultHandler, coprocessorMap);
+                taskContext.info(() -> searchKey +
+                        " - running database query (" + counter.longValue() + " rows fetched)");
+                nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                countSinceLastSend.set(0);
+            }
+        };
 
-                                        processPayloads(resultHandler, coprocessorMap);
-                                        taskContext.info(() -> searchKey +
-                                                " - running database query (" + counter.longValue() + " rows fetched)");
-                                        nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-                                        countSinceLastSend.set(0);
-                                    }
+        final Consumer<Error> errorConsumer = error -> {
+            LOGGER.error("Error in windowed flow: {}", error.getMessage(), error.getThrowable());
+            errors.add(error.getMessage());
+        };
 
-                                }).run(),
+        final Consumer<Long> completionConsumer = count -> {
+            LAMBDA_LOGGER.debug(() ->
+                    String.format("onComplete of flowable called, counter: %s",
+                            counter.longValue()));
+            // completed our window so create and pass on a payload for the
+            // data we have gathered so far
+            processPayloads(resultHandler, coprocessorMap);
+            taskContext.info(() -> searchKey + " - complete");
+            complete();
 
-                        throwable -> {
-                            LOGGER.error("Error in windowed flow: {}", throwable.getMessage(), throwable);
-                            errors.add(throwable.getMessage());
-                        },
-                        () -> {
-                            LAMBDA_LOGGER.debug(() ->
-                                    String.format("onComplete of flowable called, counter: %s",
-                                            counter.longValue()));
-                            // completed our window so create and pass on a payload for the
-                            // data we have gathered so far
-                            processPayloads(resultHandler, coprocessorMap);
-                            parentContext.info(() -> searchKey + " - complete");
-                            completionState.complete();
+            LAMBDA_LOGGER.debug(() ->
+                    LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
+        };
 
-                            LAMBDA_LOGGER.debug(() ->
-                                    LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
-                        });
-
-        LOGGER.debug("Out of flowable");
-
-        compositeDisposable.add(searchResultsDisposable);
-
-        return compositeDisposable;
+        return new ReceiverImpl(valuesConsumer, errorConsumer, completionConsumer);
     }
 
     private Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> getCoprocessorMap(
@@ -279,7 +251,7 @@ public class SqlStatisticsStore implements Store {
                         entry.getKey(),
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
                 .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
