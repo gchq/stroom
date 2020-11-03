@@ -92,10 +92,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             .fontWeight(FontWeight.BOLD)
             .fontSize(125, Unit.PCT)
             .toSafeStyles();
+
     private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
             .height(2, Unit.EM)
             .verticalAlign(VerticalAlign.BOTTOM)
             .toSafeStyles();
+
     private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
             .paddingLeft(1, Unit.EM)
             .paddingRight(1, Unit.EM)
@@ -1238,6 +1240,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void setFormatOnLoad(final boolean formatOnLoad) {
         this.formatOnLoad = formatOnLoad;
+    }
+
+    public void setNavigationControlsVisible(final boolean visible) {
+        if (visible) {
+            getView().setNavigatorView(itemNavigatorPresenter.getView());
+        } else {
+            getView().setNavigatorView(null);
+        }
     }
 
     private long getCurrentPartNo() {

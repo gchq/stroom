@@ -25,6 +25,9 @@ public class EventId {
         return streamId;
     }
 
+    /**
+     * One based
+     */
     public long getEventId() {
         return eventId;
     }

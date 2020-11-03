@@ -58,6 +58,9 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataPresenter = dataPresenter;
+        dataPresenter.setFormatOnLoad(true);
+        dataPresenter.setNavigationControlsVisible(false);
+
         this.addEventLinkPresenter = addEventLinkPresenter;
 
         addEventButton = view.addButton(SvgPresets.ADD);
@@ -128,18 +131,33 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     private void show(final List<EventId> data) {
         setData(data);
-        final PopupSize popupSize = new PopupSize(800, 600, 800, 600, true);
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Linked Events", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(LinkedEventPresenter.this, LinkedEventPresenter.this);
-            }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                consumer.accept(dirty);
-            }
-        });
+        final PopupSize popupSize = new PopupSize(
+                800,
+                600,
+                800,
+                600,
+                true);
+
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.CLOSE_DIALOG,
+                popupSize,
+                "Linked Events",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        HidePopupEvent.fire(
+                                LinkedEventPresenter.this,
+                                LinkedEventPresenter.this);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        consumer.accept(dirty);
+                    }
+                });
     }
 
     private void setData(final List<EventId> data) {
@@ -170,7 +188,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         if (selected != null) {
             final SourceLocation sourceLocation = SourceLocation.builder(selected.getStreamId())
                     .withPartNo(1L)
-                    .withSegmentNumber(selected.getEventId())
+                    .withSegmentNumber(selected.getEventId() - 1) // EventId obj is one based, segmentNo is 0 based
                     .build();
 
             dataPresenter.fetchData(sourceLocation);

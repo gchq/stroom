@@ -227,6 +227,9 @@ public class SourceLocation {
             this.truncateToWholeLines = currentSourceLocation.truncateToWholeLines;
         }
 
+        /**
+         * Zero based
+         */
         public Builder withPartNo(final Long partNo) {
             if (partNo != null) {
                 this.partNo = partNo;
@@ -239,6 +242,9 @@ public class SourceLocation {
             return this;
         }
 
+        /**
+         * Zero based
+         */
         public Builder withSegmentNumber(final Long segmentNo) {
             if (segmentNo != null) {
                 this.segmentNo = segmentNo;

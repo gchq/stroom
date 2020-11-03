@@ -56,6 +56,10 @@ public class ClassificationWrappedDataPresenter
         dataPresenter.setFormatOnLoad(formatOnLoad);
     }
 
+    public void setNavigationControlsVisible(final boolean visible) {
+        dataPresenter.setNavigationControlsVisible(visible);
+    }
+
     @Override
     public void beginStepping(final long streamId, final String childStreamType) {
         BeginPipelineSteppingEvent.fire(
