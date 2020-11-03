@@ -243,7 +243,7 @@ class SteppingRequestHandler {
                     // the last stream, last stream no, last record.
                     currentStreamIndex = streamIdList.size() - 1;
                     final long id = getStreamIdAtIndex(currentStreamIndex);
-                    currentLocation = new StepLocation(id, Long.MAX_VALUE, Long.MAX_VALUE);
+                    currentLocation = StepLocation.last(id);
 
                 } else if (currentLocation != null) {
                     // For all other step types we should have an existing
@@ -261,7 +261,7 @@ class SteppingRequestHandler {
                         if (currentStreamIndex >= 0) {
                             // Move to the end of this stream.
                             final long id = getStreamIdAtIndex(currentStreamIndex);
-                            currentLocation = new StepLocation(id, Long.MAX_VALUE, Long.MAX_VALUE);
+                            currentLocation = StepLocation.last(id);
                         }
                     }
                 }
@@ -300,7 +300,7 @@ class SteppingRequestHandler {
                         // and the stream id has changed then keep looking for a
                         // match until we reach the end of the stream
                         // (Long.MAX_VALUE)
-                        currentLocation = new StepLocation(streamId, Long.MAX_VALUE, Long.MAX_VALUE);
+                        currentLocation = StepLocation.last(streamId);
                     }
                 }
 
@@ -352,7 +352,7 @@ class SteppingRequestHandler {
                 // If we didn't find any stream then set the current record
                 // number back to what it was when this request was made. This
                 // is important when we are moving backwards and have set the
-                // current record number to Long.MAX_VALUE.
+                // current record number to StepLocation.last()
                 currentLocation = request.getStepLocation();
             }
         }
@@ -568,13 +568,13 @@ class SteppingRequestHandler {
                             currentLocation = new StepLocation(meta.getId(), partNo, 0);
                         } else if (StepType.BACKWARD.equals(stepType)) {
                             partNo--;
-                            currentLocation = new StepLocation(meta.getId(), partNo, Long.MAX_VALUE);
+                            currentLocation = StepLocation.last(meta.getId(), partNo);
                         } else if (StepType.FORWARD.equals(stepType)) {
                             partNo++;
                             currentLocation = new StepLocation(meta.getId(), partNo, 0);
                         } else if (StepType.LAST.equals(stepType)) {
                             partNo--;
-                            currentLocation = new StepLocation(meta.getId(), partNo, Long.MAX_VALUE);
+                            currentLocation = StepLocation.last(meta.getId(), partNo);
                         }
                     }
                 } catch (final IOException | RuntimeException e) {
