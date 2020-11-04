@@ -189,7 +189,10 @@ class TestDS3 extends StroomUnitTest {
     @Test
     void testLocation_singleLine() throws IOException, SAXException {
         final RootFactory rootFactory = new RootFactory();
-        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "|");
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                "|");
         new DataFactory(splitFactory, "rowData", "row", "$1");
 
         rootFactory.compile();
@@ -328,6 +331,41 @@ class TestDS3 extends StroomUnitTest {
                         "world",
                         "goodbye",
                         "world");
+    }
+
+    @Test
+    void testLocation_emojis() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                "|");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        // Emojis take up two chars each
+        final String inputStr = "🙂|🙁|👊|🖐";
+        //                       0 00 00 0000111111111122222222222
+        //                       1 23 45 6789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 3),
+                        makeRange(1,4, 1, 6),
+                        makeRange(1,7, 1, 9),
+                        makeRange(1,10, 1, 11)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "🙂",
+                        "🙁",
+                        "👊",
+                        "🖐");
     }
 
     @Test

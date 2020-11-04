@@ -18,7 +18,6 @@
 
 package stroom.data.store.impl;
 
-import stroom.util.shared.DataRange;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -58,8 +57,11 @@ import stroom.pipeline.writer.XMLWriter;
 import stroom.security.api.SecurityContext;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Marker;
@@ -67,9 +69,6 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
@@ -86,7 +85,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DataFetcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFetcher.class);
 
     // TODO @AT Need to implement showing the data has been truncated, either
     //   here by modifying the returned data or by setting some flags in the
@@ -811,7 +810,10 @@ public class DataFetcher {
         }
 
         SourceLocation resultLocation = builder.build();
-        LOGGER.debug("resultLocation {}", resultLocation);
+        LOGGER.debug(() -> LogUtil.message(
+                "resultLocation {}, charData [{}]",
+                resultLocation,
+                charData.substring(0, Math.min(charData.length(), 100))));
 
         final RawResult rawResult = new RawResult(resultLocation, charData);
         rawResult.setTotalCharacterCount(totalCharCount);

@@ -149,6 +149,10 @@ public class ByteStreamDecoder {
             return byteCount;
         }
 
+        public int getCharCount() {
+            return str.length();
+        }
+
         public boolean isByteOrderMark() {
             return str.length() == 1 && str.charAt(0) == BYTE_ORDER_MARK;
         }

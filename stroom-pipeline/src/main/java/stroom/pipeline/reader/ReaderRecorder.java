@@ -53,7 +53,8 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             if (!(target instanceof DestinationProvider)
                     && !(target instanceof TakesInput)
                     && !(target instanceof TakesReader)) {
-                throw new PipelineFactoryException("Attempt to link to an element that does not accept input or reader: "
+                throw new PipelineFactoryException(
+                        "Attempt to link to an element that does not accept input or reader: "
                         + getElementId() + " > " + target.getElementId());
             }
             super.addTarget(target);
@@ -100,6 +101,9 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    /**
+     * Buffer for reading character data
+     */
     private static class ReaderBuffer extends FilterReader implements Buffer {
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final StringBuilder stringBuilder = new StringBuilder();
@@ -256,6 +260,9 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+    /**
+     * Buffer for reading byte data with a provided encoding
+     */
     private static class InputBuffer extends FilterInputStream implements Buffer {
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final String encoding;
@@ -315,7 +322,9 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             try {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 consumeHighlightedSection(textRange, baos::write);
-                return baos.toString(encoding);
+                final String str = baos.toString(encoding);
+                LOGGER.debug("str: [{}]", str);
+                return str;
             } catch (final UnsupportedEncodingException e) {
                 LOGGER.error(e.getMessage(), e);
                 return e.getMessage();
@@ -401,7 +410,18 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                         // as they might want to do something with it.
                         LOGGER.debug("BOM found at [{}:{}]", lineNo, colNo);
                     } else {
-                        colNo++;
+                        final int charCount = decodedChar.getCharCount();
+                        if (LOGGER.isDebugEnabled() && charCount > 1) {
+                            LOGGER.debug("Found multi-char 'character' [{}] with char count {} at [{}:{}]",
+                                    decodedChar.getStr(),
+                                    charCount,
+                                    lineNo,
+                                    colNo);
+                        }
+                        // Some 'characters', e.g. emoji are not only mult-byte but are
+                        // represented as more than one char so we need
+                        // to increment the colNo by the right number of chars
+                        colNo += decodedChar.getCharCount();
                     }
                 }
             }
