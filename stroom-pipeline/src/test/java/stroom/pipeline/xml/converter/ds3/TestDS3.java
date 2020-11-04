@@ -85,18 +85,69 @@ class TestDS3 extends StroomUnitTest {
 
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 
+    @TestFactory
+    Collection<DynamicTest> testProcessInputFiles() throws IOException {
+        // Get the testing directory.
+        final Path testDir = getTestDir();
+        final List<Path> paths = new ArrayList<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(
+                testDir,
+                "*" + CONFIG_EXTENSION)) {
+            stream.forEach(paths::add);
+        }
+
+        // Build a dynamic test for each data splitter config found
+        final List<DynamicTest> dynamicTests = paths.stream()
+                .peek(path -> LOGGER.info("Found: " + FileUtil.getCanonicalPath(path)))
+                .filter(path -> path.getFileName().toString().endsWith(CONFIG_EXTENSION))
+                .map(path -> {
+                    final String name = path.getFileName().toString();
+                    final String stem = name.substring(0, name.indexOf("."));
+
+                    LOGGER.info("stem: {}", stem);
+
+                    // Only process non variants.
+                    if (stem.contains("_FAIL")) {
+                        return negativeTest(stem);
+                    } else {
+                        return positiveTest(stem);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        if (dynamicTests.isEmpty()) {
+            fail("No %s files found to create test from", CONFIG_EXTENSION);
+        } else {
+            LOGGER.info("Created {} tests", dynamicTests.size());
+        }
+
+        return dynamicTests;
+    }
+
     @Test
     void testBuildConfig() {
         final RootFactory rootFactory = new RootFactory();
 
-        final ExpressionFactory headings = new RegexFactory(rootFactory, "headingsRegex", "^[^\n]+");
+        final ExpressionFactory headings = new RegexFactory(
+                rootFactory,
+                "headingsRegex",
+                "^[^\n]+");
         final GroupFactory headingGroup = new GroupFactory(headings, "headingGroup");
-        final ExpressionFactory heading = new RegexFactory(headingGroup, "headingRegex", "[^,]+");
+        final ExpressionFactory heading = new RegexFactory(
+                headingGroup,
+                "headingRegex",
+                "[^,]+");
         new VarFactory(heading, "heading");
 
-        final ExpressionFactory record = new RegexFactory(rootFactory, "recordRegex", "^\n[\\S].+(\n[\\s]+.*)*");
+        final ExpressionFactory record = new RegexFactory(
+                rootFactory,
+                "recordRegex",
+                "^\n[\\S].+(\n[\\s]+.*)*");
         final GroupFactory partGroup = new GroupFactory(record, "partGroup");
-        final ExpressionFactory part = new RegexFactory(partGroup, "partRegex", "\n?([^,]+),?");
+        final ExpressionFactory part = new RegexFactory(
+                partGroup,
+                "partRegex",
+                "\n?([^,]+),?");
         new DataFactory(part, "part", "$heading$", "$1");
 
         // Compile the configuration.
@@ -126,6 +177,13 @@ class TestDS3 extends StroomUnitTest {
                         makeRange(2,1, 2, 5),
                         makeRange(3,1, 3, 7),
                         makeRange(4,1, 4, 5)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
     }
 
     @Test
@@ -139,7 +197,7 @@ class TestDS3 extends StroomUnitTest {
         final Root root = rootFactory.newInstance(new VarMap());
 
         final String inputStr = "hello|world|goodbye|world";
-        //                       000000000011111111112222222222
+        //                       000000000111111111122222222222
         //                       123456789012345678901234567890
 
         // source record is taken to be word + delim, e.g. hello|
@@ -150,6 +208,93 @@ class TestDS3 extends StroomUnitTest {
                         makeRange(1,7, 1, 12),
                         makeRange(1,13, 1, 20),
                         makeRange(1,21, 1, 25)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine_contained() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                0,
+                -1,
+                null,
+                "|",
+                null,
+                "\"",
+                "\"");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "\"hello\"|\"world\"|\"goodbye\"|\"world\"";
+        //                        000000 00 011111 11 11122222 22 222233 33333333
+        //                        123456 78 901234 56 78901234 56 789012 34567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 8),
+                        makeRange(1,9, 1, 16),
+                        makeRange(1,17, 1, 26),
+                        makeRange(1,27, 1, 33)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine_contained_2charDelim() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                0,
+                -1,
+                null,
+                "||",
+                null,
+                "<",
+                ">");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "<hello>||<world>||<goodbye>||<world>";
+        //                       0000000001111111111222222222233333333333
+        //                       1234567890123456789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 9),
+                        makeRange(1,10, 1, 18),
+                        makeRange(1,19, 1, 29),
+                        makeRange(1,30, 1, 36)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
     }
 
     @Test
@@ -176,12 +321,22 @@ class TestDS3 extends StroomUnitTest {
                         makeRange(1,8, 1, 14),
                         makeRange(1,15, 1, 23),
                         makeRange(1,24, 1, 28)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
     }
 
     @Test
     void testLocation_singleLine_regex() throws IOException, SAXException {
         final RootFactory rootFactory = new RootFactory();
-        final RegexFactory regexFactory = new RegexFactory(rootFactory, "regex", "[A-Z][a-z]{2}");
+        final RegexFactory regexFactory = new RegexFactory(
+                rootFactory,
+                "regex",
+                "[A-Z][a-z]{2}");
         new DataFactory(regexFactory, "rowData", "row", "$0");
 
         rootFactory.compile();
@@ -201,11 +356,21 @@ class TestDS3 extends StroomUnitTest {
                         makeRange(1,4, 1, 6),
                         makeRange(1,7, 1, 9),
                         makeRange(1,10, 1, 12)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "Fri",
+                        "Sat",
+                        "Sun",
+                        "Mon");
     }
+
 
     private LoggingContentHandler doLocationTest(final Root root,
                                                  final String inputStr,
-                                                 final List<TextRange> expectedRanges) throws IOException, SAXException {
+                                                 final List<TextRange> expectedRanges)
+            throws IOException, SAXException {
+
         LOGGER.info("root:\n{}", root.toString());
 
         DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
@@ -253,42 +418,6 @@ class TestDS3 extends StroomUnitTest {
                 DefaultLocation.of(toLine, toCol));
     }
 
-    @TestFactory
-    Collection<DynamicTest> testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
-        // Get the testing directory.
-        final Path testDir = getTestDir();
-        final List<Path> paths = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*" + CONFIG_EXTENSION)) {
-            stream.forEach(paths::add);
-        }
-
-        // Build a dynamic test for each data splitter config found
-        final List<DynamicTest> dynamicTests = paths.stream()
-                .peek(path -> LOGGER.info("Found: " + FileUtil.getCanonicalPath(path)))
-                .filter(path -> path.getFileName().toString().endsWith(CONFIG_EXTENSION))
-                .map(path -> {
-                    final String name = path.getFileName().toString();
-                    final String stem = name.substring(0, name.indexOf("."));
-
-                    LOGGER.info("stem: {}", stem);
-
-                    // Only process non variants.
-                    if (stem.contains("_FAIL")) {
-                        return negativeTest(stem);
-                    } else {
-                        return positiveTest(stem);
-                    }
-                })
-                .collect(Collectors.toList());
-
-        if (dynamicTests.isEmpty()) {
-            fail("No %s files found to create test from", CONFIG_EXTENSION);
-        } else {
-            LOGGER.info("Created {} tests", dynamicTests.size());
-        }
-
-        return dynamicTests;
-    }
 
     private DynamicTest negativeTest(final String stem, final String type) {
         return createTest(stem, "~" + type, true);
@@ -312,7 +441,9 @@ class TestDS3 extends StroomUnitTest {
 
     private void test(final String stem,
                       final String testType,
-                      final boolean expectedErrors) throws IOException, TransformerConfigurationException, SAXException {
+                      final boolean expectedErrors)
+            throws IOException, TransformerConfigurationException, SAXException {
+
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -376,7 +507,8 @@ class TestDS3 extends StroomUnitTest {
 
                 if (zipInput) {
                     final StreamLocationFactory locationFactory = new StreamLocationFactory();
-                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+                    reader.setErrorHandler(
+                            new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
 
                     try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input))) {
                         ZipEntry entry = zipInputStream.getNextEntry();
@@ -388,7 +520,8 @@ class TestDS3 extends StroomUnitTest {
                             try {
                                 if (entry.getName().endsWith(".dat")) {
                                     reader.parse(new InputSource(new BufferedReader(new InputStreamReader(
-                                            new IgnoreCloseInputStream(zipInputStream), StreamUtil.DEFAULT_CHARSET))));
+                                            new IgnoreCloseInputStream(zipInputStream),
+                                            StreamUtil.DEFAULT_CHARSET))));
                                 }
                             } finally {
                                 zipInputStream.closeEntry();
@@ -399,7 +532,10 @@ class TestDS3 extends StroomUnitTest {
 
                 } else {
                     final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
-                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+                    reader.setErrorHandler(new ErrorHandlerAdaptor(
+                            "DS3Parser",
+                            locationFactory,
+                            errorReceiver));
 
                     reader.parse(new InputSource(Files.newBufferedReader(input)));
                 }
@@ -569,6 +705,7 @@ class TestDS3 extends StroomUnitTest {
         private final DS3Parser ds3Parser;
         private Locator locator;
         private List<TextRange> textRanges = new ArrayList<>();
+        private List<String> values = new ArrayList<>();
 
         private LoggingContentHandler(final DS3Parser ds3Parser) {
             this.ds3Parser = ds3Parser;
@@ -576,6 +713,10 @@ class TestDS3 extends StroomUnitTest {
 
         public List<TextRange> getTextRanges() {
             return textRanges;
+        }
+
+        public List<String> getValues() {
+            return values;
         }
 
         @Override
@@ -605,16 +746,26 @@ class TestDS3 extends StroomUnitTest {
         }
 
         @Override
-        public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+        public void startElement(final String uri,
+                                 final String localName,
+                                 final String qName,
+                                 final Attributes atts) throws SAXException {
             LOGGER.info("startElement({}) called", localName);
             if (localName.equals("record")) {
 //                LOGGER.info("  [{}:{}]", locator.getLineNumber(), locator.getColumnNumber());
 //                stringBuilder = new StringBuilder();
             }
+            if (localName.equals("data")) {
+                final String value = atts.getValue("value");
+                LOGGER.info("  value: [{}]", value);
+                values.add(value);
+            }
         }
 
         @Override
-        public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        public void endElement(final String uri,
+                               final String localName,
+                               final String qName) throws SAXException {
             LOGGER.info("endElement({}) called", localName);
             if (localName.equals("record")) {
 

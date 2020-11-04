@@ -49,7 +49,8 @@ public class LocationHolder implements Holder {
     private Location currentEndLocation;
     private Location markedStartLocation;
     private boolean hasMarkedStartLocation;
-    private static final Comparator<Location> LOCATION_COMPARATOR = Comparator.comparing(Location::getLineNo)
+    private static final Comparator<Location> LOCATION_COMPARATOR = Comparator
+            .comparing(Location::getLineNo)
             .thenComparing(Location::getColNo);
 
     @Inject
@@ -100,7 +101,8 @@ public class LocationHolder implements Holder {
     }
 
     public void storeLocation() {
-        LOGGER.trace("currentStartLocation: {}, currentEndLocation: {}, startLocator.getLineNo: {}, startLocator.getColNo: {}",
+        LOGGER.trace("currentStartLocation: {}, currentEndLocation: {}, " +
+                        "startLocator.getLineNo: {}, startLocator.getColNo: {}",
                 currentStartLocation,
                 currentEndLocation,
                 locator.getLineNumber(),
