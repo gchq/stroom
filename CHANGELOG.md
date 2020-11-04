@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
 * Issue **#1925** : Fixed logging error that was happening on search.
 
 * Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
