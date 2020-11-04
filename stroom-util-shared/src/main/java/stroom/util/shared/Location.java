@@ -17,10 +17,12 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -45,4 +47,15 @@ public interface Location extends Comparable<Location> {
      */
     int getColNo();
 
+    @JsonIgnore
+    default boolean isBefore(final Location other) {
+        Objects.requireNonNull(other);
+        return LINE_COL_COMPARATOR.compare(this, other) < 0;
+    }
+
+    @JsonIgnore
+    default boolean isAfter(final Location other) {
+        Objects.requireNonNull(other);
+        return LINE_COL_COMPARATOR.compare(this, other) > 0;
+    }
 }

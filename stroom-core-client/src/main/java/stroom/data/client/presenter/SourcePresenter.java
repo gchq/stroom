@@ -140,7 +140,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             if (isCurrentSourceSuitable(sourceLocation)) {
                 // The requested highlight is inside the currently held data so just update
                 // the highlight in the editor
-                GWT.log("Using existing source");
+//                GWT.log("Using existing source");
 
                 // Update the highlight in case refresh is called
                 requestedSourceLocation = receivedSourceLocation.clone()
@@ -152,36 +152,85 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             } else {
                 // Highlight is outside the currently held data so we need to fetch data
                 // that contains the highlight.
-                final Location newSourceStart;
-                final Location highlightStart = highlight.getFrom();
-
-                // Define the new range as starting at the beginning of the highlight
-//                newSourceStart = highlightStart;
-
-                if (receivedSourceLocation.getDataRange().getLineCount().filter(i -> i == 1).isPresent()
-                    && highlight.isOnOneLine()
-                    && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
-                    // single line data and highligt
-                    newSourceStart = DefaultLocation.of(
-                            1,
-                            highlightStart.getColNo() - HIGHLIGHT_CONTEXT_CHARS_BEFORE);
-                } else if (highlightStart.getLineNo() > HIGHLIGHT_CONTEXT_LINES_BEFORE) {
-                    newSourceStart = DefaultLocation.of(
-                            highlightStart.getLineNo() - HIGHLIGHT_CONTEXT_LINES_BEFORE,
-                            1);
-                } else {
-                    newSourceStart = DefaultLocation.of(1,1);
-                }
-
-                GWT.log("Highlight: " + highlight.toString()
-                        + " new start: " + newSourceStart.toString());
+                final Location newSourceStart = buildNewSourceLocationFromHighlight(sourceLocation, highlight);
 
                 final SourceLocation newSourceLocation = sourceLocation.clone()
                         .withDataRange(DataRange.from(newSourceStart))
                         .build();
 
+                // Now fetch the required range
                 setSourceLocation(newSourceLocation, true);
             }
+        }
+    }
+
+    private Location buildNewSourceLocationFromHighlight(final SourceLocation sourceLocation,
+                                                         final TextRange highlight) {
+        final Location newSourceStart;
+        final Location highlightStart = highlight.getFrom();
+
+        // If we are stepping backwards then this highlight will be before the last one we
+        // requested. If we don't have previous data then treat it like stepping forward.
+        final boolean isHighlightMovingBackwards = isHighlightMovingBackwards(
+                sourceLocation,
+                requestedSourceLocation);
+
+        final Optional<Integer> optCurrLineCount = receivedSourceLocation.getOptDataRange()
+                .flatMap(DataRange::getLineCount);
+
+        if (optCurrLineCount
+                .filter(i -> i == 1)
+                .isPresent()
+            && highlight.isOnOneLine()
+            && highlightStart.getColNo() > HIGHLIGHT_CONTEXT_CHARS_BEFORE) {
+
+            // single line data and highlight
+            final int newColNo;
+            if (isHighlightMovingBackwards
+                    && receivedSourceLocation.getDataRange() != null
+                    && receivedSourceLocation.getDataRange().getOptLength().isPresent()) {
+                // try and show just under a fetch's worth of data before
+                newColNo = (int) (highlightStart.getColNo()
+                        - receivedSourceLocation.getDataRange().getLength()
+                        + HIGHLIGHT_CONTEXT_CHARS_BEFORE);
+            } else {
+                // we need to change the visible range
+                // to be some chars before the highlight to provide the user some context
+                newColNo = highlightStart.getColNo() - HIGHLIGHT_CONTEXT_CHARS_BEFORE;
+            }
+            newSourceStart = DefaultLocation.of( 1, Math.max(1, newColNo));
+        } else if (highlightStart.getLineNo() > HIGHLIGHT_CONTEXT_LINES_BEFORE) {
+            final int newLineNo;
+            if (isHighlightMovingBackwards && optCurrLineCount.isPresent()) {
+                // try and show just under a fetch's worth of data before
+                newLineNo = highlightStart.getLineNo()
+                        - optCurrLineCount.get()
+                        + HIGHLIGHT_CONTEXT_LINES_BEFORE;
+            } else {
+                // Adjust the visible data range to be a few lines before the highlight
+                // so the user has some context
+                newLineNo = highlightStart.getLineNo() - HIGHLIGHT_CONTEXT_LINES_BEFORE;
+            }
+            newSourceStart = DefaultLocation.of(  Math.max(1, newLineNo), 1);
+        } else {
+            // Shouldn't really come in here but just display from the start just in case
+            newSourceStart = DefaultLocation.of(1,1);
+        }
+
+//        GWT.log("Highlight: " + highlight.toString()
+//                + " new start: " + newSourceStart.toString());
+        return newSourceStart;
+    }
+
+    private boolean isHighlightMovingBackwards(final SourceLocation newSourceLocation,
+                                               final SourceLocation oldSourceLocation) {
+        if (newSourceLocation != null
+                && newSourceLocation.getHighlight() != null
+                && oldSourceLocation != null
+                && oldSourceLocation.getHighlight() != null) {
+            return newSourceLocation.getHighlight().isBefore(oldSourceLocation.getHighlight());
+        } else {
+            return false;
         }
     }
 
@@ -196,10 +245,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         receivedSourceLocation.getDataRange().getLocationFrom(),
                         receivedSourceLocation.getDataRange().getLocationTo());
 
-            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
-                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
-                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
-                    + " result: " + result);
+//            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
+//                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
+//                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
+//                    + " result: " + result);
         }
         return result;
     }

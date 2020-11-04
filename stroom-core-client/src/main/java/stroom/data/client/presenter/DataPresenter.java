@@ -674,6 +674,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 dataRange = DataRange.from(0,
                         sourceConfig.getMaxCharactersInPreviewFetch());
             }
+//            GWT.log("Using data range " + dataRange.toString());
 
             // TODO @AT Do we need to pass the highlight?
             final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> {
