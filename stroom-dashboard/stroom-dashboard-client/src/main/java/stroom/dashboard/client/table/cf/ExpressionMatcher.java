@@ -37,8 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
@@ -47,8 +45,10 @@ public class ExpressionMatcher {
     private final Map<String, String> fieldNameToJsDateFormat;
 
     public ExpressionMatcher(final List<Field> fields) {
-        this.fieldNameToFieldMap = fields.stream()
-                .collect(Collectors.toMap(Field::getName, Function.identity()));
+        this.fieldNameToFieldMap = new HashMap<>();
+        for (final Field field : fields) {
+            fieldNameToFieldMap.putIfAbsent(field.getName(), field);
+        }
 
         // For any date cols with a format str, convert the string to js moment syntax
         this.fieldNameToJsDateFormat = new HashMap<>();
@@ -65,7 +65,7 @@ public class ExpressionMatcher {
                         .getSettings())
                         .getPattern())
                         .ifPresent(format ->
-                                fieldNameToJsDateFormat.put(field.getName(), format)));
+                                fieldNameToJsDateFormat.putIfAbsent(field.getName(), format)));
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -388,8 +388,8 @@ public class ExpressionMatcher {
             if (value instanceof String) {
                 String valueStr = (String) value;
                 try {
-                        // This is a term value so will be IDO format
-                        return ClientDateUtil.fromISOString(valueStr);
+                    // This is a term value so will be IDO format
+                    return ClientDateUtil.fromISOString(valueStr);
                 } catch (final NumberFormatException e) {
                     GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
                     throw new MatchException(
@@ -419,7 +419,7 @@ public class ExpressionMatcher {
 
     private Long[] getDates(final Object value) {
         if (value == null) {
-           return new Long[0];
+            return new Long[0];
         } else {
             final String[] values = value.toString().split(DELIMITER);
             final Long[] dates = new Long[values.length];

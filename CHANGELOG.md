@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
 
+* Issue **#1925** : Fixed logging error that was happening on search.
+
+* Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
+
+* Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
+
+* Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.
+
+* Removed rxjava.
+
+* Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
+
+* Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
+
+* Issue **#1915** : Fixed task context user identity for statistics searches.
+
+* Issue **#1915** : Fixed task context for statistics searches.
+
 * Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
 
 * Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.

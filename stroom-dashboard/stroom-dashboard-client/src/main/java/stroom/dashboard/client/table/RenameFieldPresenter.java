@@ -16,13 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.Field;
 import stroom.util.shared.EqualsUtil;
@@ -31,6 +24,14 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
@@ -92,7 +93,7 @@ public class RenameFieldPresenter
 
                 // Need to ensure any conditional formatting rules that use this field name
                 // are renamed too.
-                tablePresenter.handleFieldRename(field.getId(), field.getName(), newFieldName);
+                tablePresenter.handleFieldRename(field.getName(), newFieldName);
 
                 final boolean isNameInUse = tablePresenter.getSettings()
                         .getFields()
