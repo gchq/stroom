@@ -322,10 +322,6 @@ allprojects {
 }
 
 
-
-
-
-
 // Variable to capture the version of slf4j defined in the DW BOM, so
 // we can use it to set the version of slf4j when we do a dependency
 // substitution with log4j
@@ -435,9 +431,9 @@ subprojects {
 
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
-        afterSuite { descriptor, result -> 
-            if (descriptor != null 
-                    && descriptor.className != null 
+        afterSuite { descriptor, result ->
+            if (descriptor != null
+                    && descriptor.className != null
                     && result.resultType.toString() == "FAILURE") {
 
                 // test class failed so add its project info and test report file to a global list for
