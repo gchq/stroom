@@ -276,7 +276,9 @@ public class StroomStreamProcessor {
                 } else {
                     // We need to add the stream size
                     // Send the data file yet ?
-                    final String dataFile = stroomZipNameSet.getName(stroomZipEntry.getBaseName(), StroomZipFileType.Data);
+                    final String dataFile = stroomZipNameSet.getName(
+                            stroomZipEntry.getBaseName(),
+                            StroomZipFileType.Data);
                     if (dataFile != null && dataStreamSizeMap.containsKey(dataFile)) {
                         // Yes we can send the header now
                         entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE,
