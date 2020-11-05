@@ -17,12 +17,14 @@
 package stroom.cluster.lock.impl.db;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.db.DbTestUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,10 +58,20 @@ class TestDbClusterLock {
         thread2.start();
 
         // Now make sure the sequence is as expected.
-        countDownLatch.await();
-        assertThat(sequence.size()).isEqualTo(3);
-        assertThat(sequence.get(0).intValue()).isEqualTo(1);
-        assertThat(sequence.get(1).intValue()).isEqualTo(2);
-        assertThat(sequence.get(2).intValue()).isEqualTo(3);
+        // Use a timeout so if it goes wrong the test won't just sit there for ages.
+        final boolean success = countDownLatch.await(20, TimeUnit.SECONDS);
+
+        assertThat(success)
+                .withFailMessage("Gave up waiting for the latch to count down")
+                .isTrue();
+
+        assertThat(sequence)
+                .hasSize(3);
+        assertThat(sequence.get(0))
+                .isEqualTo(1);
+        assertThat(sequence.get(1))
+                .isEqualTo(2);
+        assertThat(sequence.get(2))
+                .isEqualTo(3);
     }
 }
