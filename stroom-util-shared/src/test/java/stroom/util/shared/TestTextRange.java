@@ -8,11 +8,12 @@ class TestTextRange {
     @Test
     void testIsInsideRange() {
 
-        final TextRange textRange = new TextRange(
+        final TextRange highlight = new TextRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 30));
 
-        final boolean result = textRange.isInsideRange(
+        // Exactly the same as the range
+        final boolean result = highlight.isInsideRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 30));
 
@@ -23,11 +24,11 @@ class TestTextRange {
     @Test
     void testIsInsideRange2() {
 
-        final TextRange textRange = new TextRange(
+        final TextRange highlight = new TextRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 30));
 
-        final boolean result = textRange.isInsideRange(
+        final boolean result = highlight.isInsideRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 29));
 
@@ -38,11 +39,11 @@ class TestTextRange {
     @Test
     void testIsInsideRange3() {
 
-        final TextRange textRange = new TextRange(
+        final TextRange highlight = new TextRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 30));
 
-        final boolean result = textRange.isInsideRange(
+        final boolean result = highlight.isInsideRange(
                 DefaultLocation.of(1, 11),
                 DefaultLocation.of(1, 30));
 
@@ -53,13 +54,13 @@ class TestTextRange {
     @Test
     void testIsInsideRange4() {
 
-        final TextRange textRange = new TextRange(
+        final TextRange highlight = new TextRange(
                 DefaultLocation.of(1, 15),
                 DefaultLocation.of(1, 25));
 
-        final boolean result = textRange.isInsideRange(
-                DefaultLocation.of(1, 10),
-                DefaultLocation.of(1, 30));
+        final boolean result = highlight.isInsideRange(
+                DefaultLocation.of(1, 1),
+                DefaultLocation.of(1, 2000));
 
         Assertions.assertThat(result)
                 .isTrue();
@@ -68,11 +69,11 @@ class TestTextRange {
     @Test
     void testIsInsideRange5() {
 
-        final TextRange textRange = new TextRange(
+        final TextRange highlight = new TextRange(
                 DefaultLocation.of(1, 10),
                 DefaultLocation.of(1, 30));
 
-        final boolean result = textRange.isInsideRange(
+        final boolean result = highlight.isInsideRange(
                 DefaultLocation.of(1, 12),
                 DefaultLocation.of(1, 28));
 

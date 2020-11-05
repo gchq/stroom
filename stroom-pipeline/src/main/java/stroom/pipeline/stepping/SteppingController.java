@@ -206,10 +206,14 @@ public class SteppingController {
 
             // Will rely on SourcePresenter to adjust the data range to fit the
             // highlight
+            // TODO @AT PartNo/StreamNo is a mix of one and zero based depending on where it is used.
+            //   Similar for SegmentNo/RecordNo/EventId.
+            //   Always one based for the user.  Need a consistent approach, or VERY clear
+            //   comments/javadoc saying what base is in use.
             sourceLocation = SourceLocation.builder(stepLocation.getId())
                     .withChildStreamType(metaHolder.getChildDataType())
-                    .withPartNo(stepLocation.getPartNo())
-                    .withSegmentNumber(stepLocation.getRecordNo())
+                    .withPartNo(stepLocation.getPartNo() - 1) // convert to zero based
+                    .withSegmentNumber(stepLocation.getRecordNo() - 1) // convert to zero based
                     .withDataRange(DataRange.from(DefaultLocation.of(1, 1)))
                     .withHighlight(textRange)
                     .build();

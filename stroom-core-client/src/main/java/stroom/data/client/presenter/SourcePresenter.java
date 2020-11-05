@@ -59,8 +59,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
-    // This is the highlight range for the editor, not the source data. For single line
-    // data they will differ if the editor is not displaying from offset zero.
     private TextRange currentHighlight = null;
     private int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
@@ -131,6 +129,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
+        currentHighlight = sourceLocation.getHighlight();
         if (sourceLocation.getHighlight() == null || receivedSourceLocation == null) {
             // no highlight or no previous data so just get the requested data.
             setSourceLocation(sourceLocation);
@@ -147,25 +146,28 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         .withHighlight(highlight)
                         .build();
 
-                currentHighlight = highlight;
+//                currentHighlight = highlight;
                 updateEditorHighlights();
             } else {
                 // Highlight is outside the currently held data so we need to fetch data
                 // that contains the highlight.
-                final Location newSourceStart = buildNewSourceLocationFromHighlight(sourceLocation, highlight);
+                doWithConfig(sourceConfig -> {
+                    final Location newSourceStart = buildNewSourceLocationFromHighlight(
+                            sourceLocation, highlight, sourceConfig);
+                    final SourceLocation newSourceLocation = sourceLocation.clone()
+                            .withDataRange(DataRange.from(newSourceStart))
+                            .build();
 
-                final SourceLocation newSourceLocation = sourceLocation.clone()
-                        .withDataRange(DataRange.from(newSourceStart))
-                        .build();
-
-                // Now fetch the required range
-                setSourceLocation(newSourceLocation, true);
+                    // Now fetch the required range
+                    setSourceLocation(newSourceLocation, true);
+                });
             }
         }
     }
 
     private Location buildNewSourceLocationFromHighlight(final SourceLocation sourceLocation,
-                                                         final TextRange highlight) {
+                                                         final TextRange highlight,
+                                                         final SourceConfig sourceConfig) {
         final Location newSourceStart;
         final Location highlightStart = highlight.getFrom();
 
@@ -190,8 +192,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     && receivedSourceLocation.getDataRange() != null
                     && receivedSourceLocation.getDataRange().getOptLength().isPresent()) {
                 // try and show just under a fetch's worth of data before
+                final int highlightLen = highlight.getTo().getColNo() - highlight.getFrom().getColNo() + 1;
                 newColNo = (int) (highlightStart.getColNo()
-                        - receivedSourceLocation.getDataRange().getLength()
+                        - sourceConfig.getMaxCharactersPerFetch()
+                        + highlightLen
+//                        - receivedSourceLocation.getDataRange().getLength()
                         + HIGHLIGHT_CONTEXT_CHARS_BEFORE);
             } else {
                 // we need to change the visible range
@@ -239,16 +244,19 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         if (receivedSourceLocation == null) {
             result = false;
         } else {
-
             result = receivedSourceLocation.isSameSource(sourceLocation)
                     && sourceLocation.getHighlight().isInsideRange(
                         receivedSourceLocation.getDataRange().getLocationFrom(),
                         receivedSourceLocation.getDataRange().getLocationTo());
 
-//            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
-//                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
-//                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
-//                    + " result: " + result);
+            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
+                    + " isSameSource: " + receivedSourceLocation.isSameSource(sourceLocation)
+                    + " isInsideRange: " + sourceLocation.getHighlight().isInsideRange(
+                        receivedSourceLocation.getDataRange().getLocationFrom(),
+                        receivedSourceLocation.getDataRange().getLocationTo())
+                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
+                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
+                    + " result: " + result);
         }
         return result;
     }
@@ -348,15 +356,20 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     .filter(charOffset -> charOffset > 0)
                     .isPresent();
 
-            final TextRange editorHighlight;
+            // This is the highlight range for the editor, not the source data. For single line
+            // data they will differ if the editor is not displaying from offset one.
+            // It is only an issue for single line data because for multi-line we adjust the editor's
+            // starting line no to suit the data.
+            TextRange editorHighlight = currentHighlight;
+
             if (isSingleLineData.getAsBoolean() && isNonZeroCharOffset.getAsBoolean()) {
                 final long startOffset = receivedSourceLocation.getDataRange().getCharOffsetFrom();
 
-                editorHighlight = currentHighlight.withNewStartPosition(DefaultLocation.of(
-                        1,
-                        (int) (currentHighlight.getTo().getColNo() - startOffset)));
-            } else {
-                editorHighlight = currentHighlight;
+                if (startOffset != 1) {
+                    final int highlightDelta = (int) (currentHighlight.getFrom().getColNo() - startOffset);
+                    editorHighlight = currentHighlight.withNewStartPosition(
+                            DefaultLocation.of(1, highlightDelta));
+                }
             }
             textPresenter.setHighlights(Collections.singletonList(editorHighlight));
         } else {
