@@ -152,6 +152,8 @@ class TestJsonSerialisation {
                     }
 
                     Assertions.assertThat(json2)
+                            .describedAs(
+                                    "%s - Checking default values on (de)serialisation", clazz.getName())
                             .isEqualTo(json1);
                 }
             }
@@ -175,8 +177,8 @@ class TestJsonSerialisation {
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {
                             Assertions.assertThat(keyType.getTypeName())
-                                    .withFailMessage(
-                                            "Bad key type, maps must have string keys")
+                                    .describedAs(
+                                            "%s - Bad key type, maps must have string keys", clazz.getName())
                                     .isEqualTo(String.class.getName());
                         }
                     }
@@ -235,15 +237,15 @@ class TestJsonSerialisation {
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(additionalGetters)
-                            .withFailMessage("Additional getters: %s", additionalGetters)
+                            .describedAs("%s - Additional getters: %s", clazz.getName(), additionalGetters)
                             .isEmpty();
 
                     softly.assertThat(additionalSetters)
-                            .withFailMessage("Additional setters: %s", additionalSetters)
+                            .describedAs("%s - Additional setters: %s", clazz.getName(), additionalSetters)
                             .isEmpty();
 
                     softly.assertThat(uselessIgnore)
-                            .withFailMessage("Useless ignore: %s", uselessIgnore)
+                            .describedAs("%s - Useless @JsonIgnore annotation: %s", clazz.getName(), uselessIgnore)
                             .isEmpty();
                 });
             }
@@ -319,30 +321,30 @@ class TestJsonSerialisation {
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(constructorPropNames)
-                            .describedAs("JsonProperties defined in the constructor must have a" +
-                                    "corresponding JsonProperty on the field.")
+                            .describedAs("%s - JsonProperties defined in the constructor must have a" +
+                                    "corresponding JsonProperty on the field.", clazz.getName())
                             .containsExactlyInAnyOrderElementsOf(fieldPropNames);
 
                     softly.assertThat(hasJsonInclude)
-                            .describedAs("Missing JsonInclude annotation.")
+                            .describedAs("%s - Missing JsonInclude annotation.", clazz.getName())
                             .isTrue();
 //                                softly.assertThat(hasJsonPropertyOrder)
 //                                        .withFailMessage("No JsonPropertyOrder")
 //                                        .isTrue();
                     softly.assertThat(jsonCreatorCount)
                             .withFailMessage(
-                                    "Should have exactly one JsonCreator, found %s",
-                                    jsonCreatorCount.get())
+                                    "%s - Should have exactly one JsonCreator, found %s",
+                                    clazz.getName(), jsonCreatorCount.get())
                             .hasValue(1);
                     softly.assertThat(fieldsWithoutAnnotations)
                             .withFailMessage(
-                                    "Fields without annotations: %s",
-                                    fieldsWithoutAnnotations)
+                                    "%s - Fields without annotations: %s",
+                                    clazz.getName(), fieldsWithoutAnnotations)
                             .isEmpty();
                     softly.assertThat(methodsWithAnnotations)
                             .withFailMessage(
-                                    "Methods with annotations: %s",
-                                    methodsWithAnnotations)
+                                    "%s - Methods with annotations: %s",
+                                    clazz.getName(), methodsWithAnnotations)
                             .isEmpty();
                 });
             }

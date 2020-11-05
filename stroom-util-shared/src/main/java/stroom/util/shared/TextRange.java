@@ -141,7 +141,6 @@ public class TextRange implements Comparable<TextRange> {
     /**
      * @return True if the from location of this is before the from location of other
      */
-    @JsonIgnore
     public boolean isBefore(final TextRange other) {
         Objects.requireNonNull(other);
         return this.from.isBefore(other.from);
@@ -150,7 +149,6 @@ public class TextRange implements Comparable<TextRange> {
     /**
      * @return True if the from location of this is before the from location of other
      */
-    @JsonIgnore
     public boolean isAfter(final TextRange other) {
         Objects.requireNonNull(other);
         return this.from.isAfter(other.from);
