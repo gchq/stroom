@@ -43,10 +43,10 @@ public class SourceLocation {
     @JsonProperty
     private final String childType; // null for actual data, else non null (e.g. context/meta)
     @JsonProperty
-    private final long partNo; // For multipart data only, aka streamNo, 0 for non multi-part data
+    private final long partNo; // For multipart data only, aka streamNo, 0 for non multi-part data, zero based
     // TODO @AT Change to an OffsetRange to support error segments
     @JsonProperty
-    private final long segmentNo; // optional for segmented data only (segment aka record)
+    private final long segmentNo; // optional for segmented data only (segment aka record), zero based
 //    private final OffsetRange<Long> segmentNoRange;
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
@@ -206,9 +206,9 @@ public class SourceLocation {
 
     public static final class Builder {
         private final long id;
-        private long partNo = 0; // Non multipart data has segment no of zero by default
+        private long partNo = 0; // Non multipart data has segment no of zero by default, zero based
         private String childType;
-        private long segmentNo = 0; // Non-segmented data has no segment no.
+        private long segmentNo = 0; // Non-segmented data has no segment no., zero based
         private DataRange dataRange;
         private TextRange highlight;
         private boolean truncateToWholeLines = false;

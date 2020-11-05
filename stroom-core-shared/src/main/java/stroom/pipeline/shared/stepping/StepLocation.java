@@ -35,11 +35,11 @@ public class StepLocation {
     @JsonProperty
     private final long id;
 
-    // Zero based, one based for presentation only
+    // One based
     @JsonProperty
     private final long partNo;
 
-    // Zero based, one based for presentation only
+    // One based
     @JsonProperty
     private final long recordNo;
 
@@ -56,6 +56,9 @@ public class StepLocation {
         return new StepLocation(id, MAX_PART_NO, MAX_RECORD_NO);
     }
 
+    /**
+     * @param partNo One based
+     */
     public static StepLocation last(final long id, final long partNo) {
         return new StepLocation(id, partNo, MAX_RECORD_NO);
     }
@@ -64,10 +67,16 @@ public class StepLocation {
         return id;
     }
 
+    /**
+     * One based
+     */
     public long getPartNo() {
         return partNo;
     }
 
+    /**
+     * One based
+     */
     public long getRecordNo() {
         return recordNo;
     }
