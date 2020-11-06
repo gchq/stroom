@@ -24,8 +24,9 @@ stroom-core-server/src/test/resources/transientContentPacks/
 # Here we ignore everything and create exceptions for what we want to share.
 */out/
 *.iml
-/.idea/*
-!/.idea/runConfigurations
+.idea/*
+!.idea/codeStyles
+!.idea/runConfigurations
 # END OF IntelliJ
 
 #Gradle stuff (from https://github.com/github/gitignore/blob/master/Gradle.gitignore)
