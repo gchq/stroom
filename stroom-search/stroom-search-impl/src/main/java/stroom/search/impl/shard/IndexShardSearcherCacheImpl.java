@@ -16,7 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import org.apache.lucene.index.IndexWriter;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.index.impl.IndexShardService;
@@ -34,11 +33,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Clearable;
 
+import org.apache.lucene.index.IndexWriter;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton

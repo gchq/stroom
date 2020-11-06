@@ -16,23 +16,12 @@
 
 package stroom.search.extraction;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.ReceivingContentHandler;
-import net.sf.saxon.s9api.*;
-import net.sf.saxon.tree.tiny.TinyBuilder;
-import net.sf.saxon.tree.tiny.TinyTree;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -41,10 +30,29 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.ReceivingContentHandler;
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathExecutable;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmAtomicValue;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmNodeKind;
+import net.sf.saxon.s9api.XdmSequenceIterator;
+import net.sf.saxon.tree.tiny.TinyBuilder;
+import net.sf.saxon.tree.tiny.TinyTree;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -190,7 +198,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             String value = item.getStringValue();
             thisVal.append(value);
             numberOfVals++;
-        } else if (item instanceof  XdmNode){
+        } else if (item instanceof XdmNode){
             XdmNode node = (XdmNode) item;
             XdmNodeKind type = node.getNodeKind();
 
