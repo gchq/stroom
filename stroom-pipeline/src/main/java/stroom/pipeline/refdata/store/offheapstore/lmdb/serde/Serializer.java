@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 
 public interface Serializer<T> {
 
+    // TODO @AT This ought to be in config, or ideally we need something that will optimistically
+    //   serialise to a certain size of buffer and if that fails try again with a bigger one.
     int DEFAULT_CAPACITY = 1_000;
 
 //    /**
