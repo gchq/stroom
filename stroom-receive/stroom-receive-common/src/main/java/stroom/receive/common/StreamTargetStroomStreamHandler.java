@@ -41,7 +41,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,8 +110,14 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                                                                                final MetaStatistics metaDataStatistics,
                                                                                final String feedName,
                                                                                final String typeName) {
-        final ArrayList<StreamTargetStroomStreamHandler> list = new ArrayList<>();
-        list.add(new StreamTargetStroomStreamHandler(streamStore, feedProperties, metaDataStatistics, feedName, typeName, false));
+        final List<StreamTargetStroomStreamHandler> list = Collections.singletonList(
+                new StreamTargetStroomStreamHandler(
+                        streamStore,
+                        feedProperties,
+                        metaDataStatistics,
+                        feedName,
+                        typeName,
+                        false));
         return list;
     }
 
