@@ -22,6 +22,7 @@ import stroom.util.logging.LogUtil;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -99,6 +100,11 @@ public class PooledByteBuffer implements AutoCloseable {
         if (byteBuffer != null) {
             byteBuffer.clear();
         }
+    }
+
+    public Optional<Integer> getCapacity() {
+        return Optional.ofNullable(byteBuffer)
+                .map(ByteBuffer::capacity);
     }
 
     /**

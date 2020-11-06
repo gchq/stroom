@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve PooledByteBufferOutputStream.
+
 * Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
 
 * Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).

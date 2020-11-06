@@ -14,6 +14,8 @@
 
     <logger name="stroom.pipeline.refdata" level="debug" />
 
+<!--    <logger name="stroom.pipeline.refdata.util" level="trace" />-->
+
 <!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 
     <root level="error">

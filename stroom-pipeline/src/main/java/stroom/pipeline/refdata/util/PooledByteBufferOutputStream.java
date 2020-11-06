@@ -19,11 +19,10 @@ package stroom.pipeline.refdata.util;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.inject.Inject;
@@ -31,6 +30,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 /*
@@ -57,16 +58,17 @@ import java.util.function.Function;
 
 /**
  * An output stream using a {@link ByteBuffer} supplied from a {@link ByteBufferPool}.
- * The underlying buffer will continuously replaced with a larger buffer in the event
+ * The underlying buffer will be continuously replaced with a larger buffer in the event
  * that there is insufficient room for the write() methods. The underlying buffer
  * is obtained from the pool lazily. Calling close/release or using this in a try with
  * resources block will ensure that the underlying buffer is returned to the pool.
+ * Once getPooledByteBuffer is called, any calls to write(*) will throw and exception until
+ * clear or release are called.
  */
 @NotThreadSafe
 public class PooledByteBufferOutputStream extends OutputStream implements AutoCloseable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PooledByteBufferOutputStream.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferOutputStream.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferOutputStream.class);
 
     // Borrowed from openJDK:
     // http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/8-b132/java/util/ArrayList.java#221
@@ -75,6 +77,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     private PooledByteBuffer pooledByteBuffer;
     private int capacity;
     private Function<Integer, PooledByteBuffer> pooledByteBufferSupplier;
+    private boolean isAvailableForWriting = true;
 
     @Inject
     public PooledByteBufferOutputStream(final ByteBufferPool byteBufferPool,
@@ -96,13 +99,15 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * has been called.
      */
     public PooledByteBuffer getPooledByteBuffer() {
-        PooledByteBuffer pooledByteBuffer = getCurrentPooledBuffer();
+        final PooledByteBuffer pooledByteBuffer = getCurrentPooledBuffer();
         pooledByteBuffer.getByteBuffer().flip();
+        isAvailableForWriting = false;
         return pooledByteBuffer;
     }
 
     @Override
     public void write(int b) throws IOException {
+        checkWriteableState();
         checkSizeAndGrow(Bytes.SIZEOF_BYTE);
         getCurrentPooledBuffer().getByteBuffer().put((byte)b);
     }
@@ -111,9 +116,24 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
         write(b, 0, b.length);
     }
 
-    protected void checkSizeAndGrow(int extra) {
-        PooledByteBuffer currPooledByteBuffer = getCurrentPooledBuffer();
-        ByteBuffer curBuf = currPooledByteBuffer.getByteBuffer();
+    public void write(byte b[], int off, int len) throws IOException {
+        checkWriteableState();
+        Objects.checkFromIndexSize(off, len, b.length);
+        checkSizeAndGrow(len);
+
+        getCurrentPooledBuffer().getByteBuffer().put(b, off, len);
+    }
+
+    private void checkWriteableState() {
+        if (!isAvailableForWriting) {
+            throw new IllegalStateException(
+                    "getPooledByteBuffer() has been called, you can no longer write to the stream.");
+        }
+    }
+
+    private void checkSizeAndGrow(int extra) {
+        final PooledByteBuffer currPooledByteBuffer = getCurrentPooledBuffer();
+        final ByteBuffer curBuf = currPooledByteBuffer.getByteBuffer();
 
         long capacityNeeded = curBuf.position() + (long) extra;
         if (capacityNeeded > curBuf.limit()) {
@@ -121,26 +141,38 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
             if (capacityNeeded > MAX_ARRAY_SIZE) {
                 throw new BufferOverflowException();
             }
-            // double until hit the cap
-            long nextCapacity = Math.min(curBuf.capacity() * 2L, MAX_ARRAY_SIZE);
-            // but make sure there is enough if twice the existing capacity is still too small
-            nextCapacity = Math.max(nextCapacity, capacityNeeded);
-
-            LOGGER.trace("Replacing buffer with new capacity {}", nextCapacity);
+            final long currCapacity = curBuf.capacity();
+            // Double the existing capacity unless that is not as big as capacityNeeded
+            final long minNewCapacity = Math.max(
+                    Math.min(
+                            currCapacity * 2L,
+                            MAX_ARRAY_SIZE),
+                    capacityNeeded);
 
             // get a new bigger buffer from the pool
-            PooledByteBuffer newPooledByteBuffer = pooledByteBufferSupplier.apply((int) nextCapacity);
-            ByteBuffer newBuf = newPooledByteBuffer.getByteBuffer();
+            final PooledByteBuffer newPooledByteBuffer = pooledByteBufferSupplier.apply((int) minNewCapacity);
+            final ByteBuffer newBuf = newPooledByteBuffer.getByteBuffer();
 
+            LOGGER.trace(() -> LogUtil.message(
+                    "Replacing buffer (capacity {}) with new capacity {}, requested min capacity {}",
+                    currCapacity,
+                    newBuf.capacity(),
+                    minNewCapacity));
             // get current buffer ready for reading
             curBuf.flip();
 
+            // TODO @AT Consider using something like
+            //  org.apache.hadoop.hbase.util.ByteBufferUtils#copyFromArrayToBuffer()
+            //  i.e. sun.misc.Unsafe low level copying from one direct buffer to another
             // copy contents of curr to new
             newBuf.put(curBuf);
 
-            // now swap the reference over and release the old buffer back to the pool
-            pooledByteBuffer = newPooledByteBuffer;
-            currPooledByteBuffer.release();
+            try {
+                // now swap the reference over and release the old buffer back to the pool
+                pooledByteBuffer = newPooledByteBuffer;
+            } finally {
+                currPooledByteBuffer.release();
+            }
         }
     }
 
@@ -151,6 +183,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * references to it. Identical behaviour to calling {@link PooledByteBufferOutputStream#close()}.
      */
     public void release() {
+        isAvailableForWriting = true;
         if (pooledByteBuffer != null) {
             LOGGER.trace("Releasing pooledBuffer {}", pooledByteBuffer);
             pooledByteBuffer.release();
@@ -162,9 +195,15 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
      * Clears the underlying buffer if there is one.
      */
     public void clear() {
+        isAvailableForWriting = true;
         if (pooledByteBuffer != null) {
             pooledByteBuffer.clear();
         }
+    }
+
+    public Optional<Integer> getCurrentCapacity() {
+        return Optional.ofNullable(pooledByteBuffer)
+                .flatMap(PooledByteBuffer::getCapacity);
     }
 
     @Override
