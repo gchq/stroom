@@ -144,7 +144,6 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
         }
     }
 
-
     /**
      * Release the underlying {@link ByteBuffer} back to the pool. Once released,
      * the {@link ByteBuffer} cannot be used any more and you should not retain any

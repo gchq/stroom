@@ -160,7 +160,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean initialise(final boolean overwriteExisting) {
+    public PutOutcome initialise(final boolean overwriteExisting) {
 
         LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
         checkCurrentState(LoaderState.NEW);
@@ -175,11 +175,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 effectiveTimeMs,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didPutSucceed = processingInfoDb.put(
+        final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
         currentLoaderState = LoaderState.INITIALISED;
-        return didPutSucceed;
+        return putOutcome;
     }
 
     @Override
@@ -221,9 +221,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final String key,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final String key,
+                          final RefDataValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
 
         Objects.requireNonNull(mapDefinition);
@@ -248,42 +248,38 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // if overwrite == false, we can just drop out here
         // if overwrite == true we need to de-reference the value (and maybe delete)
         // then create a new value, assuming they are different
-        boolean didPutSucceed;
+        final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
             if (!overwriteExisting) {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
-                didPutSucceed = false;
+                putOutcome = PutOutcome.failed();
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
                 final ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
-//                    ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
-
-//                    RefDataValue currentValueStoreValue = valueStoreDb.get(writeTxn, currentValueStoreKey)
-//                            .orElseThrow(() -> new RuntimeException("Should have a value at this point"));
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
                         writeTxn, currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
-                    didPutSucceed = true;
+                    // We haven't really replaced the entry but as they are the same, thay is the effect
+                    putOutcome = PutOutcome.replacedEntry();
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-//                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
                     valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
-                    didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
+                    putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
-            didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
+            putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
         }
 
-        if (didPutSucceed) {
+        if (putOutcome.isSuccess()) {
             successfulPutsCounter++;
         }
 
@@ -291,14 +287,14 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         keyValuePooledKeyBuffer.clear();
 
-        return didPutSucceed;
+        return putOutcome;
     }
 
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final Range<Long> keyRange,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final Range<Long> keyRange,
+                          final RefDataValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(keyRange);
@@ -323,12 +319,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = rangeStoreDb.getAsBytes(
                 writeTxn, rangeValueKeyBuffer);
 
-        boolean didPutSucceed;
+        final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
             if (!overwriteExisting) {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
-                didPutSucceed = false;
+                putOutcome = PutOutcome.failed();
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
@@ -340,7 +336,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
-                    didPutSucceed = true;
+                    // We haven't really replaced the entry but as they are the same, thay is the effect
+                    putOutcome = PutOutcome.replacedEntry();
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
@@ -349,24 +346,24 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
 //                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
                     //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-                    didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
+                    putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
-            didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
+            putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
         }
 
-        if (didPutSucceed) {
+        if (putOutcome.isSuccess()) {
             successfulPutsCounter++;
         }
         commitIfRequired();
         rangeValuePooledKeyBuffer.clear();
-        return didPutSucceed;
+        return putOutcome;
     }
 
 
-    private boolean createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
+    private PutOutcome createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                 writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
@@ -377,7 +374,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
-    private boolean createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
+    private PutOutcome createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                 writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);

@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
@@ -28,6 +29,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -83,6 +85,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreDb.class);
 
+    private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
+
     public static final String DB_NAME = "ValueStore";
 
     private final ValueStoreKeySerde keySerde;
@@ -91,22 +95,29 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     // we can serialise them appropriately.
     private final GenericRefDataValueSerde valueSerde;
     private final ValueStoreHashAlgorithm valueStoreHashAlgorithm;
+    private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
 
     @Inject
     public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
                         final GenericRefDataValueSerde valueSerde,
-                        final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+                        final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
+                        final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
 
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
+        this.pooledByteBufferOutputStreamFactory = pooledByteBufferOutputStreamFactory;
     }
 
     public ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {
         return valueStoreHashAlgorithm;
+    }
+
+    private PooledByteBufferOutputStream getPooledByteBufferOutputStream() {
+        return pooledByteBufferOutputStreamFactory.create(BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY);
     }
 
     /**
@@ -126,12 +137,14 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             areValuesEqual = false;
         } else {
             // valueHashCodes match so need to do a full equality check
-            try (final PooledByteBuffer newRefDataValuePooledBuf = getPooledValueBuffer()) {
+            try (final PooledByteBufferOutputStream newValueOutputStream = getPooledByteBufferOutputStream()) {
 
-                Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
+                final Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
 
                 if (optCurrentValueBuf.isPresent()) {
-                    ByteBuffer newValueBuffer = valueSerde.serialize(newRefDataValuePooledBuf::getByteBuffer, newRefDataValue);
+                    final ByteBuffer newValueBuffer = valueSerde.serialize(
+                            newValueOutputStream,
+                            newRefDataValue);
 
                     areValuesEqual = optCurrentValueBuf.get().equals(newValueBuffer);
 //                    areValuesEqual = valueSerde.areValuesEqual(
@@ -185,9 +198,11 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite: {}", refDataValue, isOverwrite);
 
-        try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = getPooledByteBufferOutputStream()) {
 
-            final ByteBuffer valueBuffer = valueSerde.serialize(pooledValueBuffer::getByteBuffer, refDataValue);
+            final ByteBuffer valueBuffer = valueSerde.serialize(
+                    pooledByteBufferOutputStream,
+                    refDataValue);
 
             LAMBDA_LOGGER.trace(() ->
                     LogUtil.message("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
@@ -304,12 +319,12 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 //                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
                 }
                 valueStoreKeyBuffer = keyBuffer;
-                boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
+                final PutOutcome putOutcome = put(writeTxn, keyBuffer, valueBuffer, false);
 
                 // perform any new entry created actions
                 onNewEntryAction.accept(writeTxn, keyBuffer, valueBuffer);
 
-                if (!didPutSucceed) {
+                if (!putOutcome.isSuccess()) {
                     throw new RuntimeException(LogUtil.message("Put failed for key: {}, value {}",
                             ByteBufferUtils.byteBufferInfo(keyBuffer),
                             ByteBufferUtils.byteBufferInfo(valueBuffer)));

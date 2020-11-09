@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.UnknownRefDataValue;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -50,7 +51,7 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
 
         // defer to the specific serde associated with the typeId
-        RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
+        final RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
 
         serde.serialize(byteBuffer, refDataValue);
     }
@@ -60,7 +61,15 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
                                 final RefDataValue refDataValue) {
 
         // defer to the specific serde associated with the typeId
-        RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
+        final RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
         return serde.serialize(byteBufferSupplier, refDataValue);
+    }
+
+    @Override
+    public ByteBuffer serialize(final PooledByteBufferOutputStream pooledByteBufferOutputStream,
+                                final RefDataValue refDataValue) {
+        // defer to the specific serde associated with the typeId
+        final RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
+        return serde.serialize(pooledByteBufferOutputStream, refDataValue);
     }
 }

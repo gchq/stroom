@@ -72,6 +72,18 @@ class BitmapLookup extends AbstractLookup {
                 final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
                 final ReferenceDataResult result = getReferenceData(bitIdentifier);
 
+                // Output any warnings/errors found so far
+                if (!ignoreWarnings) {
+                    if (result.getMessages() != null) {
+                        result.getMessages()
+                                .stream()
+                                .filter(lazyMessage -> lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING))
+                                .forEach(lazyMessage -> {
+                                    log(context, lazyMessage.getSeverity(), lazyMessage.getMessage().get(), null);
+                                });
+                    }
+                }
+
                 boolean wasFound = false;
 
                 try {
@@ -87,24 +99,32 @@ class BitmapLookup extends AbstractLookup {
                             sequenceMaker.open();
                         }
                         wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
-                    }
 
-                    if (trace && wasFound) {
-                        outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-                    }
-
-                    if (!wasFound && !ignoreWarnings) {
-                        if (trace) {
-                            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                        if (trace && wasFound) {
+                            outputInfo(Severity.INFO, "Success ", lookupIdentifier, trace, result, context);
                         }
 
-                        if (failedBits == null) {
-                            failedBits = new StringBuilder();
-                        }
-                        failedBits.append(k);
-                        failedBits.append(",");
-                    }
+                        if (!wasFound && !ignoreWarnings) {
+                            if (trace) {
+                                outputInfo(Severity.WARNING, "Key not found ", lookupIdentifier, trace, result, context);
+                            }
 
+                            if (failedBits == null) {
+                                failedBits = new StringBuilder();
+                            }
+                            failedBits.append(k);
+                            failedBits.append(",");
+                        }
+                    } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
+                        // We have effective streams so if there is no proxy present then the map was not found
+                        outputInfo(
+                                Severity.WARNING,
+                                "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
+                                lookupIdentifier,
+                                trace,
+                                result,
+                                context);
+                    }
                 } catch (XPathException e) {
                     outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
                 }

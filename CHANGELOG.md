@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve handling of duplicates in reference data loads.
+
+* Improve error messages for reference loading failures.
+
+* Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
+
 * Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
 
 * Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
