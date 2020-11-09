@@ -20,14 +20,30 @@ package stroom.pipeline.refdata.util;
 
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPooledByteBufferOutputStream {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestPooledByteBufferOutputStream.class);
 
     private ByteBufferPool getByteBufferPool() {
         return new ByteBufferPoolFactory().getByteBufferPool();
@@ -122,6 +138,112 @@ class TestPooledByteBufferOutputStream {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+
+
+    @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
+    Stream<DynamicTest> testExpansionWithDifferentWriteMethods() {
+
+        AtomicInteger iteration = new AtomicInteger(1);
+
+        final Map<String, BiConsumer<Integer, PooledByteBufferOutputStream>> writeMethodMap = Map.of(
+                "byte", (cnt, pooledStream) -> {
+                    for (int i = 0; i < cnt; i++) {
+                        try {
+                            pooledStream.write((byte) iteration.get());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                },
+                "byteArray", (cnt, pooledStream) -> {
+                    final byte[] arr = new byte[cnt];
+                    Arrays.fill(arr, (byte) iteration.get());
+//                    for (int i = 0; i < cnt; i++) {
+//                        arr[i] = (byte) iteration.get();
+//                    }
+                    try {
+                        pooledStream.write(arr);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                "partialByteArray", (cnt, pooledStream) -> {
+                    final byte[] arr = new byte[cnt * 2];
+                    Arrays.fill(arr, (byte) iteration.get());
+//                    for (int i = 0; i < cnt * 2; i++) {
+//                        arr[i] = (byte) iteration.get();
+//                    }
+                    try {
+                        pooledStream.write(arr, 2, cnt);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        return writeMethodMap.entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey()) // Consistent order for when re-running a single test in the IDE
+                .map(entry ->
+                        DynamicTest.dynamicTest(entry.getKey(), () -> {
+                            // Reset the counter for each dynamic test
+                            iteration.set(1);
+
+                            ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+                            final PooledByteBufferOutputStream pooledStream = new PooledByteBufferOutputStream(
+                                    byteBufferPool, 10);
+
+                            // Initial write of 6 bytes
+                            entry.getValue().accept(6, pooledStream);
+
+                            Assertions.assertThat(pooledStream.getCurrentCapacity())
+                                    .hasValue(10);
+                            iteration.incrementAndGet();
+
+                            // second write of 6 bytes, total 12
+                            entry.getValue().accept(6, pooledStream);
+
+                            Assertions.assertThat(pooledStream.getCurrentCapacity())
+                                    .hasValue(100);
+                            iteration.incrementAndGet();
+
+                            // first write of 80 bytes, total 92
+                            entry.getValue().accept(80, pooledStream);
+
+                            Assertions.assertThat(pooledStream.getCurrentCapacity())
+                                    .hasValue(100);
+                            iteration.incrementAndGet();
+
+                            // second write of 80 bytes, total 172
+                            entry.getValue().accept(80, pooledStream);
+
+                            Assertions.assertThat(pooledStream.getCurrentCapacity())
+                                    .hasValue(1000);
+                            iteration.incrementAndGet();
+
+                            PooledByteBuffer pooledByteBuffer = pooledStream.getPooledByteBuffer();
+
+                            ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+
+                            LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer));
+
+                            Assertions.assertThat(byteBuffer.remaining())
+                                    .isEqualTo(172);
+
+                            iteration.set(1);
+                            Stream.of(6, 6, 80, 80)
+                                    .forEach(cnt -> {
+                                        byte expValue = (byte) iteration.getAndIncrement();
+                                        // Make sure the bytes are all set correctly
+                                        // Each write pass used a different value
+                                        for (int j = 0; j < cnt; j++) {
+                                            Assertions.assertThat(byteBuffer.get())
+                                                    .isEqualTo(expValue);
+                                        }
+                                    });
+                        }));
     }
 
 

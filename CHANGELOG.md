@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
 
+* Improve PooledByteBufferOutputStream.
+
 * Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
 
 * Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
