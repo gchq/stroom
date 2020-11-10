@@ -638,7 +638,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        LOGGER.info("Seen {} ref data entries in the XML", valueCount);
+        LOGGER.info("Processed {} XML ref data entries", valueCount);
         pooledByteBufferOutputStream.release();
         super.endProcessing();
     }

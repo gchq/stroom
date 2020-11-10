@@ -417,7 +417,7 @@ public class ReferenceData {
                     result.log(Severity.INFO, () ->
                             "Using stream: " + effectiveStream.getStreamId() +
                                     " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
-                                    ") for lookup time: " + Instant.ofEpochMilli(time).toString() +
+                                    ") for event time: " + Instant.ofEpochMilli(time).toString() +
                                     ", feed: " + effectiveStreamKey.getFeed());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
