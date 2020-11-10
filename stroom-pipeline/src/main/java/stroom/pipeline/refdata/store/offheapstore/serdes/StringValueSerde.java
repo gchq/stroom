@@ -19,9 +19,12 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LogUtil;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class StringValueSerde implements RefDataValueSerde {
 
@@ -33,14 +36,14 @@ public class StringValueSerde implements RefDataValueSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        String str = stringSerde.deserialize(byteBuffer);
+        final String str = stringSerde.deserialize(byteBuffer);
         return new StringValue(str);
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            StringValue stringValue = (StringValue) refDataValue;
+            final StringValue stringValue = (StringValue) refDataValue;
             stringSerde.serialize(byteBuffer, stringValue.getValue());
         } catch (ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
@@ -48,6 +51,21 @@ public class StringValueSerde implements RefDataValueSerde {
         }
     }
 
+    @Override
+    public ByteBuffer serialize(final PooledByteBufferOutputStream pooledByteBufferOutputStream,
+                                final RefDataValue refDataValue) {
+        try {
+            final StringValue stringValue = (StringValue) refDataValue;
+            pooledByteBufferOutputStream.write(stringValue.getValue().getBytes(StandardCharsets.UTF_8));
+            return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
+                    refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Unable to write value {} to output stream: {}",
+                    refDataValue, e.getMessage()), e);
+        }
+    }
 
     /**
      * Extracts the string value from the buffer.

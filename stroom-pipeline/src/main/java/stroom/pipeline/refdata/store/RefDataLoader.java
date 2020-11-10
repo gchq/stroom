@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.util.shared.Range;
 
 public interface RefDataLoader extends AutoCloseable {
@@ -30,8 +31,9 @@ public interface RefDataLoader extends AutoCloseable {
      * Creates the initial ProcessingInfo entry to mark this stream definition
      * as having a load in progress.
      * @param overwriteExisting If true, allows duplicate keys to override existing values
+     * @return
      */
-    boolean initialise(final boolean overwriteExisting);
+    PutOutcome initialise(final boolean overwriteExisting);
 
     /**
      * Completes the load, committing any outstanding work and marking the ProcessingInfo
@@ -52,9 +54,9 @@ public interface RefDataLoader extends AutoCloseable {
      * @param refDataValue The value
      * @return True if the entry was put into the store
      */
-    boolean put(final MapDefinition mapDefinition,
-                final String key,
-                final RefDataValue refDataValue);
+    PutOutcome put(final MapDefinition mapDefinition,
+                   final String key,
+                   final RefDataValue refDataValue);
 
     /**
      * Put an entry into the range/value store. The overwriteExisting setting of the loader
@@ -64,7 +66,7 @@ public interface RefDataLoader extends AutoCloseable {
      * @param refDataValue The value
      * @return True if the entry was put into the store
      */
-    boolean put(final MapDefinition mapDefinition,
-                final Range<Long> keyRange,
-                final RefDataValue refDataValue);
+    PutOutcome put(final MapDefinition mapDefinition,
+                   final Range<Long> keyRange,
+                   final RefDataValue refDataValue);
 }

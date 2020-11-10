@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
@@ -89,6 +90,74 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 "MyBasicLmdb4",
                 DbiFlags.MDB_CREATE,
                 DbiFlags.MDB_INTEGERKEY);
+    }
+
+    @Test
+    void testPutDuplicate_noOverwrite() {
+        byteBufferPool.doWithBufferPair(50, 50, (keyBuffer, valueBuffer) -> {
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
+
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                PutOutcome putOutcome = basicLmdbDb.put(
+                        writeTxn,
+                        keyBuffer,
+                        valueBuffer,
+                        false);
+
+                assertThat(putOutcome.isSuccess())
+                        .isTrue();
+                assertThat(putOutcome.isDuplicate())
+                        .hasValue(false);
+
+                putOutcome = basicLmdbDb.put(
+                        writeTxn,
+                        keyBuffer,
+                        valueBuffer,
+                        false);
+
+                assertThat(putOutcome.isSuccess())
+                        .isFalse();
+                assertThat(putOutcome.isDuplicate())
+                        .hasValue(true);
+            });
+            assertThat(basicLmdbDb.getEntryCount())
+                    .isEqualTo(1);
+        });
+    }
+
+    @Test
+    void testPutDuplicate_overwrite() {
+        byteBufferPool.doWithBufferPair(50, 50, (keyBuffer, valueBuffer) -> {
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
+
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                PutOutcome putOutcome = basicLmdbDb.put(
+                        writeTxn,
+                        keyBuffer,
+                        valueBuffer,
+                        true);
+
+                assertThat(putOutcome.isSuccess())
+                        .isTrue();
+                assertThat(putOutcome.isDuplicate())
+                        .hasValue(false);
+
+                putOutcome = basicLmdbDb.put(
+                        writeTxn,
+                        keyBuffer,
+                        valueBuffer,
+                        true);
+
+                assertThat(putOutcome.isSuccess())
+                        .isTrue();
+                assertThat(putOutcome.isDuplicate())
+                        .hasValue(true);
+            });
+            assertThat(basicLmdbDb.getEntryCount())
+                    .isEqualTo(1);
+        });
     }
 
     @Test

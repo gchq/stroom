@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -122,7 +123,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
-        this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
+        this.valueBufferCapacity = valueSerde.getBufferCapacity();
     }
 
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env,
@@ -426,10 +427,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
-    public boolean put(final Txn<ByteBuffer> writeTxn,
-                       final K key,
-                       final V value,
-                       final boolean overwriteExisting) {
+    public PutOutcome put(final Txn<ByteBuffer> writeTxn,
+                          final K key,
+                          final V value,
+                          final boolean overwriteExisting) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
              final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
@@ -452,35 +453,53 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     /**
      * This will fail if you are already inside a txn.
      */
-    public boolean put(final K key, final V value, final boolean overwriteExisting) {
+    public PutOutcome put(final K key, final V value, final boolean overwriteExisting) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
-            boolean didPutSucceed = put(writeTxn, key, value, overwriteExisting);
+            final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting);
             writeTxn.commit();
-            return didPutSucceed;
+            return putOutcome;
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
     }
 
-    public boolean put(final Txn<ByteBuffer> writeTxn,
-                       final ByteBuffer keyBuffer,
-                       final ByteBuffer valueBuffer,
-                       final boolean overwriteExisting) {
+    public PutOutcome put(final Txn<ByteBuffer> writeTxn,
+                          final ByteBuffer keyBuffer,
+                          final ByteBuffer valueBuffer,
+                          final boolean overwriteExisting) {
         try {
             boolean didPutSucceed;
-            if (overwriteExisting) {
-                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
+
+            // First try with nooverwrite flag so the put will fail if the key exists
+            // For use cases with heavy updates to existing entries this two step put is not ideal,
+            // we would need some kind of flag to indicate if we care about what was there before or not.
+            didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+
+            final PutOutcome putOutcome;
+            if (didPutSucceed) {
+                putOutcome = PutOutcome.newEntry();
             } else {
-                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+                // Already have an entry for this key
+                if (overwriteExisting) {
+                    // now try again without the overwrite flag set
+                    didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
+
+                    putOutcome = didPutSucceed
+                            ? PutOutcome.replacedEntry()
+                            : PutOutcome.failed();
+                } else {
+                   putOutcome = PutOutcome.failed();
+                }
             }
+
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Put returned {} for key [{}], value [{}]",
-                        didPutSucceed,
+                LOGGER.trace("PutOutcome {} for key [{}], value [{}]",
+                        putOutcome,
                         ByteBufferUtils.byteBufferInfo(keyBuffer),
                         ByteBufferUtils.byteBufferInfo(valueBuffer));
             }
 
-            return didPutSucceed;
+            return putOutcome;
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error putting key {}, value {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer), ByteBufferUtils.byteBufferInfo(valueBuffer)), e);

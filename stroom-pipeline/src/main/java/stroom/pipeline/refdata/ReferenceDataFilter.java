@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -43,6 +44,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -141,7 +143,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final RefDataLoaderHolder refDataLoaderHolder;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
-    private PooledByteBufferOutputStream pooledByteBufferOutputStream;
+    private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private String mapName;
@@ -166,6 +168,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private boolean insideElement = false;
     private boolean isFastInfosetDocStarted = false;
     private String valueXmlDefaultNamespaceUri = null;
+    private int valueCount = 0;
 
     private enum ValueElementType {
         XML, STRING
@@ -207,9 +210,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     "RefDataLoader is missing",
                     null);
         }
-        boolean didInitSucceed = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
+        PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
 
-        if (!didInitSucceed) {
+        if (!putOutcome.isSuccess()) {
             RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
                     .getRefStreamDefinition();
 
@@ -363,18 +366,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private void recordHavingSeenXmlContent() throws SAXException {
         // This is an xml element inside the <value></value> element so we need to treat it as XML content
-        // and use the fastinfoset to serialise it.
+        // and delegate to the fastinfoset content handler to serialise it.
         if (insideValueElement && !haveSeenXmlInValueElement) {
-            LOGGER.trace("================================================");
-            LOGGER.trace("Start of value XML fragment");
             // This is the first startElement inside the value element so we are dealing with XML refdata
             haveSeenXmlInValueElement = true;
-            // As this is the first element in our value we need to make its namespace the default and
-            // assume whatever doc it is later injected into will have the same default namespace. Thus
-            // we need to strip the prefix.
-//            valueXmlDefaultNamespaceUri = uri;
-
-            LOGGER.trace("saxDocumentSerializer - reset()");
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("================================================");
+                LOGGER.trace("Start of value XML fragment");
+                LOGGER.trace("saxDocumentSerializer - reset()");
+            }
             fastInfoSetStartDocumentIfNeeded();
         }
     }
@@ -475,6 +475,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private void handleReferenceEndElement() {
         // end of the ref data item so ensure it is persisted in the store
+        valueCount++;
         try {
             if (mapName != null) {
                 final RefDataLoader refDataLoader = Objects.requireNonNull(refDataLoaderHolder.getRefDataLoader());
@@ -487,15 +488,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     // approach of a reusable bytebuffer.
 
                     LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
-                    boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                    final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
                             .put(mapDefinition, key, refDataValue);
-                    if (!didPutSucceed) {
-                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                LogUtil.message(
-                                        "Unable to load entry for key [{}] as an entry already exists in the store",
-                                        key), null);
-
-                    }
+                    validateKeyValuePutSuccess(putOutcome);
                 } else if (rangeFrom != null && rangeTo != null) {
                     if (rangeFrom > rangeTo) {
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
@@ -515,21 +510,19 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         // if from==to we still record it as a range
                         final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
                         LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-                        boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
                                 .put(mapDefinition, range, refDataValue);
-                        if (!didPutSucceed) {
-                            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                    LogUtil.message(
-                                            "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
-                                            rangeFrom, rangeTo), null);
-                        }
+                        validateRangeValuePutSuccess(putOutcome);
                     }
                 }
             }
+        } catch (final BufferOverflowException boe) {
+            String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer", key, mapName, boe);
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
+            LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
-            if (warnOnDuplicateKeys) {
-                errorReceiverProxy.log(Severity.WARNING, null, getElementId(), e.getMessage(), e);
-            }
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
+            LOGGER.error("Error putting key {} into map {}: {}", key, mapName, e.getMessage());
         }
 
         // Set keys to null.
@@ -539,14 +532,50 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         rangeTo = null;
         haveSeenXmlInValueElement = false;
         valueXmlDefaultNamespaceUri = null;
+    }
 
-        // reset our buffers ready for the next ref data item
-//                contentBuffer.clear();
-//                byteArrayOutputStream.reset();
-//                LOGGER.trace("saxDocumentSerializer - reset()");
-//                saxDocumentSerializer.reset();
-//                LOGGER.trace("saxDocumentSerializer - startDocument()");
-//                saxDocumentSerializer.startDocument();
+    private void validateRangeValuePutSuccess(final PutOutcome putOutcome) {
+        LOGGER.debug("PutOutcome {} for key {} in map {}", putOutcome, key, mapName);
+        if (warnOnDuplicateKeys) {
+            if (overrideExistingValues
+                    && putOutcome.isSuccess()
+                    && putOutcome.isDuplicate().orElse(false)) {
+
+                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
+                        LogUtil.message(
+                                "Replaced entry for range [{}] to [{}] as an entry already exists in the store",
+                                rangeFrom, rangeTo), null);
+
+            } else if (!overrideExistingValues
+                    && putOutcome.isDuplicate().orElse(false)) {
+                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
+                        LogUtil.message(
+                                "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
+                                rangeFrom, rangeTo), null);
+            }
+        }
+    }
+
+    private void validateKeyValuePutSuccess(final PutOutcome putOutcome) {
+        LOGGER.debug("PutOutcome {} for key {} in map {}", putOutcome, key, mapName);
+        if (warnOnDuplicateKeys) {
+            if (overrideExistingValues
+                    && putOutcome.isSuccess()
+                    && putOutcome.isDuplicate().orElse(false)) {
+
+                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
+                        LogUtil.message(
+                                "Replaced entry for key [{}] as an entry already exists in the store",
+                                key), null);
+
+            } else if (!overrideExistingValues
+                    && putOutcome.isDuplicate().orElse(false)) {
+                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
+                        LogUtil.message(
+                                "Unable to load entry for key [{}] as an entry already exists in the store",
+                                key), null);
+            }
+        }
     }
 
     private RefDataValue getRefDataValueFromBuffers() throws SAXException {
@@ -571,12 +600,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         return refDataValue;
     }
 
-
     /**
-     * If we are within a function element then this method should buffer the
-     * character content so that it can be operated on in the function end
-     * element.
-     *
      * @param ch     An array of characters.
      * @param start  The starting position in the array.
      * @param length The number of characters to use from the array.
@@ -587,10 +611,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (insideValueElement && haveSeenXmlInValueElement) {
-
             LOGGER.trace(() -> LogUtil.message(
                     "characters(\"{}\")", new String(ch, start, length).trim()));
             if (insideElement || !isAllWhitespace(ch, start, length)) {
+                // Delegate to the fastInfoset content handler
                 fastInfosetCharacters(ch, start, length);
             }
         } else {
@@ -604,6 +628,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
+        LOGGER.info("Seen {} ref data entries in the XML", valueCount);
         pooledByteBufferOutputStream.release();
         super.endProcessing();
     }
@@ -633,7 +658,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
         // Done like this because isOnlyWhitespace is not final so can't use a lambda
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
+            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}",
+                    new String(ch, start, length),
+                    isOnlyWhitespace);
         }
         return isOnlyWhitespace;
     }
