@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.util;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -37,8 +38,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -245,6 +248,61 @@ class TestByteBufferUtils {
             
             LOGGER.info("==========================================");
         }
+    }
+
+    @Disabled // manual perf testing only
+    @Test
+    void testCopyPerformance() {
+
+        final int rounds = 2;
+        final int iterations = 10_000;
+        final int bufferSize = 1_000;
+
+        final ByteBuffer src = ByteBuffer.allocateDirect(bufferSize);
+        final ByteBuffer dest = ByteBuffer.allocateDirect(bufferSize);
+
+        final Random random = new Random();
+
+        final byte[] randBytes = new byte[bufferSize];
+        random.nextBytes(randBytes);
+        src.put(randBytes);
+        src.flip();
+
+        final Map<String, BiConsumer<ByteBuffer, ByteBuffer>> funcMap = Map.of(
+                "Simple", this::doSimpleCopyTest,
+                "Hadoop", this::doHadoopCopyTest);
+
+        for (int j = 0; j < rounds; j++) {
+            final int round = j;
+            funcMap.forEach((name, func) -> {
+                Instant startTime = Instant.now();
+
+                for (int i = 0; i < iterations; i++) {
+
+                    func.accept(src, dest);
+
+                    Assertions.assertThat(dest)
+                            .isEqualByComparingTo(src);
+
+                    src.clear();
+                    random.nextBytes(randBytes);
+                    src.put(randBytes);
+                    src.flip();
+
+                    dest.clear();
+                }
+                LOGGER.info("Round {}, {} duration: {}",
+                        round, name, Duration.between(startTime, Instant.now()));
+            });
+        }
+    }
+
+    private void doHadoopCopyTest(final ByteBuffer src, final ByteBuffer dest) {
+        org.apache.hadoop.hbase.util.ByteBufferUtils.copyFromBufferToBuffer(src, dest);
+    }
+
+    private void doSimpleCopyTest(final ByteBuffer src, final ByteBuffer dest) {
+        dest.put(src);
     }
 
     private void doHashTest(final String name,
