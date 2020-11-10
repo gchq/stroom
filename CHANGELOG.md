@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.69] - 2020-11-10
+
 * Improve handling of duplicates in reference data loads.
 
 * Improve error messages for reference loading failures.
@@ -2799,7 +2802,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.68...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.69...HEAD
+[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.69
 [v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.68
 [v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
