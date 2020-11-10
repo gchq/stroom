@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -490,14 +491,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
                     final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
                             .put(mapDefinition, key, refDataValue);
-                    validateKeyValuePutSuccess(putOutcome);
+                    validateKeyValuePutSuccess(putOutcome, mapDefinition);
                 } else if (rangeFrom != null && rangeTo != null) {
                     if (rangeFrom > rangeTo) {
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                                 "Range from '" + rangeFrom
                                         + "' must be less than or equal to range to '" + rangeTo + "'",
                                 null);
-                    } else if (rangeFrom < 0 || rangeTo < 0) {
+                    } else if (rangeFrom < 0) {
                         // negative values cause problems for the ordering of data in LMDB so prevent their use
                         // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
@@ -512,12 +513,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
                         final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
                                 .put(mapDefinition, range, refDataValue);
-                        validateRangeValuePutSuccess(putOutcome);
+                        validateRangeValuePutSuccess(putOutcome, mapDefinition);
                     }
                 }
             }
         } catch (final BufferOverflowException boe) {
-            String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer", key, mapName, boe);
+            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer", key, mapName, boe);
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
@@ -534,30 +535,31 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         valueXmlDefaultNamespaceUri = null;
     }
 
-    private void validateRangeValuePutSuccess(final PutOutcome putOutcome) {
-        LOGGER.debug("PutOutcome {} for key {} in map {}", putOutcome, key, mapName);
-        if (warnOnDuplicateKeys) {
-            if (overrideExistingValues
-                    && putOutcome.isSuccess()
-                    && putOutcome.isDuplicate().orElse(false)) {
-
-                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
-                        LogUtil.message(
-                                "Replaced entry for range [{}] to [{}] as an entry already exists in the store",
-                                rangeFrom, rangeTo), null);
-
-            } else if (!overrideExistingValues
-                    && putOutcome.isDuplicate().orElse(false)) {
-                errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
-                        LogUtil.message(
-                                "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
-                                rangeFrom, rangeTo), null);
-            }
-        }
+    private String getKeyText() {
+        return LogUtil.message("key [{}]", key);
     }
 
-    private void validateKeyValuePutSuccess(final PutOutcome putOutcome) {
-        LOGGER.debug("PutOutcome {} for key {} in map {}", putOutcome, key, mapName);
+    private String getRangeText() {
+        return LogUtil.message("range [{}] to [{}]", rangeFrom, rangeTo);
+    }
+
+    private void validateRangeValuePutSuccess(final PutOutcome putOutcome,
+                                              final MapDefinition mapDefinition) {
+        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
+                putOutcome, getRangeText(), mapName));
+        validatePutSuccess(putOutcome, mapDefinition, this::getRangeText);
+    }
+
+    private void validateKeyValuePutSuccess(final PutOutcome putOutcome,
+                                            final MapDefinition mapDefinition) {
+        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
+                putOutcome, getKeyText(), mapName));
+        validatePutSuccess(putOutcome, mapDefinition, this::getKeyText);
+    }
+
+    private void validatePutSuccess(final PutOutcome putOutcome,
+                                    final MapDefinition mapDefinition,
+                                    final Supplier<String> keyTextSupplier) {
         if (warnOnDuplicateKeys) {
             if (overrideExistingValues
                     && putOutcome.isSuccess()
@@ -565,15 +567,23 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
-                                "Replaced entry for key [{}] as an entry already exists in the store",
-                                key), null);
+                                "Replaced entry for {} in map {} from stream {} as an entry already exists in the " +
+                                        "store and overrideExistingValues is set to true on the reference " +
+                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
+                                keyTextSupplier.get(),
+                                mapName,
+                                mapDefinition.getRefStreamDefinition().getStreamId()), null);
 
             } else if (!overrideExistingValues
                     && putOutcome.isDuplicate().orElse(false)) {
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
-                                "Unable to load entry for key [{}] as an entry already exists in the store",
-                                key), null);
+                                "Unable to load entry for {} into map {} from stream {} as an entry already exists " +
+                                        "in the store and overrideExistingValues is set to false on the reference " +
+                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
+                                keyTextSupplier.get(),
+                                mapName,
+                                mapDefinition.getRefStreamDefinition().getStreamId()), null);
             }
         }
     }

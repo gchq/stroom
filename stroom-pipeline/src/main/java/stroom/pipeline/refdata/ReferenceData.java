@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -446,8 +447,13 @@ public class ReferenceData {
                             // It is possible for another thread, i.e. another pipeline process to be trying to
                             // load the same stream at the same time. There is concurrency protection further
                             // down to protect against this.
-                            securityContext.asProcessingUser(() ->
+                            final StoredErrorReceiver storedErrorReceiver = securityContext.asProcessingUserResult(() ->
                                     referenceDataLoader.load(refStreamDefinition));
+
+                            // Replay any errors/warning from the load onto our result
+                            if (storedErrorReceiver != null) {
+                                storedErrorReceiver.replay(result);
+                            }
 
                             LAMBDA_LOGGER.debug(() -> LogUtil.message(
                                     "Loaded {} refStreamDefinition", refStreamDefinition));
