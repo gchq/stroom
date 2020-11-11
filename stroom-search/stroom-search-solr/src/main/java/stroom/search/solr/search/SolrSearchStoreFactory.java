@@ -23,7 +23,6 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsFactory;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
@@ -108,8 +107,8 @@ class SolrSearchStoreFactory implements StoreFactory {
         // Extract highlights.
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
-        // Create a coprocessor settings map.
-        final List<CoprocessorSettings> coprocessorSettingsList = CoprocessorSettingsFactory.create(searchRequest);
+        // Create a coprocessor settings list.
+        final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory.createSettings(searchRequest);
 
         // Create a handler for search results.
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettingsList, searchRequest.getQuery().getParams());

@@ -70,9 +70,13 @@ public class SolrAsyncSearchTaskHandler {
                     // batch search only needs stream and event id stored fields.
                     final String[] storedFields = getStoredFields(index);
 
-                    final SolrClusterSearchTask clusterSearchTask = new SolrClusterSearchTask(index, query, storedFields,
-                            task.getSettings(), task.getDateTimeLocale(), task.getNow());
-                    clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, coprocessors);
+                    clusterSearchTaskHandler.exec(taskContext,
+                            index,
+                            query,
+                            storedFields,
+                            task.getNow(),
+                            task.getDateTimeLocale(),
+                            coprocessors);
 
                     // Await completion.
                     taskContext.info(() -> task.getSearchName() + " - searching");

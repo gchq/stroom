@@ -5,8 +5,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsFactory;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -81,11 +78,8 @@ class SearchableStoreFactory implements StoreFactory {
             // Replace expression parameters.
             final ExpressionOperator expression = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
-            // Create a coprocessor settings map.
-            final List<CoprocessorSettings> coprocessorSettingsList = CoprocessorSettingsFactory.create(searchRequest);
-
             // Create a handler for search results.
-            final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettingsList, searchRequest.getQuery().getParams());
+            final Coprocessors coprocessors = coprocessorsFactory.create(searchRequest);
 
             return buildStore(taskContext, searchRequest, searchable, coprocessors, expression);
         }).get();

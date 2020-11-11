@@ -5,8 +5,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsFactory;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Data;
@@ -20,7 +18,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,17 +44,12 @@ public class SqlStatisticsStore implements Store {
                        final CoprocessorsFactory coprocessorsFactory) {
         this.searchKey = searchRequest.getKey().toString();
 
-        final List<CoprocessorSettings> coprocessorSettingsList = CoprocessorSettingsFactory.create(searchRequest);
-        Preconditions.checkNotNull(coprocessorSettingsList);
-
         // convert the search into something stats understands
         final ExpressionOperator expression = ExpressionUtil.replaceExpressionParameters(searchRequest);
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(statisticStoreDoc, expression, searchRequest.getDateTimeLocale());
 
         // Create coprocessors.
-        coprocessors = coprocessorsFactory.create(
-                coprocessorSettingsList,
-                searchRequest.getQuery().getParams());
+        coprocessors = coprocessorsFactory.create(searchRequest);
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Create the object that will receive results.

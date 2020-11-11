@@ -33,14 +33,14 @@ public class SolrSearchFactory {
         this.solrSearchTaskHandler = solrSearchTaskHandler;
     }
 
-    public void search(final SolrClusterSearchTask task,
+    public void search(final CachedSolrIndex index,
+                       final String[] storedFields,
+                       final long now,
                        final ExpressionOperator expression,
                        final Receiver receiver,
                        final TaskContext taskContext,
-                       final AtomicLong hitCount) {
-        // Reload the index.
-        final CachedSolrIndex index = task.getCachedSolrIndex();
-
+                       final AtomicLong hitCount,
+                       final String dateTimeLocale) {
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
@@ -48,13 +48,13 @@ public class SolrSearchFactory {
 
         // Create a map of index fields keyed by name.
         final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
+        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
         final String queryString = searchExpressionQuery.getQuery().toString();
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);
 
         final Tracker tracker = new Tracker(hitCount);
-        final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, task.getStoredFields(), receiver, tracker);
+        final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, storedFields, receiver, tracker);
         solrSearchTaskHandler.exec(taskContext, solrSearchTask);
 
         // Wait until we finish.

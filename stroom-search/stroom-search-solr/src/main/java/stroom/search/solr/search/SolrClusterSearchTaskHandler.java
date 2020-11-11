@@ -19,12 +19,14 @@ package stroom.search.solr.search;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.solr.CachedSolrIndex;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
@@ -42,8 +44,6 @@ class SolrClusterSearchTaskHandler {
     private final SecurityContext securityContext;
     private final CompletionState searchCompletionState = new CompletionState();
 
-    private SolrClusterSearchTask task;
-
     @Inject
     SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
                                  final ExtractionDecoratorFactory extractionDecoratorFactory,
@@ -53,13 +53,16 @@ class SolrClusterSearchTaskHandler {
         this.securityContext = securityContext;
     }
 
-    public void exec(final TaskContext taskContext, final SolrClusterSearchTask task, final Coprocessors coprocessors) {
+    public void exec(final TaskContext taskContext,
+                     final CachedSolrIndex cachedSolrIndex,
+                     final Query query,
+                     final String[] storedFields,
+                     final long now,
+                     final String dateTimeLocale,
+                     final Coprocessors coprocessors) {
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
-
-                this.task = task;
-                final stroom.query.api.v2.Query query = task.getQuery();
 
                 try {
                     // Make sure we have been given a query.
@@ -68,14 +71,13 @@ class SolrClusterSearchTaskHandler {
                     }
 
                     // Get the stored fields that search is hoping to use.
-                    final String[] storedFields = task.getStoredFields();
                     if (storedFields == null || storedFields.length == 0) {
                         throw new SearchException("No stored fields have been requested");
                     }
 
                     if (coprocessors.size() > 0) {
                         // Start searching.
-                        search(taskContext, task, query, coprocessors);
+                        search(taskContext, cachedSolrIndex, query, storedFields, now, dateTimeLocale, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
@@ -96,22 +98,25 @@ class SolrClusterSearchTaskHandler {
     }
 
     private void search(final TaskContext taskContext,
-                        final SolrClusterSearchTask task,
-                        final stroom.query.api.v2.Query query,
+                        final CachedSolrIndex cachedSolrIndex,
+                        final Query query,
+                        final String[] storedFields,
+                        final long now,
+                        final String dateTimeLocale,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, task.getStoredFields(), coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
-            final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
+            final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            solrSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
+            solrSearchFactory.search(cachedSolrIndex, storedFields, now, expression, extractionReceiver, taskContext, hitCount, dateTimeLocale);
 
             // Wait for search completion.
             boolean allComplete = false;
@@ -144,9 +149,5 @@ class SolrClusterSearchTaskHandler {
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
-    }
-
-    public SolrClusterSearchTask getTask() {
-        return task;
     }
 }

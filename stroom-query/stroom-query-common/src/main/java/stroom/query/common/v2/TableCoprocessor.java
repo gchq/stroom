@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.query.api.v2.TableSettings;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
+    private final CoprocessorKey coprocessorKey;
+    private final TableSettings tableSettings;
     private final TableDataStore tableDataStore;
 
     private final Consumer<Throwable> errorConsumer;
@@ -32,14 +35,18 @@ public class TableCoprocessor implements Coprocessor {
     private final AtomicLong valuesCount = new AtomicLong();
     private final AtomicLong completionCount = new AtomicLong();
 
-    public TableCoprocessor(final TableDataStore tableDataStore,
+    public TableCoprocessor(final CoprocessorKey coprocessorKey,
+                            final TableSettings tableSettings,
+                            final TableDataStore tableDataStore,
                             final Consumer<Throwable> errorConsumer) {
+        this.coprocessorKey = coprocessorKey;
+        this.tableSettings = tableSettings;
         this.tableDataStore = tableDataStore;
         this.errorConsumer = errorConsumer;
     }
 
-    public CoprocessorSettings getSettings() {
-        return tableDataStore.getSettings();
+    public TableSettings getTableSettings() {
+        return tableSettings;
     }
 
     @Override

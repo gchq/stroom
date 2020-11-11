@@ -19,6 +19,7 @@ package stroom.search.impl;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
@@ -67,7 +68,7 @@ class ClusterSearchTaskHandler {
                 taskContext.info(() -> "Initialising...");
 
                 this.task = task;
-                final stroom.query.api.v2.Query query = task.getQuery();
+                final Query query = task.getQuery();
 
                 try {
                     // Make sure we have been given a query.
@@ -106,7 +107,7 @@ class ClusterSearchTaskHandler {
 
     private void search(final TaskContext taskContext,
                         final ClusterSearchTask task,
-                        final stroom.query.api.v2.Query query,
+                        final Query query,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
@@ -123,7 +124,7 @@ class ClusterSearchTaskHandler {
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                         .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                         .build();
-                final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
+                final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
                 final AtomicLong hitCount = new AtomicLong();
                 indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
 

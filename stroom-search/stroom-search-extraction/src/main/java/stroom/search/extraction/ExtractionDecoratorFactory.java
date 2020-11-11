@@ -16,9 +16,7 @@ import stroom.task.api.TaskContextFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class ExtractionDecoratorFactory {
@@ -62,23 +60,13 @@ public class ExtractionDecoratorFactory {
                 storedFields,
                 metaService);
 
-        // Group coprocessors by extraction pipeline.
-        final Map<DocRef, Set<Coprocessor>> map = new HashMap<>();
-        coprocessors.forEach(coprocessor -> {
-            DocRef extractionPipeline = null;
-            if (coprocessor.getSettings().extractValues()) {
-                extractionPipeline = coprocessor.getSettings().getExtractionPipeline();
-            }
-            map.computeIfAbsent(extractionPipeline, k -> new HashSet<>()).add(coprocessor);
-        });
-
         final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();
-        map.forEach((docRef, coprocessorSet) -> {
+        coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
             ExtractionReceiver receiver;
             if (coprocessorSet.size() == 1) {
                 final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndex fieldIndex = coprocessor.getFieldIndexMap();
+                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
                 final Consumer<Val[]> valuesConsumer = coprocessor.getValuesConsumer();
                 final Consumer<Throwable> errorConsumer = coprocessor.getErrorConsumer();
                 final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
@@ -86,7 +74,7 @@ public class ExtractionDecoratorFactory {
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndex fieldIndex = coprocessorSet.iterator().next().getFieldIndexMap();
+                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
                 final Consumer<Val[]> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
                 final Consumer<Throwable> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
                 final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));

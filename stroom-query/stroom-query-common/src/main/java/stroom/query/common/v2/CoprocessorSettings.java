@@ -16,8 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.docref.DocRef;
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -33,8 +31,4 @@ import java.io.Serializable;
 })
 public interface CoprocessorSettings extends Serializable {
     CoprocessorKey getCoprocessorKey();
-
-    boolean extractValues();
-
-    DocRef getExtractionPipeline();
 }

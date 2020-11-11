@@ -26,39 +26,29 @@ import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventRefsPayload;
-import stroom.query.common.v2.Sizes;
 import stroom.security.api.SecurityContext;
-import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 
 public class EventSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeInfo nodeInfo;
-    private final SearchConfig searchConfig;
-    private final UiConfig clientConfig;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     EventSearchTaskHandler(final NodeInfo nodeInfo,
-                           final SearchConfig searchConfig,
-                           final UiConfig clientConfig,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                            final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory) {
         this.nodeInfo = nodeInfo;
-        this.searchConfig = searchConfig;
-        this.clientConfig = clientConfig;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -137,29 +127,5 @@ public class EventSearchTaskHandler {
 
             return eventRefs;
         });
-    }
-
-    private Sizes getDefaultMaxResultsSizes() {
-        final String value = clientConfig.getDefaultMaxResults();
-        return extractValues(value);
-    }
-
-    private Sizes getStoreSizes() {
-        final String value = searchConfig.getStoreSize();
-        return extractValues(value);
-    }
-
-    private Sizes extractValues(String value) {
-        if (value != null) {
-            try {
-                return Sizes.create(Arrays.stream(value.split(","))
-                        .map(String::trim)
-                        .map(Integer::valueOf)
-                        .collect(Collectors.toList()));
-            } catch (RuntimeException e) {
-                LOGGER.warn(e::getMessage);
-            }
-        }
-        return Sizes.create(Integer.MAX_VALUE);
     }
 }

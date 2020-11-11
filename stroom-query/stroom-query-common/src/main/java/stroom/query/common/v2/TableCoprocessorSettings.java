@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.docref.DocRef;
 import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,16 +48,6 @@ public class TableCoprocessorSettings implements CoprocessorSettings {
 
     public TableSettings getTableSettings() {
         return tableSettings;
-    }
-
-    @Override
-    public boolean extractValues() {
-        return tableSettings.extractValues();
-    }
-
-    @Override
-    public DocRef getExtractionPipeline() {
-        return tableSettings.getExtractionPipeline();
     }
 
     public int getQueueCapacity() {

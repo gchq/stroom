@@ -16,16 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface Coprocessor extends Receiver {
-    CoprocessorSettings getSettings();
-
-    FieldIndex getFieldIndexMap();
-
     AtomicLong getValuesCount();
 
     boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException;

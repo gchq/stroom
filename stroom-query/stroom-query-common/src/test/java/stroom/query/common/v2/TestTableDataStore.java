@@ -291,13 +291,12 @@ class TestTableDataStore {
     }
 
     private TableDataStore create(final TableSettings tableSettings) {
-        final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(new CoprocessorKey(1, new String[]{"test"}), tableSettings);
-
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
-        final Sizes maxResults = Sizes.min(Sizes.create(tableCoprocessorSettings.getTableSettings().getMaxResults()), defaultMaxResultsSizes);
+        final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
         final FieldIndex fieldIndex = new FieldIndex();
 
-        return new TableDataStore(tableCoprocessorSettings, fieldIndex, Collections.emptyMap(), maxResults, storeSize);
+        final CoprocessorKey coprocessorKey = new CoprocessorKey(1, new String[]{"test"});
+        return new TableDataStore(coprocessorKey, tableSettings, fieldIndex, Collections.emptyMap(), maxResults, storeSize);
     }
 }

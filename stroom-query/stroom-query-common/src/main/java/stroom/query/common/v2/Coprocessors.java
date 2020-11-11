@@ -2,16 +2,20 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class Coprocessors implements Iterable<Coprocessor> {
@@ -19,16 +23,19 @@ public class Coprocessors implements Iterable<Coprocessor> {
 
     private final Map<CoprocessorKey, Coprocessor> coprocessorMap;
     private final Map<String, TableCoprocessor> componentIdCoprocessorMap;
+    private final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap;
     private final FieldIndex fieldIndex;
     private final LongAdder counter = new LongAdder();
     private final ErrorConsumer errorConsumer;
 
     Coprocessors(final Map<CoprocessorKey, Coprocessor> coprocessorMap,
                  final Map<String, TableCoprocessor> componentIdCoprocessorMap,
+                 final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap,
                  final FieldIndex fieldIndex,
                  final ErrorConsumer errorConsumer) {
         this.coprocessorMap = coprocessorMap;
         this.componentIdCoprocessorMap = componentIdCoprocessorMap;
+        this.extractionPipelineCoprocessorMap = extractionPipelineCoprocessorMap;
         this.fieldIndex = fieldIndex;
         this.errorConsumer = errorConsumer;
     }
@@ -95,6 +102,7 @@ public class Coprocessors implements Iterable<Coprocessor> {
     }
 
     @Override
+    @Nonnull
     public Iterator<Coprocessor> iterator() {
         return coprocessorMap.values().iterator();
     }
@@ -105,5 +113,9 @@ public class Coprocessors implements Iterable<Coprocessor> {
 
     public FieldIndex getFieldIndex() {
         return fieldIndex;
+    }
+
+    public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
+        extractionPipelineCoprocessorMap.forEach(consumer);
     }
 }

@@ -46,12 +46,13 @@ public class EventCoprocessor implements Coprocessor {
     private volatile EventRef maxEvent;
     private volatile EventRefs eventRefs;
 
-    public EventCoprocessor(final EventCoprocessorSettings settings,
+    public EventCoprocessor(final CoprocessorKey coprocessorKey,
+                            final EventCoprocessorSettings settings,
                             final FieldIndex fieldIndex,
                             final Consumer<Throwable> errorConsumer) {
+        this.coprocessorKey = coprocessorKey;
         this.settings = settings;
         this.errorConsumer = errorConsumer;
-        this.coprocessorKey = settings.getCoprocessorKey();
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
         this.maxStreams = settings.getMaxStreams();
@@ -65,16 +66,6 @@ public class EventCoprocessor implements Coprocessor {
 
         streamIdIndex = fieldIndex.getPos(STREAM_ID);
         eventIdIndex = fieldIndex.getPos(EVENT_ID);
-    }
-
-    @Override
-    public CoprocessorSettings getSettings() {
-        return settings;
-    }
-
-    @Override
-    public FieldIndex getFieldIndexMap() {
-        return fieldIndex;
     }
 
     @Override

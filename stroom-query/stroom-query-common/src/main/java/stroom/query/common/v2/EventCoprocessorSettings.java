@@ -79,14 +79,4 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
     public long getMaxEventsPerStream() {
         return maxEventsPerStream;
     }
-
-    @Override
-    public boolean extractValues() {
-        return false;
-    }
-
-    @Override
-    public DocRef getExtractionPipeline() {
-        return null;
-    }
 }
