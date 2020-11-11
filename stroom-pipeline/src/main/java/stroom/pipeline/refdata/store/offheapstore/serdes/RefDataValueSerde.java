@@ -26,6 +26,4 @@ public interface RefDataValueSerde extends
         Serde<RefDataValue>,
         Serializer<RefDataValue>,
         Deserializer<RefDataValue> {
-
-
 }

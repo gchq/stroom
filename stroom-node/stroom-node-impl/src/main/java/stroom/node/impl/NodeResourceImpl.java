@@ -70,11 +70,15 @@ class NodeResourceImpl implements NodeResource {
 
     @Override
     public List<String> listAllNodes() {
-        return find().getValues()
-                .stream()
-                .map(NodeStatusResult::getNode)
-                .map(Node::getName)
-                .collect(Collectors.toList());
+        FetchNodeStatusResponse response = find();
+        if (response != null && response.getValues() != null){
+            return response.getValues()
+                    .stream()
+                    .map(NodeStatusResult::getNode)
+                    .map(Node::getName)
+                    .collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     @Override
@@ -117,6 +121,7 @@ class NodeResourceImpl implements NodeResource {
             documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
             documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), null, e);
+            throw e;
         }
 
         return response;

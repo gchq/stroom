@@ -17,7 +17,6 @@
 
 package stroom.pipeline.writer;
 
-import com.google.common.base.Strings;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
@@ -25,7 +24,11 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.destination.*;
+import stroom.pipeline.destination.RollingDestination;
+import stroom.pipeline.destination.RollingDestinationFactory;
+import stroom.pipeline.destination.RollingDestinations;
+import stroom.pipeline.destination.RollingStreamDestination;
+import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -34,6 +37,8 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+
+import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 

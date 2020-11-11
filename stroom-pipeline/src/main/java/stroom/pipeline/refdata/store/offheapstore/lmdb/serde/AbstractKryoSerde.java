@@ -17,14 +17,16 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb.serde;
 
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
@@ -52,5 +54,18 @@ public abstract class AbstractKryoSerde<T> implements Serde<T>, KryoSerializer<T
             output.flush();
             byteBuffer.flip();
         }
+    }
+
+    @Override
+    public ByteBuffer serialize(final PooledByteBufferOutputStream pooledByteBufferOutputStream,
+                                final T object) {
+
+        try (final Output output = new Output(pooledByteBufferOutputStream)) {
+            write(output, object);
+            output.flush();
+            // must not call getByteBuffer until we have finished writing
+            pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer().flip();
+        }
+        return pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
     }
 }

@@ -22,6 +22,7 @@ import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
@@ -41,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
@@ -169,17 +172,21 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
         final ReferenceDataResult result = new ReferenceDataResult();
 
-        result.log(Severity.INFO, () -> LogUtil.message("Doing lookup - " +
-                        "key: {}, map: {}, eventTime: {} (primaryMapName: {}, secondaryMapName: {})",
-                lookupIdentifier.getKey(),
-                lookupIdentifier.getMap(),
-                Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
-                lookupIdentifier.getPrimaryMapName(),
-                lookupIdentifier.getSecondaryMapName()));
+        result.log(
+                Severity.INFO,
+                () -> LogUtil.message("Doing lookup - " +
+                                "key: {}, map: {}, event time: {} (primary map: {}, secondary map: {})",
+                        lookupIdentifier.getKey(),
+                        lookupIdentifier.getMap(),
+                        Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
+                        lookupIdentifier.getPrimaryMapName(),
+                        lookupIdentifier.getSecondaryMapName()));
 
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (pipelineReferences == null || pipelineReferences.size() == 0) {
-            result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
+            result.log(
+                    Severity.ERROR,
+                    () -> "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
             referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
@@ -213,24 +220,37 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     final String msg,
                     final LookupIdentifier lookupIdentifier,
                     final boolean trace,
+                    final boolean ignoreWarnings,
                     final ReferenceDataResult result,
                     final XPathContext context) {
         final StringBuilder sb = new StringBuilder();
         sb.append(msg);
         lookupIdentifier.append(sb);
 
-        if (trace) {
-            result.getMessages().forEach(message -> {
-                sb.append("\n > ");
-                sb.append(message.getSeverity().getDisplayValue());
-                sb.append(": ");
-                sb.append(message.getMessage().get());
-            });
-        }
+        result.getMessages()
+                .stream()
+                .filter(lazyMessage ->
+                        trace ||
+                                (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
+                .forEach(lazyMessage -> {
+                    sb.append("\n > ");
+                    sb.append(lazyMessage.getSeverity().getDisplayValue());
+                    sb.append(": ");
+                    sb.append(lazyMessage.getMessage().get());
+        });
 
         final String message = sb.toString();
         LOGGER.debug(message);
         log(context, severity, message, null);
+    }
+
+    String getEffectiveStreamIds(final ReferenceDataResult result) {
+        Objects.requireNonNull(result);
+        return result.getEffectiveStreams()
+                .stream()
+                .map(RefStreamDefinition::getStreamId)
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
     }
 
     static class SequenceMaker {

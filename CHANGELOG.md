@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
+
+## [v7.0-beta.69] - 2020-11-10
+
+* Improve handling of duplicates in reference data loads.
+
+* Improve error messages for reference loading failures.
+
+* Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
+
+* Improve PooledByteBufferOutputStream.
+
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
 * Issue **#1925** : Fixed logging error that was happening on search.
 
 * Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
@@ -2787,7 +2804,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.68...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.69...HEAD
+[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.69
 [v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.68
 [v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66

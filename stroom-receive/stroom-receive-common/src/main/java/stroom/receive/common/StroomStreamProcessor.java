@@ -16,18 +16,13 @@
 
 package stroom.receive.common;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.util.date.DateUtil;
@@ -36,6 +31,12 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamUtil;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
@@ -61,8 +62,10 @@ public class StroomStreamProcessor {
     private boolean appendReceivedPath = true;
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-    public StroomStreamProcessor(final AttributeMap attributeMap, final List<? extends StroomStreamHandler> stroomStreamHandlerList,
-                                 final byte[] buffer, final String logPrefix) {
+    public StroomStreamProcessor(final AttributeMap attributeMap,
+                                 final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+                                 final byte[] buffer,
+                                 final String logPrefix) {
         this.globalAttributeMap = attributeMap;
         this.buffer = buffer;
         this.stroomStreamHandlerList = stroomStreamHandlerList;
@@ -172,7 +175,9 @@ public class StroomStreamProcessor {
                         read = StreamUtil.eagerRead(inputStream, buffer);
                     } catch (final IOException ioEx) {
                         if (compressed == true) {
-                            throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                            throw new StroomStreamException(
+                                    StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                                    ioEx.getMessage());
                         } else {
                             throw ioEx;
                         }
@@ -271,7 +276,9 @@ public class StroomStreamProcessor {
                 } else {
                     // We need to add the stream size
                     // Send the data file yet ?
-                    final String dataFile = stroomZipNameSet.getName(stroomZipEntry.getBaseName(), StroomZipFileType.Data);
+                    final String dataFile = stroomZipNameSet.getName(
+                            stroomZipEntry.getBaseName(),
+                            StroomZipFileType.Data);
                     if (dataFile != null && dataStreamSizeMap.containsKey(dataFile)) {
                         // Yes we can send the header now
                         entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE,

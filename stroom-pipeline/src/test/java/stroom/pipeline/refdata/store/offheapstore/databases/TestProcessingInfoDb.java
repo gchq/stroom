@@ -21,6 +21,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
@@ -70,11 +71,17 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 789012L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didSucceed = false;
-        didSucceed = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
-        assertThat(didSucceed).isTrue();
-        didSucceed = processingInfoDb.put(refStreamDefinitionB, refDataProcessingInfoB, false);
-        assertThat(didSucceed).isTrue();
+        PutOutcome putOutcome;
+        putOutcome = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(false);
+        putOutcome = processingInfoDb.put(refStreamDefinitionB, refDataProcessingInfoB, false);
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(false);
 
         Map<String, String> dbInfo = processingInfoDb.getDbInfo();
         LOGGER.debug("DB info: {}", dbInfo);
@@ -99,19 +106,28 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 345L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didSucceed = false;
+        PutOutcome putOutcome;
 
         // initial put into empty db so will succeed
-        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
-        assertThat(didSucceed).isTrue();
+        putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(false);
 
         // put the same key/value with overwrite==false so will fail
-        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
-        assertThat(didSucceed).isFalse();
+        putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(putOutcome.isSuccess())
+                .isFalse();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(true);
 
         // put the same key/value with overwrite==true so will succeed
-        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, true);
-        assertThat(didSucceed).isTrue();
+        putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, true);
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(true);
 
         // open a write txn and mutate the value
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
@@ -147,11 +163,14 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 345L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didSucceed = false;
+        final PutOutcome putOutcome;
 
         // initial put into empty db so will succeed
-        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
-        assertThat(didSucceed).isTrue();
+        putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(false);
 
         processingInfoDb.updateLastAccessedTime(refStreamDefinition);
 
@@ -174,17 +193,20 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 345L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didSucceed;
+        PutOutcome putOutcome;
 
         // initial put into empty db so will succeed
-        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
 
-        assertThat(didSucceed).isTrue();
+        assertThat(putOutcome.isSuccess())
+                .isTrue();
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(false);
         assertThat(processingInfoDb.getEntryCount()).isEqualTo(1);
 
-        didSucceed = processingInfoDb.delete(refStreamDefinition);
+        final boolean didDeleteSucceed = processingInfoDb.delete(refStreamDefinition);
 
-        assertThat(didSucceed).isTrue();
+        assertThat(didDeleteSucceed).isTrue();
         assertThat(processingInfoDb.getEntryCount()).isEqualTo(0);
     }
 

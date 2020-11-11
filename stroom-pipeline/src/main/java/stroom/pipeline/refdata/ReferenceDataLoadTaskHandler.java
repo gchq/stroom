@@ -114,12 +114,12 @@ class ReferenceDataLoadTaskHandler {
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    public void exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+    public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+        final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
             // on can be read.
             securityContext.useAsRead(() -> {
-                final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
@@ -163,6 +163,7 @@ class ReferenceDataLoadTaskHandler {
                 }
             });
         });
+        return storedErrorReceiver;
     }
 
     private void populateMaps(final Pipeline pipeline,

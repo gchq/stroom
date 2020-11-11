@@ -16,6 +16,18 @@
 
 package stroom.editor.client.view;
 
+import stroom.editor.client.event.FormatEvent;
+import stroom.editor.client.event.FormatEvent.FormatHandler;
+import stroom.editor.client.model.XmlFormatter;
+import stroom.editor.client.presenter.EditorUiHandlers;
+import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.presenter.Option;
+import stroom.util.shared.Highlight;
+import stroom.util.shared.Location;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
+import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -44,17 +56,6 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
-import stroom.editor.client.event.FormatEvent;
-import stroom.editor.client.event.FormatEvent.FormatHandler;
-import stroom.editor.client.model.XmlFormatter;
-import stroom.editor.client.presenter.EditorUiHandlers;
-import stroom.editor.client.presenter.EditorView;
-import stroom.editor.client.presenter.Option;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Location;
-import stroom.util.shared.Severity;
-import stroom.util.shared.StoredError;
-import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -215,7 +216,14 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                                 break;
                         }
 
-                        annotations.add(new Annotation(row, col, error.getMessage(), annotationType));
+                        // Ace munges all the msgs together in one popup for annotaions on the same line/col
+                        // so add the severity as if we have some info + warnings then we get a warning
+                        // icon whose popup contains all the msgs.
+                        annotations.add(new Annotation(
+                                row,
+                                col,
+                                error.getSeverity().toString() + " " + error.getMessage(),
+                                annotationType));
                     }
                 }
             }

@@ -20,6 +20,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +117,7 @@ class TestJsonSerialisation {
      * looks the same.
      */
     @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testDefaultValues() {
         final ObjectMapper objectMapper = JsonUtil.getMapper();
 
@@ -161,6 +164,7 @@ class TestJsonSerialisation {
      * map keys as this isn't serialisable.
      */
     @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testNoComplexMaps() {
         return buildRelatedResourceTests(clazz -> {
             // Try and find the no args constructor if there is any.
@@ -187,6 +191,7 @@ class TestJsonSerialisation {
      * annotations.
      */
     @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testNoExtraProps() {
         return buildRelatedResourceTests(clazz -> {
             // Try and find the no args constructor if there is any.
@@ -257,6 +262,7 @@ class TestJsonSerialisation {
      * Test that classes that will be subject to JSON serialisation have the full complement of JSON annotations.
      */
     @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
     Stream<DynamicTest> testJsonAnnotations() {
         return buildRelatedResourceTests(clazz -> {
 

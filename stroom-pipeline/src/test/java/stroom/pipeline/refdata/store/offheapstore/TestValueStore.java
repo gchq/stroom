@@ -34,6 +34,8 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream.Factory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,12 @@ class TestValueStore extends AbstractLmdbDbTest {
     private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
     private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
+        @Override
+        public PooledByteBufferOutputStream create(final int initialCapacity) {
+            return new PooledByteBufferOutputStream(byteBufferPool, initialCapacity);
+        }
+    };
     private ValueStore valueStore = null;
     private ValueStoreDb valueStoreDb = null;
     private ValueStoreMetaDb valueStoreMetaDb = null;
@@ -62,7 +70,8 @@ class TestValueStore extends AbstractLmdbDbTest {
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
-                xxHashAlgorithm);
+                xxHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
 
 
         valueStoreMetaDb = new ValueStoreMetaDb(
@@ -80,7 +89,8 @@ class TestValueStore extends AbstractLmdbDbTest {
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
-                valueStoreHashAlgorithm);
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
 
         valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
     }

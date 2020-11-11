@@ -87,26 +87,66 @@ class BitmapLookup extends AbstractLookup {
                             sequenceMaker.open();
                         }
                         wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
-                    }
 
-                    if (trace && wasFound) {
-                        outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-                    }
-
-                    if (!wasFound && !ignoreWarnings) {
-                        if (trace) {
-                            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                        if (trace && wasFound) {
+                            outputInfo(
+                                    Severity.INFO,
+                                    "Success ",
+                                    lookupIdentifier,
+                                    trace,
+                                    ignoreWarnings,
+                                    result,
+                                    context);
                         }
 
-                        if (failedBits == null) {
-                            failedBits = new StringBuilder();
-                        }
-                        failedBits.append(k);
-                        failedBits.append(",");
-                    }
+                        if (!wasFound && !ignoreWarnings) {
+                            if (trace) {
+                                outputInfo(
+                                        Severity.WARNING,
+                                        "Key not found ",
+                                        lookupIdentifier,
+                                        trace,
+                                        ignoreWarnings,
+                                        result,
+                                        context);
+                            }
 
+                            if (failedBits == null) {
+                                failedBits = new StringBuilder();
+                            }
+                            failedBits.append(k);
+                            failedBits.append(",");
+                        }
+                    } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
+                        // We have effective streams so if there is no proxy present then the map was not found
+                        outputInfo(
+                                Severity.WARNING,
+                                "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
+                                lookupIdentifier,
+                                trace,
+                                ignoreWarnings,
+                                result,
+                                context);
+                    } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+                        // No effective streams were found to lookup from
+                        outputInfo(
+                                Severity.WARNING,
+                                "No effective streams found ",
+                                lookupIdentifier,
+                                trace,
+                                ignoreWarnings,
+                                result,
+                                context);
+                    }
                 } catch (XPathException e) {
-                    outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+                    outputInfo(
+                            Severity.ERROR,
+                            "Lookup errored: " + e.getMessage(),
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
                 }
             }
 

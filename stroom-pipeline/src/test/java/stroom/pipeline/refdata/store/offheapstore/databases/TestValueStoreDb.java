@@ -14,6 +14,8 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactor
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream.Factory;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -42,6 +44,13 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
     private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
     private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
+    private final ByteBufferPoolFactory byteBufferPoolFactory = new ByteBufferPoolFactory();
+    private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory = new Factory() {
+        @Override
+        public PooledByteBufferOutputStream create(final int initialCapacity) {
+            return new PooledByteBufferOutputStream(byteBufferPoolFactory.getByteBufferPool(), initialCapacity);
+        }
+    };
     private ValueStoreDb valueStoreDb = null;
 
 
@@ -53,7 +62,8 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
-                xxHashAlgorithm);
+                xxHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
     }
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
@@ -62,7 +72,8 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
-                valueStoreHashAlgorithm);
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory);
     }
 
 

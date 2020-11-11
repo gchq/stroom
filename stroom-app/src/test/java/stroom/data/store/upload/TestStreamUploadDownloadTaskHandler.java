@@ -17,9 +17,12 @@
 package stroom.data.store.upload;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.*;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.data.store.impl.DataUploadTaskHandler;
@@ -37,6 +40,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
