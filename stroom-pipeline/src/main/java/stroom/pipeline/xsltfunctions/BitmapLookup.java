@@ -72,18 +72,6 @@ class BitmapLookup extends AbstractLookup {
                 final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
                 final ReferenceDataResult result = getReferenceData(bitIdentifier);
 
-                // Output any warnings/errors found so far
-                if (!ignoreWarnings) {
-                    if (result.getMessages() != null) {
-                        result.getMessages()
-                                .stream()
-                                .filter(lazyMessage -> lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING))
-                                .forEach(lazyMessage -> {
-                                    log(context, lazyMessage.getSeverity(), lazyMessage.getMessage().get(), null);
-                                });
-                    }
-                }
-
                 boolean wasFound = false;
 
                 try {
@@ -101,12 +89,26 @@ class BitmapLookup extends AbstractLookup {
                         wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
 
                         if (trace && wasFound) {
-                            outputInfo(Severity.INFO, "Success ", lookupIdentifier, trace, result, context);
+                            outputInfo(
+                                    Severity.INFO,
+                                    "Success ",
+                                    lookupIdentifier,
+                                    trace,
+                                    ignoreWarnings,
+                                    result,
+                                    context);
                         }
 
                         if (!wasFound && !ignoreWarnings) {
                             if (trace) {
-                                outputInfo(Severity.WARNING, "Key not found ", lookupIdentifier, trace, result, context);
+                                outputInfo(
+                                        Severity.WARNING,
+                                        "Key not found ",
+                                        lookupIdentifier,
+                                        trace,
+                                        ignoreWarnings,
+                                        result,
+                                        context);
                             }
 
                             if (failedBits == null) {
@@ -122,11 +124,29 @@ class BitmapLookup extends AbstractLookup {
                                 "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
                                 lookupIdentifier,
                                 trace,
+                                ignoreWarnings,
+                                result,
+                                context);
+                    } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+                        // No effective streams were found to lookup from
+                        outputInfo(
+                                Severity.WARNING,
+                                "No effective streams found ",
+                                lookupIdentifier,
+                                trace,
+                                ignoreWarnings,
                                 result,
                                 context);
                     }
                 } catch (XPathException e) {
-                    outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+                    outputInfo(
+                            Severity.ERROR,
+                            "Lookup errored: " + e.getMessage(),
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
                 }
             }
 

@@ -84,8 +84,14 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
     private Runnable commitIfRequireFunc = () -> {}; // default position is to not commit mid-load
+
+    private int inputCount = 0;
+    private int newEntriesCount = 0;
+    private int replacedEntriesCount = 0;
+    private int unchangedEntriesCount = 0;
+    private int ignoredCount = 0;
+
     private int putsCounter = 0;
-    private int successfulPutsCounter = 0;
     private boolean overwriteExisting = false;
     private Instant startTime = Instant.EPOCH;
     private LoaderState currentLoaderState = LoaderState.NEW;
@@ -193,12 +199,28 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true);
 
         final Duration loadDuration = Duration.between(startTime, Instant.now());
+
         final String mapNames = mapDefinitionToUIDMap.keySet()
                 .stream()
                 .map(MapDefinition::getMapName)
-                .collect(Collectors.joining(","));
-        LOGGER.info("Successfully Loaded {} entries out of {} attempts with map names [{}] in {} for {}",
-                successfulPutsCounter, putsCounter, mapNames, loadDuration, refStreamDefinition);
+                .collect(Collectors.joining(", "));
+
+        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+                ? refStreamDefinition.getPipelineDocRef().getName()
+                : refStreamDefinition.getPipelineDocRef().getUuid();
+
+        LOGGER.info("Processed {} entries (new: {}, updated: {}, unchanged: {}, ignored: {}) " +
+                        "with map name(s): [{}], stream: {}, pipeline: {} in {}",
+                inputCount,
+                newEntriesCount,
+                replacedEntriesCount,
+                unchangedEntriesCount,
+                ignoredCount,
+                mapNames,
+                refStreamDefinition.getStreamId(),
+                pipeline,
+                loadDuration);
+
         currentLoaderState = LoaderState.COMPLETED;
     }
 
@@ -225,6 +247,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                           final String key,
                           final RefDataValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
+        inputCount++;
 
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(key);
@@ -254,6 +277,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
                 putOutcome = PutOutcome.failed();
+                ignoredCount++;
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
@@ -264,27 +288,25 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
-                    // We haven't really replaced the entry but as they are the same, thay is the effect
+                    // We haven't really replaced the entry but as they are the same, that is the effect
                     putOutcome = PutOutcome.replacedEntry();
+                    unchangedEntriesCount++;
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
                     valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
                     putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
+                    replacedEntriesCount++;
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
             putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
+            newEntriesCount++;
         }
 
-        if (putOutcome.isSuccess()) {
-            successfulPutsCounter++;
-        }
-
-        commitIfRequired();
-
+        commitIfRequired(putOutcome);
         keyValuePooledKeyBuffer.clear();
 
         return putOutcome;
@@ -325,6 +347,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
                 putOutcome = PutOutcome.failed();
+                ignoredCount++;
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
@@ -338,6 +361,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     // and no ref counts to change
                     // We haven't really replaced the entry but as they are the same, thay is the effect
                     putOutcome = PutOutcome.replacedEntry();
+                    unchangedEntriesCount++;
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
@@ -347,17 +371,16 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
                     //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
                     putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
+                    replacedEntriesCount++;
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
             putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
+            newEntriesCount++;
         }
 
-        if (putOutcome.isSuccess()) {
-            successfulPutsCounter++;
-        }
-        commitIfRequired();
+        commitIfRequired(putOutcome);
         rangeValuePooledKeyBuffer.clear();
         return putOutcome;
     }
@@ -474,8 +497,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     /**
      * To be called after each put
      */
-    private void commitIfRequired() {
-        putsCounter++;
+    private void commitIfRequired(final PutOutcome putOutcome) {
+        if (putOutcome.isSuccess()) {
+            putsCounter++;
+        }
         commitIfRequireFunc.run();
     }
 

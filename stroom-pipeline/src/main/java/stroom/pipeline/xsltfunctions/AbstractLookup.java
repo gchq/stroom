@@ -220,20 +220,24 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     final String msg,
                     final LookupIdentifier lookupIdentifier,
                     final boolean trace,
+                    final boolean ignoreWarnings,
                     final ReferenceDataResult result,
                     final XPathContext context) {
         final StringBuilder sb = new StringBuilder();
         sb.append(msg);
         lookupIdentifier.append(sb);
 
-        if (trace) {
-            result.getMessages().forEach(message -> {
-                sb.append("\n > ");
-                sb.append(message.getSeverity().getDisplayValue());
-                sb.append(": ");
-                sb.append(message.getMessage().get());
-            });
-        }
+        result.getMessages()
+                .stream()
+                .filter(lazyMessage ->
+                        trace ||
+                                (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
+                .forEach(lazyMessage -> {
+                    sb.append("\n > ");
+                    sb.append(lazyMessage.getSeverity().getDisplayValue());
+                    sb.append(": ");
+                    sb.append(lazyMessage.getMessage().get());
+        });
 
         final String message = sb.toString();
         LOGGER.debug(message);

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
 
 ## [v7.0-beta.69] - 2020-11-10
 
