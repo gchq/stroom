@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.time.StroomDuration;
 
 import java.util.List;
 import java.util.Optional;
@@ -94,6 +95,8 @@ public interface RefDataStore {
     long getProcessingInfoEntryCount();
 
     void purgeOldData();
+
+    void purgeOldData(final StroomDuration purgeAge);
 
     void logAllContents();
 
