@@ -18,11 +18,11 @@
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
@@ -51,12 +51,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBasicLmdbDb.class);
-
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
     private BasicLmdbDb<String, String> basicLmdbDb;
     private BasicLmdbDb<String, String> basicLmdbDb2;
     private BasicLmdbDb<Integer, String> basicLmdbDb3;
     private BasicLmdbDb<Integer, String> basicLmdbDb4;
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {

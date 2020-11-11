@@ -16,11 +16,9 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
-import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
@@ -28,12 +26,15 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.Data.DataItem;
+import stroom.query.common.v2.Data.DataItems;
 import stroom.query.common.v2.format.FieldFormatter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -137,11 +138,9 @@ public class FlatResultCreator implements ResultCreator {
                 long totalResults = 0;
 
                 // Get top level items.
-                final Items<Item> items = mappedData.getChildMap().get(null);
-
-                final List<List<Object>> results = new ArrayList<>();
-
-                if (items != null) {
+                final DataItems items = mappedData.get();
+                final List<List<Object>> results = new ArrayList<>(items.size());
+                if (items.size() > 0) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
                     final OpenGroups openGroups = OpenGroupsFactory.create(resultRequest.getOpenGroups());
 
@@ -176,7 +175,7 @@ public class FlatResultCreator implements ResultCreator {
 
                 return resultBuilder.build();
 
-            } catch (final RuntimeException e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
                 error = e.getMessage();
             }
@@ -186,7 +185,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private int addResults(final Data data, final RangeChecker rangeChecker,
-                           final OpenGroups openGroups, final Items<Item> items, final List<List<Object>> results,
+                           final OpenGroups openGroups, final DataItems items, final List<List<Object>> results,
                            final int depth, final int parentCount, final Sizes maxResults) {
         int count = parentCount;
         int maxResultsAtThisDepth = maxResults.size(depth);
@@ -199,64 +198,58 @@ public class FlatResultCreator implements ResultCreator {
             }
         }
 
-        if (items != null) {
-            for (final Item item : items) {
-                if (rangeChecker.check(count)) {
+        for (final DataItem item : items) {
+            if (rangeChecker.check(count)) {
+                final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
-                    final List<Object> values = new ArrayList<>(fields.size() + 3);
+                if (item.getKey() != null) {
+                    resultList.add(toNodeKey(groupFields, item.getKey().getParent()));
+                    resultList.add(toNodeKey(groupFields, item.getKey()));
+                } else {
+                    resultList.add(null);
+                    resultList.add(null);
+                }
+                resultList.add(depth);
 
-                    if (item.getKey() != null) {
-                        values.add(toNodeKey(groupFields, item.getKey().getParent()));
-                        values.add(toNodeKey(groupFields, item.getKey()));
-                    } else {
-                        values.add(null);
-                        values.add(null);
-                    }
-                    values.add(depth);
-
-                    // Convert all list into fully resolved objects evaluating
-                    // functions where necessary.
-                    int i = 0;
-                    for (final Field field : fields) {
-                        final Generator generator = item.getGenerators()[i];
-                        Object value = null;
-                        if (generator != null) {
-                            // Convert all list into fully resolved
-                            // objects evaluating functions where necessary.
-                            final Val val = generator.eval();
-                            if (val != null) {
-                                if (fieldFormatter != null) {
-                                    value = fieldFormatter.format(field, val);
-                                } else {
-                                    value = convert(field, val);
-                                }
-                            }
-                        }
-
-                        values.add(value);
-                        i++;
-                    }
-
-                    // Add the values.
-                    results.add(values);
-                    resultCountAtThisLevel++;
-
-                    // Add child results if a node is open.
-                    if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
-                        final Items<Item> childItems = data.getChildMap().get(item.getKey());
-                        if (childItems != null) {
-                            count = addResults(data, rangeChecker, openGroups,
-                                    childItems, results, depth + 1, count, maxResults);
+                // Convert all list into fully resolved objects evaluating
+                // functions where necessary.
+                int i = 0;
+                for (final Field field : fields) {
+                    final Val val = item.getValue(i);
+                    Object result = null;
+                    if (val != null) {
+                        // Convert all list into fully resolved
+                        // objects evaluating functions where necessary.
+                        if (fieldFormatter != null) {
+                            result = fieldFormatter.format(field, val);
+                        } else {
+                            result = convert(field, val);
                         }
                     }
+
+                    resultList.add(result);
+                    i++;
                 }
 
-                // Increment the position.
-                count++;
+                // Add the values.
+                results.add(resultList);
+                resultCountAtThisLevel++;
 
-                if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
-                    break;
+                // Add child results if a node is open.
+                if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
+                    final DataItems childItems = data.get(item.getKey());
+                    if (childItems.size() > 0) {
+                        count = addResults(data, rangeChecker, openGroups,
+                                childItems, results, depth + 1, count, maxResults);
+                    }
                 }
+            }
+
+            // Increment the position.
+            count++;
+
+            if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
+                break;
             }
         }
 
@@ -275,28 +268,6 @@ public class FlatResultCreator implements ResultCreator {
         return val.toString();
     }
 
-    private String[] getTypes(final Field[] fields) {
-        String[] types = null;
-        if (fields != null) {
-            types = new String[fields.length];
-            for (int i = 0; i < types.length; i++) {
-                final Field field = fields[i];
-                final Type type = getType(field);
-                types[i] = type.name();
-            }
-        }
-        return types;
-    }
-
-    private Type getType(final Field field) {
-        Type type = Type.GENERAL;
-        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
-            type = field.getFormat().getType();
-        }
-
-        return type;
-    }
-
     @FunctionalInterface
     private interface RangeChecker {
         boolean check(long count);
@@ -308,11 +279,8 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class Mapper {
-        private final String[] parentFields;
-        private final FieldIndexMap fieldIndexMap;
-        private final CompiledFields compiledFields;
-        private final CompiledDepths compiledDepths;
-        private final TablePayloadHandler tablePayloadHandler;
+        private final int[] parentFieldIndices;
+        private final TableDataStore tableDataStore;
         private final int maxItems;
 
         Mapper(final TableSettings parent,
@@ -321,52 +289,56 @@ public class FlatResultCreator implements ResultCreator {
                final int maxItems) {
             this.maxItems = maxItems;
 
-            parentFields = new String[parent.getFields().size()];
-            int i = 0;
-            for (final Field field : parent.getFields()) {
-                parentFields[i++] = field.getName();
-            }
-
-            fieldIndexMap = new FieldIndexMap(true);
-
-            final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(child);
-            final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-
-            final List<Field> fields = tableSettings.getFields();
-            compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
-            compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
-
             // Create a set of max result sizes that are determined by the supplied max results or default to integer max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
-            tablePayloadHandler = new TablePayloadHandler(child.getFields(), true, maxResults, null);
+
+            final FieldIndex fieldIndex = new FieldIndex();
+
+            final List<Field> fields = child.getFields();
+            final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
+            final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, paramMap);
+
+            tableDataStore = new TableDataStore(
+                    new TableCoprocessorSettings(null, child),
+                    fieldIndex,
+                    paramMap,
+                    maxResults,
+                    null);
+
+            int i = 0;
+            final Map<String, Integer> parentIndex = new HashMap<>();
+            for (final Field field : parent.getFields()) {
+                parentIndex.put(field.getName(), i++);
+            }
+
+            parentFieldIndices = new int[compiledFields.size()];
+            Arrays.fill(parentFieldIndices, -1);
+            for (i = 0; i < compiledFields.size(); i++) {
+                final Integer index = parentIndex.get(compiledFields.getField(i).getField().getName());
+                if (index != null) {
+                    parentFieldIndices[i] = index;
+                }
+            }
         }
 
         public Data map(final Data data) {
-            // Create a new table coprocessor to receive data.
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(new UnsafePairQueue<>(), compiledFields, compiledDepths);
-
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
-            final Items<Item> items = data.getChildMap().get(null);
+            final DataItems items = data.get();
 
-            int itemCount = 0;
-            tablePayloadHandler.clear();
-            if (items != null) {
-                for (final Item item : items) {
-                    final Generator[] generators = item.getGenerators();
-                    final Val[] values = new Val[fieldIndexMap.size()];
-                    for (int i = 0; i < generators.length; i++) {
-                        final Generator generator = generators[i];
-                        if (generator != null) {
-                            final int index = fieldIndexMap.get(parentFields[i]);
-                            if (index >= 0) {
-                                values[index] = generator.eval();
-                            }
+            tableDataStore.clear();
+            if (items.size() > 0) {
+                int itemCount = 0;
+                for (final DataItem item : items) {
+                    final Val[] values = new Val[parentFieldIndices.length];
+                    for (int i = 0; i < values.length; i++) {
+                        final int index = parentFieldIndices[i];
+                        if (index != -1) {
+                            final Val val = item.getValue(index);
+                            values[index] = val;
                         }
                     }
-
-                    // TODO : Receive Object[] for lazy + nested evaluation.
-                    tableCoprocessor.receive(values);
+                    tableDataStore.add(values);
 
                     // Trim the data to the parent first level result size.
                     itemCount++;
@@ -374,11 +346,9 @@ public class FlatResultCreator implements ResultCreator {
                         break;
                     }
                 }
-                final TablePayload payload = (TablePayload) tableCoprocessor.createPayload();
-                tablePayloadHandler.addQueue(payload.getQueue());
             }
 
-            return tablePayloadHandler.getData();
+            return tableDataStore.getData();
         }
     }
 

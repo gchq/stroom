@@ -32,8 +32,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
+import stroom.pipeline.refdata.util.ByteBufferModule;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
@@ -48,6 +47,8 @@ import static stroom.job.api.Schedule.ScheduleType.CRON;
 public class RefDataStoreModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new ByteBufferModule());
+
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         ByteBufferConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetByteBufferConsumer.Factory.class)
@@ -74,13 +75,9 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
-        // If you switch impl here make sure also to do it in the SystemInfo binder below
-        bind(ByteBufferPool.class).to(ByteBufferPoolImpl4.class);
-
         bind(ValueStoreHashAlgorithm.class).to(XxHashValueStoreHashAlgorithm.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPoolImpl4.class)
                 .bind(RefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())

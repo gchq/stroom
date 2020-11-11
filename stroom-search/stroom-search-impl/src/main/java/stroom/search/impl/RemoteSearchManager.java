@@ -18,7 +18,7 @@ package stroom.search.impl;
 
 import stroom.cluster.api.ServiceName;
 import stroom.query.api.v2.QueryKey;
-import stroom.search.resultsender.NodeResult;
+import stroom.query.common.v2.NodeResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -37,13 +37,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class RemoteSearchManager {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchManager.class);
-
     public static final ServiceName SERVICE_NAME = new ServiceName("remoteSearchManager");
     public static final String START_SEARCH = "startSearch";
     public static final String POLL = "poll";
     public static final String DESTROY = "destroy";
-
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchManager.class);
     private final RemoteSearchResults remoteSearchResults;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;

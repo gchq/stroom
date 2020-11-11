@@ -74,21 +74,4 @@ public interface Store {
      * the UI to show where the query terms have been found.
      */
     List<String> getHighlights();
-
-    /**
-     * Get a list of the default maximum result row counts for each grouping level,
-     * e.g. [100,10,1] means at most 100 rows for group level 0, 10 for each group level
-     * 1 and 1 for each group level 2
-     *
-     * @return A list of {@link Integer} values, where the value represents the default
-     * maximum number of results at a grouping depth equal to the position in the list
-     */
-    Sizes getDefaultMaxResultsSizes();
-
-    /**
-     * Get the store size configuration for this store
-     *
-     * @return A non-null {@link Sizes} object
-     */
-    Sizes getStoreSize();
 }

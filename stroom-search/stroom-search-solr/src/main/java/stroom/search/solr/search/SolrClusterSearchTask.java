@@ -18,32 +18,28 @@ package stroom.search.solr.search;
 
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.search.solr.CachedSolrIndex;
 
-import java.util.Map;
+import java.util.List;
 
 class SolrClusterSearchTask {
     private final CachedSolrIndex cachedSolrIndex;
     private final Query query;
-    private final int resultSendFrequency;
     private final String[] storedFields;
-    private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
+    private final List<CoprocessorSettings> settings;
     private final String dateTimeLocale;
     private final long now;
 
     SolrClusterSearchTask(final CachedSolrIndex cachedSolrIndex,
                           final Query query,
-                          final int resultSendFrequency,
                           final String[] storedFields,
-                          final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                          final List<CoprocessorSettings> settings,
                           final String dateTimeLocale,
                           final long now) {
         this.cachedSolrIndex = cachedSolrIndex;
         this.query = query;
-        this.resultSendFrequency = resultSendFrequency;
         this.storedFields = storedFields;
-        this.coprocessorMap = coprocessorMap;
+        this.settings = settings;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
     }
@@ -56,16 +52,12 @@ class SolrClusterSearchTask {
         return query;
     }
 
-    public int getResultSendFrequency() {
-        return resultSendFrequency;
-    }
-
     public String[] getStoredFields() {
         return storedFields;
     }
 
-    public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
-        return coprocessorMap;
+    public List<CoprocessorSettings> getSettings() {
+        return settings;
     }
 
     public String getDateTimeLocale() {

@@ -16,9 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
-import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -27,6 +25,8 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.Data.DataItem;
+import stroom.query.common.v2.Data.DataItems;
 import stroom.query.common.v2.format.FieldFormatter;
 
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import java.util.Set;
 
 public class TableResultCreator implements ResultCreator {
     private final FieldFormatter fieldFormatter;
-    private volatile List<Field> latestFields;
     private final Sizes defaultMaxResultsSizes;
+    private volatile List<Field> latestFields;
 
     public TableResultCreator(final FieldFormatter fieldFormatter,
                               final Sizes defaultMaxResultsSizes) {
@@ -111,64 +111,27 @@ public class TableResultCreator implements ResultCreator {
         int pos = position;
         int resultCountAtThisLevel = 0;
         // Get top level items.
-        final Items<Item> items = data.getChildMap().get(parentKey);
+        final DataItems items = data.get(parentKey);
         if (items != null) {
-            for (final Item item : items) {
+            for (final DataItem item : items) {
                 final GroupKey groupKey = item.getKey();
 
                 // If the result is within the requested window (offset + length) then add it.
-                if (pos >= offset &&
-                        resultList.size() < length) {
-                    // Convert all list into fully resolved objects evaluating functions where necessary.
-                    final List<String> values = new ArrayList<>(item.getGenerators().length);
+                if (pos >= offset && resultList.size() < length) {
+                    final List<String> stringValues = new ArrayList<>(fields.size());
                     int i = 0;
 
                     for (final Field field : fields) {
-                        String string = null;
-
-                        if (item.getGenerators().length > i) {
-                            final Generator generator = item.getGenerators()[i];
-                            if (generator != null) {
-                                Val val;
-
-                                if (groupKey != null && generator instanceof Selector) {
-                                    // If the generator is a selector then select a child row.
-                                    final Items<Item> childItems = data.getChildMap().get(groupKey);
-                                    if (childItems != null) {
-                                        // Create a list of child generators.
-                                        final List<Generator> childGenerators = new ArrayList<>(childItems.size());
-                                        for (final Item childItem : childItems) {
-                                            final Generator childGenerator = childItem.getGenerators()[i];
-                                            childGenerators.add(childGenerator);
-                                        }
-
-                                        // Make the selector select from the list of child generators.
-                                        final Selector selector = (Selector) generator;
-                                        val = selector.select(childGenerators.toArray(new Generator[0]));
-
-                                    } else {
-                                        // If there are are no child items then just evaluate the inner expression
-                                        // provided to the selector function.
-                                        val = generator.eval();
-                                    }
-                                } else {
-                                    // Convert all list into fully resolved objects evaluating functions where
-                                    // necessary.
-                                    val = generator.eval();
-                                }
-
-                                string = fieldFormatter.format(field, val);
-                            }
-                        }
-
-                        values.add(string);
+                        final Val val = item.getValue(i);
+                        final String string = fieldFormatter.format(field, val);
+                        stringValues.add(string);
                         i++;
                     }
 
                     if (item.getKey() != null) {
-                        resultList.add(new Row(item.getKey().toString(), values, item.getDepth()));
+                        resultList.add(new Row(item.getKey().toString(), stringValues, item.getDepth()));
                     } else {
-                        resultList.add(new Row(null, values, item.getDepth()));
+                        resultList.add(new Row(null, stringValues, item.getDepth()));
                     }
                 }
 

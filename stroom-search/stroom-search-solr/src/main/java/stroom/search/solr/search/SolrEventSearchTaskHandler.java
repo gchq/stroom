@@ -16,15 +16,16 @@
 
 package stroom.search.solr.search;
 
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.CoprocessorKey;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.EventCoprocessor;
+import stroom.query.common.v2.EventCoprocessorSettings;
+import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.EventRefsPayload;
 import stroom.query.common.v2.Sizes;
-import stroom.search.api.EventRefs;
-import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.UiConfig;
@@ -35,8 +36,7 @@ import stroom.util.logging.LogUtil;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -49,6 +49,7 @@ public class SolrEventSearchTaskHandler {
     private final SolrSearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final SecurityContext securityContext;
+    private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     SolrEventSearchTaskHandler(final Executor executor,
@@ -56,13 +57,15 @@ public class SolrEventSearchTaskHandler {
                                final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                final SolrSearchConfig searchConfig,
                                final UiConfig clientConfig,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final CoprocessorsFactory coprocessorsFactory) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.securityContext = securityContext;
+        this.coprocessorsFactory = coprocessorsFactory;
     }
 
     public EventRefs exec(final SolrEventSearchTask task) {
@@ -76,39 +79,38 @@ public class SolrEventSearchTaskHandler {
             final Query query = task.getQuery();
 
             // Replace expression parameters.
-            ExpressionOperator expression = query.getExpression();
-            final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
-            expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
-            query.setExpression(expression);
+            ExpressionUtil.replaceExpressionParameters(query);
 
-            final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
-                    task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
-            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
-            coprocessorMap.put(new CoprocessorKey(0, new String[]{"eventCoprocessor"}), settings);
+            final CoprocessorKey coprocessorKey = new CoprocessorKey(0, new String[]{"eventCoprocessor"});
+            final EventCoprocessorSettings settings = new EventCoprocessorSettings(
+                    coprocessorKey,
+                    task.getMinEvent(),
+                    task.getMaxEvent(),
+                    task.getMaxStreams(),
+                    task.getMaxEvents(),
+                    task.getMaxEventsPerStream());
 
             // Create an asynchronous search task.
             final String searchName = "Event Search";
             final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
+                    task.getKey(),
                     searchName,
                     query,
-                    task.getResultSendFrequency(),
-                    coprocessorMap,
+                    Collections.singletonList(settings),
                     null,
                     nowEpochMilli);
 
+            final Coprocessors coprocessors = coprocessorsFactory.create(Collections.singletonList(settings), query.getParams());
+            final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorKey);
+
             // Create a collector to store search results.
-            final Sizes storeSize = getStoreSizes();
-            final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-            final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
                     executor,
                     taskContextFactory,
                     solrAsyncSearchTaskHandlerProvider,
                     asyncSearchTask,
                     null,
-                    resultHandler,
-                    defaultMaxResultsSizes,
-                    storeSize);
+                    coprocessors);
 
             // Tell the task where results will be collected.
             asyncSearchTask.setResultCollector(searchResultCollector);
@@ -122,7 +124,7 @@ public class SolrEventSearchTaskHandler {
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
 
-                eventRefs = resultHandler.getEventRefs();
+                eventRefs = ((EventRefsPayload) eventCoprocessor.createPayload()).getEventRefs();
                 if (eventRefs != null) {
                     eventRefs.trim();
                 }

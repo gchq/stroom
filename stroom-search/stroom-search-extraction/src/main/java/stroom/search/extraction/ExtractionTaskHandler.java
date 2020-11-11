@@ -40,7 +40,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.search.coprocessor.Error;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;

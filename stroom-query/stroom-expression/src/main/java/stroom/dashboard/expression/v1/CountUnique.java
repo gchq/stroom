@@ -109,7 +109,7 @@ class CountUnique extends AbstractFunction {
             uniqueValues.clear();
             final int length = input.readInt(true);
             for (int i = 0; i < length; i++) {
-                uniqueValues.add(ValSerialisers.read(input));
+                uniqueValues.add(ValSerialiser.read(input));
             }
         }
 
@@ -117,7 +117,7 @@ class CountUnique extends AbstractFunction {
         public void write(final Output output) {
             output.writeInt(uniqueValues.size(), true);
             for (final Val val : uniqueValues) {
-                ValSerialisers.write(output, val);
+                ValSerialiser.write(output, val);
             }
         }
     }

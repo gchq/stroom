@@ -16,9 +16,10 @@
 
 package stroom.search.impl.shard;
 
+import stroom.query.common.v2.Receiver;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import stroom.search.coprocessor.Receiver;
 
 import java.util.concurrent.atomic.AtomicLong;
 

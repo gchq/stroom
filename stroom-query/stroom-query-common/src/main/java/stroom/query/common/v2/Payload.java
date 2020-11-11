@@ -16,7 +16,17 @@
 
 package stroom.query.common.v2;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public interface Payload extends Serializable {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TablePayload.class, name = "table"),
+        @JsonSubTypes.Type(value = EventRefsPayload.class, name = "event")
+})
+public interface Payload {
+    CoprocessorKey getKey();
 }

@@ -2,7 +2,7 @@ package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexField;

@@ -1,25 +1,18 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.query.api.v2.Param;
+import stroom.dashboard.expression.v1.Val;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.CoprocessorSettingsFactory;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.SearchResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ReceiverImpl;
 import stroom.query.common.v2.Store;
-import stroom.query.common.v2.TableCoprocessor;
-import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.query.common.v2.TablePayload;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
-import stroom.search.coprocessor.Values;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -28,76 +21,52 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class SqlStatisticsStore implements Store {
+    public static final String TASK_NAME = "Sql Statistic Search";
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
-
-    public static final String TASK_NAME = "Sql Statistic Search";
-
-    private static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
-
-    private final ResultHandler resultHandler;
-    private final int resultHandlerBatchSize;
-    private final Sizes defaultMaxResultsSizes;
-    private final Sizes storeSize;
+    private final Coprocessors coprocessors;
     private final CompletionState completionState = new CompletionState();
-    private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final String searchKey;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreDoc statisticStoreDoc,
                        final StatisticsSearchService statisticsSearchService,
-                       final Sizes defaultMaxResultsSizes,
-                       final Sizes storeSize,
-                       final int resultHandlerBatchSize,
                        final Executor executor,
-                       final TaskContextFactory taskContextFactory) {
-
-        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
-        this.storeSize = storeSize;
+                       final TaskContextFactory taskContextFactory,
+                       final CoprocessorsFactory coprocessorsFactory) {
         this.searchKey = searchRequest.getKey().toString();
-        this.resultHandlerBatchSize = resultHandlerBatchSize;
 
-        final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
-        Preconditions.checkNotNull(coprocessorSettingsMap);
-
-        final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
-        final Map<String, String> paramMap = getParamMap(searchRequest);
-
-        final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap = getCoprocessorMap(
-                coprocessorSettingsMap, fieldIndexMap, paramMap);
+        final List<CoprocessorSettings> coprocessorSettingsList = CoprocessorSettingsFactory.create(searchRequest);
+        Preconditions.checkNotNull(coprocessorSettingsList);
 
         // convert the search into something stats understands
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreDoc);
+        final ExpressionOperator expression = ExpressionUtil.replaceExpressionParameters(searchRequest);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(statisticStoreDoc, expression, searchRequest.getDateTimeLocale());
 
-        resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        // Create coprocessors.
+        coprocessors = coprocessorsFactory.create(
+                coprocessorSettingsList,
+                searchRequest.getQuery().getParams());
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Create the object that will receive results.
-            final Receiver receiver = createReceiver(coprocessorMap, taskContext);
+            final Receiver receiver = createReceiver(coprocessors, taskContext);
 
             // Execute the search asynchronously.
             // We have to create a wrapped runnable so that the task context references a managed task.
             statisticsSearchService.search(
-                    taskContext, statisticStoreDoc, criteria, fieldIndexMap, receiver, completionState);
+                    taskContext, statisticStoreDoc, criteria, coprocessors.getFieldIndex(), receiver, completionState);
         });
         executor.execute(runnable);
 
@@ -133,14 +102,12 @@ public class SqlStatisticsStore implements Store {
 
     @Override
     public Data getData(String componentId) {
-        LOGGER.debug("getData called for componentId {}", componentId);
-
-        return resultHandler.getResultStore(componentId);
+        return coprocessors.getData(componentId);
     }
 
     @Override
     public List<String> getErrors() {
-        return errors;
+        return coprocessors.getErrorConsumer().getErrors();
     }
 
     @Override
@@ -149,86 +116,29 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public Sizes getDefaultMaxResultsSizes() {
-        return defaultMaxResultsSizes;
-    }
-
-    @Override
-    public Sizes getStoreSize() {
-        return storeSize;
-    }
-
-    @Override
     public String toString() {
         return "SqlStatisticsStore{" +
-                "defaultMaxResultsSizes=" + defaultMaxResultsSizes +
-                ", storeSize=" + storeSize +
                 ", completionState=" + completionState +
-//                ", isTerminated=" + isTerminated +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
     }
 
-    private Map<String, String> getParamMap(final SearchRequest searchRequest) {
-        final Map<String, String> paramMap;
-        if (searchRequest.getQuery().getParams() != null) {
-            paramMap = searchRequest.getQuery().getParams().stream()
-                    .collect(Collectors.toMap(Param::getKey, Param::getValue));
-        } else {
-            paramMap = Collections.emptyMap();
-        }
-        return paramMap;
-    }
-
     private Receiver createReceiver(
-            final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
+            final Coprocessors coprocessors,
             final TaskContext taskContext) {
 
         LOGGER.debug("Starting search with key {}", searchKey);
         taskContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
 
-        final LongAdder counter = new LongAdder();
-        final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-        final AtomicLong countSinceLastSend = new AtomicLong(0);
         final Instant queryStart = Instant.now();
+        final Consumer<Val[]> valuesConsumer = coprocessors.getValuesConsumer();
 
-        final Consumer<Values> valuesConsumer = values -> {
-            counter.increment();
-            countSinceLastSend.incrementAndGet();
-            LAMBDA_LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values.getValues())));
-
-            // give the data array to each of our coprocessors
-            coprocessorMap.values().forEach(coprocessor ->
-                    coprocessor.receive(values.getValues()));
-            // send what we have every 1s or when the batch reaches a set size
-            long now = System.currentTimeMillis();
-            if (now >= nextProcessPayloadsTime.get() ||
-                    countSinceLastSend.get() >= resultHandlerBatchSize) {
-
-                LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
-                        now, nextProcessPayloadsTime,
-                        countSinceLastSend.get(), resultHandlerBatchSize));
-
-                processPayloads(resultHandler, coprocessorMap);
-                taskContext.info(() -> searchKey +
-                        " - running database query (" + counter.longValue() + " rows fetched)");
-                nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-                countSinceLastSend.set(0);
-            }
-        };
-
-        final Consumer<Error> errorConsumer = error -> {
-            LOGGER.error("Error in windowed flow: {}", error.getMessage(), error.getThrowable());
-            errors.add(error.getMessage());
+        final Consumer<Throwable> errorConsumer = error -> {
+            LOGGER.error("Error in windowed flow: {}", error.getMessage(), error);
+            coprocessors.getErrorConsumer().accept(error);
         };
 
         final Consumer<Long> completionConsumer = count -> {
-            LAMBDA_LOGGER.debug(() ->
-                    String.format("onComplete of flowable called, counter: %s",
-                            counter.longValue()));
-            // completed our window so create and pass on a payload for the
-            // data we have gathered so far
-            processPayloads(resultHandler, coprocessorMap);
             taskContext.info(() -> searchKey + " - complete");
             complete();
 
@@ -237,79 +147,5 @@ public class SqlStatisticsStore implements Store {
         };
 
         return new ReceiverImpl(valuesConsumer, errorConsumer, completionConsumer);
-    }
-
-    private Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> getCoprocessorMap(
-            final CoprocessorSettingsMap coprocessorSettingsMap,
-            final FieldIndexMap fieldIndexMap,
-            final Map<String, String> paramMap) {
-
-        return coprocessorSettingsMap.getMap()
-                .entrySet()
-                .stream()
-                .map(entry -> Maps.immutableEntry(
-                        entry.getKey(),
-                        createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
-                .filter(entry -> entry.getKey() != null)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    /**
-     * Synchronized to ensure multiple threads don't fight over the coprocessors which is unlikely to
-     * happen anyway as it is mostly used in
-     */
-    private synchronized void processPayloads(final ResultHandler resultHandler,
-                                              final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap) {
-
-        if (!Thread.currentThread().isInterrupted()) {
-            LAMBDA_LOGGER.debug(() ->
-                    LogUtil.message("processPayloads called for {} coprocessors", coprocessorMap.size()));
-
-            //build a payload map from whatever the coprocessors have in them, if anything
-            final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessorMap.entrySet().stream()
-                    .map(entry ->
-                            Maps.immutableEntry(entry.getKey(), entry.getValue().createPayload()))
-                    .filter(entry ->
-                            entry.getValue() != null)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            // log the queue sizes in the payload map
-            if (LOGGER.isDebugEnabled()) {
-                final String contents = payloadMap.entrySet().stream()
-                        .map(entry -> {
-                            String key = entry.getKey() != null ? entry.getKey().toString() : "null";
-                            String size;
-                            // entry checked for null in stream above
-                            if (entry.getValue() instanceof TablePayload) {
-                                TablePayload tablePayload = (TablePayload) entry.getValue();
-                                if (tablePayload.getQueue() != null) {
-                                    size = Integer.toString(tablePayload.getQueue().size());
-                                } else {
-                                    size = "null";
-                                }
-                            } else {
-                                size = "?";
-                            }
-                            return key + ": " + size;
-                        })
-                        .collect(Collectors.joining(", "));
-                LOGGER.debug("payloadMap: [{}]", contents);
-            }
-
-            // give the processed results to the collector, it will handle nulls
-            resultHandler.handle(payloadMap);
-        } else {
-            LOGGER.debug("Thread is interrupted, not processing payload");
-        }
-    }
-
-    private static Coprocessor createCoprocessor(final CoprocessorSettings settings,
-                                                 final FieldIndexMap fieldIndexMap,
-                                                 final Map<String, String> paramMap) {
-        if (settings instanceof TableCoprocessorSettings) {
-            final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            return new TableCoprocessor(tableCoprocessorSettings, fieldIndexMap, paramMap);
-        }
-        return null;
     }
 }

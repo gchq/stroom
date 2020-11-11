@@ -17,8 +17,7 @@
 package stroom.search.impl;
 
 import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
@@ -46,9 +45,7 @@ public class ClusterSearchResultCollectorFactory {
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
                                                final String nodeName,
                                                final Set<String> highlights,
-                                               final ResultHandler resultHandler,
-                                               final Sizes defaultMaxResultsSizes,
-                                               final Sizes storeSize) {
+                                               final Coprocessors coprocessors) {
         return new ClusterSearchResultCollector(executor,
                 taskContextFactory,
                 asyncSearchTaskHandlerProvider,
@@ -56,8 +53,6 @@ public class ClusterSearchResultCollectorFactory {
                 nodeName,
                 highlights,
                 clusterResultCollectorCache,
-                resultHandler,
-                defaultMaxResultsSizes,
-                storeSize);
+                coprocessors);
     }
 }

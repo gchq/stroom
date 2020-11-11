@@ -19,19 +19,32 @@ package stroom.query.common.v2;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.TableSettings;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(Include.NON_NULL)
 public class TableCoprocessorSettings implements CoprocessorSettings {
-    private TableSettings tableSettings;
-
     private static final int DEFAULT_QUEUE_CAPACITY = 1000000;
+
+    @JsonProperty
+    private final CoprocessorKey coprocessorKey;
+    @JsonProperty
+    private final TableSettings tableSettings;
+
     private volatile int queueCapacity = DEFAULT_QUEUE_CAPACITY;
 
-    TableCoprocessorSettings() {
+    @JsonCreator
+    public TableCoprocessorSettings(@JsonProperty("coprocessorKey") final CoprocessorKey coprocessorKey,
+                                    @JsonProperty("tableSettings") final TableSettings tableSettings) {
+        this.coprocessorKey = coprocessorKey;
+        this.tableSettings = tableSettings;
     }
 
-    public TableCoprocessorSettings(final TableSettings tableSettings) {
-        this.tableSettings = tableSettings;
+    @Override
+    public CoprocessorKey getCoprocessorKey() {
+        return coprocessorKey;
     }
 
     public TableSettings getTableSettings() {
@@ -54,19 +67,5 @@ public class TableCoprocessorSettings implements CoprocessorSettings {
 
     public void setQueueCapacity(final int queueCapacity) {
         this.queueCapacity = queueCapacity;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final TableCoprocessorSettings that = (TableCoprocessorSettings) o;
-        return queueCapacity == that.queueCapacity &&
-                Objects.equals(tableSettings, that.tableSettings);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(tableSettings, queueCapacity);
     }
 }

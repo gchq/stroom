@@ -16,8 +16,6 @@
 
 package stroom.query.common.v2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -28,6 +26,9 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
+    private final SizesProvider sizesProvider;
     private final Store store;
     private final Duration defaultTimeout;
 
@@ -54,7 +56,8 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final Store store) {
+    SearchResponseCreator(final SizesProvider sizesProvider, final Store store) {
+        this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
     }
@@ -64,10 +67,38 @@ public class SearchResponseCreator {
      * @param defaultTimeout The service's default timeout period to use for waiting for the store to complete. This
      *                       will be used when the search request hasn't specified a timeout period.
      */
-    public SearchResponseCreator(final Store store,
-                                 final Duration defaultTimeout) {
+    SearchResponseCreator(final SizesProvider sizesProvider,
+                          final Store store,
+                          final Duration defaultTimeout) {
+        this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = Objects.requireNonNull(defaultTimeout);
+    }
+
+    /**
+     * @param errorMessages List of errors to add to the {@link SearchResponse}
+     * @return An empty {@link SearchResponse} with the passed error messages
+     */
+    public static SearchResponse createErrorResponse(final List<String> errorMessages) {
+        Objects.requireNonNull(errorMessages);
+        List<String> errors = new ArrayList<>();
+        errors.addAll(errorMessages);
+        return new SearchResponse(
+                null,
+                null,
+                errors,
+                false);
+    }
+
+    private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
+        Objects.requireNonNull(store);
+        Objects.requireNonNull(errorMessages);
+        List<String> errors = new ArrayList<>();
+        errors.addAll(errorMessages);
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
+        return createErrorResponse(errors);
     }
 
     /**
@@ -150,33 +181,6 @@ public class SearchResponseCreator {
                                     e.getMessage())));
         }
     }
-
-    /**
-     * @param errorMessages List of errors to add to the {@link SearchResponse}
-     * @return An empty {@link SearchResponse} with the passed error messages
-     */
-    public static SearchResponse createErrorResponse(final List<String> errorMessages) {
-        Objects.requireNonNull(errorMessages);
-        List<String> errors = new ArrayList<>();
-        errors.addAll(errorMessages);
-        return new SearchResponse(
-                null,
-                null,
-                errors,
-                false);
-    }
-
-    private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
-        Objects.requireNonNull(store);
-        Objects.requireNonNull(errorMessages);
-        List<String> errors = new ArrayList<>();
-        errors.addAll(errorMessages);
-        if (store.getErrors() != null) {
-            errors.addAll(store.getErrors());
-        }
-        return createErrorResponse(errors);
-    }
-
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
         Duration requestedTimeout = searchRequest.getTimeout() == null
@@ -280,13 +284,13 @@ public class SearchResponseCreator {
         try {
             if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                 final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
-                resultCreator = new TableResultCreator(fieldFormatter, store.getDefaultMaxResultsSizes());
+                resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
             } else {
                 resultCreator = new FlatResultCreator(
                         resultRequest,
                         null,
                         null,
-                        store.getDefaultMaxResultsSizes());
+                        sizesProvider.getDefaultMaxResultsSizes());
             }
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage());

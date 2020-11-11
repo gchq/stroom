@@ -23,7 +23,6 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.refdata.store.ByteBufferConsumerId;
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -38,6 +37,7 @@ import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsum
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;

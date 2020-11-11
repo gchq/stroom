@@ -26,6 +26,7 @@ import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -51,6 +52,7 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
+    public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -94,6 +96,7 @@ public class AppConfig extends AbstractConfig {
 
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
     private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
@@ -167,6 +170,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
         this.annotationConfig = annotationConfig;
+    }
+
+    @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
+    public ByteBufferPoolConfig getByteBufferPoolConfig() {
+        return byteBufferPoolConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setByteBufferPoolConfig(final ByteBufferPoolConfig byteBufferPoolConfig) {
+        this.byteBufferPoolConfig = byteBufferPoolConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)

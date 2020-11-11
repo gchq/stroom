@@ -19,6 +19,7 @@ package stroom.search.solr.search;
 
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.Coprocessors;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.shared.SolrIndexField;
@@ -49,9 +50,11 @@ public class SolrAsyncSearchTaskHandler {
         this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    public void exec(final TaskContext taskContext, final SolrAsyncSearchTask task) {
+    public void exec(final TaskContext taskContext,
+                     final SolrAsyncSearchTask task,
+                     final Coprocessors coprocessors,
+                     final SolrSearchResultCollector resultCollector) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
-            final SolrSearchResultCollector resultCollector = task.getResultCollector();
             if (!Thread.currentThread().isInterrupted()) {
                 try {
                     taskContext.info(() -> task.getSearchName() + " - initialising");
@@ -67,18 +70,18 @@ public class SolrAsyncSearchTaskHandler {
                     // batch search only needs stream and event id stored fields.
                     final String[] storedFields = getStoredFields(index);
 
-                    final SolrClusterSearchTask clusterSearchTask = new SolrClusterSearchTask(index, query, task.getResultSendFrequency(), storedFields,
-                            task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
-                    clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, resultCollector);
+                    final SolrClusterSearchTask clusterSearchTask = new SolrClusterSearchTask(index, query, storedFields,
+                            task.getSettings(), task.getDateTimeLocale(), task.getNow());
+                    clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, coprocessors);
 
                     // Await completion.
                     taskContext.info(() -> task.getSearchName() + " - searching");
                     resultCollector.awaitCompletion();
 
                 } catch (final RuntimeException e) {
-                    resultCollector.getErrorSet().add(e.getMessage());
+                    coprocessors.getErrorConsumer().accept(e);
                 } catch (final InterruptedException e) {
-                    resultCollector.getErrorSet().add(e.getMessage());
+                    coprocessors.getErrorConsumer().accept(e);
 
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();

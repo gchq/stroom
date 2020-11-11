@@ -18,7 +18,7 @@ dependencies {
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-processor:stroom-processor-api')
-    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common') // TODO : Turn back into API
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')

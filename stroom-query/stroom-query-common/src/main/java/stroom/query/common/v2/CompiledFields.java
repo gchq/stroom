@@ -18,7 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.query.api.v2.Field;
@@ -34,7 +34,7 @@ public class CompiledFields implements Iterable<CompiledField> {
     private final List<CompiledField> compiledFields;
 
     public CompiledFields(final List<Field> fields,
-                          final FieldIndexMap fieldIndexMap,
+                          final FieldIndex fieldIndex,
                           final Map<String, String> paramMap) {
         if (null != fields) {
             compiledFields = new ArrayList<>(fields.size());
@@ -47,9 +47,9 @@ public class CompiledFields implements Iterable<CompiledField> {
                     groupDepth = field.getGroup();
                 }
                 Expression expression = null;
-                if (fieldIndexMap != null && field.getExpression() != null && field.getExpression().trim().length() > 0) {
+                if (fieldIndex != null && field.getExpression() != null && field.getExpression().trim().length() > 0) {
                     try {
-                        expression = expressionParser.parse(fieldIndexMap, field.getExpression());
+                        expression = expressionParser.parse(fieldIndex, field.getExpression());
                         expression.setStaticMappedValues(paramMap);
                     } catch (final ParseException e) {
                         throw new RuntimeException(e.getMessage(), e);
@@ -83,6 +83,10 @@ public class CompiledFields implements Iterable<CompiledField> {
 
     public CompiledField getField(final int i) {
         return compiledFields.get(i);
+    }
+
+    public CompiledField[] toArray() {
+        return compiledFields.toArray(new CompiledField[0]);
     }
 
     @Override

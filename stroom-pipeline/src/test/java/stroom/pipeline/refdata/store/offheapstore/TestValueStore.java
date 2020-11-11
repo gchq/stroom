@@ -19,7 +19,6 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
@@ -33,6 +32,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactor
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;

@@ -16,15 +16,14 @@
 
 package stroom.search.solr.search;
 
-import org.apache.solr.client.solrj.FastStreamingDocsCallback;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.StreamingResponseCallback;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.util.DataEntry;
-import stroom.dashboard.expression.v1.*;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Values;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValBoolean;
+import stroom.dashboard.expression.v1.ValDouble;
+import stroom.dashboard.expression.v1.ValErr;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -37,6 +36,13 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import org.apache.solr.client.solrj.FastStreamingDocsCallback;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.StreamingResponseCallback;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.util.DataEntry;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -176,7 +182,7 @@ public class SolrSearchTaskHandler {
         if (task == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getReceiver().getErrorConsumer().accept(new Error(message, t));
+            task.getReceiver().getErrorConsumer().accept(t);
         }
     }
 
@@ -187,15 +193,15 @@ public class SolrSearchTaskHandler {
     private static class Callback extends StreamingResponseCallback {
         private final Tracker tracker;
         private final String[] fieldNames;
-        private final Consumer<Values> valuesConsumer;
-        private final Consumer<Error> errorConsumer;
+        private final Consumer<Val[]> valuesConsumer;
+        private final Consumer<Throwable> errorConsumer;
 
         private DocListInfo docListInfo;
 
         Callback(final Tracker tracker,
                  final String[] fieldNames,
-                 final Consumer<Values> valuesConsumer,
-                 final Consumer<Error> errorConsumer) {
+                 final Consumer<Val[]> valuesConsumer,
+                 final Consumer<Throwable> errorConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
             this.valuesConsumer = valuesConsumer;
@@ -233,7 +239,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.accept(new Values(values));
+                    valuesConsumer.accept(values);
                 }
             } catch (final RuntimeException e) {
                 error(e.getMessage(), e);
@@ -293,18 +299,19 @@ public class SolrSearchTaskHandler {
     }
 
     private static class Callback2 implements FastStreamingDocsCallback {
+        final Map<String, Val> map = new HashMap<>();
         private final Tracker tracker;
         private final String[] fieldNames;
         private final Map<String, SolrIndexField> fieldsMap;
-        private final Consumer<Values> valuesConsumer;
-        private final Consumer<Error> errorConsumer;
+        private final Consumer<Val[]> valuesConsumer;
+        private final Consumer<Throwable> errorConsumer;
         private final Consumer<Long> countConsumer;
 
         Callback2(final Tracker tracker,
                   final String[] fieldNames,
                   final Map<String, SolrIndexField> fieldsMap,
-                  final Consumer<Values> valuesConsumer,
-                  final Consumer<Error> errorConsumer,
+                  final Consumer<Val[]> valuesConsumer,
+                  final Consumer<Throwable> errorConsumer,
                   final Consumer<Long> countConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
@@ -313,8 +320,6 @@ public class SolrSearchTaskHandler {
             this.errorConsumer = errorConsumer;
             this.countConsumer = countConsumer;
         }
-
-        final Map<String, Val> map = new HashMap<>();
 
         @Override
         public Object startDoc(final Object docListObj) {
@@ -410,7 +415,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.accept(new Values(values));
+                    valuesConsumer.accept(values);
                     countConsumer.accept(1L);
                 }
             } catch (final RuntimeException e) {

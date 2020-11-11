@@ -1,12 +1,13 @@
 package stroom.search.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
@@ -28,6 +29,14 @@ public class SearchConfig extends AbstractConfig {
 
     private CacheConfig resultStoreCache = new CacheConfig.Builder()
             .maximumSize(100L)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
+            .build();
+    private CacheConfig remoteSearchResultCache = new CacheConfig.Builder()
+            .maximumSize(100L)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
+            .build();
+    private CacheConfig clusterResultCollectorCache = new CacheConfig.Builder()
+            .maximumSize(1000000L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
@@ -82,6 +91,24 @@ public class SearchConfig extends AbstractConfig {
 
     public void setResultStoreCache(final CacheConfig resultStoreCache) {
         this.resultStoreCache = resultStoreCache;
+    }
+
+    @JsonProperty("remoteSearchResultCache")
+    public CacheConfig getRemoteSearchResultCache() {
+        return remoteSearchResultCache;
+    }
+
+    public void setRemoteSearchResultCache(final CacheConfig remoteSearchResultCache) {
+        this.remoteSearchResultCache = remoteSearchResultCache;
+    }
+
+    @JsonProperty("clusterResultCollectorCache")
+    public CacheConfig getClusterResultCollectorCache() {
+        return clusterResultCollectorCache;
+    }
+
+    public void setClusterResultCollectorCache(final CacheConfig clusterResultCollectorCache) {
+        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     @Override

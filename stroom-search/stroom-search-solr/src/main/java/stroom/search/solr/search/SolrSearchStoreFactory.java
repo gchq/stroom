@@ -19,12 +19,13 @@ package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CoprocessorSettingsMap;
-import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsFactory;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -44,6 +45,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -66,6 +68,7 @@ class SolrSearchStoreFactory implements StoreFactory {
     private final SolrSearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final SecurityContext securityContext;
+    private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     public SolrSearchStoreFactory(final SolrIndexCache solrIndexCache,
@@ -75,7 +78,8 @@ class SolrSearchStoreFactory implements StoreFactory {
                                   final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                   final SolrSearchConfig searchConfig,
                                   final UiConfig clientConfig,
-                                  final SecurityContext securityContext) {
+                                  final SecurityContext securityContext,
+                                  final CoprocessorsFactory coprocessorsFactory) {
         this.solrIndexCache = solrIndexCache;
         this.wordListProvider = wordListProvider;
         this.executor = executor;
@@ -84,6 +88,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.securityContext = securityContext;
+        this.coprocessorsFactory = coprocessorsFactory;
     }
 
     @Override
@@ -95,10 +100,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         final Query query = searchRequest.getQuery();
 
         // Replace expression parameters.
-        ExpressionOperator expression = query.getExpression();
-        final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
-        expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
-        query.setExpression(expression);
+        ExpressionUtil.replaceExpressionParameters(searchRequest);
 
         // Load the index.
         final CachedSolrIndex index = securityContext.useAsReadResult(() -> solrIndexCache.get(query.getDataSource()));
@@ -107,25 +109,20 @@ class SolrSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // Create a coprocessor settings map.
-        final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
+        final List<CoprocessorSettings> coprocessorSettingsList = CoprocessorSettingsFactory.create(searchRequest);
+
+        // Create a handler for search results.
+        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettingsList, searchRequest.getQuery().getParams());
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
+                searchRequest.getKey(),
                 searchName,
                 query,
-                SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
-                coprocessorSettingsMap.getMap(),
+                coprocessorSettingsList,
                 searchRequest.getDateTimeLocale(),
                 nowEpochMilli);
-
-        // Create a handler for search results.
-        final Sizes storeSize = getStoreSizes();
-        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        final SearchResultHandler resultHandler = new SearchResultHandler(
-                coprocessorSettingsMap,
-                defaultMaxResultsSizes,
-                storeSize);
 
         // Create the search result collector.
         final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
@@ -134,9 +131,7 @@ class SolrSearchStoreFactory implements StoreFactory {
                 solrAsyncSearchTaskHandlerProvider,
                 asyncSearchTask,
                 highlights,
-                resultHandler,
-                defaultMaxResultsSizes,
-                storeSize);
+                coprocessors);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);

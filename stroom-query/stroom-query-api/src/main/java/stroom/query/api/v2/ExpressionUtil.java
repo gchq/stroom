@@ -189,8 +189,29 @@ public class ExpressionUtil {
         return builder.build();
     }
 
-    public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                 final Map<String, String> paramMap) {
+    public static ExpressionOperator replaceExpressionParameters(final SearchRequest searchRequest) {
+        ExpressionOperator expression = null;
+        if (searchRequest != null) {
+            expression = replaceExpressionParameters(searchRequest.getQuery());
+        }
+        return expression;
+    }
+
+    public static ExpressionOperator replaceExpressionParameters(final Query query) {
+        ExpressionOperator expression = null;
+        if (query != null) {
+            expression = query.getExpression();
+            if (query.getParams() != null && expression != null) {
+                final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+                expression = replaceExpressionParameters(expression, paramMap);
+            }
+            query.setExpression(expression);
+        }
+        return expression;
+    }
+
+    private static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
+                                                                  final Map<String, String> paramMap) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.getEnabled(), operator.getOp());
         if (operator.getChildren() != null) {
             for (ExpressionItem child : operator.getChildren()) {

@@ -17,11 +17,10 @@
 ext.moduleName = 'stroom.query.common'
 
 dependencies {
+    compile project(':stroom-docref')
+    compile project(':stroom-lmdb')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
-
-    //--------Stroom libs------
-    compile project(':stroom-docref')
 
     //--------3rd party--------
     compile libs.guava

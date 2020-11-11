@@ -1,15 +1,8 @@
 package stroom.statistics.impl.sql.search;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
-import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
@@ -27,20 +20,21 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //used by DI
 public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
+    public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticCacheImpl.class);
-
-    public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
-
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;
     private final StatisticStoreCache statisticStoreCache;
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -70,15 +64,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     public SearchResponse search(final SearchRequest searchRequest) {
         return securityContext.useAsReadResult(() -> {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
-
-            // Replace expression parameters.
-            final Query query = searchRequest.getQuery();
-            if (query != null) {
-                ExpressionOperator expression = query.getExpression();
-                final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
-                expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
-                query.setExpression(expression);
-            }
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
@@ -121,9 +106,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                 new SearchResponseCreatorCache.Key(searchRequest));
 
         // This will build a response from the search whether it is still running or has finished
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
-
-        return searchResponse;
+        return searchResponseCreator.create(searchRequest);
     }
 
     private SearchResponse buildEmptyResponse(final SearchRequest searchRequest, final String errorMessage) {

@@ -32,8 +32,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.NodeResult;
 import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
-import stroom.search.resultsender.NodeResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -191,12 +191,13 @@ class AsyncSearchTaskHandler {
 
         // Start remote cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                taskContext.getTaskId(),
                 "Cluster Search",
                 task.getKey(),
                 query,
                 shards,
                 storedFields,
-                task.getCoprocessorMap(),
+                task.getSettings(),
                 task.getDateTimeLocale(),
                 task.getNow());
         LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);

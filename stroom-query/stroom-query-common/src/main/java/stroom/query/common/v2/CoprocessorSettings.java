@@ -18,9 +18,22 @@ package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.io.Serializable;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TableCoprocessorSettings.class, name = "table"),
+        @JsonSubTypes.Type(value = EventCoprocessorSettings.class, name = "event")
+})
 public interface CoprocessorSettings extends Serializable {
+    CoprocessorKey getCoprocessorKey();
+
     boolean extractValues();
 
     DocRef getExtractionPipeline();

@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
@@ -27,6 +26,7 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
@@ -57,11 +57,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
-
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
     private MapDefinitionUIDStore mapDefinitionUIDStore = null;
     private MapUidForwardDb mapUidForwardDb;
     private MapUidReverseDb mapUidReverseDb;
-    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {
@@ -76,7 +75,6 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 mapUidForwardDb,
                 mapUidReverseDb);
     }
-
 
 
     /**

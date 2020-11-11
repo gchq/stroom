@@ -94,14 +94,14 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         @Override
         public void read(final Input input) {
             super.read(input);
-            current = ValSerialisers.read(input);
+            current = ValSerialiser.read(input);
             count = input.readInt(true);
         }
 
         @Override
         public void write(final Output output) {
             super.write(output);
-            ValSerialisers.write(output, current);
+            ValSerialiser.write(output, current);
             output.writeInt(count, true);
         }
     }

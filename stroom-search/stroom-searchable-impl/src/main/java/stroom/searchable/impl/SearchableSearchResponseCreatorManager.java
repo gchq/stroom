@@ -1,15 +1,17 @@
 package stroom.searchable.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorCache.Key;
+import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.Store;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,13 +24,16 @@ class SearchableSearchResponseCreatorManager implements SearchResponseCreatorMan
     private static final String CACHE_NAME = "DB Search Result Creators";
 
     private final SearchableStoreFactory storeFactory;
+    private final SearchResponseCreatorFactory searchResponseCreatorFactory;
     private final ICache<Key, SearchResponseCreator> cache;
 
     @Inject
     public SearchableSearchResponseCreatorManager(final CacheManager cacheManager,
                                                   final SearchableConfig searchableConfig,
-                                                  final SearchableStoreFactory storeFactory) {
+                                                  final SearchableStoreFactory storeFactory,
+                                                  final SearchResponseCreatorFactory searchResponseCreatorFactory) {
         this.storeFactory = storeFactory;
+        this.searchResponseCreatorFactory = searchResponseCreatorFactory;
         cache = cacheManager.create(CACHE_NAME, searchableConfig::getSearchResultCache, this::create, this::destroy);
     }
 
@@ -36,7 +41,7 @@ class SearchableSearchResponseCreatorManager implements SearchResponseCreatorMan
         try {
             LOGGER.debug("Creating new store for key {}", key);
             final Store store = storeFactory.create(key.getSearchRequest());
-            return new SearchResponseCreator(store);
+            return searchResponseCreatorFactory.create(store);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;

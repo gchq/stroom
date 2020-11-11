@@ -3,7 +3,6 @@ package stroom.statistics.impl.sql.search;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -28,7 +27,7 @@ public class StatStoreCriteriaBuilder {
 
     private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(ExpressionTerm.Condition.BETWEEN);
 
-    public static FindEventCriteria buildCriteria(final SearchRequest search, final StatisticStoreDoc dataSource) {
+    public static FindEventCriteria buildCriteria(final StatisticStoreDoc dataSource, final ExpressionOperator expression, final String timeZoneId) {
 
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
@@ -39,14 +38,16 @@ public class StatStoreCriteriaBuilder {
         // AND
         // Date Time between 2014-10-22T23:00:00.000Z,2014-10-23T23:00:00.000Z
 
-        final ExpressionOperator topLevelExpressionOperator = search.getQuery().getExpression();
+//        ExpressionOperator topLevelExpressionOperator = search.getQuery().getExpression();
+//        final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(search.getQuery().getParams());
+//        topLevelExpressionOperator = ExpressionUtil.replaceExpressionParameters(topLevelExpressionOperator, paramMap);
 
-        if (topLevelExpressionOperator == null || topLevelExpressionOperator.op() == null) {
+        if (expression == null || expression.op() == null) {
             throw new BadRequestException(
                     "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
         }
 
-        final List<ExpressionItem> childExpressions = topLevelExpressionOperator.getChildren();
+        final List<ExpressionItem> childExpressions = expression.getChildren();
         int validDateTermsFound = 0;
         int dateTermsFound = 0;
 
@@ -80,7 +81,7 @@ public class StatStoreCriteriaBuilder {
                     } else if (expressionItem instanceof ExpressionOperator) {
                         if (((ExpressionOperator) expressionItem).op() == null) {
                             throw new BadRequestException(
-                                "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
+                                    "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
                         }
                     }
                 }
@@ -97,17 +98,17 @@ public class StatStoreCriteriaBuilder {
         }
 
         // ensure the value field is not used in the query terms
-        if (contains(topLevelExpressionOperator, StatisticStoreDoc.FIELD_NAME_VALUE)) {
+        if (contains(expression, StatisticStoreDoc.FIELD_NAME_VALUE)) {
             throw new BadRequestException("Search queries containing the field '"
                     + StatisticStoreDoc.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
         }
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, search.getDateTimeLocale(), nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerm, timeZoneId, nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
-        findAllTermNodes(topLevelExpressionOperator, termNodesInFilter);
+        findAllTermNodes(expression, termNodesInFilter);
 
         final Set<String> rolledUpFieldNames = new HashSet<>();
 
@@ -143,7 +144,7 @@ public class StatStoreCriteriaBuilder {
         blackListedFieldNames.add(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder
-                .convertExpresionItemsTree(topLevelExpressionOperator, blackListedFieldNames);
+                .convertExpresionItemsTree(expression, blackListedFieldNames);
 
         final FindEventCriteria criteria = FindEventCriteria.instance(new Period(range.getFrom(), range.getTo()),
                 dataSource.getName(), filterTermsTree, rolledUpFieldNames);

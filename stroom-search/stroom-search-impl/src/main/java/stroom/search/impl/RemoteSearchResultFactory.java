@@ -1,19 +1,15 @@
 package stroom.search.impl;
 
 import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.NodeResult;
 import stroom.query.common.v2.Payload;
-import stroom.search.coprocessor.Coprocessors;
-import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 class RemoteSearchResultFactory {
@@ -23,7 +19,6 @@ class RemoteSearchResultFactory {
 
     private final CompletionState completionState = new CompletionState();
     private volatile Coprocessors coprocessors;
-    private volatile LinkedBlockingQueue<String> errors;
     private volatile TaskId taskId;
     private volatile boolean destroy;
     private volatile boolean started;
@@ -49,21 +44,20 @@ class RemoteSearchResultFactory {
             }
 
             // Produce payloads for each coprocessor.
-            final Map<CoprocessorSettingsMap.CoprocessorKey, Payload> payloadMap = coprocessors.createPayloads();
+            final List<Payload> payloads = coprocessors.createPayloads();
 
             // Drain all current errors to a list.
-            final List<String> errorsSnapshot = new ArrayList<>();
-            errors.drainTo(errorsSnapshot);
+            final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
             LOGGER.debug(() -> "" +
-                    "Result: payload=" +
-                    payloadMap +
+                    "Result: payloads=" +
+                    payloads +
                     ", error=" +
                     errorsSnapshot +
                     ", complete=" +
                     complete);
 
             // Form a result to send back to the requesting node.
-            return new NodeResult(payloadMap, errorsSnapshot, complete);
+            return new NodeResult(payloads, errorsSnapshot, complete);
 
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
@@ -83,10 +77,6 @@ class RemoteSearchResultFactory {
 
     public void setCoprocessors(final Coprocessors coprocessors) {
         this.coprocessors = coprocessors;
-    }
-
-    public void setErrors(final LinkedBlockingQueue<String> errors) {
-        this.errors = errors;
     }
 
     public synchronized void setTaskId(final TaskId taskId) {

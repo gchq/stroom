@@ -1,11 +1,5 @@
 package stroom.query.common.v2;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
@@ -20,8 +14,14 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestSearchResponseCreator {
-    private static Duration TOLLERANCE = Duration.ofMillis(100);
+    private static final Duration TOLLERANCE = Duration.ofMillis(100);
 
     @Mock
     private Store mockStore;
@@ -43,13 +43,12 @@ class TestSearchResponseCreator {
         Mockito.when(mockStore.getErrors()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getData(Mockito.any())).thenReturn(createSingleItemDataObject());
-        Mockito.when(mockStore.getStoreSize()).thenReturn(Sizes.create(Arrays.asList(100, 10, 1)));
     }
 
     @Test
     void create_nonIncremental_timesOut() {
         Duration serverTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(mockStore, serverTimeout);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(null, mockStore);
 
         //store is never complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -77,9 +76,7 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_completesImmediately() {
-        //long timeout because we should return almost immediately
-        Duration serverTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(mockStore, serverTimeout);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(null, mockStore);
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(true);
@@ -106,7 +103,7 @@ class TestSearchResponseCreator {
     void create_nonIncremental_completesBeforeTimeout() {
         Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(mockStore, serverTimeout);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(null, mockStore);
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -133,7 +130,7 @@ class TestSearchResponseCreator {
     void create_incremental_noTimeout() {
         Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(0);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(mockStore, serverTimeout);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(null, mockStore);
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -167,7 +164,7 @@ class TestSearchResponseCreator {
         //long timeout because we should return almost immediately
         Duration serverTimeout = Duration.ofMillis(500);
         Duration clientTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(mockStore, serverTimeout);
+        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(null, mockStore);
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -269,14 +266,14 @@ class TestSearchResponseCreator {
     }
 
     private Data createSingleItemDataObject() {
-        final Items<Item> items = new ItemsArrayList<>();
+        final Items items = new Items();
         final Generator[] generators = new Generator[3];
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
         items.add(new Item(null, generators, 0));
 
-        final Map<GroupKey, Items<Item>> map = new HashMap<>();
+        final Map<GroupKey, Items> map = new HashMap<>();
         map.put(null, items);
 
         return new Data(map, items.size(), items.size());

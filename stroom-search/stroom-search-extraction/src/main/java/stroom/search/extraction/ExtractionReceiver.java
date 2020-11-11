@@ -1,24 +1,23 @@
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.ReceiverImpl;
-import stroom.search.coprocessor.Values;
+import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Val;
+import stroom.query.common.v2.ReceiverImpl;
 
 import java.util.function.Consumer;
 
 public class ExtractionReceiver extends ReceiverImpl {
-    private final FieldIndexMap fieldIndexMap;
+    private final FieldIndex fieldIndex;
 
-    public ExtractionReceiver(final Consumer<Values> valuesConsumer,
-                              final Consumer<Error> errorConsumer,
+    public ExtractionReceiver(final Consumer<Val[]> valuesConsumer,
+                              final Consumer<Throwable> errorConsumer,
                               final Consumer<Long> completionConsumer,
-                              final FieldIndexMap fieldIndexMap) {
+                              final FieldIndex fieldIndex) {
         super(valuesConsumer, errorConsumer, completionConsumer);
-        this.fieldIndexMap = fieldIndexMap;
+        this.fieldIndex = fieldIndex;
     }
 
-    public FieldIndexMap getFieldIndexMap() {
-        return fieldIndexMap;
+    public FieldIndex getFieldIndexMap() {
+        return fieldIndex;
     }
 }

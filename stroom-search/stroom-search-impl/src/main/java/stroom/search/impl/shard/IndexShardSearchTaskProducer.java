@@ -16,7 +16,7 @@
 
 package stroom.search.impl.shard;
 
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;

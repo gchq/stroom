@@ -6,8 +6,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.common.v2.Receiver;
 import stroom.search.impl.ClusterSearchTask;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.SearchException;
@@ -126,7 +125,7 @@ public class IndexShardSearchFactory {
                                                                 final ExpressionOperator expression,
                                                                 final IndexFieldsMap indexFieldsMap,
                                                                 final Map<Version, Optional<SearchExpressionQuery>> queryMap,
-                                                                final Consumer<Error> errorConsumer) {
+                                                                final Consumer<Throwable> errorConsumer) {
         return new IndexShardQueryFactory() {
             @Override
             public Query getQuery(final Version luceneVersion) {

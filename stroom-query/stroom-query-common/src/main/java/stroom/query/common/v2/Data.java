@@ -16,23 +16,37 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
+import stroom.dashboard.expression.v1.Selector;
+import stroom.dashboard.expression.v1.Val;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class Data {
-    private final Map<GroupKey, Items<Item>> childMap;
+    public static final GroupKey ROOT_KEY = new GroupKey(0, null, null);
+
+    private final Map<GroupKey, Items> childMap;
     private final long size;
     private final long totalSize;
 
-    public Data(final Map<GroupKey, Items<Item>> childMap, final long size, final long totalSize) {
+    public Data(final Map<GroupKey, Items> childMap, final long size, final long totalSize) {
         this.childMap = childMap;
         this.size = size;
         this.totalSize = totalSize;
     }
 
-    public Map<GroupKey, Items<Item>> getChildMap() {
-        return childMap;
+    public DataItems get() {
+        return get(ROOT_KEY);
+    }
+
+    public DataItems get(final GroupKey groupKey) {
+        final Items items = childMap.get(groupKey);
+        return new DataItemsImpl(childMap, items);
     }
 
     public long getSize() {
@@ -41,5 +55,109 @@ public class Data {
 
     public long getTotalSize() {
         return totalSize;
+    }
+
+    public interface DataItem {
+        GroupKey getKey();
+
+        Val getValue(int index);
+
+        int getDepth();
+    }
+
+    public interface DataItems extends Iterable<DataItem> {
+        int size();
+    }
+
+    private static class DataItemsImpl implements DataItems {
+        private final Map<GroupKey, Items> childMap;
+        private final Items items;
+
+        public DataItemsImpl(final Map<GroupKey, Items> childMap,
+                             final Items items) {
+            this.childMap = childMap;
+            this.items = items;
+        }
+
+        @Override
+        public Iterator<DataItem> iterator() {
+            return new Iterator<>() {
+                private final Iterator<Item> itemIterator = items == null ? Collections.emptyIterator() : items.iterator();
+
+                @Override
+                public boolean hasNext() {
+                    return itemIterator.hasNext();
+                }
+
+                @Override
+                public DataItem next() {
+                    final Item item = itemIterator.next();
+                    return new DataItemImpl(childMap, item);
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return items == null ? 0 : items.size();
+        }
+    }
+
+    public static class DataItemImpl implements DataItem {
+        private final Map<GroupKey, Items> childMap;
+        private final Item item;
+
+        public DataItemImpl(final Map<GroupKey, Items> childMap,
+                            final Item item) {
+            this.childMap = childMap;
+            this.item = item;
+        }
+
+        @Override
+        public GroupKey getKey() {
+            return item.getKey();
+        }
+
+        @Override
+        public Val getValue(final int index) {
+            Val val = null;
+
+            final Generator[] generators = item.getGenerators();
+            if (index >= 0 && index < generators.length) {
+                final Generator generator = generators[index];
+                final GroupKey groupKey = item.getKey();
+                if (groupKey != null && generator instanceof Selector) {
+                    // If the generator is a selector then select a child row.
+                    final Items childItems = childMap.get(groupKey);
+                    if (childItems != null) {
+                        // Create a list of child generators.
+                        final List<Generator> childGenerators = new ArrayList<>(childItems.size());
+                        for (final Item childItem : childItems) {
+                            final Generator childGenerator = childItem.getGenerators()[index];
+                            childGenerators.add(childGenerator);
+                        }
+
+                        // Make the selector select from the list of child generators.
+                        final Selector selector = (Selector) generator;
+                        val = selector.select(childGenerators.toArray(new Generator[0]));
+
+                    } else {
+                        // If there are are no child items then just evaluate the inner expression
+                        // provided to the selector function.
+                        val = generator.eval();
+                    }
+                } else {
+                    // Convert all list into fully resolved objects evaluating functions where
+                    // necessary.
+                    val = generator.eval();
+                }
+            }
+            return val;
+        }
+
+        @Override
+        public int getDepth() {
+            return item.getDepth();
+        }
     }
 }

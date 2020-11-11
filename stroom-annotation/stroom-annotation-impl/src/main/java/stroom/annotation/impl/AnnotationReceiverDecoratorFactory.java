@@ -2,7 +2,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
@@ -13,7 +13,6 @@ import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.search.coprocessor.Values;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionReceiver;
@@ -34,13 +33,8 @@ import java.util.function.Function;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
-
-    private final AnnotationDao annotationDao;
-    private final ExpressionMatcherFactory expressionMatcherFactory;
-    private final AnnotationConfig annotationConfig;
-    private final SecurityContext securityContext;
-
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = new HashMap<>();
+    private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = new HashMap<>();
 
     static {
         VALUE_MAPPING.put(AnnotationFields.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
@@ -56,8 +50,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         VALUE_MAPPING.put(AnnotationFields.HISTORY, annotation -> annotation.getHistory() == null ? ValNull.INSTANCE : ValString.create(annotation.getHistory()));
     }
 
-    private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = new HashMap<>();
-
     static {
         OBJECT_MAPPING.put(AnnotationFields.ID, Annotation::getId);
         OBJECT_MAPPING.put(AnnotationFields.CREATED_ON, Annotation::getCreateTime);
@@ -72,6 +64,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         OBJECT_MAPPING.put(AnnotationFields.HISTORY, Annotation::getHistory);
     }
 
+    private final AnnotationDao annotationDao;
+    private final ExpressionMatcherFactory expressionMatcherFactory;
+    private final AnnotationConfig annotationConfig;
+    private final SecurityContext securityContext;
+
     @Inject
     AnnotationReceiverDecoratorFactory(final AnnotationDao annotationDao,
                                        final ExpressionMatcherFactory expressionMatcherFactory,
@@ -85,10 +82,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     @Override
     public ExtractionReceiver create(final ExtractionReceiver receiver, final Query query) {
-        final FieldIndexMap fieldIndexMap = receiver.getFieldIndexMap();
-        final Integer annotationIdIndex = fieldIndexMap.getMap().get(AnnotationFields.ID);
-        final Integer streamIdIndex = fieldIndexMap.getMap().get(IndexConstants.STREAM_ID);
-        final Integer eventIdIndex = fieldIndexMap.getMap().get(IndexConstants.EVENT_ID);
+        final FieldIndex fieldIndex = receiver.getFieldIndexMap();
+        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
+        final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
+        final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
         if (annotationIdIndex == null && (streamIdIndex == null || eventIdIndex == null)) {
             return receiver;
@@ -97,7 +94,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         // Do we need to filter based on annotation attributes.
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
-        final Set<String> usedFields = new HashSet<>(fieldIndexMap.getMap().keySet());
+        final Set<String> usedFields = new HashSet<>(fieldIndex.getFieldNames());
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {
@@ -106,18 +103,18 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         final Annotation defaultAnnotation = createDefaultAnnotation();
 
-        final Consumer<Values> valuesConsumer = v -> {
+        final Consumer<Val[]> valuesConsumer = v -> {
             final List<Annotation> annotations = new ArrayList<>();
             if (annotationIdIndex != null) {
-                final Long annotationId = getLong(v.getValues(), annotationIdIndex);
+                final Long annotationId = getLong(v, annotationIdIndex);
                 if (annotationId != null) {
                     annotations.add(annotationDao.get(annotationId));
                 }
             }
 
             if (annotations.size() == 0) {
-                final Long streamId = getLong(v.getValues(), streamIdIndex);
-                final Long eventId = getLong(v.getValues(), eventIdIndex);
+                final Long streamId = getLong(v, streamIdIndex);
+                final Long eventId = getLong(v, eventIdIndex);
                 if (streamId != null && eventId != null) {
                     final List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
                     annotations.addAll(list);
@@ -129,18 +126,18 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             }
 
             // Filter based on annotation.
-            Values values = v;
+            Val[] values = v;
             for (final Annotation annotation : annotations) {
                 try {
                     if (filter == null || filter.apply(annotation)) {
                         // If we have more that one annotation then copy the original values into a new values object for each new row.
                         if (annotations.size() > 1) {
-                            final Val[] copy = Arrays.copyOf(v.getValues(), v.getValues().length);
-                            values = new Values(copy);
+                            final Val[] copy = Arrays.copyOf(v, v.length);
+                            values = copy;
                         }
 
                         for (final String field : usedFields) {
-                            setValue(values.getValues(), fieldIndexMap, field, annotation);
+                            setValue(values, fieldIndex, field, annotation);
                         }
 
                         receiver.getValuesConsumer().accept(values);
@@ -153,7 +150,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in which
         // case we would increment the completion count after providing values.
-        return new ExtractionReceiver(valuesConsumer, receiver.getErrorConsumer(), receiver.getCompletionConsumer(), fieldIndexMap);
+        return new ExtractionReceiver(valuesConsumer, receiver.getErrorConsumer(), receiver.getCompletionConsumer(), fieldIndex);
     }
 
     private Annotation createDefaultAnnotation() {
@@ -198,8 +195,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         return val.toLong();
     }
 
-    private void setValue(final Val[] values, final FieldIndexMap fieldIndexMap, final String field, final Annotation annotation) {
-        final int index = fieldIndexMap.get(field);
+    private void setValue(final Val[] values, final FieldIndex fieldIndex, final String field, final Annotation annotation) {
+        final int index = fieldIndex.getPos(field);
         if (index != -1) {
             // Only add values that are missing.
             if (values[index] == null) {

@@ -21,8 +21,6 @@ import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.SearchRequest;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
@@ -265,13 +263,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         assertThatThrownBy(() -> {
             final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
-            final Query query = new Query(null, rootOperator.build());
-            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");
 
-            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+            StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
     }
 
@@ -285,13 +280,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
                     Condition.IN_DICTIONARY, dateTerm);
 
-            final Query query = new Query(null, rootOperator.build());
-            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");
 
-            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+            StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
     }
 
@@ -308,13 +300,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);
@@ -337,13 +326,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-            final Query query = new Query(null, rootOperator.build());
-            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");
 
-            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+            StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(RuntimeException.class);
     }
 
@@ -362,13 +348,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
             rootOperator.addTerm(new TextField(null), Condition.EQUALS, "xxx");
 
-            final Query query = new Query(null, rootOperator.build());
-            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");
 
-            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+            StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
     }
 
@@ -386,13 +369,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getFilterTermsTree().toString()).isEqualTo("[]");
@@ -413,13 +393,10 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
         final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
 
         assertThat(criteria).isNotNull();
         assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);

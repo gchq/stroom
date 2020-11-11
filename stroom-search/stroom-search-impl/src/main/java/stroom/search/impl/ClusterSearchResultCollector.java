@@ -21,13 +21,11 @@ import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.CollectorId;
 import stroom.cluster.task.api.CollectorIdFactory;
 import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.Data;
+import stroom.query.common.v2.NodeResult;
 import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
-import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 
@@ -38,7 +36,6 @@ import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -61,9 +58,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final AsyncSearchTask task;
     private final String nodeName;
     private final Set<String> highlights;
-    private final ResultHandler resultHandler;
-    private final Sizes defaultMaxResultsSizes;
-    private final Sizes storeSize;
+    private final Coprocessors coprocessors;
 
     ClusterSearchResultCollector(final Executor executor,
                                  final TaskContextFactory taskContextFactory,
@@ -72,9 +67,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final String nodeName,
                                  final Set<String> highlights,
                                  final ClusterResultCollectorCache clusterResultCollectorCache,
-                                 final ResultHandler resultHandler,
-                                 final Sizes defaultMaxResultsSizes,
-                                 final Sizes storeSize) {
+                                 final Coprocessors coprocessors) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
@@ -82,9 +75,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.nodeName = nodeName;
         this.highlights = highlights;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
-        this.resultHandler = resultHandler;
-        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
-        this.storeSize = storeSize;
+        this.coprocessors = coprocessors;
 
         id = CollectorIdFactory.create();
 
@@ -161,11 +152,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
         boolean success = true;
         try {
-            final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
+            final List<Payload> payloads = result.getPayloads();
             final List<String> errors = result.getErrors();
 
-            if (payloadMap != null) {
-                success = resultHandler.handle(payloadMap);
+            if (payloads != null) {
+                success = coprocessors.consumePayloads(payloads);
             }
 
             if (errors != null) {
@@ -226,21 +217,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public Sizes getDefaultMaxResultsSizes() {
-        return defaultMaxResultsSizes;
-    }
-
-    @Override
-    public Sizes getStoreSize() {
-        return storeSize;
-    }
-
-    @Override
     public Data getData(final String componentId) {
         // Keep the cluster result collector cache fresh.
         clusterResultCollectorCache.get(getId());
 
-        return resultHandler.getResultStore(componentId);
+        return coprocessors.getData(componentId);
     }
 
     @Override

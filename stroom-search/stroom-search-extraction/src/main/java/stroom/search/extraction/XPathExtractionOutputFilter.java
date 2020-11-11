@@ -16,35 +16,42 @@
 
 package stroom.search.extraction;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.ReceivingContentHandler;
-import net.sf.saxon.s9api.*;
-import net.sf.saxon.tree.tiny.TinyBuilder;
-import net.sf.saxon.tree.tiny.TinyTree;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.ReceivingContentHandler;
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathExecutable;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmAtomicValue;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmNodeKind;
+import net.sf.saxon.s9api.XdmSequenceIterator;
+import net.sf.saxon.tree.tiny.TinyBuilder;
+import net.sf.saxon.tree.tiny.TinyTree;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -54,22 +61,16 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
 public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilter {
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
-
-    private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
-
-    private boolean createJson = false;
-
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SecurityContext securityContext;
     private final LocationFactoryProxy locationFactory;
-
-    private Locator locator;
-
     private final Configuration config = new Configuration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
     private final Processor processor = new Processor(config);
     private final XPathCompiler compiler = processor.newXPathCompiler();
-
+    private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
+    private final boolean createJson = false;
+    private Locator locator;
     private TinyBuilder builder = null;
 
     private ReceivingContentHandler contentHandler = null;
@@ -127,12 +128,12 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 topLevelAtts = atts;
                 count++;
 
-            }else if (depth == 2){
+            } else if (depth == 2) {
                 if (!secondLevelElementToCreateDocs.equals((localName))) {
                     secondLevelElementToCreateDocs = localName;
                     xPathExecutables = null;
                 }
-                if(xPathExecutables == null)
+                if (xPathExecutables == null)
                     createXPathExecutables();
 
                 //Start new document
@@ -152,21 +153,21 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             } else {
                 contentHandler.startElement(uri, localName, qName, atts);
             }
-          } catch (SAXException saxException) {
+        } catch (SAXException saxException) {
 
-            log(Severity.ERROR,  LogUtil.message("XML error creating element {}", localName), saxException);
+            log(Severity.ERROR, LogUtil.message("XML error creating element {}", localName), saxException);
         }
 
     }
 
 
-    private void createXPathExecutables (){
+    private void createXPathExecutables() {
         xPathExecutables = new XPathExecutable[fieldIndexes.size()];
 
-        for (String xpathPart : fieldIndexes.getMap().keySet()){
-            int index = fieldIndexes.get(xpathPart);
+        fieldIndexes.forEach((fieldName, index) -> {
+            String xpathPart = fieldName;
 
-            if (EVENT_ID.equals (xpathPart))
+            if (EVENT_ID.equals(xpathPart))
                 xpathPart = "@" + EVENT_ID;
             else if (STREAM_ID.equals(xpathPart))
                 xpathPart = "@" + STREAM_ID;
@@ -176,21 +177,19 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             try {
                 xPathExecutables[index] = compiler.compile(xpath);
             } catch (SaxonApiException e) {
-                log(Severity.FATAL_ERROR,  LogUtil.message("Error in XPath Expression: {}", xpath), e);
+                log(Severity.FATAL_ERROR, LogUtil.message("Error in XPath Expression: {}", xpath), e);
             }
-        }
-
+        });
     }
 
-
-    private int stringifyItem (XdmItem item, StringBuilder thisVal, int numberOfVals){
+    private int stringifyItem(XdmItem item, StringBuilder thisVal, int numberOfVals) {
         if (item instanceof XdmAtomicValue) {
             if (numberOfVals > 0)
                 thisVal.append(multipleValueDelimiter);
             String value = item.getStringValue();
             thisVal.append(value);
             numberOfVals++;
-        } else if (item instanceof  XdmNode){
+        } else if (item instanceof XdmNode) {
             XdmNode node = (XdmNode) item;
             XdmNodeKind type = node.getNodeKind();
 
@@ -203,7 +202,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 while (iterator.hasNext()) {
 
                     XdmItem child = iterator.next();
-                    if (item instanceof XdmNode){
+                    if (item instanceof XdmNode) {
                         XdmNode childNode = (XdmNode) child;
                         XdmNodeKind childType = childNode.getNodeKind();
 
@@ -213,8 +212,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                         }
                     }
                 }
-                if (!hasChildElement)
-                {
+                if (!hasChildElement) {
                     iterator = node.axisIterator(Axis.CHILD);
 
                     while (iterator.hasNext()) {
@@ -232,17 +230,15 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                     }
                 }
 
-                if (hasChildElement){
+                if (hasChildElement) {
                     if (createJson) {
                         String serialisedForm = complexElementToJson(node.toString());
                         thisVal.append(serialisedForm);
-                    }
-                    else {
+                    } else {
                         thisVal.append(node.toString());
                     }
                     numberOfVals++;
-                }
-                else {
+                } else {
                     iterator = node.axisIterator(Axis.CHILD);
                     while (iterator.hasNext()) {
                         XdmItem child = iterator.next();
@@ -266,29 +262,28 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 if (numberOfVals > 0)
                     thisVal.append(multipleValueDelimiter);
                 numberOfVals++;
                 thisVal.append(item.getStringValue());
             }
         } else {
-            log(Severity.ERROR,  LogUtil.message("Unknown type of XdmItem:{}", item.getClass().getName()), null);
+            log(Severity.ERROR, LogUtil.message("Unknown type of XdmItem:{}", item.getClass().getName()), null);
         }
 
         return numberOfVals;
     }
 
-    protected String complexElementToJson(String xml){
+    protected String complexElementToJson(String xml) {
         return "Not Supported in this Version";
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        depth --;
+        depth--;
 
-        if (depth == 1){
+        if (depth == 1) {
             if (secondLevelElementToCreateDocs.equals(localName)) {
                 try {
                     contentHandler.endElement(uri, localName, qName);
@@ -300,7 +295,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
                     final TinyTree tree = builder.getTree();
 
-                    Val [] values = new Val[xPathExecutables.length];
+                    Val[] values = new Val[xPathExecutables.length];
 
                     for (int field = 0; field < values.length; field++) {
                         final XPathSelector selector = xPathExecutables[field].load();
@@ -319,7 +314,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    consumer.accept(new Values(values));
+                    consumer.accept(values);
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
@@ -329,7 +324,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             } else {
                 contentHandler = null;
                 secondLevelElementToCreateDocs = "";
-                log (Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs), null);
+                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs), null);
             }
 
         } else if (depth == 0) {
@@ -386,7 +381,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
         if (contentHandler != null)
             contentHandler.startPrefixMapping(prefix, uri);
 
-        prefixMappings.put (prefix, uri);
+        prefixMappings.put(prefix, uri);
         compiler.declareNamespace(prefix, uri);
 
         super.startPrefixMapping(prefix, uri);

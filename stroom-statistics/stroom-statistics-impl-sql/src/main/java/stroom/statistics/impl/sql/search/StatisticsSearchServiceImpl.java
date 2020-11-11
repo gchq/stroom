@@ -1,15 +1,13 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.query.common.v2.CompletionState;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.Receiver;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -55,22 +53,19 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_PRECISION_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.PRECISION;
     private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
-
-    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
-    private final SearchConfig searchConfig;
-
-    //defines how the entity fields relate to the table columns
-
     private static final Map<String, List<String>> COMMON_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
             StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL),
             StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL),
             StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL)
     );
-
     // VALUE stat only cols
     private static final Map<String, List<String>> VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
             StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL)
     );
+
+    //defines how the entity fields relate to the table columns
+    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
+    private final SearchConfig searchConfig;
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
@@ -80,20 +75,50 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         this.searchConfig = searchConfig;
     }
 
+    /**
+     * TODO: This is a bit simplistic as a user could create a filter that said
+     * user=user1 AND user='*' which makes no sense. At the moment we would
+     * assume that the user tag is being rolled up so user=user1 would never be
+     * found in the data and thus would return no data.
+     */
+    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
+                                                                final StatisticStoreDoc statisticsDataSource) {
+        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
+
+        final RollUpBitMask result;
+
+        if (rolledUpTagsFound.size() > 0) {
+            final List<Integer> rollUpTagPositionList = new ArrayList<>();
+
+            for (final String tag : rolledUpTagsFound) {
+                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                if (position == null) {
+                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
+                }
+                rollUpTagPositionList.add(position);
+            }
+            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
+
+        } else {
+            result = RollUpBitMask.ZERO_MASK;
+        }
+        return result;
+    }
+
     @Override
     public void search(final TaskContext taskContext,
                        final StatisticStoreDoc statisticStoreEntity,
                        final FindEventCriteria criteria,
-                       final FieldIndexMap fieldIndexMap,
+                       final FieldIndex fieldIndex,
                        final Receiver receiver,
                        final CompletionState completionState) {
         try {
-            List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
-            SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
+            List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
+            SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndex);
 
             // build a mapper function to convert a resultSet row into a String[] based on the fields
             // required by all coprocessors
-            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
+            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
             // the query will not be executed until somebody subscribes to the flowable
             getFlowableQueryResults(taskContext, sql, resultSetMapper, receiver, completionState);
@@ -103,10 +128,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private List<String> getSelectColumns(final StatisticStoreDoc statisticStoreEntity,
-                                          final FieldIndexMap fieldIndexMap) {
+                                          final FieldIndex fieldIndex) {
         //assemble a map of how fields map to 1-* select cols
 
-        if (fieldIndexMap == null || fieldIndexMap.size() == 0) {
+        if (fieldIndex == null || fieldIndex.size() == 0) {
             // This is a slight fudge to allow a dash query with a table that only has custom cols
             // tha involve no fields, e.g. one col of 'add(1,2)'. So we just return a col of nulls.
             return Collections.singletonList("null");
@@ -128,7 +153,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     .flatMap(entry ->
                             entry.getValue().stream()
                                     .map(colName ->
-                                            getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
+                                            getOptFieldIndexPosition(fieldIndex, entry.getKey())
                                                     .map(val -> colName))
                                     .filter(Optional::isPresent)
                                     .map(Optional::get))
@@ -157,7 +182,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      */
     private SqlBuilder buildSql(final StatisticStoreDoc statisticStoreEntity,
                                 final FindEventCriteria criteria,
-                                final FieldIndexMap fieldIndexMap) {
+                                final FieldIndex fieldIndex) {
         final RollUpBitMask rollUpBitMask = buildRollUpBitMaskFromCriteria(criteria, statisticStoreEntity);
 
         final String statNameWithMask = statisticStoreEntity.getName() + rollUpBitMask.asHexString();
@@ -165,7 +190,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
 
-        String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndexMap));
+        String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndex));
 
         sql.append(selectColsStr);
 
@@ -203,8 +228,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         return sql;
     }
 
-    private Optional<Integer> getOptFieldIndexPosition(final FieldIndexMap fieldIndexMap, final String fieldName) {
-        int idx = fieldIndexMap.get(fieldName);
+    private Optional<Integer> getOptFieldIndexPosition(final FieldIndex fieldIndex, final String fieldName) {
+        int idx = fieldIndex.getPos(fieldName);
         if (idx == -1) {
             return Optional.empty();
         } else {
@@ -212,21 +237,20 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-
     /**
      * Build a mapper function that will only extract the columns of interest from the resultSet row.
      * Assumes something external to the returned function will advance the resultSet
      */
     private Function<ResultSet, Val[]> buildResultSetMapper(
-            final FieldIndexMap fieldIndexMap,
+            final FieldIndex fieldIndex,
             final StatisticStoreDoc statisticStoreEntity) {
 
         LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
-                fieldIndexMap, statisticStoreEntity.getUuid()));
+                fieldIndex, statisticStoreEntity.getUuid()));
 
         // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
-        List<ValueExtractor> valueExtractors = fieldIndexMap.getMap().entrySet().stream()
+        List<ValueExtractor> valueExtractors = fieldIndex.stream()
                 .map(entry -> {
                     final int idx = entry.getValue();
                     final String fieldName = entry.getKey();
@@ -403,7 +427,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             !completionState.isComplete()) {
                         LOGGER.trace("Adding resultt");
                         final Val[] values = resultSetMapper.apply(resultSet);
-                        receiver.getValuesConsumer().accept(new Values(values));
+                        receiver.getValuesConsumer().accept(values);
                         count++;
                     }
 
@@ -461,36 +485,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
             return statisticTags;
         }
-    }
-
-    /**
-     * TODO: This is a bit simplistic as a user could create a filter that said
-     * user=user1 AND user='*' which makes no sense. At the moment we would
-     * assume that the user tag is being rolled up so user=user1 would never be
-     * found in the data and thus would return no data.
-     */
-    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                                final StatisticStoreDoc statisticsDataSource) {
-        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
-
-        final RollUpBitMask result;
-
-        if (rolledUpTagsFound.size() > 0) {
-            final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
-            for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
-                if (position == null) {
-                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
-                }
-                rollUpTagPositionList.add(position);
-            }
-            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
-
-        } else {
-            result = RollUpBitMask.ZERO_MASK;
-        }
-        return result;
     }
 
     @FunctionalInterface

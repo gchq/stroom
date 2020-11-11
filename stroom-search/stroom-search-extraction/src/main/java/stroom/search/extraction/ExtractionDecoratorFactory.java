@@ -1,14 +1,13 @@
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
-import stroom.search.coprocessor.Coprocessors;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.NewCoprocessor;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.Receiver;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -52,7 +51,6 @@ public class ExtractionDecoratorFactory {
     }
 
     public Receiver create(final TaskContext parentContext,
-                           final Consumer<Error> parentErrorConsumer,
                            final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query) {
@@ -65,8 +63,8 @@ public class ExtractionDecoratorFactory {
                 metaService);
 
         // Group coprocessors by extraction pipeline.
-        final Map<DocRef, Set<NewCoprocessor>> map = new HashMap<>();
-        coprocessors.getSet().forEach(coprocessor -> {
+        final Map<DocRef, Set<Coprocessor>> map = new HashMap<>();
+        coprocessors.forEach(coprocessor -> {
             DocRef extractionPipeline = null;
             if (coprocessor.getSettings().extractValues()) {
                 extractionPipeline = coprocessor.getSettings().getExtractionPipeline();
@@ -79,20 +77,20 @@ public class ExtractionDecoratorFactory {
             // Create a receiver that will send data to all coprocessors.
             ExtractionReceiver receiver;
             if (coprocessorSet.size() == 1) {
-                final NewCoprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndexMap fieldIndexMap = coprocessor.getFieldIndexMap();
-                final Consumer<Values> valuesConsumer = coprocessor.getValuesConsumer();
-                final Consumer<Error> errorConsumer = coprocessor.getErrorConsumer();
+                final Coprocessor coprocessor = coprocessorSet.iterator().next();
+                final FieldIndex fieldIndex = coprocessor.getFieldIndexMap();
+                final Consumer<Val[]> valuesConsumer = coprocessor.getValuesConsumer();
+                final Consumer<Throwable> errorConsumer = coprocessor.getErrorConsumer();
                 final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndexMap);
+                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndexMap fieldIndexMap = coprocessorSet.iterator().next().getFieldIndexMap();
-                final Consumer<Values> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-                final Consumer<Error> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
+                final FieldIndex fieldIndex = coprocessorSet.iterator().next().getFieldIndexMap();
+                final Consumer<Val[]> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
+                final Consumer<Throwable> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
                 final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndexMap);
+                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 
             // Decorate result with annotations.
@@ -106,7 +104,7 @@ public class ExtractionDecoratorFactory {
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
                 streamMapCreator,
-                parentErrorConsumer,
+                coprocessors.getErrorConsumer(),
                 receivers,
                 extractionConfig.getMaxStoredDataQueueSize(),
                 extractionConfig.getMaxThreadsPerTask(),

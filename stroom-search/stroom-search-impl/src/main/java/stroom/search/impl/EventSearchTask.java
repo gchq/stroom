@@ -18,7 +18,7 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.search.api.EventRef;
+import stroom.query.common.v2.EventRef;
 
 public class EventSearchTask {
     private final QueryKey key;
