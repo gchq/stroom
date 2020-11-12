@@ -141,8 +141,12 @@ public class EventCoprocessor implements Coprocessor {
         final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
         eventRefsLock.lock();
         try {
-            eventRefs.add(eventRefsPayload.getEventRefs());
-            eventRefs.trim();
+            if (eventRefs == null) {
+                eventRefs = eventRefsPayload.getEventRefs();
+            } else {
+                eventRefs.add(eventRefsPayload.getEventRefs());
+                eventRefs.trim();
+            }
         } finally {
             eventRefsLock.unlock();
         }

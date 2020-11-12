@@ -96,15 +96,17 @@ public class CoprocessorsFactory {
         // Group coprocessors by extraction pipeline.
         final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap = new HashMap<>();
         coprocessorMap.values().forEach(coprocessor -> {
+            DocRef extractionPipeline = null;
+
             if (coprocessor instanceof TableCoprocessor) {
                 final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
-                DocRef extractionPipeline = null;
                 if (tableCoprocessor.getTableSettings().extractValues()) {
                     extractionPipeline = tableCoprocessor.getTableSettings().getExtractionPipeline();
                 }
-                extractionPipelineCoprocessorMap.computeIfAbsent(extractionPipeline, k ->
-                        new HashSet<>()).add(coprocessor);
             }
+
+            extractionPipelineCoprocessorMap.computeIfAbsent(extractionPipeline, k ->
+                    new HashSet<>()).add(coprocessor);
         });
 
         return new Coprocessors(
