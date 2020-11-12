@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -278,7 +279,7 @@ class TestSearchResponseCreator {
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        items.add(new Item(null, generators, 0));
+        items.add(new Item(new GroupKey(0, null, ValSerialiser.EMPTY_VALUES), generators));
 
         final Map<GroupKey, Items> map = new HashMap<>();
         map.put(Data.ROOT_KEY, items);

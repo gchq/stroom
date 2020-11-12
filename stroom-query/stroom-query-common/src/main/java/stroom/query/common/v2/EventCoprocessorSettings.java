@@ -16,8 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.docref.DocRef;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -25,8 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class EventCoprocessorSettings implements CoprocessorSettings {
-    private static final long serialVersionUID = -4916050910828000494L;
-
     @JsonProperty
     private final CoprocessorKey coprocessorKey;
     @JsonProperty

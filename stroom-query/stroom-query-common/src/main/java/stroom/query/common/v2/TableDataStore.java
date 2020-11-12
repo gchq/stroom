@@ -21,6 +21,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -88,16 +89,18 @@ public class TableDataStore {
     }
 
     boolean processPayload(final TablePayload payload) {
-        final Item[] items = tablePayloadSerialiser.toQueue(payload.getData());
+        final Item[] items = tablePayloadSerialiser.fromByteArray(payload.getData());
         for (final Item item : items) {
-            if (addToGroupMap(item)) {
-                return true;
-            }
+            addToGroupMap(item);
         }
-        return false;
+
+        // Return success if we have not been asked to terminate and we are still willing to accept data.
+        return !Thread.currentThread().isInterrupted() && !hasEnoughData;
     }
 
     Payload createPayload() {
+        Payload payload = null;
+
         final List<Item> itemList = new ArrayList<>();
         childMap.keySet().forEach(groupKey -> {
             final Items items = childMap.remove(groupKey);
@@ -106,9 +109,13 @@ public class TableDataStore {
             }
         });
 
-        final Item[] itemsArray = itemList.toArray(new Item[0]);
-        final byte[] data = tablePayloadSerialiser.fromQueue(itemsArray);
-        return new TablePayload(coprocessorKey, data);
+        if (itemList.size() > 0) {
+            final Item[] itemsArray = itemList.toArray(new Item[0]);
+            final byte[] data = tablePayloadSerialiser.toByteArray(itemsArray);
+            payload = new TablePayload(coprocessorKey, data);
+        }
+
+        return payload;
 //
 //        final UnsafePairQueue<GroupKey, Item> outputQueue = new UnsafePairQueue<>();
 //
@@ -140,7 +147,7 @@ public class TableDataStore {
 
         for (int depth = 0; depth < fieldIndicesByDepth.length; depth++) {
             final int[] fieldIndexes = fieldIndicesByDepth[depth];
-            Val[] groupValues = null;
+            Val[] groupValues = ValSerialiser.EMPTY_VALUES;
             if (fieldIndexes != null) {
                 groupValues = new Val[fieldIndexes.length];
                 int index = 0;
@@ -153,7 +160,7 @@ public class TableDataStore {
             final GroupKey key = new GroupKey(depth, parentKey, groupValues);
             parentKey = key;
 
-            final Item item = new Item(key, generators, depth);
+            final Item item = new Item(key, generators);
             addToGroupMap(item);
         }
     }
@@ -221,17 +228,17 @@ public class TableDataStore {
 //        newQueue.forEach(item -> addToGroupMap(item));
 //    }
 
-    boolean addToGroupMap(final Item item) {
+    private void addToGroupMap(final Item item) {
         LOGGER.trace(() -> "addToGroupMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
-            return false;
+            return;
         }
 
         // Update the total number of results that we have received.
         totalResultCount.getAndIncrement();
 
         final GroupKey key = item.getKey();
-        if (key != null && key.getValues() != null) {
+        if (key.getValues().length > 0) {
             groupingMap.compute(key, (k, v) -> {
                 Item result = v;
 
@@ -249,7 +256,7 @@ public class TableDataStore {
                                 compiledDepths.getMaxDepth(),
                                 result.generators[i],
                                 item.generators[i],
-                                item.depth);
+                                key.getDepth());
                     }
                 }
 
@@ -269,12 +276,11 @@ public class TableDataStore {
         }
 
         LOGGER.trace(() -> "Finished adding items to the queue");
-        return !hasEnoughData;
     }
 
     private void addToChildMap(final Item item) {
         GroupKey parentKey;
-        if (item.getKey() != null && item.getKey().getParent() != null) {
+        if (item.getKey().getParent() != null) {
             parentKey = item.getKey().getParent();
         } else {
             parentKey = Data.ROOT_KEY;
@@ -284,7 +290,7 @@ public class TableDataStore {
             Items result = v;
 
             if (result == null) {
-                result = new Items(storeSize.size(item.getDepth()), compiledSorter, removed -> remove(removed.key));
+                result = new Items(storeSize.size(item.getKey().getDepth()), compiledSorter, removed -> remove(removed.key));
                 result.add(item);
                 resultCount.incrementAndGet();
 

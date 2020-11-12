@@ -20,6 +20,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValSerialiser;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Data {
-    public static final GroupKey ROOT_KEY = new GroupKey(0, null, null);
+    public static final GroupKey ROOT_KEY = new GroupKey(-1, null, ValSerialiser.EMPTY_VALUES);
 
     private final Map<GroupKey, Items> childMap;
     private final long size;
@@ -61,8 +62,6 @@ public class Data {
         GroupKey getKey();
 
         Val getValue(int index);
-
-        int getDepth();
     }
 
     public interface DataItems extends Iterable<DataItem> {
@@ -153,11 +152,6 @@ public class Data {
                 }
             }
             return val;
-        }
-
-        @Override
-        public int getDepth() {
-            return item.getDepth();
         }
     }
 }

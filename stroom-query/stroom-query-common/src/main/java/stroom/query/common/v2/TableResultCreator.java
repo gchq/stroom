@@ -128,11 +128,7 @@ public class TableResultCreator implements ResultCreator {
                         i++;
                     }
 
-                    if (item.getKey() != null) {
-                        resultList.add(new Row(item.getKey().toString(), stringValues, item.getDepth()));
-                    } else {
-                        resultList.add(new Row(null, stringValues, item.getDepth()));
-                    }
+                    resultList.add(new Row(item.getKey().toString(), stringValues, item.getKey().getDepth()));
                 }
 
                 // Increment the overall position.

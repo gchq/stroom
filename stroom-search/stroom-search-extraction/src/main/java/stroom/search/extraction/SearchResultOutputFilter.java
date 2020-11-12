@@ -47,8 +47,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final int pos = fieldIndexes.getPos(name);
-                    if (pos >= 0) {
+                    final Integer pos = fieldIndexes.getPos(name);
+                    if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
                 }

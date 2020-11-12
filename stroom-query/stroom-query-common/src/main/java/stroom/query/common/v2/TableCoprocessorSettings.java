@@ -25,14 +25,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class TableCoprocessorSettings implements CoprocessorSettings {
-    private static final int DEFAULT_QUEUE_CAPACITY = 1000000;
-
     @JsonProperty
     private final CoprocessorKey coprocessorKey;
     @JsonProperty
     private final TableSettings tableSettings;
-
-    private volatile int queueCapacity = DEFAULT_QUEUE_CAPACITY;
 
     @JsonCreator
     public TableCoprocessorSettings(@JsonProperty("coprocessorKey") final CoprocessorKey coprocessorKey,
@@ -48,13 +44,5 @@ public class TableCoprocessorSettings implements CoprocessorSettings {
 
     public TableSettings getTableSettings() {
         return tableSettings;
-    }
-
-    public int getQueueCapacity() {
-        return queueCapacity;
-    }
-
-    public void setQueueCapacity(final int queueCapacity) {
-        this.queueCapacity = queueCapacity;
     }
 }

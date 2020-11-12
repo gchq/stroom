@@ -15,7 +15,7 @@ public class TablePayloadSerialiser {
         itemSerialiser = new ItemSerialiser(compiledFields);
     }
 
-    public byte[] fromQueue(final Item[] items) {
+    public byte[] toByteArray(final Item[] items) {
         byte[] data;
         try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (final Output output = new Output(outputStream)) {
@@ -37,14 +37,14 @@ public class TablePayloadSerialiser {
         return data;
     }
 
-    public Item[] toQueue(final byte[] data) {
+    public Item[] fromByteArray(final byte[] data) {
         try (final Input input = new Input(new ByteArrayInputStream(data))) {
             return itemSerialiser.readArray(input);
         }
     }
 
     public TablePayload getPayload(final CoprocessorKey coprocessorKey, final Item[] items) {
-        final byte[] data = fromQueue(items);
+        final byte[] data = toByteArray(items);
         return new TablePayload(coprocessorKey, data);
     }
 }

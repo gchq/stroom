@@ -29,7 +29,6 @@ public class EventCoprocessor implements Coprocessor {
     private static final String STREAM_ID = "StreamId";
     private static final String EVENT_ID = "EventId";
 
-    private final EventCoprocessorSettings settings;
     private final Consumer<Throwable> errorConsumer;
     private final CoprocessorKey coprocessorKey;
     private final EventRef minEvent;
@@ -40,9 +39,8 @@ public class EventCoprocessor implements Coprocessor {
     private final AtomicLong valuesCount = new AtomicLong();
     private final AtomicLong completionCount = new AtomicLong();
     private final CountDownLatch completionState = new CountDownLatch(1);
-    private final FieldIndex fieldIndex;
-    private final int streamIdIndex;
-    private final int eventIdIndex;
+    private final Integer streamIdIndex;
+    private final Integer eventIdIndex;
     private volatile EventRef maxEvent;
     private volatile EventRefs eventRefs;
 
@@ -51,14 +49,12 @@ public class EventCoprocessor implements Coprocessor {
                             final FieldIndex fieldIndex,
                             final Consumer<Throwable> errorConsumer) {
         this.coprocessorKey = coprocessorKey;
-        this.settings = settings;
         this.errorConsumer = errorConsumer;
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
         this.maxStreams = settings.getMaxStreams();
         this.maxEvents = settings.getMaxEvents();
         this.maxEventsPerStream = settings.getMaxEventsPerStream();
-        this.fieldIndex = fieldIndex;
 
         // Add required fields.
         fieldIndex.create(STREAM_ID);
@@ -153,9 +149,9 @@ public class EventCoprocessor implements Coprocessor {
         return true;
     }
 
-    private Long getLong(final Val[] storedData, final int index) {
+    private Long getLong(final Val[] storedData, final Integer index) {
         try {
-            if (index >= 0 && storedData.length > index) {
+            if (index != null && storedData.length > index) {
                 final Val value = storedData[index];
                 return value.toLong();
             }

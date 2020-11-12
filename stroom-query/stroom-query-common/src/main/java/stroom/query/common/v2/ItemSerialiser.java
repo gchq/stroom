@@ -22,32 +22,24 @@ public class ItemSerialiser {
         int pos = 0;
         for (final CompiledField compiledField : fields) {
             final Expression expression = compiledField.getExpression();
-//            if (expression != null) {
             final Generator generator = expression.createGenerator();
             generator.read(input);
             generators[pos] = generator;
-//            }
             pos++;
         }
 
-        final int depth = input.readByteUnsigned();
-        return new Item(groupKey, generators, depth);
+        return new Item(groupKey, generators);
     }
 
     void write(final Output output, final Item item) {
         if (item.generators.length > Byte.MAX_VALUE) {
             throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
-        if (item.getDepth() > Byte.MAX_VALUE) {
-            throw new RuntimeException("Max depth allowed is " + 255);
-        }
 
         GroupKeySerialiser.write(output, item.getKey());
-        output.writeByte(item.generators.length);
         for (final Generator generator : item.getGenerators()) {
             generator.write(output);
         }
-        output.writeByte(item.getDepth());
     }
 
     Item[] readArray(final Input input) {

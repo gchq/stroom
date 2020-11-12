@@ -17,8 +17,6 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.api.ClusterCallService;
-import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
@@ -31,11 +29,9 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.NodeResult;
 import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -59,7 +55,7 @@ class AsyncSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final ClusterCallService clusterCallService;
+    private final RemoteSearchResource remoteSearchResource;
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
@@ -70,7 +66,7 @@ class AsyncSearchTaskHandler {
 
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
-                           final ClusterCallServiceRemote clusterCallService,
+                           final RemoteSearchResource remoteSearchResource,
                            final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
@@ -79,7 +75,7 @@ class AsyncSearchTaskHandler {
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory) {
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.clusterCallService = clusterCallService;
+        this.remoteSearchResource = remoteSearchResource;
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
@@ -202,14 +198,7 @@ class AsyncSearchTaskHandler {
                 task.getNow());
         LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);
         try {
-            final boolean success = (Boolean) clusterCallService.call(
-                    sourceNode,
-                    targetNode,
-                    securityContext.getUserIdentity(),
-                    RemoteSearchManager.SERVICE_NAME,
-                    RemoteSearchManager.START_SEARCH,
-                    new Class[]{UserIdentity.class, TaskId.class, ClusterSearchTask.class},
-                    new Object[]{securityContext.getUserIdentity(), taskContext.getTaskId(), clusterSearchTask});
+            final boolean success = remoteSearchResource.start(targetNode, clusterSearchTask);
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
                 final SearchException searchException = new SearchException("Failed to start remote search on node: " + targetNode);
@@ -230,14 +219,7 @@ class AsyncSearchTaskHandler {
             // Poll for results until completion.
             boolean complete = false;
             while (!Thread.currentThread().isInterrupted() && !complete) {
-                final NodeResult nodeResult = (NodeResult) clusterCallService.call(
-                        sourceNode,
-                        targetNode,
-                        securityContext.getUserIdentity(),
-                        RemoteSearchManager.SERVICE_NAME,
-                        RemoteSearchManager.POLL,
-                        new Class[]{UserIdentity.class, QueryKey.class},
-                        new Object[]{securityContext.getUserIdentity(), task.getKey()});
+                final NodeResult nodeResult = remoteSearchResource.poll(targetNode, task.getKey());
                 if (nodeResult != null) {
                     LOGGER.debug(() -> "Receive result for node: " + targetNode + " " + nodeResult);
                     final boolean success = resultCollector.onSuccess(targetNode, nodeResult);
@@ -258,14 +240,7 @@ class AsyncSearchTaskHandler {
 
             // Destroy remote search results.
             try {
-                final boolean success = (Boolean) clusterCallService.call(
-                        sourceNode,
-                        targetNode,
-                        securityContext.getUserIdentity(),
-                        RemoteSearchManager.SERVICE_NAME,
-                        RemoteSearchManager.DESTROY,
-                        new Class[]{UserIdentity.class, QueryKey.class},
-                        new Object[]{securityContext.getUserIdentity(), task.getKey()});
+                final boolean success = remoteSearchResource.destroy(targetNode, task.getKey());
                 if (!success) {
                     LOGGER.debug(() -> "Failed to destroy remote search on node: " + targetNode);
                     resultCollector.onFailure(targetNode, new SearchException("Failed to destroy remote search"));

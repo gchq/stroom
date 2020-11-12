@@ -196,8 +196,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     private void setValue(final Val[] values, final FieldIndex fieldIndex, final String field, final Annotation annotation) {
-        final int index = fieldIndex.getPos(field);
-        if (index != -1) {
+        final Integer index = fieldIndex.getPos(field);
+        if (index != null) {
             // Only add values that are missing.
             if (values[index] == null) {
                 final Val val = VALUE_MAPPING.get(field).apply(annotation);

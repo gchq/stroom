@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
+    public static final Val[] EMPTY_VALUES = new Val[0];
     private static final Serialiser[] SERIALISERS = new Serialiser[20];
 
     static {
@@ -48,17 +49,22 @@ public final class ValSerialiser {
     }
 
     static Val[] readArray(final Input input) {
-        final byte valueCount = input.readByte();
-        final Val[] values = new Val[valueCount];
-        for (int i = 0; i < valueCount; i++) {
-            values[i] = read(input);
+        Val[] values = EMPTY_VALUES;
+
+        final int valueCount = input.readByteUnsigned();
+        if (valueCount > 0) {
+            values = new Val[valueCount];
+            for (int i = 0; i < valueCount; i++) {
+                values[i] = read(input);
+            }
         }
+
         return values;
     }
 
     static void writeArray(final Output output, final Val[] values) {
-        if (values.length > Byte.MAX_VALUE) {
-            throw new RuntimeException("You can only write a maximum of " + Byte.BYTES + " values");
+        if (values.length > 255) {
+            throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
         output.writeByte(values.length);
         for (final Val val : values) {

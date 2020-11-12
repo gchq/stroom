@@ -28,16 +28,7 @@ import java.util.stream.Stream;
 public class FieldIndex {
     private final Map<String, Integer> fieldToPos = new HashMap<>();
     private final Map<Integer, String> posToField = new HashMap<>();
-    //    private final boolean autoCreate;
     private int index;
-
-//    public FieldIndexMap() {
-//        this(false);
-//    }
-//
-//    public FieldIndexMap(final boolean autoCreate) {
-//        this.autoCreate = autoCreate;
-//    }
 
     public static FieldIndex forFields(final String... fieldNames) {
         final FieldIndex instance = new FieldIndex();
@@ -45,38 +36,16 @@ public class FieldIndex {
         return instance;
     }
 
-//    public void add(final FieldIndexMap fieldIndexMap) {
-//        if (fieldToPos.size() == 0) {
-//            fieldIndexMap.getMap().forEach((k, v) -> {
-//                fieldToPos.put(k, v);
-//                index = Math.max(index, v + 1);
-//            });
-//        } else {
-//            fieldIndexMap.getMap().keySet().forEach(fieldName -> create(fieldName, true));
-//        }
-//    }
-
     public int create(final String fieldName) {
         return fieldToPos.computeIfAbsent(fieldName, k -> {
             final int pos = index++;
             posToField.put(pos, k);
             return pos;
         });
-//        }
-//
-//        Integer currentIndex = fieldToPos.get(fieldName);
-//        if (currentIndex == null) {
-//            return -1;
-//        }
-//        return currentIndex;
     }
 
     public Integer getPos(final String fieldName) {
         return fieldToPos.get(fieldName);
-//        if (currentIndex == null) {
-//            return -1;
-//        }
-//        return currentIndex;
     }
 
     public String getField(final int pos) {
@@ -86,18 +55,6 @@ public class FieldIndex {
     public int size() {
         return fieldToPos.size();
     }
-
-//    /**
-//     * @return An unmodifiable view of the underlying field to position map
-//     */
-//    public Map<String, Integer> getMap() {
-//        return Collections.unmodifiableMap(fieldToPos);
-//    }
-//
-//    @Override
-//    public Iterator<String> iterator() {
-//        return fieldToPos.keySet().iterator();
-//    }
 
     public Set<String> getFieldNames() {
         return fieldToPos.keySet();

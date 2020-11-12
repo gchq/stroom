@@ -229,12 +229,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     }
 
     private Optional<Integer> getOptFieldIndexPosition(final FieldIndex fieldIndex, final String fieldName) {
-        int idx = fieldIndex.getPos(fieldName);
-        if (idx == -1) {
-            return Optional.empty();
-        } else {
-            return Optional.of(idx);
-        }
+        final Integer idx = fieldIndex.getPos(fieldName);
+        return Optional.ofNullable(idx);
     }
 
     /**

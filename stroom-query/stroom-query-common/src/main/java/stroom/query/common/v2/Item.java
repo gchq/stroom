@@ -26,14 +26,11 @@ public class Item implements Serializable {
 
     GroupKey key;
     Generator[] generators;
-    int depth;
 
     public Item(final GroupKey key,
-                final Generator[] generators,
-                final int depth) {
+                final Generator[] generators) {
         this.key = key;
         this.generators = generators;
-        this.depth = depth;
     }
 
     public GroupKey getKey() {
@@ -42,25 +39,6 @@ public class Item implements Serializable {
 
     public Generator[] getGenerators() {
         return generators;
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Item)) return false;
-
-        final Item item = (Item) o;
-
-        return key != null ? key.equals(item.key) : item.key == null;
-    }
-
-    @Override
-    public int hashCode() {
-        return key != null ? key.hashCode() : 0;
     }
 
     @Override
