@@ -9,6 +9,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,14 +18,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
+    private final Provider<Executor> executorProvider;
 
     @Inject
-    CoprocessorsFactory(final SizesProvider sizesProvider) {
+    CoprocessorsFactory(final SizesProvider sizesProvider,
+                        final Provider<Executor> executorProvider) {
         this.sizesProvider = sizesProvider;
+        this.executorProvider = executorProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -97,7 +102,8 @@ public class CoprocessorsFactory {
                 if (tableCoprocessor.getTableSettings().extractValues()) {
                     extractionPipeline = tableCoprocessor.getTableSettings().getExtractionPipeline();
                 }
-                extractionPipelineCoprocessorMap.computeIfAbsent(extractionPipeline, k -> new HashSet<>()).add(coprocessor);
+                extractionPipelineCoprocessorMap.computeIfAbsent(extractionPipeline, k ->
+                        new HashSet<>()).add(coprocessor);
             }
         });
 
@@ -133,10 +139,19 @@ public class CoprocessorsFactory {
                                   final Map<String, String> paramMap) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
 
-        // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
+        // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
+        // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+        final Executor executor = executorProvider.get();
 
-        return new TableDataStore(coprocessorKey, tableSettings, fieldIndex, paramMap, maxResults, storeSizes);
+        return new TableDataStore(
+                coprocessorKey,
+                tableSettings,
+                fieldIndex,
+                paramMap,
+                maxResults,
+                storeSizes,
+                executor);
     }
 }

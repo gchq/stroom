@@ -83,7 +83,7 @@ public class TableResultCreator implements ResultCreator {
                     length,
                     openGroups,
                     resultList,
-                    null,
+                    Data.ROOT_KEY,
                     0,
                     0);
         } catch (final RuntimeException e) {

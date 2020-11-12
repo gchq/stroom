@@ -303,6 +303,7 @@ public class FlatResultCreator implements ResultCreator {
                     fieldIndex,
                     paramMap,
                     maxResults,
+                    null,
                     null);
 
             int i = 0;

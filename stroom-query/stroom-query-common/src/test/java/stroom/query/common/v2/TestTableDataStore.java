@@ -35,6 +35,7 @@ import stroom.query.shared.v2.ParamUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,8 +105,9 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
-        checkResults(data, tableResultRequest, 0);
+        final ResultRequest tableResultRequest =
+                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+        checkResults(data, tableResultRequest, 0, false);
     }
 
     @Test
@@ -132,8 +134,9 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
-        checkResults(data, tableResultRequest, 0);
+        final ResultRequest tableResultRequest =
+                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+        checkResults(data, tableResultRequest, 0, true);
     }
 
     @Test
@@ -174,8 +177,9 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
-        checkResults(data, tableResultRequest, 0);
+        final ResultRequest tableResultRequest =
+                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+        checkResults(data, tableResultRequest, 0, false);
     }
 
     @Test
@@ -216,8 +220,9 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
-        checkResults(data, tableResultRequest, 1);
+        final ResultRequest tableResultRequest =
+                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+        checkResults(data, tableResultRequest, 1, false);
     }
 
     @Test
@@ -261,11 +266,13 @@ class TestTableDataStore {
                 "componentX",
                 tableSettings,
                 new OffsetRange(0, 3000));
-        checkResults(data, tableResultRequest, 1);
+        checkResults(data, tableResultRequest, 1, false);
     }
 
-    private void checkResults(final Data data, final ResultRequest tableResultRequest,
-                              final int sortCol) {
+    private void checkResults(final Data data,
+                              final ResultRequest tableResultRequest,
+                              final int sortCol,
+                              final boolean numeric) {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
@@ -281,22 +288,38 @@ class TestTableDataStore {
         String lastValue = null;
         for (final Row result : searchResult.getRows()) {
             final String value = result.getValues().get(sortCol);
-
             if (lastValue != null) {
-                final int diff = lastValue.compareTo(value);
-                assertThat(diff <= 0).isTrue();
+                if (numeric) {
+                    final double d1 = Double.parseDouble(lastValue);
+                    final double d2 = Double.parseDouble(value);
+
+                    final int diff = Double.compare(d1, d2);
+
+                    assertThat(diff <= 0).isTrue();
+                } else {
+                    final int diff = lastValue.compareTo(value);
+                    assertThat(diff <= 0).isTrue();
+                }
             }
             lastValue = value;
         }
     }
 
     private TableDataStore create(final TableSettings tableSettings) {
-        // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
+        // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
+        // and the default maximum sizes.
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
         final FieldIndex fieldIndex = new FieldIndex();
 
         final CoprocessorKey coprocessorKey = new CoprocessorKey(1, new String[]{"test"});
-        return new TableDataStore(coprocessorKey, tableSettings, fieldIndex, Collections.emptyMap(), maxResults, storeSize);
+        return new TableDataStore(
+                coprocessorKey,
+                tableSettings,
+                fieldIndex,
+                Collections.emptyMap(),
+                maxResults,
+                storeSize,
+                Executors.newSingleThreadExecutor());
     }
 }

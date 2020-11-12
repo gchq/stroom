@@ -29,13 +29,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class TableDataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableDataStore.class);
@@ -44,7 +43,6 @@ public class TableDataStore {
     private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
     private final CoprocessorKey coprocessorKey;
-    private final TableSettings tableSettings;
     private final FieldIndex fieldIndex;
     private final CompiledFields compiledFields;
     private final CompiledSorter compiledSorter;
@@ -52,6 +50,7 @@ public class TableDataStore {
     private final CompiledField[] fieldsArray;
     private final Sizes maxResults;
     private final Sizes storeSize;
+    private final Executor executor;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
 
@@ -64,9 +63,9 @@ public class TableDataStore {
                           final FieldIndex fieldIndex,
                           final Map<String, String> paramMap,
                           final Sizes maxResults,
-                          final Sizes storeSize) {
+                          final Sizes storeSize,
+                          final Executor executor) {
         this.coprocessorKey = coprocessorKey;
-        this.tableSettings = tableSettings;
         this.fieldIndex = fieldIndex;
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
@@ -77,6 +76,7 @@ public class TableDataStore {
         this.compiledSorter = compiledSorter;
         this.maxResults = maxResults;
         this.storeSize = storeSize;
+        this.executor = executor;
 
         tablePayloadSerialiser = new TablePayloadSerialiser(compiledFields);
     }
@@ -102,9 +102,7 @@ public class TableDataStore {
         childMap.keySet().forEach(groupKey -> {
             final Items items = childMap.remove(groupKey);
             if (items != null) {
-                for (final Item item : items) {
-                    itemList.add(item);
-                }
+                items.forEach(itemList::add);
             }
         });
 
@@ -240,15 +238,18 @@ public class TableDataStore {
                 // Items with a null key values will not undergo partitioning and reduction as we don't want to
                 // group items with null key values as they are child items.
                 if (result == null) {
-                    final boolean success = addToChildMap(item);
-                    if (success) {
-                        result = item;
-                    }
+                    addToChildMap(item);
+                    result = item;
                 } else {
                     // Combine the new item into the original item.
                     for (int i = 0; i < compiledFields.size(); i++) {
                         final CompiledField compiledField = compiledFields.getField(i);
-                        result.generators[i] = combine(compiledField.getGroupDepth(), compiledDepths.getMaxDepth(), result.generators[i], item.generators[i], item.depth);
+                        result.generators[i] = combine(
+                                compiledField.getGroupDepth(),
+                                compiledDepths.getMaxDepth(),
+                                result.generators[i],
+                                item.generators[i],
+                                item.depth);
                     }
                 }
 
@@ -271,9 +272,7 @@ public class TableDataStore {
         return !hasEnoughData;
     }
 
-    private boolean addToChildMap(final Item item) {
-        final AtomicBoolean success = new AtomicBoolean();
-
+    private void addToChildMap(final Item item) {
         GroupKey parentKey;
         if (item.getKey() != null && item.getKey().getParent() != null) {
             parentKey = item.getKey().getParent();
@@ -281,77 +280,32 @@ public class TableDataStore {
             parentKey = Data.ROOT_KEY;
         }
 
-        final AtomicReference<GroupKey> removalKey = new AtomicReference<>();
         childMap.compute(parentKey, (k, v) -> {
             Items result = v;
 
             if (result == null) {
-                result = new Items(Collections.synchronizedList(new ArrayList<>()));
+                result = new Items(storeSize.size(item.getDepth()), compiledSorter, removed -> remove(removed.key));
                 result.add(item);
                 resultCount.incrementAndGet();
-                success.set(true);
 
             } else {
-                boolean ok = result.add(item);
-                if (ok) {
-                    success.set(true);
-                } else {
-                    // We didn't add so record that we need to remove.
-                    removalKey.set(item.key);
-                }
-//
-//                if (success.get()
-//
-//                final List<Item> list = result.).list;
-//                final int maxSize = storeSize.size(item.depth);
-//
-//                if (compiledSorter.hasSort()) {
-//                    int pos = Collections.binarySearch(list, item, compiledSorter);
-//                    if (pos < 0) {
-//                        // It isn't already present so insert.
-//                        pos = Math.abs(pos + 1);
-//                    }
-//                    if (pos < maxSize) {
-//                        list.add(pos, item);
-//                        resultCount.incrementAndGet();
-//                        success.set(true);
-//
-//                        if (list.size() > maxSize) {
-//                            // Remove the end.
-//                            final Item removed = list.remove(list.size() - 1);
-//                            // We removed an item so record that we need to cascade the removal.
-//                            removalKey.set(removed.key);
-//                        }
-//                    } else {
-//                        // We didn't add so record that we need to remove.
-//                        removalKey.set(item.key);
-//                    }
-//
-//                } else if (result.size() < maxSize) {
-//                    list.add(item);
-//                    resultCount.incrementAndGet();
-//                    success.set(true);
-//
-//                } else {
-//                    // We didn't add so record that we need to remove.
-//                    removalKey.set(item.key);
-//                }
+                result.add(item);
             }
 
             return result;
         });
-
-        remove(removalKey.get());
-        return success.get();
     }
 
     private void remove(final GroupKey groupKey) {
-        if (groupKey != null) {
-            final Items items = childMap.remove(groupKey);
-            if (items != null) {
-                resultCount.addAndGet(-items.size());
-                items.forEach(item -> remove(item.getKey()));
-            }
+        if (groupKey != null && executor != null) {
+            // Execute removal asynchronously to prevent blocking.
+            CompletableFuture.runAsync(() -> {
+                final Items items = childMap.remove(groupKey);
+                if (items != null) {
+                    resultCount.addAndGet(-items.size());
+                    items.forEach(item -> remove(item.getKey()));
+                }
+            }, executor);
         }
     }
 

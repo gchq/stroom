@@ -39,6 +39,15 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
+  byteBufferPool:
+    pooledByteBufferCounts:
+      1: 50
+      10: 50
+      100: 50
+      1000: 50
+      10000: 50
+      100000: 10
+      1000000: 3
   cluster:
     clusterCallUseLocal: true
     clusterCallReadTimeout: "PT30S"
@@ -366,14 +375,6 @@ appConfig:
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"
-      pooledByteBufferCounts:
-        1: 50
-        10: 50
-        100: 50
-        1000: 50
-        10000: 50
-        100000: 10
-        1000000: 3
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
@@ -487,6 +488,14 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
+    remoteSearchResultCache:
+      maximumSize: 100
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
+    clusterResultCollectorCache:
+      maximumSize: 1000000
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
@@ -662,7 +671,6 @@ appConfig:
           maxPoolSize: 30
       search:
         storeSize: "1000000,100,10,1"
-        resultHandlerBatchSize: 5000
         maxResults: 100000
         fetchSize: 5000
         searchResultCache:

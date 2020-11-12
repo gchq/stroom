@@ -132,10 +132,10 @@ public class Data {
                     if (childItems != null) {
                         // Create a list of child generators.
                         final List<Generator> childGenerators = new ArrayList<>(childItems.size());
-                        for (final Item childItem : childItems) {
+                        childItems.forEach(childItem -> {
                             final Generator childGenerator = childItem.getGenerators()[index];
                             childGenerators.add(childGenerator);
-                        }
+                        });
 
                         // Make the selector select from the list of child generators.
                         final Selector selector = (Selector) generator;

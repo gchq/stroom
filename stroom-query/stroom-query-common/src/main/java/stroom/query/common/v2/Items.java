@@ -16,23 +16,34 @@
 
 package stroom.query.common.v2;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 class Items implements Iterable<Item> {
     private final List<Item> list;
+    private final int trimmedSize;
+    private final int maxSize;
+    private final Comparator<Item> comparator;
+    private final Consumer<Item> removeHandler;
 
-    Items(final List<Item> list) {
-        this.list = list;
-    }
+    private volatile boolean trimmed;
+    private volatile boolean full;
 
-    Items() {
+    Items(final int trimmedSize,
+          final Comparator<Item> comparator,
+          final Consumer<Item> removeHandler) {
+        this.trimmedSize = trimmedSize;
+        this.maxSize = trimmedSize * 2;
+        this.comparator = comparator;
+        this.removeHandler = removeHandler;
         list = new ArrayList<>();
     }
 
-    boolean add(final Item item) {
+    synchronized void add(final Item item) {
 
 
 //        final List<Item> list = result.).list;
@@ -70,39 +81,65 @@ class Items implements Iterable<Item> {
 //            removalKey.set(item.key);
 //        }
 
-        return list.add(item);
+        if (comparator != null) {
+            list.add(item);
+            if (list.size() > maxSize) {
+                sortAndTrim();
+            } else {
+                trimmed = false;
+            }
+        } else if (list.size() < trimmedSize) {
+            list.add(item);
+        } else {
+            full = true;
+            removeHandler.accept(item);
+        }
     }
 
-    boolean remove(final Item item) {
-        return list.remove(item);
-    }
+//    synchronized boolean remove(final Item item) {
+//        return list.remove(item);
+//    }
 
     int size() {
         return list.size();
     }
 
-    void sort(Comparator<Item> comparator) {
-        if (comparator != null) {
+    private void sortAndTrim() {
+        if (!trimmed) {
+            // Sort the list before trimming if we have a comparator.
             list.sort(comparator);
+            while (list.size() > trimmedSize) {
+                final Item lastItem = list.remove(list.size() - 1);
+
+                // Tell the remove handler that we have removed an item.
+                removeHandler.accept(lastItem);
+            }
+            trimmed = true;
         }
     }
 
-    void sortAndTrim(final int size, final Comparator<Item> comparator) {
-        // Sort the list before trimming if we have a comparator.
-        sort(comparator);
-
-        while (list.size() > size) {
-            final Item lastItem = list.remove(list.size() - 1);
-
-//            // Tell the remove handler that we have removed an item.
-//            if (removeHandler != null) {
-//                removeHandler.onRemove(lastItem);
-//            }
-        }
+    private synchronized List<Item> copy() {
+        sortAndTrim();
+        return new ArrayList<>(list);
     }
+
+//    public void forEach(final Consumer<Item> consumer) {
+//        if (full) {
+//            list.forEach(consumer);
+//        } else {
+//            final List<Item> copy = copy();
+//            copy.forEach(consumer);
+//        }
+//    }
 
     @Override
+    @Nonnull
     public Iterator<Item> iterator() {
-        return list.iterator();
+        if (full) {
+            return list.iterator();
+        } else {
+            final List<Item> copy = copy();
+            return copy.iterator();
+        }
     }
 }
