@@ -34,12 +34,14 @@ import io.swagger.annotations.Api;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -86,7 +88,7 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
             return start(clusterSearchTask);
 
         } else {
-            return (Boolean) call(nodeName, RemoteSearchResource.START_PATH_PART, clusterSearchTask);
+            return call(nodeName, RemoteSearchResource.START_PATH_PART, clusterSearchTask, Boolean.class);
         }
     }
 
@@ -110,7 +112,7 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
             return poll(key);
 
         } else {
-            return (NodeResult) call(nodeName, RemoteSearchResource.POLL_PATH_PART, key);
+            return call(nodeName, RemoteSearchResource.POLL_PATH_PART, key, NodeResult.class);
         }
     }
 
@@ -126,7 +128,7 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
             return destroy(key);
 
         } else {
-            return (Boolean) call(nodeName, RemoteSearchResource.DESTROY_PATH_PART, key);
+            return call(nodeName, RemoteSearchResource.DESTROY_PATH_PART, key, Boolean.class);
         }
     }
 
@@ -136,7 +138,7 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
         return true;
     }
 
-    private Object call(final String nodeName, final String path, final Object entity) {
+    private <T> T call(final String nodeName, final String path, final Object entity, final Class<T> responseClass) {
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
@@ -148,10 +150,13 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.json(entity));
-            if (response.getStatus() != 200) {
+            if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                throw new NotFoundException(response);
+            } else if (response.getStatus() != Status.OK.getStatusCode()) {
                 throw new WebApplicationException(response);
             }
-            return response.getEntity();
+
+            return response.readEntity(responseClass);
         } catch (Throwable e) {
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
