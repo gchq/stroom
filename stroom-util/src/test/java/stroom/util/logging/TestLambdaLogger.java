@@ -9,8 +9,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class TestLambdaLogger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLambdaLogger.class);

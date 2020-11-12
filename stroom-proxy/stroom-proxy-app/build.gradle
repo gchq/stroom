@@ -55,7 +55,7 @@ dependencies {
     compile libs.jaxb_api
     compile libs.jetty_server
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     
     testCompile project(':stroom-test-common')
 

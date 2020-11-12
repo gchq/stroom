@@ -84,8 +84,14 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
     private Runnable commitIfRequireFunc = () -> {}; // default position is to not commit mid-load
+
+    private int inputCount = 0;
+    private int newEntriesCount = 0;
+    private int replacedEntriesCount = 0;
+    private int unchangedEntriesCount = 0;
+    private int ignoredCount = 0;
+
     private int putsCounter = 0;
-    private int successfulPutsCounter = 0;
     private boolean overwriteExisting = false;
     private Instant startTime = Instant.EPOCH;
     private LoaderState currentLoaderState = LoaderState.NEW;
@@ -160,7 +166,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean initialise(final boolean overwriteExisting) {
+    public PutOutcome initialise(final boolean overwriteExisting) {
 
         LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
         checkCurrentState(LoaderState.NEW);
@@ -175,11 +181,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 effectiveTimeMs,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didPutSucceed = processingInfoDb.put(
+        final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
         currentLoaderState = LoaderState.INITIALISED;
-        return didPutSucceed;
+        return putOutcome;
     }
 
     @Override
@@ -193,12 +199,29 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true);
 
         final Duration loadDuration = Duration.between(startTime, Instant.now());
+
         final String mapNames = mapDefinitionToUIDMap.keySet()
                 .stream()
                 .map(MapDefinition::getMapName)
-                .collect(Collectors.joining(","));
-        LOGGER.info("Successfully Loaded {} entries out of {} attempts with map names [{}] in {} for {}",
-                successfulPutsCounter, putsCounter, mapNames, loadDuration, refStreamDefinition);
+                .collect(Collectors.joining(", "));
+
+        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+                ? refStreamDefinition.getPipelineDocRef().getName()
+                : refStreamDefinition.getPipelineDocRef().getUuid();
+
+        LOGGER.info("Processed {} entries (" +
+                        "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
+                        "with map name(s): [{}], stream: {}, pipeline: {} in {}",
+                inputCount,
+                newEntriesCount,
+                replacedEntriesCount,
+                unchangedEntriesCount,
+                ignoredCount,
+                mapNames,
+                refStreamDefinition.getStreamId(),
+                pipeline,
+                loadDuration);
+
         currentLoaderState = LoaderState.COMPLETED;
     }
 
@@ -221,10 +244,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final String key,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final String key,
+                          final RefDataValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
+        inputCount++;
 
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(key);
@@ -248,57 +272,52 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // if overwrite == false, we can just drop out here
         // if overwrite == true we need to de-reference the value (and maybe delete)
         // then create a new value, assuming they are different
-        boolean didPutSucceed;
+        final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
             if (!overwriteExisting) {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
-                didPutSucceed = false;
+                putOutcome = PutOutcome.failed();
+                ignoredCount++;
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
                 final ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
-//                    ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
-
-//                    RefDataValue currentValueStoreValue = valueStoreDb.get(writeTxn, currentValueStoreKey)
-//                            .orElseThrow(() -> new RuntimeException("Should have a value at this point"));
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
                         writeTxn, currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
-                    didPutSucceed = true;
+                    // We haven't really replaced the entry but as they are the same, that is the effect
+                    putOutcome = PutOutcome.replacedEntry();
+                    unchangedEntriesCount++;
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-//                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
                     valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
-                    didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
+                    putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
+                    replacedEntriesCount++;
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
-            didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
+            putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
+            newEntriesCount++;
         }
 
-        if (didPutSucceed) {
-            successfulPutsCounter++;
-        }
-
-        commitIfRequired();
-
+        commitIfRequired(putOutcome);
         keyValuePooledKeyBuffer.clear();
 
-        return didPutSucceed;
+        return putOutcome;
     }
 
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final Range<Long> keyRange,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final Range<Long> keyRange,
+                          final RefDataValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(keyRange);
@@ -323,12 +342,13 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = rangeStoreDb.getAsBytes(
                 writeTxn, rangeValueKeyBuffer);
 
-        boolean didPutSucceed;
+        final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
             if (!overwriteExisting) {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
-                didPutSucceed = false;
+                putOutcome = PutOutcome.failed();
+                ignoredCount++;
             } else {
                 // overwriting and we already have a value so see if the old and
                 // new values are the same.
@@ -340,7 +360,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
-                    didPutSucceed = true;
+                    // We haven't really replaced the entry but as they are the same, thay is the effect
+                    putOutcome = PutOutcome.replacedEntry();
+                    unchangedEntriesCount++;
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
@@ -349,24 +371,23 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
 //                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
                     //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-                    didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
+                    putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
+                    replacedEntriesCount++;
                 }
             }
         } else {
             // no existing valueStoreKey so create the entries
-            didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
+            putOutcome = createRangeValue(refDataValue, rangeValueKeyBuffer);
+            newEntriesCount++;
         }
 
-        if (didPutSucceed) {
-            successfulPutsCounter++;
-        }
-        commitIfRequired();
+        commitIfRequired(putOutcome);
         rangeValuePooledKeyBuffer.clear();
-        return didPutSucceed;
+        return putOutcome;
     }
 
 
-    private boolean createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
+    private PutOutcome createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                 writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
@@ -377,7 +398,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
-    private boolean createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
+    private PutOutcome createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                 writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
@@ -477,8 +498,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     /**
      * To be called after each put
      */
-    private void commitIfRequired() {
-        putsCounter++;
+    private void commitIfRequired(final PutOutcome putOutcome) {
+        if (putOutcome.isSuccess()) {
+            putsCounter++;
+        }
         commitIfRequireFunc.run();
     }
 

@@ -13,7 +13,7 @@ dependencies {
     compile libs.gwtp_mvp_client
     compile libs.javax_inject
     compile libs.jaxb_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

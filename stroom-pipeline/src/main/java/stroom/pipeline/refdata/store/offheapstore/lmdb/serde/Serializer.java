@@ -17,43 +17,65 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb.serde;
 
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.logging.LogUtil;
+
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface Serializer<T> {
 
+    // TODO @AT This ought to be in config, or ideally we need something that will optimistically
+    //   serialise to a certain size of buffer and if that fails try again with a bigger one.
     int DEFAULT_CAPACITY = 1_000;
-
-//    /**
-//     * Serialize the passed objects to bytes returning a new {@link ByteBuffer} containing
-//     * those bytes.
-//     */
-//    default ByteBuffer serialize(final T object) {
-//        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getBufferCapacity());
-//        serialize(byteBuffer, object);
-//        return byteBuffer;
-//    }
 
     /**
      * @param byteBufferSupplier A supplier of a {@link ByteBuffer} in a ready state for writing. The
      *                           supplier may or may not be called depending on the impl so only use
      *                           the return value to get the serialised form.
+     *                           May throw a {@link RuntimeException} if the supplied buffer
+     *                           is not big enough to hold the serialised form.
      * @param object The object to be serialised.
      * @return The serialised form of the object, flipped and ready for reading.
      */
     default ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
                                  final T object) {
-        ByteBuffer byteBuffer = byteBufferSupplier.get();
-        serialize(byteBuffer, object);
+        final ByteBuffer byteBuffer = Objects.requireNonNull(byteBufferSupplier.get());
+        try {
+            serialize(byteBuffer, object);
+        } catch (BufferOverflowException boe) {
+            throw new RuntimeException(LogUtil.message("Buffer {} too small for value {}",
+                    ByteBufferUtils.byteBufferInfo(byteBuffer),
+                    object));
+        }
         return byteBuffer;
     }
-
 
     /**
      * Serialize object into the passed {@link ByteBuffer}. Assumes there is sufficient capacity.
      * This method will flip the buffer after writing to it.
+     * May throw a {@link java.nio.BufferOverflowException} if the supplied buffer
+     * is not big enough to hold the serialised form.
      */
     void serialize(final ByteBuffer byteBuffer, final T object);
+
+    /**
+     * Method for serialising the value when the length of the serialized form is unknown.
+     * @param pooledByteBufferOutputStream The {@link PooledByteBufferOutputStream} to serialize the object to.
+     * @param object The object to be serialised.
+     * @return The serialised form of the object, flipped and ready for reading. This buffer should
+     * be used instead of calling {@link PooledByteBufferOutputStream#getPooledByteBuffer()} in case
+     * the implementation chooses not to used the passed {@link PooledByteBufferOutputStream}.
+     * The returned {@link ByteBuffer} may be a pooled one so ensure that the close method
+     * of pooledByteBufferOutputStream is called once byteBuffer is no longer needed.
+     */
+    default ByteBuffer serialize(final PooledByteBufferOutputStream pooledByteBufferOutputStream,
+                                 final T object) {
+        throw new UnsupportedOperationException("Not implemented for this serialiser");
+    }
 
     /**
      * Allows the sub-class to specify the capacity of the buffer to be used in serialisation.

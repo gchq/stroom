@@ -7,6 +7,7 @@ import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -80,7 +81,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean initialise(final boolean overwriteExisting) {
+    public PutOutcome initialise(final boolean overwriteExisting) {
         LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
         checkCurrentState(LoaderState.NEW);
 
@@ -93,10 +94,10 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 effectiveTimeMs,
                 ProcessingState.LOAD_IN_PROGRESS);
 
-        boolean didPutSucceed = putProcessingInfo(refStreamDefinition, refDataProcessingInfo);
+        PutOutcome putOutcome = putProcessingInfo(refStreamDefinition, refDataProcessingInfo);
 
         currentLoaderState = LoaderState.INITIALISED;
-        return didPutSucceed;
+        return putOutcome;
     }
 
     @Override
@@ -130,55 +131,74 @@ class OnHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final String key,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final String key,
+                          final RefDataValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
-        boolean wasValuePut;
         LAMBDA_LOGGER.trace(() ->
                 LogUtil.message("containsKey == {}", keyValueMap.containsKey(mapKey)));
-        if (overwriteExisting) {
-            keyValueMap.put(mapKey, refDataValue);
-            wasValuePut = true;
-        } else {
-            RefDataValue prevValue = keyValueMap.putIfAbsent(mapKey, refDataValue);
-            wasValuePut = prevValue == null;
-        }
-        recordPut(mapDefinition, wasValuePut);
+
+        final PutOutcome putOutcome = putWithOutcome(
+                keyValueMap,
+                mapKey,
+                refDataValue,
+                overwriteExisting);
+
+//        if (overwriteExisting) {
+//            RefDataValue prevValue = keyValueMap.put(mapKey, refDataValue);
+//            putOutcome = prevValue == null
+//                    ? PutOutcome.newEntry()
+//                    : PutOutcome.replacedEntry();
+//        } else {
+//            RefDataValue prevValue = keyValueMap.putIfAbsent(mapKey, refDataValue);
+//            putOutcome = prevValue == null
+//                    ? PutOutcome.newEntry()
+//                    : PutOutcome.failed();
+//        }
+        recordPut(mapDefinition, putOutcome.isSuccess());
+
         LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
-        return wasValuePut;
+        return putOutcome;
     }
 
     @Override
-    public boolean put(final MapDefinition mapDefinition,
-                       final Range<Long> keyRange,
-                       final RefDataValue refDataValue) {
+    public PutOutcome put(final MapDefinition mapDefinition,
+                          final Range<Long> keyRange,
+                          final RefDataValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         // ensure we have a sub map for our mapDef
-        NavigableMap<Range<Long>, RefDataValue> subMap = rangeValueNestedMap.computeIfAbsent(
+        final NavigableMap<Range<Long>, RefDataValue> subMap = rangeValueNestedMap.computeIfAbsent(
                 mapDefinition,
                 k -> new TreeMap<>(RANGE_COMPARATOR.reversed()));
 
-        boolean wasValuePut;
-        if (overwriteExisting) {
-            subMap.put(keyRange, refDataValue);
-            wasValuePut = true;
-        } else {
-            RefDataValue prevValue = subMap.putIfAbsent(keyRange, refDataValue);
-            wasValuePut = prevValue == null;
-        }
-        recordPut(mapDefinition, wasValuePut);
+        final PutOutcome putOutcome = putWithOutcome(
+                subMap,
+                keyRange,
+                refDataValue,
+                overwriteExisting);
+//        if (overwriteExisting) {
+//            final RefDataValue prevValue = subMap.put(keyRange, refDataValue);
+//            putOutcome = prevValue == null
+//                    ? PutOutcome.newEntry()
+//                    : PutOutcome.replacedEntry();
+//        } else {
+//            final RefDataValue prevValue = subMap.putIfAbsent(keyRange, refDataValue);
+//            putOutcome = prevValue == null
+//                    ? PutOutcome.newEntry()
+//                    : PutOutcome.failed();
+//        }
+        recordPut(mapDefinition, putOutcome.isSuccess());
         LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)
                         .orElse(0)));
-        return wasValuePut;
+        return putOutcome;
     }
 
     private void recordPut(final MapDefinition mapDefinition, final boolean wasValuePut) {
@@ -201,8 +221,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         processingInfoMap.compute(refStreamDefinition, (refStreamDef, refDataProcessingInfo) -> {
             if (refDataProcessingInfo != null) {
-                RefDataProcessingInfo newRefDataProcessingInfo = refDataProcessingInfo.cloneWithNewState(
-                        newProcessingState, touchLastAccessedTime);
+                RefDataProcessingInfo newRefDataProcessingInfo = refDataProcessingInfo
+                        .cloneWithNewState(newProcessingState, touchLastAccessedTime);
                 return newRefDataProcessingInfo;
             } else {
                 throw new RuntimeException(LogUtil.message(
@@ -211,18 +231,30 @@ class OnHeapRefDataLoader implements RefDataLoader {
         });
     }
 
-    private boolean putProcessingInfo(final RefStreamDefinition refStreamDefinition,
-                                      final RefDataProcessingInfo refDataProcessingInfo) {
+    private PutOutcome putProcessingInfo(final RefStreamDefinition refStreamDefinition,
+                                         final RefDataProcessingInfo refDataProcessingInfo) {
 
-        boolean wasValuePut;
-        if (overwriteExisting) {
-            processingInfoMap.putIfAbsent(refStreamDefinition, refDataProcessingInfo);
-            wasValuePut = true;
-        } else {
-            RefDataProcessingInfo prevValue = processingInfoMap.putIfAbsent(refStreamDefinition, refDataProcessingInfo);
-            wasValuePut = prevValue == null;
-        }
-        return wasValuePut;
+//        final boolean keyExists = processingInfoMap.containsKey(refStreamDefinition);
+
+        final PutOutcome putOutcome = putWithOutcome(
+                processingInfoMap,
+                refStreamDefinition,
+                refDataProcessingInfo,
+                overwriteExisting);
+//        if (overwriteExisting) {
+//            processingInfoMap.put(refStreamDefinition, refDataProcessingInfo);
+//            putOutcome = keyExists
+//                    ? PutOutcome.replacedEntry()
+//                    : PutOutcome.newEntry();
+//        } else {
+//            if (keyExists) {
+//                putOutcome = PutOutcome.failed();
+//            } else {
+//                processingInfoMap.put(refStreamDefinition, refDataProcessingInfo);
+//                putOutcome = PutOutcome.newEntry();
+//            }
+//        }
+        return putOutcome;
     }
 
     private void checkCurrentState(final LoaderState... validStates) {
@@ -237,6 +269,29 @@ class OnHeapRefDataLoader implements RefDataLoader {
             throw new IllegalStateException(LogUtil.message("Current loader state: {}, valid states: {}",
                     currentLoaderState, Arrays.toString(validStates)));
         }
+    }
+
+    private <K, V> PutOutcome putWithOutcome(final Map<K, V> map,
+                                             final K key,
+                                             final V value,
+                                             final boolean overwriteExisting) {
+
+        final PutOutcome putOutcome;
+        if (overwriteExisting) {
+            final V prevValue = map.put(key, value);
+            putOutcome = prevValue == null
+                    ? PutOutcome.newEntry()
+                    : PutOutcome.replacedEntry();
+        } else {
+            final V prevValue = map.putIfAbsent(key, value);
+            putOutcome = prevValue == null
+                    ? PutOutcome.newEntry()
+                    : PutOutcome.failed();
+        }
+
+        LOGGER.trace("Put key {}, value {}, outcome {}", key, value, putOutcome);
+
+        return putOutcome;
     }
 
 }

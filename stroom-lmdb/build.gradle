@@ -1,0 +1,90 @@
+ext.moduleName = 'stroom.lmdb'
+
+dependencies {
+//    compile project(':stroom-cache:stroom-cache-api')
+//    compile project(':stroom-meta:stroom-meta-api')
+//    compile project(':stroom-data:stroom-data-store-api')
+//    compile project(':stroom-core-shared')
+//    compile project(':stroom-cluster:stroom-cluster-task-api')
+//    compile project(':stroom-dictionary:stroom-dictionary-api')
+//    compile project(':stroom-docstore:stroom-docstore-api')
+//    compile project(':stroom-event-logging:stroom-event-logging-api')
+//    compile project(':stroom-feed:stroom-feed-api')
+//    compile project(':stroom-lifecycle:stroom-lifecycle-api')
+//    compile project(':stroom-node:stroom-node-api')
+//    compile project(':stroom-processor:stroom-processor-api')
+//    compile project(':stroom-query:stroom-query-common')
+//    compile project(':stroom-security:stroom-security-api')
+//    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-util')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-explorer:stroom-explorer-api')
+//    compile project(':stroom-importexport:stroom-importexport-api')
+//    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-job:stroom-job-api')
+//    compile project(':stroom-search:stroom-searchable-api')
+//
+//
+//    compile libs.commons_io
+//    compile libs.commons_lang
+//    compile libs.commons_text
+//    compile libs.dropwizard_metrics_annotation
+//    compile libs.dropwizard_metrics_healthchecks
+//    compile libs.dropwizard_validation
+//    compile libs.fast_infoset
+//    compile libs.google_findbugs
+//    compile libs.guava
+//    compile libs.guice4
+    compile libs.guice_assistedinject
+    compile libs.hadoopCommonShaded
+//    compile libs.hadoopHdfsShaded
+    compile(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
+//    compile libs.jackson_annotations
+//    compile libs.jackson_core
+//    compile libs.jackson_databind
+//    compile libs.javax_inject
+//    compile libs.jaxb_api
+//    compile libs.jersey_client
+//    compile libs.jetty_http
+//    compile libs.jsr173_api
+    compile libs.kryo
+    compile libs.lmdbjava
+    compile libs.zero_allocation_hashing
+//    compile libs.okhttp
+//    compile libs.saxon_he
+//    compile libs.slf4j_api
+//    compile project(':stroom-docref')
+//    compile libs.swagger_annotations
+//    compile libs.vavr
+//    compile libs.ws_rs_api
+//    compile libs.xml_apis
+//
+//    testCompile project(':stroom-cache:stroom-cache-api')
+//    testCompile project(':stroom-cache:stroom-cache-impl')
+//    testCompile project(':stroom-meta:stroom-meta-mock')
+//    testCompile project(':stroom-data:stroom-data-store-mock')
+//    testCompile project(':stroom-docstore:stroom-docstore-impl')
+//    testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
+//    testCompile project(':stroom-feed:stroom-feed-impl')
+//    testCompile project(':stroom-security:stroom-security-mock')
+//    testCompile project(':stroom-test-common')
+
+    testCompile libs.assertj_core
+//    testCompile libs.commons_io
+    testCompile libs.junit_jupiter_api
+//    testCompile libs.mockito_core
+//    testCompile libs.mockito_junit_jupiter
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}
+//
+//// Need the schemas for the DataSplitter tests
+//tasks.test.dependsOn rootProject.downloadStroomContent

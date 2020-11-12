@@ -4,14 +4,14 @@ dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-core-shared')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-util-shared')
 
     runtimeOnly project(':stroom-security:stroom-security-client')
 
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
+    compile project(':stroom-docref')
 
     compile libs.gin
     compile libs.guice3

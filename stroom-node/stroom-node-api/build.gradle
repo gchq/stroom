@@ -5,5 +5,5 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 }

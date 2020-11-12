@@ -6,5 +6,5 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.guice4
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 }

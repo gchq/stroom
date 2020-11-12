@@ -29,6 +29,7 @@ import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,12 +83,65 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
         doForEachTest(uid3, 1);
     }
 
+    @Test
+    void testDeleteMapEntries() {
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            putEntry(writeTxn, 1, "key11", 1, (short) 1);
+            putEntry(writeTxn, 1, "key12", 1, (short) 1);
+            putEntry(writeTxn, 1, "key13", 1, (short) 1);
+
+            putEntry(writeTxn, 2, "key21", 1, (short) 1);
+            putEntry(writeTxn, 2, "key22", 1, (short) 1);
+            putEntry(writeTxn, 2, "key23", 1, (short) 1);
+
+            putEntry(writeTxn, 3, "key31", 1, (short) 1);
+            putEntry(writeTxn, 3, "key32", 1, (short) 1);
+            putEntry(writeTxn, 3, "key33", 1, (short) 1);
+
+            assertThat(keyValueStoreDb.getEntryCount(writeTxn))
+                    .isEqualTo(9);
+        });
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            keyValueStoreDb.deleteMapEntries(
+                    writeTxn,
+                    UID.of(2, ByteBuffer.allocateDirect(10)),
+                    (keyBuffer, valueBuffer) -> {
+                        LOGGER.info("{} - {}",
+                                ByteBufferUtils.byteBufferInfo(keyBuffer),
+                                ByteBufferUtils.byteBufferInfo(keyBuffer));
+                    });
+
+            assertThat(keyValueStoreDb.getEntryCount(writeTxn))
+                    .isEqualTo(6);
+        });
+    }
+
+    private void putEntry(final Txn<ByteBuffer> writeTxn,
+                          final long uidVal,
+                          final String key,
+                          final long valueHash,
+                          final short valueUniqueId) {
+
+        // Don't ca
+        keyValueStoreDb.put(
+                writeTxn,
+                new KeyValueStoreKey(
+                        UID.of(uidVal, ByteBuffer.allocateDirect(10)),
+                        key),
+                new ValueStoreKey(valueHash, valueUniqueId),
+                false);
+    }
+
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);
             keyValueStoreDb.deleteMapEntries(writeTxn, uid, (keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
-                LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
+                LOGGER.info("{} {}",
+                        ByteBufferUtils.byteBufferInfo(keyBuf),
+                        ByteBufferUtils.byteBufferInfo(valBuf));
             });
 
             assertThat(cnt).hasValue(expectedEntryCount);

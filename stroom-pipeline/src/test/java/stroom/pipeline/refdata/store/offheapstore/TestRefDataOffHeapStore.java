@@ -218,17 +218,28 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value2));
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, key, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
+
+            putOutcome = loader.put(mapDefinition, key, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
         refDataStore.logAllContents();
 
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
         assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
     }
@@ -246,24 +257,32 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
 
-        final AtomicBoolean didPutSucceed = new AtomicBoolean(false);
-
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value2));
+            putOutcome = loader.put(mapDefinition, range, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
 
             // second put for same key, should only succeed if overwriteExisting is enabled
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, range, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
 
         refDataStore.logAllContents();
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
     }

@@ -269,7 +269,14 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                                 break;
                         }
 
-                        annotations.add(new Annotation(row, col, error.getMessage(), annotationType));
+                        // Ace munges all the msgs together in one popup for annotaions on the same line/col
+                        // so add the severity as if we have some info + warnings then we get a warning
+                        // icon whose popup contains all the msgs.
+                        annotations.add(new Annotation(
+                                row,
+                                col,
+                                error.getSeverity().toString() + " " + error.getMessage(),
+                                annotationType));
                     }
                 }
             }

@@ -14,15 +14,15 @@ dependencies {
 //    compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-processor:stroom-processor-impl')
     compile project(':stroom-processor:stroom-processor-impl-db-jooq')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
 //    compile project(':stroom-statistics:stroom-statistics-api')
 //    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
     // Stroom external bintray libs
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
+    compile project(':stroom-docref')
 
     // 3rd party libs
     compile libs.dropwizard_metrics_healthchecks

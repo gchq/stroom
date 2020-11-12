@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
+import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -202,6 +203,8 @@ public class ReferenceData {
                 // map def if the map is know to not exist for that ref stream
                 referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
                     if (refDataValueProxy instanceof SingleRefDataValueProxy) {
+                        // Add it to a list and remove it from the result so we
+                        // can add it back once we have checked all pipe refs
                         refDataValueProxies.add((SingleRefDataValueProxy) refDataValueProxy);
                         referenceDataResult.setRefDataValueProxy(null);
                     } else {
@@ -212,7 +215,7 @@ public class ReferenceData {
         }
 
         // We are dealing with multiple ref pipelines so replace the current value proxy with a
-        // multi one that will perform a lookup on each one in turn
+        // multi one that will perform a lookup on each one in turn until it finds a hit
         if (!refDataValueProxies.isEmpty()) {
             if (refDataValueProxies.size() > 1) {
                 LAMBDA_LOGGER.trace(() -> LogUtil.message(
@@ -254,6 +257,8 @@ public class ReferenceData {
                 getPipelineVersion(pipelineReference),
                 metaHolder.getMeta().getId(),
                 streamNo);
+
+        result.addEffectiveStream(refStreamDefinition);
 
         // Establish if we have the data for the context stream in the store
         final RefDataStore onHeapRefDataStore = refDataStoreHolder.getOnHeapRefDataStore();
@@ -411,13 +416,15 @@ public class ReferenceData {
 
                     result.log(Severity.INFO, () ->
                             "Using stream: " + effectiveStream.getStreamId() +
-                            " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
-                            ") for feed: " + effectiveStreamKey.getFeed());
+                                    " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
+                                    ") for event time: " + Instant.ofEpochMilli(time).toString() +
+                                    ", feed: " + effectiveStreamKey.getFeed());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
                             getPipelineVersion(pipelineReference),
                             effectiveStream.getStreamId());
+                    result.addEffectiveStream(refStreamDefinition);
                     final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
@@ -440,8 +447,13 @@ public class ReferenceData {
                             // It is possible for another thread, i.e. another pipeline process to be trying to
                             // load the same stream at the same time. There is concurrency protection further
                             // down to protect against this.
-                            securityContext.asProcessingUser(() ->
+                            final StoredErrorReceiver storedErrorReceiver = securityContext.asProcessingUserResult(() ->
                                     referenceDataLoader.load(refStreamDefinition));
+
+                            // Replay any errors/warning from the load onto our result
+                            if (storedErrorReceiver != null) {
+                                storedErrorReceiver.replay(result);
+                            }
 
                             LAMBDA_LOGGER.debug(() -> LogUtil.message(
                                     "Loaded {} refStreamDefinition", refStreamDefinition));
@@ -455,17 +467,34 @@ public class ReferenceData {
                     // now we should have the required data in the store (unless the max age is set far too small)
                     // Note however that the effective stream may not contain the map we are interested in. A data
                     // may have two ref loaders on it.  When a lookup is done it must try the lookup against the two
-                    // effective streams as it cannot know which ref streams contain (if at all) the map name of interest.
+                    // effective streams as it cannot know which ref streams contain (if at all) the map name of
+                    // interest.
                     setValueProxyOnResult(offHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
                     optEffectiveRefStreamDef = Optional.of(refStreamDefinition);
                 } else {
-                    result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
+
+                    result.log(
+                            Severity.WARNING,
+                            () -> LogUtil.message(
+                                    "No effective streams can be found in the returned set (" +
+                                            "feed: {}, event time {})",
+                                    pipelineReference.getFeed().getName(),
+                                    Instant.ofEpochMilli(time).toString()));
                 }
             } else {
-                result.log(Severity.WARNING, () -> "No effective streams can be found (" + effectiveStreamKey + ")");
+                result.log(
+                        Severity.WARNING,
+                        () -> LogUtil.message(
+                                "No effective stream can be found (" +
+                                        "feed: {}, event time {})",
+                                pipelineReference.getFeed().getName(),
+                                Instant.ofEpochMilli(time).toString()));
             }
         } else {
-            result.log(Severity.ERROR, () -> "User does not have permission to use data from feed '" + pipelineReference.getFeed().getName() + "'");
+            result.log(
+                    Severity.ERROR,
+                    () -> "User does not have permission to use data from feed '"
+                            + pipelineReference.getFeed().getName() + "'");
         }
 
         return optEffectiveRefStreamDef;

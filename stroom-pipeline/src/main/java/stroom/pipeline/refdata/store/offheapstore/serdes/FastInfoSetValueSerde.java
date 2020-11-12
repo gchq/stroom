@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
@@ -42,7 +43,9 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
 
         } catch (ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
-                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+                    refDataValue.getClass().getCanonicalName(),
+                    FastInfosetValue.class.getCanonicalName()),
+                    e);
         }
     }
 
@@ -56,8 +59,24 @@ public class FastInfoSetValueSerde implements RefDataValueSerde {
             return ((FastInfosetValue) refDataValue).getByteBuffer();
         } catch (ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
-                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+                    refDataValue.getClass().getCanonicalName(),
+                    FastInfosetValue.class.getCanonicalName()),
+                    e);
         }
     }
 
+    @Override
+    public ByteBuffer serialize(final PooledByteBufferOutputStream pooledByteBufferOutputStream,
+                                final RefDataValue refDataValue) {
+        try {
+            // the FastInfosetValue just wraps a ByteBuffer so just return that, no
+            // serialisation to do.
+            return ((FastInfosetValue) refDataValue).getByteBuffer();
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Unable to cast {} to {}",
+                    refDataValue.getClass().getCanonicalName(),
+                    FastInfosetValue.class.getCanonicalName()),
+                    e);
+        }
+    }
 }

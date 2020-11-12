@@ -9,6 +9,6 @@ dependencies {
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.jaxb_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 }
 

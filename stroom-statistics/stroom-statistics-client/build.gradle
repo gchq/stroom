@@ -14,5 +14,5 @@ dependencies {
     compile libs.gwtp_mvp_client
     compile libs.jackson_annotations
     compile libs.jaxb_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 }

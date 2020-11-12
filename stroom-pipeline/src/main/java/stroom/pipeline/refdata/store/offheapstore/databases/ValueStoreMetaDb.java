@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
@@ -111,9 +112,9 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
             ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
             serializeValue(pooledValueBuffer.getByteBuffer(), new ValueStoreMeta(refDataValue.getTypeId()));
 
-            boolean didPutSucceed = put(txn, keyBuffer, valueBuffer, false);
+            PutOutcome putOutcome = put(txn, keyBuffer, valueBuffer, false);
 
-            if (!didPutSucceed) {
+            if (!putOutcome.isSuccess()) {
                 throw new RuntimeException(LogUtil.message(
                         "Put failed for key [{}], value [{}], may be an entry already",
                         ByteBufferUtils.byteBufferInfo(keyBuffer),
@@ -135,8 +136,8 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
         try (PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
             ByteBuffer newValueBuffer = pooledValueBuffer.getByteBuffer();
             valueSerde.cloneAndIncrementRefCount(currValueBuffer, newValueBuffer);
-            boolean didPutSucceed = put(writeTxn, keyBuffer, newValueBuffer, true);
-            if (!didPutSucceed) {
+            PutOutcome putOutcome = put(writeTxn, keyBuffer, newValueBuffer, true);
+            if (!putOutcome.isSuccess()) {
                 throw new RuntimeException(LogUtil.message("Put failed for keyBuffer {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
@@ -207,7 +208,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                     }
                     cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
                 }
-                return true;
+                return false;
             }
         }
     }

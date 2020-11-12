@@ -7,8 +7,7 @@ dependencies {
     compile project(':stroom-util')
 
 //
-    compile libs.stroomDocRef
-//    //compile libs.stroomQueryApi
+    compile project(':stroom-docref')
 //    //compile libs.eventLogging
 ////    compile libs.flyway_core
 //    //compile libs.guice4

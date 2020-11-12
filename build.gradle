@@ -90,9 +90,6 @@ ext.versions = [
         eventLogging      : 'v4.0.5_schema-v3.2.4',
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
-        stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
-        stroomExpression  : 'v3.0.4',
-        stroomQuery       : 'v4.0-beta.76', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
         stroomTestData    : 'v0.2.2',
 
@@ -122,7 +119,6 @@ ext.versions = [
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
-        rxjava            : '2.1.10',
         swagger           : '1.5.21',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -138,12 +134,6 @@ ext.libs = [
         eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
         hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
-        stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
-        stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
-        stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
-        stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
-        stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
-        stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
         stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
         stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 
@@ -266,9 +256,7 @@ ext.libs = [
         okhttp_logging_interceptor     : 'com.squareup.okhttp3:logging-interceptor:4.8.1',
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
-        reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
         restygwt                       : "org.fusesource.restygwt:restygwt:2.2.6",
-        rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-21",
         simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
@@ -332,10 +320,6 @@ allprojects {
     }
 
 }
-
-
-
-
 
 
 // Variable to capture the version of slf4j defined in the DW BOM, so
@@ -447,9 +431,9 @@ subprojects {
 
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
-        afterSuite { descriptor, result -> 
-            if (descriptor != null 
-                    && descriptor.className != null 
+        afterSuite { descriptor, result ->
+            if (descriptor != null
+                    && descriptor.className != null
                     && result.resultType.toString() == "FAILURE") {
 
                 // test class failed so add its project info and test report file to a global list for

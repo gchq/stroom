@@ -6,7 +6,7 @@ ext.moduleName = 'stroom.util'
 dependencies {
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks

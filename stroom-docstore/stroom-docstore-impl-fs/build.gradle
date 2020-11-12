@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.docstore.impl.fs'
 dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.guice4
     compile libs.jackson_annotations

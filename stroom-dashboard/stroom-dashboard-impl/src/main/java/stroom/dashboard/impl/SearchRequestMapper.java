@@ -17,12 +17,6 @@
 
 package stroom.dashboard.impl;
 
-import javassist.expr.Expr;
-import org.apache.commons.text.StringEscapeUtils;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import stroom.dashboard.impl.vis.VisSettings;
 import stroom.dashboard.impl.vis.VisSettings.Control;
 import stroom.dashboard.impl.vis.VisSettings.Nest;
@@ -44,16 +38,28 @@ import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.*;
+import stroom.query.api.v2.DateTimeFormat;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.NumberFormat;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.text.StringEscapeUtils;
+
 import javax.inject.Inject;
-import java.beans.Expression;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;

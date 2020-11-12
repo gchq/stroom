@@ -16,6 +16,15 @@
 
 package stroom.dashboard.client.flexlayout;
 
+import stroom.core.client.StroomStyleNames;
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.shared.DashboardConfig.TabVisibility;
+import stroom.dashboard.shared.TabConfig;
+import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.LayerContainerImpl;
+import stroom.widget.tab.client.view.LinkTabBar;
+
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Button;
@@ -25,14 +34,6 @@ import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.gwtplatform.mvp.client.HandlerRegistrations;
 import com.gwtplatform.mvp.client.LayerContainer;
-import stroom.core.client.StroomStyleNames;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.shared.DashboardConfig.TabVisibility;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.view.LayerContainerImpl;
-import stroom.widget.tab.client.view.LinkTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
     private final TabLayoutConfig tabLayoutConfig;
@@ -120,7 +121,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
-                    changeHandler.requestTabClose(component.getTabConfig());
+                    changeHandler.requestTabClose(tabLayoutConfig, component.getTabConfig());
                 }
             }
         }, ClickEvent.getType()));

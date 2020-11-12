@@ -79,6 +79,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -120,6 +121,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
+    private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final LocationManager locationManager;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
@@ -687,8 +689,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(column);
     }
 
-    void handleFieldRename(final String fieldId,
-                           final String oldName,
+    void handleFieldRename(final String oldName,
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
             if (tableSettings != null && tableSettings.getConditionalFormattingRules() != null) {
@@ -789,9 +790,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-        // Find out if we have any special fields.
-        final boolean hasSpecialFields = tableSettings.getFields().stream().anyMatch(Field::isSpecial);
-
         // Get special fields from the current data source.
         final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
         final List<Field> requiredSpecialFields = new ArrayList<>();
@@ -806,33 +804,29 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     requiredSpecialFields.add(specialField);
                 }
             }
-        }
 
-        // Remove all special fields as we will re-add them with the right names if there are any.
-        tableSettings.getFields().removeIf(Field::isSpecial);
+            // If the fields we want to make special do exist in the current data source then
+            // add them.
+            if (requiredSpecialFields.size() > 0) {
+                // Remove all special fields as we will re-add them with the right names if there are any.
+                tableSettings.getFields().removeIf(Field::isSpecial);
 
-        // If the fields we want to make special do exist in the current data source then
-        // add them.
-        if (requiredSpecialFields.size() > 0) {
-            // Prior to the introduction of the special field concept, special fields were
-            // treated as invisible fields. For this reason we need to remove old invisible
-            // fields if we haven't yet turned them into special fields.
-            if (!hasSpecialFields) {
-                requiredSpecialDsFields.forEach(requiredSpecialDsField ->
-                        tableSettings.getFields().removeIf(field ->
-                                !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+                // Prior to the introduction of the special field concept, special fields were
+                // treated as invisible fields. For this reason we need to remove old invisible
+                // fields if we haven't yet turned them into special fields.
+                final Version version = Version.parse(tableSettings.getModelVersion());
+                final boolean old = version.lt(CURRENT_MODEL_VERSION);
+                if (old) {
+                    requiredSpecialDsFields.forEach(requiredSpecialDsField ->
+                            tableSettings.getFields().removeIf(field ->
+                                    !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+                    tableSettings.setModelVersion(CURRENT_MODEL_VERSION.toString());
+                }
+
+                // Add special fields.
+                requiredSpecialFields.forEach(field ->
+                        tableSettings.getFields().add(field));
             }
-
-            // We have changed the name of the special fields from EventId to __event_id__
-            // so we need to remove those old ones.
-            requiredSpecialDsFields.forEach(requiredSpecialDsField ->
-                    tableSettings.getFields().removeIf(field ->
-                            field.isSpecial() && field.getName().equals(requiredSpecialDsField.getName())));
-
-            // Add special fields.
-            requiredSpecialFields.forEach(field ->
-                    tableSettings.getFields().add(field));
-        }
 
 //        GWT.log(tableSettings.getFields().stream()
 //                .map(field ->
@@ -843,6 +837,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 //                                Boolean.toString(field.isVisible()),
 //                                Boolean.toString(field.isSpecial())))
 //                .collect(Collectors.joining("\n")));
+        }
     }
 
     public static Field buildSpecialField(final String indexFieldName) {

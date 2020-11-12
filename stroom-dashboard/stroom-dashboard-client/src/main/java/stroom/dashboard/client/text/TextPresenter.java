@@ -26,9 +26,9 @@ import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.util.shared.DataRange;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -44,20 +44,11 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.TextRange;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
+import stroom.util.shared.Version;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -79,6 +70,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
+
+    private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
+
     private final Provider<EditorPresenter> rawPresenterProvider;
     private final Provider<HtmlPresenter> htmlPresenterProvider;
     private final RestFactory restFactory;
@@ -281,15 +275,22 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             if (tablePresenter != null) {
                 final List<TableRow> selection = tablePresenter.getSelectedRows();
                 if (selection != null && selection.size() == 1) {
+                    final Field streamIdField = chooseBestField(tablePresenter, textSettings.getStreamIdField());
+                    final Field partNoField = chooseBestField(tablePresenter, textSettings.getPartNoField());
+                    final Field recordNoField = chooseBestField(tablePresenter, textSettings.getRecordNoField());
+                    final Field lineFromField = chooseBestField(tablePresenter, textSettings.getLineFromField());
+                    final Field colFromField = chooseBestField(tablePresenter, textSettings.getColFromField());
+                    final Field lineToField = chooseBestField(tablePresenter, textSettings.getLineToField());
+                    final Field colToField = chooseBestField(tablePresenter, textSettings.getColToField());
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
-                    currentStreamId = getLong(textSettings.getStreamIdField(), selected);
-                    currentPartNo = getLong(textSettings.getPartNoField(), selected);
-                    currentRecordNo = getLong(textSettings.getRecordNoField(), selected);
-                    final Long currentLineFrom = getLong(textSettings.getLineFromField(), selected);
-                    final Long currentColFrom = getLong(textSettings.getColFromField(), selected);
-                    final Long currentLineTo = getLong(textSettings.getLineToField(), selected);
-                    final Long currentColTo = getLong(textSettings.getColToField(), selected);
+                    currentStreamId = getLong(streamIdField, selected);
+                    currentPartNo = getLong(partNoField, selected);
+                    currentRecordNo = getLong(recordNoField, selected);
+                    final Long currentLineFrom = getLong(lineFromField, selected);
+                    final Long currentColFrom = getLong(colFromField, selected);
+                    final Long currentLineTo = getLong(lineToField, selected);
+                    final Long currentColTo = getLong(colToField, selected);
 
                     // Validate settings.
                     if (textSettings.getStreamIdField() == null) {
@@ -386,6 +387,26 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (!updating) {
             showData(message, null, null, isHtml);
         }
+    }
+
+    private Field chooseBestField(final TablePresenter tablePresenter, final Field field) {
+        if (field != null) {
+            final TableComponentSettings tableComponentSettings = tablePresenter.getSettings();
+            final List<Field> fields = tableComponentSettings.getFields();
+            // Try and choose by id.
+            for (final Field f : fields) {
+                if (f.getId() != null && f.getId().equals(field.getId())) {
+                    return f;
+                }
+            }
+            // Try and choose by name.
+            for (final Field f : fields) {
+                if (f.getName() != null && f.getName().equals(field.getName())) {
+                    return f;
+                }
+            }
+        }
+        return null;
     }
 
     private long getStartLine(final TextRange highlight) {
@@ -520,18 +541,23 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         super.read(componentConfig);
         textSettings = getSettings();
 
+        final Version version = Version.parse(textSettings.getModelVersion());
+        final boolean old = version.lt(CURRENT_MODEL_VERSION);
+
         // special field names have changed from EventId to __event_id__ so we need to deal
         // with those and replace them, also rebuild existing special fields just in case
         if (textSettings.getStreamIdField() == null
-                || IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName())
-                || textSettings.getStreamIdField().isSpecial()) {
+                || (old && IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName()))
+                || (old && textSettings.getStreamIdField().isSpecial())) {
             textSettings.setStreamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
         }
         if (textSettings.getRecordNoField() == null
-                || IndexConstants.EVENT_ID.equals(textSettings.getStreamIdField().getName())
-                || textSettings.getRecordNoField().isSpecial()) {
+                || (old && IndexConstants.EVENT_ID.equals(textSettings.getRecordNoField().getName()))
+                || (old && textSettings.getRecordNoField().isSpecial())) {
             textSettings.setRecordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
+
+        textSettings.setModelVersion(CURRENT_MODEL_VERSION.toString());
     }
 
     @Override

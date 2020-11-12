@@ -7,9 +7,70 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1678** : Fix data display in dashboard text pane.
+
+* Issue **#1679** : Fix data display in dashboard text pane.
+
+* Issue **#1777** : Fix sub stream tab selection when switching streams in data screen.
+
+* Issue **#1647** : Right align numeric columns in data screen.
+
+* Issue **#1872** : Fix display of source data when data has no line breaks.
+
 * Add completion and snippets to dashboard expression builder.
 
 * Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
+
+* Replace stream Info icon on data screen with a sub-stream type tab.
+
+* Add Source View tab available from Data Preview screen to show the unformatted source data.
+
+* Fix highlighting while stepping single line data.
+
+* Add completion and snippets to edit screens using the ACE editor.
+
+* Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
+
+* Fix log output counts for reference data.
+
+* Add REST endpoint for purging reference data.
+
+* Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
+
+## [v7.0-beta.69] - 2020-11-10
+
+* Improve handling of duplicates in reference data loads.
+
+* Improve error messages for reference loading failures.
+
+* Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
+
+* Improve PooledByteBufferOutputStream.
+
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
+* Issue **#1925** : Fixed logging error that was happening on search.
+
+* Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
+
+* Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
+
+* Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.
+
+* Removed rxjava.
+
+* Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
+
+* Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
+
+* Issue **#1915** : Fixed task context user identity for statistics searches.
+
+* Issue **#1915** : Fixed task context for statistics searches.
+
+* Merged external expression and query libraries into the source code and added Kryo serialisation to search results.
 
 * Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
 
@@ -434,20 +495,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1659** : Multiple fixes for new UI.
 
 * Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
-
-* Issue **#1678** : Fix range of data displayed in dashboard text pane.
-
-* Add labels to data display pagers.
-
-* Change data display to show one record at a time.
-
-* Change data display and data fetching to work with character ranges instead of line ranges.
-
-* Add 'Show Hidden Characters' and 'Use Vim Key Bindings' to the editor context menu.
-
-* Change data splitter to record the source of records (line/col range) without the line breaks.
-
-* Change stepping so that the source header row is not included with the first record for csv type data.
 
 
 ## [v7.0-beta.39] - 2020-07-06
@@ -2785,8 +2832,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.68...HEAD
-[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.68
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.69...HEAD
+[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
+[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
 [v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65

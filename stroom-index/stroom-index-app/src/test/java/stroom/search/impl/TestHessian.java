@@ -1,7 +1,9 @@
 package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
 import stroom.index.shared.AnalyzerType;
@@ -23,7 +25,6 @@ import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.GroupKey;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
@@ -103,7 +104,7 @@ class TestHessian {
 
     @Test
     void testNodeResult() throws IOException {
-        final GroupKey key = new GroupKey(ValString.create("test"));
+        final GroupKey key = new GroupKey(0, null, new Val[]{ValString.create("test")});
         final UnsafePairQueue<GroupKey, Item> pairQueue = new UnsafePairQueue<>();
         pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v1"), getGenerator("v2")}, 0));
         pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v4"), getGenerator("v6")}, 0));

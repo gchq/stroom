@@ -19,7 +19,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.kafka_clients
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.stroomStatsSchema
     compile libs.xml_apis
 

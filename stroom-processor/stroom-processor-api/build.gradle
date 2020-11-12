@@ -5,13 +5,13 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-data:stroom-data-store-api')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
     // Stroom external bintray libs
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
+    compile project(':stroom-docref')
 
     // 3rd party libs
     compile libs.jackson_annotations

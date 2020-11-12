@@ -14,6 +14,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+import stroom.util.time.StroomDuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +33,11 @@ import java.util.function.Predicate;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
- * That is intended for use with reference data with a very short life, i.e. context
+ * that is intended for use with reference data with a very short life, i.e. context
  * data that is transient and only required for the life of a single pipeline processor
  * task. As such is is not thread safe and only intended to be used to by a single thread.
  * It also does not support purge operations as it is expected that the store will be created,
- * populated, used then destroyed when no longer needed
+ * populated, used, then destroyed when no longer needed.
  */
 @NotThreadSafe
 public class RefDataOnHeapStore extends AbstractRefDataStore {
@@ -118,7 +119,9 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 if (doesStoreContainRanges) {
                     // we have ranges for this map def so we would expect to be able to convert the key
                     throw new RuntimeException(LogUtil.message(
-                            "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                            "Key {} cannot be used with the range store as it cannot be converted to a long",
+                            key),
+                            e);
                 }
                 // no ranges for this map def so the fact that we could not convert the key to a long
                 // is not a problem. Do nothing.
@@ -130,7 +133,8 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         return result;
     }
 
-    private Optional<RefDataValue> getValueByRange(NavigableMap<Range<Long>, RefDataValue> rangeSubMap, final long key) {
+    private Optional<RefDataValue> getValueByRange(final NavigableMap<Range<Long>, RefDataValue> rangeSubMap,
+                                                   final long key) {
 
         // We want to scan backwards over all keys with the passed mapDefinitionUid,
         // starting with a range from == key. E.g. with the following data
@@ -215,7 +219,14 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public void purgeOldData() {
-        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store");
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
+                "as the data is transient");
+    }
+
+    @Override
+    public void purgeOldData(final StroomDuration purgeAge) {
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
+                "as the data is transient");
     }
 
     @Override
@@ -274,7 +285,8 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
      * @param effectiveTimeMs
      */
     @Override
-    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
+    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
+                                   final long effectiveTimeMs) {
 
         return new OnHeapRefDataLoader(
                 refStreamDefinition,

@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-impl-fs')
     compile project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.eventLogging
 
     compile libs.flyway_core

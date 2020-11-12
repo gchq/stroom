@@ -15,7 +15,7 @@ dependencies {
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.eventLogging
 
     compile libs.guava

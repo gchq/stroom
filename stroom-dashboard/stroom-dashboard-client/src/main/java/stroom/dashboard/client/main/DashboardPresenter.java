@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
@@ -378,13 +379,30 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabConfig) {
-        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
-            if (ok) {
-                layoutPresenter.closeTab(tabConfig);
-                components.remove(tabConfig.getId(), true);
+    public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        // Figure out what tabs would remain after removal.
+        int hiddenCount = 0;
+        int totalCount = 0;
+        for (final TabConfig tab : tabLayoutConfig.getTabs()) {
+            if (tab != tabConfig) {
+                if (!tab.visible()) {
+                    hiddenCount++;
+                }
+                totalCount++;
             }
-        });
+        }
+
+        // If all remaining tabs are hidden the we can't allow removal.
+        if (totalCount > 0 && totalCount == hiddenCount) {
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
+        } else {
+            ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+                if (ok) {
+                    layoutPresenter.closeTab(tabConfig);
+                    components.remove(tabConfig.getId(), true);
+                }
+            });
+        }
     }
 
     @Override

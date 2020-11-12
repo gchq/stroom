@@ -1,0 +1,7 @@
+ext.moduleName = 'stroom.docref'
+
+dependencies {
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.swagger_annotations
+}
