@@ -131,8 +131,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 try {
                     if (filter == null || filter.apply(annotation)) {
                         // If we have more that one annotation then copy the original values into a new values object for each new row.
-                        if (annotations.size() > 1) {
-                            final Val[] copy = Arrays.copyOf(v, v.length);
+                        if (annotations.size() > 1 || values.length < fieldIndex.size()) {
+                            final Val[] copy = Arrays.copyOf(v, fieldIndex.size());
                             values = copy;
                         }
 
@@ -188,16 +188,19 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     private Long getLong(final Val[] values, final int index) {
-        Val val = values[index];
-        if (val == null) {
-            return null;
+        Long result = null;
+        if (values.length > index) {
+            Val val = values[index];
+            if (val != null) {
+                result = val.toLong();
+            }
         }
-        return val.toLong();
+        return result;
     }
 
     private void setValue(final Val[] values, final FieldIndex fieldIndex, final String field, final Annotation annotation) {
         final Integer index = fieldIndex.getPos(field);
-        if (index != null) {
+        if (index != null && values.length > index) {
             // Only add values that are missing.
             if (values[index] == null) {
                 final Val val = VALUE_MAPPING.get(field).apply(annotation);

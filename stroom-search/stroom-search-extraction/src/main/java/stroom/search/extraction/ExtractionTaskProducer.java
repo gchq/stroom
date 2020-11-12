@@ -166,9 +166,9 @@ class ExtractionTaskProducer extends TaskProducer {
                 });
     }
 
-    public void addToStoredDataQueue(final Val[] t) {
+    public void addToStoredDataQueue(final Val[] values) {
         try {
-            storedDataQueue.put(Optional.ofNullable(t));
+            storedDataQueue.put(Optional.ofNullable(values));
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();
