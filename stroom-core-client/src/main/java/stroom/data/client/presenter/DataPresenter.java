@@ -280,6 +280,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 .withPartNo(currentPartNo)
                 .withSegmentNumber(currentSegmentNo)
                 .withChildStreamType(currentChildDataType)
+                .withHighlight(currentSourceLocation != null
+                        ? currentSourceLocation.getHighlight()
+                        : null)
                 .build();
 
         sourceTabPlugin.open(sourceLocation, true);

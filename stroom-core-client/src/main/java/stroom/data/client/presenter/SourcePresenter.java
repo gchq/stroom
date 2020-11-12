@@ -45,8 +45,8 @@ import java.util.function.Consumer;
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers {
 
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
-    private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_000;
-    private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 3;
+    private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
+    private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
@@ -104,6 +104,32 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         textPresenter.getFormatAction().setAvailable(false);
     }
 
+    private void updateStepControlVisibility() {
+        final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
+                PermissionNames.STEPPING_PERMISSION);
+
+        if (hasStepPermission && !isSteppingSource) {
+            textPresenter.setControlsVisible(true);
+        } else {
+            textPresenter.setControlsVisible(false);
+        }
+    }
+
+    /**
+     * Sets the source location/range according to the passed {@link SourceLocation}
+     * If there is a highlight and it is outside the visible range then so be it.
+     * Only re-fetches the data if the location/range has changed
+     */
+    public void setSourceLocation(final SourceLocation sourceLocation) {
+        setSourceLocation(sourceLocation, false);
+    }
+
+    /**
+     * Sets the source location/range according to the passed {@link SourceLocation}
+     * If there is a highlight and it is outside the visible range then so be it.
+     * @param force If true forces a re-fetch of the data even if the location/range is
+     *              the same as last time.
+     */
     public void setSourceLocation(final SourceLocation sourceLocation, final boolean force) {
         updateStepControlVisibility();
 
@@ -117,26 +143,20 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         }
     }
 
-    private void updateStepControlVisibility() {
-        final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
-                PermissionNames.STEPPING_PERMISSION);
-
-        if (hasStepPermission && !isSteppingSource) {
-            textPresenter.setControlsVisible(true);
-        } else {
-            textPresenter.setControlsVisible(false);
-        }
-    }
-
+    /**
+     * Will attempt to set the source range using the passed highlight, i.e. if the highlight
+     * is towards the end of the data then it will set the range to enclose the highlight.
+     */
     public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
         currentHighlight = sourceLocation.getHighlight();
-        if (sourceLocation.getHighlight() == null || receivedSourceLocation == null) {
-            // no highlight or no previous data so just get the requested data.
+//        if (sourceLocation.getHighlight() == null || receivedSourceLocation == null) {
+        if (sourceLocation.getHighlight() == null) {
+            // no highlight so just get the requested data.
             setSourceLocation(sourceLocation);
         } else {
             updateStepControlVisibility();
             final TextRange highlight = sourceLocation.getHighlight();
-            if (isCurrentSourceSuitable(sourceLocation)) {
+            if (receivedSourceLocation != null && isCurrentSourceSuitable(sourceLocation)) {
                 // The requested highlight is inside the currently held data so just update
                 // the highlight in the editor
 //                GWT.log("Using existing source");
@@ -177,7 +197,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 sourceLocation,
                 requestedSourceLocation);
 
-        final Optional<Integer> optCurrLineCount = receivedSourceLocation.getOptDataRange()
+        final Optional<Integer> optCurrLineCount = Optional.ofNullable(receivedSourceLocation)
+                .flatMap(SourceLocation::getOptDataRange)
                 .flatMap(DataRange::getLineCount);
 
         if (optCurrLineCount
@@ -249,20 +270,16 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         receivedSourceLocation.getDataRange().getLocationFrom(),
                         receivedSourceLocation.getDataRange().getLocationTo());
 
-            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
-                    + " isSameSource: " + receivedSourceLocation.isSameSource(sourceLocation)
-                    + " isInsideRange: " + sourceLocation.getHighlight().isInsideRange(
-                        receivedSourceLocation.getDataRange().getLocationFrom(),
-                        receivedSourceLocation.getDataRange().getLocationTo())
-                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
-                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
-                    + " result: " + result);
+//            GWT.log("Highlight: " + sourceLocation.getHighlight().toString()
+//                    + " isSameSource: " + receivedSourceLocation.isSameSource(sourceLocation)
+//                    + " isInsideRange: " + sourceLocation.getHighlight().isInsideRange(
+//                        receivedSourceLocation.getDataRange().getLocationFrom(),
+//                        receivedSourceLocation.getDataRange().getLocationTo())
+//                    + " received data: " + receivedSourceLocation.getDataRange().getLocationFrom().toString()
+//                    + " => " + receivedSourceLocation.getDataRange().getLocationTo().toString()
+//                    + " result: " + result);
         }
         return result;
-    }
-
-    public void setSourceLocation(final SourceLocation sourceLocation) {
-        setSourceLocation(sourceLocation, false);
     }
 
     public void setNavigatorControlsVisible(final boolean isVisible) {

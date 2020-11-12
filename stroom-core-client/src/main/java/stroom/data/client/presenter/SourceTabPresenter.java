@@ -15,7 +15,7 @@ import com.gwtplatform.mvp.client.View;
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     private final ClassificationWrappedSourcePresenter sourcePresenter;
-    private SourceLocation sourceLocation = null;
+//    private SourceLocation sourceLocation = null;
     private SourceKey sourceKey;
 
     @Inject
@@ -49,9 +49,12 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                     + type)
                 : "Source Data";
     }
+    public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
+        sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
+    }
 
     public void setSourceLocation(final SourceLocation sourceLocation) {
-        this.sourceLocation = sourceLocation;
+//        this.sourceLocation = sourceLocation;
         sourcePresenter.setSourceLocation(sourceLocation);
     }
 
@@ -67,9 +70,4 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
     public interface SourceTabView extends View {
         void setSourceView(final ClassificationWrapperView sourceView);
     }
-
-
-
-
-
 }

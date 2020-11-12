@@ -106,6 +106,10 @@ public class SourceTabPlugin extends Plugin {
 
             presenter = existing;
 
+            // Update the source location/range on the existing tab as we
+            // may want to highlight a different record
+            presenter.setSourceLocationUsingHighlight(sourceLocation);
+
         } else if (forceOpen) {
             // Start spinning.
             TaskStartEvent.fire(this, "Opening document");
@@ -115,7 +119,7 @@ public class SourceTabPlugin extends Plugin {
 
             final SourceTabPresenter sourceTabPresenter = createPresenter(sourceKey);
             presenter = sourceTabPresenter;
-            sourceTabPresenter.setSourceLocation(sourceLocation);
+            sourceTabPresenter.setSourceLocationUsingHighlight(sourceLocation);
 
             // Register the tab as being open.
             keyToPresenterMap.put(sourceKey, sourceTabPresenter);

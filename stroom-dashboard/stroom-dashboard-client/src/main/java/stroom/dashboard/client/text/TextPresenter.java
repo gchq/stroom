@@ -282,6 +282,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Field colFromField = chooseBestField(tablePresenter, textSettings.getColFromField());
                     final Field lineToField = chooseBestField(tablePresenter, textSettings.getLineToField());
                     final Field colToField = chooseBestField(tablePresenter, textSettings.getColToField());
+
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
                     currentStreamId = getLong(streamIdField, selected);

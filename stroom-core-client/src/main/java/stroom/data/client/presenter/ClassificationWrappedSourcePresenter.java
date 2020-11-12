@@ -25,7 +25,7 @@ public class ClassificationWrappedSourcePresenter
         extends ClassificationWrapperPresenter {
 
     private final SourcePresenter sourcePresenter;
-    private SourceLocation sourceLocation;
+//    private SourceLocation sourceLocation;
 
     @Inject
     public ClassificationWrappedSourcePresenter(final EventBus eventBus,
@@ -40,7 +40,11 @@ public class ClassificationWrappedSourcePresenter
 
     public void clear() {
         sourcePresenter.clear();
-        this.sourceLocation = null;
+//        this.sourceLocation = null;
+    }
+
+    public void setSourceLocationUsingHighlight(final SourceLocation sourceLocation) {
+        sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
     }
 
     public void setSourceLocation(final SourceLocation sourceLocation, final boolean force) {

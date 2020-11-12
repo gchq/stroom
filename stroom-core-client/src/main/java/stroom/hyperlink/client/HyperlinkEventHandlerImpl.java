@@ -12,6 +12,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.TextRange;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -175,11 +176,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     }
                 });
 
-//        if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
-//            builder.withHighlight(new TextRange(
-//                    new DefaultLocation(lineFrom, colFrom),
-//                    new DefaultLocation(lineTo, colTo)));
-//        }
+        if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+            builder.withHighlight(new TextRange(
+                    new DefaultLocation(lineFrom, colFrom),
+                    new DefaultLocation(lineTo, colTo)));
+        }
 
         final SourceLocation sourceLocation = builder.build();
 
