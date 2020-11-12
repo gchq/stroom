@@ -47,7 +47,6 @@ dependencies {
     compile libs.guava
     compile libs.guice4
     compile libs.gwt_servlet
-    compile libs.hessian
     compile libs.hikari
     compile libs.jackson_annotations
     compile libs.jackson_core

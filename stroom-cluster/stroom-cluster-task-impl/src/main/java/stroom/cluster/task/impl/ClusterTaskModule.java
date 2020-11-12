@@ -16,7 +16,6 @@
 
 package stroom.cluster.task.impl;
 
-import stroom.cluster.api.ClusterServiceBinder;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.TargetNodeSetFactory;
@@ -35,8 +34,6 @@ public class ClusterTaskModule extends AbstractModule {
         bind(ClusterResultCollectorCache.class).to(ClusterResultCollectorCacheImpl.class);
         bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
-
-        ClusterServiceBinder.create(binder());
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ClusterResultCollectorCacheImpl.class);

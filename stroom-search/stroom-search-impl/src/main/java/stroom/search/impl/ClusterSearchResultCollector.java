@@ -144,11 +144,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public boolean onReceive() {
-        return true;
-    }
-
-    @Override
     public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
         boolean success = true;
         try {

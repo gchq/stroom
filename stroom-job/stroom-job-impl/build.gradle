@@ -18,7 +18,6 @@ dependencies {
     
     compile libs.eventLogging
     compile libs.guice4
-    compile libs.hessian
     compile libs.dropwizard_lifecycle
     compile libs.javax_inject
     compile libs.slf4j_api

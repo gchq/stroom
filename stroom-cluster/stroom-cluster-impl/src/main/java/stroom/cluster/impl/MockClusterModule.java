@@ -16,16 +16,13 @@
 
 package stroom.cluster.impl;
 
-import com.google.inject.AbstractModule;
-import stroom.cluster.api.ClusterCallServiceLocal;
-import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
+
+import com.google.inject.AbstractModule;
 
 public class MockClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterCallServiceLocal.class).to(ClusterCallServiceLocalImpl.class);
-        bind(ClusterCallServiceRemote.class).to(ClusterCallServiceRemoteImpl.class);
         bind(ClusterNodeManager.class).to(MockClusterNodeManager.class);
     }
 }

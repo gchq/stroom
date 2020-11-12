@@ -19,8 +19,6 @@ package stroom.cluster.task.api;
 public interface ClusterResultCollector<R> {
     CollectorId getId();
 
-    boolean onReceive();
-
     boolean onSuccess(String nodeName, R r);
 
     void onFailure(String nodeName, Throwable throwable);
