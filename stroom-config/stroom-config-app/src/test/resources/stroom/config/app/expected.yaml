@@ -69,11 +69,6 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-  clusterTask:
-    clusterResultCollectorCache:
-      maximumSize: 1000000
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
@@ -490,10 +485,6 @@ appConfig:
         expireAfterWrite: null
     remoteSearchResultCache:
       maximumSize: 100
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
-    clusterResultCollectorCache:
-      maximumSize: 1000000
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
   searchable:

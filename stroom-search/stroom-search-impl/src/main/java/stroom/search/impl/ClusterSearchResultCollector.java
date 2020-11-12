@@ -16,10 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterResultCollector;
-import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.cluster.task.api.CollectorId;
-import stroom.cluster.task.api.CollectorIdFactory;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.Data;
@@ -44,12 +40,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
+public class ClusterSearchResultCollector implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
-    private final CollectorId id;
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
     private final CompletionState completionState = new CompletionState();
     private final Executor executor;
@@ -66,7 +60,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final AsyncSearchTask task,
                                  final String nodeName,
                                  final Set<String> highlights,
-                                 final ClusterResultCollectorCache clusterResultCollectorCache,
                                  final Coprocessors coprocessors) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
@@ -74,12 +67,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.task = task;
         this.nodeName = nodeName;
         this.highlights = highlights;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.coprocessors = coprocessors;
-
-        id = CollectorIdFactory.create();
-
-        clusterResultCollectorCache.put(id, this);
     }
 
     public void start() {
@@ -115,7 +103,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public void destroy() {
-        clusterResultCollectorCache.remove(id);
         completionState.complete();
     }
 
@@ -138,12 +125,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return completionState.awaitCompletion(timeout, unit);
     }
 
-    @Override
-    public CollectorId getId() {
-        return id;
-    }
-
-    @Override
     public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
         boolean success = true;
         try {
@@ -163,7 +144,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return success;
     }
 
-    @Override
     public synchronized void onFailure(final String nodeName, final Throwable throwable) {
         getErrorSet(nodeName).add(throwable.getMessage());
     }
@@ -213,9 +193,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public Data getData(final String componentId) {
-        // Keep the cluster result collector cache fresh.
-        clusterResultCollectorCache.get(getId());
-
         return coprocessors.getData(componentId);
     }
 

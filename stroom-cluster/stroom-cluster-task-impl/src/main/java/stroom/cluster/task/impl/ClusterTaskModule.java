@@ -16,30 +16,16 @@
 
 package stroom.cluster.task.impl;
 
-import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.lifecycle.api.LifecycleBinder;
-import stroom.util.RunnableWrapper;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterResultCollectorCache.class).to(ClusterResultCollectorCacheImpl.class);
         bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ClusterResultCollectorCacheImpl.class);
-
-        LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(ClusterResultCollectorCacheShutdown.class);
     }
 
     @Override
@@ -52,12 +38,5 @@ public class ClusterTaskModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
-    }
-
-    private static class ClusterResultCollectorCacheShutdown extends RunnableWrapper {
-        @Inject
-        ClusterResultCollectorCacheShutdown(final ClusterResultCollectorCacheImpl clusterResultCollectorCache) {
-            super(clusterResultCollectorCache::shutdown);
-        }
     }
 }

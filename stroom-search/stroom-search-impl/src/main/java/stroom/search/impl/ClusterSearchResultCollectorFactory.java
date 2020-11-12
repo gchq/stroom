@@ -16,7 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
@@ -29,17 +28,14 @@ public class ClusterSearchResultCollectorFactory {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     @Inject
     private ClusterSearchResultCollectorFactory(final Executor executor,
                                                 final TaskContextFactory taskContextFactory,
-                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                                final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
@@ -52,7 +48,6 @@ public class ClusterSearchResultCollectorFactory {
                 task,
                 nodeName,
                 highlights,
-                clusterResultCollectorCache,
                 coprocessors);
     }
 }

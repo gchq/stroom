@@ -2,7 +2,6 @@ package stroom.config.app;
 
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
@@ -73,8 +72,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -115,7 +112,6 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getByteBufferPoolConfig, AppConfig::setByteBufferPoolConfig, ByteBufferPoolConfig.class);
         bindConfig(AppConfig::getClusterConfig, AppConfig::setClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, AppConfig::setClusterLockConfig, ClusterLockConfig.class);
-        bindConfig(AppConfig::getClusterTaskConfig, AppConfig::setClusterTaskConfig, ClusterTaskConfig.class);
         bindConfig(AppConfig::getCommonDbConfig, AppConfig::setCommonDbConfig, CommonDbConfig.class);
         bindConfig(AppConfig::getContentPackImportConfig, AppConfig::setContentPackImportConfig, ContentPackImportConfig.class);
         bindConfig(AppConfig::getLegacyDbConfig, AppConfig::setLegacyDbConfig, LegacyDbConfig.class);

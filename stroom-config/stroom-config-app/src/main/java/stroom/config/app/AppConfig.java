@@ -4,7 +4,6 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
@@ -99,7 +98,6 @@ public class AppConfig extends AbstractConfig {
     private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
-    private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
     private CommonDbConfig commonDbConfig = new CommonDbConfig();
     private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
     private LegacyDbConfig legacyDbConfig = new LegacyDbConfig();
@@ -200,16 +198,6 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setClusterLockConfig(ClusterLockConfig clusterLockConfig) {
         this.clusterLockConfig = clusterLockConfig;
-    }
-
-    @JsonProperty(PROP_NAME_CLUSTER_TASK)
-    public ClusterTaskConfig getClusterTaskConfig() {
-        return clusterTaskConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterTaskConfig(final ClusterTaskConfig clusterTaskConfig) {
-        this.clusterTaskConfig = clusterTaskConfig;
     }
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)

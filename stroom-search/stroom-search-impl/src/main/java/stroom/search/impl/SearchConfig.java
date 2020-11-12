@@ -35,10 +35,6 @@ public class SearchConfig extends AbstractConfig {
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
-    private CacheConfig clusterResultCollectorCache = new CacheConfig.Builder()
-            .maximumSize(1000000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(1))
-            .build();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
@@ -100,15 +96,6 @@ public class SearchConfig extends AbstractConfig {
 
     public void setRemoteSearchResultCache(final CacheConfig remoteSearchResultCache) {
         this.remoteSearchResultCache = remoteSearchResultCache;
-    }
-
-    @JsonProperty("clusterResultCollectorCache")
-    public CacheConfig getClusterResultCollectorCache() {
-        return clusterResultCollectorCache;
-    }
-
-    public void setClusterResultCollectorCache(final CacheConfig clusterResultCollectorCache) {
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     @Override
