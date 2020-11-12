@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
@@ -37,7 +38,9 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
             // do the parsing which will output to the tinyBuilder
             saxDocumentParser.parse(inputStream);
         } catch (IOException | FastInfosetException | SAXException e) {
-            throw new RuntimeException("Error parsing fastinfoset bytes, " + e.getMessage(), e);
+            throw new RuntimeException("Error parsing fastinfoset bytes, "
+                    + ByteBufferUtils.byteBufferInfo(inputStream.getByteBuffer()) + " "
+                    + e.getMessage(), e);
         }
 
         saxDocumentParser.reset();

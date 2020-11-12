@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix log output counts for reference data.
+
+* Add REST endpoint for purging reference data.
+
 * Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
 
 
