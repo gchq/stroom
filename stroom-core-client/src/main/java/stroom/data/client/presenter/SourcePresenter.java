@@ -63,6 +63,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
+    private RowCount<Long> exactCharCount = null;
 
 
     @Inject
@@ -330,8 +331,23 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void handleResponse(final AbstractFetchDataResult result) {
 
         if (result instanceof FetchDataResult) {
+            final FetchDataResult fetchDataResult = (FetchDataResult) result;
+            receivedSourceLocation = result.getSourceLocation();
+
+            if (receivedSourceLocation != null
+                    && lastResult != null
+                    && receivedSourceLocation.isSameSource(lastResult.getSourceLocation())) {
+                // If we encounter an exact char count for this source then hold onto it
+                // so we can still show it if we page backwards
+                if (fetchDataResult.getTotalCharacterCount().isExact()
+                        || exactCharCount == null) {
+                    exactCharCount = fetchDataResult.getTotalCharacterCount();
+                }
+            } else {
+                exactCharCount = null;
+            }
+
             lastResult = (FetchDataResult) result;
-            receivedSourceLocation = lastResult.getSourceLocation();
             // hold this separately as we may change the highlight without fetching new data
             currentHighlight = receivedSourceLocation.getHighlight();
 
@@ -401,10 +417,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             dataNavigatorData.partsCount = result.getTotalItemCount();
         }
 
-        DataRange dataRange = Optional.ofNullable(result.getSourceLocation())
-                .map(SourceLocation::getDataRange)
-                .orElse(null);
-
+//        DataRange dataRange = Optional.ofNullable(result.getSourceLocation())
+//                .map(SourceLocation::getDataRange)
+//                .orElse(null);
+//
         characterNavigatorPresenter.refreshNavigator();
     }
 
@@ -561,10 +577,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public Optional<Long> getTotalChars() {
-            return Optional.ofNullable(lastResult)
-                    .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
+            if (exactCharCount != null) {
+                return exactCharCount.asOptional();
+            } else {
+                return Optional.ofNullable(lastResult)
+                        .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
+                        .flatMap(RowCount::asOptional);
+            }
         }
 
         @Override
@@ -619,8 +638,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     public interface SourceView extends View {
 
-//        void setSourceLocation(final SourceLocation sourceLocation);
-
         void setTextView(final TextView textView);
 
         void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
@@ -632,11 +649,5 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                       final long partNo,
                       final long segmentNo,
                       final String type);
-
-//        void setNavigatorClickHandler(final Runnable clickHandler);
-
-//        void setNavigatorData(final HasCharacterData dataNavigatorData);
-
-//        void refreshNavigator();
     }
 }
