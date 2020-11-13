@@ -46,8 +46,8 @@ public class CoprocessorsFactory {
         for (final Entry<TableSettings, Set<String>> entry : groupMap.entrySet()) {
             final TableSettings tableSettings = entry.getKey();
             final Set<String> componentIds = entry.getValue();
-            final CoprocessorKey key = new CoprocessorKey(i++, componentIds.stream().sorted().toArray(String[]::new));
-            coprocessorSettings.add(new TableCoprocessorSettings(key, tableSettings));
+            final String[] componentIdArray = componentIds.stream().sorted().toArray(String[]::new);
+            coprocessorSettings.add(new TableCoprocessorSettings(i++, componentIdArray, tableSettings));
         }
 
         return coprocessorSettings;
@@ -69,18 +69,18 @@ public class CoprocessorsFactory {
         // Create error consumer.
         final ErrorConsumer errorConsumer = new ErrorConsumer();
 
-        final Map<CoprocessorKey, Coprocessor> coprocessorMap = new HashMap<>();
+        final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(coprocessorSettings, fieldIndex, paramMap, errorConsumer);
 
                 if (coprocessor != null) {
-                    coprocessorMap.put(coprocessorSettings.getCoprocessorKey(), coprocessor);
+                    coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
 
                     if (coprocessor instanceof TableCoprocessor) {
                         final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
-                        for (final String componentId : coprocessorSettings.getCoprocessorKey().getComponentIds()) {
+                        for (final String componentId : coprocessorSettings.getComponentIds()) {
                             componentIdCoprocessorMap.put(componentId, tableCoprocessor);
                         }
                     }
@@ -116,21 +116,21 @@ public class CoprocessorsFactory {
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
                                final Consumer<Throwable> errorConsumer) {
-        final CoprocessorKey coprocessorKey = settings.getCoprocessorKey();
+        final int coprocessorId = settings.getCoprocessorId();
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-            final TableDataStore tableDataStore = create(coprocessorKey, tableSettings, fieldIndex, paramMap);
-            return new TableCoprocessor(coprocessorKey, tableSettings, tableDataStore, errorConsumer);
+            final TableDataStore tableDataStore = create(coprocessorId, tableSettings, fieldIndex, paramMap);
+            return new TableCoprocessor(tableSettings, tableDataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
-            return new EventCoprocessor(coprocessorKey, eventCoprocessorSettings, fieldIndex, errorConsumer);
+            return new EventCoprocessor(coprocessorId, eventCoprocessorSettings, fieldIndex, errorConsumer);
         }
 
         return null;
     }
 
-    private TableDataStore create(final CoprocessorKey coprocessorKey,
+    private TableDataStore create(final int coprocessorId,
                                   final TableSettings tableSettings,
                                   final FieldIndex fieldIndex,
                                   final Map<String, String> paramMap) {
@@ -142,7 +142,7 @@ public class CoprocessorsFactory {
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
         return new TableDataStore(
-                coprocessorKey,
+                coprocessorId,
                 tableSettings,
                 fieldIndex,
                 paramMap,

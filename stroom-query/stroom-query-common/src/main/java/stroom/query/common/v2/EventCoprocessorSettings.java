@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class EventCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
-    private final CoprocessorKey coprocessorKey;
+    private final int coprocessorId;
     @JsonProperty
     private final EventRef minEvent;
     @JsonProperty
@@ -37,13 +37,13 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
     private final long maxEventsPerStream;
 
     @JsonCreator
-    public EventCoprocessorSettings(@JsonProperty("coprocessorKey") final CoprocessorKey coprocessorKey,
+    public EventCoprocessorSettings(@JsonProperty("coprocessorId") final int coprocessorId,
                                     @JsonProperty("minEvent") final EventRef minEvent,
                                     @JsonProperty("maxEvent") final EventRef maxEvent,
                                     @JsonProperty("maxStreams") final long maxStreams,
                                     @JsonProperty("maxEvents") final long maxEvents,
                                     @JsonProperty("maxEventsPerStream") final long maxEventsPerStream) {
-        this.coprocessorKey = coprocessorKey;
+        this.coprocessorId = coprocessorId;
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
@@ -52,8 +52,13 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
     }
 
     @Override
-    public CoprocessorKey getCoprocessorKey() {
-        return coprocessorKey;
+    public int getCoprocessorId() {
+        return coprocessorId;
+    }
+
+    @Override
+    public String[] getComponentIds() {
+        return new String[0];
     }
 
     public EventRef getMinEvent() {

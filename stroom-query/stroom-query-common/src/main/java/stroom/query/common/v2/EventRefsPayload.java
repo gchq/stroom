@@ -24,20 +24,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class EventRefsPayload implements Payload {
     @JsonProperty
-    private final CoprocessorKey key;
+    private final int coprocessorId;
     @JsonProperty
     private final EventRefs eventRefs;
 
     @JsonCreator
-    public EventRefsPayload(@JsonProperty("key") final CoprocessorKey key,
+    public EventRefsPayload(@JsonProperty("coprocessorId") final int coprocessorId,
                             @JsonProperty("eventRefs") final EventRefs eventRefs) {
-        this.key = key;
+        this.coprocessorId = coprocessorId;
         this.eventRefs = eventRefs;
     }
 
     @Override
-    public CoprocessorKey getKey() {
-        return key;
+    public int getCoprocessorId() {
+        return coprocessorId;
     }
 
     public EventRefs getEventRefs() {

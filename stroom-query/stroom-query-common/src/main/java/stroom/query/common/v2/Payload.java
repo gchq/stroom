@@ -28,5 +28,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = EventRefsPayload.class, name = "event")
 })
 public interface Payload {
-    CoprocessorKey getKey();
+    int getCoprocessorId();
 }

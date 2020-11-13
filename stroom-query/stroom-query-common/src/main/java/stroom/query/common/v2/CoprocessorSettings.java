@@ -30,5 +30,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = EventCoprocessorSettings.class, name = "event")
 })
 public interface CoprocessorSettings extends Serializable {
-    CoprocessorKey getCoprocessorKey();
+    int getCoprocessorId();
+
+    String[] getComponentIds();
 }

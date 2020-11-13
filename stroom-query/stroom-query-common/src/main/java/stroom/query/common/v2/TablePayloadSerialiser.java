@@ -43,8 +43,8 @@ public class TablePayloadSerialiser {
         }
     }
 
-    public TablePayload getPayload(final CoprocessorKey coprocessorKey, final Item[] items) {
+    public TablePayload getPayload(final int coprocessorId, final Item[] items) {
         final byte[] data = toByteArray(items);
-        return new TablePayload(coprocessorKey, data);
+        return new TablePayload(coprocessorId, data);
     }
 }

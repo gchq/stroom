@@ -21,14 +21,14 @@ import java.util.function.Consumer;
 public class Coprocessors implements Iterable<Coprocessor> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
-    private final Map<CoprocessorKey, Coprocessor> coprocessorMap;
+    private final Map<Integer, Coprocessor> coprocessorMap;
     private final Map<String, TableCoprocessor> componentIdCoprocessorMap;
     private final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap;
     private final FieldIndex fieldIndex;
     private final LongAdder counter = new LongAdder();
     private final ErrorConsumer errorConsumer;
 
-    Coprocessors(final Map<CoprocessorKey, Coprocessor> coprocessorMap,
+    Coprocessors(final Map<Integer, Coprocessor> coprocessorMap,
                  final Map<String, TableCoprocessor> componentIdCoprocessorMap,
                  final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap,
                  final FieldIndex fieldIndex,
@@ -61,7 +61,7 @@ public class Coprocessors implements Iterable<Coprocessor> {
         if (payloads != null && payloads.size() > 0) {
             partialSuccess = false;
             for (final Payload payload : payloads) {
-                final boolean success = get(payload.getKey()).consumePayload(payload);
+                final boolean success = get(payload.getCoprocessorId()).consumePayload(payload);
                 if (success) {
                     partialSuccess = true;
                 }
@@ -84,8 +84,8 @@ public class Coprocessors implements Iterable<Coprocessor> {
         return errorConsumer;
     }
 
-    public Coprocessor get(final CoprocessorKey key) {
-        return coprocessorMap.get(key);
+    public Coprocessor get(final int coprocessorId) {
+        return coprocessorMap.get(coprocessorId);
     }
 
     public Data getData(final String componentId) {

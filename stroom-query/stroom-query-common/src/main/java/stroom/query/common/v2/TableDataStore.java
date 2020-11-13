@@ -42,7 +42,7 @@ public class TableDataStore {
     private final Map<GroupKey, Item> groupingMap = new ConcurrentHashMap<>();
     private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
-    private final CoprocessorKey coprocessorKey;
+    private final int coprocessorId;
     private final FieldIndex fieldIndex;
     private final CompiledFields compiledFields;
     private final CompiledSorter compiledSorter;
@@ -57,13 +57,13 @@ public class TableDataStore {
 
     private volatile boolean hasEnoughData;
 
-    public TableDataStore(final CoprocessorKey coprocessorKey,
+    public TableDataStore(final int coprocessorId,
                           final TableSettings tableSettings,
                           final FieldIndex fieldIndex,
                           final Map<String, String> paramMap,
                           final Sizes maxResults,
                           final Sizes storeSize) {
-        this.coprocessorKey = coprocessorKey;
+        this.coprocessorId = coprocessorId;
         this.fieldIndex = fieldIndex;
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
@@ -108,30 +108,10 @@ public class TableDataStore {
         if (itemList.size() > 0) {
             final Item[] itemsArray = itemList.toArray(new Item[0]);
             final byte[] data = tablePayloadSerialiser.toByteArray(itemsArray);
-            payload = new TablePayload(coprocessorKey, data);
+            payload = new TablePayload(coprocessorId, data);
         }
 
         return payload;
-//
-//        final UnsafePairQueue<GroupKey, Item> outputQueue = new UnsafePairQueue<>();
-//
-//        // Create a partitioner to perform result reduction if needed.
-//        final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
-//                compiledDepths.getMaxDepth());
-//        partitioner.setOutputCollector(outputQueue);
-//
-//        // Partition the data prior to forwarding to the target node.
-//        partitioner.read(queue);
-//
-//        // Perform partitioning.
-//        partitioner.partition();
-//
-//        // Don't create a payload if the queue is empty.
-//        if (outputQueue.size() == 0) {
-//            return null;
-//        }
-//
-//        return tablePayloadSerialiser.getPayload(settings.getCoprocessorId(), outputQueue);
     }
 
     void add(final Val[] values) {
@@ -201,28 +181,6 @@ public class TableDataStore {
         }
         return generators;
     }
-
-
-//    void addAll(final List<Item> newQueue) {
-//        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("addQueue called for {} items", newQueue.size()));
-//        if (newQueue != null) {
-//            if (!Thread.currentThread().isInterrupted() && !hasEnoughData) {
-//                // Add the new queue to the pending merge queue ready for
-//                // merging.
-//                try {
-//                    mergeQueue(newQueue);
-//                } catch (final RuntimeException e) {
-//                    LOGGER.error(e.getMessage(), e);
-//                }
-//            }
-//        }
-//
-//        LAMBDA_LOGGER.trace(() -> "Finished adding items to the queue");
-//    }
-//
-//    private void mergeQueue(final List<Item> newQueue) {
-//        newQueue.forEach(item -> addToGroupMap(item));
-//    }
 
     private void addToGroupMap(final Item item) {
         LOGGER.trace(() -> "addToGroupMap called for item");

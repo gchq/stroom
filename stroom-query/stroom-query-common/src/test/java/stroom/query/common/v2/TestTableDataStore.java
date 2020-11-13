@@ -311,9 +311,8 @@ class TestTableDataStore {
 
         final FieldIndex fieldIndex = new FieldIndex();
 
-        final CoprocessorKey coprocessorKey = new CoprocessorKey(1, new String[]{"test"});
         return new TableDataStore(
-                coprocessorKey,
+                0,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),

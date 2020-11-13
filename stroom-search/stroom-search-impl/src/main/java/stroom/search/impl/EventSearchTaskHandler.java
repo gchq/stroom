@@ -19,7 +19,6 @@ package stroom.search.impl;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CoprocessorKey;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.EventCoprocessor;
@@ -67,9 +66,9 @@ public class EventSearchTaskHandler {
             // Replace expression parameters.
             ExpressionUtil.replaceExpressionParameters(query);
 
-            final CoprocessorKey coprocessorKey = new CoprocessorKey(0, new String[]{"eventCoprocessor"});
+            final int coprocessorId = 0;
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(
-                    coprocessorKey,
+                    coprocessorId,
                     task.getMinEvent(),
                     task.getMaxEvent(),
                     task.getMaxStreams(),
@@ -87,7 +86,7 @@ public class EventSearchTaskHandler {
                     nowEpochMilli);
 
             final Coprocessors coprocessors = coprocessorsFactory.create(Collections.singletonList(settings), query.getParams());
-            final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorKey);
+            final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create a collector to store search results.
             final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(

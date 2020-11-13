@@ -24,20 +24,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class TablePayload implements Payload {
     @JsonProperty
-    private final CoprocessorKey key;
+    private final int coprocessorId;
     @JsonProperty
     private final byte[] data;
 
     @JsonCreator
-    public TablePayload(@JsonProperty("key") final CoprocessorKey key,
+    public TablePayload(@JsonProperty("coprocessorId") final int coprocessorId,
                         @JsonProperty("data") final byte[] data) {
-        this.key = key;
+        this.coprocessorId = coprocessorId;
         this.data = data;
     }
 
     @Override
-    public CoprocessorKey getKey() {
-        return key;
+    public int getCoprocessorId() {
+        return coprocessorId;
     }
 
     public byte[] getData() {

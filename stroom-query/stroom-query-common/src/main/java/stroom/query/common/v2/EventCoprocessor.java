@@ -30,7 +30,7 @@ public class EventCoprocessor implements Coprocessor {
     private static final String EVENT_ID = "EventId";
 
     private final Consumer<Throwable> errorConsumer;
-    private final CoprocessorKey coprocessorKey;
+    private final int coprocessorId;
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;
@@ -44,11 +44,11 @@ public class EventCoprocessor implements Coprocessor {
     private volatile EventRef maxEvent;
     private volatile EventRefs eventRefs;
 
-    public EventCoprocessor(final CoprocessorKey coprocessorKey,
+    public EventCoprocessor(final int coprocessorId,
                             final EventCoprocessorSettings settings,
                             final FieldIndex fieldIndex,
                             final Consumer<Throwable> errorConsumer) {
-        this.coprocessorKey = coprocessorKey;
+        this.coprocessorId = coprocessorId;
         this.errorConsumer = errorConsumer;
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
@@ -130,7 +130,7 @@ public class EventCoprocessor implements Coprocessor {
 
         if (refs != null && refs.size() > 0) {
             refs.trim();
-            return new EventRefsPayload(coprocessorKey, refs);
+            return new EventRefsPayload(coprocessorId, refs);
         }
 
         return null;

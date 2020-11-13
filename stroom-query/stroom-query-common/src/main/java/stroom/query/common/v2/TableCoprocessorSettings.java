@@ -26,20 +26,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class TableCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
-    private final CoprocessorKey coprocessorKey;
+    private final int coprocessorId;
+    @JsonProperty
+    private final String[] componentIds;
     @JsonProperty
     private final TableSettings tableSettings;
 
     @JsonCreator
-    public TableCoprocessorSettings(@JsonProperty("coprocessorKey") final CoprocessorKey coprocessorKey,
+    public TableCoprocessorSettings(@JsonProperty("coprocessorId") final int coprocessorId,
+                                    @JsonProperty("componentIds") final String[] componentIds,
                                     @JsonProperty("tableSettings") final TableSettings tableSettings) {
-        this.coprocessorKey = coprocessorKey;
+        this.coprocessorId = coprocessorId;
+        this.componentIds = componentIds;
         this.tableSettings = tableSettings;
     }
 
     @Override
-    public CoprocessorKey getCoprocessorKey() {
-        return coprocessorKey;
+    public int getCoprocessorId() {
+        return coprocessorId;
+    }
+
+    @Override
+    public String[] getComponentIds() {
+        return componentIds;
     }
 
     public TableSettings getTableSettings() {

@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
-    private final CoprocessorKey coprocessorKey;
     private final TableSettings tableSettings;
     private final TableDataStore tableDataStore;
 
@@ -35,11 +34,9 @@ public class TableCoprocessor implements Coprocessor {
     private final AtomicLong valuesCount = new AtomicLong();
     private final AtomicLong completionCount = new AtomicLong();
 
-    public TableCoprocessor(final CoprocessorKey coprocessorKey,
-                            final TableSettings tableSettings,
+    public TableCoprocessor(final TableSettings tableSettings,
                             final TableDataStore tableDataStore,
                             final Consumer<Throwable> errorConsumer) {
-        this.coprocessorKey = coprocessorKey;
         this.tableSettings = tableSettings;
         this.tableDataStore = tableDataStore;
         this.errorConsumer = errorConsumer;

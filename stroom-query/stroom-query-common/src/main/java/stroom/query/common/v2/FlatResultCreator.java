@@ -298,7 +298,7 @@ public class FlatResultCreator implements ResultCreator {
             final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
             final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, paramMap);
 
-            tableDataStore = new TableDataStore(null,
+            tableDataStore = new TableDataStore(0,
                     child,
                     fieldIndex,
                     paramMap,
