@@ -35,7 +35,6 @@ import stroom.query.shared.v2.ParamUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -319,7 +318,6 @@ class TestTableDataStore {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize,
-                Executors.newSingleThreadExecutor());
+                storeSize);
     }
 }

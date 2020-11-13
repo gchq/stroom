@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TableDataStore {
@@ -51,7 +50,6 @@ public class TableDataStore {
     private final CompiledField[] fieldsArray;
     private final Sizes maxResults;
     private final Sizes storeSize;
-    private final Executor executor;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
 
@@ -64,8 +62,7 @@ public class TableDataStore {
                           final FieldIndex fieldIndex,
                           final Map<String, String> paramMap,
                           final Sizes maxResults,
-                          final Sizes storeSize,
-                          final Executor executor) {
+                          final Sizes storeSize) {
         this.coprocessorKey = coprocessorKey;
         this.fieldIndex = fieldIndex;
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
@@ -77,7 +74,6 @@ public class TableDataStore {
         this.compiledSorter = compiledSorter;
         this.maxResults = maxResults;
         this.storeSize = storeSize;
-        this.executor = executor;
 
         tablePayloadSerialiser = new TablePayloadSerialiser(compiledFields);
     }
@@ -303,7 +299,7 @@ public class TableDataStore {
     }
 
     private void remove(final GroupKey groupKey) {
-        if (groupKey != null && executor != null) {
+        if (groupKey != null) {
             // Execute removal asynchronously to prevent blocking.
             CompletableFuture.runAsync(() -> {
                 final Items items = childMap.remove(groupKey);
@@ -311,7 +307,7 @@ public class TableDataStore {
                     resultCount.addAndGet(-items.size());
                     items.forEach(item -> remove(item.getKey()));
                 }
-            }, executor);
+            });
         }
     }
 

@@ -9,7 +9,6 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,18 +17,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
-    private final Provider<Executor> executorProvider;
 
     @Inject
-    CoprocessorsFactory(final SizesProvider sizesProvider,
-                        final Provider<Executor> executorProvider) {
+    CoprocessorsFactory(final SizesProvider sizesProvider) {
         this.sizesProvider = sizesProvider;
-        this.executorProvider = executorProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -145,7 +140,6 @@ public class CoprocessorsFactory {
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
-        final Executor executor = executorProvider.get();
 
         return new TableDataStore(
                 coprocessorKey,
@@ -153,7 +147,6 @@ public class CoprocessorsFactory {
                 fieldIndex,
                 paramMap,
                 maxResults,
-                storeSizes,
-                executor);
+                storeSizes);
     }
 }
