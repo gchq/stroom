@@ -32,6 +32,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
+import java.util.function.Function;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
         HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String>, RequiresResize {
@@ -40,7 +41,9 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void focus();
 
-    void setText(String text);
+    void setText(final String text);
+
+    void setText(final String text, final boolean format);
 
     void insertTextAtCursor(final String text);
 
@@ -48,15 +51,23 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setFirstLineNumber(int firstLineNumber);
 
-    void setIndicators(IndicatorLines indicators);
+    void setIndicators(final IndicatorLines indicators);
 
-    void setHighlights(List<TextRange> highlights);
+    void setHighlights(final List<TextRange> highlights);
 
-    void setReadOnly(boolean readOnly);
+    /**
+     * If the text is being formatted by this view then you can provide a function to generate
+     * highlights on the formatted text as the line/col positions in the formatted text may
+     * differ to those in the original input. Should be called before setText is called.
+     * @param highlightsFunction A function to return a list of highlight ranges from the formatted text.
+     */
+    void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction);
 
-    void setMode(AceEditorMode mode);
+    void setReadOnly(final boolean readOnly);
 
-    void setTheme(AceEditorTheme theme);
+    void setMode(final AceEditorMode mode);
+
+    void setTheme(final AceEditorTheme theme);
 
     Action getFormatAction();
 

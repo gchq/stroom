@@ -200,6 +200,28 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         }
 	}-*/;
 
+    /**
+     * Go to given line.
+     *
+     * @param line the line to go to, one based
+     * @param col the col to go to, one based
+     */
+    public native void gotoPosition(final int line, final int col) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+		// Convert col to zero based
+		editor.gotoLine(line, col - 1, true);
+        var cursorPos = editor.getCursorPosition();
+
+        // 0.5 means position the cursor half way up the editor
+        editor.renderer.scrollCursorIntoView({
+            row: cursorPos.row,
+            column: cursorPos.column
+            //row: line,
+            //column: col - 1
+        }, 0.5);
+	}-*/;
+
     // =====================================================================
     // Added for Stroom by at055612 FINISH
     // =====================================================================

@@ -23,6 +23,7 @@ import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -63,6 +64,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This is a widget that can be used to edit text. It provides useful
@@ -102,6 +105,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
+    private Function<String, List<TextRange>> formattedHighlightsFunc;
 
     @Inject
     public EditorViewImpl() {
@@ -213,7 +217,22 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setText(final String text) {
-        editor.setText(text);
+        setText(text, false);
+    }
+
+    @Override
+    public void setText(final String text, final boolean format) {
+        if (text == null) {
+            editor.setText("");
+        } else {
+            if (format) {
+                final String formattedText = formatAsIfXml(text);
+                editor.setText(formattedText);
+                applyFormattedHighlights(formattedText);
+            } else {
+                editor.setText(text);
+            }
+        }
     }
 
     @Override
@@ -292,23 +311,40 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
+    public void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction) {
+        this.formattedHighlightsFunc = highlightsFunction;
+    }
+
+    @Override
     public void setHighlights(final List<TextRange> highlights) {
+
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
-                final List<Marker> markers = new ArrayList<>();
-                int minLineNo = Integer.MAX_VALUE;
+                // Find our first from location
+                final Location minLocation = highlights.stream()
+                        .map(TextRange::getFrom)
+                        .min(Location::compareTo)
+                        .orElse(DefaultLocation.beginning());
 
-                for (final TextRange highlight : highlights) {
-                    minLineNo = Math.min(minLineNo, highlight.getFrom().getLineNo());
-                    final AceRange range = AceRange.create(
-                            highlight.getFrom().getLineNo() - firstLineNumber,
-                            highlight.getFrom().getColNo() - 1, // appears to be zero-based & inclusive
-                            highlight.getTo().getLineNo() - firstLineNumber,
-                            highlight.getTo().getColNo()); // appears to be zero-based & exclusive
-                    markers.add(new Marker(range, "hl", AceMarkerType.TEXT, false));
-                }
+                final List<Marker> markers = highlights.stream()
+                        .map(highlightStr -> {
+                            // Location is all one based and exclusive, AceRange is a mix
+                            return AceRange.create(
+                                    highlightStr.getFrom().getLineNo() - firstLineNumber,
+                                    highlightStr.getFrom().getColNo() - 1, // zero-based & inclusive
+                                    highlightStr.getTo().getLineNo() - firstLineNumber,
+                                    highlightStr.getTo().getColNo()); // zero-based & exclusive so no need to change
+                        })
+                        .map(aceRange ->
+                                new Marker(aceRange, "hl", AceMarkerType.TEXT, false))
+                        .collect(Collectors.toList());
+
                 editor.setMarkers(markers);
-                editor.gotoLine(minLineNo - firstLineNumber + 1);
+                // Move the cursor location so the highlight is in view.  Line and col as we
+                // could be dealing with single line data with the highlight at col 500 for example.
+                editor.gotoLocation(
+                        minLocation.getLineNo() - firstLineNumber + 1,
+                        minLocation.getColNo());
             } else {
                 editor.setMarkers(null);
             }
@@ -344,6 +380,10 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         editor.setTheme(theme);
     }
 
+    private String formatAsIfXml(final String text) {
+        return new XmlFormatter().format(text);
+    }
+
     /**
      * Formats the currently displayed text.
      */
@@ -352,11 +392,13 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             final int scrollTop = editor.getScrollTop();
             final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
 
+            final String formattedText;
             if (AceEditorMode.XML.equals(mode)) {
-                final String formatted = new XmlFormatter().format(getText());
-                setText(formatted);
+                formattedText = formatAsIfXml(getText());
+                setText(formattedText);
             } else {
                 editor.beautify();
+                formattedText = editor.getText();
             }
 
             if (cursorPosition != null) {
@@ -369,7 +411,16 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             editor.focus();
 
             FormatEvent.fire(this);
+
+            applyFormattedHighlights(formattedText);
         });
+    }
+
+    private void applyFormattedHighlights(final String formattedText) {
+        if (formattedHighlightsFunc != null) {
+            final List<TextRange> highlightRanges = formattedHighlightsFunc.apply(formattedText);
+            setHighlights(highlightRanges);
+        }
     }
 
     @Override

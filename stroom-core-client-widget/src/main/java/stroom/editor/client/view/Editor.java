@@ -16,6 +16,10 @@
 
 package stroom.editor.client.view;
 
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Location;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -51,6 +55,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean highlightActiveLineDirty;
     private int gotoLine;
     private boolean gotoLineDirty;
+    private Location gotoLocation;
+    private boolean gotoLocationDirty;
     private Rect scrollMargin;
     private boolean scrollMarginDirty;
     private boolean useWrapMode;
@@ -282,6 +288,28 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (started && gotoLineDirty) {
             editor.gotoLine(gotoLine);
             gotoLineDirty = false;
+        }
+    }
+
+    /**
+     * @param lineNo One based
+     * @param colNo One based
+     */
+    public void gotoLocation(final int lineNo, final int colNo) {
+        gotoLocation(DefaultLocation.of(lineNo, colNo));
+    }
+
+    public void gotoLocation(final Location location) {
+        gotoLocationDirty = true;
+        this.gotoLocation = location;
+        updateGotoLocation();
+    }
+
+    private void updateGotoLocation() {
+        if (started && gotoLocationDirty) {
+            GWT.log("Goto " + gotoLocation.getLineNo() + ":" + gotoLocation.getColNo());
+            editor.gotoPosition(gotoLocation.getLineNo(), gotoLocation.getColNo());
+            gotoLocationDirty = false;
         }
     }
 

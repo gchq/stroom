@@ -44,6 +44,10 @@ public class DefaultLocation implements Location {
         return new DefaultLocation(lineNo, colNo);
     }
 
+    public static Location beginning() {
+        return new DefaultLocation(1, 1);
+    }
+
     @Override
     public int getLineNo() {
         return lineNo;

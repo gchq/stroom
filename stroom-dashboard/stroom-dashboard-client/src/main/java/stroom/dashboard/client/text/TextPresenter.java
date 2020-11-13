@@ -114,7 +114,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                           final String classification,
                           final Set<String> highlightStrings,
                           final boolean isHtml) {
-        final List<TextRange> highlights = getHighlights(data, highlightStrings);
+//        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
         // visible first.
@@ -155,16 +155,25 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                 getView().setContent(rawPresenter.getView());
 
+                if (highlightStrings != null && !highlightStrings.isEmpty()) {
+                    rawPresenter.setFormattedHighlights(formattedText ->
+                            getHighlights(formattedText, highlightStrings));
+                } else {
+                    rawPresenter.setFormattedHighlights(null);
+                }
+
                 rawPresenter.setText(data, true);
-                rawPresenter.setHighlights(highlights);
+//                rawPresenter.setHighlights(highlights);
                 rawPresenter.setControlsVisible(playButtonVisible);
             }
         });
     }
 
+    /**
+     * The ranges returned are line/col positions in the input text. Thus the input text should
+     * not be changed/formatted after the highlight ranges have been generated.
+     */
     private List<TextRange> getHighlights(final String input, final Set<String> highlightStrings) {
-        // final StringBuilder output = new StringBuilder(input);
-
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
@@ -177,23 +186,28 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 final char[] highlightChars = highlight.toLowerCase().toCharArray();
                 final int highlightLength = highlightChars.length;
 
-                boolean inElement = false;
+                boolean inElementTag = false;
                 boolean inEscapedElement = false;
                 int lineNo = 1;
-                int colNo = 0;
+                int colNo = 1;
+                char lastInputChar = 0;
                 for (int i = 0; i < inputLength; i++) {
                     final char inputChar = inputChars[i];
 
-                    if (inputChar == '\n') {
+                    if (lastInputChar == '\n') {
                         lineNo++;
-                        colNo = 0;
+                        colNo = 1;
                     }
+                    lastInputChar = inputChar;
 
-                    if (!inElement && !inEscapedElement) {
+                    if (!inElementTag && !inEscapedElement) {
                         if (inputChar == '<') {
-                            inElement = true;
-                        } else if (inputChar == '&' && i + 3 < inputLength && inputChars[i + 1] == 'l'
-                                && inputChars[i + 2] == 't' && inputChars[i + 3] == ';') {
+                            inElementTag = true;
+                        } else if (inputChar == '&'
+                                && i + 3 < inputLength
+                                && inputChars[i + 1] == 'l'
+                                && inputChars[i + 2] == 't'
+                                && inputChars[i + 3] == ';') {
                             inEscapedElement = true;
                         } else {
                             // If we aren't in an element or escaped element
@@ -209,19 +223,25 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                             }
 
                             if (found) {
+                                // All one based and inclusive
                                 final TextRange hl = new TextRange(
                                         new DefaultLocation(lineNo, colNo),
-                                        new DefaultLocation(lineNo, colNo + highlightLength));
+                                        new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
                                 highlights.add(hl);
 
                                 i += highlightLength;
+                                // carry on looking for more instances of this highlight string
                             }
                         }
-                    } else if (inElement && inputChar == '>') {
-                        inElement = false;
+                    } else if (inElementTag && inputChar == '>') {
+                        inElementTag = false;
 
-                    } else if (inEscapedElement && inputChar == '&' && i + 3 < inputLength && inputChars[i + 1] == 'g'
-                            && inputChars[i + 2] == 't' && inputChars[i + 3] == ';') {
+                    } else if (inEscapedElement
+                            && inputChar == '&'
+                            && i + 3 < inputLength
+                            && inputChars[i + 1] == 'g'
+                            && inputChars[i + 2] == 't'
+                            && inputChars[i + 3] == ';') {
                         inEscapedElement = false;
                     }
 

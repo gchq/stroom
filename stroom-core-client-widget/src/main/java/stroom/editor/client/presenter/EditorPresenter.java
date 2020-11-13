@@ -38,6 +38,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
+import java.util.function.Function;
 
 public class EditorPresenter
         extends MyPresenterWidget<EditorView>
@@ -106,7 +107,7 @@ public class EditorPresenter
         } else {
             if (format) {
                 final String formatted = new XmlFormatter().format(text);
-                getView().setText(formatted);
+                getView().setText(formatted, true);
             } else {
                 getView().setText(text);
             }
@@ -167,6 +168,10 @@ public class EditorPresenter
 
     public void setHighlights(final List<TextRange> highlights) {
         getView().setHighlights(highlights);
+    }
+
+    public void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction) {
+        getView().setFormattedHighlights(highlightsFunction);
     }
 
     @Override
