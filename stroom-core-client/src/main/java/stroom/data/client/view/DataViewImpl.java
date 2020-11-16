@@ -23,10 +23,12 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -34,6 +36,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataViewImpl extends ViewImpl implements DataView {
     private final Widget widget;
+
     @UiField
     LinkTabBar tabBar;
 
@@ -56,6 +59,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //    Pager dataPager;
     @UiField
     LayerContainer layerContainer;
+
+    @UiField
+    SimplePanel progressBarPanel;
 
     @Inject
     public DataViewImpl(final Binder binder) {
@@ -227,6 +233,15 @@ public class DataViewImpl extends ViewImpl implements DataView {
             navigatorContainer.setWidget(itemNavigatorView.asWidget());
         } else {
             navigatorContainer.clear();
+        }
+    }
+
+    @Override
+    public void setProgressView(final ProgressView progressView) {
+        if (progressView != null) {
+            progressBarPanel.setWidget(progressView.asWidget());
+        } else {
+            progressBarPanel.clear();
         }
     }
 

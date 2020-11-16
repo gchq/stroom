@@ -40,6 +40,14 @@
 		float: right;
 		text-align: right;
 		}
+
+		.progressBarPanel {
+		display: inline-block;
+		width: 150px;
+		height: 10px;
+		padding-right: 0.75em;
+		padding-top: 2px;
+		}
 	</ui:style>
 
 	<g:DockLayoutPanel unit="PX" styleName="{style.layout}">
@@ -49,8 +57,10 @@
 		</g:center>
 		<g:north size="20">
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
-				<g:east size="250">
+				<g:east size="400">
                     <g:HorizontalPanel width="100%" height="100%">
+						<g:SimplePanel ui:field="progressBarPanel"
+									   styleName="{style.progressBarPanel}"/>
 						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
 						<v:ResizeSimplePanel ui:field="navigatorContainer" width="100%" height="100%" />
 					</g:HorizontalPanel>

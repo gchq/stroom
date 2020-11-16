@@ -15,6 +15,10 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
     private final Widget widget;
 
     @UiField
+    FlowPanel progressBarContainer;
+    @UiField
+    FlowPanel progressBarOuter;
+    @UiField
     FlowPanel progressBarInner;
 
     @Inject
@@ -56,7 +60,7 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
 
     @Override
     public void setVisible(final boolean isVisible) {
-
+        progressBarContainer.setVisible(isVisible);
     }
 
     public interface Binder extends UiBinder<Widget, ProgressViewImpl> {

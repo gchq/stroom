@@ -24,8 +24,11 @@
         }
     </ui:style>
 
-    <g:FlowPanel styleName="{style.progressBarContainer}">
-        <g:FlowPanel styleName="{style.progressBarOuter}">
+    <g:FlowPanel ui:field="progressBarContainer"
+                 styleName="{style.progressBarContainer}">
+        <!-- This div is the background bit of the progress bar, i.e the full bounds -->
+        <g:FlowPanel ui:field="progressBarOuter"
+                     styleName="{style.progressBarOuter}">
             <!-- This div is the coloured bit of the progress bar -->
             <g:FlowPanel ui:field="progressBarInner"
                          styleName="{style.progressBarInner}"/>

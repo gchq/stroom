@@ -5,6 +5,7 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.RowCount;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
@@ -33,7 +34,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
         this.characterRangeSelectionPresenterProvider = characterRangeSelectionPresenterProvider;
 
         getView().setLabelClickHandler(this::handleLabelClick);
-        getView().setProgressPresenter(progressPresenter);
+//        getView().setProgressPresenter(progressPresenter);
         getView().setProgressView(progressPresenter.getView());
     }
 
@@ -45,6 +46,27 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
     public void refreshNavigator() {
         getView().refreshNavigator();
+        refreshProgressBar();
+    }
+
+    private void refreshProgressBar() {
+        if (display != null
+                && display.getCharFrom().isPresent()
+                && display.getCharTo().isPresent()) {
+            progressPresenter.setVisible(true);
+            if (display.getTotalChars().isPresent()) {
+                progressPresenter.setProgress(Progress.boundedRange(
+                        display.getTotalChars().get(),
+                        display.getCharFrom().get(),
+                        display.getCharTo().get()));
+            } else {
+                progressPresenter.setProgress(Progress.unboundedRange(
+                        display.getCharFrom().get(),
+                        display.getCharTo().get()));
+            }
+        } else {
+            progressPresenter.setVisible(false);
+        }
     }
 
     private CharacterRangeSelectionPresenter getCharacterRangeSelectionPresenter() {
@@ -84,7 +106,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
     public interface CharacterNavigatorView extends View {
 
-        void setProgressPresenter(final ProgressPresenter progressPresenter);
+//        void setProgressPresenter(final ProgressPresenter progressPresenter);
 
         void setProgressView(final ProgressView progressView);
 

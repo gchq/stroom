@@ -51,6 +51,9 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.progress.client.presenter.Progress;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -123,6 +126,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
+    private final ProgressPresenter progressPresenter;
 //    private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
     private final ContentManager contentManager;
@@ -196,6 +200,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final ItemNavigatorPresenter itemNavigatorPresenter,
                          final DataView view,
                          final TextPresenter textPresenter,
+                         final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
 //                         final SourceLocationPresenter sourceLocationPresenter,
                          final ContentManager contentManager,
@@ -207,6 +212,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.htmlPresenter = htmlPresenter;
         this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
+        this.progressPresenter = progressPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
 //        this.sourceLocationPresenter = sourceLocationPresenter;
@@ -263,6 +269,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         view.setNavigatorView(itemNavigatorPresenter.getView());
+        view.setProgressView(progressPresenter.getView());
     }
 
     private void setCurrentSegmentNo(final long segmentNo) {
@@ -326,12 +333,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     fetchMetaInfoData(currentMetaId);
                     viewSourceBtn.setVisible(false);
                     itemNavigatorPresenter.refreshNavigator();
+                    refreshProgressBar(false);
 //                    getView().refreshNavigator();
                 } else {
                     viewSourceBtn.setVisible(true);
                     if (META.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.PROPERTIES;
                         fetchDataForCurrentStreamNo(META_DATA);
+                        refreshProgressBar(false);
                     } else if (CONTEXT.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.XML;
                         fetchDataForCurrentStreamNo(CONTEXT);
@@ -353,6 +362,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
                         fetchDataForCurrentStreamNo(null);
                     }
+                    refreshProgressBar(true);
                 }
                 lastTabName = tab.getLabel();
             }
@@ -382,6 +392,39 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                refreshTextPresenterContent();
            }
        }
+    }
+
+    private void refreshProgressBar(final boolean isVisible) {
+        if (isVisible
+                && lastResult != null
+                && lastResult instanceof FetchDataResult
+                && lastResult.getSourceLocation() != null
+                && lastResult.getSourceLocation().getDataRange() != null) {
+
+            final DataRange dataRange = lastResult.getSourceLocation().getDataRange();
+
+            FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
+
+//            if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
+//                // No point showing for segmented as we are only showing one rec on screen at once
+//                progressPresenter.setVisible(false);
+//            } else {
+                progressPresenter.setVisible(true);
+                // non-segmented
+                if (fetchDataResult.getTotalCharacterCount().isExact()) {
+                    progressPresenter.setProgress(Progress.boundedRange(
+                            fetchDataResult.getTotalCharacterCount().getCount(),
+                            dataRange.getCharOffsetFrom(),
+                            dataRange.getCharOffsetTo()));
+                } else {
+                    progressPresenter.setProgress(Progress.unboundedRange(
+                            dataRange.getCharOffsetFrom(),
+                            dataRange.getCharOffsetTo()));
+                }
+//            }
+        } else {
+            progressPresenter.setVisible(false);
+        }
     }
 
 //    private void showSourceLocationPopup() {
@@ -1004,7 +1047,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             refresh(result);
             updateTabs(result.getStreamTypeName(), result.getAvailableChildStreamTypes());
-
         } else {
 //            getView().showSegmentPager(false);
             // Clear the classification.
@@ -1093,6 +1135,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void refresh(final AbstractFetchDataResult result) {
+
+        refreshProgressBar(result != null);
 
         setPagers(result);
 
@@ -1375,6 +1419,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        void setNavigatorClickHandler(final Runnable clickHandler);
 
         void setNavigatorView(ItemNavigatorView itemNavigatorView);
+
+        void setProgressView(final ProgressView progressView);
     }
 
 //    private static abstract class PagerRows implements HasRows {
