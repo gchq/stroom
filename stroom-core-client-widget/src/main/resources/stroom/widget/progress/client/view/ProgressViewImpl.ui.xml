@@ -1,0 +1,34 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:style>
+        .progressBarContainer {
+        position: relative;
+        }
+
+        .progressBarOuter {
+        position: absolute;
+        /* background-color: lightgray; */
+        width: 100%;
+        height: 12px;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #616161;
+        }
+
+        .progressBarInner {
+        position: absolute;
+        background-color: #1e88e5;
+        height: 10px;
+        }
+    </ui:style>
+
+    <g:FlowPanel styleName="{style.progressBarContainer}">
+        <g:FlowPanel styleName="{style.progressBarOuter}">
+            <!-- This div is the coloured bit of the progress bar -->
+            <g:FlowPanel ui:field="progressBarInner"
+                         styleName="{style.progressBarInner}"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

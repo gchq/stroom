@@ -5,6 +5,8 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.RowCount;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -17,17 +19,22 @@ import com.gwtplatform.mvp.client.View;
 public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavigatorView> {
 
     private final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider;
+    private final ProgressPresenter progressPresenter;
     private CharacterRangeSelectionPresenter characterRangeSelectionPresenter = null;
     private HasCharacterData display;
 
     @Inject
     public CharacterNavigatorPresenter(final EventBus eventBus,
+                                       final ProgressPresenter progressPresenter,
                                        final CharacterNavigatorView view,
                                        final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider) {
         super(eventBus, view);
+        this.progressPresenter = progressPresenter;
         this.characterRangeSelectionPresenterProvider = characterRangeSelectionPresenterProvider;
 
         getView().setLabelClickHandler(this::handleLabelClick);
+        getView().setProgressPresenter(progressPresenter);
+        getView().setProgressView(progressPresenter.getView());
     }
 
     public void setDisplay(final HasCharacterData display) {
@@ -76,6 +83,10 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
     }
 
     public interface CharacterNavigatorView extends View {
+
+        void setProgressPresenter(final ProgressPresenter progressPresenter);
+
+        void setProgressView(final ProgressView progressView);
 
         void setDisplay(final HasCharacterData hasCharacterData);
 

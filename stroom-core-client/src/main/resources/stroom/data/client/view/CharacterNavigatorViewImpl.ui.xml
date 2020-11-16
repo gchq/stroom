@@ -25,12 +25,26 @@
         padding: 1px;
         text-align: center;
         }
+
+        .progressBarPanel {
+        display: inline-block;
+        width: 150px;
+        height: 10px;
+        padding-right: 0.75em;
+        vertical-align: text-top;
+        }
     </ui:style>
 
     <g:FlowPanel styleName="{style.characterNavigator}">
 
-        <g:Label ui:field="lblLines" styleName="{style.label}"/>
-        <g:Label ui:field="lblCharacters" styleName="{style.label}"/>
+        <g:Label ui:field="lblLines"
+                 styleName="{style.label}"/>
+        <g:Label ui:field="lblCharacters"
+                 styleName="{style.label}"/>
+
+        <g:SimplePanel ui:field="progressBarPanel"
+                       styleName="{style.progressBarPanel}"/>
+
         <btn:SvgButton ui:field="showHeadCharactersBtn"/>
         <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
         <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>

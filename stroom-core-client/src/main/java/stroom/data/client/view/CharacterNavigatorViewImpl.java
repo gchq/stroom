@@ -20,6 +20,9 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigat
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.HasCharacterData;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.progress.client.presenter.Progress;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,6 +33,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -48,10 +52,12 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private static final String NUMBER_FORMAT = "#,###";
 
     private static Binder binder;
-
+    private ProgressPresenter progressPresenter;
 
     // Selection controls for the char data in the selected record and/or part
     // Always visible
+    @UiField
+    SimplePanel progressBarPanel;
     @UiField
     Label lblLines;
     @UiField
@@ -194,6 +200,16 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         this.display = display;
     }
 
+    @Override
+    public void setProgressPresenter(final ProgressPresenter progressPresenter) {
+        this.progressPresenter = progressPresenter;
+    }
+
+    @Override
+    public void setProgressView(final ProgressView progressView) {
+        this.progressBarPanel.setWidget(progressView.asWidget());
+    }
+
     // Characters UI handlers
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -248,7 +264,29 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 //        lblOf.setText("?");
 //    }
     public void refreshNavigator() {
+
         refreshCharacterControls();
+        refreshProgressBar();
+    }
+
+    private void refreshProgressBar() {
+        if (display != null
+                && display.getCharFrom().isPresent()
+                && display.getCharTo().isPresent()) {
+            progressPresenter.setVisible(true);
+            if (display.getTotalChars().isPresent()) {
+                progressPresenter.setProgress(Progress.boundedRange(
+                        display.getTotalChars().get(),
+                        display.getCharFrom().get(),
+                        display.getCharTo().get()));
+            } else {
+                progressPresenter.setProgress(Progress.unboundedRange(
+                        display.getCharFrom().get(),
+                        display.getCharTo().get()));
+            }
+        } else {
+            progressPresenter.setVisible(false);
+        }
     }
 
     public void setRefreshing(final boolean refreshing) {

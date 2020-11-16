@@ -69,6 +69,9 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter.DropDrownVi
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.progress.client.view.ProgressViewImpl;
 
 public class StreamStoreModule extends PluginModule {
     @Override
@@ -136,6 +139,10 @@ public class StreamStoreModule extends PluginModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
+        bindPresenterWidget(
+                ProgressPresenter.class,
+                ProgressView.class,
+                ProgressViewImpl.class);
         bind(MetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);

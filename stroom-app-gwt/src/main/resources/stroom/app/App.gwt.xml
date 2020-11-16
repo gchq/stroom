@@ -45,6 +45,7 @@
     <inherits name="stroom.widget.menu.Menu" />
     <inherits name="stroom.widget.button.Button" />
     <inherits name="stroom.widget.popup.Popup" />
+    <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox" />
     <inherits name="stroom.widget.tooltip.Tooltip" />
     <inherits name="stroom.widget.valuespinner.ValueSpinner" />
