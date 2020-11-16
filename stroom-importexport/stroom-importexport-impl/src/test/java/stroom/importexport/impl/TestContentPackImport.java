@@ -22,6 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +53,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestContentPackImport {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestContentPackImport.class);
+
+    private static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
 
     @Mock
     private ImportExportService importExportService;
@@ -70,7 +74,7 @@ class TestContentPackImport {
     void setup(@TempDir final Path tempDir) throws IOException {
         this.tempDir = tempDir;
 
-        contentPackDir = tempDir.resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        contentPackDir = tempDir.resolve(CONTENT_PACK_IMPORT_DIR);
 //        Mockito.when(contentPackImportConfig.getImportDirectory())
 //                .thenReturn(contentPackDir.toAbsolutePath().toString());
         Files.createDirectories(contentPackDir);
@@ -205,7 +209,7 @@ class TestContentPackImport {
 
         contentPackImport.startup(Collections.singletonList(contentPackDir));
         Mockito.verify(importExportService, Mockito.times(1))
-            .performImportWithoutConfirmation(packFile);
+                .performImportWithoutConfirmation(packFile);
 
         assertThat(Files.exists(packFile)).isFalse();
 
@@ -236,7 +240,8 @@ class TestContentPackImport {
     }
 
     private ContentPackImport getContentPackImport() {
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         return new ContentPackImport(
-                importExportService, contentPackImportConfig, () -> tempDir, securityContext);
+                importExportService, contentPackImportConfig, securityContext, pathCreator);
     }
 }

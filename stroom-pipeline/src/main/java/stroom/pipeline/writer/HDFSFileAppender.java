@@ -30,6 +30,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.PathCreator;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;

@@ -27,16 +27,58 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public class YamlUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(YamlUtil.class);
 
     private YamlUtil() {
         // Utility
+    }
+
+    public static Path getYamlFileFromArgs(final String[] args) {
+        // This is not ideal as we are duplicating what dropwizard is doing but there appears to be
+        // no way of getting the yaml file location from the dropwizard classes
+        Path path = null;
+
+        for (String arg : args) {
+            if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
+                Path yamlFile = Path.of(arg);
+                if (Files.isRegularFile(yamlFile)) {
+                    path = yamlFile;
+                    break;
+                } else {
+                    // NOTE if you are getting here while running in IJ then you have probable not run
+                    // local.yaml.sh
+                    LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
+                                    "You need to supply a valid stroom configuration YAML file.",
+                            yamlFile, Arrays.asList(args));
+                }
+            }
+        }
+
+        if (path == null) {
+            throw new RuntimeException("Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
+        }
+
+        Path realConfigFile = null;
+        try {
+            realConfigFile = path.toRealPath();
+            LOGGER.info("Using config file: \"" + realConfigFile + "\"");
+        } catch (final IOException e) {
+            LOGGER.error("Unable to find location of real config file from \"" + path + "\"");
+        }
+
+        return realConfigFile;
     }
 
     public static AppConfig readAppConfig(final Path configFile) throws IOException {

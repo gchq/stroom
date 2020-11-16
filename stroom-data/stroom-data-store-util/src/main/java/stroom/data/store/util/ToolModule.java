@@ -25,6 +25,8 @@ import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.servlet.MockServletModule;
@@ -54,6 +56,8 @@ public class ToolModule extends AbstractModule {
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
         });
+
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 

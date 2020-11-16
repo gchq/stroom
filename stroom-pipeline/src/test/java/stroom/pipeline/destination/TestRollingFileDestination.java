@@ -17,7 +17,7 @@
 package stroom.pipeline.destination;
 
 
-import stroom.pipeline.writer.PathCreator;
+import stroom.util.io.PathCreator;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 
@@ -37,7 +37,7 @@ class TestRollingFileDestination {
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
 
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 pathCreator,
                 "test",
@@ -60,7 +60,7 @@ class TestRollingFileDestination {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 pathCreator,
                 "test",

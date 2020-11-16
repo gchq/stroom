@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
+
 * Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
 
 

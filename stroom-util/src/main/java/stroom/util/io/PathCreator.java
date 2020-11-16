@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
-
-import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
+package stroom.util.io;
 
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 
 public class PathCreator {
     private static final String STROOM_TEMP = "stroom.temp";
+    private static final String STROOM_HOME = "stroom.home";
     private static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
@@ -54,14 +55,18 @@ public class PathCreator {
             "fileName",
             "fileStem",
             "fileExtension",
+            STROOM_HOME,
             STROOM_TEMP};
 
     private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
     private final TempDirProvider tempDirProvider;
+    private final HomeDirProvider homeDirProvider;
 
     @Inject
-    public PathCreator(final TempDirProvider tempDirProvider) {
+    public PathCreator(final HomeDirProvider homeDirProvider,
+                       final TempDirProvider tempDirProvider) {
+        this.homeDirProvider = homeDirProvider;
         this.tempDirProvider = tempDirProvider;
     }
 
@@ -88,9 +93,22 @@ public class PathCreator {
     public String replaceSystemProperties(String path) {
         path = replace(
                 path,
+                STROOM_HOME,
+                () -> FileUtil.getCanonicalPath(homeDirProvider.get()));
+        path = replace(
+                path,
                 STROOM_TEMP,
                 () -> FileUtil.getCanonicalPath(tempDirProvider.get()));
-        return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
+        path = FileUtil.replaceHome(path);
+
+        path = SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
+
+        // If this isn't an absolute path then make it so.
+        if (!path.startsWith("/") && !path.startsWith("\\")) {
+            path = FileUtil.getCanonicalPath(homeDirProvider.get()) + File.separator + path;
+        }
+
+        return path;
     }
 
     public String replaceUUIDVars(String path) {
@@ -141,7 +159,7 @@ public class PathCreator {
         return vars.toArray(new String[0]);
     }
 
-    String replace(final String path,
+    protected String replace(final String path,
                    final String type,
                    final LongSupplier replacementSupplier,
                    final int pad) {

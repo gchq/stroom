@@ -753,11 +753,6 @@ task downloadStroomContent() {
     }
 }
 
-task setupSampleData() {
-    dependsOn downloadStroomContent
-    dependsOn ':stroom-app:setupSampleDataApplication'
-}
-
 gradle.buildFinished {
     //if any of the tests failed dump the junit xml to the console
     if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size > 0) {

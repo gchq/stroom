@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
-
-import stroom.test.common.util.test.StroomUnitTest;
+package stroom.util.io;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -27,10 +25,10 @@ import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestPathCreator extends StroomUnitTest {
+class TestPathCreator {
     @Test
     void testReplaceFileName(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         assertThat(pathCreator.replaceFileName("${fileStem}.txt", "test.tmp")).isEqualTo("test.txt");
 
         assertThat(pathCreator.replaceFileName("${fileStem}", "test.tmp")).isEqualTo("test");
@@ -46,7 +44,7 @@ class TestPathCreator extends StroomUnitTest {
 
     @Test
     void testFindVars(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final String[] vars = pathCreator.findVars("/temp/${feed}-FLAT/${pipe}_less-${uuid}/${searchId}");
         assertThat(vars.length).isEqualTo(4);
         assertThat(vars[0]).isEqualTo("feed");
@@ -57,7 +55,7 @@ class TestPathCreator extends StroomUnitTest {
 
     @Test
     void testReplaceTime(@TempDir Path tempDir) {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
 
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";

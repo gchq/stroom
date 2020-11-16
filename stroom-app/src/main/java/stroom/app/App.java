@@ -23,6 +23,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.impl.validation.ValidationModule;
@@ -62,11 +63,8 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
 import javax.validation.ValidatorFactory;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -118,14 +116,8 @@ public class App extends Application<Config> {
     }
 
     public static void main(final String[] args) throws Exception {
-        final Path yamlConfigFile = getYamlFileFromArgs(args);
-        try {
-            final Path realConfigFile = yamlConfigFile.toRealPath();
-            LOGGER.info("Using config file: \"" + realConfigFile + "\"");
-            new App(realConfigFile).run(args);
-        } catch (final IOException e) {
-            LOGGER.error("Unable to find location of real config file from \"" + yamlConfigFile + "\"");
-        }
+        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
+        new App(yamlConfigFile).run(args);
     }
 
     @Override
@@ -299,29 +291,6 @@ public class App extends Application<Config> {
                     appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
-    }
-
-    private static Path getYamlFileFromArgs(final String[] args) {
-        // This is not ideal as we are duplicating what dropwizard is doing but there appears to be
-        // no way of getting the yaml file location from the dropwizard classes
-
-        for (String arg : args) {
-            if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
-                Path yamlFile = Path.of(arg);
-                if (Files.isRegularFile(yamlFile)) {
-                    return yamlFile;
-                } else {
-                    // NOTE if you are getting here while running in IJ then you have probable not run
-                    // local.yaml.sh
-                    LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
-                                    "You need to supply a valid stroom configuration YAML file.",
-                            yamlFile, Arrays.asList(args));
-                }
-            }
-        }
-        LOGGER.warn("Could not extract YAML config file from arguments [{}]",
-                Arrays.asList(args));
-        return null;
     }
 
     private static void configureSessionHandling(final Environment environment) {

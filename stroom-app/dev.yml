@@ -74,14 +74,15 @@ appConfig:
   data:
     filesystemVolume:
       defaultStreamVolumePaths:
-        - ${HOME}/.stroom/volumes/defaultStreamVolume
+        - "~/.stroom/v7/volumes/defaultStreamVolume"
   job:
     enabled: true
     executionInterval: "10s"
   node:
     name: node1a
   path:
-    temp: "${HOME}/.stroom/temp"
+    home: "~/.stroom/v7"
+    temp: "/tmp"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:
@@ -117,5 +118,5 @@ appConfig:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
   volumes:
-    defaultIndexVolumeGroupPaths: ["${HOME}/.stroom/volumes/defaultIndexVolume"]
+    defaultIndexVolumeGroupPaths: ["~/.stroom/v7/volumes/defaultIndexVolume"]
 

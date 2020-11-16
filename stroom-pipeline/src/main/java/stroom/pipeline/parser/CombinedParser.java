@@ -42,7 +42,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
-import stroom.pipeline.writer.PathCreator;
+import stroom.util.io.PathCreator;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.util.io.StreamUtil;

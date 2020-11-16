@@ -70,10 +70,7 @@ dependencies {
 //    testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
-//    testCompile libs.commons_io
     testCompile libs.junit_jupiter_api
-//    testCompile libs.mockito_core
-//    testCompile libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
@@ -85,6 +82,3 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 }
-//
-//// Need the schemas for the DataSplitter tests
-//tasks.test.dependsOn rootProject.downloadStroomContent

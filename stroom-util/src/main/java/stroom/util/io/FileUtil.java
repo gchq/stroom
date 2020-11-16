@@ -19,6 +19,7 @@ package stroom.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
@@ -197,5 +198,13 @@ public final class FileUtil {
 
     public static String getCanonicalPath(final Path file) {
         return file.toAbsolutePath().normalize().toString();
+    }
+
+    public static String replaceHome(final String file) {
+        String resolved = file;
+        if (resolved != null && resolved.startsWith("~")) {
+            resolved = System.getProperty("user.home") + resolved.substring(1);
+        }
+        return resolved;
     }
 }

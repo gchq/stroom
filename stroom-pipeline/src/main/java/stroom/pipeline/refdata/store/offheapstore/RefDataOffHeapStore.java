@@ -43,7 +43,7 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
-import stroom.pipeline.writer.PathCreator;
+import stroom.util.io.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
 import stroom.util.io.TempDirProvider;

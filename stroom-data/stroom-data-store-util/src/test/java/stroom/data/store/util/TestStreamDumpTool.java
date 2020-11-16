@@ -27,6 +27,7 @@ import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.Guice;
@@ -54,6 +55,8 @@ class TestStreamDumpTool {
     @Inject
     private FsVolumeService fsVolumeService;
     @Inject
+    private HomeDirProviderImpl homeDirProvider;
+    @Inject
     private TempDirProviderImpl tempDirProvider;
 
     @Mock
@@ -70,6 +73,7 @@ class TestStreamDumpTool {
         injector.injectMembers(this);
 
         // Clear any lingering volumes or data.
+        homeDirProvider.setHomeDir(tempDir);
         tempDirProvider.setTempDir(tempDir);
         final String path = tempDir
                 .resolve("volumes/defaultStreamVolume")

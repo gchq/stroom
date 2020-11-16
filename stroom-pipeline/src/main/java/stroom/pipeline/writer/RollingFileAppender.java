@@ -26,6 +26,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
 import javax.inject.Inject;
 import java.io.IOException;

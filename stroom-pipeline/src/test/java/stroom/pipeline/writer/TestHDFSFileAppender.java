@@ -17,6 +17,7 @@
 package stroom.pipeline.writer;
 
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.PathCreator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -142,7 +143,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
 
     private HDFSFileAppender buildTestObject(final java.nio.file.Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
         String dir = tempDir.toAbsolutePath().toString();

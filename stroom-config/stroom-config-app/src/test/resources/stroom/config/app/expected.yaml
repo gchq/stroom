@@ -86,7 +86,7 @@ appConfig:
       maxPoolSize: 30
   contentPackImport:
     enabled: false
-    importDirectory: null
+    importDirectory: "contentPackImport"
   core:
     db:
       connection:
@@ -341,6 +341,7 @@ appConfig:
     port: null
     pathPrefix: null
   path:
+    home: null
     temp: "/tmp"
   pipeline:
     httpClientCache:

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
+package stroom.util.io;
 
 import java.util.Set;
 
@@ -25,7 +25,8 @@ final class SystemPropertyUtil {
 //        return replaceProperty(string, provider, null);
 //    }
 
-    static String replaceProperty(String string, final PropertyProvider provider,
+    static String replaceProperty(String string,
+                                  final PropertyProvider provider,
                                   final Set<String> ignore) {
         if (string != null) {
             int start = 0;

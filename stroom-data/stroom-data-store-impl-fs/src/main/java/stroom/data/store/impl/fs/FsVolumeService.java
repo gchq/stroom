@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
+import stroom.util.io.PathCreator;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -17,7 +18,6 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -40,13 +40,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * TODO JC: I'm not clear what currentVolumeList is for. Add comments?
@@ -84,7 +80,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final InternalStatisticsReceiver statisticsReceiver;
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
-    private final TempDirProvider tempDirProvider;
+    private final PathCreator pathCreator;
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
 
     private volatile boolean createdDefaultVolumes;
@@ -98,7 +94,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final InternalStatisticsReceiver statisticsReceiver,
                            final ClusterLockService clusterLockService,
                            final Provider<EntityEventBus> entityEventBusProvider,
-                           final TempDirProvider tempDirProvider) {
+                           final PathCreator pathCreator) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.securityContext = securityContext;
@@ -106,7 +102,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.statisticsReceiver = statisticsReceiver;
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
-        this.tempDirProvider = tempDirProvider;
+        this.pathCreator = pathCreator;
     }
 
     private static void registerVolumeSelector(final FsVolumeSelector volumeSelector) {
@@ -289,12 +285,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
 
         // Delete default volumes.
-        final Optional<Path> defaultVolumesPath = getDefaultVolumesPath();
-        if (volumeConfig.getDefaultStreamVolumePaths() != null && defaultVolumesPath.isPresent()) {
-            LOGGER.info(() -> "Deleting default volumes");
-            List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
+        LOGGER.info(() -> "Deleting default volumes");
+        if (volumeConfig.getDefaultStreamVolumePaths() != null) {
+            final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
             for (String path : paths) {
-                Path resolvedPath = defaultVolumesPath.get().resolve(path.trim());
+                final Path resolvedPath = Paths.get(pathCreator.replaceSystemProperties(path));
                 LOGGER.info("Deleting directory {}", resolvedPath.toAbsolutePath().normalize().toString());
                 FileUtil.deleteDir(resolvedPath);
             }
@@ -452,20 +447,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
                             if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-                                final List<String>paths = volumeConfig.getDefaultStreamVolumePaths();
+                                final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
                                 for (String path : paths) {
-                                    Path resolvedPath = null;
-                                    if (!path.startsWith("/")) {
-                                        final Optional<Path> defaultVolumesPath = getDefaultVolumesPath();
-                                        if (defaultVolumesPath.isPresent()) {
-                                            resolvedPath = defaultVolumesPath.get().resolve(path.trim());
-                                        }
-                                    }
-
-                                    if (resolvedPath == null) {
-                                        resolvedPath = Paths.get(path.trim());
-                                    }
-
+                                    path = pathCreator.replaceSystemProperties(path);
+                                    final Path resolvedPath = Paths.get(path.trim());
                                     LOGGER.info("Creating default data volume with path {}",
                                             resolvedPath.toAbsolutePath().normalize());
 
@@ -541,50 +526,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
                     FileUtil.getCanonicalPath(path)));
             return OptionalLong.empty();
-        }
-    }
-
-    private Optional<Path> getDefaultVolumesPath() {
-        return Stream.<Supplier<Optional<Path>>>of(
-                this::getApplicationJarDir,
-                this::getDotStroomDir,
-                () -> Optional.of(tempDirProvider.get()),
-                Optional::empty
-        )
-                .map(Supplier::get)
-                .filter(Optional::isPresent)
-                .peek(path -> LOGGER.debug(() -> LogUtil.message("Found base dir for volumes: {}",
-                        path.get().toAbsolutePath().normalize().toString())))
-                .findFirst()
-                .map(Optional::get);
-    }
-
-    private Optional<Path> getDotStroomDir() {
-        final String userHome = System.getProperty("user.home");
-        if (userHome == null) {
-            return Optional.empty();
-        } else {
-            final Path dotStroomDir = Paths.get(userHome)
-                    .resolve(".stroom");
-            if (Files.isDirectory(dotStroomDir)) {
-                return Optional.of(dotStroomDir);
-            } else {
-                return Optional.empty();
-            }
-        }
-    }
-
-    private Optional<Path> getApplicationJarDir() {
-        try {
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
-                return Optional.of(Paths.get(codeSourceLocation).getParent());
-            } else {
-                return Optional.empty();
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
-            return Optional.empty();
         }
     }
 
