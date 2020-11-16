@@ -24,7 +24,6 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
-import stroom.query.common.v2.EventRefsPayload;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -107,7 +106,7 @@ public class EventSearchTaskHandler {
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
 
-                eventRefs = ((EventRefsPayload) eventCoprocessor.createPayload()).getEventRefs();
+                eventRefs = eventCoprocessor.getEventRefs();
                 if (eventRefs != null) {
                     eventRefs.trim();
                 }

@@ -20,6 +20,9 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.TableSettings;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,13 +71,13 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
-    public Payload createPayload() {
-        return tableDataStore.createPayload();
+    public boolean readPayload(final Input input) {
+        return tableDataStore.readPayload(input);
     }
 
     @Override
-    public boolean consumePayload(final Payload payload) {
-        return tableDataStore.processPayload((TablePayload) payload);
+    public void writePayload(final Output output) {
+        tableDataStore.writePayload(output);
     }
 
     public AtomicLong getValuesCount() {

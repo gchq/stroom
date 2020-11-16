@@ -46,7 +46,6 @@ public class TableCoprocessorSettings implements CoprocessorSettings {
         return coprocessorId;
     }
 
-    @Override
     public String[] getComponentIds() {
         return componentIds;
     }

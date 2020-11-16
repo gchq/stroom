@@ -23,7 +23,6 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
-import stroom.query.common.v2.EventRefsPayload;
 import stroom.query.common.v2.Sizes;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
@@ -123,7 +122,7 @@ public class SolrEventSearchTaskHandler {
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
 
-                eventRefs = ((EventRefsPayload) eventCoprocessor.createPayload()).getEventRefs();
+                eventRefs = eventCoprocessor.getEventRefs();
                 if (eventRefs != null) {
                     eventRefs.trim();
                 }

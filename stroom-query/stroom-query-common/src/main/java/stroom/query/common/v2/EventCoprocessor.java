@@ -19,6 +19,10 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,7 +34,6 @@ public class EventCoprocessor implements Coprocessor {
     private static final String EVENT_ID = "EventId";
 
     private final Consumer<Throwable> errorConsumer;
-    private final int coprocessorId;
     private final EventRef minEvent;
     private final long maxStreams;
     private final long maxEvents;
@@ -44,11 +47,9 @@ public class EventCoprocessor implements Coprocessor {
     private volatile EventRef maxEvent;
     private volatile EventRefs eventRefs;
 
-    public EventCoprocessor(final int coprocessorId,
-                            final EventCoprocessorSettings settings,
+    public EventCoprocessor(final EventCoprocessorSettings settings,
                             final FieldIndex fieldIndex,
                             final Consumer<Throwable> errorConsumer) {
-        this.coprocessorId = coprocessorId;
         this.errorConsumer = errorConsumer;
         this.minEvent = settings.getMinEvent();
         this.maxEvent = settings.getMaxEvent();
@@ -118,7 +119,27 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public Payload createPayload() {
+    public boolean readPayload(final Input input) {
+        final EventRef[] array = EventRefsSerialiser.readArray(input);
+        if (array.length > 0) {
+            eventRefsLock.lock();
+            try {
+                if (eventRefs == null) {
+                    eventRefs = new EventRefs(minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream);
+                }
+
+                eventRefs.add(List.of(array));
+                eventRefs.trim();
+
+            } finally {
+                eventRefsLock.unlock();
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void writePayload(final Output output) {
         EventRefs refs;
         eventRefsLock.lock();
         try {
@@ -128,29 +149,17 @@ public class EventCoprocessor implements Coprocessor {
             eventRefsLock.unlock();
         }
 
+        EventRef[] array = new EventRef[0];
         if (refs != null && refs.size() > 0) {
             refs.trim();
-            return new EventRefsPayload(coprocessorId, refs);
+            array = refs.getList().toArray(new EventRef[0]);
         }
 
-        return null;
+        EventRefsSerialiser.writeArray(output, array);
     }
 
-    @Override
-    public boolean consumePayload(final Payload payload) {
-        final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
-        eventRefsLock.lock();
-        try {
-            if (eventRefs == null) {
-                eventRefs = eventRefsPayload.getEventRefs();
-            } else {
-                eventRefs.add(eventRefsPayload.getEventRefs());
-                eventRefs.trim();
-            }
-        } finally {
-            eventRefsLock.unlock();
-        }
-        return true;
+    public EventRefs getEventRefs() {
+        return eventRefs;
     }
 
     private Long getLong(final Val[] storedData, final Integer index) {

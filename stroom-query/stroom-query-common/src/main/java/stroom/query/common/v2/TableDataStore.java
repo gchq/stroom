@@ -52,8 +52,7 @@ public class TableDataStore {
     private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
-
-    private final TablePayloadSerialiser tablePayloadSerialiser;
+    private final ItemSerialiser itemSerialiser;
 
     private volatile boolean hasEnoughData;
 
@@ -74,8 +73,7 @@ public class TableDataStore {
         this.compiledSorter = compiledSorter;
         this.maxResults = maxResults;
         this.storeSize = storeSize;
-
-        tablePayloadSerialiser = new TablePayloadSerialiser(compiledFields);
+        itemSerialiser = new ItemSerialiser(compiledFields);
     }
 
     void clear() {
@@ -84,9 +82,9 @@ public class TableDataStore {
         childMap.clear();
     }
 
-    boolean processPayload(final TablePayload payload) {
-        final Item[] items = tablePayloadSerialiser.fromByteArray(payload.getData());
-        for (final Item item : items) {
+    boolean readPayload(final Input input) {
+        final Item[] itemsArray = itemSerialiser.readArray(input);
+        for (final Item item : itemsArray) {
             addToGroupMap(item);
         }
 
@@ -94,9 +92,7 @@ public class TableDataStore {
         return !Thread.currentThread().isInterrupted() && !hasEnoughData;
     }
 
-    Payload createPayload() {
-        Payload payload = null;
-
+    void writePayload(final Output output) {
         final List<Item> itemList = new ArrayList<>();
         childMap.keySet().forEach(groupKey -> {
             final Items items = childMap.remove(groupKey);
@@ -105,14 +101,29 @@ public class TableDataStore {
             }
         });
 
+        Item[] itemsArray = new Item[0];
         if (itemList.size() > 0) {
-            final Item[] itemsArray = itemList.toArray(new Item[0]);
-            final byte[] data = tablePayloadSerialiser.toByteArray(itemsArray);
-            payload = new TablePayload(coprocessorId, data);
+            itemsArray = itemList.toArray(new Item[0]);
         }
 
-        return payload;
+        itemSerialiser.writeArray(output, itemsArray);
     }
+
+
+//
+//    boolean processPayload(final TablePayload payload) {
+//        final Item[] items = tablePayloadSerialiser.fromByteArray(payload.getData());
+//        for (final Item item : items) {
+//            addToGroupMap(item);
+//        }
+//
+//        // Return success if we have not been asked to terminate and we are still willing to accept data.
+//        return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+//    }
+//
+//    Payload createPayload() {
+//
+//    }
 
     void add(final Val[] values) {
         final Generator[] generators = makeGenerators(values);

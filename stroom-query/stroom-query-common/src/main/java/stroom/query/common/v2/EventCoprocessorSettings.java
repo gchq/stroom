@@ -56,11 +56,6 @@ public class EventCoprocessorSettings implements CoprocessorSettings {
         return coprocessorId;
     }
 
-    @Override
-    public String[] getComponentIds() {
-        return new String[0];
-    }
-
     public EventRef getMinEvent() {
         return minEvent;
     }

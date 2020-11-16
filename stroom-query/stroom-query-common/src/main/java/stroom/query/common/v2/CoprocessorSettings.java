@@ -31,6 +31,4 @@ import java.io.Serializable;
 })
 public interface CoprocessorSettings extends Serializable {
     int getCoprocessorId();
-
-    String[] getComponentIds();
 }

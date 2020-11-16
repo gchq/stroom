@@ -80,7 +80,8 @@ public class CoprocessorsFactory {
 
                     if (coprocessor instanceof TableCoprocessor) {
                         final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
-                        for (final String componentId : coprocessorSettings.getComponentIds()) {
+                        final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettings;
+                        for (final String componentId : tableCoprocessorSettings.getComponentIds()) {
                             componentIdCoprocessorMap.put(componentId, tableCoprocessor);
                         }
                     }
@@ -124,7 +125,7 @@ public class CoprocessorsFactory {
             return new TableCoprocessor(tableSettings, tableDataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
-            return new EventCoprocessor(coprocessorId, eventCoprocessorSettings, fieldIndex, errorConsumer);
+            return new EventCoprocessor(eventCoprocessorSettings, fieldIndex, errorConsumer);
         }
 
         return null;

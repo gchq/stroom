@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.NodeResult;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -26,11 +24,14 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
 
 @Api(value = "remoteSearch - /v1")
 @Path(RemoteSearchResource.BASE_PATH)
@@ -41,32 +42,25 @@ public interface RemoteSearchResource extends RestResource {
     String START_PATH_PART = "/start";
     String POLL_PATH_PART = "/poll";
     String DESTROY_PATH_PART = "/destroy";
-    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @POST
-    @Path(START_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Path(START_PATH_PART)
     @Timed
     @ApiOperation(
             value = "Start a search",
             response = Boolean.class)
-    Boolean start(@PathParam("nodeName") String nodeName,
-                  ClusterSearchTask clusterSearchTask);
+    Boolean start(ClusterSearchTask clusterSearchTask);
 
-    @POST
-    @Path(POLL_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Timed
-    @ApiOperation(
-            value = "Poll for search results",
-            response = Boolean.class)
-    NodeResult poll(@PathParam("nodeName") String nodeName,
-                    QueryKey key);
+    @GET
+    @Path(POLL_PATH_PART)
+    @Produces("application/octet-stream")
+    StreamingOutput poll(@QueryParam("queryKey") String queryKey);
 
-    @POST
-    @Path(DESTROY_PATH_PART + NODE_NAME_PATH_PARAM)
+    @GET
+    @Path(DESTROY_PATH_PART)
     @Timed
     @ApiOperation(
             value = "Destroy search results",
             response = Boolean.class)
-    Boolean destroy(@PathParam("nodeName") String nodeName,
-                    QueryKey key);
+    Boolean destroy(@QueryParam("queryKey") String queryKey);
 }

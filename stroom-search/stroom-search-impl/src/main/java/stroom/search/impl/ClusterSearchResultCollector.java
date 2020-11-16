@@ -19,16 +19,20 @@ package stroom.search.impl;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.Data;
-import stroom.query.common.v2.NodeResult;
-import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.io.StreamUtil;
 
+import com.esotericsoftware.kryo.io.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +43,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClusterSearchResultCollector implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
@@ -91,7 +96,7 @@ public class ClusterSearchResultCollector implements Store {
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
-                            getErrorSet(nodeName).add(t.getMessage());
+                            onFailure(nodeName, t);
                             completionState.complete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
@@ -121,34 +126,57 @@ public class ClusterSearchResultCollector implements Store {
     }
 
     @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+    public boolean awaitCompletion(final long timeout,
+                                   final TimeUnit unit) throws InterruptedException {
         return completionState.awaitCompletion(timeout, unit);
     }
 
-    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
+    public synchronized boolean onSuccess(final String nodeName,
+                                          final InputStream inputStream) {
+        final AtomicBoolean complete = new AtomicBoolean();
+
         boolean success = true;
-        try {
-            final List<Payload> payloads = result.getPayloads();
-            final List<String> errors = result.getErrors();
 
-            if (payloads != null) {
-                success = coprocessors.consumePayloads(payloads);
-            }
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
-            if (errors != null) {
-                getErrorSet(nodeName).addAll(errors);
-            }
+        try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+            final Set<String> errors = getErrorSet(nodeName);
+            success = NodeResultSerialiser.read(input, complete, coprocessors, errors);
         } catch (final RuntimeException e) {
-            getErrorSet(nodeName).add(e.getMessage());
+            onFailure(nodeName, e);
         }
-        return success;
+
+        // If the result collector returns false it is because we have already collected enough data and can
+        // therefore consider search complete.
+        return complete.get() || !success;
     }
 
-    public synchronized void onFailure(final String nodeName, final Throwable throwable) {
+//    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
+//        boolean success = true;
+//        try {
+//            final List<Payload> payloads = result.getPayloads();
+//            final List<String> errors = result.getErrors();
+//
+//            if (payloads != null) {
+//                success = coprocessors.consumePayloads(payloads);
+//            }
+//
+//            if (errors != null) {
+//                getErrorSet(nodeName).addAll(errors);
+//            }
+//        } catch (final RuntimeException e) {
+//            getErrorSet(nodeName).add(e.getMessage());
+//        }
+//        return success;
+//    }
+
+    public synchronized void onFailure(final String nodeName,
+                                       final Throwable throwable) {
         getErrorSet(nodeName).add(throwable.getMessage());
     }
 
-    public Set<String> getErrorSet(final String nodeName) {
+    private Set<String> getErrorSet(final String nodeName) {
         Set<String> errorSet = errors.get(nodeName);
         if (errorSet == null) {
             errorSet = new HashSet<>();

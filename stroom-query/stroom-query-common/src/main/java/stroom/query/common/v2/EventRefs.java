@@ -57,14 +57,23 @@ public class EventRefs implements Iterable<EventRef> {
         this.maxEventsPerStream = maxEventsPerStream;
     }
 
-    public void add(final EventRefs eventRefs) {
-        list.addAll(eventRefs.list);
+    public void add(final List<EventRef> eventRefs) {
+        list.addAll(eventRefs);
 
         // Trim if the list gets bigger than double the number of events.
         if (list.size() > (maxEvents * 2)) {
             trim();
         }
     }
+
+//    public void add(final EventRefs eventRefs) {
+//        list.addAll(eventRefs.list);
+//
+//        // Trim if the list gets bigger than double the number of events.
+//        if (list.size() > (maxEvents * 2)) {
+//            trim();
+//        }
+//    }
 
     public void add(final EventRef ref) {
         if ((ref.getStreamId() > minEvent.getStreamId()
@@ -131,6 +140,10 @@ public class EventRefs implements Iterable<EventRef> {
 
     public int size() {
         return list.size();
+    }
+
+    public List<EventRef> getList() {
+        return list;
     }
 
     @Override

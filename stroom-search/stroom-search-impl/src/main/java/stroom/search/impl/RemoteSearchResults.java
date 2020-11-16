@@ -18,7 +18,6 @@ package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.query.api.v2.QueryKey;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,7 +25,7 @@ import java.util.Optional;
 
 @Singleton
 class RemoteSearchResults {
-    private final ICache<QueryKey, RemoteSearchResultFactory> cache;
+    private final ICache<String, RemoteSearchResultFactory> cache;
 
     @Inject
     RemoteSearchResults(final CacheManager cacheManager, final SearchConfig searchConfig) {
@@ -34,15 +33,15 @@ class RemoteSearchResults {
                 v.destroy());
     }
 
-    public Optional<RemoteSearchResultFactory> get(final QueryKey key) {
+    public Optional<RemoteSearchResultFactory> get(final String key) {
         return cache.getOptional(key);
     }
 
-    public void put(final QueryKey key, final RemoteSearchResultFactory factory) {
+    public void put(final String key, final RemoteSearchResultFactory factory) {
         cache.put(key, factory);
     }
 
-    public void invalidate(final QueryKey key) {
+    public void invalidate(final String key) {
         cache.invalidate(key);
     }
 }

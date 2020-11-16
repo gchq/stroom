@@ -7,12 +7,14 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
@@ -40,34 +42,30 @@ public class Coprocessors implements Iterable<Coprocessor> {
         this.errorConsumer = errorConsumer;
     }
 
-    public List<Payload> createPayloads() {
-        // Produce payloads for each coprocessor.
-        List<Payload> payloads = null;
-        for (final Coprocessor coprocessor : coprocessorMap.values()) {
-            final Payload payload = coprocessor.createPayload();
-            if (payload != null) {
-                if (payloads == null) {
-                    payloads = new ArrayList<>();
-                }
+    public boolean readPayloads(final Input input) {
+        boolean partialSuccess = false;
 
-                payloads.add(payload);
+        final int length = input.readInt();
+        for (int i = 0; i < length; i++) {
+            final int coprocessorId = input.readInt();
+            final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
+            final boolean success = coprocessor.readPayload(input);
+            if (success) {
+                partialSuccess = true;
             }
         }
-        return payloads;
+
+        return partialSuccess;
     }
 
-    public boolean consumePayloads(final List<Payload> payloads) {
-        boolean partialSuccess = true;
-        if (payloads != null && payloads.size() > 0) {
-            partialSuccess = false;
-            for (final Payload payload : payloads) {
-                final boolean success = get(payload.getCoprocessorId()).consumePayload(payload);
-                if (success) {
-                    partialSuccess = true;
-                }
-            }
+    public void writePayloads(final Output output) {
+        output.writeInt(coprocessorMap.size());
+        for (final Entry<Integer, Coprocessor> entry : coprocessorMap.entrySet()) {
+            final int coprocessorId = entry.getKey();
+            final Coprocessor coprocessor = entry.getValue();
+            output.writeInt(coprocessorId);
+            coprocessor.writePayload(output);
         }
-        return partialSuccess;
     }
 
     public Consumer<Val[]> getValuesConsumer() {
