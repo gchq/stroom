@@ -40,7 +40,6 @@ import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -267,20 +266,38 @@ public class PhysicalDeleteExecutor {
                     String baseName = file.getFileName().toString();
                     baseName = baseName.substring(0, baseName.indexOf("."));
 
-                    try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, baseName + ".*")) {
-                        stream.forEach(f -> {
-                            try {
-                                info(taskContext, () -> "Deleting file: " + FileUtil.getCanonicalPath(f));
-                                Files.deleteIfExists(f);
-                            } catch (final IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
-                        });
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
+                    if (Files.isDirectory(dir)) {
+                        final String glob = baseName + ".*";
+                        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
+                            stream.forEach(f -> {
+                                try {
+                                    info(taskContext, () -> "Deleting file: " + FileUtil.getCanonicalPath(f));
+                                    Files.deleteIfExists(f);
+                                } catch (final IOException e) {
+                                    LOGGER.debug(e.getMessage(), e);
+                                    LOGGER.error("Error deleting file '" +
+                                            FileUtil.getCanonicalPath(f) +
+                                            "'" +
+                                            " " +
+                                            e.getMessage());
+                                }
+                            });
+                        } catch (final IOException e) {
+                            LOGGER.debug(e.getMessage(), e);
+                            LOGGER.error("Error creating directory stream '" +
+                                    FileUtil.getCanonicalPath(dir) +
+                                    "' glob=" +
+                                    glob +
+                                    " " +
+                                    e.getMessage());
+                        }
 
-                    directoryMap.put(dir, volumePath);
+                        directoryMap.put(dir, volumePath);
+                    } else {
+                        LOGGER.warn("Directory does not exist '" +
+                                FileUtil.getCanonicalPath(dir) +
+                                "'");
+                    }
                 }
 
                 successfulMetaIdDeleteQueue.add(meta.getId());

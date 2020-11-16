@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1932** : Physical stream delete will no longer fail if a file or directory it wants to delete cannot be found, i.e. has been deleted by another external process.
+
 * Fix log output counts for reference data.
 
 * Add REST endpoint for purging reference data.
