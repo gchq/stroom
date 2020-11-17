@@ -117,11 +117,10 @@ public class CoprocessorsFactory {
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
                                final Consumer<Throwable> errorConsumer) {
-        final int coprocessorId = settings.getCoprocessorId();
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-            final TableDataStore tableDataStore = create(coprocessorId, tableSettings, fieldIndex, paramMap);
+            final TableDataStore tableDataStore = create(tableSettings, fieldIndex, paramMap);
             return new TableCoprocessor(tableSettings, tableDataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
@@ -131,8 +130,7 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private TableDataStore create(final int coprocessorId,
-                                  final TableSettings tableSettings,
+    private TableDataStore create(final TableSettings tableSettings,
                                   final FieldIndex fieldIndex,
                                   final Map<String, String> paramMap) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
@@ -143,7 +141,6 @@ public class CoprocessorsFactory {
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
         return new TableDataStore(
-                coprocessorId,
                 tableSettings,
                 fieldIndex,
                 paramMap,

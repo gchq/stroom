@@ -42,8 +42,6 @@ public class TableDataStore {
     private final Map<GroupKey, Item> groupingMap = new ConcurrentHashMap<>();
     private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
-    private final int coprocessorId;
-    private final FieldIndex fieldIndex;
     private final CompiledFields compiledFields;
     private final CompiledSorter compiledSorter;
     private final CompiledDepths compiledDepths;
@@ -56,14 +54,11 @@ public class TableDataStore {
 
     private volatile boolean hasEnoughData;
 
-    public TableDataStore(final int coprocessorId,
-                          final TableSettings tableSettings,
+    public TableDataStore(final TableSettings tableSettings,
                           final FieldIndex fieldIndex,
                           final Map<String, String> paramMap,
                           final Sizes maxResults,
                           final Sizes storeSize) {
-        this.coprocessorId = coprocessorId;
-        this.fieldIndex = fieldIndex;
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
         final CompiledSorter compiledSorter = new CompiledSorter(tableSettings.getFields());
@@ -306,9 +301,5 @@ public class TableDataStore {
 
     public Data getData() {
         return new Data(childMap, resultCount.get(), totalResultCount.get());
-    }
-
-    public FieldIndex getFieldIndexMap() {
-        return fieldIndex;
     }
 }

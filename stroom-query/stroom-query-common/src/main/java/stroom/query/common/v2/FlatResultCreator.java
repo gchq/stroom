@@ -295,15 +295,15 @@ public class FlatResultCreator implements ResultCreator {
             final FieldIndex fieldIndex = new FieldIndex();
 
             final List<Field> fields = child.getFields();
-            final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
+//            final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
             final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, paramMap);
 
-            tableDataStore = new TableDataStore(0,
+            tableDataStore = new TableDataStore(
                     child,
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    null);
+                    Sizes.create(Integer.MAX_VALUE));
 
             int i = 0;
             final Map<String, Integer> parentIndex = new HashMap<>();
@@ -311,10 +311,10 @@ public class FlatResultCreator implements ResultCreator {
                 parentIndex.put(field.getName(), i++);
             }
 
-            parentFieldIndices = new int[compiledFields.size()];
+            parentFieldIndices = new int[fieldIndex.size()];
             Arrays.fill(parentFieldIndices, -1);
-            for (i = 0; i < compiledFields.size(); i++) {
-                final Integer index = parentIndex.get(compiledFields.getField(i).getField().getName());
+            for (i = 0; i < fieldIndex.size(); i++) {
+                final Integer index = parentIndex.get(fieldIndex.getField(i));
                 if (index != null) {
                     parentFieldIndices[i] = index;
                 }

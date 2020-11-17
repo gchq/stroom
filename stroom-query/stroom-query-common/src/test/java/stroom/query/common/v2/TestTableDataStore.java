@@ -312,7 +312,6 @@ class TestTableDataStore {
         final FieldIndex fieldIndex = new FieldIndex();
 
         return new TableDataStore(
-                0,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),

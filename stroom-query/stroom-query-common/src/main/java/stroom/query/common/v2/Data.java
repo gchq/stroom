@@ -22,6 +22,7 @@ import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -79,6 +80,7 @@ public class Data {
         }
 
         @Override
+        @Nonnull
         public Iterator<DataItem> iterator() {
             return new Iterator<>() {
                 private final Iterator<Item> itemIterator = items == null ? Collections.emptyIterator() : items.iterator();

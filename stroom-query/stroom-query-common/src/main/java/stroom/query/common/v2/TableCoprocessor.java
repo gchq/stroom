@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.TableSettings;
 
@@ -86,10 +85,6 @@ public class TableCoprocessor implements Coprocessor {
 
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
         return completionState.await(timeout, unit);
-    }
-
-    public FieldIndex getFieldIndexMap() {
-        return tableDataStore.getFieldIndexMap();
     }
 
     public Data getData() {
