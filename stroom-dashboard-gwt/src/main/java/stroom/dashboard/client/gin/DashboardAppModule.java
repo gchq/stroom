@@ -68,6 +68,9 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.progress.client.view.ProgressViewImpl;
 
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -128,5 +131,9 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
+        bindPresenterWidget(
+                ProgressPresenter.class,
+                ProgressView.class,
+                ProgressViewImpl.class);
     }
 }
