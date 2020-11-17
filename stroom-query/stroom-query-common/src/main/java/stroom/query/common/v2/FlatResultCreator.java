@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -283,7 +282,8 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class Mapper {
-        private final int[] parentFieldIndices;
+        private final FieldIndex fieldIndex;
+        //        private final int[] parentFieldIndices;
         private final TableDataStore tableDataStore;
         private final int maxItems;
 
@@ -293,16 +293,21 @@ public class FlatResultCreator implements ResultCreator {
                final int maxItems) {
             this.maxItems = maxItems;
 
-            // Create a set of max result sizes that are determined by the supplied max results or default to integer
-            // max value.
-            final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
-
-            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex = new FieldIndex();
+//            int i = 0;
+//            final Map<String, Integer> parentIndex = new HashMap<>();
+            for (final Field field : parent.getFields()) {
+                fieldIndex.create(field.getName());
+//                parentIndex.put(field.getName(), i++);
+            }
 
             final List<Field> fields = child.getFields();
 //            final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
             final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, paramMap);
 
+            // Create a set of max result sizes that are determined by the supplied max results or default to integer
+            // max value.
+            final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
             tableDataStore = new TableDataStore(
                     child,
                     fieldIndex,
@@ -310,20 +315,14 @@ public class FlatResultCreator implements ResultCreator {
                     maxResults,
                     Sizes.create(Integer.MAX_VALUE));
 
-            int i = 0;
-            final Map<String, Integer> parentIndex = new HashMap<>();
-            for (final Field field : parent.getFields()) {
-                parentIndex.put(field.getName(), i++);
-            }
-
-            parentFieldIndices = new int[fieldIndex.size()];
-            Arrays.fill(parentFieldIndices, -1);
-            for (i = 0; i < fieldIndex.size(); i++) {
-                final Integer index = parentIndex.get(fieldIndex.getField(i));
-                if (index != null) {
-                    parentFieldIndices[i] = index;
-                }
-            }
+//            parentFieldIndices = new int[fieldIndex.size()];
+//            Arrays.fill(parentFieldIndices, -1);
+//            for (i = 0; i < fieldIndex.size(); i++) {
+//                final Integer index = parentIndex.get(fieldIndex.getField(i));
+//                if (index != null) {
+//                    parentFieldIndices[i] = index;
+//                }
+//            }
         }
 
         public Data map(final Data data) {
@@ -335,13 +334,13 @@ public class FlatResultCreator implements ResultCreator {
             if (items.size() > 0) {
                 int itemCount = 0;
                 for (final DataItem item : items) {
-                    final Val[] values = new Val[parentFieldIndices.length];
-                    for (int i = 0; i < values.length; i++) {
-                        final int index = parentFieldIndices[i];
-                        if (index != -1) {
-                            final Val val = item.getValue(index);
-                            values[index] = val;
-                        }
+                    final Val[] values = new Val[fieldIndex.size()];
+                    for (int i = 0; i < fieldIndex.size(); i++) {
+//                        final int index = parentFieldIndices[i];
+//                        if (index != -1) {
+                        final Val val = item.getValue(i); // TODO : @66 Currently evaluating more values than will be needed.
+                        values[i] = val;
+//                        }
                     }
                     tableDataStore.add(values);
 
