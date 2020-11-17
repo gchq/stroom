@@ -1,3 +1,4 @@
+import java.nio.file.Files
 import java.nio.file.Paths
 
 buildscript {
@@ -54,10 +55,6 @@ apply plugin: 'de.undercouch.download'
 if (!JavaVersion.current().isJava12()) {
     throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
 }
-
-
-ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
-ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -281,10 +278,10 @@ ext.libs = [
 def contentPackDownloadDir = "${project.buildDir}/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
-ext.contentPackImportDir = contentPackImportDir
-def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
+//ext.contentPackImportDir = contentPackImportDir
+def contentReleasesUrl = "https://github.com/gchq/stroom-content/releases/download/"
 def visualisationsContentPackVer = "v3.2.1"
-def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
+def visualisationsContentPackUrl = "https://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
@@ -681,65 +678,66 @@ configure(projectsToBePublished) {
 //    artifacts.archives packageTests
 //}
 
-task clearContentPackImportDir(type: Delete) {
-    doFirst {
-        println "Clearing ${contentPackImportDir}"
-    }
-    //ensure the import directory exists
-    new File(contentPackImportDir).mkdirs()
-
-    //cleans out any zip files in the contentPackImportDir
-    delete fileTree(new File(contentPackImportDir)) {
-        include '**/*.zip'
+task clearContentPackDownloadDir(type: Delete) {
+    doLast {
+        println "Clearing ${contentPackDownloadDir}"
+        def downloadDir = Paths.get(contentPackDownloadDir)
+        if (Files.exists(downloadDir)) {
+            // Cleans out any zip files in the contentPackDownloadDir
+            delete fileTree(downloadDir) {
+                include '**/*.zip'
+            }
+        }
     }
 }
 
-task clearContentPackDownloadDir(type: Delete) {
-    doFirst {
-        println "Clearing ${contentPackDownloadDir}"
-    }
-
-    //ensure the import directory exists
-    new File(contentPackDownloadDir).mkdirs()
-
-    //cleans out any zip files in the contentPackImportDir
-    delete fileTree(new File(contentPackDownloadDir)) {
-        include '**/*.zip'
+task clearContentPackImportDir(type: Delete) {
+    doLast {
+        println "Clearing ${contentPackImportDir}"
+        def importDir = Paths.get(contentPackImportDir)
+        if (Files.exists(importDir)) {
+            // Cleans out any zip files in the contentPackImportDir
+            delete fileTree(importDir) {
+                include '**/*.zip'
+            }
+        }
     }
 }
 
 task downloadStroomContent() {
-
-    doFirst {
-        println "Downloading content packs to ${contentPackDownloadDir}"
-    }
-
-    def downloadPack = { url ->
-        String filename = Paths.get(new URI(url).getPath()).getFileName().toString()
-        def downloadFile = new File(contentPackDownloadDir + "/" + filename)
-        def importFile = new File(contentPackImportDir + "/" + filename)
-        if (downloadFile.exists()) {
-            println "${url} has already been downloaded"
-        } else {
-            println "Downloading ${url} into ${contentPackDownloadDir}"
-            download {
-                src url
-                dest new File(contentPackDownloadDir)
-                overwrite true
-            }
-        }
-
-        if (!importFile.exists()) {
-            copy {
-                println "Copying from ${downloadFile} to ${importFile}"
-                from downloadFile
-                into stroomContentImportDir
-            }
-        }
-    }
-
     doLast {
-        //download each content pack to the contentPackImportDir ready for stroom to import on startup
+        println "Downloading content packs to ${contentPackDownloadDir}"
+        def downloadDir = Paths.get(contentPackDownloadDir)
+        def importDir = Paths.get(contentPackImportDir)
+
+        Files.createDirectories(downloadDir)
+        Files.createDirectories(importDir)
+
+        def downloadPack = { url ->
+            String filename = Paths.get(new URI(url).getPath()).getFileName().toString()
+            def downloadFile = downloadDir.resolve(filename)
+            def importFile = importDir.resolve(filename)
+            if (Files.exists(downloadFile)) {
+                println "${url} has already been downloaded"
+            } else {
+                println "Downloading ${url} into ${contentPackDownloadDir}"
+                download {
+                    src url
+                    dest downloadDir.toFile()
+                    overwrite true
+                }
+            }
+
+            if (!Files.exists(importFile)) {
+                copy {
+                    println "Copying from ${downloadFile} to ${importFile}"
+                    from downloadFile.toFile()
+                    into contentPackImportDir
+                }
+            }
+        }
+
+        // Download each content pack to the contentPackImportDir ready for stroom to import on startup
         for (pack in contentPacks) {
             def packName = pack.key
             def packVer = pack.value
@@ -748,7 +746,7 @@ task downloadStroomContent() {
             downloadPack packUrl
 
         }
-        //now get the visualisations pack from a different repo
+        // Now get the visualisations pack from a different repo
         downloadPack visualisationsContentPackUrl
     }
 }
