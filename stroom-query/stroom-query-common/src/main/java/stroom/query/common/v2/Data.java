@@ -126,31 +126,33 @@ public class Data {
             final Generator[] generators = item.getGenerators();
             if (index >= 0 && index < generators.length) {
                 final Generator generator = generators[index];
-                final GroupKey groupKey = item.getKey();
-                if (groupKey != null && generator instanceof Selector) {
-                    // If the generator is a selector then select a child row.
-                    final Items childItems = childMap.get(groupKey);
-                    if (childItems != null) {
-                        // Create a list of child generators.
-                        final List<Generator> childGenerators = new ArrayList<>(childItems.size());
-                        childItems.forEach(childItem -> {
-                            final Generator childGenerator = childItem.getGenerators()[index];
-                            childGenerators.add(childGenerator);
-                        });
+                if (generator != null) {
+                    final GroupKey groupKey = item.getKey();
+                    if (groupKey != null && generator instanceof Selector) {
+                        // If the generator is a selector then select a child row.
+                        final Items childItems = childMap.get(groupKey);
+                        if (childItems != null) {
+                            // Create a list of child generators.
+                            final List<Generator> childGenerators = new ArrayList<>(childItems.size());
+                            childItems.forEach(childItem -> {
+                                final Generator childGenerator = childItem.getGenerators()[index];
+                                childGenerators.add(childGenerator);
+                            });
 
-                        // Make the selector select from the list of child generators.
-                        final Selector selector = (Selector) generator;
-                        val = selector.select(childGenerators.toArray(new Generator[0]));
+                            // Make the selector select from the list of child generators.
+                            final Selector selector = (Selector) generator;
+                            val = selector.select(childGenerators.toArray(new Generator[0]));
 
+                        } else {
+                            // If there are are no child items then just evaluate the inner expression
+                            // provided to the selector function.
+                            val = generator.eval();
+                        }
                     } else {
-                        // If there are are no child items then just evaluate the inner expression
-                        // provided to the selector function.
+                        // Convert all list into fully resolved objects evaluating functions where
+                        // necessary.
                         val = generator.eval();
                     }
-                } else {
-                    // Convert all list into fully resolved objects evaluating functions where
-                    // necessary.
-                    val = generator.eval();
                 }
             }
             return val;

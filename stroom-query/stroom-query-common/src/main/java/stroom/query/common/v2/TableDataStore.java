@@ -135,7 +135,9 @@ public class TableDataStore {
                 int index = 0;
                 for (final int fieldIndex : fieldIndexes) {
                     final Generator generator = generators[fieldIndex];
-                    groupValues[index++] = generator.eval();
+                    if (generator != null) {
+                        groupValues[index++] = generator.eval();
+                    }
                 }
             }
 

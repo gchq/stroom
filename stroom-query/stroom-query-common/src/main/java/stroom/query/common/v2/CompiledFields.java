@@ -46,18 +46,14 @@ public class CompiledFields implements Iterable<CompiledField> {
                 if (field.getGroup() != null) {
                     groupDepth = field.getGroup();
                 }
-
-                String expressionString = "null()";
+                Expression expression = null;
                 if (field.getExpression() != null && field.getExpression().trim().length() > 0) {
-                    expressionString = field.getExpression().trim();
-                }
-
-                Expression expression;
-                try {
-                    expression = expressionParser.parse(fieldIndex, expressionString);
-                    expression.setStaticMappedValues(paramMap);
-                } catch (final ParseException e) {
-                    throw new RuntimeException(e.getMessage(), e);
+                    try {
+                        expression = expressionParser.parse(fieldIndex, field.getExpression());
+                        expression.setStaticMappedValues(paramMap);
+                    } catch (final ParseException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
                 }
 
                 CompiledFilter filter = null;

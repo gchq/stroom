@@ -66,7 +66,8 @@ public class FlatResultCreator implements ResultCreator {
                 final TableSettings parent = tableSettings.get(i);
                 final TableSettings child = tableSettings.get(i + 1);
 
-                // Create a set of sizes that are the minimum values for the combination of user provided sizes for the parent table and the default maximum sizes.
+                // Create a set of sizes that are the minimum values for the combination of user provided sizes for the
+                // parent table and the default maximum sizes.
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
 
@@ -82,7 +83,9 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final GroupKey key) {
-        if (key == null || key.getValues() == null) {
+        if (key == null ||
+                key.getValues() == null ||
+                key.getValues().length == 0) {
             return null;
         }
 
@@ -145,11 +148,12 @@ public class FlatResultCreator implements ResultCreator {
                     final OpenGroups openGroups = OpenGroupsFactory.create(resultRequest.getOpenGroups());
 
                     // Extract the maxResults settings from the last TableSettings object in the chain.
-                    // Do not constrain the max results with the default max results as the result size will have already
-                    // been constrained by the previous table mapping.
+                    // Do not constrain the max results with the default max results as the result size will have
+                    // already been constrained by the previous table mapping.
                     final List<TableSettings> mappings = resultRequest.getMappings();
                     final TableSettings tableSettings = mappings.get(mappings.size() - 1);
-                    // Create a set of max result sizes that are determined by the supplied max results or default to integer max value.
+                    // Create a set of max result sizes that are determined by the supplied max results or default to
+                    // integer max value.
                     final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
                     totalResults = addResults(mappedData, rangeChecker, openGroups, items, results, 0,
@@ -289,7 +293,8 @@ public class FlatResultCreator implements ResultCreator {
                final int maxItems) {
             this.maxItems = maxItems;
 
-            // Create a set of max result sizes that are determined by the supplied max results or default to integer max value.
+            // Create a set of max result sizes that are determined by the supplied max results or default to integer
+            // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
 
             final FieldIndex fieldIndex = new FieldIndex();
