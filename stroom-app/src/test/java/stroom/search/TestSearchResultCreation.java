@@ -69,7 +69,7 @@ class TestSearchResultCreation {
                 .resolve("TestSearchResultCreation");
 
         // Validate the search request.
-        validateSearchRequest(resourcesDir, searchRequest);
+        validateSearchRequest(searchRequest);
 
         // Now create coprocessors to feed with data.
         // Create a coprocessor settings map.
@@ -129,13 +129,22 @@ class TestSearchResultCreation {
         final Path dataPath = resourcesDir.resolve("data.txt");
         final String data = Files.readString(dataPath);
         final String[] lines = data.split("\n");
+
+        // Reorder values if field mappings have changed.
+        final int[] mappings = new int[4];
+        mappings[0] = consumer.getFieldIndexMap().get("EventTime");
+        mappings[1] = consumer.getFieldIndexMap().get("UserId");
+        mappings[2] = consumer.getFieldIndexMap().get("StreamId");
+        mappings[3] = consumer.getFieldIndexMap().get("EventId");
+
         for (int i = 0; i < lines.length; i++) {
             final String line = lines[i];
             final String[] values = line.split(",");
             final Val[] vals = new Val[values.length];
             for (int j = 0; j < values.length; j++) {
                 final String value = values[j];
-                vals[j] = ValString.create(value);
+                final int target = mappings[j];
+                vals[target] = ValString.create(value);
             }
             consumer.getValuesConsumer().accept(new Values(vals));
         }
@@ -166,32 +175,18 @@ class TestSearchResultCreation {
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
-        validateSearchResponse(resourcesDir, searchResponse);
+        validateSearchResponse(searchResponse);
 
     }
 
-    private void validateSearchRequest(final Path resourcesDir, final SearchRequest searchRequest) throws Exception {
-        final Path pathForActualOutput = resourcesDir.resolve("searchRequest_actual.txt");
-        final Path pathForExpectedOutput = resourcesDir.resolve("searchRequest_expected.txt");
-
+    private void validateSearchRequest(final SearchRequest searchRequest) {
         SearchDebugUtil.writeRequest(searchRequest, true);
-
-        final String actual = Files.readString(pathForActualOutput);
-        final String expected = Files.readString(pathForExpectedOutput);
-
-        assertThat(actual).isEqualTo(expected);
+        SearchDebugUtil.validateRequest();
     }
 
-    private void validateSearchResponse(final Path resourcesDir, final SearchResponse searchResponse) throws Exception {
-        final Path pathForActualOutput = resourcesDir.resolve("searchResponse_actual.txt");
-        final Path pathForExpectedOutput = resourcesDir.resolve("searchResponse_expected.txt");
-
+    private void validateSearchResponse(final SearchResponse searchResponse) {
         SearchDebugUtil.writeResponse(searchResponse, true);
-
-        final String actual = Files.readString(pathForActualOutput);
-        final String expected = Files.readString(pathForExpectedOutput);
-
-        assertThat(actual).isEqualTo(expected);
+        SearchDebugUtil.validateResponse();
     }
 
     private SearchRequest createSearchRequest() {

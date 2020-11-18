@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,8 @@ import java.util.List;
 public class SearchDebugUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
     private static final Path dir = Paths.get("/home/stroomdev66/work/stroom-master-temp2/stroom-app/src/test/resources/TestSearchResultCreation");
-    private static final boolean enabled = true;
+    private static final boolean writeActual = true;
+    private static final boolean writeExpected = false;
     private static Writer writer;
 
     private SearchDebugUtil() {
@@ -40,8 +42,34 @@ public class SearchDebugUtil {
         return suffix;
     }
 
+    public static void validateRequest() {
+        compareFiles(dir.resolve("searchRequest_actual.txt"), dir.resolve("searchRequest_expected.txt"));
+    }
+
+    public static void validateResponse() {
+        compareFiles(dir.resolve("searchResponse_actual.txt"), dir.resolve("searchResponse_expected.txt"));
+        compareFiles(dir.resolve("table-78LF4_actual.txt"), dir.resolve("table-78LF4_expected.txt"));
+        compareFiles(dir.resolve("table-BKJT6_actual.txt"), dir.resolve("table-BKJT6_expected.txt"));
+        compareFiles(dir.resolve("vis-L1AL1_actual.txt"), dir.resolve("vis-L1AL1_expected.txt"));
+        compareFiles(dir.resolve("vis-QYG7H_actual.txt"), dir.resolve("vis-QYG7H_expected.txt"));
+        compareFiles(dir.resolve("vis-SPSCW_actual.txt"), dir.resolve("vis-SPSCW_expected.txt"));
+    }
+
+    private static void compareFiles(final Path pathForActualOutput, final Path pathForExpectedOutput) {
+        try {
+            final String actual = Files.readString(pathForActualOutput);
+            final String expected = Files.readString(pathForExpectedOutput);
+
+            if (!actual.equals(expected)) {
+                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath().toString() + " " + pathForExpectedOutput.toAbsolutePath().toString());
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public static void writeRequest(final SearchRequest searchRequest, final boolean actual) {
-        if (enabled) {
+        if ((writeExpected && !actual) || (writeActual && actual)) {
             final String suffix = getSuffix(actual);
             try {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -56,7 +84,7 @@ public class SearchDebugUtil {
     }
 
     public static void writeResponse(final SearchResponse searchResponse, final boolean actual) {
-        if (enabled) {
+        if ((writeExpected && !actual) || (writeActual && actual)) {
             final String suffix = getSuffix(actual);
             try {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -132,7 +160,7 @@ public class SearchDebugUtil {
     }
 
     public static synchronized void writeExtractionData(final Val[] values) {
-        if (enabled) {
+        if (writeExpected) {
             try {
                 if (writer == null) {
                     writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("data.txt")));
