@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.shared.StreamTypeNames;
@@ -10,6 +11,7 @@ import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -38,6 +40,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.PermissionException;
+import stroom.util.time.StroomDuration;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -76,6 +79,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             "Key", true, SUPPORTED_STRING_CONDITIONS);
     private static final AbstractField VALUE_FIELD = new TextField(
             "Value", true, SUPPORTED_STRING_CONDITIONS);
+    private static final AbstractField VALUE_REF_COUNT_FIELD = new IntegerField(
+            "Value Reference Count", false);
     private static final AbstractField MAP_NAME_FIELD = new TextField(
             "Map Name", true, SUPPORTED_STRING_CONDITIONS);
     private static final AbstractField CREATE_TIME_FIELD = new DateField(
@@ -98,6 +103,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private static final List<AbstractField> FIELDS = List.of(
             KEY_FIELD,
             VALUE_FIELD,
+            VALUE_REF_COUNT_FIELD,
             MAP_NAME_FIELD,
             CREATE_TIME_FIELD,
             EFFECTIVE_TIME_FIELD,
@@ -142,6 +148,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     RefStoreEntry::getKey),
             Map.entry(VALUE_FIELD.getName(),
                     RefStoreEntry::getValue),
+            Map.entry(VALUE_REF_COUNT_FIELD.getName(),
+                    RefStoreEntry::getValueReferenceCount),
             Map.entry(MAP_NAME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getMapName()),
             Map.entry(CREATE_TIME_FIELD.getName(), refStoreEntry ->
@@ -223,6 +231,23 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 performLookup(refDataLookupRequest),
                                         LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
                 .get();
+    }
+
+    @Override
+    public void purge(final StroomDuration purgeAge) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+                taskContextFactory.context("Reference Data Purge",
+                        taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () ->
+                                                performPurge(purgeAge),
+                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
+                        .run());
+
+    }
+
+    private void performPurge(final StroomDuration purgeAge) {
+        refDataStore.purgeOldData(purgeAge);
     }
 
     private String performLookup(final RefDataLookupRequest refDataLookupRequest) {
@@ -690,6 +715,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         switch (field.getType()) {
             case FieldTypes.TEXT:
                 return ValString.create((String) object);
+            case FieldTypes.INTEGER:
+                return ValInteger.create((Integer) object);
             case FieldTypes.LONG:
             case FieldTypes.ID:
             case FieldTypes.DATE:

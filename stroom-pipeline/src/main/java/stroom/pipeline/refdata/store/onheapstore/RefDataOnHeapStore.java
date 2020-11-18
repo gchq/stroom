@@ -14,6 +14,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+import stroom.util.time.StroomDuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +219,14 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public void purgeOldData() {
-        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store");
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
+                "as the data is transient");
+    }
+
+    @Override
+    public void purgeOldData(final StroomDuration purgeAge) {
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
+                "as the data is transient");
     }
 
     @Override

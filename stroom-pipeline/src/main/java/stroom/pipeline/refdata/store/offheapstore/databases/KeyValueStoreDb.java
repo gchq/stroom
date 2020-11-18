@@ -74,13 +74,14 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
              PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
-            // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
-            // when both the start and end key are used in the keyRange
-            // see https://github.com/lmdbjava/lmdbjava/issues/98
-            // As a work around will have to use an AT_LEAST cursor and manually
-            // test entries to see when I have gone too far.
+            // TODO there appears to be a bug in lmdbjava that prevents closedOpen key ranges working
+            //   see https://github.com/lmdbjava/lmdbjava/issues/169
+            //   As a work around will have to use an AT_LEAST cursor and manually
+            //   test entries to see when I have gone too far.
 //            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-//                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
+//                    mapUid,
+//                    startKeyIncPooledBuffer.getByteBuffer(),
+//                    endKeyExcPooledBuffer.getByteBuffer());
 
             final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
             final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
@@ -91,8 +92,10 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
+//            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, singleMapUidKeyRange)) {
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
                 int cnt = 0;
+
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
                 while (iterator.hasNext()) {
                     final KeyVal<ByteBuffer> keyVal = iterator.next();
@@ -120,24 +123,29 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         }
     }
 
-//    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
-//                                                           final ByteBuffer startKeyIncBuffer,
-//                                                           final ByteBuffer endKeyExcBuffer) {
-//        final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
-//
-//        keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
-//
-//        UID nextMapUid = mapUid.nextUid();
+    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
+                                                           final ByteBuffer startKeyIncBuffer,
+                                                           final ByteBuffer endKeyExcBuffer) {
+        final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
+
+        // serialise the startKeyInc to both start and end buffers, then
+        // we will mutate the uid of the end buffer
+        keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
+        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, startKeyInc);
+
+        // Increment the UID part of the end key buffer to give us an exclusive key
+        UID.incrementUid(endKeyExcBuffer);
+
 //        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
-//
-//        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
-//                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
-//                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
-//
+
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
+                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
+
 //        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
-//
-//        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
-//    }
+
+        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
+    }
 
     public interface Factory {
         KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);

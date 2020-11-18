@@ -22,6 +22,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.common.v2.SearchDebugUtil;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -62,6 +63,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
+            SearchDebugUtil.writeExtractionData(values);
+
             consumer.accept(values);
             count++;
             values = null;

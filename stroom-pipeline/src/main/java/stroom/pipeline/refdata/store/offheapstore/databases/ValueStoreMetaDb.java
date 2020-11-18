@@ -208,7 +208,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                     }
                     cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
                 }
-                return true;
+                return false;
             }
         }
     }

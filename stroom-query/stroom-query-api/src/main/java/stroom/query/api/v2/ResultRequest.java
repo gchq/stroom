@@ -167,6 +167,7 @@ public final class ResultRequest implements Serializable {
     /**
      * The fetch type determines if the request actually wants data returned or if it only wants data if the data has
      * changed since the last request was made.
+     *
      * @return The fetch type.
      */
     public Fetch getFetch() {
@@ -224,11 +225,11 @@ public final class ResultRequest implements Serializable {
     public static class Builder {
         private String componentId;
 
-        private final List<TableSettings> mappings = new ArrayList<>();
+        private List<TableSettings> mappings;
 
         private OffsetRange requestedRange;
 
-        private final List<String> openGroups = new ArrayList<>();
+        private List<String> openGroups;
 
         private ResultRequest.ResultStyle resultStyle;
 
@@ -236,7 +237,6 @@ public final class ResultRequest implements Serializable {
 
         /**
          * @param value The ID of the component that will receive the results corresponding to this ResultRequest
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder componentId(final String value) {
@@ -246,7 +246,6 @@ public final class ResultRequest implements Serializable {
 
         /**
          * @param value Set the requested range of the results.
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder requestedRange(final OffsetRange value) {
@@ -256,20 +255,26 @@ public final class ResultRequest implements Serializable {
 
         /**
          * @param values Adding a set of TableSettings which are used to map the raw results to the output
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder addMappings(final TableSettings... values) {
+            if (values.length > 0 && mappings == null) {
+                mappings = new ArrayList<>();
+            }
+
             this.mappings.addAll(Arrays.asList(values));
             return this;
         }
 
         /**
          * @param values TODO
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOpenGroups(final String...values) {
+        public Builder addOpenGroups(final String... values) {
+            if (values.length > 0 && openGroups == null) {
+                openGroups = new ArrayList<>();
+            }
+
             this.openGroups.addAll(Arrays.asList(values));
             return this;
         }
@@ -278,7 +283,6 @@ public final class ResultRequest implements Serializable {
          * @param value The style of results required.
          *              FLAT will provide a FlatResult object,
          *              while TABLE will provide a TableResult object
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder resultStyle(final ResultRequest.ResultStyle value) {
@@ -291,7 +295,6 @@ public final class ResultRequest implements Serializable {
          *              NONE means fetch no data,
          *              ALL means fetch all known results,
          *              CHANGES means fetch only those records not see in previous requests
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder fetch(final ResultRequest.Fetch value) {

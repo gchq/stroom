@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Instant;
-
 @JsonInclude(Include.NON_NULL)
 public class RefStoreEntry {
 
@@ -17,17 +15,21 @@ public class RefStoreEntry {
     @JsonProperty
     private final String value;
     @JsonProperty
+    private int valueReferenceCount;
+    @JsonProperty
     private final RefDataProcessingInfo refDataProcessingInfo;
 
     @JsonCreator
     public RefStoreEntry(@JsonProperty("mapDefinition") final MapDefinition mapDefinition,
                          @JsonProperty("key") final String key,
                          @JsonProperty("value") final String value,
+                         @JsonProperty("valueReferenceCount") final int valueReferenceCount,
                          @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo) {
 
         this.mapDefinition = mapDefinition;
         this.key = key;
         this.value = value;
+        this.valueReferenceCount = valueReferenceCount;
         this.refDataProcessingInfo = refDataProcessingInfo;
     }
 
@@ -43,6 +45,10 @@ public class RefStoreEntry {
         return value;
     }
 
+    public int getValueReferenceCount() {
+        return valueReferenceCount;
+    }
+
     public RefDataProcessingInfo getRefDataProcessingInfo() {
         return refDataProcessingInfo;
     }
@@ -50,10 +56,11 @@ public class RefStoreEntry {
     @Override
     public String toString() {
         return "RefStoreEntry{" +
-                "map=" + mapDefinition.getMapName() +
+                "mapDefinition=" + mapDefinition +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\'' +
-                ", effectiveData=" + Instant.ofEpochMilli(refDataProcessingInfo.getEffectiveTimeEpochMs()) +
+                ", valueReferenceCount=" + valueReferenceCount +
+                ", refDataProcessingInfo=" + refDataProcessingInfo +
                 '}';
     }
 }

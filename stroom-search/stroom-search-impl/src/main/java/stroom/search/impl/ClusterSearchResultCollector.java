@@ -59,7 +59,7 @@ public class ClusterSearchResultCollector implements Store {
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
 
-    ClusterSearchResultCollector(final Executor executor,
+    public ClusterSearchResultCollector(final Executor executor,
                                  final TaskContextFactory taskContextFactory,
                                  final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
                                  final AsyncSearchTask task,

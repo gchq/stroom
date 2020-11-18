@@ -63,16 +63,11 @@ class ProcessorFeedCache implements Clearable {
     }
 
     public Integer getOrCreate(final String name) {
+        if (name == null) {
+            return null;
+        }
         return cache.get(name);
     }
-
-//    @Override
-//    public List<String> list() {
-//        return JooqUtil.contextResult(connectionProvider, context -> context
-//                .select(PROCESSOR_NODE.NAME)
-//                .from(PROCESSOR_NODE)
-//                .fetch(PROCESSOR_NODE.NAME));
-//    }
 
     private Optional<Integer> get(final String name) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context

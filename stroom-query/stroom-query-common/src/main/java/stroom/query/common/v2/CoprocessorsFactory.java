@@ -23,7 +23,7 @@ public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
 
     @Inject
-    CoprocessorsFactory(final SizesProvider sizesProvider) {
+    public CoprocessorsFactory(final SizesProvider sizesProvider) {
         this.sizesProvider = sizesProvider;
     }
 

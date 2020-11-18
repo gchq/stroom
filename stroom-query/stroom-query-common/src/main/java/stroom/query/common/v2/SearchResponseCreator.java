@@ -56,7 +56,7 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    SearchResponseCreator(final SizesProvider sizesProvider, final Store store) {
+    public SearchResponseCreator(final SizesProvider sizesProvider, final Store store) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
@@ -169,7 +169,14 @@ public class SearchResponseCreator {
                         (results == null ? "null" : results.size()), complete, store.isComplete());
             }
 
-            return new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+            final SearchResponse searchResponse = new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+
+            if (complete) {
+                SearchDebugUtil.writeRequest(searchRequest, false);
+                SearchDebugUtil.writeResponse(searchResponse, false);
+            }
+
+            return searchResponse;
 
         } catch (final RuntimeException e) {
             LOGGER.error("Error getting search results for query {}", searchRequest.getKey().toString(), e);

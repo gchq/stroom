@@ -106,6 +106,15 @@ public class ValueStore {
         return valueStoreMetaDb.getReferenceCount(txn, keyBuffer);
     }
 
+    public OptionalInt getReferenceCount(final Txn<ByteBuffer> txn,
+                                         final ValueStoreKey valueStoreKey) {
+        try(PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
+            return valueStoreMetaDb.getReferenceCount(txn, keyBuffer);
+        }
+    }
+
     public OptionalInt getTypeId(final Txn<ByteBuffer> txn,
                                  final ByteBuffer keyBuffer) {
         return valueStoreMetaDb.getTypeId(txn, keyBuffer);

@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,11 +57,19 @@ public class RefDataProcessingInfo {
         } else {
             newLastAccessedTime = lastAccessedTimeEpochMs;
         }
-        return new RefDataProcessingInfo(createTimeEpochMs, newLastAccessedTime, effectiveTimeEpochMs, newProcessingState);
+        return new RefDataProcessingInfo(
+                createTimeEpochMs,
+                newLastAccessedTime,
+                effectiveTimeEpochMs,
+                newProcessingState);
     }
 
     public RefDataProcessingInfo updateLastAccessedTime() {
-        return new RefDataProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
+        return new RefDataProcessingInfo(
+                createTimeEpochMs,
+                System.currentTimeMillis(),
+                effectiveTimeEpochMs,
+                processingState);
     }
 
     public long getCreateTimeEpochMs() {
@@ -77,6 +86,21 @@ public class RefDataProcessingInfo {
 
     public ProcessingState getProcessingState() {
         return processingState;
+    }
+
+    @JsonIgnore
+    public Instant getCreateTime() {
+        return Instant.ofEpochMilli(createTimeEpochMs);
+    }
+
+    @JsonIgnore
+    public Instant getLastAccessedTime() {
+        return Instant.ofEpochMilli(lastAccessedTimeEpochMs);
+    }
+
+    @JsonIgnore
+    public Instant getEffectiveTime() {
+        return Instant.ofEpochMilli(effectiveTimeEpochMs);
     }
 
     @Override
