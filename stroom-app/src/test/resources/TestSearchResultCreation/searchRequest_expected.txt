@@ -1,6 +1,6 @@
 {
   "key" : {
-    "uuid" : "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322"
+    "uuid" : "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|CO9U_1605714426717"
   },
   "query" : {
     "dataSource" : {
@@ -27,7 +27,7 @@
     "mappings" : [ {
       "queryId" : "query-MRGPM",
       "fields" : [ {
-        "id" : "table-BKJT6|RACJI",
+        "id" : "table-BKJT6|TRGIL",
         "name" : "UserId",
         "expression" : "${UserId}",
         "sort" : {
@@ -39,7 +39,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-BKJT6|89WRT",
+        "id" : "table-BKJT6|CER2D",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
@@ -73,7 +73,7 @@
     "mappings" : [ {
       "queryId" : "query-MRGPM",
       "fields" : [ {
-        "id" : "table-BKJT6|RACJI",
+        "id" : "table-BKJT6|TRGIL",
         "name" : "UserId",
         "expression" : "${UserId}",
         "sort" : {
@@ -85,7 +85,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-BKJT6|89WRT",
+        "id" : "table-BKJT6|CER2D",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
@@ -137,7 +137,7 @@
     "mappings" : [ {
       "queryId" : "query-MRGPM",
       "fields" : [ {
-        "id" : "table-78LF4|7JU9H",
+        "id" : "table-78LF4|J8IX8",
         "name" : "EventTime",
         "expression" : "roundMinute(${EventTime})",
         "sort" : {
@@ -149,7 +149,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|T5WYU",
+        "id" : "table-78LF4|FZ798",
         "name" : "UserId",
         "expression" : "${UserId}",
         "sort" : {
@@ -161,7 +161,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|MT5IM",
+        "id" : "table-78LF4|0TR7Y",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
@@ -195,7 +195,7 @@
     "mappings" : [ {
       "queryId" : "query-MRGPM",
       "fields" : [ {
-        "id" : "table-78LF4|7JU9H",
+        "id" : "table-78LF4|J8IX8",
         "name" : "EventTime",
         "expression" : "roundMinute(${EventTime})",
         "sort" : {
@@ -207,7 +207,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|T5WYU",
+        "id" : "table-78LF4|FZ798",
         "name" : "UserId",
         "expression" : "${UserId}",
         "sort" : {
@@ -219,7 +219,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|MT5IM",
+        "id" : "table-78LF4|0TR7Y",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
@@ -287,7 +287,7 @@
     "mappings" : [ {
       "queryId" : "query-MRGPM",
       "fields" : [ {
-        "id" : "table-78LF4|7JU9H",
+        "id" : "table-78LF4|J8IX8",
         "name" : "EventTime",
         "expression" : "roundMinute(${EventTime})",
         "sort" : {
@@ -299,7 +299,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|T5WYU",
+        "id" : "table-78LF4|FZ798",
         "name" : "UserId",
         "expression" : "${UserId}",
         "sort" : {
@@ -311,7 +311,7 @@
         },
         "group" : 0
       }, {
-        "id" : "table-78LF4|MT5IM",
+        "id" : "table-78LF4|0TR7Y",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
