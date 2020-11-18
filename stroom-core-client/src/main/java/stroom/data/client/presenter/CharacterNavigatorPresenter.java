@@ -5,9 +5,7 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.RowCount;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -35,39 +33,40 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
         getView().setLabelClickHandler(this::handleLabelClick);
 //        getView().setProgressPresenter(progressPresenter);
-        getView().setProgressView(progressPresenter.getView());
+//        getView().setProgressView(progressPresenter.getView());
+        progressPresenter.setVisible(false);
     }
 
     public void setDisplay(final HasCharacterData display) {
         this.display = display;
         getView().setDisplay(display);
-        refreshNavigator();
+//        refreshNavigator();
     }
 
     public void refreshNavigator() {
         getView().refreshNavigator();
-        refreshProgressBar();
+//        refreshProgressBar();
     }
 
-    private void refreshProgressBar() {
-        if (display != null
-                && display.getCharFrom().isPresent()
-                && display.getCharTo().isPresent()) {
-            progressPresenter.setVisible(true);
-            if (display.getTotalChars().isPresent()) {
-                progressPresenter.setProgress(Progress.boundedRange(
-                        display.getTotalChars().get(),
-                        display.getCharFrom().get(),
-                        display.getCharTo().get()));
-            } else {
-                progressPresenter.setProgress(Progress.unboundedRange(
-                        display.getCharFrom().get(),
-                        display.getCharTo().get()));
-            }
-        } else {
-            progressPresenter.setVisible(false);
-        }
-    }
+//    private void refreshProgressBar() {
+//        if (display != null
+//                && display.getCharOffsetFrom().isPresent()
+//                && display.getCharOffsetTo().isPresent()) {
+//            progressPresenter.setVisible(true);
+//            if (display.getTotalChars().isPresent()) {
+//                progressPresenter.setProgress(Progress.boundedRange(
+//                        display.getTotalChars().get(),
+//                        display.getCharOffsetFrom().get(),
+//                        display.getCharOffsetTo().get()));
+//            } else {
+//                progressPresenter.setProgress(Progress.unboundedRange(
+//                        display.getCharOffsetFrom().get(),
+//                        display.getCharOffsetTo().get()));
+//            }
+//        } else {
+//            progressPresenter.setVisible(false);
+//        }
+//    }
 
     private CharacterRangeSelectionPresenter getCharacterRangeSelectionPresenter() {
         if (characterRangeSelectionPresenter == null) {
@@ -108,7 +107,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
 //        void setProgressPresenter(final ProgressPresenter progressPresenter);
 
-        void setProgressView(final ProgressView progressView);
+//        void setProgressView(final ProgressView progressView);
 
         void setDisplay(final HasCharacterData hasCharacterData);
 

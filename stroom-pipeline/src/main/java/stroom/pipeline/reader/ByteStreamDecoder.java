@@ -14,7 +14,6 @@ import java.util.function.Supplier;
 
 @NotThreadSafe
 public class ByteStreamDecoder {
-
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
 
     private final Charset charset;
@@ -32,11 +31,13 @@ public class ByteStreamDecoder {
 
     /**
      * @param encoding The charset to use
-//     * @param byteSupplier A function to return the next byte on each call.
      */
     public ByteStreamDecoder(final String encoding) {
-//        this.byteSupplier = Objects.requireNonNull(byteSupplier);
-        this.charset = Objects.requireNonNull(Charset.forName(encoding));
+        this(Objects.requireNonNull(Charset.forName(encoding)));
+    }
+
+    public ByteStreamDecoder(final Charset charset) {
+        this.charset = Objects.requireNonNull(charset);
         this.charsetDecoder = charset.newDecoder();
     }
 
@@ -52,14 +53,21 @@ public class ByteStreamDecoder {
         outputBuffer.clear();
 
         DecodedChar result = null;
+        boolean endOfSupply = false;
 
         // Start trying to decode a char from this position
 //            int byteOffset = startOffset;
-
+        
         while (!charDecoded && loopCnt++ < MAX_BYTES_PER_CHAR) {
             byte b = 0;
             try {
-                b = byteSupplier.get();
+                final Byte suppliedByte = byteSupplier.get();
+                if (suppliedByte == null || suppliedByte == -1) {
+                    // end of stream
+                    endOfSupply = true;
+                    break;
+                }
+                b = suppliedByte;
             } catch (Exception e) {
                 throw new RuntimeException("Error getting next byte");
             }
@@ -116,7 +124,7 @@ public class ByteStreamDecoder {
 //                    byteOffset++;
             }
         }
-        if (!charDecoded) {
+        if (!charDecoded && !endOfSupply) {
             throw new RuntimeException(LogUtil.message("Failed to decode char after {} iterations.", loopCnt));
         }
 
@@ -131,7 +139,7 @@ public class ByteStreamDecoder {
      * Holds a single 'character' (which may be represented as two char primitives)
      * along with the number of bytes used to represent that char.
      */
-    static class DecodedChar {
+    public static class DecodedChar {
         private final String str;
         private final int byteCount;
         private static final char BYTE_ORDER_MARK = '\ufeff';
@@ -141,7 +149,7 @@ public class ByteStreamDecoder {
             this.byteCount = byteCount;
         }
 
-        public String getStr() {
+        public String getAsString() {
             return str;
         }
 
@@ -179,9 +187,13 @@ public class ByteStreamDecoder {
 
         @Override
         public String toString() {
-            return "SizedString{" +
+            return "DecodedChar{" +
                     "str='" + str + '\'' +
                     ", byteCount=" + byteCount +
+                    ", charCount=" + getCharCount() +
+                    ", isLineBreak=" + isLineBreak() +
+                    ", isNonVisibleCharacter=" + isNonVisibleCharacter() +
+                    ", isByteOrderMark=" + isByteOrderMark() +
                     '}';
         }
     }

@@ -16,17 +16,19 @@ public class DataRange {
     // Need one of these
     @JsonProperty
     private final Location locationFrom;
-
     @JsonProperty
     private final Long charOffsetFrom;
+    @JsonProperty
+    private final Long byteOffsetFrom; // zero based
 
     // The extent of the data range, absolute or relative
     // Need one of these
     @JsonProperty
     private final Location locationTo;
-
     @JsonProperty
     private final Long charOffsetTo;
+    @JsonProperty
+    private final Long byteOffsetTo; // zero based
 
     @JsonProperty
     private final Long length; // number of chars from the start position
@@ -36,34 +38,44 @@ public class DataRange {
     @JsonCreator
     public DataRange(@JsonProperty("locationFrom") final Location locationFrom,
                      @JsonProperty("charOffsetFrom") final Long charOffsetFrom,
+                     @JsonProperty("byteOffsetFrom") final Long byteOffsetFrom,
                      @JsonProperty("locationTo") final Location locationTo,
                      @JsonProperty("charOffsetTo") final Long charOffsetTo,
+                     @JsonProperty("byteOffsetTo") final Long byteOffsetTo,
                      @JsonProperty("length") final Long length) {
         this.locationFrom = locationFrom;
         this.charOffsetFrom = charOffsetFrom;
+        this.byteOffsetFrom = byteOffsetFrom;
         this.locationTo = locationTo;
         this.charOffsetTo = charOffsetTo;
+        this.byteOffsetTo = byteOffsetTo;
         this.length = length;
     }
 
     private DataRange(final Builder builder) {
         locationFrom = builder.locationFrom;
         charOffsetFrom = builder.charOffsetFrom;
+        byteOffsetFrom = builder.byteOffsetFrom;
         locationTo = builder.locationTo;
         charOffsetTo = builder.charOffsetTo;
+        byteOffsetTo = builder.byteOffsetTo;
         length = builder.length;
     }
 
     public static DataRange between(final Location fromInclusive, final Location toInclusive) {
         return new DataRange(fromInclusive,
                 null,
+                null,
                 toInclusive,
+                null,
                 null,
                 null);
     }
 
     public static DataRange from(final Location fromInclusive) {
         return new DataRange(fromInclusive,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -78,15 +90,32 @@ public class DataRange {
                 charOffsetFrom,
                 null,
                 null,
+                null,
+                null,
                 length);
     }
 
     /**
      * @param charOffsetFrom Zero based
      */
-    public static DataRange from(final long charOffsetFrom) {
+    public static DataRange fromCharOffset(final long charOffsetFrom) {
         return new DataRange(null,
                 charOffsetFrom,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    /**
+     * @param byteOffsetFrom Zero based
+     */
+    public static DataRange fromByteOffset(final long byteOffsetFrom) {
+        return new DataRange(null,
+                null,
+                byteOffsetFrom,
+                null,
                 null,
                 null,
                 null);
@@ -158,6 +187,24 @@ public class DataRange {
         return Optional.ofNullable(length);
     }
 
+    public Long getByteOffsetFrom() {
+        return byteOffsetFrom;
+    }
+
+    @JsonIgnore
+    public Optional<Long> getOptByteOffsetFrom() {
+        return Optional.ofNullable(byteOffsetFrom);
+    }
+
+    public Long getByteOffsetTo() {
+        return byteOffsetTo;
+    }
+
+    @JsonIgnore
+    public Optional<Long> getOptByteOffsetTo() {
+        return Optional.ofNullable(byteOffsetTo);
+    }
+
     /**
      * @return The number of chars in the range
      */
@@ -213,8 +260,10 @@ public class DataRange {
     public static final class Builder {
         private Location locationFrom;
         private Long charOffsetFrom;
+        private Long byteOffsetFrom;
         private Location locationTo;
         private Long charOffsetTo;
+        private Long byteOffsetTo;
         private Long length;
 
         private Builder() {
@@ -230,6 +279,11 @@ public class DataRange {
             return this;
         }
 
+        public Builder fromByteOffset(final Long byteOffsetFrom) {
+            this.byteOffsetFrom = byteOffsetFrom;
+            return this;
+        }
+
         public Builder toLocation(final Location locationFrom) {
             this.locationTo = locationFrom;
             return this;
@@ -237,6 +291,11 @@ public class DataRange {
 
         public Builder toCharOffset(final Long charOffsetTo) {
             this.charOffsetTo = charOffsetTo;
+            return this;
+        }
+
+        public Builder toByteOffset(final Long byteOffsetTo) {
+            this.byteOffsetTo = byteOffsetTo;
             return this;
         }
 

@@ -40,23 +40,12 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @UiField
     LinkTabBar tabBar;
 
-//    @UiField(provided = true)
-//    SvgButton rawBtn;
-//    @UiField(provided = true)
-//    SvgButton formattedBtn;
     @UiField
     ButtonPanel buttonPanel;
-
-//    @UiField
-//    SubStreamNavigator subStreamNavigator;
 
     @UiField
     ResizeSimplePanel navigatorContainer;
 
-//    @UiField
-//    Pager segmentPager;
-//    @UiField
-//    Pager dataPager;
     @UiField
     LayerContainer layerContainer;
 
@@ -67,78 +56,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
-//        segmentPager.setTitle("Segment");
-
-//        rawBtn = SvgButton.create(SvgPresets.RAW.title("View Raw"));
-//        formattedBtn = SvgButton.create(SvgPresets.FORMAT.title("View Formatted"));
-
-//        subStreamNavigator.setVisible(false);
-//        dataNavigator.setDisplay(new HasCharacterData() {
-//            @Override
-//            public boolean isMultiPart() {
-//                return true;
-//            }
-//
-//            @Override
-//            public Optional<Long> getPartNo() {
-//                return Optional.of(0L);
-//            }
-//
-//            @Override
-//            public Optional<Long> getTotalParts() {
-//                return Optional.of(10L);
-//            }
-//
-//            @Override
-//            public void setPartNo(final long partNo) {
-//
-//            }
-//
-//            @Override
-//            public boolean isSegmented() {
-//                return true;
-//            }
-//
-//            @Override
-//            public Optional<Long> getSegmentNo() {
-//                return Optional.of(1L);
-//            }
-//
-//            @Override
-//            public Optional<Long> getTotalSegments() {
-//                return Optional.of(20L);
-//            }
-//
-//            @Override
-//            public void setSegmentNo(final long partNo) {
-//            }
-//
-//            @Override
-//            public Optional<Long> getCharFrom() {
-//                return Optional.of(1L);
-//            }
-//
-//            @Override
-//            public Optional<Long> getCharTo() {
-//                return Optional.of(100L);
-//            }
-//
-//            @Override
-//            public Optional<Long> getTotalChars() {
-//                return Optional.of(1000L);
-//            }
-//
-//            @Override
-//            public void advanceCharactersForward() {
-//
-//            }
-//
-//            @Override
-//            public void advanceCharactersBackwards() {
-//
-//            }
-//        });
-//        subStreamNavigator.refresh();
     }
 
     @Override
@@ -157,46 +74,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
         return widget;
     }
 
-//    @Override
-//    public void showSegmentPager(final boolean show) {
-//        segmentPager.setVisible(show);
-//    }
-//
-//    @Override
-//    public void showDataPager(final boolean show) {
-//        dataPager.setVisible(show);
-//    }
-//
-//    @Override
-//    public void setSegmentPagerRows(final HasRows display) {
-//        segmentPager.setDisplay(display);
-//    }
-//
-//    @Override
-//    public void setSegmentPagerToVisibleState(final boolean isVisible) {
-//        segmentPager.setToVisibleState(isVisible);
-//    }
-//
-//    @Override
-//    public void setDataPagerRows(final HasRows display) {
-//        dataPager.setDisplay(display);
-//    }
-//
-//    @Override
-//    public void setSegmentPagerTitle(final String title) {
-//        segmentPager.setTitle(title);
-//    }
-//
-//    @Override
-//    public void setDataPagerTitle(final String title) {
-//        dataPager.setTitle(title);
-//    }
-//
-//    @Override
-//    public void setDataPagerToVisibleState(final boolean isVisible) {
-//        dataPager.setToVisibleState(isVisible);
-//    }
-
     @Override
     public LinkTabBar getTabBar() {
         return tabBar;
@@ -206,26 +83,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
     public LayerContainer getLayerContainer() {
         return layerContainer;
     }
-
-//    @Override
-//    public void setRefreshing(final boolean refreshing) {
-//        subStreamNavigator.setRefreshing(refreshing);
-//    }
-//
-//    @Override
-//    public void setNavigatorData(final HasSubStreams dataNavigatorData) {
-//        subStreamNavigator.setDisplay(dataNavigatorData);
-//    }
-//
-//    @Override
-//    public void refreshNavigator() {
-//        subStreamNavigator.refresh();
-//    }
-//
-//    @Override
-//    public void setNavigatorClickHandler(final Runnable clickHandler) {
-//        subStreamNavigator.setClickHandler(clickHandler);
-//    }
 
     @Override
     public void setNavigatorView(final ItemNavigatorView itemNavigatorView) {

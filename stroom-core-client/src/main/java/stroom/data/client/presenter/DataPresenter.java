@@ -270,6 +270,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         view.setNavigatorView(itemNavigatorPresenter.getView());
         view.setProgressView(progressPresenter.getView());
+        progressPresenter.setVisible(false);
     }
 
     private void setCurrentSegmentNo(final long segmentNo) {
@@ -403,24 +404,41 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             final DataRange dataRange = lastResult.getSourceLocation().getDataRange();
 
-            FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
+            final FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
 
+            progressPresenter.setVisible(true);
 //            if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-//                // No point showing for segmented as we are only showing one rec on screen at once
-//                progressPresenter.setVisible(false);
+//                if (fetchDataResult.getTotalItemCount().isExact()) {
+//                    progressPresenter.setProgress(Progress.boundedRange(
+//                            fetchDataResult.getTotalItemCount().getCount(),
+//                            fetchDataResult.getItemRange(),
+//                            dataRange.getByteOffsetTo()));
+//                }
 //            } else {
-                progressPresenter.setVisible(true);
-                // non-segmented
-                if (fetchDataResult.getTotalCharacterCount().isExact()) {
-                    progressPresenter.setProgress(Progress.boundedRange(
-                            fetchDataResult.getTotalCharacterCount().getCount(),
-                            dataRange.getCharOffsetFrom(),
-                            dataRange.getCharOffsetTo()));
-                } else {
-                    progressPresenter.setProgress(Progress.unboundedRange(
-                            dataRange.getCharOffsetFrom(),
-                            dataRange.getCharOffsetTo()));
-                }
+            // Don't want to confuse the user so the prog bar need to be based on the char/byte content,
+            // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
+            // data preview and thus will always see 100%
+            if (!DataType.SEGMENTED.equals(fetchDataResult.getDataType())
+                    && fetchDataResult.getOptTotalBytes().isPresent()
+                    && dataRange.getOptByteOffsetFrom().isPresent()
+                    && dataRange.getOptByteOffsetTo().isPresent()) {
+                // progress based on know byte size and byte offsets
+                progressPresenter.setProgress(Progress.boundedRange(
+                        fetchDataResult.getTotalBytes() - 1, // count to zero based bound
+                        dataRange.getByteOffsetFrom(),
+                        dataRange.getByteOffsetTo()));
+            } else if (fetchDataResult.getTotalCharacterCount().isExact()) {
+                // progress based on known char count and char offsets
+                progressPresenter.setProgress(Progress.boundedRange(
+                        fetchDataResult.getTotalCharacterCount().getCount() - 1, // count to zero based bound
+                        dataRange.getCharOffsetFrom(),
+                        dataRange.getCharOffsetTo()));
+            } else {
+                // progress based on unknown char count and char offsets
+                progressPresenter.setProgress(Progress.unboundedRange(
+                        dataRange.getCharOffsetFrom(),
+                        dataRange.getCharOffsetTo()));
+            }
 //            }
         } else {
             progressPresenter.setVisible(false);
@@ -710,9 +728,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             final DataRange dataRange;
             // Error markers are a bit different
             if (StreamTypeNames.ERROR.equals(currentStreamType)) {
-                dataRange = DataRange.from(0);
+                dataRange = DataRange.fromCharOffset(0);
             } else if (StreamTypeNames.META.equals(currentChildDataType)) {
-                dataRange = DataRange.from(0);
+                dataRange = DataRange.fromCharOffset(0);
             } else if (currentSourceLocation != null && currentSourceLocation.getDataRange() != null) {
                 // We have a specific range of data, i.e. when using the data() dash func.
                 dataRange = currentSourceLocation.getDataRange();
@@ -1165,7 +1183,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void refreshMetaInfoPresenterContent(final Long metaId) {
 
-        if (metaId != null) {
+        if (metaId != null && INFO.equals(lastTabName)) {
             fetchMetaInfoData(metaId);
         } else {
             htmlPresenter.setHtml(null);

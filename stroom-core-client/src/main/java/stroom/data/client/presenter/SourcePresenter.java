@@ -27,6 +27,9 @@ import stroom.util.shared.Location;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.progress.client.presenter.Progress;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -48,6 +51,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
+    private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
 //    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
@@ -69,12 +73,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
+                           final ProgressPresenter progressPresenter,
                            final TextPresenter textPresenter,
                            final CharacterNavigatorPresenter characterNavigatorPresenter,
                            final UiConfigCache uiConfigCache,
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        this.progressPresenter = progressPresenter;
         this.textPresenter = textPresenter;
         this.characterNavigatorPresenter = characterNavigatorPresenter;
         this.uiConfigCache = uiConfigCache;
@@ -86,6 +92,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         view.setTextView(textPresenter.getView());
         view.setNavigatorView(characterNavigatorPresenter.getView());
+
+        view.setProgressView(progressPresenter.getView());
+        progressPresenter.setVisible(false);
 
         textPresenter.setUiHandlers(this);
 
@@ -357,9 +366,49 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             updateEditor();
 
             updateNavigator(result);
+            refreshProgressBar(true);
         } else {
 
             // TODO @AT Fire alert, should never get this
+        }
+    }
+
+    private void refreshProgressBar(final boolean isVisible) {
+        if (dataNavigatorData != null
+            && dataNavigatorData.isSegmented()
+            && dataNavigatorData.getCharOffsetFrom().isPresent()
+            && dataNavigatorData.getCharOffsetTo().isPresent()) {
+
+            progressPresenter.setVisible(true);
+
+            if (dataNavigatorData.getTotalChars().isPresent()) {
+                progressPresenter.setProgress(Progress.boundedRange(
+                        dataNavigatorData.getTotalChars().get() -1, // count to zero based bound
+                        dataNavigatorData.getCharOffsetFrom().get(),
+                        dataNavigatorData.getCharOffsetTo().get()));
+            } else {
+                progressPresenter.setProgress(Progress.unboundedRange(
+                        dataNavigatorData.getCharOffsetFrom().get(),
+                        dataNavigatorData.getCharOffsetTo().get()));
+            }
+        } else if (dataNavigatorData != null
+                && dataNavigatorData.getByteOffsetFrom().isPresent()
+                && dataNavigatorData.getByteOffsetTo().isPresent()) {
+
+            progressPresenter.setVisible(true);
+
+            if (dataNavigatorData.getTotalBytes().isPresent()) {
+                progressPresenter.setProgress(Progress.boundedRange(
+                        dataNavigatorData.getTotalBytes().get() - 1, // count to zero based bound
+                        dataNavigatorData.getByteOffsetFrom().get(),
+                        dataNavigatorData.getByteOffsetTo().get()));
+            } else {
+                progressPresenter.setProgress(Progress.unboundedRange(
+                        dataNavigatorData.getByteOffsetFrom().get(),
+                        dataNavigatorData.getByteOffsetTo().get()));
+            }
+        } else {
+            progressPresenter.setVisible(false);
         }
     }
 
@@ -515,7 +564,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             return Optional.ofNullable(lastResult)
                     .map(AbstractFetchDataResult::getSourceLocation)
                     .flatMap(SourceLocation::getOptDataRange)
-                    .orElse(DataRange.from(0));
+                    .orElse(DataRange.fromCharOffset(0));
         }
 
         @Override
@@ -530,50 +579,55 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         }
 
         @Override
-        public Optional<Long> getTotalLines() {
-            return Optional.ofNullable(lastResult)
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
-                            && dataRange.getOptLocationTo().isPresent())
-                    .map(dataRange -> dataRange.getLocationTo().getLineNo()
-                            - dataRange.getLocationFrom().getLineNo()
-                            + 1L); // line nos are inclusive, so add 1
+        public boolean isSegmented() {
+            return DataType.SEGMENTED.equals(lastResult.getDataType());
         }
 
-        @Override
-        public Optional<Long> getCharFrom() {
-            return Optional.ofNullable(lastResult)
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptCharOffsetFrom);
-        }
+        //        @Override
+//        public Optional<Long> getTotalLines() {
+//            return Optional.ofNullable(lastResult)
+//                    .map(AbstractFetchDataResult::getSourceLocation)
+//                    .flatMap(SourceLocation::getOptDataRange)
+//                    .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
+//                            && dataRange.getOptLocationTo().isPresent())
+//                    .map(dataRange -> dataRange.getLocationTo().getLineNo()
+//                            - dataRange.getLocationFrom().getLineNo()
+//                            + 1L); // line nos are inclusive, so add 1
+//        }
 
-        @Override
-        public Optional<Long> getCharTo() {
-            return Optional.ofNullable(lastResult)
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptCharOffsetTo);
-        }
-
-        @Override
-        public Optional<Integer> getLineFrom() {
-            return Optional.ofNullable(lastResult)
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptLocationFrom)
-                    .map(Location::getLineNo);
-        }
-
-        @Override
-        public Optional<Integer> getLineTo() {
-            return Optional.ofNullable(lastResult)
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptLocationTo)
-                    .map(Location::getLineNo);
-        }
+//        @Override
+//        public Optional<Long> getCharOffsetFrom() {
+//            return Optional.ofNullable(lastResult)
+//                    .map(AbstractFetchDataResult::getSourceLocation)
+//                    .flatMap(SourceLocation::getOptDataRange)
+//                    .flatMap(DataRange::getOptCharOffsetFrom);
+//        }
+//
+//        @Override
+//        public Optional<Long> getCharOffsetTo() {
+//            return Optional.ofNullable(lastResult)
+//                    .map(AbstractFetchDataResult::getSourceLocation)
+//                    .flatMap(SourceLocation::getOptDataRange)
+//                    .flatMap(DataRange::getOptCharOffsetTo);
+//        }
+//
+//        @Override
+//        public Optional<Integer> getLineFrom() {
+//            return Optional.ofNullable(lastResult)
+//                    .map(AbstractFetchDataResult::getSourceLocation)
+//                    .flatMap(SourceLocation::getOptDataRange)
+//                    .flatMap(DataRange::getOptLocationFrom)
+//                    .map(Location::getLineNo);
+//        }
+//
+//        @Override
+//        public Optional<Integer> getLineTo() {
+//            return Optional.ofNullable(lastResult)
+//                    .map(AbstractFetchDataResult::getSourceLocation)
+//                    .flatMap(SourceLocation::getOptDataRange)
+//                    .flatMap(DataRange::getOptLocationTo)
+//                    .map(Location::getLineNo);
+//        }
 
         @Override
         public Optional<Long> getTotalChars() {
@@ -584,6 +638,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
                         .flatMap(RowCount::asOptional);
             }
+        }
+
+        @Override
+        public Optional<Long> getTotalBytes() {
+            return Optional.ofNullable(lastResult)
+                    .flatMap(FetchDataResult::getOptTotalBytes);
         }
 
         @Override
@@ -637,6 +697,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
 
     public interface SourceView extends View {
+
+        void setProgressView(final ProgressView progressView);
 
         void setTextView(final TextView textView);
 

@@ -38,6 +38,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.BOMRemovalInputStream;
+import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
@@ -80,8 +81,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class DataFetcher {
@@ -227,9 +230,6 @@ public class DataFetcher {
                             fetchDataRequest.getPipeline(),
                             new IOException(msg));
 
-//                    return new FetchDataResult(null, null, resultStreamsRange,
-//                            streamsRowCount, resultPageRange, pageRowCount, null,
-//                            "Stream has been deleted", fetchDataRequest.isShowAsHtml());
                     return new FetchDataResult(
                             feedName,
                             null,
@@ -238,6 +238,7 @@ public class DataFetcher {
                             itemRange,
                             totalItemCount,
                             totalCharCount,
+                            null,
                             null,
                             msg,
                             fetchDataRequest.isShowAsHtml(),
@@ -406,10 +407,7 @@ public class DataFetcher {
     private FetchDataResult createDataResult(final String feedName,
                                              final String streamTypeName,
                                              final SegmentInputStream segmentInputStream,
-//                                             final OffsetRange<Long> pageRange,
                                              final Set<String> availableChildStreamTypes,
-//                                             final DocRef pipeline,
-//                                             final boolean showAsHtml,
                                              final Source streamSource,
                                              final InputStreamProvider inputStreamProvider,
                                              final FetchDataRequest fetchDataRequest) throws IOException {
@@ -418,12 +416,22 @@ public class DataFetcher {
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
         RawResult rawResult;
-        DataType dataType = segmentInputStream.count() > 1
+
+
+        final DataType dataType = segmentInputStream.count() > 1
                 ? DataType.SEGMENTED
                 : DataType.NON_SEGMENTED;
 
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+
+        Charset charset = Charset.forName(encoding);
+        final float averageBytesPerChar = charset.newEncoder().averageBytesPerChar();
+
+//        LOGGER.info("Size in bytes: {}, avgBytesPerChar: {}, approxChars: {}",
+//                ModelStringUtil.formatIECByteSizeString(segmentInputStream.size()),
+//                averageBytesPerChar,
+//                segmentInputStream.size() / averageBytesPerChar);
 
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(sourceLocation, segmentInputStream, encoding);
@@ -431,6 +439,7 @@ public class DataFetcher {
             // Non-segmented data
             rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
+        rawResult.setTotalBytes(segmentInputStream.size());
 
         String output;
         final DocRef pipeline = fetchDataRequest.getPipeline();
@@ -507,6 +516,7 @@ public class DataFetcher {
                 rawResult.getItemRange(),
                 rawResult.getTotalItemCount(),
                 rawResult.getTotalCharacterCount(),
+                rawResult.getTotalBytes(),
                 availableChildStreamTypes,
                 output,
                 fetchDataRequest.isShowAsHtml(),
@@ -514,14 +524,6 @@ public class DataFetcher {
     }
 
     private FetchDataResult createErrorResult(final SourceLocation sourceLocation, final String error) {
-
-        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(0L, 0L);
-        final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
-        final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
-        final RowCount<Long> pageRowCount = new RowCount<>(0L, true);
-
-//        return new FetchDataResult(StreamTypeNames.RAW_EVENTS, null, resultStreamsRange,
-//                streamsRowCount, resultPageRange, pageRowCount, null, error, false);
         return new FetchDataResult(
                 null,
                 StreamTypeNames.RAW_EVENTS,
@@ -530,6 +532,7 @@ public class DataFetcher {
                 OffsetRange.of(0L, 0L),
                 RowCount.of(0L, true),
                 RowCount.of(0L, true),
+                0L,
                 null,
                 error,
                 false,
@@ -577,13 +580,6 @@ public class DataFetcher {
         // Include the requested segment, add one to allow for start root elm
         segmentInputStream.include(segmentNumber + 1);
 
-//        // Add the requested records.
-//        for (long i = segmentNumber + 1; pageLength < 1
-//                && i <= segmentInputStream.count() - 2; i++) {
-//
-//            segmentInputStream.include(i);
-//            pageLength++;
-//        }
         // Include end root element.
         segmentInputStream.include(segmentInputStream.count() - 1);
 
@@ -623,6 +619,7 @@ public class DataFetcher {
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
+        int byteOffset = 0; // zero based
         int currLineNo = 1; // one based
         int currColNo = 1; // one based
         long currCharOffset = 0; //zero based
@@ -635,110 +632,122 @@ public class DataFetcher {
         long charsInRangeCount = 0;
 
         long startOfCurrLineCharOffset = 0;
+        long startByteOffset = -1;
 
         int currBufferLen = 0;
-        char currChar = (char) -1;
+//        String currChar = "";
+        Optional<DecodedChar> optDecodeChar = Optional.empty();
         boolean isFirstChar = true;
         int extraCharCount = 0;
 
         boolean foundRange = false;
         boolean reachedEndOfRange = false;
         boolean isMultiLine = false;
+        RowCount<Long> totalCharCount = RowCount.of(0L, false);
 
         // If no range supplied then use a default one
         final DataRange dataRange = sourceLocation.getOptDataRange()
                 .orElse(DataRange.from(0, sourceConfig.getMaxCharactersPerFetch()));
+        CharsetEncoder charsetEncoder = Charset.forName(encoding).newEncoder();
 
-        try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
-            final char[] buffer = new char[STREAM_BUFFER_SIZE];
+        final CharReader charReader = new CharReader(inputStream, encoding);
 
-            final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
-                    dataRange);
-            final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
-                    dataRange);
+        final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
+                dataRange);
+        final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
+                dataRange);
 
-            // Ideally we would jump to the requested offset, but if we do, we can't
-            // track the line/col info for the requested range, i.e.
-            // to show the right line numbers in the editor. Thus we need
-            // to advance through char by char
+        // Ideally we would jump to the requested offset, but if we do, we can't
+        // track the line/colcharOffset info for the requested range, i.e.
+        // to show the right line numbers in the editor. Thus we need
+        // to advance through char by char
 
-            while (!reachedEndOfRange && (currBufferLen = reader.read(buffer)) != -1) {
+        while (!reachedEndOfRange) {
+            optDecodeChar = charReader.read();
+            if (optDecodeChar.isEmpty()) {
+                // Reached the end of the stream
+                totalCharCount = RowCount.exactly(currCharOffset + 1); // zero based offset to count
+                break;
+            }
 
-                for (int i = 0; i < currBufferLen; i++) {
-                    currChar = buffer[i];
+            final DecodedChar decodedChar = optDecodeChar.get();
 
-                    if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
-                        // On or after the first requested char
-                        foundRange = true;
+            if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
+//                        if (!foundRange) {
+//
+//                            startByteOffset = locationAwareInputStream.
+//                        }
+                // On or after the first requested char
+                foundRange = true;
 
-                        boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
-                                currLineNo, currColNo, currCharOffset, charsInRangeCount);
+                boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
+                        currLineNo, currColNo, currCharOffset, charsInRangeCount);
 
-                        if (isCharAfterRequestedRange) {
-                            extraCharCount++;
-                        }
-
-                        // For multi-line data continue past the desired range a bit to try to complete the line
-                        // to make it look better in the UI.
-                        if (isCharAfterRequestedRange
-                                && (!isMultiLine
-                                || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
-                                || currChar == '\n'))) {
-                            // This is the char after our requested range
-                            // or requested range continued to the end of the line
-                            // or we have blown the max chars limit
-                            reachedEndOfRange = true;
-                            if (currChar == '\n') {
-                                // need to ensure we count the line break in our offset position.
-                                currCharOffset++;
-                            }
-                            break;
-                        } else {
-                            // Inside the requested range
-                            charsInRangeCount++;
-                            // Record the start position for the requested range
-                            if (startCharOffset == -1) {
-                                startCharOffset = currCharOffset;
-                                startLineNo = currLineNo;
-                                startColNo = currColNo;
-                            }
-                            strBuilderRange.append(currChar);
-
-                            // Need the prev location so when we test the first char after the range
-                            // we can get the last one in the range
-                            lastLineNo = currLineNo;
-                            lastColNo = currColNo;
-                        }
-                    } else {
-                        // Hold the chars for the line so far up to the requested range so we can
-                        // tack it on when we find our range
-                        strBuilderLineSoFar.append(currChar);
-                    }
-
-                    // Now advance the counters/trackers for the next char
-                    currCharOffset++;
-
-                    if (isFirstChar) {
-                        isFirstChar = false;
-                    } else if (currChar == '\n') {
-                        currLineNo++;
-                        currColNo = 1;
-
-                        if (!isMultiLine && currLineNo > 1) {
-                            // Multi line data so we want to keep adding chars all the way to the end
-                            // of the line so we don't get part lines in the UI.
-                            isMultiLine = true;
-                        }
-                        if (!foundRange) {
-                            // Not found our requested range yet so reset the current line so far
-                            // to the offset of the next char
-                            startOfCurrLineCharOffset = currCharOffset;
-                            strBuilderLineSoFar.setLength(0);
-                        }
-                    } else {
-                        currColNo++;
-                    }
+                if (isCharAfterRequestedRange) {
+                    extraCharCount++;
                 }
+
+                // For multi-line data continue past the desired range a bit to try to complete the line
+                // to make it look better in the UI.
+                if (isCharAfterRequestedRange
+                        && (!isMultiLine
+                        || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
+                        || decodedChar.isLineBreak()))) {
+                    // This is the char after our requested range
+                    // or requested range continued to the end of the line
+                    // or we have blown the max chars limit
+                    reachedEndOfRange = true;
+                    if (decodedChar.isLineBreak()) {
+                        // need to ensure we count the line break in our offset position.
+                        currCharOffset++;
+                    }
+                    break;
+                } else {
+                    // Inside the requested range
+                    charsInRangeCount += decodedChar.getCharCount();
+                    // Record the start position for the requested range
+                    if (startCharOffset == -1) {
+                        startCharOffset = currCharOffset;
+                        startLineNo = currLineNo;
+                        startColNo = currColNo;
+                        startByteOffset = charReader.getLastByteOffsetRead()
+                                .orElseThrow(() -> new RuntimeException("Should have a byte offset at this point"));
+                    }
+                    strBuilderRange.append(decodedChar.getAsString());
+
+                    // Need the prev location so when we test the first char after the range
+                    // we can get the last one in the range
+                    lastLineNo = currLineNo;
+                    lastColNo = currColNo;
+                }
+            } else {
+                // Hold the chars for the line so far up to the requested range so we can
+                // tack it on when we find our range
+                strBuilderLineSoFar.append(decodedChar.getAsString());
+            }
+
+            // Now advance the counters/trackers for the next char
+            currCharOffset += decodedChar.getCharCount();
+
+            if (isFirstChar) {
+                isFirstChar = false;
+            } else if (decodedChar.isLineBreak()) {
+                currLineNo++;
+                currColNo = 1;
+
+                if (!isMultiLine && currLineNo > 1) {
+                    // Multi line data so we want to keep adding chars all the way to the end
+                    // of the line so we don't get part lines in the UI.
+                    isMultiLine = true;
+                }
+                if (!foundRange) {
+                    // Not found our requested range yet so reset the current line so far
+                    // to the offset of the next char
+                    startOfCurrLineCharOffset = currCharOffset;
+                    strBuilderLineSoFar.setLength(0);
+                }
+            } else {
+                currColNo += decodedChar.getCharCount();
             }
         }
 
@@ -766,33 +775,40 @@ public class DataFetcher {
 
         final boolean isTotalPageableItemsExact = currBufferLen == -1;
 
-        if (isMultiLine && !isTotalPageableItemsExact) {
-            if (currChar == '\n') {
-                strBuilderResultRange.append(TRUNCATED_TEXT);
-            } else {
-                // TODO @AT See TODO next to TRUNCATED_TEXT declaration
-//                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
-            }
-        } else if (!isMultiLine && !isTotalPageableItemsExact) {
-            strBuilderResultRange.append(TRUNCATED_TEXT);
-        }
+//        if (isMultiLine && !isTotalPageableItemsExact) {
+//            if (currChar == '\n') {
+//                strBuilderResultRange.append(TRUNCATED_TEXT);
+//            } else {
+//                // TODO @AT See TODO next to TRUNCATED_TEXT declaration
+////                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
+//            }
+//        } else if (!isMultiLine && !isTotalPageableItemsExact) {
+//            strBuilderResultRange.append(TRUNCATED_TEXT);
+//        }
 
         final String charData = strBuilderResultRange.toString();
 
-        if (currChar != '\n') {
+        if (optDecodeChar.isPresent() && optDecodeChar.filter(DecodedChar::isLineBreak).isPresent()) {
             currCharOffset = currCharOffset - 1; // undo the last ++ op
         }
 
-        final RowCount<Long> totalCharCount = RowCount.of(
-                startCharOffset + charData.length(),
-                isTotalPageableItemsExact);
+        // set it to the most we know so far, approximately
+        if (!totalCharCount.isExact()) {
+            totalCharCount = RowCount.approximately(currCharOffset + 1); // zero based offset to count
+        }
+//        final RowCount<Long> totalCharCount = RowCount.of(
+//                startCharOffset + charData.length(),
+//                isTotalPageableItemsExact);
 
         // The range returned may differ to that requested if we have continued to the end of the line
         final DataRange actualDataRange = DataRange.builder()
                 .fromCharOffset(startCharOffset)
+                .fromByteOffset(startByteOffset)
                 .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                 .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
                 .toCharOffset(currCharOffset)
+                .toByteOffset(charReader.getLastByteOffsetRead()
+                        .orElseThrow())
                 .withLength((long) charData.length())
                 .build();
 
@@ -809,7 +825,7 @@ public class DataFetcher {
             builder.withSegmentNumber(segmentNumber);
         }
 
-        SourceLocation resultLocation = builder.build();
+        final SourceLocation resultLocation = builder.build();
         LOGGER.debug(() -> LogUtil.message(
                 "resultLocation {}, charData [{}]",
                 resultLocation,
@@ -819,6 +835,23 @@ public class DataFetcher {
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
+
+//    private long getOffsetFromCharOffset(
+//            final long byteOffsetForFirstChar,
+//            final char[] buffer,
+//            final int offsetInBuffer,
+//            final CharsetEncoder charsetEncoder) {
+//
+//        final ByteBuffer byteBuffer
+//        long offset = byteOffsetForFirstChar;
+//        for (int i = 0; i <= offsetInBuffer; i++) {
+//            final char chr = buffer[i];
+//
+//            charsetEncoder.
+//
+//        }
+//
+//    }
 
     /**
      * @return True if we are after or on the first char of our range.
@@ -1014,6 +1047,7 @@ public class DataFetcher {
         private OffsetRange<Long> itemRange; // part/segment/marker
         private RowCount<Long> totalItemCount; // part/segment/marker
         private RowCount<Long> totalCharacterCount; // Total chars in part/segment
+        private long totalBytes;
 
         public RawResult(final SourceLocation sourceLocation,
                          final String rawData) {
@@ -1051,6 +1085,14 @@ public class DataFetcher {
 
         public void setTotalCharacterCount(final RowCount<Long> totalCharacterCount) {
             this.totalCharacterCount = totalCharacterCount;
+        }
+
+        public long getTotalBytes() {
+            return totalBytes;
+        }
+
+        public void setTotalBytes(final long totalBytes) {
+            this.totalBytes = totalBytes;
         }
     }
 

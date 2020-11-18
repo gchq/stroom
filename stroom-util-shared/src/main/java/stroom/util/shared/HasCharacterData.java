@@ -65,33 +65,80 @@ public interface HasCharacterData {
 //
 //    boolean canNavigateCharacterData();
 
-    /**
-     * @return The total number of lines if known
-     */
-    Optional<Long> getTotalLines();
 
     DataRange getDataRange();
 
-    Optional<Integer> getLineFrom();
+    /**
+     * @return The total number of lines if known
+     */
+    default Optional<Long> getTotalLines() {
+        return Optional.ofNullable(getDataRange())
+                .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
+                        && dataRange.getOptLocationTo().isPresent())
+                .map(dataRange -> dataRange.getLocationTo().getLineNo()
+                        - dataRange.getLocationFrom().getLineNo()
+                        + 1L); // line nos are inclusive, so add 1
+    }
 
-    Optional<Integer> getLineTo();
+    default Optional<Integer> getLineFrom() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptLocationFrom)
+                .map(Location::getLineNo);
+    }
+
+    default Optional<Integer> getLineTo() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptLocationTo)
+                .map(Location::getLineNo);
+    }
 
     /**
      * The char offset to display from
      * Zero based, inclusive
      */
-    Optional<Long> getCharFrom();
+    default Optional<Long> getCharOffsetFrom() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptCharOffsetFrom);
+    }
 
     /**
      * The char offset to display to
      * Zero based, inclusive
      */
-    Optional<Long> getCharTo();
+    default Optional<Long> getCharOffsetTo() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptCharOffsetTo);
+    }
+
+    /**
+     * The byte offset to display from
+     * Zero based, inclusive
+     */
+    default Optional<Long> getByteOffsetFrom() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptByteOffsetFrom);
+    }
+
+    /**
+     * The byte offset to display to
+     * Zero based, inclusive
+     */
+    default Optional<Long> getByteOffsetTo() {
+        return Optional.ofNullable(getDataRange())
+                .flatMap(DataRange::getOptByteOffsetTo);
+    }
+
+    boolean isSegmented();
 
     /**
      * @return The total number of chars in the source, if known
      */
     Optional<Long> getTotalChars();
+
+    /**
+     * @return The total number of bytes in the source, if known
+     */
+    Optional<Long> getTotalBytes();
 
     /**
      * Called when the user clicks the |< button

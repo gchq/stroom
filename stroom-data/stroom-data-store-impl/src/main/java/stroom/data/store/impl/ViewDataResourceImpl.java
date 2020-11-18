@@ -37,11 +37,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import com.codahale.metrics.annotation.Timed;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Timed
 class ViewDataResourceImpl implements ViewDataResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewDataResourceImpl.class);
@@ -91,14 +94,17 @@ class ViewDataResourceImpl implements ViewDataResource {
                     ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
                     : PermissionNames.VIEW_DATA_PERMISSION;
 
+            return LOGGER.logDurationIfInfoEnabled(() -> {
             return securityContext.secureResult(permissionName, () ->
                     dataFetcher.getData(request));
+            }, "fetch");
         } catch (Exception e) {
             LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
             throw e;
         }
     }
 
+    @Override
     public Set<String> getChildStreamTypes(final long id, final long partNo) {
         try {
             final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
@@ -118,35 +124,4 @@ class ViewDataResourceImpl implements ViewDataResource {
             throw e;
         }
     }
-
-//    @Override
-//    public AbstractFetchDataResult fetchData( final long streamId,
-//                                              final Long streamsOffset,
-//                                              final Long streamsLength,
-//                                              final Long pageOffset,
-//                                              final Long pageSize) {
-//
-//        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
-//        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
-//
-//        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
-//        final boolean showAsHtml = false; // Used for dashboards so false here.
-//        final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
-//
-//        //TODO Used for child streams. Needs implementing.
-//        String childStreamTypeName = null;
-//
-//        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-//            dataFetcher.reset();
-//            return dataFetcher.getData(
-//                    streamId,
-//                    childStreamTypeName,
-//                    streamRange,
-//                    pageRange,
-//                    isMarkerMode,
-//                    null,
-//                    showAsHtml,
-//                    expandedSeverities);
-//        });
-//    }
 }

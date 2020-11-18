@@ -413,12 +413,12 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                         final int charCount = decodedChar.getCharCount();
                         if (LOGGER.isDebugEnabled() && charCount > 1) {
                             LOGGER.debug("Found multi-char 'character' [{}] with char count {} at [{}:{}]",
-                                    decodedChar.getStr(),
+                                    decodedChar.getAsString(),
                                     charCount,
                                     lineNo,
                                     colNo);
                         }
-                        // Some 'characters', e.g. emoji are not only mult-byte but are
+                        // Some 'characters', e.g. emoji are not only multi-byte but are
                         // represented as more than one char so we need
                         // to increment the colNo by the right number of chars
                         colNo += decodedChar.getCharCount();

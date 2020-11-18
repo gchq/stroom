@@ -44,6 +44,14 @@ public class RowCount<T extends Number> {
         return new RowCount<>(count, exact);
     }
 
+    public static <T extends Number> RowCount<T> exactly(final T count) {
+        return new RowCount<>(count, true);
+    }
+
+    public static <T extends Number> RowCount<T> approximately(final T count) {
+        return new RowCount<>(count, false);
+    }
+
     public T getCount() {
         return count;
     }

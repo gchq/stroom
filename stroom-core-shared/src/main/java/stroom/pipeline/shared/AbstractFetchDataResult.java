@@ -48,14 +48,6 @@ public abstract class AbstractFetchDataResult {
     private final String classification;
     @JsonProperty
     private final SourceLocation sourceLocation;
-//    @JsonProperty
-//    private final OffsetRange<Long> streamRange;
-//    @JsonProperty
-//    private final RowCount<Long> streamRowCount;
-//    @JsonProperty
-//    private final OffsetRange<Long> pageRange;
-//    @JsonProperty
-//    private final RowCount<Long> pageRowCount;
     @JsonProperty
     private final OffsetRange<Long> itemRange; // part/segment/marker
     @JsonProperty
@@ -70,10 +62,6 @@ public abstract class AbstractFetchDataResult {
                                    @JsonProperty("streamTypeName") final String streamTypeName,
                                    @JsonProperty("classification") final String classification,
                                    @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-//                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-//                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-//                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-//                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                                    @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
                                    @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                                    @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
@@ -82,10 +70,6 @@ public abstract class AbstractFetchDataResult {
         this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.sourceLocation = sourceLocation;
-//        this.streamRange = streamRange;
-//        this.streamRowCount = streamRowCount;
-//        this.pageRange = pageRange;
-//        this.pageRowCount = pageRowCount;
         this.itemRange = itemRange;
         this.totalItemCount = totalItemCount;
         this.totalCharacterCount = totalCharacterCount;
@@ -108,22 +92,6 @@ public abstract class AbstractFetchDataResult {
         return sourceLocation;
     }
 
-//    public OffsetRange<Long> getStreamRange() {
-//        return streamRange;
-//    }
-
-//    public RowCount<Long> getStreamRowCount() {
-//        return streamRowCount;
-//    }
-
-    /**
-     * This is the offset and count for the items on the page. An item may
-     * be a character, record, segment, marker, etc.
-     */
-//    public OffsetRange<Long> getPageRange() {
-//        return pageRange;
-//    }
-
     public OffsetRange<Long> getItemRange() {
         return itemRange;
     }
@@ -135,14 +103,6 @@ public abstract class AbstractFetchDataResult {
     public RowCount<Long> getTotalCharacterCount() {
         return totalCharacterCount;
     }
-
-    /**
-     * The total number of items that can be paged. An item may
-     * be a character, record, segment, marker, etc.
-     */
-//    public RowCount<Long> getPageRowCount() {
-//        return pageRowCount;
-//    }
 
     public Set<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;

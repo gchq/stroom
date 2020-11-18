@@ -41,10 +41,85 @@ class TestByteStreamDecoder {
             final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(() ->
                     myByteBuffer.getByte(byteOffset.getAndIncrement()));
 
-            outputStringBuilder.append(decodedChar.getStr());
+            outputStringBuilder.append(decodedChar.getAsString());
         }
 
         LOGGER.info("outputStringBuilder: {}", outputStringBuilder.toString());
+
+        Assertions.assertThat(outputStringBuilder.toString())
+                .isEqualTo(input);
+
+        Assertions.assertThat(byteOffset)
+                .hasValue(inputByteCount);
+    }
+
+    @Test
+    void testFlagEmoji() throws IOException {
+        final String gbFlag = fromUnicode( 0x1F1EC, 0x1F1E7);
+        doTest(gbFlag);
+    }
+
+    @Test
+    void testCompoundEmoji() throws IOException {
+        final String womanMediumDarkSkinToneWhiteHair = fromUnicode(
+                0x1F469,
+                0x1F3FE,
+                0x200D,
+                0x1F9B3);
+        doTest(womanMediumDarkSkinToneWhiteHair);
+    }
+
+    @Test
+    void testHeartsEmoji() throws IOException {
+        final String heartsEmoji = "💕";
+        doTest(heartsEmoji);
+    }
+
+    @Test
+    void testSmilyEmoji() throws IOException {
+        final String heartsEmoji = "😀";
+        doTest(heartsEmoji);
+    }
+
+    private String fromUnicode(final int... unicodePoints) {
+        return new String(unicodePoints, 0, unicodePoints.length);
+    }
+
+    void doTest(final String input) throws IOException {
+
+        final Charset charset = StandardCharsets.UTF_8;
+
+        final int inputByteCount = input.getBytes(charset).length;
+        LOGGER.info("Input: [{}], byteCount: {}, bytesPerChar: {}",
+                input, inputByteCount, (double) inputByteCount / input.length());
+
+        final MyByteBuffer myByteBuffer = new MyByteBuffer();
+        myByteBuffer.write(input.getBytes(charset));
+
+        final StringBuilder outputStringBuilder = new StringBuilder();
+
+        final AtomicInteger byteOffset = new AtomicInteger(0);
+        final ByteStreamDecoder byteStreamDecoder = new ByteStreamDecoder(charset.name());
+
+        int outputByteCount = 0;
+        int outputVisibleCharCount = 0;
+        while (byteOffset.get() < input.getBytes(charset).length) {
+
+            final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(() ->
+                    myByteBuffer.getByte(byteOffset.getAndIncrement()));
+
+            outputByteCount += decodedChar.getByteCount();
+            outputVisibleCharCount++;
+
+            LOGGER.info("decodedChar {}", decodedChar);
+
+            outputStringBuilder.append(decodedChar.getAsString());
+        }
+
+        LOGGER.info("outputStringBuilder: [{}], byte count {}, visible char count {}",
+                outputStringBuilder.toString(),
+                outputByteCount,
+                outputVisibleCharCount);
 
         Assertions.assertThat(outputStringBuilder.toString())
                 .isEqualTo(input);
@@ -90,7 +165,7 @@ class TestByteStreamDecoder {
                 LOGGER.info("BOM found");
             }
 
-            outputStringBuilder.append(decodedChar.getStr());
+            outputStringBuilder.append(decodedChar.getAsString());
         }
 
         LOGGER.info("outputStringBuilder: [{}]", outputStringBuilder.toString());

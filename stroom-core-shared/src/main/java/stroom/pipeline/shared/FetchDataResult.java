@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Optional;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -35,24 +36,22 @@ public class FetchDataResult extends AbstractFetchDataResult {
     private final boolean html;
     @JsonProperty
     private final DataType dataType;
+    @JsonProperty
+    private final Long totalBytes;
 
     @JsonCreator
     public FetchDataResult(@JsonProperty("feedName") final String feedName,
                            @JsonProperty("streamTypeName") final String streamTypeName,
                            @JsonProperty("classification") final String classification,
                            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-//                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-//                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-//                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-//                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                            @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
                            @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                            @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
+                           @JsonProperty("totalBytes") final Long totalBytes,
                            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
                            @JsonProperty("html") final boolean html,
                            @JsonProperty("dataType") final DataType dataType) {
-//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(feedName,
                 streamTypeName,
                 classification,
@@ -64,6 +63,7 @@ public class FetchDataResult extends AbstractFetchDataResult {
         this.data = data;
         this.html = html;
         this.dataType = dataType;
+        this.totalBytes = totalBytes;
     }
 
     public String getData() {
@@ -76,5 +76,13 @@ public class FetchDataResult extends AbstractFetchDataResult {
 
     public DataType getDataType() {
         return dataType;
+    }
+
+    public Long getTotalBytes() {
+        return totalBytes;
+    }
+
+    public Optional<Long> getOptTotalBytes() {
+        return Optional.ofNullable(totalBytes);
     }
 }

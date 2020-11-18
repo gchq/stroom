@@ -196,6 +196,7 @@ public class EditorPresenter
             getSnippetsOption().setUnavailable();
             getLiveAutoCompletionOption().setOff();
             getLiveAutoCompletionOption().setUnavailable();
+            getHighlightActiveLineOption().setOff();
         } else {
             getFormatAction().setToDefaultAvailability();
             getBasicAutoCompletionOption().setToDefaultState();
@@ -204,6 +205,7 @@ public class EditorPresenter
             getSnippetsOption().setToDefaultAvailability();
             getLiveAutoCompletionOption().setToDefaultState();
             getLiveAutoCompletionOption().setToDefaultAvailability();
+            getHighlightActiveLineOption().setToDefaultState();
         }
 
         getView().setReadOnly(readOnly);

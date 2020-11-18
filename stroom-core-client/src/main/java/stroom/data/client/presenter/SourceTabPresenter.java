@@ -15,7 +15,6 @@ import com.gwtplatform.mvp.client.View;
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     private final ClassificationWrappedSourcePresenter sourcePresenter;
-//    private SourceLocation sourceLocation = null;
     private SourceKey sourceKey;
 
     @Inject
@@ -34,7 +33,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.RAW;
+        return SvgPresets.FILE;
     }
 
     @Override
@@ -54,13 +53,11 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
     }
 
     public void setSourceLocation(final SourceLocation sourceLocation) {
-//        this.sourceLocation = sourceLocation;
         sourcePresenter.setSourceLocation(sourceLocation);
     }
 
     public void setSourceKey(final SourceKey sourceKey) {
         this.sourceKey = sourceKey;
-//        sourcePresenter.setSourceKey(sourceKey);
 
         sourcePresenter.setSourceLocation(SourceLocation.builder(sourceKey.getMetaId())
                 .withChildStreamType(sourceKey.getOptChildStreamType().orElse(null))

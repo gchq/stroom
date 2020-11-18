@@ -54,8 +54,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     // Selection controls for the char data in the selected record and/or part
     // Always visible
-    @UiField
-    SimplePanel progressBarPanel;
+//    @UiField
+//    SimplePanel progressBarPanel;
     @UiField
     Label lblLines;
     @UiField
@@ -119,8 +119,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private void refreshCharacterControls() {
         if (display != null
                 && display.areNavigationControlsVisible()
-                && display.getCharFrom().isPresent()
-                && display.getCharTo().isPresent()) {
+                && display.getCharOffsetFrom().isPresent()
+                && display.getCharOffsetTo().isPresent()) {
 
             String linesLbl = "";
             if (display.getLineFrom().isPresent() && display.getLineTo().isPresent()) {
@@ -134,16 +134,16 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
             final String charactersLbl = CHARACTERS_TITLE
                     + " "
-                    + getLongValueForLabel(display.getCharFrom(), ZERO_TO_ONE_BASE_INCREMENT)
+                    + getLongValueForLabel(display.getCharOffsetFrom(), ZERO_TO_ONE_BASE_INCREMENT)
                     + " to "
-                    + getLongValueForLabel(display.getCharTo(), ZERO_TO_ONE_BASE_INCREMENT)
+                    + getLongValueForLabel(display.getCharOffsetTo(), ZERO_TO_ONE_BASE_INCREMENT)
                     + " of "
                     + getLongValueForLabel(display.getTotalChars());
 
             lblCharacters.setText(charactersLbl);
 
-            final long charFrom = display.getCharFrom().get();
-            final long charTo = display.getCharTo().get();
+            final long charFrom = display.getCharOffsetFrom().get();
+            final long charTo = display.getCharOffsetTo().get();
 
             showHeadCharactersBtn.setEnabled(charFrom > 0);
             advanceCharactersBackwardBtn.setEnabled(charFrom > 0);
@@ -203,10 +203,10 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 //        this.progressPresenter = progressPresenter;
 //    }
 
-    @Override
-    public void setProgressView(final ProgressView progressView) {
-        this.progressBarPanel.setWidget(progressView.asWidget());
-    }
+//    @Override
+//    public void setProgressView(final ProgressView progressView) {
+//        this.progressBarPanel.setWidget(progressView.asWidget());
+//    }
 
     // Characters UI handlers
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -56,6 +56,9 @@ public class ByteArrayUtils {
         }
         return sb.toString().replaceAll(" $", "");
     }
+    public static String byteArrayToHex(final byte b) {
+        return byteArrayToHex(new byte[]{b}, 0, 1);
+    }
 
     /**
      * Converts a byte array into a hex representation with a space between each
@@ -90,6 +93,10 @@ public class ByteArrayUtils {
             }
         }
         return sb.toString().replaceAll(" $", "");
+    }
+
+    public static String byteArrayToAllForms(final byte b) {
+        return byteArrayToAllForms(new byte[]{b}, 0, 1);
     }
 
     /**

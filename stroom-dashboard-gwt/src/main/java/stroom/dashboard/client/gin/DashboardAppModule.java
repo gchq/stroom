@@ -94,19 +94,43 @@ public class DashboardAppModule extends AbstractPresenterModule {
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
-        bindPresenter(DashboardMainPresenter.class, DashboardMainView.class, DashboardMainViewImpl.class, DashboardMainProxy.class);
+        bindPresenter(
+                DashboardMainPresenter.class,
+                DashboardMainView.class,
+                DashboardMainViewImpl.class,
+                DashboardMainProxy.class);
 
         bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
-        bindPresenterWidget(EntityTreePresenter.class, EntityTreePresenter.EntityTreeView.class, EntityTreeViewImpl.class);
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
-        bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
-        bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
-        bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
+        bindPresenterWidget(
+                EntityTreePresenter.class,
+                EntityTreePresenter.EntityTreeView.class,
+                EntityTreeViewImpl.class);
+        bindPresenterWidget(
+                EditorPresenter.class,
+                EditorView.class,
+                EditorViewImpl.class);
+        bindPresenterWidget(
+                IFramePresenter.class,
+                IFrameView.class,
+                IFrameViewImpl.class);
+        bindPresenterWidget(
+                IFrameContentPresenter.class,
+                IFrameContentView.class,
+                IFrameContentViewImpl.class);
+
+        bindPresenterWidget(
+                ClassificationWrapperPresenter.class,
+                ClassificationWrapperView.class,
+                ClassificationWrapperViewImpl.class);
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
 
+        bindPresenterWidget(
+                ProgressPresenter.class,
+                ProgressView.class,
+                ProgressViewImpl.class);
         bindPresenterWidget(
                 SourceTabPresenter.class,
                 SourceTabView.class,
@@ -131,9 +155,5 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
-        bindPresenterWidget(
-                ProgressPresenter.class,
-                ProgressView.class,
-                ProgressViewImpl.class);
     }
 }

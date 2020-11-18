@@ -259,21 +259,21 @@ public class DataNavigator extends Composite {
     private void refreshCharacterControls() {
         if (display != null
                 && display.areNavigationControlsVisible()
-                && display.getCharFrom().isPresent()
-                && display.getCharTo().isPresent()) {
+                && display.getCharOffsetFrom().isPresent()
+                && display.getCharOffsetTo().isPresent()) {
 
             final String lbl = CHARACTERS_TITLE
                     + " "
-                    + getValueForLabel(display.getCharFrom(), ZERO_TO_ONE_BASE_INCREMENT)
+                    + getValueForLabel(display.getCharOffsetFrom(), ZERO_TO_ONE_BASE_INCREMENT)
                     + " to "
-                    + getValueForLabel(display.getCharTo(), ZERO_TO_ONE_BASE_INCREMENT)
+                    + getValueForLabel(display.getCharOffsetTo(), ZERO_TO_ONE_BASE_INCREMENT)
                     + " of "
                     + getValueForLabel(display.getTotalChars());
 
             lblCharacters.setText(lbl);
 
-            final long charFrom = display.getCharFrom().get();
-            final long charTo = display.getCharTo().get();
+            final long charFrom = display.getCharOffsetFrom().get();
+            final long charTo = display.getCharOffsetTo().get();
 
             // Zero based
             showHeadCharactersBtn.setEnabled(charFrom > 0);
