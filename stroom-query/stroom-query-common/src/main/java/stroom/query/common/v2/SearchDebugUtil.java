@@ -135,7 +135,7 @@ public class SearchDebugUtil {
         if (enabled) {
             try {
                 if (writer == null) {
-                    writer = new OutputStreamWriter(Files.newOutputStream(Paths.get(dir + "data.txt")));
+                    writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("data.txt")));
                 }
 
                 for (int i = 0; i < values.length; i++) {
