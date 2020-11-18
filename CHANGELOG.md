@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
 
+* Add _progress_ bar to Source Data view and Data Preview to show location in the file.
+
 * Issue **#1678** : Fix data display in dashboard text pane.
 
 * Issue **#1679** : Fix data display in dashboard text pane.
