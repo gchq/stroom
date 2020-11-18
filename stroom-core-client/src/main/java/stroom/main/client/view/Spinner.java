@@ -16,6 +16,9 @@
 
 package stroom.main.client.view;
 
+import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
+import stroom.widget.spinner.client.SpinnerWhite;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -23,33 +26,56 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
-import stroom.widget.spinner.client.SpinnerWhite;
 
 public class Spinner extends Composite implements SpinnerDisplay {
     private static Binder binder = GWT.create(Binder.class);
     private SpinnerWhite spinner;
     private boolean spinning;
+
+    private final Timer timer;
+
     public Spinner() {
         initWidget(binder.createAndBindUi(this));
+
+        timer = new Timer() {
+            @Override
+            public void run() {
+                startSpinner();
+            }
+        };
     }
 
     @Override
     public void start() {
-        if (!spinning) {
-            spinning = true;
-            spinner = new SpinnerWhite();
-            getElement().removeAllChildren();
-            getElement().appendChild(spinner.getElement());
-            spinner.setVisible(true);
+        // The search polling hits this method on every poll and if we start the spinner immediately
+        // then the CPU is caned constantly updating the DOM. Add a small delay to give the polling
+        // a chance to finish and cancel the scheduler before the scheduled time is reached.
+        if (!spinning && !timer.isRunning()) {
+            GWT.log("Scheduling spinner");
+            timer.schedule(200);
         }
+    }
+
+    private void startSpinner() {
+        GWT.log("Starting spinner");
+        spinning = true;
+        spinner = new SpinnerWhite();
+        getElement().removeAllChildren();
+        getElement().appendChild(spinner.getElement());
+        spinner.setVisible(true);
     }
 
     @Override
     public void stop() {
+        if (timer.isRunning()) {
+            GWT.log("Cancelling timer");
+            timer.cancel();
+        }
         if (spinning) {
+            GWT.log("Stopping spinner");
             spinning = false;
             getElement().removeAllChildren();
             spinner = null;
