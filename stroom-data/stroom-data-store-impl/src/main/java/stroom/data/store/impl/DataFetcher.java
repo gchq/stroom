@@ -747,6 +747,8 @@ public class DataFetcher {
                     strBuilderLineSoFar.setLength(0);
                 }
             } else {
+                // This is a debatable one. Is a simple smiley emoji one col or two?
+                // Java will say the string has length 2
                 currColNo += decodedChar.getCharCount();
             }
         }
