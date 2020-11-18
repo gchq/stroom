@@ -1,0 +1,11 @@
+null,[null],0,null,null,null
+[null],null,1,null,user1,393.0
+[null],null,1,null,user10,381.0
+[null],null,1,null,user2,377.0
+[null],null,1,null,user3,379.0
+[null],null,1,null,user4,395.0
+[null],null,1,null,user5,377.0
+[null],null,1,null,user6,380.0
+[null],null,1,null,user7,380.0
+[null],null,1,null,user8,402.0
+[null],null,1,null,user9,383.0

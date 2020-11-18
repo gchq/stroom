@@ -1,0 +1,648 @@
+{
+  "results" : [ {
+    "type" : "table",
+    "componentId" : "table-BKJT6",
+    "fields" : [ {
+      "id" : "table-BKJT6|RACJI",
+      "name" : "UserId",
+      "expression" : "${UserId}",
+      "sort" : {
+        "order" : 0,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 0
+    }, {
+      "id" : "table-BKJT6|89WRT",
+      "name" : "Count",
+      "expression" : "count()",
+      "format" : {
+        "type" : "NUMBER"
+      }
+    }, {
+      "id" : "__stream_id__",
+      "name" : "__stream_id__",
+      "expression" : "${StreamId}"
+    }, {
+      "id" : "__event_id__",
+      "name" : "__event_id__",
+      "expression" : "${EventId}"
+    } ],
+    "rows" : [ {
+      "groupKey" : "user1",
+      "values" : [ "user1", "393", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user10",
+      "values" : [ "user10", "381", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user2",
+      "values" : [ "user2", "377", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user3",
+      "values" : [ "user3", "379", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user4",
+      "values" : [ "user4", "395", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user5",
+      "values" : [ "user5", "377", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user6",
+      "values" : [ "user6", "380", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user7",
+      "values" : [ "user7", "380", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user8",
+      "values" : [ "user8", "402", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "user9",
+      "values" : [ "user9", "383", null, null ],
+      "depth" : 0
+    } ],
+    "resultRange" : {
+      "offset" : 0,
+      "length" : 10
+    },
+    "totalResults" : 10
+  }, {
+    "type" : "vis",
+    "componentId" : "vis-QYG7H",
+    "structure" : [ {
+      "name" : ":ParentKey"
+    }, {
+      "name" : ":Key"
+    }, {
+      "name" : ":Depth"
+    }, {
+      "sort" : {
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 0
+    }, {
+      "expression" : "${UserId}",
+      "format" : {
+        "type" : "GENERAL"
+      }
+    }, {
+      "expression" : "${Count}",
+      "format" : {
+        "type" : "NUMBER"
+      }
+    } ],
+    "values" : [ [ null, [ null ], 0, null, null, null ], [ [ null ], null, 1, null, "user1", 393.0 ], [ [ null ], null, 1, null, "user10", 381.0 ], [ [ null ], null, 1, null, "user2", 377.0 ], [ [ null ], null, 1, null, "user3", 379.0 ], [ [ null ], null, 1, null, "user4", 395.0 ], [ [ null ], null, 1, null, "user5", 377.0 ], [ [ null ], null, 1, null, "user6", 380.0 ], [ [ null ], null, 1, null, "user7", 380.0 ], [ [ null ], null, 1, null, "user8", 402.0 ], [ [ null ], null, 1, null, "user9", 383.0 ] ],
+    "size" : 11
+  }, {
+    "type" : "table",
+    "componentId" : "table-78LF4",
+    "fields" : [ {
+      "id" : "table-78LF4|7JU9H",
+      "name" : "EventTime",
+      "expression" : "roundMinute(${EventTime})",
+      "sort" : {
+        "order" : 0,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "DATE_TIME"
+      },
+      "group" : 0
+    }, {
+      "id" : "table-78LF4|T5WYU",
+      "name" : "UserId",
+      "expression" : "${UserId}",
+      "sort" : {
+        "order" : 1,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 0
+    }, {
+      "id" : "table-78LF4|MT5IM",
+      "name" : "Count",
+      "expression" : "count()",
+      "format" : {
+        "type" : "NUMBER"
+      }
+    }, {
+      "id" : "__stream_id__",
+      "name" : "__stream_id__",
+      "expression" : "${StreamId}"
+    }, {
+      "id" : "__event_id__",
+      "name" : "__event_id__",
+      "expression" : "${EventId}"
+    } ],
+    "rows" : [ {
+      "groupKey" : "1262304000000|user1",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user1", "322", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user10",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user10", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user2",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user2", "1", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user3",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user3", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user4",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user4", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user5",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user5", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user6",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user6", "2", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user7",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user7", "2", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user8",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user8", "1", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304000000|user9",
+      "values" : [ "2010-01-01T00:00:00.000Z", "user9", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user1",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user1", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user10",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user10", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user2",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user2", "336", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user3",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user3", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user4",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user4", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user5",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user5", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user6",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user6", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user7",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user7", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user8",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user8", "10", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304060000|user9",
+      "values" : [ "2010-01-01T00:01:00.000Z", "user9", "9", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user1",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user1", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user10",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user10", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user2",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user2", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user3",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user3", "327", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user4",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user4", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user5",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user5", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user6",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user6", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user7",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user7", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user8",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user8", "14", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304120000|user9",
+      "values" : [ "2010-01-01T00:02:00.000Z", "user9", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user1",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user1", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user10",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user10", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user2",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user2", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user3",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user3", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user4",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user4", "338", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user5",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user5", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user6",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user6", "1", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user7",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user7", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user8",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user8", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304180000|user9",
+      "values" : [ "2010-01-01T00:03:00.000Z", "user9", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user1",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user1", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user10",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user10", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user2",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user2", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user3",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user3", "2", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user4",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user4", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user5",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user5", "323", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user6",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user6", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user7",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user7", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user8",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user8", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304240000|user9",
+      "values" : [ "2010-01-01T00:04:00.000Z", "user9", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user1",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user1", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user10",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user10", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user2",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user2", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user3",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user3", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user4",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user4", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user5",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user5", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user6",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user6", "334", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user7",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user7", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user8",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user8", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304300000|user9",
+      "values" : [ "2010-01-01T00:05:00.000Z", "user9", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user1",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user1", "12", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user10",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user10", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user2",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user2", "2", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user3",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user3", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user4",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user4", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user5",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user5", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user6",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user6", "9", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user7",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user7", "330", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user8",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user8", "9", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304360000|user9",
+      "values" : [ "2010-01-01T00:06:00.000Z", "user9", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user1",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user1", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user10",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user10", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user2",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user2", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user3",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user3", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user4",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user4", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user5",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user5", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user6",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user6", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user7",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user7", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user8",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user8", "335", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304420000|user9",
+      "values" : [ "2010-01-01T00:07:00.000Z", "user9", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user1",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user1", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user10",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user10", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user2",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user2", "6", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user3",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user3", "14", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user4",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user4", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user5",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user5", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user6",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user6", "9", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user7",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user7", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user8",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user8", "2", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304480000|user9",
+      "values" : [ "2010-01-01T00:08:00.000Z", "user9", "326", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user1",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user1", "12", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user10",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user10", "327", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user2",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user2", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user3",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user3", "5", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user4",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user4", "9", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user5",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user5", "8", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user6",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user6", "4", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user7",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user7", "3", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user8",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user8", "7", null, null ],
+      "depth" : 0
+    }, {
+      "groupKey" : "1262304540000|user9",
+      "values" : [ "2010-01-01T00:09:00.000Z", "user9", "6", null, null ],
+      "depth" : 0
+    } ],
+    "resultRange" : {
+      "offset" : 0,
+      "length" : 100
+    },
+    "totalResults" : 110
+  }, {
+    "type" : "vis",
+    "componentId" : "vis-L1AL1",
+    "structure" : [ {
+      "name" : ":ParentKey"
+    }, {
+      "name" : ":Key"
+    }, {
+      "name" : ":Depth"
+    }, {
+      "expression" : "${EventTime}",
+      "sort" : {
+        "order" : 0,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "DATE_TIME"
+      },
+      "group" : 0
+    }, {
+      "expression" : "${UserId}",
+      "sort" : {
+        "order" : 1,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 1
+    }, {
+      "expression" : "${UserId}",
+      "sort" : {
+        "order" : 2,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      }
+    }, {
+      "expression" : "${Count}",
+      "format" : {
+        "type" : "NUMBER"
+      }
+    } ],
+    "values" : [ [ null, [ 1.262304E12 ], 0, 1.262304E12, null, null, null ], [ [ 1.262304E12 ], [ 1.262304E12, "user1" ], 1, 1.262304E12, "user1", null, null ], [ [ 1.262304E12, "user1" ], null, 2, 1.262304E12, "user1", "user1", 322.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user10" ], 1, 1.262304E12, "user10", null, null ], [ [ 1.262304E12, "user10" ], null, 2, 1.262304E12, "user10", "user10", 4.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user2" ], 1, 1.262304E12, "user2", null, null ], [ [ 1.262304E12, "user2" ], null, 2, 1.262304E12, "user2", "user2", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user3" ], 1, 1.262304E12, "user3", null, null ], [ [ 1.262304E12, "user3" ], null, 2, 1.262304E12, "user3", "user3", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user4" ], 1, 1.262304E12, "user4", null, null ], [ [ 1.262304E12, "user4" ], null, 2, 1.262304E12, "user4", "user4", 7.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user5" ], 1, 1.262304E12, "user5", null, null ], [ [ 1.262304E12, "user5" ], null, 2, 1.262304E12, "user5", "user5", 3.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user6" ], 1, 1.262304E12, "user6", null, null ], [ [ 1.262304E12, "user6" ], null, 2, 1.262304E12, "user6", "user6", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user7" ], 1, 1.262304E12, "user7", null, null ], [ [ 1.262304E12, "user7" ], null, 2, 1.262304E12, "user7", "user7", 2.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user8" ], 1, 1.262304E12, "user8", null, null ], [ [ 1.262304E12, "user8" ], null, 2, 1.262304E12, "user8", "user8", 1.0 ], [ [ 1.262304E12 ], [ 1.262304E12, "user9" ], 1, 1.262304E12, "user9", null, null ], [ [ 1.262304E12, "user9" ], null, 2, 1.262304E12, "user9", "user9", 3.0 ], [ null, [ 1.26230406E12 ], 0, 1.26230406E12, null, null, null ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user1" ], 1, 1.26230406E12, "user1", null, null ], [ [ 1.26230406E12, "user1" ], null, 2, 1.26230406E12, "user1", "user1", 8.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user10" ], 1, 1.26230406E12, "user10", null, null ], [ [ 1.26230406E12, "user10" ], null, 2, 1.26230406E12, "user10", "user10", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user2" ], 1, 1.26230406E12, "user2", null, null ], [ [ 1.26230406E12, "user2" ], null, 2, 1.26230406E12, "user2", "user2", 336.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user3" ], 1, 1.26230406E12, "user3", null, null ], [ [ 1.26230406E12, "user3" ], null, 2, 1.26230406E12, "user3", "user3", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user4" ], 1, 1.26230406E12, "user4", null, null ], [ [ 1.26230406E12, "user4" ], null, 2, 1.26230406E12, "user4", "user4", 7.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user5" ], 1, 1.26230406E12, "user5", null, null ], [ [ 1.26230406E12, "user5" ], null, 2, 1.26230406E12, "user5", "user5", 6.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user6" ], 1, 1.26230406E12, "user6", null, null ], [ [ 1.26230406E12, "user6" ], null, 2, 1.26230406E12, "user6", "user6", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user7" ], 1, 1.26230406E12, "user7", null, null ], [ [ 1.26230406E12, "user7" ], null, 2, 1.26230406E12, "user7", "user7", 3.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user8" ], 1, 1.26230406E12, "user8", null, null ], [ [ 1.26230406E12, "user8" ], null, 2, 1.26230406E12, "user8", "user8", 10.0 ], [ [ 1.26230406E12 ], [ 1.26230406E12, "user9" ], 1, 1.26230406E12, "user9", null, null ], [ [ 1.26230406E12, "user9" ], null, 2, 1.26230406E12, "user9", "user9", 9.0 ], [ null, [ 1.26230412E12 ], 0, 1.26230412E12, null, null, null ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user1" ], 1, 1.26230412E12, "user1", null, null ], [ [ 1.26230412E12, "user1" ], null, 2, 1.26230412E12, "user1", "user1", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user10" ], 1, 1.26230412E12, "user10", null, null ], [ [ 1.26230412E12, "user10" ], null, 2, 1.26230412E12, "user10", "user10", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user2" ], 1, 1.26230412E12, "user2", null, null ], [ [ 1.26230412E12, "user2" ], null, 2, 1.26230412E12, "user2", "user2", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user3" ], 1, 1.26230412E12, "user3", null, null ], [ [ 1.26230412E12, "user3" ], null, 2, 1.26230412E12, "user3", "user3", 327.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user4" ], 1, 1.26230412E12, "user4", null, null ], [ [ 1.26230412E12, "user4" ], null, 2, 1.26230412E12, "user4", "user4", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user5" ], 1, 1.26230412E12, "user5", null, null ], [ [ 1.26230412E12, "user5" ], null, 2, 1.26230412E12, "user5", "user5", 6.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user6" ], 1, 1.26230412E12, "user6", null, null ], [ [ 1.26230412E12, "user6" ], null, 2, 1.26230412E12, "user6", "user6", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user7" ], 1, 1.26230412E12, "user7", null, null ], [ [ 1.26230412E12, "user7" ], null, 2, 1.26230412E12, "user7", "user7", 4.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user8" ], 1, 1.26230412E12, "user8", null, null ], [ [ 1.26230412E12, "user8" ], null, 2, 1.26230412E12, "user8", "user8", 14.0 ], [ [ 1.26230412E12 ], [ 1.26230412E12, "user9" ], 1, 1.26230412E12, "user9", null, null ], [ [ 1.26230412E12, "user9" ], null, 2, 1.26230412E12, "user9", "user9", 6.0 ], [ null, [ 1.26230418E12 ], 0, 1.26230418E12, null, null, null ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user1" ], 1, 1.26230418E12, "user1", null, null ], [ [ 1.26230418E12, "user1" ], null, 2, 1.26230418E12, "user1", "user1", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user10" ], 1, 1.26230418E12, "user10", null, null ], [ [ 1.26230418E12, "user10" ], null, 2, 1.26230418E12, "user10", "user10", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user2" ], 1, 1.26230418E12, "user2", null, null ], [ [ 1.26230418E12, "user2" ], null, 2, 1.26230418E12, "user2", "user2", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user3" ], 1, 1.26230418E12, "user3", null, null ], [ [ 1.26230418E12, "user3" ], null, 2, 1.26230418E12, "user3", "user3", 4.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user4" ], 1, 1.26230418E12, "user4", null, null ], [ [ 1.26230418E12, "user4" ], null, 2, 1.26230418E12, "user4", "user4", 338.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user5" ], 1, 1.26230418E12, "user5", null, null ], [ [ 1.26230418E12, "user5" ], null, 2, 1.26230418E12, "user5", "user5", 6.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user6" ], 1, 1.26230418E12, "user6", null, null ], [ [ 1.26230418E12, "user6" ], null, 2, 1.26230418E12, "user6", "user6", 1.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user7" ], 1, 1.26230418E12, "user7", null, null ], [ [ 1.26230418E12, "user7" ], null, 2, 1.26230418E12, "user7", "user7", 7.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user8" ], 1, 1.26230418E12, "user8", null, null ], [ [ 1.26230418E12, "user8" ], null, 2, 1.26230418E12, "user8", "user8", 5.0 ], [ [ 1.26230418E12 ], [ 1.26230418E12, "user9" ], 1, 1.26230418E12, "user9", null, null ], [ [ 1.26230418E12, "user9" ], null, 2, 1.26230418E12, "user9", "user9", 4.0 ], [ null, [ 1.26230424E12 ], 0, 1.26230424E12, null, null, null ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user1" ], 1, 1.26230424E12, "user1", null, null ], [ [ 1.26230424E12, "user1" ], null, 2, 1.26230424E12, "user1", "user1", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user10" ], 1, 1.26230424E12, "user10", null, null ], [ [ 1.26230424E12, "user10" ], null, 2, 1.26230424E12, "user10", "user10", 5.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user2" ], 1, 1.26230424E12, "user2", null, null ], [ [ 1.26230424E12, "user2" ], null, 2, 1.26230424E12, "user2", "user2", 3.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user3" ], 1, 1.26230424E12, "user3", null, null ], [ [ 1.26230424E12, "user3" ], null, 2, 1.26230424E12, "user3", "user3", 2.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user4" ], 1, 1.26230424E12, "user4", null, null ], [ [ 1.26230424E12, "user4" ], null, 2, 1.26230424E12, "user4", "user4", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user5" ], 1, 1.26230424E12, "user5", null, null ], [ [ 1.26230424E12, "user5" ], null, 2, 1.26230424E12, "user5", "user5", 323.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user6" ], 1, 1.26230424E12, "user6", null, null ], [ [ 1.26230424E12, "user6" ], null, 2, 1.26230424E12, "user6", "user6", 7.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user7" ], 1, 1.26230424E12, "user7", null, null ], [ [ 1.26230424E12, "user7" ], null, 2, 1.26230424E12, "user7", "user7", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user8" ], 1, 1.26230424E12, "user8", null, null ], [ [ 1.26230424E12, "user8" ], null, 2, 1.26230424E12, "user8", "user8", 6.0 ], [ [ 1.26230424E12 ], [ 1.26230424E12, "user9" ], 1, 1.26230424E12, "user9", null, null ], [ [ 1.26230424E12, "user9" ], null, 2, 1.26230424E12, "user9", "user9", 4.0 ], [ null, [ 1.2623043E12 ], 0, 1.2623043E12, null, null, null ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user1" ], 1, 1.2623043E12, "user1", null, null ], [ [ 1.2623043E12, "user1" ], null, 2, 1.2623043E12, "user1", "user1", 6.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user10" ], 1, 1.2623043E12, "user10", null, null ], [ [ 1.2623043E12, "user10" ], null, 2, 1.2623043E12, "user10", "user10", 8.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user2" ], 1, 1.2623043E12, "user2", null, null ], [ [ 1.2623043E12, "user2" ], null, 2, 1.2623043E12, "user2", "user2", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user3" ], 1, 1.2623043E12, "user3", null, null ], [ [ 1.2623043E12, "user3" ], null, 2, 1.2623043E12, "user3", "user3", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user4" ], 1, 1.2623043E12, "user4", null, null ], [ [ 1.2623043E12, "user4" ], null, 2, 1.2623043E12, "user4", "user4", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user5" ], 1, 1.2623043E12, "user5", null, null ], [ [ 1.2623043E12, "user5" ], null, 2, 1.2623043E12, "user5", "user5", 5.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user6" ], 1, 1.2623043E12, "user6", null, null ], [ [ 1.2623043E12, "user6" ], null, 2, 1.2623043E12, "user6", "user6", 334.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user7" ], 1, 1.2623043E12, "user7", null, null ], [ [ 1.2623043E12, "user7" ], null, 2, 1.2623043E12, "user7", "user7", 4.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user8" ], 1, 1.2623043E12, "user8", null, null ], [ [ 1.2623043E12, "user8" ], null, 2, 1.2623043E12, "user8", "user8", 7.0 ], [ [ 1.2623043E12 ], [ 1.2623043E12, "user9" ], 1, 1.2623043E12, "user9", null, null ], [ [ 1.2623043E12, "user9" ], null, 2, 1.2623043E12, "user9", "user9", 6.0 ], [ null, [ 1.26230436E12 ], 0, 1.26230436E12, null, null, null ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user1" ], 1, 1.26230436E12, "user1", null, null ], [ [ 1.26230436E12, "user1" ], null, 2, 1.26230436E12, "user1", "user1", 12.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user10" ], 1, 1.26230436E12, "user10", null, null ], [ [ 1.26230436E12, "user10" ], null, 2, 1.26230436E12, "user10", "user10", 6.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user2" ], 1, 1.26230436E12, "user2", null, null ], [ [ 1.26230436E12, "user2" ], null, 2, 1.26230436E12, "user2", "user2", 2.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user3" ], 1, 1.26230436E12, "user3", null, null ], [ [ 1.26230436E12, "user3" ], null, 2, 1.26230436E12, "user3", "user3", 4.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user4" ], 1, 1.26230436E12, "user4", null, null ], [ [ 1.26230436E12, "user4" ], null, 2, 1.26230436E12, "user4", "user4", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user5" ], 1, 1.26230436E12, "user5", null, null ], [ [ 1.26230436E12, "user5" ], null, 2, 1.26230436E12, "user5", "user5", 7.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user6" ], 1, 1.26230436E12, "user6", null, null ], [ [ 1.26230436E12, "user6" ], null, 2, 1.26230436E12, "user6", "user6", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user7" ], 1, 1.26230436E12, "user7", null, null ], [ [ 1.26230436E12, "user7" ], null, 2, 1.26230436E12, "user7", "user7", 330.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user8" ], 1, 1.26230436E12, "user8", null, null ], [ [ 1.26230436E12, "user8" ], null, 2, 1.26230436E12, "user8", "user8", 9.0 ], [ [ 1.26230436E12 ], [ 1.26230436E12, "user9" ], 1, 1.26230436E12, "user9", null, null ], [ [ 1.26230436E12, "user9" ], null, 2, 1.26230436E12, "user9", "user9", 7.0 ], [ null, [ 1.26230442E12 ], 0, 1.26230442E12, null, null, null ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user1" ], 1, 1.26230442E12, "user1", null, null ], [ [ 1.26230442E12, "user1" ], null, 2, 1.26230442E12, "user1", "user1", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user10" ], 1, 1.26230442E12, "user10", null, null ], [ [ 1.26230442E12, "user10" ], null, 2, 1.26230442E12, "user10", "user10", 7.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user2" ], 1, 1.26230442E12, "user2", null, null ], [ [ 1.26230442E12, "user2" ], null, 2, 1.26230442E12, "user2", "user2", 6.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user3" ], 1, 1.26230442E12, "user3", null, null ], [ [ 1.26230442E12, "user3" ], null, 2, 1.26230442E12, "user3", "user3", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user4" ], 1, 1.26230442E12, "user4", null, null ], [ [ 1.26230442E12, "user4" ], null, 2, 1.26230442E12, "user4", "user4", 5.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user5" ], 1, 1.26230442E12, "user5", null, null ], [ [ 1.26230442E12, "user5" ], null, 2, 1.26230442E12, "user5", "user5", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user6" ], 1, 1.26230442E12, "user6", null, null ], [ [ 1.26230442E12, "user6" ], null, 2, 1.26230442E12, "user6", "user6", 4.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user7" ], 1, 1.26230442E12, "user7", null, null ], [ [ 1.26230442E12, "user7" ], null, 2, 1.26230442E12, "user7", "user7", 8.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user8" ], 1, 1.26230442E12, "user8", null, null ], [ [ 1.26230442E12, "user8" ], null, 2, 1.26230442E12, "user8", "user8", 335.0 ], [ [ 1.26230442E12 ], [ 1.26230442E12, "user9" ], 1, 1.26230442E12, "user9", null, null ], [ [ 1.26230442E12, "user9" ], null, 2, 1.26230442E12, "user9", "user9", 7.0 ], [ null, [ 1.26230448E12 ], 0, 1.26230448E12, null, null, null ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user1" ], 1, 1.26230448E12, "user1", null, null ], [ [ 1.26230448E12, "user1" ], null, 2, 1.26230448E12, "user1", "user1", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user10" ], 1, 1.26230448E12, "user10", null, null ], [ [ 1.26230448E12, "user10" ], null, 2, 1.26230448E12, "user10", "user10", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user2" ], 1, 1.26230448E12, "user2", null, null ], [ [ 1.26230448E12, "user2" ], null, 2, 1.26230448E12, "user2", "user2", 6.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user3" ], 1, 1.26230448E12, "user3", null, null ], [ [ 1.26230448E12, "user3" ], null, 2, 1.26230448E12, "user3", "user3", 14.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user4" ], 1, 1.26230448E12, "user4", null, null ], [ [ 1.26230448E12, "user4" ], null, 2, 1.26230448E12, "user4", "user4", 4.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user5" ], 1, 1.26230448E12, "user5", null, null ], [ [ 1.26230448E12, "user5" ], null, 2, 1.26230448E12, "user5", "user5", 3.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user6" ], 1, 1.26230448E12, "user6", null, null ], [ [ 1.26230448E12, "user6" ], null, 2, 1.26230448E12, "user6", "user6", 9.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user7" ], 1, 1.26230448E12, "user7", null, null ], [ [ 1.26230448E12, "user7" ], null, 2, 1.26230448E12, "user7", "user7", 8.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user8" ], 1, 1.26230448E12, "user8", null, null ], [ [ 1.26230448E12, "user8" ], null, 2, 1.26230448E12, "user8", "user8", 2.0 ], [ [ 1.26230448E12 ], [ 1.26230448E12, "user9" ], 1, 1.26230448E12, "user9", null, null ], [ [ 1.26230448E12, "user9" ], null, 2, 1.26230448E12, "user9", "user9", 326.0 ], [ null, [ 1.26230454E12 ], 0, 1.26230454E12, null, null, null ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user1" ], 1, 1.26230454E12, "user1", null, null ], [ [ 1.26230454E12, "user1" ], null, 2, 1.26230454E12, "user1", "user1", 12.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user10" ], 1, 1.26230454E12, "user10", null, null ], [ [ 1.26230454E12, "user10" ], null, 2, 1.26230454E12, "user10", "user10", 327.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user2" ], 1, 1.26230454E12, "user2", null, null ], [ [ 1.26230454E12, "user2" ], null, 2, 1.26230454E12, "user2", "user2", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user3" ], 1, 1.26230454E12, "user3", null, null ], [ [ 1.26230454E12, "user3" ], null, 2, 1.26230454E12, "user3", "user3", 5.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user4" ], 1, 1.26230454E12, "user4", null, null ], [ [ 1.26230454E12, "user4" ], null, 2, 1.26230454E12, "user4", "user4", 9.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user5" ], 1, 1.26230454E12, "user5", null, null ], [ [ 1.26230454E12, "user5" ], null, 2, 1.26230454E12, "user5", "user5", 8.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user6" ], 1, 1.26230454E12, "user6", null, null ], [ [ 1.26230454E12, "user6" ], null, 2, 1.26230454E12, "user6", "user6", 4.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user7" ], 1, 1.26230454E12, "user7", null, null ], [ [ 1.26230454E12, "user7" ], null, 2, 1.26230454E12, "user7", "user7", 3.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user8" ], 1, 1.26230454E12, "user8", null, null ], [ [ 1.26230454E12, "user8" ], null, 2, 1.26230454E12, "user8", "user8", 7.0 ], [ [ 1.26230454E12 ], [ 1.26230454E12, "user9" ], 1, 1.26230454E12, "user9", null, null ], [ [ 1.26230454E12, "user9" ], null, 2, 1.26230454E12, "user9", "user9", 6.0 ], [ null, [ 1.2623046E12 ], 0, 1.2623046E12, null, null, null ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user1" ], 1, 1.2623046E12, "user1", null, null ], [ [ 1.2623046E12, "user1" ], null, 2, 1.2623046E12, "user1", "user1", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user10" ], 1, 1.2623046E12, "user10", null, null ], [ [ 1.2623046E12, "user10" ], null, 2, 1.2623046E12, "user10", "user10", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user2" ], 1, 1.2623046E12, "user2", null, null ], [ [ 1.2623046E12, "user2" ], null, 2, 1.2623046E12, "user2", "user2", 1.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user3" ], 1, 1.2623046E12, "user3", null, null ], [ [ 1.2623046E12, "user3" ], null, 2, 1.2623046E12, "user3", "user3", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user4" ], 1, 1.2623046E12, "user4", null, null ], [ [ 1.2623046E12, "user4" ], null, 2, 1.2623046E12, "user4", "user4", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user5" ], 1, 1.2623046E12, "user5", null, null ], [ [ 1.2623046E12, "user5" ], null, 2, 1.2623046E12, "user5", "user5", 2.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user6" ], 1, 1.2623046E12, "user6", null, null ], [ [ 1.2623046E12, "user6" ], null, 2, 1.2623046E12, "user6", "user6", 3.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user7" ], 1, 1.2623046E12, "user7", null, null ], [ [ 1.2623046E12, "user7" ], null, 2, 1.2623046E12, "user7", "user7", 5.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user8" ], 1, 1.2623046E12, "user8", null, null ], [ [ 1.2623046E12, "user8" ], null, 2, 1.2623046E12, "user8", "user8", 6.0 ], [ [ 1.2623046E12 ], [ 1.2623046E12, "user9" ], 1, 1.2623046E12, "user9", null, null ], [ [ 1.2623046E12, "user9" ], null, 2, 1.2623046E12, "user9", "user9", 5.0 ] ],
+    "size" : 231
+  }, {
+    "type" : "vis",
+    "componentId" : "vis-SPSCW",
+    "structure" : [ {
+      "name" : ":ParentKey"
+    }, {
+      "name" : ":Key"
+    }, {
+      "name" : ":Depth"
+    }, {
+      "sort" : {
+        "order" : 0,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 0
+    }, {
+      "expression" : "${UserId}",
+      "format" : {
+        "type" : "GENERAL"
+      },
+      "group" : 1
+    }, {
+      "expression" : "${EventTime}",
+      "sort" : {
+        "order" : 2,
+        "direction" : "ASCENDING"
+      },
+      "format" : {
+        "type" : "DATE_TIME"
+      }
+    }, {
+      "expression" : "${Count}",
+      "format" : {
+        "type" : "NUMBER"
+      }
+    } ],
+    "values" : [ [ null, [ null ], 0, null, null, null, null ], [ [ null ], [ null, "user1" ], 1, null, "user1", null, null ], [ [ null, "user1" ], null, 2, null, "user1", 1.262304E12, 322.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230406E12, 8.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230412E12, 6.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230418E12, 4.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230424E12, 7.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.2623043E12, 6.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230436E12, 12.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230442E12, 4.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230448E12, 6.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.26230454E12, 12.0 ], [ [ null, "user1" ], null, 2, null, "user1", 1.2623046E12, 6.0 ], [ [ null ], [ null, "user10" ], 1, null, "user10", null, null ], [ [ null, "user10" ], null, 2, null, "user10", 1.262304E12, 4.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230406E12, 6.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230412E12, 6.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230418E12, 5.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230424E12, 5.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.2623043E12, 8.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230436E12, 6.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230442E12, 7.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230448E12, 4.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.26230454E12, 327.0 ], [ [ null, "user10" ], null, 2, null, "user10", 1.2623046E12, 3.0 ], [ [ null ], [ null, "user2" ], 1, null, "user2", null, null ], [ [ null, "user2" ], null, 2, null, "user2", 1.262304E12, 1.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230406E12, 336.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230412E12, 4.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230418E12, 7.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230424E12, 3.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.2623043E12, 7.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230436E12, 2.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230442E12, 6.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230448E12, 6.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.26230454E12, 4.0 ], [ [ null, "user2" ], null, 2, null, "user2", 1.2623046E12, 1.0 ], [ [ null ], [ null, "user3" ], 1, null, "user3", null, null ], [ [ null, "user3" ], null, 2, null, "user3", 1.262304E12, 3.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230406E12, 6.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230412E12, 327.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230418E12, 4.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230424E12, 2.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.2623043E12, 7.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230436E12, 4.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230442E12, 5.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230448E12, 14.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.26230454E12, 5.0 ], [ [ null, "user3" ], null, 2, null, "user3", 1.2623046E12, 2.0 ], [ [ null ], [ null, "user4" ], 1, null, "user4", null, null ], [ [ null, "user4" ], null, 2, null, "user4", 1.262304E12, 7.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230406E12, 7.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230412E12, 4.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230418E12, 338.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230424E12, 6.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.2623043E12, 5.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230436E12, 7.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230442E12, 5.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230448E12, 4.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.26230454E12, 9.0 ], [ [ null, "user4" ], null, 2, null, "user4", 1.2623046E12, 3.0 ], [ [ null ], [ null, "user5" ], 1, null, "user5", null, null ], [ [ null, "user5" ], null, 2, null, "user5", 1.262304E12, 3.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230406E12, 6.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230412E12, 6.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230418E12, 6.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230424E12, 323.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.2623043E12, 5.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230436E12, 7.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230442E12, 8.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230448E12, 3.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.26230454E12, 8.0 ], [ [ null, "user5" ], null, 2, null, "user5", 1.2623046E12, 2.0 ], [ [ null ], [ null, "user6" ], 1, null, "user6", null, null ], [ [ null, "user6" ], null, 2, null, "user6", 1.262304E12, 2.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230406E12, 3.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230412E12, 4.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230418E12, 1.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230424E12, 7.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.2623043E12, 334.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230436E12, 9.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230442E12, 4.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230448E12, 9.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.26230454E12, 4.0 ], [ [ null, "user6" ], null, 2, null, "user6", 1.2623046E12, 3.0 ], [ [ null ], [ null, "user7" ], 1, null, "user7", null, null ], [ [ null, "user7" ], null, 2, null, "user7", 1.262304E12, 2.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230406E12, 3.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230412E12, 4.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230418E12, 7.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230424E12, 6.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.2623043E12, 4.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230436E12, 330.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230442E12, 8.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230448E12, 8.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.26230454E12, 3.0 ], [ [ null, "user7" ], null, 2, null, "user7", 1.2623046E12, 5.0 ], [ [ null ], [ null, "user8" ], 1, null, "user8", null, null ], [ [ null, "user8" ], null, 2, null, "user8", 1.262304E12, 1.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230406E12, 10.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230412E12, 14.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230418E12, 5.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230424E12, 6.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.2623043E12, 7.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230436E12, 9.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230442E12, 335.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230448E12, 2.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.26230454E12, 7.0 ], [ [ null, "user8" ], null, 2, null, "user8", 1.2623046E12, 6.0 ], [ [ null ], [ null, "user9" ], 1, null, "user9", null, null ], [ [ null, "user9" ], null, 2, null, "user9", 1.262304E12, 3.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230406E12, 9.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230412E12, 6.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230418E12, 4.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230424E12, 4.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.2623043E12, 6.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230436E12, 7.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230442E12, 7.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230448E12, 326.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.26230454E12, 6.0 ], [ [ null, "user9" ], null, 2, null, "user9", 1.2623046E12, 5.0 ] ],
+    "size" : 121
+  } ],
+  "errors" : [ ],
+  "complete" : true
+}
