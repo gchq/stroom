@@ -24,12 +24,30 @@ import java.util.List;
 
 public class SearchDebugUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
-    private static final Path dir = Paths.get("/home/stroomdev66/work/stroom-master-temp2/stroom-app/src/test/resources/TestSearchResultCreation");
+    private static final Path dir;
+
+    static {
+        dir = resolveDir("stroom-app").resolve("src/test/resources/TestSearchResultCreation");
+    }
+
     private static final boolean writeActual = true;
     private static final boolean writeExpected = false;
     private static Writer writer;
 
     private SearchDebugUtil() {
+    }
+
+    private static Path resolveDir(final String projectDir) {
+        Path root = Paths.get(".").toAbsolutePath().normalize();
+        Path dir = root.resolve(projectDir);
+        if (!Files.isDirectory(dir)) {
+            dir = root.getParent().resolve(projectDir);
+            if (!Files.isDirectory(dir)) {
+                throw new RuntimeException("Path not found: " + dir);
+            }
+        }
+
+        return dir;
     }
 
     private static String getSuffix(final boolean actual) {

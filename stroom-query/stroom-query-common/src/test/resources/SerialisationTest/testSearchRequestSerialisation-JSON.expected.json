@@ -93,8 +93,7 @@
     "requestedRange" : {
       "offset" : 1,
       "length" : 100
-    },
-    "openGroups" : [ ]
+    }
   } ],
   "dateTimeLocale" : "en-gb",
   "incremental" : true
