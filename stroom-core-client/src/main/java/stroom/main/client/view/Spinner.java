@@ -54,13 +54,11 @@ public class Spinner extends Composite implements SpinnerDisplay {
         // then the CPU is caned constantly updating the DOM. Add a small delay to give the polling
         // a chance to finish and cancel the scheduler before the scheduled time is reached.
         if (!spinning && !timer.isRunning()) {
-            GWT.log("Scheduling spinner");
             timer.schedule(200);
         }
     }
 
     private void startSpinner() {
-        GWT.log("Starting spinner");
         spinning = true;
         spinner = new SpinnerWhite();
         getElement().removeAllChildren();
@@ -71,11 +69,9 @@ public class Spinner extends Composite implements SpinnerDisplay {
     @Override
     public void stop() {
         if (timer.isRunning()) {
-            GWT.log("Cancelling timer");
             timer.cancel();
         }
         if (spinning) {
-            GWT.log("Stopping spinner");
             spinning = false;
             getElement().removeAllChildren();
             spinner = null;
