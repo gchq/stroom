@@ -94,10 +94,8 @@ class ViewDataResourceImpl implements ViewDataResource {
                     ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
                     : PermissionNames.VIEW_DATA_PERMISSION;
 
-            return LOGGER.logDurationIfInfoEnabled(() -> {
             return securityContext.secureResult(permissionName, () ->
                     dataFetcher.getData(request));
-            }, "fetch");
         } catch (Exception e) {
             LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
             throw e;
