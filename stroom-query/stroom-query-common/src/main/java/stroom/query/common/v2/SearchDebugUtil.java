@@ -39,15 +39,15 @@ public class SearchDebugUtil {
 
     private static Path resolveDir(final String projectDir) {
         Path root = Paths.get(".").toAbsolutePath().normalize();
-        Path dir = root.resolve(projectDir);
-        if (!Files.isDirectory(dir)) {
-            dir = root.getParent().resolve(projectDir);
-            if (!Files.isDirectory(dir)) {
-                throw new RuntimeException("Path not found: " + dir);
-            }
+        while (root != null && !Files.isDirectory(root.resolve(projectDir))) {
+            root = root.getParent();
         }
 
-        return dir;
+        if (root == null) {
+            throw new RuntimeException("Path not found: " + dir);
+        }
+
+        return root.resolve(projectDir);
     }
 
     private static String getSuffix(final boolean actual) {
