@@ -21,6 +21,7 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -82,6 +83,7 @@ public class FetchDataResult extends AbstractFetchDataResult {
         return totalBytes;
     }
 
+    @JsonIgnore
     public Optional<Long> getOptTotalBytes() {
         return Optional.ofNullable(totalBytes);
     }
