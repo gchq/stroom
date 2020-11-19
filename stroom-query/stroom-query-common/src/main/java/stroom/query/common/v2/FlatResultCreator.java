@@ -282,8 +282,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class Mapper {
-        private final FieldIndex fieldIndex;
-        //        private final int[] parentFieldIndices;
+        private final int[] parentFieldIndices;
         private final TableDataStore tableDataStore;
         private final int maxItems;
 
@@ -293,36 +292,38 @@ public class FlatResultCreator implements ResultCreator {
                final int maxItems) {
             this.maxItems = maxItems;
 
-            fieldIndex = new FieldIndex();
-//            int i = 0;
-//            final Map<String, Integer> parentIndex = new HashMap<>();
+            final FieldIndex parentFieldIndex = new FieldIndex();
+
+            // Parent fields are now table column names.
             for (final Field field : parent.getFields()) {
-                fieldIndex.create(field.getName());
-//                parentIndex.put(field.getName(), i++);
+                parentFieldIndex.create(field.getName());
             }
 
-            final List<Field> fields = child.getFields();
-//            final CompiledDepths compiledDepths = new CompiledDepths(fields, child.showDetail());
-            final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, paramMap);
+            // Extract child fields from expressions.
+            final FieldIndex childFieldIndex = new FieldIndex();
+            new CompiledFields(child.getFields(), childFieldIndex, paramMap);
+
+            // Create the index mapping.
+            parentFieldIndices = new int[childFieldIndex.size()];
+            for (int i = 0; i < childFieldIndex.size(); i++) {
+                final String childField = childFieldIndex.getField(i);
+                final Integer parentIndex = parentFieldIndex.getPos(childField);
+                if (parentIndex == null) {
+                    parentFieldIndices[i] = -1;
+                } else {
+                    parentFieldIndices[i] = parentIndex;
+                }
+            }
 
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
             tableDataStore = new TableDataStore(
                     child,
-                    fieldIndex,
+                    childFieldIndex,
                     paramMap,
                     maxResults,
                     Sizes.create(Integer.MAX_VALUE));
-
-//            parentFieldIndices = new int[fieldIndex.size()];
-//            Arrays.fill(parentFieldIndices, -1);
-//            for (i = 0; i < fieldIndex.size(); i++) {
-//                final Integer index = parentIndex.get(fieldIndex.getField(i));
-//                if (index != null) {
-//                    parentFieldIndices[i] = index;
-//                }
-//            }
         }
 
         public Data map(final Data data) {
@@ -334,13 +335,13 @@ public class FlatResultCreator implements ResultCreator {
             if (items.size() > 0) {
                 int itemCount = 0;
                 for (final DataItem item : items) {
-                    final Val[] values = new Val[fieldIndex.size()];
-                    for (int i = 0; i < fieldIndex.size(); i++) {
-//                        final int index = parentFieldIndices[i];
-//                        if (index != -1) {
-                        final Val val = item.getValue(i); // TODO : @66 Currently evaluating more values than will be needed.
-                        values[i] = val;
-//                        }
+                    final Val[] values = new Val[parentFieldIndices.length];
+                    for (int i = 0; i < parentFieldIndices.length; i++) {
+                        final int index = parentFieldIndices[i];
+                        if (index != -1) {
+                            final Val val = item.getValue(index); // TODO : @66 Currently evaluating more values than will be needed.
+                            values[i] = val;
+                        }
                     }
                     tableDataStore.add(values);
 

@@ -7,6 +7,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+import stroom.util.io.FileUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -24,12 +25,30 @@ import java.util.List;
 
 public class SearchDebugUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
-    private static final Path dir = Paths.get("/home/stroomdev66/work/stroom-master-temp2/stroom-app/src/test/resources/TestSearchResultCreation");
+    private static final Path dir;
+
+    static {
+        dir = resolveDir("stroom-app").resolve("src/test/resources/TestSearchResultCreation");
+    }
+
     private static final boolean writeActual = true;
     private static final boolean writeExpected = false;
     private static Writer writer;
 
     private SearchDebugUtil() {
+    }
+
+    private static Path resolveDir(final String projectDir) {
+        Path root = Paths.get(".").toAbsolutePath().normalize();
+        Path dir = root.resolve(projectDir);
+        if (!Files.isDirectory(dir)) {
+            dir = root.getParent().resolve(projectDir);
+            if (!Files.isDirectory(dir)) {
+                throw new RuntimeException("Path not found: " + FileUtil.getCanonicalPath(dir));
+            }
+        }
+
+        return dir;
     }
 
     private static String getSuffix(final boolean actual) {

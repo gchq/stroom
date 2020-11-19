@@ -60,7 +60,7 @@ public class TableDataStore {
                           final Sizes maxResults,
                           final Sizes storeSize) {
         final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
-        final CompiledDepths compiledDepths = new CompiledDepths(tableSettings.getFields(), tableSettings.showDetail());
+        final CompiledDepths compiledDepths = new CompiledDepths(compiledFields.toArray(), tableSettings.showDetail());
         final CompiledSorter compiledSorter = new CompiledSorter(tableSettings.getFields());
         this.fieldsArray = compiledFields.toArray();
         this.compiledFields = compiledFields;
@@ -121,22 +121,41 @@ public class TableDataStore {
 //    }
 
     void add(final Val[] values) {
-        final Generator[] generators = makeGenerators(values);
-
-        final int[][] fieldIndicesByDepth = compiledDepths.getFieldIndicesByDepth();
+        final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
+        final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
+        final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
         GroupKey parentKey = null;
 
-        for (int depth = 0; depth < fieldIndicesByDepth.length; depth++) {
-            final int[] fieldIndexes = fieldIndicesByDepth[depth];
+        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
+            final Generator[] generators = new Generator[fieldsArray.length];
+
+            final int groupSize = groupSizeByDepth[depth];
+            final boolean[] groupIndices = groupIndicesByDepth[depth];
+            final boolean[] valueIndices = valueIndicesByDepth[depth];
             Val[] groupValues = ValSerialiser.EMPTY_VALUES;
-            if (fieldIndexes != null) {
-                groupValues = new Val[fieldIndexes.length];
-                int index = 0;
-                for (final int fieldIndex : fieldIndexes) {
-                    final Generator generator = generators[fieldIndex];
-                    if (generator != null) {
-                        groupValues[index++] = generator.eval();
+
+            if (groupSize > 0) {
+                groupValues = new Val[groupSize];
+            }
+
+            int groupIndex = 0;
+            for (int fieldIndex = 0; fieldIndex < fieldsArray.length; fieldIndex++) {
+                final CompiledField compiledField = fieldsArray[fieldIndex];
+
+                final Expression expression = compiledField.getExpression();
+                if (expression != null) {
+                    if (groupIndices[fieldIndex] || valueIndices[fieldIndex]) {
+                        final Generator generator = expression.createGenerator();
+                        generator.set(values);
+
+                        if (groupIndices[fieldIndex]) {
+                            groupValues[groupIndex++] = generator.eval();
+                        }
+
+                        if (valueIndices[fieldIndex]) {
+                            generators[fieldIndex] = generator;
+                        }
                     }
                 }
             }
@@ -147,20 +166,6 @@ public class TableDataStore {
             final Item item = new Item(key, generators);
             addToGroupMap(item);
         }
-    }
-
-    public Generator[] makeGenerators(final Val[] values) {
-        final Generator[] generators = new Generator[fieldsArray.length];
-        for (int i = 0; i < fieldsArray.length; i++) {
-            final CompiledField compiledField = fieldsArray[i];
-            final Expression expression = compiledField.getExpression();
-            if (expression != null) {
-                final Generator generator = expression.createGenerator();
-                generator.set(values);
-                generators[i] = generator;
-            }
-        }
-        return generators;
     }
 
     public void write(final Val[] values,

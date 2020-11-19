@@ -81,8 +81,7 @@ public class SearchResponseCreator {
      */
     public static SearchResponse createErrorResponse(final List<String> errorMessages) {
         Objects.requireNonNull(errorMessages);
-        List<String> errors = new ArrayList<>();
-        errors.addAll(errorMessages);
+        final List<String> errors = new ArrayList<>(errorMessages);
         return new SearchResponse(
                 null,
                 null,
@@ -93,8 +92,7 @@ public class SearchResponseCreator {
     private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
         Objects.requireNonNull(store);
         Objects.requireNonNull(errorMessages);
-        List<String> errors = new ArrayList<>();
-        errors.addAll(errorMessages);
+        final List<String> errors = new ArrayList<>(errorMessages);
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
         }
@@ -282,29 +280,24 @@ public class SearchResponseCreator {
     private ResultCreator getResultCreator(final String componentId,
                                            final ResultRequest resultRequest,
                                            final String dateTimeLocale) {
-
-        if (cachedResultCreators.containsKey(componentId)) {
-            return cachedResultCreators.get(componentId);
-        }
-
-        ResultCreator resultCreator = null;
-        try {
-            if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
-                final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
-                resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
-            } else {
-                resultCreator = new FlatResultCreator(
-                        resultRequest,
-                        null,
-                        null,
-                        sizesProvider.getDefaultMaxResultsSizes());
+        return cachedResultCreators.computeIfAbsent(componentId, k -> {
+            ResultCreator resultCreator;
+            try {
+                if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
+                    final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
+                    resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
+                } else {
+                    resultCreator = new FlatResultCreator(
+                            resultRequest,
+                            null,
+                            null,
+                            sizesProvider.getDefaultMaxResultsSizes());
+                }
+            } catch (final RuntimeException e) {
+                throw new RuntimeException(e.getMessage());
             }
-        } catch (final RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        } finally {
-            cachedResultCreators.put(componentId, resultCreator);
-        }
 
-        return resultCreator;
+            return resultCreator;
+        });
     }
 }

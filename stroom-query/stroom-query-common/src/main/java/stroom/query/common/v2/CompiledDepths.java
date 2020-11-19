@@ -16,28 +16,27 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
-
 import java.util.Arrays;
-import java.util.List;
 
 class CompiledDepths {
     private final int maxGroupDepth;
     private final int maxDepth;
-    private final int[][] fieldIndicesByDepth;
+    private final int[] groupSizeByDepth;
+    private final boolean[][] groupIndicesByDepth;
+    private final boolean[][] valueIndicesByDepth;
 
-    CompiledDepths(final List<Field> fields, final boolean showDetail) {
+    CompiledDepths(final CompiledField[] compiledFields, final boolean showDetail) {
         int maxGroupDepth = -1;
         int maxDepth = 0;
 
-        if (fields == null) {
-            fieldIndicesByDepth = new int[0][];
+        if (compiledFields == null) {
+            groupSizeByDepth = new int[0];
+            groupIndicesByDepth = new boolean[0][];
+            valueIndicesByDepth = new boolean[0][];
         } else {
             // Get the max group depth.
-            for (final Field field : fields) {
-                if (field.getGroup() != null) {
-                    maxGroupDepth = Math.max(maxGroupDepth, field.getGroup());
-                }
+            for (final CompiledField field : compiledFields) {
+                maxGroupDepth = Math.max(maxGroupDepth, field.getGroupDepth());
             }
 
             if (maxGroupDepth >= 0) {
@@ -47,24 +46,37 @@ class CompiledDepths {
                 maxDepth++;
             }
 
-            fieldIndicesByDepth = new int[maxDepth][];
-            if (maxGroupDepth != -1) {
-                for (int i = 0; i < fields.size(); i++) {
-                    final Field field = fields.get(i);
-                    // Create compiled field.
-                    if (field.getGroup() != null) {
-                        final int groupDepth = field.getGroup();
-                        final int[] fieldIndexes = fieldIndicesByDepth[groupDepth];
-                        if (fieldIndexes == null) {
-                            fieldIndicesByDepth[groupDepth] = new int[]{i};
-                        } else {
-                            final int[] arr = new int[fieldIndexes.length + 1];
-                            System.arraycopy(fieldIndexes, 0, arr, 0, fieldIndexes.length);
-                            arr[fieldIndexes.length] = i;
-                            fieldIndicesByDepth[groupDepth] = arr;
+            groupSizeByDepth = new int[maxDepth];
+            groupIndicesByDepth = new boolean[maxDepth][];
+            valueIndicesByDepth = new boolean[maxDepth][];
+
+            for (int depth = 0; depth < maxDepth; depth++) {
+                final boolean[] valueIndices = new boolean[compiledFields.length];
+                final boolean[] groupIndices = new boolean[compiledFields.length];
+
+                for (int i = 0; i < compiledFields.length; i++) {
+                    final CompiledField field = compiledFields[i];
+
+                    // Add a flag for each field index included in this group depth.
+                    if (field.getGroupDepth() == depth) {
+                        groupIndices[i] = true;
+                        groupSizeByDepth[depth] = groupSizeByDepth[depth] + 1;
+                        valueIndices[i] = true;
+                    } else if (field.getGroupDepth() != -1 && field.getGroupDepth() < depth) {
+                        valueIndices[i] = true;
+                    } else if (depth > maxGroupDepth) {
+                        valueIndices[i] = true;
+                    } else {
+                        if (field.getExpression() != null) {
+                            if (field.getExpression().hasAggregate()) {
+                                valueIndices[i] = true;
+                            }
                         }
                     }
                 }
+
+                valueIndicesByDepth[depth] = valueIndices;
+                groupIndicesByDepth[depth] = groupIndices;
             }
         }
 
@@ -76,8 +88,16 @@ class CompiledDepths {
         return maxGroupDepth != -1;
     }
 
-    public int[][] getFieldIndicesByDepth() {
-        return fieldIndicesByDepth;
+    public int[] getGroupSizeByDepth() {
+        return groupSizeByDepth;
+    }
+
+    public boolean[][] getGroupIndicesByDepth() {
+        return groupIndicesByDepth;
+    }
+
+    public boolean[][] getValueIndicesByDepth() {
+        return valueIndicesByDepth;
     }
 
     public int getMaxDepth() {
@@ -89,7 +109,7 @@ class CompiledDepths {
         return "CompiledDepths{" +
                 "maxGroupDepth=" + maxGroupDepth +
                 ", levels=" + maxDepth +
-                ", fieldIndicesByDepth=" + Arrays.toString(fieldIndicesByDepth) +
+                ", fieldIndicesByDepth=" + Arrays.toString(groupIndicesByDepth) +
                 '}';
     }
 }
