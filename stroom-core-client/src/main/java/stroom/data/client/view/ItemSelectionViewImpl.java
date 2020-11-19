@@ -1,7 +1,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.i18n.client.NumberFormat;
@@ -71,7 +71,7 @@ public class ItemSelectionViewImpl
     }
 
     @Override
-    public void setTotalItemsCount(final RowCount<Long> totalItemsCount) {
+    public void setTotalItemsCount(final Count<Long> totalItemsCount) {
         final String countStr = getLongValueForLabel(totalItemsCount.asOptional());
         itemCountLbl.setText("of " + countStr);
         if (totalItemsCount.isExact()) {

@@ -87,6 +87,10 @@ public class Progress {
         return Optional.ofNullable(upperBound);
     }
 
+    public boolean hasKnownUpperBound() {
+        return upperBound != null;
+    }
+
     public double getRangeFromInc() {
         return rangeFromInc;
     }

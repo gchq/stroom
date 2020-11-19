@@ -67,7 +67,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
 
@@ -218,9 +218,9 @@ public class DataFetcher {
                     final String msg = "Stream has been deleted";
                     final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(
                             sourceLocation.getPartNo(), partsToReturn);
-                    final RowCount<Long> totalItemCount = new RowCount<>(0L, true);
+                    final Count<Long> totalItemCount = new Count<>(0L, true);
                     final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
-                    final RowCount<Long> totalCharCount = new RowCount<>((long) msg.length(), true);
+                    final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
 
                     writeEventLog(
                             eventId,
@@ -386,10 +386,10 @@ public class DataFetcher {
                 sourceLocation.getSegmentNo(),
                 (long) resultList.size());
 //        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
-        final RowCount<Long> totalItemCount = new RowCount<>((long) totalResults, true);
+        final Count<Long> totalItemCount = new Count<>((long) totalResults, true);
 //        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
 //                (long) resultList.size());
-        final RowCount<Long> totalCharCount = new RowCount<>(0L, true);
+        final Count<Long> totalCharCount = new Count<>(0L, true);
 
         return new FetchMarkerResult(
                 feedName,
@@ -477,7 +477,7 @@ public class DataFetcher {
         // Set the result.
         final String classification = feedProperties.getDisplayClassification(feedName);
 //        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(dataRange.getPartNo(), partsToReturn);
-        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
+        final Count<Long> streamsCount = new Count<>(partCount, true);
 //        final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
 //        final RowCount<Long> pageRowCount;
 //        final OffsetRange<Long> resultPageRange;
@@ -529,8 +529,8 @@ public class DataFetcher {
                 null,
                 sourceLocation,
                 OffsetRange.of(0L, 0L),
-                RowCount.of(0L, true),
-                RowCount.of(0L, true),
+                Count.of(0L, true),
+                Count.of(0L, true),
                 0L,
                 null,
                 error,
@@ -588,7 +588,7 @@ public class DataFetcher {
 
         // Override the page items range/total as we are dealing in segments/records
         rawResult.setItemRange(OffsetRange.of(segmentNumber, 1L));
-        rawResult.setTotalItemCount(RowCount.of(segmentInputStream.count() - 2, true));
+        rawResult.setTotalItemCount(Count.of(segmentInputStream.count() - 2, true));
         return rawResult;
     }
 
@@ -602,7 +602,7 @@ public class DataFetcher {
             final RawResult rawResult = extractDataRange(sourceLocation, bomRemovalIS, encoding);
             // Non-segmented data exists within parts so set the item info
             rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
-            rawResult.setTotalItemCount(RowCount.of(partCount, true));
+            rawResult.setTotalItemCount(Count.of(partCount, true));
             return rawResult;
         }
     }
@@ -642,7 +642,7 @@ public class DataFetcher {
         boolean foundRange = false;
         boolean reachedEndOfRange = false;
         boolean isMultiLine = false;
-        RowCount<Long> totalCharCount = RowCount.of(0L, false);
+        Count<Long> totalCharCount = Count.of(0L, false);
 
         // If no range supplied then use a default one
         final DataRange dataRange = sourceLocation.getOptDataRange()
@@ -660,21 +660,17 @@ public class DataFetcher {
         // to show the right line numbers in the editor. Thus we need
         // to advance through char by char
 
-        while (!reachedEndOfRange) {
+        while (true) {
             optDecodeChar = charReader.read();
             if (optDecodeChar.isEmpty()) {
                 // Reached the end of the stream
-                totalCharCount = RowCount.exactly(currCharOffset + 1); // zero based offset to count
+                totalCharCount = Count.exactly(currCharOffset + 1); // zero based offset to count
                 break;
             }
 
             final DecodedChar decodedChar = optDecodeChar.get();
 
             if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount)) {
-//                        if (!foundRange) {
-//
-//                            startByteOffset = locationAwareInputStream.
-//                        }
                 // On or after the first requested char
                 foundRange = true;
 
@@ -694,10 +690,9 @@ public class DataFetcher {
                     // This is the char after our requested range
                     // or requested range continued to the end of the line
                     // or we have blown the max chars limit
-                    reachedEndOfRange = true;
                     if (decodedChar.isLineBreak()) {
                         // need to ensure we count the line break in our offset position.
-                        currCharOffset++;
+                        currCharOffset += decodedChar.getCharCount();
                     }
                     break;
                 } else {
@@ -774,8 +769,6 @@ public class DataFetcher {
             strBuilderResultRange.append(strBuilderRange);
         }
 
-        final boolean isTotalPageableItemsExact = currBufferLen == -1;
-
 //        if (isMultiLine && !isTotalPageableItemsExact) {
 //            if (currChar == '\n') {
 //                strBuilderResultRange.append(TRUNCATED_TEXT);
@@ -795,7 +788,7 @@ public class DataFetcher {
 
         // set it to the most we know so far, approximately
         if (!totalCharCount.isExact()) {
-            totalCharCount = RowCount.approximately(currCharOffset + 1); // zero based offset to count
+            totalCharCount = Count.approximately(currCharOffset + 1); // zero based offset to count
         }
 //        final RowCount<Long> totalCharCount = RowCount.of(
 //                startCharOffset + charData.length(),
@@ -836,23 +829,6 @@ public class DataFetcher {
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
-
-//    private long getOffsetFromCharOffset(
-//            final long byteOffsetForFirstChar,
-//            final char[] buffer,
-//            final int offsetInBuffer,
-//            final CharsetEncoder charsetEncoder) {
-//
-//        final ByteBuffer byteBuffer
-//        long offset = byteOffsetForFirstChar;
-//        for (int i = 0; i <= offsetInBuffer; i++) {
-//            final char chr = buffer[i];
-//
-//            charsetEncoder.
-//
-//        }
-//
-//    }
 
     /**
      * @return True if we are after or on the first char of our range.
@@ -1057,8 +1033,8 @@ public class DataFetcher {
         private final String rawData;
 
         private OffsetRange<Long> itemRange; // part/segment/marker
-        private RowCount<Long> totalItemCount; // part/segment/marker
-        private RowCount<Long> totalCharacterCount; // Total chars in part/segment
+        private Count<Long> totalItemCount; // part/segment/marker
+        private Count<Long> totalCharacterCount; // Total chars in part/segment
         private long totalBytes;
 
         public RawResult(final SourceLocation sourceLocation,
@@ -1083,19 +1059,19 @@ public class DataFetcher {
             this.itemRange = itemRange;
         }
 
-        public RowCount<Long> getTotalItemCount() {
+        public Count<Long> getTotalItemCount() {
             return totalItemCount;
         }
 
-        public void setTotalItemCount(final RowCount<Long> totalItemCount) {
+        public void setTotalItemCount(final Count<Long> totalItemCount) {
             this.totalItemCount = totalItemCount;
         }
 
-        public RowCount<Long> getTotalCharacterCount() {
+        public Count<Long> getTotalCharacterCount() {
             return totalCharacterCount;
         }
 
-        public void setTotalCharacterCount(final RowCount<Long> totalCharacterCount) {
+        public void setTotalCharacterCount(final Count<Long> totalCharacterCount) {
             this.totalCharacterCount = totalCharacterCount;
         }
 

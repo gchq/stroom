@@ -11,10 +11,12 @@ import java.util.function.Consumer;
 
 public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
 
-    private static final String TITLE_PREFIX = "Visible section of the source data";
+    private static final String TITLE_PREFIX = "Section of the source data visible in the editor";
     private static final double UNCERTAINTY_FACTOR_MAX = 3;
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
+    private static final String BAR_COLOUR_KNOWN_BOUNDED = "#1e88e5"; // Stroom blue
+    private static final String BAR_COLOUR_UNKNOWN_BOUND = "#FFCA28"; // Material Design Amber 300
 
     private Progress progress;
     private double computedUpperBound = 0;
@@ -70,10 +72,10 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
     }
 
     private double getTotalSize() {
-        return getUpperBound() - progress.getLowerBound();
+        return getComputedUpperBound() - progress.getLowerBound();
     }
 
-    private double getUpperBound() {
+    private double getComputedUpperBound() {
         // If there is no upperbound then make one that is a bit bigger than what is known
         if (progress.getUpperBound().isPresent()) {
             computedUpperBound = progress.getUpperBound().get();
@@ -99,7 +101,7 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
     private double getPositionAsPercentage(final double position) {
         if (position == progress.getLowerBound()) {
             return 0;
-        } else if (position == getUpperBound()) {
+        } else if (position == getComputedUpperBound()) {
             return 100;
         } else {
             return (position - progress.getLowerBound()) / getTotalSize() * 100;
@@ -127,17 +129,11 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         final String barColour;
         final String title;
         // TODO set colour via a style name
-        if (progress.getUpperBound().isPresent()) {
-            // blue
-            barColour = "#1e88e5";
+        if (progress.hasKnownUpperBound()) {
+            barColour = BAR_COLOUR_KNOWN_BOUNDED;
             title = TITLE_PREFIX;
-
         } else {
-            // orange, consistent with the orange svg icons, e.g. favorites.svg
-//            barColour = "#ff8f00"; // Material Design Amber 800
-//            barColour = "#FFD54F"; // Material Design Amber 300
-            barColour = "#FFCA28"; // Material Design Amber 301
-//            barColour = "#FDD835"; // Material Design Yellow 600
+            barColour = BAR_COLOUR_UNKNOWN_BOUND;
             title = TITLE_PREFIX + " (total size unknown)";
         }
         getView().setProgressBarColour(barColour);

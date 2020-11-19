@@ -38,7 +38,7 @@ public interface HasItems {
      */
     void setItemNo(final long itemNo);
 
-    RowCount<Long> getTotalItemsCount();
+    Count<Long> getTotalItemsCount();
 
     boolean areNavigationControlsVisible();
 

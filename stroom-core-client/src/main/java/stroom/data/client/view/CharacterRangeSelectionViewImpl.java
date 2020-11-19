@@ -2,7 +2,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.DataRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -77,7 +77,7 @@ public class CharacterRangeSelectionViewImpl
     @UiField
     ValueSpinner charCountSpinner2;
 
-    private RowCount<Long> totalCharCount = RowCount.of(0L, false);
+    private Count<Long> totalCharCount = Count.of(0L, false);
 
     @Inject
     public CharacterRangeSelectionViewImpl(final EventBus eventBus,
@@ -214,7 +214,7 @@ public class CharacterRangeSelectionViewImpl
         }
     }
 
-    private String getCountText(final RowCount<Long> count) {
+    private String getCountText(final Count<Long> count) {
         return "of " + (count.isExact()
                 ? count.getCount()
                 : "?");
@@ -227,7 +227,7 @@ public class CharacterRangeSelectionViewImpl
     }
 
     @Override
-    public void setTotalCharsCount(final RowCount<Long> totalCharCount) {
+    public void setTotalCharsCount(final Count<Long> totalCharCount) {
         this.totalCharCount = totalCharCount;
         if (totalCharCount.isExact() && totalCharCount.getCount() != null) {
             charOffsetFromSpinner1.setMax(totalCharCount.getCount());

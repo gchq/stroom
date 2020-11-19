@@ -42,10 +42,9 @@ import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasItems;
-import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
@@ -157,7 +156,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private String data;
     private AceEditorMode editorMode = AceEditorMode.XML;
     private List<Marker> markers;
-    private int startLineNo;
 
     private List<TextRange> highlights;
     private Long highlightId;
@@ -620,8 +618,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         if (result instanceof FetchMarkerResult) {
             // Error: a of b
-            final RowCount<Long> totalPageCount = RowCount.of(result.getTotalItemCount().getCount()
-                    / SourceLocation.MAX_ERRORS_PER_PAGE + 1, true);
+            final Count<Long> totalPageCount = Count.of(
+                    result.getTotalItemCount().getCount() / SourceLocation.MAX_ERRORS_PER_PAGE + 1,
+                    true);
 
             navigatorData.updateStateForOneItemPerPage(
                     totalPageCount,
@@ -634,7 +633,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
                 // Record: a of b   Characters: x to y of z
-
                 navigatorData.updateStateForOneItemPerPage(
                         result.getTotalItemCount(),
                         this::setCurrentSegmentNo,
@@ -644,7 +642,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 // non-segmented
                 //    Part: a of b   Characters: x to y of z
                 // OR                Characters: x to y of z
-
                 navigatorData.updateStateForOneItemPerPage(
                         result.getTotalItemCount(),
                         this::setCurrentPartNo,
@@ -687,7 +684,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         data = "";
         markers = null;
-        startLineNo = 1;
 
         if (result != null) {
             currentChildDataType = Optional.ofNullable(result.getSourceLocation())
@@ -718,13 +714,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         // probably one record per line so for csv type data easier to read non-wrapped
                         textPresenter.setWrapLines(false);
                     }
+                    textPresenter.setWrapLines(lineCount == 1);
                 }
             }
-
-            startLineNo = result.getSourceLocation().getOptDataRange()
-                    .flatMap(DataRange::getOptLocationFrom)
-                    .map(Location::getLineNo)
-                    .orElse(1);
 
             // Let the classification handler know that the classification has
             // changed.
@@ -1021,7 +1013,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         @Override
-        public RowCount<Long> getTotalItemsCount() {
+        public Count<Long> getTotalItemsCount() {
             return null;
         }
 
@@ -1060,14 +1052,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private class NavigatorData implements HasItems {
 
-        private RowCount<Long> totalItemCount = RowCount.of(0L, false);
+        private Count<Long> totalItemCount = Count.of(0L, false);
         private Consumer<Long> itemNoFromConsumer = null;
         private Supplier<OffsetRange<Long>> itemRangeSupplier = null;
 //        private long previousItemNo = -1;
         private String name = "";
         private int maxItemsPerPage = 1;
 
-        private void updateStateForOneItemPerPage(final RowCount<Long> totalItemCount,
+        private void updateStateForOneItemPerPage(final Count<Long> totalItemCount,
                                                   final Consumer<Long> itemNoConsumer,
                                                   final Supplier<Long> itemOffsetSupplier,
                                                   final String name) {
@@ -1078,7 +1070,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.maxItemsPerPage = 1;
         }
 
-        private void updateStateForMultiItemsPerPage(final RowCount<Long> totalItemCount,
+        private void updateStateForMultiItemsPerPage(final Count<Long> totalItemCount,
                                                      final Consumer<Long> itemNoConsumer,
                                                      final Supplier<OffsetRange<Long>> itemRangeSupplier,
                                                      final String name,
@@ -1090,7 +1082,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.maxItemsPerPage = maxItemsPerPage;
         }
 
-        private void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+        private void updateSegmentsCount(final Count<Long> segmentsCount) {
             this.totalItemCount = segmentsCount;
         }
 
@@ -1098,7 +1090,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.name = name;
         }
 
-        private void setTotalItemCount(final RowCount<Long> totalItemCount) {
+        private void setTotalItemCount(final Count<Long> totalItemCount) {
             this.totalItemCount = totalItemCount;
         }
 
@@ -1127,7 +1119,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         @Override
-        public RowCount<Long> getTotalItemsCount() {
+        public Count<Long> getTotalItemsCount() {
             return totalItemCount;
         }
 

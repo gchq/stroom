@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,8 +45,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
 //                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
 //                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                              @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
-                             @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
-                             @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
+                             @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+                             @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
 //        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);

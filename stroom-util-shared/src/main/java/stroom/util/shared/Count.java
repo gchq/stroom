@@ -25,31 +25,35 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * A count of something where the count may not be known with certainty.
+ */
 @JsonPropertyOrder({"count", "exact"})
 @JsonInclude(Include.NON_NULL)
-public class RowCount<T extends Number> {
+public class Count<T extends Number> {
+
     @JsonProperty
     private final T count;
     @JsonProperty
     private final boolean exact;
 
     @JsonCreator
-    public RowCount(@JsonProperty("count") final T count,
-                    @JsonProperty("exact") final boolean exact) {
+    public Count(@JsonProperty("count") final T count,
+                 @JsonProperty("exact") final boolean exact) {
         this.count = count;
         this.exact = exact;
     }
 
-    public static <T extends Number> RowCount<T> of(final T count, final boolean exact) {
-        return new RowCount<>(count, exact);
+    public static <T extends Number> Count<T> of(final T count, final boolean exact) {
+        return new Count<>(count, exact);
     }
 
-    public static <T extends Number> RowCount<T> exactly(final T count) {
-        return new RowCount<>(count, true);
+    public static <T extends Number> Count<T> exactly(final T count) {
+        return new Count<>(count, true);
     }
 
-    public static <T extends Number> RowCount<T> approximately(final T count) {
-        return new RowCount<>(count, false);
+    public static <T extends Number> Count<T> approximately(final T count) {
+        return new Count<>(count, false);
     }
 
     public T getCount() {
@@ -76,9 +80,9 @@ public class RowCount<T extends Number> {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final RowCount<?> rowCount = (RowCount<?>) o;
-        return exact == rowCount.exact &&
-                Objects.equals(count, rowCount.count);
+        final Count<?> count = (Count<?>) o;
+        return exact == count.exact &&
+                Objects.equals(this.count, count.count);
     }
 
     @Override

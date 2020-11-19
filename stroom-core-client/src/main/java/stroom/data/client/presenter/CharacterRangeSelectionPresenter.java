@@ -2,7 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.DataRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -31,7 +31,7 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
         this.dataRange = dataRange;
     }
 
-    public void setTotalCharsCount(final RowCount<Long> totalCharsCount) {
+    public void setTotalCharsCount(final Count<Long> totalCharsCount) {
         getView().setTotalCharsCount(totalCharsCount);
     }
 
@@ -70,6 +70,6 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
 
         void setDataRange(final DataRange dataRange);
 
-        void setTotalCharsCount(final RowCount<Long> totalCharCount);
+        void setTotalCharsCount(final Count<Long> totalCharCount);
     }
 }

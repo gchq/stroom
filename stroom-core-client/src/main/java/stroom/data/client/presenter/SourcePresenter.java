@@ -24,7 +24,7 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.util.shared.TextRange;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
@@ -67,7 +67,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
-    private RowCount<Long> exactCharCount = null;
+    private Count<Long> exactCharCount = null;
 
 
     @Inject
@@ -572,8 +572,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
 
     private class DataNavigatorData implements HasCharacterData {
-        private RowCount<Long> partsCount = RowCount.of(0L, false);
-        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+        private Count<Long> partsCount = Count.of(0L, false);
+        private Count<Long> segmentsCount = Count.of(0L, false);
 
         @Override
         public boolean areNavigationControlsVisible() {
@@ -611,7 +611,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             } else {
                 return Optional.ofNullable(lastResult)
                         .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
-                        .flatMap(RowCount::asOptional);
+                        .flatMap(Count::asOptional);
             }
         }
 

@@ -2,7 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.util.shared.HasItems;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -74,6 +74,6 @@ public class ItemSelectionPresenter extends MyPresenterWidget<ItemSelectionView>
          */
         void setItemNo(final long itemNo);
 
-        void setTotalItemsCount(final RowCount<Long> totalItemsCount);
+        void setTotalItemsCount(final Count<Long> totalItemsCount);
     }
 }

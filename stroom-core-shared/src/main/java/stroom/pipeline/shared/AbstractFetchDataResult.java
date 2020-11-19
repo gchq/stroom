@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
+import stroom.util.shared.Count;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -51,9 +51,9 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final OffsetRange<Long> itemRange; // part/segment/marker
     @JsonProperty
-    private final RowCount<Long> totalItemCount; // part/segment/marker
+    private final Count<Long> totalItemCount; // part/segment/marker
     @JsonProperty
-    private final RowCount<Long> totalCharacterCount; // Total chars in part/segment
+    private final Count<Long> totalCharacterCount; // Total chars in part/segment
     @JsonProperty
     private final Set<String> availableChildStreamTypes;
 
@@ -63,8 +63,8 @@ public abstract class AbstractFetchDataResult {
                                    @JsonProperty("classification") final String classification,
                                    @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
                                    @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
-                                   @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
-                                   @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
+                                   @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+                                   @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                                    @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
@@ -96,11 +96,11 @@ public abstract class AbstractFetchDataResult {
         return itemRange;
     }
 
-    public RowCount<Long> getTotalItemCount() {
+    public Count<Long> getTotalItemCount() {
         return totalItemCount;
     }
 
-    public RowCount<Long> getTotalCharacterCount() {
+    public Count<Long> getTotalCharacterCount() {
         return totalCharacterCount;
     }
 
