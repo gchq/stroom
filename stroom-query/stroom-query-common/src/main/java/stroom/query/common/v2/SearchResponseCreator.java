@@ -16,8 +16,6 @@
 
 package stroom.query.common.v2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -28,6 +26,9 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.util.LambdaLogger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -138,7 +139,14 @@ public class SearchResponseCreator {
                         (results == null ? "null" : results.size()), complete, store.isComplete());
             }
 
-            return new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+            final SearchResponse searchResponse = new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+
+            if (complete) {
+                SearchDebugUtil.writeRequest(searchRequest, false);
+                SearchDebugUtil.writeResponse(searchResponse, false);
+            }
+
+            return searchResponse;
 
         } catch (final RuntimeException e) {
             LOGGER.error("Error getting search results for query {}", searchRequest.getKey().toString(), e);

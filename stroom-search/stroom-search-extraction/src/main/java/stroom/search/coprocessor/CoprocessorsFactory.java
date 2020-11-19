@@ -2,7 +2,6 @@ package stroom.search.coprocessor;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.query.api.v2.ExpressionParamUtil;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -21,7 +20,7 @@ public class CoprocessorsFactory {
     private final CoprocessorFactory coprocessorFactory;
 
     @Inject
-    CoprocessorsFactory(final CoprocessorFactory coprocessorFactory) {
+    public CoprocessorsFactory(final CoprocessorFactory coprocessorFactory) {
         this.coprocessorFactory = coprocessorFactory;
     }
 

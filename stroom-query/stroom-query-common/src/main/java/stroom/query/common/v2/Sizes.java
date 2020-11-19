@@ -16,9 +16,11 @@
 
 package stroom.query.common.v2;
 
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * Class for describing the maximum number of items to hold in a store at each level of grouping.
@@ -74,6 +76,20 @@ public class Sizes {
         }
 
         return new Sizes(sizes, defaultSize);
+    }
+
+    public static Sizes parse(String value) throws ParseException {
+        if (value != null) {
+            try {
+                return Sizes.create(Arrays.stream(value.split(","))
+                        .map(String::trim)
+                        .map(Integer::valueOf)
+                        .collect(Collectors.toList()));
+            } catch (RuntimeException e) {
+                throw new ParseException(e.getMessage(), 0);
+            }
+        }
+        return Sizes.create(Integer.MAX_VALUE);
     }
 
     public static Sizes max(final Sizes s1, final Sizes s2) {

@@ -65,16 +65,16 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
 
-    ClusterSearchResultCollector(final Executor executor,
-                                 final TaskContextFactory taskContextFactory,
-                                 final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                 final AsyncSearchTask task,
-                                 final String nodeName,
-                                 final Set<String> highlights,
-                                 final ClusterResultCollectorCache clusterResultCollectorCache,
-                                 final ResultHandler resultHandler,
-                                 final Sizes defaultMaxResultsSizes,
-                                 final Sizes storeSize) {
+    public ClusterSearchResultCollector(final Executor executor,
+                                        final TaskContextFactory taskContextFactory,
+                                        final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
+                                        final AsyncSearchTask task,
+                                        final String nodeName,
+                                        final Set<String> highlights,
+                                        final ClusterResultCollectorCache clusterResultCollectorCache,
+                                        final ResultHandler resultHandler,
+                                        final Sizes defaultMaxResultsSizes,
+                                        final Sizes storeSize) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
@@ -168,7 +168,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 success = resultHandler.handle(payloadMap);
             }
 
-            if (errors != null) {
+            if (errors != null && errors.size() > 0) {
                 getErrorSet(nodeName).addAll(errors);
             }
         } catch (final RuntimeException e) {

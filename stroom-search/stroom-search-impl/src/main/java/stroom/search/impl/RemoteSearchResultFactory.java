@@ -5,6 +5,7 @@ import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.Payload;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.resultsender.NodeResult;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
@@ -20,6 +21,7 @@ class RemoteSearchResultFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchResultFactory.class);
 
     private final TaskManager taskManager;
+    private final SecurityContext securityContext;
 
     private final CompletionState completionState = new CompletionState();
     private volatile Coprocessors coprocessors;
@@ -28,8 +30,10 @@ class RemoteSearchResultFactory {
     private volatile boolean destroy;
     private volatile boolean started;
 
-    RemoteSearchResultFactory(final TaskManager taskManager) {
+    RemoteSearchResultFactory(final TaskManager taskManager,
+                              final SecurityContext securityContext) {
         this.taskManager = taskManager;
+        this.securityContext = securityContext;
     }
 
     public NodeResult create() {
@@ -75,10 +79,12 @@ class RemoteSearchResultFactory {
     }
 
     public synchronized void destroy() {
-        destroy = true;
-        if (taskId != null) {
-            taskManager.terminate(taskId);
-        }
+        securityContext.asProcessingUser(() -> {
+            destroy = true;
+            if (taskId != null) {
+                taskManager.terminate(taskId);
+            }
+        });
     }
 
     public void setCoprocessors(final Coprocessors coprocessors) {
@@ -92,7 +98,7 @@ class RemoteSearchResultFactory {
     public synchronized void setTaskId(final TaskId taskId) {
         this.taskId = taskId;
         if (destroy) {
-            taskManager.terminate(taskId);
+            destroy();
         }
     }
 

@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
 
+
+## [v7.0-beta.70] - 2020-11-16
+
+* Issue **#1947** : Fixed NPE thrown when trying to unassign processing tasks by setting the assigned node to null.
+
+* Issue **#1940** : Old searches are now terminated by the processing user.
+
+* Issue **#1932** : Physical stream delete will no longer fail if a file or directory it wants to delete cannot be found, i.e. has been deleted by another external process.
+
 * Fix log output counts for reference data.
 
 * Add REST endpoint for purging reference data.
@@ -2836,10 +2845,11 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.69...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.70...HEAD
+[v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
 [v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
 [v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
-[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
+[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
 [v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64

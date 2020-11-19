@@ -1,0 +1,375 @@
+{
+  "key" : {
+    "uuid" : "e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322"
+  },
+  "query" : {
+    "dataSource" : {
+      "type" : "Index",
+      "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+      "name" : "Example index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "EventTime",
+        "condition" : "BETWEEN",
+        "value" : "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z"
+      } ]
+    },
+    "params" : [ {
+      "key" : "currentUser()",
+      "value" : "admin"
+    } ]
+  },
+  "resultRequests" : [ {
+    "componentId" : "table-BKJT6",
+    "mappings" : [ {
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-BKJT6|RACJI",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-BKJT6|89WRT",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}"
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}"
+      } ],
+      "extractValues" : true,
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 100
+    },
+    "resultStyle" : "TABLE",
+    "fetch" : "CHANGES"
+  }, {
+    "componentId" : "vis-QYG7H",
+    "mappings" : [ {
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-BKJT6|RACJI",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-BKJT6|89WRT",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}"
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}"
+      } ],
+      "extractValues" : true,
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    }, {
+      "fields" : [ {
+        "sort" : {
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        }
+      }, {
+        "expression" : "${Count}",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      } ],
+      "maxResults" : [ 20, 20 ],
+      "showDetail" : true
+    } ],
+    "resultStyle" : "FLAT",
+    "fetch" : "CHANGES"
+  }, {
+    "componentId" : "table-78LF4",
+    "mappings" : [ {
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-78LF4|7JU9H",
+        "name" : "EventTime",
+        "expression" : "roundMinute(${EventTime})",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|T5WYU",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|MT5IM",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}"
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}"
+      } ],
+      "extractValues" : true,
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 100
+    },
+    "resultStyle" : "TABLE",
+    "fetch" : "CHANGES"
+  }, {
+    "componentId" : "vis-L1AL1",
+    "mappings" : [ {
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-78LF4|7JU9H",
+        "name" : "EventTime",
+        "expression" : "roundMinute(${EventTime})",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|T5WYU",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|MT5IM",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}"
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}"
+      } ],
+      "extractValues" : true,
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    }, {
+      "fields" : [ {
+        "expression" : "${EventTime}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0
+      }, {
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1
+      }, {
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 2,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        }
+      }, {
+        "expression" : "${Count}",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      } ],
+      "maxResults" : [ 20, 10, 500 ],
+      "showDetail" : true
+    } ],
+    "resultStyle" : "FLAT",
+    "fetch" : "CHANGES"
+  }, {
+    "componentId" : "vis-SPSCW",
+    "mappings" : [ {
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-78LF4|7JU9H",
+        "name" : "EventTime",
+        "expression" : "roundMinute(${EventTime})",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|T5WYU",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 1,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "id" : "table-78LF4|MT5IM",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}"
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}"
+      } ],
+      "extractValues" : true,
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ]
+    }, {
+      "fields" : [ {
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0
+      }, {
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1
+      }, {
+        "expression" : "${EventTime}",
+        "sort" : {
+          "order" : 2,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        }
+      }, {
+        "expression" : "${Count}",
+        "format" : {
+          "type" : "NUMBER"
+        }
+      } ],
+      "maxResults" : [ 20, 100, 1000 ],
+      "showDetail" : true
+    } ],
+    "resultStyle" : "FLAT",
+    "fetch" : "CHANGES"
+  } ],
+  "dateTimeLocale" : "Europe/London",
+  "incremental" : true
+}

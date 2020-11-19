@@ -71,7 +71,9 @@ public class RemoteSearchManager {
         return securityContext.asUserResult(userIdentity, () -> {
             final TaskContext parentContext = new TaskContextImpl(sourceTaskId, "Cluster Search Task", userIdentity);
 
-            final RemoteSearchResultFactory remoteSearchResultFactory = new RemoteSearchResultFactory(taskManager);
+            final RemoteSearchResultFactory remoteSearchResultFactory = new RemoteSearchResultFactory(
+                    taskManager,
+                    securityContext);
             remoteSearchResults.put(clusterSearchTask.getKey(), remoteSearchResultFactory);
 
             final Runnable runnable = taskContextFactory.context(parentContext, clusterSearchTask.getTaskName(), taskContext -> {
