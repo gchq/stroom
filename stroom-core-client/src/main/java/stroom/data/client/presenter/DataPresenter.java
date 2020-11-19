@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.core.client.ContentManager;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.shared.DataInfoSection;
@@ -127,21 +126,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
     private final ProgressPresenter progressPresenter;
-//    private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
-    private final ContentManager contentManager;
     private final SourceTabPlugin sourceTabPlugin;
     private final UiConfigCache uiConfigCache;
 
     private final RestFactory restFactory;
-//    private final PagerRows dataPagerRows;
-//    private final PagerRows segmentPagerRows;
-    //    private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
-
-//    private final Map<String, DataRange> dataTypeRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
-
-//    DataNavigatorData dataNavigatorData = new DataNavigatorData();
 
     final NoNavigatorData noNavigatorData = new NoNavigatorData();
     final NavigatorData navigatorData = new NavigatorData();
@@ -156,19 +146,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private String currentChildDataType;
     private long currentPartNo;
     private long currentSegmentNo;
-    private long currentErrorNo;
 
     private DataType curDataType;
 
     private SourceLocation currentSourceLocation;
-    // The data range for the data preview tab initially requested by the caller
-    private DataRange requestedDataDataRange;
-
-//    private OffsetRange<Long> currentDataRange = new OffsetRange<>(0L, 1L);
-//    private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
-
-    // The range to display on the current page
-//    private DataRange currentDataRange = DEFAULT_DATA_RANGE;
 
     private AbstractFetchDataResult lastResult;
     private List<FetchDataRequest> actionQueue;
@@ -202,8 +183,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final TextPresenter textPresenter,
                          final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
-//                         final SourceLocationPresenter sourceLocationPresenter,
-                         final ContentManager contentManager,
                          final SourceTabPlugin sourceTabPlugin,
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
@@ -215,12 +194,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.progressPresenter = progressPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
-//        this.sourceLocationPresenter = sourceLocationPresenter;
-        this.contentManager = contentManager;
         this.sourceTabPlugin = sourceTabPlugin;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
-        this.currentErrorNo = currentErrorNo;
 
         markerListPresenter.getWidget()
                 .getElement()
@@ -243,20 +219,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setWrapLines(true);
 
-//        dataPagerRows = new PageRows();
-//        segmentPagerRows = new SegmentRows();
-//        segmentPagerRows = new SimplePagerRows(1);
-//        view.setDataPagerRows(dataPagerRows);
-//        view.setSegmentPagerRows(segmentPagerRows);
-
-        // Don't want to see x to y of z, want x of y for the part pager
-//        view.setSegmentPagerToVisibleState(false);
-//        view.setDataPagerTitle(CHARACTERS_PAGER_TITLE);
-
-//        dataNavigatorData = new DataNavigatorData();
-
-//        view.setNavigatorData(dataNavigatorData);
-
         addTab(infoTab);
         addTab(errorTab);
         addTab(dataTab);
@@ -264,8 +226,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         addTab(contextTab);
 
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
-
-//        view.setNavigatorClickHandler(this::showSourceLocationPopup);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         view.setNavigatorView(itemNavigatorPresenter.getView());
@@ -335,7 +295,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     viewSourceBtn.setVisible(false);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
-//                    getView().refreshNavigator();
                 } else {
                     viewSourceBtn.setVisible(true);
                     if (META.equals(tab.getLabel())) {
@@ -407,14 +366,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             final FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
 
             progressPresenter.setVisible(true);
-//            if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-//                if (fetchDataResult.getTotalItemCount().isExact()) {
-//                    progressPresenter.setProgress(Progress.boundedRange(
-//                            fetchDataResult.getTotalItemCount().getCount(),
-//                            fetchDataResult.getItemRange(),
-//                            dataRange.getByteOffsetTo()));
-//                }
-//            } else {
+
             // Don't want to confuse the user so the prog bar need to be based on the char/byte content,
             // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
             // data preview and thus will always see 100%
@@ -439,7 +391,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             }
-//            }
         } else {
             progressPresenter.setVisible(false);
         }
@@ -467,16 +418,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void fetchDataForCurrentStreamNo(final String childDataType) {
-//        currentDataRange = new OffsetRange<>(currentDataRange.getOffset(), 1L);
-
-//        dataTypeRangeMap.put(currentChildDataType, currentDataRange);
-//        currentDataRange = dataTypeRangeMap.get(childDataType);
-//
-//        if (currentDataRange == null) {
-////            currentPageRange = new OffsetRange<>(0L, 100L);
-//            currentDataRange = DEFAULT_DATA_RANGE;
-//        }
-
         this.currentChildDataType = childDataType;
         update(true);
     }
@@ -497,67 +438,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.highlightPartNo = sourceLocation.getPartNo();
         this.highlightChildDataType = sourceLocation.getChildType();
 
-        // Hold onto the range of data requested so when we switch tabs
-        // back we can show the right range of data.
-        this.requestedDataDataRange = sourceLocation.getDataRange();
-
-        // Make sure the right page is shown when the source is displayed.
-//        final long oldPartNo = currentDataRange.getOffset() + 1;
-        final long oldPartNo = currentPartNo;
-
-        long newPartNo = sourceLocation.getPartNo();
-
-        final long oldSegmentNo = currentSegmentNo;
-
-//        long recordLength = currentPageRange.getLength();
-
-        // If we have a source highlight then use it
-//        int lineNo = 0;
-//        if (highlights != null && highlights.size() > 0) {
-//            final Highlight highlight = highlights.get(0);
-//            lineNo = highlight.getFrom().getLineNo();
-//        }
-//        if (sourceLocation.getOptDataRange().isPresent()) {
-//            currentDataRange = sourceLocation.getDataRange();
-//        }
-
-//        long newRecordOffset;
-//        if (sourceLocation.getSegmentNo() != -1) {
-        // Segmented data
-//            recordLength = 1L;
-//            newRecordOffset = sourceLocation.getSegmentNo();
-//        } else {
-        // Non segmented data, aka raw
-//            final long page = lineNo / recordLength;
-//            newRecordOffset = oldSegmentNo % recordLength;
-//            final long tmp = page * recordLength;
-//            if (tmp + newRecordOffset < lineNo) {
-//                // We can show this page.
-//                newRecordOffset = tmp + newRecordOffset;
-//            } else {
-//                // We need to show the page before.
-//                newRecordOffset = tmp - recordLength + newRecordOffset;
-//            }
-//        }
-
         // Update the stream source.
         if (!Objects.equals(currentSourceLocation, sourceLocation)) {
             // New data location so re-fetch
-//        }
-//        if (!EqualsUtil.isEquals(currentMetaId, highlightId)
-//                || !EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)
-//                || oldPartNo != newPartNo
-//                || oldSegmentNo != newRecordOffset) {
-//            currentDataRange = new OffsetRange<>(newPartNo - 1, 1L);
             currentPartNo = sourceLocation.getPartNo();
             currentSegmentNo = sourceLocation.getOptSegmentNo()
                     .orElse(-1);
-//            currentDataRange = sourceLocation.getDataRange();
-
             currentSourceLocation = sourceLocation;
             currentMetaId = sourceLocation.getId();
             currentChildDataType = sourceLocation.getChildType();
-//            dataTypeRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
 
             update(false);
@@ -567,25 +456,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-    public void fetchData(final boolean fireEvents, final Long metaId, final String childDataType) {
-        currentMetaId = metaId;
-        currentChildDataType = childDataType;
-        currentPartNo = 0;
-        currentSegmentNo = 0;
-//        currentDataRange = DEFAULT_DATA_RANGE;
-//        dataTypeRangeMap.clear();
-        markerListPresenter.resetExpandedSeverities();
-        update(fireEvents);
-    }
-
     public void fetchData(final Meta meta) {
         this.currentMetaId = meta.getId();
         this.currentStreamType = meta.getTypeName();
         currentPartNo = 0;
         currentSegmentNo = 0;
-//        currentDataRange = new OffsetRange<>(0L, 1L);
-//        currentDataRange = DEFAULT_DATA_RANGE;
-//        dataTypeRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(true);
     }
@@ -614,42 +489,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         })
                         .onFailure(caught ->
                                 itemNavigatorPresenter.setRefreshing(false))
-//                                getView().setRefreshing(false))
                         .call(VIEW_DATA_RESOURCE)
                         .getChildStreamTypes(currentMetaId, currentPartNo);
             }
-
-
-//            if (INFO.equals(lastTabName)) {
-//                // Were on Info tab last time and that will always be available so just update the
-//                // meta info
-//                if (!isSameStreamAndPartAsLastTime()) {
-//
-//                } else {
-//
-//                }
-//                refreshMetaInfoPresenterContent(currentMetaId);
-//            } else {
-//                if (isSameStreamAndPartAsLastTime()) {
-//                    // Same stream/part so we know this type is available
-//                    updateFromResource(fireEvents);
-//                } else {
-//                    // Different stream/part so we need to check which child stream types are available
-//                    // and pick an appropriate one.
-//
-//                    final Rest<Set<String>> rest = restFactory.create();
-//                    rest
-//                            .onSuccess(availableChildStreamTypes -> {
-//                                setEffectiveChildStreamType(availableChildStreamTypes);
-//                                updateFromResource(fireEvents);
-//                                updateTabs(currentStreamType, availableChildStreamTypes);
-//                            })
-//                            .onFailure(caught ->
-//                                    getView().setRefreshing(false))
-//                            .call(VIEW_DATA_RESOURCE)
-//                            .getChildStreamTypes(currentMetaId, currentPartNo);
-//                }
-//            }
         }
     }
 
@@ -669,10 +511,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void updateFromResource(final boolean fireEvents) {
         final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
-
-//            long charOffset = currentDataRange != null && currentDataRange.getOptCharOffsetFrom().isPresent()
-//                    ? currentDataRange.getCharOffsetFrom()
-//                    : 0;
 
         doWithConfig(sourceConfig -> {
             final DataRange dataRange;
@@ -703,10 +541,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 }
             });
 
-//            request.setStreamId(currentMetaId);
-//            request.setStreamRange(currentDataRange);
-//            request.setPageRange(currentPageRange);
-//            request.setChildStreamType(currentChildDataType);
             request.setMarkerMode(errorMarkerMode);
             request.setExpandedSeverities(expandedSeverities);
             request.setFireEvents(fireEvents);
@@ -738,7 +572,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
         if (currentMetaId != null) {
             itemNavigatorPresenter.setRefreshing(true);
-//            getView().setRefreshing(true);
 
             // Create the action queue and delayed refresh timer if we haven't
             // already.
@@ -784,105 +617,41 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setPagers(final AbstractFetchDataResult result) {
-        long commonPagerOffset = 0;
-        long commonPagerLength = 0;
-        long commonPagerCount = 0;
-        boolean commonPagerCountExact = true;
 
-        long dataPagerOffset = 0;
-        long dataPagerLength = 0;
-        long dataPagerCount = 0;
-        boolean dataPagerCountExact = true;
+        if (result instanceof FetchMarkerResult) {
+            // Error: a of b
+            final RowCount<Long> totalPageCount = RowCount.of(result.getTotalItemCount().getCount()
+                    / SourceLocation.MAX_ERRORS_PER_PAGE + 1, true);
 
-        if (result != null) {
-            commonPagerOffset = result.getItemRange().getOffset();
-            commonPagerLength = result.getItemRange().getLength();
-            commonPagerCount = result.getTotalItemCount().getCount();
-            commonPagerCountExact = result.getTotalItemCount().isExact();
+            navigatorData.updateStateForOneItemPerPage(
+                    totalPageCount,
+                    this::setCurrentErrorsPageOffset,
+                    this::getCurrentErrorsPageOffset,
+                    PAGE);
+        } else if (result instanceof FetchDataResult) {
 
+            FetchDataResult fetchDataResult = (FetchDataResult) result;
 
-            if (result instanceof FetchMarkerResult) {
-                // Error: a of b
-//                getView().showSegmentPager(true);
-//                getView().showDataPager(false);
-
-//                getView().setSegmentPagerTitle("Error");
-//                segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
-//                getView().setSegmentPagerToVisibleState(true);
-
-//                dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
-
-//                navigatorData.updateStateForMultiItemsPerPage(
-//                        result.getTotalItemCount(),
-//                        this::setCurrentSegmentNo,
-//                        result::getItemRange,
-//                        ERROR,
-//                        SourceLocation.MAX_ERRORS_PER_PAGE);
-
-                final RowCount<Long> totalPageCount = RowCount.of(result.getTotalItemCount().getCount()
-                        / SourceLocation.MAX_ERRORS_PER_PAGE + 1, true);
+            if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
+                // Record: a of b   Characters: x to y of z
 
                 navigatorData.updateStateForOneItemPerPage(
-                        totalPageCount,
-                        this::setCurrentErrorsPageOffset,
-                        this::getCurrentErrorsPageOffset,
-                        PAGE);
+                        result.getTotalItemCount(),
+                        this::setCurrentSegmentNo,
+                        this::getCurrentSegmentNo,
+                        RECORD);
+            } else {
+                // non-segmented
+                //    Part: a of b   Characters: x to y of z
+                // OR                Characters: x to y of z
 
-//                commonPagerOffset = result.getPageRange().getOffset().intValue();
-
-            } else if (result instanceof FetchDataResult) {
-                // Make it one based
-                dataPagerOffset = result.getSourceLocation()
-                        .getDataRange()
-                        .getOptCharOffsetFrom()
-                        .orElse(0L);
-                dataPagerLength = result.getSourceLocation().getDataRange().getLength();
-                dataPagerCount = result.getTotalCharacterCount().getCount();
-                dataPagerCountExact = result.getTotalCharacterCount().isExact();
-
-                FetchDataResult fetchDataResult = (FetchDataResult) result;
-//                getView().showDataPager(true);
-//                getView().setDataPagerToVisibleState(true);
-
-                if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-                    // Record: a of b   Characters: x to y of z
-
-//                    getView().showSegmentPager(true);
-
-//                    getView().setSegmentPagerTitle("Record");
-//                    segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
-
-//                    getView().setSegmentPagerToVisibleState(false);
-
-//                    dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
-
-                    navigatorData.updateStateForOneItemPerPage(
-                            result.getTotalItemCount(),
-                            this::setCurrentSegmentNo,
-                            this::getCurrentSegmentNo,
-                            RECORD);
-
-                } else {
-                    // non-segmented
-                    //    Part: a of b   Characters: x to y of z
-                    // OR                Characters: x to y of z
-
-                    // Only show part pager
-//                    getView().showSegmentPager(result.getTotalItemCount().getCount() > 1);
-
-//                    getView().setSegmentPagerTitle("Part");
-//                    segmentPagerRows.setVisibleRangeHandler(this::handlePartNoRangeChange);
-
-//                    dataNavigatorData.updatePartsCount(result.getTotalItemCount());
-
-                    navigatorData.updateStateForOneItemPerPage(
-                            result.getTotalItemCount(),
-                            this::setCurrentPartNo,
-                            this::getCurrentPartNo,
-                            PART);
-                }
+                navigatorData.updateStateForOneItemPerPage(
+                        result.getTotalItemCount(),
+                        this::setCurrentPartNo,
+                        this::getCurrentPartNo,
+                        PART);
             }
-
+        }
 
 //            GWT.log("Segment Pager Offset: " + dataPagerOffset
 //                    + " Length: " + dataPagerLength
@@ -895,38 +664,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    + " Total: " + commonPagerCount
 //                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
 //                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
-
-
-
-
-//            segmentPagerRows.updateRowData((int) commonPagerOffset, (int) commonPagerLength);
-//            segmentPagerRows.updateRowCount((int) commonPagerCount, commonPagerCountExact);
-
-//            dataPagerRows.updateRowData((int) dataPagerOffset, (int) dataPagerLength);
-//            dataPagerRows.updateRowCount((int) dataPagerCount, dataPagerCountExact);
-        } else {
-//            getView().showSegmentPager(false);
-//            getView().showDataPager(false);
-        }
     }
-
-//    private void handleErrorRangeChange(final Range range) {
-//        GWT.log("Error range: " + range.getStart() + ":" + range.getLength());
-//        currentErrorNo = range.getStart();
-//        update(false);
-//    }
-
-//    private void handlePartNoRangeChange(final Range range) {
-//        GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
-//        currentPartNo = range.getStart();
-//        update(false);
-//    }
-//
-//    private void handleSegmentNoRangeChange(final Range range) {
-//        GWT.log("Segment range: " + range.getStart() + ":" + range.getLength());
-//        currentSegmentNo = range.getStart();
-//        update(false);
-//    }
 
     long getCurrentErrorsPageOffset() {
         return currentSegmentNo / SourceLocation.MAX_ERRORS_PER_PAGE;
@@ -951,15 +689,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         markers = null;
         startLineNo = 1;
 
-        // The range returned may differ from that requested so update it.
-//        if (result != null
-//                && result.getSourceLocation() != null
-//                && result.getSourceLocation().getOptDataRange().isPresent()) {
-//
-//                currentDataRange = result.getSourceLocation()
-//                        .getDataRange();
-//        }
-
         if (result != null) {
             currentChildDataType = Optional.ofNullable(result.getSourceLocation())
                     .map(SourceLocation::getChildType)
@@ -969,22 +698,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
                 markers = fetchMarkerResult.getMarkers();
                 curDataType = DataType.MARKER;
-
-//                getView().setDataPagerTitle("Errors");
-//                getView().setDataPagerToVisibleState(true);
-
             } else if (result instanceof FetchDataResult) {
                 final FetchDataResult fetchDataResult = (FetchDataResult) result;
                 data = fetchDataResult.getData();
                 curDataType = fetchDataResult.getDataType();
 
                 if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-//                    getView().setDataPagerTitle("Record");
-//                    getView().setDataPagerToVisibleState(false);
                     textPresenter.setWrapLines(false);
                 } else {
-//                    getView().setDataPagerTitle("Characters");
-//                    getView().setDataPagerToVisibleState(true);
                     final int lineCount = result.getSourceLocation().getOptDataRange()
                             .flatMap(DataRange::getLineCount)
                             .orElse(0);
@@ -1000,14 +721,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 }
             }
 
-//            startLineNo = result.getPageRange().getOffset().intValue() + 1;
             startLineNo = result.getSourceLocation().getOptDataRange()
                     .flatMap(DataRange::getOptLocationFrom)
                     .map(Location::getLineNo)
                     .orElse(1);
-
-            // Update the paging controls.
-//            getView().showSegmentPager(result.getStreamRowCount().getCount() > 1);
 
             // Let the classification handler know that the classification has
             // changed.
@@ -1016,8 +733,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             refresh(result);
             updateTabs(result.getStreamTypeName(), result.getAvailableChildStreamTypes());
         } else {
-//            getView().showSegmentPager(false);
-            // Clear the classification.
             classificationUiHandlers.setClassification("");
 
             refresh(result);
@@ -1105,18 +820,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void refresh(final AbstractFetchDataResult result) {
 
         refreshProgressBar(result != null);
-
         setPagers(result);
-
         refreshTextPresenterContent();
 
         refreshMetaInfoPresenterContent(result != null
                 ? result.getSourceLocation().getId()
                 : null);
 
-//        getView().refreshNavigator();
         itemNavigatorPresenter.refreshNavigator();
-
         refreshHighlights(result);
         refreshMarkers(result);
     }
@@ -1144,15 +855,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         int partNo = 0;
 
         if (result != null) {
-//            partNo = (int) (result.getSourceLocation().getPartNo() + 1);
             partNo = (int) (result.getSourceLocation().getPartNo());
         }
 
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
-        // Only show highlights when not formatted
-        // TODO @AT fix highlighting
         if (highlights != null
                 && currentMetaId != null
                 && currentMetaId.equals(highlightId)
@@ -1166,17 +874,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             // highlight.
             textPresenter.setHighlights(null);
         }
-//        if (highlights != null && currentMetaId != null && currentMetaId.equals(highlightId)
-//                && streamNo == highlightPartNo
-//                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)) {
-//            // Set the content to be displayed in the source view with a
-//            // highlight.
-//            textPresenter.setHighlights(highlights);
-//        } else {
-//            // Set the content to be displayed in the source view without a
-//            // highlight.
-//            textPresenter.setHighlights(null);
-//        }
     }
 
     private void refreshMarkers(final AbstractFetchDataResult result) {
@@ -1190,56 +887,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         markerListPresenter.setData(markers, pageOffset, pageCount);
     }
-
-    // No longer used
-//    public void showStepSource(final Integer taskOffset,
-//                               final StepLocation stepLocation,
-//                               final String childStreamType,
-//                               final List<Highlight> highlights) {
-//        this.highlights = highlights;
-//        this.highlightId = stepLocation.getId();
-//        this.highlightPartNo = stepLocation.getPartNo();
-//        this.highlightChildDataType = childStreamType;
-//
-//        // Set the source type that will be used when the page source is shown.
-//        // Make sure the right page is shown when the source is displayed.
-//        final long oldStreamNo = currentDataRange.getOffset() + 1;
-//        long newStreamNo = oldStreamNo;
-//        final long oldPageOffset = currentPageRange.getOffset();
-//        final long pageLength = currentPageRange.getLength();
-//        int lineNo = 0;
-//
-//        // If we have a source highlight then use it.
-//        if (highlights != null && highlights.size() > 0) {
-//            final Highlight highlight = highlights.get(0);
-//            newStreamNo = highlightPartNo;
-//            lineNo = highlight.getFrom().getLineNo();
-//        }
-//
-//        final long page = lineNo / pageLength;
-//        long newPageOffset = oldPageOffset % pageLength;
-//        final long tmp = page * pageLength;
-//        if (tmp + newPageOffset < lineNo) {
-//            // We can show this page.
-//            newPageOffset = tmp + newPageOffset;
-//        } else {
-//            // We need to show the page before.
-//            newPageOffset = tmp - pageLength + newPageOffset;
-//        }
-//
-//        // Update the stream source.
-//        if (!EqualsUtil.isEquals(currentMetaId, highlightId)
-//                || !EqualsUtil.isEquals(currentChildDataType, highlightChildDataType) || oldStreamNo != newStreamNo
-//                || oldPageOffset != newPageOffset) {
-//            currentDataRange = new OffsetRange<>(newStreamNo - 1, 1L);
-//            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
-//
-//            fetchData(false, highlightId, highlightChildDataType);
-//        } else {
-//            refreshHighlights(lastResult);
-//            refreshMarkers(lastResult);
-//        }
-//    }
 
     public void setBeginSteppingHandler(final BeginSteppingHandler beginSteppingHandler) {
         this.beginSteppingHandler = beginSteppingHandler;
@@ -1277,20 +924,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private DataType getCurDataType() {
         return curDataType;
     }
-
-    private boolean isCurrentDataSegmented() {
-        return DataType.SEGMENTED.equals(getCurDataType())
-                || DataType.MARKER.equals(getCurDataType());
-    }
-
-    private boolean isCurrentDataMultiPart() {
-        // For now assume segmented and multi-part are mutually exclusive
-        return DataType.NON_SEGMENTED.equals(getCurDataType());
-    }
-
-//    private DataRange getCurrentDataRange() {
-//        return currentDataRange;
-//    }
 
     private AbstractFetchDataResult getLastResult() {
         return lastResult;
@@ -1350,6 +983,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     public interface DataView extends View {
 
         ButtonView addButton(final SvgPreset preset);
@@ -1357,284 +992,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         ToggleButtonView addToggleButton(final SvgPreset onPreset,
                                          final SvgPreset offPreset);
 
-//        void setSegmentPagerRows(HasRows display);
-
-//        void showSegmentPager(boolean show);
-//
-//        void showDataPager(boolean show);
-//
-//        // TODO @AT
-//        void setSegmentPagerToVisibleState(final boolean isVisible);
-//
-//        void setDataPagerRows(HasRows display);
-//
-//        void setSegmentPagerTitle(final String title);
-//
-//        void setDataPagerTitle(final String title);
-//
-//        void setDataPagerToVisibleState(final boolean isVisible);
-
         TabBar getTabBar();
 
         LayerContainer getLayerContainer();
-
-//        void setNavigatorData(final HasSubStreams dataNavigatorData);
-//
-//        void refreshNavigator();
-//
-//        void setRefreshing(boolean refreshing);
-//
-//        void setNavigatorClickHandler(final Runnable clickHandler);
 
         void setNavigatorView(ItemNavigatorView itemNavigatorView);
 
         void setProgressView(final ProgressView progressView);
     }
 
-//    private static abstract class PagerRows implements HasRows {
-//        private final SimpleEventBus simpleEventBus = new SimpleEventBus();
-//        private Range visibleRange;
-//        private RowCount<Integer> rowCount = new RowCount<>(0, false);
-//        private Consumer<Range> visibleRangeHandler;
-//
-//        public PagerRows(final int length) {
-//            visibleRange = new Range(0, length);
-//        }
-//
-//        @Override
-//        public void fireEvent(final GwtEvent<?> event) {
-//            simpleEventBus.fireEvent(event);
-//        }
-//
-//        @Override
-//        public void setVisibleRange(final int start, final int length) {
-//            visibleRange = new Range(start, length);
-//            setVisibleRange(visibleRange);
-//        }
-//
-//        @Override
-//        public void setVisibleRange(final Range visibleRange) {
-//            if (visibleRangeHandler != null) {
-//                visibleRangeHandler.accept(visibleRange);
-//            }
-//        }
-//
-//        public void setVisibleRangeHandler(final Consumer<Range> visibleRangeHandler) {
-//            this.visibleRangeHandler = visibleRangeHandler;
-//        }
-//
-//        @Override
-//        public Range getVisibleRange() {
-//            return visibleRange;
-//        }
-//
-//        @Override
-//        public void setRowCount(final int count, final boolean exact) {
-//            rowCount = new RowCount<>(count, exact);
-//        }
-//
-//        @Override
-//        public boolean isRowCountExact() {
-//            return rowCount.isExact();
-//        }
-//
-//        @Override
-//        public int getRowCount() {
-//            return rowCount.getCount();
-//        }
-//
-//        @Override
-//        public void setRowCount(final int count) {
-//            setRowCount(count, true);
-//        }
-//
-//        @Override
-//        public com.google.gwt.event.shared.HandlerRegistration addRowCountChangeHandler(
-//                final com.google.gwt.view.client.RowCountChangeEvent.Handler handler) {
-//            return simpleEventBus.addHandler(RowCountChangeEvent.getType(), handler);
-//        }
-//
-//        @Override
-//        public com.google.gwt.event.shared.HandlerRegistration addRangeChangeHandler(final Handler handler) {
-//            return simpleEventBus.addHandler(RangeChangeEvent.getType(), handler);
-//        }
-//
-//        public void updateRowData(final int start, final int length) {
-//            visibleRange = new Range(start, length);
-//            RangeChangeEvent.fire(this, new Range(start, length));
-//        }
-//
-//        public void updateRowCount(final int count, final boolean exact) {
-//            rowCount = new RowCount<>(count, exact);
-//            RowCountChangeEvent.fire(this, count, exact);
-//        }
-//    }
-//
-//
-//    private class PageRows extends PagerRows {
-//        // TODO @AT Get from config, same one as DataFetcher
-//        private static final int SOURCE_PAGE_SIZE = 1000;
-//
-//        public PageRows() {
-//            super(SOURCE_PAGE_SIZE);
-//        }
-//
-//        @Override
-//        public void setVisibleRange(final Range range) {
-//            GWT.log("Data range: " + range.getStart() + ":" + range.getLength());
-//            // TODO @AT fix paging
-////            currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
-//            currentDataRange = DataRange.from(range.getStart(), range.getLength());
-//            update(false);
-//        }
-//    }
 
-
-//    private class SegmentRows extends PagerRows {
-//        public SegmentRows() {
-//            super(1);
-//        }
-//
-//        @Override
-//        public void setVisibleRange(final Range range) {
-//            GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
-//            // Only one part at a time so don't care about range length
-//            currentPartNo = range.getStart();
-//            update(false);
-//        }
-//    }
-
-//    private class SimplePagerRows extends PagerRows {
-//
-//        public SimplePagerRows(final int length) {
-//            super(length);
-//        }
-//
-//        @Override
-//        public Range getVisibleRange() {
-//            final Range range = super.getVisibleRange();
-//            // TODO @AT should be consistent with DataFetcher
-//            return new Range(range.getStart(), 10_000);
-//        }
-//    }
-
-//    private class DataNavigatorData implements HasSubStreams {
-//
-//        private RowCount<Long> partsCount = RowCount.of(0L, false);
-//        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
-//
-//        public void updatePartsCount(final RowCount<Long> partsCount) {
-//            this.partsCount = partsCount;
-//        }
-//
-//        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
-//            this.segmentsCount = segmentsCount;
-//        }
-//
-//        @Override
-//        public boolean areNavigationControlsVisible() {
-//            if (getView().getTabBar() != null && getView().getTabBar().getSelectedTab() != null) {
-//                return !INFO.equals(getView().getTabBar().getSelectedTab().getLabel());
-//            } else {
-//                return false;
-//            }
-//        }
-//
-//        @Override
-//        public boolean isMultiPart() {
-//            // For now assume segmented and multi-part are mutually exclusive
-//            return isCurrentDataMultiPart();
-//        }
-//
-//        @Override
-//        public Optional<Long> getPartNo() {
-//            return Optional.of(getCurrentPartNo());
-////            return Optional.ofNullable(currentSourceLocation)
-////                    .map(SourceLocation::getPartNo);
-//        }
-//
-//        @Override
-//        public Optional<Long> getTotalParts() {
-//            return Optional.ofNullable(partsCount)
-//                    .filter(RowCount::isExact)
-//                    .map(RowCount::getCount);
-//        }
-//
-//        @Override
-//        public void setPartNo(final long partNo) {
-//            currentPartNo = partNo;
-//            update(false);
-//        }
-//
-//        @Override
-//        public boolean isSegmented() {
-//            return isCurrentDataSegmented();
-//        }
-//
-//        @Override
-//        public boolean canDisplayMultipleSegments() {
-//            return isCurrentDataSegmented()
-//                    && getCurDataType().equals(DataType.MARKER);
-//        }
-//
-//        @Override
-//        public Optional<Long> getSegmentNoFrom() {
-//            final AbstractFetchDataResult lastResult = getLastResult();
-//
-//            if (lastResult != null && isSegmented()) {
-//                return Optional.ofNullable(lastResult)
-//                        .map(AbstractFetchDataResult::getItemRange)
-//                        .map(OffsetRange::getOffset);
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public Optional<Long> getSegmentNoTo() {
-//            final AbstractFetchDataResult lastResult = getLastResult();
-//
-//            if (lastResult != null && isSegmented()) {
-//                return Optional.ofNullable(lastResult)
-//                        .map(AbstractFetchDataResult::getItemRange)
-//                        .map(range -> range.getOffset() + range.getLength() - 1);
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public Optional<Long> getTotalSegments() {
-//            return Optional.ofNullable(segmentsCount)
-//                    .filter(RowCount::isExact)
-//                    .map(RowCount::getCount);
-//        }
-//
-//        @Override
-//        public Optional<String> getSegmentName() {
-//            final AbstractFetchDataResult lastResult = getLastResult();
-//            if (lastResult == null) {
-//                return Optional.empty();
-//            } else if (DataType.MARKER.equals(getCurDataType())) {
-//                return Optional.of(ERROR);
-//            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
-//                return Optional.of(RECORD);
-//            } else {
-//                return Optional.empty();
-//            }
-//        }
-//
-//        @Override
-//        public void setSegmentNoFrom(final long segmentNoFrom) {
-//            currentSegmentNo = segmentNoFrom;
-//            update(false);
-//        }
-//
-//        @Override
-//        public void refresh() {
-//            update(false);
-//        }
-//    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private static class NoNavigatorData implements HasItems {
 
@@ -1687,6 +1055,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         public void refresh() {
         }
     }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private class NavigatorData implements HasItems {
 
