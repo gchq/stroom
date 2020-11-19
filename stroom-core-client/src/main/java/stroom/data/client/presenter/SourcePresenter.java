@@ -93,12 +93,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         view.setTextView(textPresenter.getView());
         view.setNavigatorView(characterNavigatorPresenter.getView());
 
-        view.setProgressView(progressPresenter.getView());
-        progressPresenter.setVisible(false);
+        setupProgressBar(view, progressPresenter);
 
         textPresenter.setUiHandlers(this);
 
         characterNavigatorPresenter.setDisplay(dataNavigatorData);
+    }
+
+    private void setupProgressBar(final SourceView view,
+                                  final ProgressPresenter progressPresenter) {
+        view.setProgressView(progressPresenter.getView());
+        progressPresenter.setVisible(false);
+
     }
 
     private void setEditorOptions(final TextPresenter textPresenter) {
@@ -185,7 +191,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     final Location newSourceStart = buildNewSourceLocationFromHighlight(
                             sourceLocation, highlight, sourceConfig);
                     final SourceLocation newSourceLocation = sourceLocation.clone()
-                            .withDataRange(DataRange.from(newSourceStart))
+                            .withDataRange(DataRange.fromLocation(newSourceStart))
                             .build();
 
                     // Now fetch the required range
@@ -374,38 +380,53 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     private void refreshProgressBar(final boolean isVisible) {
-        if (dataNavigatorData != null
-            && dataNavigatorData.isSegmented()
+        Progress progress = null;
+        if (dataNavigatorData.isSegmented()
             && dataNavigatorData.getCharOffsetFrom().isPresent()
             && dataNavigatorData.getCharOffsetTo().isPresent()) {
 
-            progressPresenter.setVisible(true);
-
             if (dataNavigatorData.getTotalChars().isPresent()) {
-                progressPresenter.setProgress(Progress.boundedRange(
+                progress = Progress.boundedRange(
                         dataNavigatorData.getTotalChars().get() -1, // count to zero based bound
                         dataNavigatorData.getCharOffsetFrom().get(),
-                        dataNavigatorData.getCharOffsetTo().get()));
+                        dataNavigatorData.getCharOffsetTo().get());
             } else {
-                progressPresenter.setProgress(Progress.unboundedRange(
+                progress = Progress.unboundedRange(
                         dataNavigatorData.getCharOffsetFrom().get(),
-                        dataNavigatorData.getCharOffsetTo().get()));
+                        dataNavigatorData.getCharOffsetTo().get());
             }
-        } else if (dataNavigatorData != null
-                && dataNavigatorData.getByteOffsetFrom().isPresent()
+        } else if (dataNavigatorData.getByteOffsetFrom().isPresent()
                 && dataNavigatorData.getByteOffsetTo().isPresent()) {
 
-            progressPresenter.setVisible(true);
-
             if (dataNavigatorData.getTotalBytes().isPresent()) {
-                progressPresenter.setProgress(Progress.boundedRange(
+                progress = Progress.boundedRange(
                         dataNavigatorData.getTotalBytes().get() - 1, // count to zero based bound
                         dataNavigatorData.getByteOffsetFrom().get(),
-                        dataNavigatorData.getByteOffsetTo().get()));
+                        dataNavigatorData.getByteOffsetTo().get());
             } else {
-                progressPresenter.setProgress(Progress.unboundedRange(
+                progress = Progress.unboundedRange(
                         dataNavigatorData.getByteOffsetFrom().get(),
-                        dataNavigatorData.getByteOffsetTo().get()));
+                        dataNavigatorData.getByteOffsetTo().get());
+            }
+
+        }
+
+        if (progress != null) {
+            progressPresenter.setVisible(true);
+            progressPresenter.setProgress(progress);
+
+            if (progress.isComplete()) {
+                // Don't want users clicking if we are showing everything
+                progressPresenter.setClickHandler(null);
+            } else {
+                progressPresenter.setClickHandler(byteOffsetDbl -> {
+                    final long byteOffset = (long) Math.floor(byteOffsetDbl);
+                    // update the location with the new range
+                    doWithConfig(sourceConfig -> {
+                        final long maxChars = sourceConfig.getMaxCharactersPerFetch();
+                        dataNavigatorData.setDataRange(DataRange.fromByteOffset(byteOffset, maxChars));
+                    });
+                });
             }
         } else {
             progressPresenter.setVisible(false);
@@ -569,65 +590,19 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public void setDataRange(final DataRange dataRange) {
-            doWithConfig(sourceConfig -> {
+//            doWithConfig(sourceConfig -> {
                 final SourceLocation newSourceLocation = requestedSourceLocation.clone()
                         .withDataRange(dataRange)
                         .build();
 
                 setSourceLocation(newSourceLocation);
-            });
+//            });
         }
 
         @Override
         public boolean isSegmented() {
             return DataType.SEGMENTED.equals(lastResult.getDataType());
         }
-
-        //        @Override
-//        public Optional<Long> getTotalLines() {
-//            return Optional.ofNullable(lastResult)
-//                    .map(AbstractFetchDataResult::getSourceLocation)
-//                    .flatMap(SourceLocation::getOptDataRange)
-//                    .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
-//                            && dataRange.getOptLocationTo().isPresent())
-//                    .map(dataRange -> dataRange.getLocationTo().getLineNo()
-//                            - dataRange.getLocationFrom().getLineNo()
-//                            + 1L); // line nos are inclusive, so add 1
-//        }
-
-//        @Override
-//        public Optional<Long> getCharOffsetFrom() {
-//            return Optional.ofNullable(lastResult)
-//                    .map(AbstractFetchDataResult::getSourceLocation)
-//                    .flatMap(SourceLocation::getOptDataRange)
-//                    .flatMap(DataRange::getOptCharOffsetFrom);
-//        }
-//
-//        @Override
-//        public Optional<Long> getCharOffsetTo() {
-//            return Optional.ofNullable(lastResult)
-//                    .map(AbstractFetchDataResult::getSourceLocation)
-//                    .flatMap(SourceLocation::getOptDataRange)
-//                    .flatMap(DataRange::getOptCharOffsetTo);
-//        }
-//
-//        @Override
-//        public Optional<Integer> getLineFrom() {
-//            return Optional.ofNullable(lastResult)
-//                    .map(AbstractFetchDataResult::getSourceLocation)
-//                    .flatMap(SourceLocation::getOptDataRange)
-//                    .flatMap(DataRange::getOptLocationFrom)
-//                    .map(Location::getLineNo);
-//        }
-//
-//        @Override
-//        public Optional<Integer> getLineTo() {
-//            return Optional.ofNullable(lastResult)
-//                    .map(AbstractFetchDataResult::getSourceLocation)
-//                    .flatMap(SourceLocation::getOptDataRange)
-//                    .flatMap(DataRange::getOptLocationTo)
-//                    .map(Location::getLineNo);
-//        }
 
         @Override
         public Optional<Long> getTotalChars() {
@@ -648,41 +623,27 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         @Override
         public void showHeadCharacters() {
-            doWithConfig(sourceConfig -> {
-                final SourceLocation newSourceLocation = requestedSourceLocation.clone()
-                        .withDataRange(DataRange.from(
-                                0,
-                                sourceConfig.getMaxCharactersPerFetch()))
-                        .build();
-
-                setSourceLocation(newSourceLocation);
-            });
+            doWithConfig(sourceConfig ->
+                    setDataRange(DataRange.fromCharOffset(
+                            0,
+                            sourceConfig.getMaxCharactersPerFetch())));
         }
 
         @Override
         public void advanceCharactersForward() {
-            doWithConfig(sourceConfig -> {
-                final SourceLocation newSourceLocation = requestedSourceLocation.clone()
-                        .withDataRange(DataRange.from(
-                                receivedSourceLocation.getDataRange().getCharOffsetTo() + 1,
-                                sourceConfig.getMaxCharactersPerFetch()))
-                        .build();
-
-                setSourceLocation(newSourceLocation);
-            });
+            doWithConfig(sourceConfig ->
+                    setDataRange(DataRange.fromCharOffset(
+                            receivedSourceLocation.getDataRange().getCharOffsetTo() + 1,
+                            sourceConfig.getMaxCharactersPerFetch())));
         }
 
         @Override
         public void advanceCharactersBackwards() {
             doWithConfig(sourceConfig -> {
                 final long maxChars = sourceConfig.getMaxCharactersPerFetch();
-                final SourceLocation newSourceLocation = requestedSourceLocation.clone()
-                        .withDataRange(DataRange.from(
-                                receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars,
-                                maxChars))
-                        .build();
-
-                setSourceLocation(newSourceLocation);
+                setDataRange(DataRange.fromCharOffset(
+                        receivedSourceLocation.getDataRange().getCharOffsetFrom() - maxChars,
+                        maxChars));
             });
         }
 

@@ -2,13 +2,19 @@ package stroom.widget.progress.client.view;
 
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+
+import java.util.function.Consumer;
 
 public class ProgressViewImpl extends ViewImpl implements ProgressView {
 
@@ -21,9 +27,39 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
     @UiField
     FlowPanel progressBarInner;
 
+    private Consumer<Double> clickPercentageConsumer = null;
+
     @Inject
     public ProgressViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        progressBarOuter.addDomHandler(getClickHandler(), ClickEvent.getType());
+    }
+
+    private Consumer<Double> getClickPercentageConsumer() {
+        return clickPercentageConsumer;
+    }
+
+    private ClickHandler getClickHandler() {
+        return event -> {
+            if (getClickPercentageConsumer() != null) {
+                final double x = event.getX() - 1; // make zero based
+                final double width = event.getRelativeElement().getOffsetWidth();
+                // Turn x into a percentage, making sure 0 <= percentage <= 100
+                final double percentage = Math.max(
+                        0,
+                        Math.min(
+                                100,
+                                (x / width * 100)));
+
+//            GWT.log("x " + event.getX() +
+//                    " y " + event.getY() +
+//                    " len " + event.getRelativeElement().getClientWidth() +
+//                    " pct " + percentage);
+
+                getClickPercentageConsumer()
+                        .accept(percentage);
+            }
+        };
     }
 
     @Override
@@ -54,6 +90,8 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
 
     @Override
     public void setTitle(final String title) {
+        progressBarOuter.getElement()
+                .setTitle(title);
         progressBarInner.getElement()
                 .setTitle(title);
     }
@@ -61,6 +99,17 @@ public class ProgressViewImpl extends ViewImpl implements ProgressView {
     @Override
     public void setVisible(final boolean isVisible) {
         progressBarContainer.setVisible(isVisible);
+    }
+
+    @Override
+    public void setClickHandler(final Consumer<Double> percentageConsumer) {
+        Style style = progressBarOuter.getElement().getStyle();
+        if (percentageConsumer == null) {
+            style.setCursor(Cursor.DEFAULT);
+        } else {
+            style.setCursor(Cursor.POINTER);
+        }
+        clickPercentageConsumer = percentageConsumer;
     }
 
     public interface Binder extends UiBinder<Widget, ProgressViewImpl> {

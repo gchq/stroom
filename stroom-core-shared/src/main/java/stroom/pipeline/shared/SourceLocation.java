@@ -182,6 +182,7 @@ public class SourceLocation {
         return id == that.id &&
                 partNo == that.partNo &&
                 segmentNo == that.segmentNo &&
+                truncateToWholeLines == that.truncateToWholeLines &&
                 Objects.equals(childType, that.childType) &&
                 Objects.equals(dataRange, that.dataRange) &&
                 Objects.equals(highlight, that.highlight);
@@ -189,7 +190,7 @@ public class SourceLocation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, childType, partNo, segmentNo, dataRange, highlight);
+        return Objects.hash(id, childType, partNo, segmentNo, dataRange, highlight, truncateToWholeLines);
     }
 
     @Override
@@ -201,6 +202,7 @@ public class SourceLocation {
                 ", segmentNo=" + segmentNo +
                 ", dataRange=" + dataRange +
                 ", highlight=" + highlight +
+                ", truncateToWholeLines=" + truncateToWholeLines +
                 '}';
     }
 

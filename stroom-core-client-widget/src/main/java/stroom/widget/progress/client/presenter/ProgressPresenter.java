@@ -7,6 +7,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Consumer;
+
 public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
 
     private static final String TITLE_PREFIX = "Visible section of the source data";
@@ -37,6 +39,25 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         this.progress = progress;
         if (progress != null) {
             update();
+        }
+    }
+
+    /**
+     * @param valueConsumer A consumer of the value of the point on the progress bar
+     *                      that was clicked in the same units as used in {@link Progress}.
+     *                      valueConsumer will not be called if the current value of {@link Progress}
+     *                      has no upper bound.
+     */
+    public void setClickHandler(Consumer<Double> valueConsumer) {
+
+        if (valueConsumer == null) {
+            getView().setClickHandler(null);
+        } else {
+            getView().setClickHandler(percentage ->
+                    progress.getUpperBound()
+                            .map(upperBound ->
+                                    upperBound * percentage / 100)
+                            .ifPresent(valueConsumer));
         }
     }
 
@@ -138,6 +159,7 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         void setProgressBarColour(final String colour);
 
         void setTitle(final String title);
-    }
 
+        void setClickHandler(final Consumer<Double> percentageConsumer);
+    }
 }

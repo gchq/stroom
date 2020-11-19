@@ -36,7 +36,6 @@ public class Progress {
     private final double rangeFromInc;
     private final double rangeToInc;
 
-
     public Progress(final double lowerBound,
                     final Double upperBound,
                     final double rangeFromInc,
@@ -94,6 +93,12 @@ public class Progress {
 
     public double getRangeToInc() {
         return rangeToInc;
+    }
+
+    public boolean isComplete() {
+        return upperBound != null
+                && rangeFromInc == lowerBound
+                && rangeToInc == upperBound;
     }
 
     @Override

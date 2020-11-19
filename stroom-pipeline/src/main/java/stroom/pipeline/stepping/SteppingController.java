@@ -214,7 +214,7 @@ public class SteppingController {
                     .withChildStreamType(metaHolder.getChildDataType())
                     .withPartNo(stepLocation.getPartNo() - 1) // convert to zero based
                     .withSegmentNumber(stepLocation.getRecordNo() - 1) // convert to zero based
-                    .withDataRange(DataRange.from(DefaultLocation.of(1, 1)))
+                    .withDataRange(DataRange.fromLocation(DefaultLocation.of(1, 1)))
                     .withHighlight(textRange)
                     .build();
         }

@@ -81,7 +81,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -619,7 +618,7 @@ public class DataFetcher {
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
-        int byteOffset = 0; // zero based
+        int currByteOffset = 0; // zero based
         int currLineNo = 1; // one based
         int currColNo = 1; // one based
         long currCharOffset = 0; //zero based
@@ -647,8 +646,7 @@ public class DataFetcher {
 
         // If no range supplied then use a default one
         final DataRange dataRange = sourceLocation.getOptDataRange()
-                .orElse(DataRange.from(0, sourceConfig.getMaxCharactersPerFetch()));
-        CharsetEncoder charsetEncoder = Charset.forName(encoding).newEncoder();
+                .orElse(DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
 
         final CharReader charReader = new CharReader(inputStream, encoding);
 
@@ -672,7 +670,7 @@ public class DataFetcher {
 
             final DecodedChar decodedChar = optDecodeChar.get();
 
-            if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
+            if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount)) {
 //                        if (!foundRange) {
 //
 //                            startByteOffset = locationAwareInputStream.
@@ -681,7 +679,7 @@ public class DataFetcher {
                 foundRange = true;
 
                 boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
-                        currLineNo, currColNo, currCharOffset, charsInRangeCount);
+                        currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount);
 
                 if (isCharAfterRequestedRange) {
                     extraCharCount++;
@@ -728,6 +726,7 @@ public class DataFetcher {
 
             // Now advance the counters/trackers for the next char
             currCharOffset += decodedChar.getCharCount();
+            currByteOffset += decodedChar.getByteCount();
 
             if (isFirstChar) {
                 isFirstChar = false;
@@ -864,17 +863,22 @@ public class DataFetcher {
         if (dataRange == null || !dataRange.hasBoundedStart()) {
             // No start bound
             LOGGER.debug("Unbounded from predicate");
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) -> true;
+        } else if (dataRange.getOptByteOffsetFrom().isPresent()) {
+            final long startByteOffset = dataRange.getOptByteOffsetFrom().get();
+            LOGGER.debug("Byte offset (inc.) from predicate [{}]", startByteOffset);
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
+                    currByteOffset >= startByteOffset;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
             final long startCharOffset = dataRange.getOptCharOffsetFrom().get();
             LOGGER.debug("Char offset (inc.) from predicate [{}]", startCharOffset);
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     currCharOffset >= startCharOffset;
         } else if (dataRange.getOptLocationFrom().isPresent()) {
             final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
             final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
             LOGGER.debug("Line/col (inc.) from predicate [{}, {}]", lineNoFrom, colNoFrom);
-            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
         } else {
             throw new RuntimeException("No start point specified");
@@ -894,23 +898,28 @@ public class DataFetcher {
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
             LOGGER.debug("Unbounded to predicate");
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     charCount >= maxChars;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().get();
             LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     charCount > dataLength || charCount >= maxChars;
+        } else if (dataRange.getOptByteOffsetTo().isPresent()) {
+            final long byteOffsetTo = dataRange.getOptByteOffsetTo().get();
+            LOGGER.debug("Byte offset (inc.) to predicate [{}]", byteOffsetTo);
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
+                    currByteOffset > byteOffsetTo || charCount >= maxChars;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
             final long charOffsetTo = dataRange.getOptCharOffsetTo().get();
             LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     currCharOffset > charOffsetTo || charCount >= maxChars;
         } else if (dataRange.getOptLocationTo().isPresent()) {
             final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
             final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
             LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
-            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, currByteOffset, charCount) ->
                     currLineNo > lineNoTo
                             || (currLineNo == lineNoTo && currColNo > colNoTo)
                             || charCount >= maxChars;
@@ -1039,6 +1048,7 @@ public class DataFetcher {
         boolean test(final long currLineNo,
                      final long currColNo,
                      final long currCharOffset,
+                     final long currByteOffset,
                      final long charCount);
     }
 

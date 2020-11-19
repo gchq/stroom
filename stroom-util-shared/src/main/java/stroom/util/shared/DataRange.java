@@ -72,7 +72,7 @@ public class DataRange {
                 null);
     }
 
-    public static DataRange from(final Location fromInclusive) {
+    public static DataRange fromLocation(final Location fromInclusive) {
         return new DataRange(fromInclusive,
                 null,
                 null,
@@ -85,7 +85,7 @@ public class DataRange {
     /**
      * @param charOffsetFrom Zero based
      */
-    public static DataRange from(final long charOffsetFrom, final long length) {
+    public static DataRange fromCharOffset(final long charOffsetFrom, final long length) {
         return new DataRange(null,
                 charOffsetFrom,
                 null,
@@ -106,6 +106,20 @@ public class DataRange {
                 null,
                 null,
                 null);
+    }
+
+    /**
+     * @param byteOffsetFrom Zero based
+     * @param length The number of chars in the range
+     */
+    public static DataRange fromByteOffset(final long byteOffsetFrom, final long length) {
+        return new DataRange(null,
+                null,
+                byteOffsetFrom,
+                null,
+                null,
+                null,
+                length);
     }
 
     /**
@@ -213,11 +227,16 @@ public class DataRange {
     }
 
     public boolean hasBoundedStart() {
-        return locationFrom != null || charOffsetFrom != null;
+        return locationFrom != null
+                || charOffsetFrom != null
+                || byteOffsetFrom != null;
     }
 
     public boolean hasBoundedEnd() {
-        return locationTo != null || charOffsetTo != null || length != null;
+        return locationTo != null
+                || charOffsetTo != null
+                || length != null
+                || byteOffsetTo != null;
     }
 
     @JsonIgnore
@@ -236,14 +255,16 @@ public class DataRange {
         final DataRange dataRange = (DataRange) o;
         return Objects.equals(locationFrom, dataRange.locationFrom) &&
                 Objects.equals(charOffsetFrom, dataRange.charOffsetFrom) &&
+                Objects.equals(byteOffsetFrom, dataRange.byteOffsetFrom) &&
                 Objects.equals(locationTo, dataRange.locationTo) &&
                 Objects.equals(charOffsetTo, dataRange.charOffsetTo) &&
+                Objects.equals(byteOffsetTo, dataRange.byteOffsetTo) &&
                 Objects.equals(length, dataRange.length);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(locationFrom, charOffsetFrom, locationTo, charOffsetTo, length);
+        return Objects.hash(locationFrom, charOffsetFrom, byteOffsetFrom, locationTo, charOffsetTo, byteOffsetTo, length);
     }
 
     @Override
@@ -251,8 +272,10 @@ public class DataRange {
         return "DataRange{" +
                 "locationFrom=" + locationFrom +
                 ", charOffsetFrom=" + charOffsetFrom +
+                ", byteOffsetFrom=" + byteOffsetFrom +
                 ", locationTo=" + locationTo +
                 ", charOffsetTo=" + charOffsetTo +
+                ", byteOffsetTo=" + byteOffsetTo +
                 ", length=" + length +
                 '}';
     }

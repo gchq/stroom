@@ -735,7 +735,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 // We have a specific range of data, i.e. when using the data() dash func.
                 dataRange = currentSourceLocation.getDataRange();
             } else {
-                dataRange = DataRange.from(0,
+                dataRange = DataRange.fromCharOffset(0,
                         sourceConfig.getMaxCharactersInPreviewFetch());
             }
 //            GWT.log("Using data range " + dataRange.toString());
