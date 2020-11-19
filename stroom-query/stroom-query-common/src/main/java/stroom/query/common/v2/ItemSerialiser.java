@@ -9,22 +9,25 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 public class ItemSerialiser {
-    private final CompiledFields fields;
+    private final CompiledField[] fields;
 
     public ItemSerialiser(final CompiledFields fields) {
-        this.fields = fields;
+        this.fields = fields.toArray();
     }
 
     Item read(final Input input) {
         final GroupKey groupKey = GroupKeySerialiser.read(input);
 
-        final Generator[] generators = new Generator[fields.size()];
+        final Generator[] generators = new Generator[fields.length];
         int pos = 0;
         for (final CompiledField compiledField : fields) {
-            final Expression expression = compiledField.getExpression();
-            final Generator generator = expression.createGenerator();
-            generator.read(input);
-            generators[pos] = generator;
+            final boolean nonNull = input.readBoolean();
+            if (nonNull) {
+                final Expression expression = compiledField.getExpression();
+                final Generator generator = expression.createGenerator();
+                generator.read(input);
+                generators[pos] = generator;
+            }
             pos++;
         }
 
@@ -38,7 +41,12 @@ public class ItemSerialiser {
 
         GroupKeySerialiser.write(output, item.getKey());
         for (final Generator generator : item.getGenerators()) {
-            generator.write(output);
+            if (generator != null) {
+                output.writeBoolean(true);
+                generator.write(output);
+            } else {
+                output.writeBoolean(false);
+            }
         }
     }
 
