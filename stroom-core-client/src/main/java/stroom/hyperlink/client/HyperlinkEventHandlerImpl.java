@@ -176,6 +176,9 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     }
                 });
 
+        // Add the highlight in case the user clicks through to the source view, then we can
+        // highlight the range in there.  Can't highlight in data preview as the data may be formatted
+        // so the line/cols won't marry up.
         if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
             builder.withHighlight(new TextRange(
                     new DefaultLocation(lineFrom, colFrom),

@@ -445,56 +445,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-//    private void showSourceLocationPopup() {
-//        if (lastResult != null && lastResult.getSourceLocation() != null) {
-//            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
-//
-//            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
-//            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
-//
-//            if (isCurrentDataMultiPart()) {
-//                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
-//            } else {
-//                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
-//            }
-//
-//            if (isCurrentDataSegmented()) {
-//                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
-//            } else {
-//                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
-//            }
-//            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
-//            sourceLocationPresenter.setCharacterControlsVisible(! (lastResult instanceof FetchMarkerResult));
-//        }
-//
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                sourceLocationPresenter.hide(autoClose, ok);
-//            }
-//
-//            @Override
-//            public void onHide(final boolean autoClose, final boolean ok) {
-//                if (ok) {
-//                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
-//                    currentPartNo = newSourceLocation.getPartNo();
-//                    currentSegmentNo = newSourceLocation.getSegmentNo();
-////                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
-//
-//                    update(false);
-//
-//                    // TODO @AT set all the values
-//
-////                    final String schedule = schedulePresenter.getScheduleString();
-////                    jobNode.setSchedule(schedule);
-////                    final Rest<JobNode> rest = restFactory.create();
-////                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(), schedule);
-//                }
-//            }
-//        };
-//        sourceLocationPresenter.show(popupUiHandlers);
-//    }
-
     @Override
     public void clear() {
         clear(true);
