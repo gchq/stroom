@@ -30,7 +30,7 @@ class Items implements Iterable<Item> {
     private final Comparator<Item> comparator;
     private final Consumer<Item> removeHandler;
 
-    private volatile boolean trimmed;
+    private volatile boolean trimmed = true;
     private volatile boolean full;
 
     Items(final int trimmedSize,
@@ -44,49 +44,11 @@ class Items implements Iterable<Item> {
     }
 
     synchronized void add(final Item item) {
-
-
-//        final List<Item> list = result.).list;
-//        final int maxSize = storeSize.size(item.depth);
-//
-//        if (compiledSorter.hasSort()) {
-//            int pos = Collections.binarySearch(list, item, compiledSorter);
-//            if (pos < 0) {
-//                // It isn't already present so insert.
-//                pos = Math.abs(pos + 1);
-//            }
-//            if (pos < maxSize) {
-//                list.add(pos, item);
-//                resultCount.incrementAndGet();
-//                success.set(true);
-//
-//                if (list.size() > maxSize) {
-//                    // Remove the end.
-//                    final Item removed = list.remove(list.size() - 1);
-//                    // We removed an item so record that we need to cascade the removal.
-//                    removalKey.set(removed.key);
-//                }
-//            } else {
-//                // We didn't add so record that we need to remove.
-//                removalKey.set(item.key);
-//            }
-//
-//        } else if (result.size() < maxSize) {
-//            list.add(item);
-//            resultCount.incrementAndGet();
-//            success.set(true);
-//
-//        } else {
-//            // We didn't add so record that we need to remove.
-//            removalKey.set(item.key);
-//        }
-
         if (comparator != null) {
             list.add(item);
+            trimmed = false;
             if (list.size() > maxSize) {
                 sortAndTrim();
-            } else {
-                trimmed = false;
             }
         } else if (list.size() < trimmedSize) {
             list.add(item);
@@ -95,10 +57,6 @@ class Items implements Iterable<Item> {
             removeHandler.accept(item);
         }
     }
-
-//    synchronized boolean remove(final Item item) {
-//        return list.remove(item);
-//    }
 
     int size() {
         return list.size();
@@ -122,15 +80,6 @@ class Items implements Iterable<Item> {
         sortAndTrim();
         return new ArrayList<>(list);
     }
-
-//    public void forEach(final Consumer<Item> consumer) {
-//        if (full) {
-//            list.forEach(consumer);
-//        } else {
-//            final List<Item> copy = copy();
-//            copy.forEach(consumer);
-//        }
-//    }
 
     @Override
     @Nonnull
