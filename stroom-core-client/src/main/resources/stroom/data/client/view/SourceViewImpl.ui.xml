@@ -18,17 +18,6 @@
         padding-right: 0.25em;
         }
 
-        <!--		.segmentPager {-->
-        <!--		float:-->
-        <!--		right;-->
-        <!--		}-->
-
-        <!--		.dataPager {-->
-        <!--		min-width: 250px;-->
-        <!--		float: right;-->
-        <!--		text-align: right;-->
-        <!--		}-->
-
         .characterNavigator {
         float: right;
         text-align: right;
@@ -51,7 +40,7 @@
         .progressBarPanel {
         display: inline-block;
         width: 100%;
-        height: 5px;
+        height: 6px;
         padding-right: 0.25em;
         padding-left: 0.25em;
         }
@@ -96,16 +85,13 @@
                                              styleName="{style.characterNavigator}"
                                              width="100%"
                                              height="100%" />
-<!--                        <pager:CharacterNavigator ui:field="characterNavigator"-->
-<!--                                             styleName="{style.characterNavigator}"-->
-<!--                                             visible="false"/>-->
                         <btn:ButtonPanel ui:field="buttonPanel"
                                          styleName="{style.buttonPanel}"/>
                     </v:ResizeFlowPanel>
                 </g:east>
             </g:DockLayoutPanel>
         </g:north>
-        <g:north size="5">
+        <g:north size="8">
             <g:SimplePanel ui:field="progressBarPanel"
                            styleName="{style.progressBarPanel}"/>
         </g:north>

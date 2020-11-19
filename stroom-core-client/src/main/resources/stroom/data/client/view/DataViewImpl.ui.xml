@@ -44,7 +44,7 @@
 		.progressBarPanel {
 		display: inline-block;
 		width: 100%;
-		height: 5px;
+		height: 6px;
 		padding-right: 0.25em;
 		padding-left: 0.25em;
 		}
@@ -59,21 +59,9 @@
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
 				<g:east size="400">
                     <g:HorizontalPanel width="100%" height="100%">
-<!--						<g:SimplePanel ui:field="progressBarPanel"-->
-<!--									   styleName="{style.progressBarPanel}"/>-->
 						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
 						<v:ResizeSimplePanel ui:field="navigatorContainer" width="100%" height="100%" />
 					</g:HorizontalPanel>
-<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
-<!--					</v:ResizeFlowPanel>-->
-
-<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
-<!--						<pager:SubStreamNavigator-->
-<!--                                ui:field="subStreamNavigator"-->
-<!--								styleName="{style.subStreamNavigator}"-->
-<!--								visible="false"/>-->
-<!--						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>-->
-<!--					</v:ResizeFlowPanel>-->
 				</g:east>
 				<g:center>
 					<v:ResizeFlowPanel styleName="{style.tabBarOuter}">
@@ -82,7 +70,7 @@
 				</g:center>
 			</g:DockLayoutPanel>
 		</g:north>
-		<g:north size="5">
+		<g:north size="8">
 			<g:SimplePanel ui:field="progressBarPanel"
 						   styleName="{style.progressBarPanel}"/>
 		</g:north>
