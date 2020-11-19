@@ -105,14 +105,16 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     .keySet()
                     .stream()
                     .map(fieldName -> {
-                        return new AceCompletionValue(
+                        final String fieldExpression ="${" + fieldName + "}";
+                        final String snippet = "\\" + fieldExpression + "${0}"; // escape our $ for snippet engine
+                        return new AceCompletionSnippet(
                                 fieldName,
-                                "${" + fieldName + "}",
+                                snippet,
+                                DEFAULT_COMPLETION_SCORE,
                                 "Field",
-                                DEFAULT_COMPLETION_SCORE);
+                                SafeHtmlUtils.htmlEscape(fieldExpression));
                     })
                     .collect(Collectors.toList());
-
         } else {
             fieldCompletions = Collections.emptyList();
         }
@@ -611,46 +613,56 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 .map(snippetText -> {
                     final String name = getSnippetNameFromText(text);
                     final String html = SafeHtmlUtils.htmlEscape(text);
-//                    GWT.log(name + " - " + snippetText);
+                    final String meta = metaPrefix
+                            + (isValueFunction(name) ? "Value" : "Function");
+//                    GWT.log(name + " - " + snippetText + " - " + meta);
                     return new AceCompletionSnippet(
                             name,
                             snippetText,
                             DEFAULT_COMPLETION_SCORE,
-                            metaPrefix + " Function",
+                            meta,
                             html);
                 });
     }
 
+    private boolean isValueFunction(final String name) {
+        return name.endsWith("()");
+    }
+
     private String getSnippetNameFromText(final String text) {
-//         replace($,regex,replacement) ==> replace($, $, $)
-//        return text.substring(0, text.indexOf("("));
-        final String funcName = text.substring(0, text.indexOf("("));
-        try {
-            String argsStr = text.substring(text.indexOf("(") + 1);
-            argsStr = argsStr.substring(0, argsStr.length() -1);
-            final String[] args = argsStr.split(",");
-            final StringBuilder stringBuilder = new StringBuilder()
-                    .append(funcName)
-                    .append("(");
+        // e.g.
+        // replace($,regex,replacement) ==> replace($, $, $)
+        // true() => true()
+        if (text.endsWith("()")) {
+            return text;
+        } else {
+            final String funcName = text.substring(0, text.indexOf("("));
+            try {
+                String argsStr = text.substring(text.indexOf("(") + 1);
+                argsStr = argsStr.substring(0, argsStr.length() -1);
+                final String[] args = argsStr.split(",");
+                final StringBuilder stringBuilder = new StringBuilder()
+                        .append(funcName)
+                        .append("(");
 
-            for (int i = 0; i < args.length; i++) {
-                final String arg = args[i];
-                final int snippetArgNo = i + 1;
-                if (i != 0) {
-                    // put commas back in
+                for (int i = 0; i < args.length; i++) {
+                    final String arg = args[i];
+                    if (i != 0) {
+                        // put commas back in
+                        stringBuilder
+                                .append(", ");
+                    }
                     stringBuilder
-                            .append(", ");
+                            .append("$");
                 }
-                stringBuilder
-                        .append("$");
+                stringBuilder.append(")"); // cursor pos after all args are tabbed through
+
+//                GWT.log(text + " => " + stringBuilder.toString());
+                return stringBuilder.toString();
+            } catch (Exception e) {
+                GWT.log("Error parsing " + text + " - " + e.getMessage());
+                return funcName + "(...)";
             }
-
-            stringBuilder.append(")"); // cursor pos after all args are tabbed through
-
-            return stringBuilder.toString();
-        } catch (Exception e) {
-            GWT.log("Error parsing " + text + " - " + e.getMessage());
-            return funcName + "(...)";
         }
 }
 
@@ -658,36 +670,44 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         try {
             // replace($,regex,replacement) ==> replace(${1}, ${2:regex}, ${3:replacement})$0
 
-            final String funcName = text.substring(0, text.indexOf("("));
-            String argsStr = text.substring(text.indexOf("(") + 1);
-            argsStr = argsStr.substring(0, argsStr.length() -1);
-            final String[] args = argsStr.split(",");
-            final StringBuilder stringBuilder = new StringBuilder()
-                .append(funcName)
-                    .append("(");
-
-            for (int i = 0; i < args.length; i++) {
-                final String arg = args[i];
-                final int snippetArgNo = i + 1;
-                if (i != 0) {
-                    // put commas back in
-                    stringBuilder
-                            .append(", ");
-                }
+            final StringBuilder stringBuilder = new StringBuilder();
+            if (text.endsWith("()")) {
+                // e.g. true() => true()${0}
                 stringBuilder
-                        .append("${")
-                        .append(snippetArgNo);
-
-                if (!arg.equals("$")) {
-                    stringBuilder
-                            .append(":")
-                            .append(arg);
-                }
+                        .append(text)
+                        .append("${0}");
+            } else {
+                final String funcName = text.substring(0, text.indexOf("("));
+                String argsStr = text.substring(text.indexOf("(") + 1);
+                argsStr = argsStr.substring(0, argsStr.length() -1);
+                final String[] args = argsStr.split(",");
                 stringBuilder
-                        .append("}");
+                        .append(funcName)
+                        .append("(");
+
+                for (int i = 0; i < args.length; i++) {
+                    final String arg = args[i];
+                    final int snippetArgNo = i + 1;
+                    if (i != 0) {
+                        // put commas back in
+                        stringBuilder
+                                .append(", ");
+                    }
+                    stringBuilder
+                            .append("${")
+                            .append(snippetArgNo);
+
+                    if (!arg.equals("$")) {
+                        stringBuilder
+                                .append(":")
+                                .append(arg);
+                    }
+                    stringBuilder
+                            .append("}");
+                }
+                stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
             }
 
-            stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
 
             return Optional.of(stringBuilder.toString());
         } catch (Exception e) {
