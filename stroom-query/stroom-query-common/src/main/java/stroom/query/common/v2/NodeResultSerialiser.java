@@ -4,18 +4,17 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class NodeResultSerialiser {
     public static boolean read(final Input input,
-                            final AtomicBoolean complete,
-                            final Coprocessors coprocessors,
-                            final Set<String> errors) {
-        boolean success = true;
+                               final Coprocessors coprocessors,
+                               final Consumer<String> errorConsumer,
+                               final Consumer<Boolean> completionConsumer) {
+        boolean success;
 
         // Read completion status.
-        complete.set(input.readBoolean());
+        completionConsumer.accept(input.readBoolean());
 
         // Read payloads for each coprocessor.
         success = coprocessors.readPayloads(input);
@@ -23,7 +22,7 @@ public class NodeResultSerialiser {
         // Read all errors.
         final int length = input.readInt();
         for (int i = 0; i < length; i++) {
-            errors.add(input.readString());
+            errorConsumer.accept(input.readString());
         }
 
         return success;

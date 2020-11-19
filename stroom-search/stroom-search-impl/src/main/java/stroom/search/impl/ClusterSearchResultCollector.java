@@ -60,12 +60,12 @@ public class ClusterSearchResultCollector implements Store {
     private final Coprocessors coprocessors;
 
     public ClusterSearchResultCollector(final Executor executor,
-                                 final TaskContextFactory taskContextFactory,
-                                 final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                 final AsyncSearchTask task,
-                                 final String nodeName,
-                                 final Set<String> highlights,
-                                 final Coprocessors coprocessors) {
+                                        final TaskContextFactory taskContextFactory,
+                                        final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
+                                        final AsyncSearchTask task,
+                                        final String nodeName,
+                                        final Set<String> highlights,
+                                        final Coprocessors coprocessors) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
@@ -141,8 +141,11 @@ public class ClusterSearchResultCollector implements Store {
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
-            final Set<String> errors = getErrorSet(nodeName);
-            success = NodeResultSerialiser.read(input, complete, coprocessors, errors);
+            final Set<String> errors = new HashSet<>();
+            success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
+            if (errors.size() > 0) {
+                getErrorSet(nodeName).addAll(errors);
+            }
         } catch (final RuntimeException e) {
             onFailure(nodeName, e);
         }
