@@ -27,7 +27,7 @@ public class SearchDebugUtil {
     private static final Path dir;
 
     static {
-        dir = resolveDir("stroom-app").resolve("src/test/resources/TestSearchResultCreation");
+        dir = resolveDir("stroom-search-impl").resolve("src/test/resources/TestSearchResultCreation");
     }
 
     private static final boolean writeActual = true;
@@ -35,6 +35,10 @@ public class SearchDebugUtil {
     private static Writer writer;
 
     private SearchDebugUtil() {
+    }
+
+    public static Path getDir() {
+        return dir;
     }
 
     private static Path resolveDir(final String projectDir) {

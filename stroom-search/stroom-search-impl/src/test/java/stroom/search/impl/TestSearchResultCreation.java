@@ -1,4 +1,4 @@
-package stroom.search;
+package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
@@ -28,8 +28,6 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
-import stroom.search.impl.ClusterSearchResultCollector;
-import stroom.test.common.ProjectPathUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,9 +50,7 @@ class TestSearchResultCreation {
         final SearchRequest searchRequest = createSearchRequest();
 
         // Make sure the search request is the same as the one we expected to make.
-        final Path resourcesDir = ProjectPathUtil.resolveDir("stroom-app")
-                .resolve("src/test/resources")
-                .resolve("TestSearchResultCreation");
+        final Path resourcesDir = SearchDebugUtil.getDir();
 
         // Validate the search request.
         validateSearchRequest(searchRequest);
