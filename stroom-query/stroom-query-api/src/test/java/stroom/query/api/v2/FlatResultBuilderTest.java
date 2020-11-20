@@ -37,7 +37,7 @@ class FlatResultBuilderTest {
         IntStream.range(0, numberResultSets).forEach(x -> {
             final List<Object> values = IntStream.range(0, numberFields).mapToObj(y ->
                     String.format("field%d_value%d", y, x)).collect(Collectors.toList());
-            values.add(values);
+            list.add(values);
         });
 
         flatResultBuilder.structure(fields);

@@ -37,36 +37,20 @@ import java.util.Objects;
         description = "A result structure used primarily for visualisation data",
         parent = Result.class)
 public final class FlatResult extends Result {
-
-    private static final long serialVersionUID = 3826654996795750099L;
-
     @XmlElement
     @JsonProperty
-    private List<Field> structure;
+    private final List<Field> structure;
 
     @XmlElement
     @ApiModelProperty(value = "The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
     @JsonProperty
-    private List<List<Object>> values;
+    private final List<List<Object>> values;
 
     @XmlElement
     @ApiModelProperty(value = "The size of the result set being returned")
     @JsonProperty
-    private Long size;
-
-    public FlatResult() {
-    }
-
-    public FlatResult(final String componentId,
-                      final List<Field> structure,
-                      final List<List<Object>> values,
-                      final String error) {
-        super(componentId, error);
-        this.structure = structure;
-        this.values = values;
-        this.size = (long) values.size();
-    }
+    private final Long size;
 
     @JsonCreator
     public FlatResult(@JsonProperty("componentId") final String componentId,
@@ -84,24 +68,12 @@ public final class FlatResult extends Result {
         return structure;
     }
 
-    public void setStructure(final List<Field> structure) {
-        this.structure = structure;
-    }
-
     public List<List<Object>> getValues() {
         return values;
     }
 
-    public void setValues(final List<List<Object>> values) {
-        this.values = values;
-    }
-
     public Long getSize() {
         return size;
-    }
-
-    public void setSize(final Long size) {
-        this.size = size;
     }
 
     @Override
@@ -130,14 +102,14 @@ public final class FlatResult extends Result {
      */
     public static class Builder
             extends Result.Builder<FlatResult, Builder> {
-        private List<Field> structure;
-        private List<List<Object>> values;
+        private List<Field> structure = List.of();
+        private List<List<Object>> values = List.of();
         private Long overriddenSize = null;
 
         /**
          * Add headings to our data
          *
-         * @param fields the fields which act as headings for our data
+         * @param structure the fields which act as headings for our data
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder structure(List<Field> structure) {
@@ -174,7 +146,7 @@ public final class FlatResult extends Result {
             if (null != overriddenSize) {
                 return new FlatResult(getComponentId(), structure, values, overriddenSize, getError());
             } else {
-                return new FlatResult(getComponentId(), structure, values, getError());
+                return new FlatResult(getComponentId(), structure, values, (long) values.size(), getError());
             }
         }
     }
