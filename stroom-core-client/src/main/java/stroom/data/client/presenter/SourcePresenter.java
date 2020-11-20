@@ -385,9 +385,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             && dataNavigatorData.getCharOffsetFrom().isPresent()
             && dataNavigatorData.getCharOffsetTo().isPresent()) {
 
-            if (dataNavigatorData.getTotalChars().isPresent()) {
+            if (dataNavigatorData.getTotalChars().isExact()) {
                 progress = Progress.boundedRange(
-                        dataNavigatorData.getTotalChars().get() -1, // count to zero based bound
+                        dataNavigatorData.getTotalChars().getCount() -1, // count to zero based bound
                         dataNavigatorData.getCharOffsetFrom().get(),
                         dataNavigatorData.getCharOffsetTo().get());
             } else {
@@ -408,7 +408,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         dataNavigatorData.getByteOffsetFrom().get(),
                         dataNavigatorData.getByteOffsetTo().get());
             }
-
         }
 
         if (progress != null) {
@@ -605,13 +604,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         }
 
         @Override
-        public Optional<Long> getTotalChars() {
-            if (exactCharCount != null) {
-                return exactCharCount.asOptional();
+        public Count<Long> getTotalChars() {
+
+            if (lastResult != null && lastResult.getTotalCharacterCount() != null) {
+                return lastResult.getTotalCharacterCount();
             } else {
-                return Optional.ofNullable(lastResult)
-                        .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
-                        .flatMap(Count::asOptional);
+                return Count.approximately(0L);
             }
         }
 

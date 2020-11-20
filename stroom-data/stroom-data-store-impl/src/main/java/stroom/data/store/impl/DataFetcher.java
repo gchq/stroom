@@ -424,7 +424,7 @@ public class DataFetcher {
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
-        Charset charset = Charset.forName(encoding);
+        final Charset charset = Charset.forName(encoding);
         final float averageBytesPerChar = charset.newEncoder().averageBytesPerChar();
 
 //        LOGGER.info("Size in bytes: {}, avgBytesPerChar: {}, approxChars: {}",
@@ -439,6 +439,9 @@ public class DataFetcher {
             rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
         rawResult.setTotalBytes(segmentInputStream.size());
+        if (rawResult.getTotalCharacterCount() == null) {
+            rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
+        }
 
         String output;
         final DocRef pipeline = fetchDataRequest.getPipeline();
@@ -538,6 +541,11 @@ public class DataFetcher {
                 null);
     }
 
+    private Count<Long> estimateCharCount(final long totalBytes, final Charset charset) {
+        return Count.approximately((long) Math.floor(
+                charset.newDecoder().averageCharsPerByte() * totalBytes));
+    }
+
     private void writeEventLog(final String eventId,
                                final String feedName,
                                final String streamTypeName,
@@ -584,7 +592,11 @@ public class DataFetcher {
 
         // Get the data from the stream.
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
-        RawResult rawResult = extractDataRange(sourceLocation, segmentInputStream, encoding);
+        RawResult rawResult = extractDataRange(
+                sourceLocation,
+                segmentInputStream,
+                encoding,
+                segmentInputStream.size());
 
         // Override the page items range/total as we are dealing in segments/records
         rawResult.setItemRange(OffsetRange.of(segmentNumber, 1L));
@@ -599,7 +611,11 @@ public class DataFetcher {
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding)) {
-            final RawResult rawResult = extractDataRange(sourceLocation, bomRemovalIS, encoding);
+            final RawResult rawResult = extractDataRange(
+                    sourceLocation,
+                    bomRemovalIS,
+                    encoding,
+                    segmentInputStream.size());
             // Non-segmented data exists within parts so set the item info
             rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
             rawResult.setTotalItemCount(Count.of(partCount, true));
@@ -609,7 +625,8 @@ public class DataFetcher {
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
                                        final InputStream inputStream,
-                                       final String encoding) throws IOException {
+                                       final String encoding,
+                                       final long streamSizeBytes) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -786,13 +803,17 @@ public class DataFetcher {
             currCharOffset = currCharOffset - 1; // undo the last ++ op
         }
 
-        // set it to the most we know so far, approximately
-        if (!totalCharCount.isExact()) {
-            totalCharCount = Count.approximately(currCharOffset + 1); // zero based offset to count
-        }
 //        final RowCount<Long> totalCharCount = RowCount.of(
 //                startCharOffset + charData.length(),
 //                isTotalPageableItemsExact);
+
+        if (!totalCharCount.isExact() && charReader.getLastCharOffsetRead().isPresent()) {
+            // Estimate the total chat count based on the ratio of chars to bytes seen so far
+            final double avgCharsPerByte = charReader.getLastCharOffsetRead().get()
+                    / (double) charReader.getLastByteOffsetRead().get();
+
+            totalCharCount = Count.approximately((long) (avgCharsPerByte * streamSizeBytes));
+        }
 
         // The range returned may differ to that requested if we have continued to the end of the line
         final DataRange actualDataRange = DataRange.builder()

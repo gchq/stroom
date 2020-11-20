@@ -6,66 +6,6 @@ public interface HasCharacterData {
 
     boolean areNavigationControlsVisible();
 
-    // Methods for parts
-
-//    boolean isMultiPart();
-//
-//    /**
-//     * The current partNo
-//     * zero based
-//     */
-//    Optional<Long> getPartNo();
-//
-//    /**
-//     * @return The total number of parts in the data, if known
-//     */
-//    Optional<Long> getTotalParts();
-//
-//    /**
-//     * Called when the user clicks one of the part nav controls
-//     * @param partNo The new part number
-//     */
-//    void setPartNo(final long partNo);
-//
-//    // Methods for segments
-//
-//    /**
-//     * @return True if the data is segmented.
-//     */
-//    boolean isSegmented();
-//
-//    /**
-//     * @return True if multiple segments can be displayed at once
-//     */
-//    boolean canDisplayMultipleSegments();
-//    /**
-//     * zero based, inclusive
-//     */
-//    Optional<Long> getSegmentNoFrom();
-//
-//    /**
-//     * zero based, inclusive
-//     */
-//    Optional<Long> getSegmentNoTo();
-//
-//    /**
-//     * @return The total number of segments in the data, if known
-//     */
-//    Optional<Long> getTotalSegments();
-//
-//    Optional<String> getSegmentName();
-//
-//    /**
-//     * Called when the user clicks one of the segment nav controls
-//     * @param segmentNoFrom The new segment number
-//     */
-//    void setSegmentNoFrom(final long segmentNoFrom);
-//
-//    // Methods for character data
-//
-//    boolean canNavigateCharacterData();
-
-
     DataRange getDataRange();
 
     /**
@@ -133,7 +73,7 @@ public interface HasCharacterData {
     /**
      * @return The total number of chars in the source, if known
      */
-    Optional<Long> getTotalChars();
+    Count<Long> getTotalChars();
 
     /**
      * @return The total number of bytes in the source, if known

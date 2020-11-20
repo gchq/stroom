@@ -221,9 +221,11 @@ public class CharacterRangeSelectionViewImpl
     }
 
     private void updateCountLabels() {
-        lblTotalCharCount.setText(totalCharCount.isExact()
-                ? totalCharCount.getCount().toString()
-                : "?");
+        final String prefix = totalCharCount.isExact()
+                ? ""
+                : "approx. ";
+
+        lblTotalCharCount.setText(prefix + totalCharCount.getCount());
     }
 
     @Override

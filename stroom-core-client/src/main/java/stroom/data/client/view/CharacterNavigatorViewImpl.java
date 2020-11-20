@@ -18,9 +18,9 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -149,7 +148,10 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
             advanceCharactersBackwardBtn.setEnabled(charFrom > 0);
 
             advanceCharactersForwardBtn.setEnabled(
-                    charTo < display.getTotalChars().map(total -> total - 1).orElse(Long.MAX_VALUE));
+                    charTo < display.getTotalChars()
+                            .asOptional()
+                            .map(total -> total - 1)
+                            .orElse(Long.MAX_VALUE));
 
             setCharactersControlVisibility(true);
         } else {
@@ -178,6 +180,24 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                     return formatter.format(val);
                 })
                 .orElse(UNKNOWN_VALUE);
+    }
+
+    private String getLongValueForLabel(final Count<Long> value) {
+        return getLongValueForLabel(value, 0);
+    }
+    private String getLongValueForLabel(final Count<Long> value, final int increment) {
+        // Increment allows for switching from zero to one based
+        if (value != null && value.getCount() != null) {
+            final NumberFormat formatter = NumberFormat.getFormat(NUMBER_FORMAT);
+            String str = formatter.format(value.getCount() + increment);
+            if (value.isExact()) {
+                return str;
+            } else {
+                return "~" + str;
+            }
+        } else {
+            return UNKNOWN_VALUE;
+        }
     }
 
     private String getIntValueForLabel(final Optional<Integer> value) {

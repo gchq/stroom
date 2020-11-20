@@ -70,8 +70,11 @@ public class Count<T extends Number> {
                 : other;
     }
 
+    /**
+     * @return Empty if the count is not exact or is null
+     */
     public Optional<T> asOptional() {
-        return exact
+        return exact && count != null
                 ? Optional.of(count)
                 : Optional.empty();
     }

@@ -3,7 +3,6 @@ package stroom.data.client.presenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
-import stroom.util.shared.Count;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 
@@ -80,10 +79,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
         final CharacterRangeSelectionPresenter characterRangeSelectionPresenter = getCharacterRangeSelectionPresenter();
         characterRangeSelectionPresenter.setDataRange(display.getDataRange());
 
-        characterRangeSelectionPresenter.setTotalCharsCount(
-                Count.of(display.getTotalChars()
-                        .orElse(0L), display.getTotalChars()
-                        .isPresent()));
+        characterRangeSelectionPresenter.setTotalCharsCount(display.getTotalChars());
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
