@@ -17,7 +17,7 @@ public class ExtractionReceiver extends ReceiverImpl {
         this.fieldIndex = fieldIndex;
     }
 
-    public FieldIndex getFieldIndexMap() {
+    public FieldIndex getFieldMap() {
         return fieldIndex;
     }
 }

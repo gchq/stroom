@@ -82,7 +82,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     @Override
     public ExtractionReceiver create(final ExtractionReceiver receiver, final Query query) {
-        final FieldIndex fieldIndex = receiver.getFieldIndexMap();
+        final FieldIndex fieldIndex = receiver.getFieldMap();
         final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
         final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
