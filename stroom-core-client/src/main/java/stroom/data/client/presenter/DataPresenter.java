@@ -126,8 +126,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final ItemNavigatorPresenter itemNavigatorPresenter;
     private final ProgressPresenter progressPresenter;
     private final MarkerListPresenter markerListPresenter;
-    private final SourceTabPlugin sourceTabPlugin;
-    private final SourceOpenSupport sourceOpenSupport;
     private final UiConfigCache uiConfigCache;
 
     private final RestFactory restFactory;
@@ -184,7 +182,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
                          final SourceTabPlugin sourceTabPlugin,
-                         final SourceOpenSupport sourceOpenSupport,
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
@@ -195,8 +192,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.progressPresenter = progressPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
-        this.sourceTabPlugin = sourceTabPlugin;
-        this.sourceOpenSupport = sourceOpenSupport;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
 

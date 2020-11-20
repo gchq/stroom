@@ -45,7 +45,6 @@ import stroom.data.client.presenter.ProcessChoicePresenter.ProcessChoiceView;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
-import stroom.data.client.presenter.SourceOpenSupport;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
@@ -83,7 +82,6 @@ public class StreamStoreModule extends PluginModule {
     protected void configure() {
         bind(DataTypeUiManager.class).asEagerSingleton();
         bind(DataPopupSupport.class).asEagerSingleton();
-        bind(SourceOpenSupport.class).asEagerSingleton();
 
         bindPlugin(SourceTabPlugin.class);
         bindPlugin(DataPreviewTabPlugin.class);
