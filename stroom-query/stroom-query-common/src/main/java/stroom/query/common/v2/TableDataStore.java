@@ -256,8 +256,6 @@ public class TableDataStore {
             groupingMap.compute(key, (k, v) -> {
                 Item result = v;
 
-                // Items with a null key values will not undergo partitioning and reduction as we don't want to
-                // group items with null key values as they are child items.
                 if (result == null) {
                     result = item;
                 } else {

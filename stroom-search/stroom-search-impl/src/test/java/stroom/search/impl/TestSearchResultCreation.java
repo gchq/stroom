@@ -48,7 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -210,6 +211,14 @@ class TestSearchResultCreation {
     }
 
     @Test
+    void testMultiAsyncPayloadTransfer() throws Exception {
+        for (int i = 0; i < 1000; i++) {
+            System.out.println("RUN " + i);
+            testAsyncPayloadTransfer();
+        }
+    }
+
+    @Test
     void testAsyncPayloadTransfer() throws Exception {
         final SearchRequest searchRequest = createSearchRequest();
 
@@ -232,11 +241,11 @@ class TestSearchResultCreation {
         final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
 
-        final AtomicBoolean complete = new AtomicBoolean();
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         final String line = "2010-01-01T00:02:00.000Z,user3,694,3";
         final String[] values = line.split(",");
-        final int count = 10000000;
+        final int count = 100000000;
         final int threads = 1000;
         final int perThread = count / threads;
 
@@ -250,14 +259,15 @@ class TestSearchResultCreation {
                 }
             });
         }
-        CompletableFuture.allOf(futures).thenRunAsync(() ->
-            complete.set(true));
+        CompletableFuture.allOf(futures).thenRunAsync(countDownLatch::countDown);
 
         // Create payload transfer future.
         final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
-            while (!complete.get()) {
+            boolean complete = false;
+            while (!complete) {
                 try {
-                    Thread.sleep((long) (Math.random() * 100));
+                    final long wait = (long) (Math.random() * 100);
+                    complete = countDownLatch.await(wait, TimeUnit.MILLISECONDS);
                     transferPayloads(coprocessors, coprocessors2);
                 } catch (final InterruptedException e) {
                     // Ignore.
@@ -268,8 +278,6 @@ class TestSearchResultCreation {
 
 
         consumer.getCompletionConsumer().accept((long) count);
-
-
 
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
@@ -288,7 +296,6 @@ class TestSearchResultCreation {
         final DataItem dataItem = dataItems.iterator().next();
         final Val val = dataItem.getValue(2);
         assertThat(val.toLong()).isEqualTo(count);
-
 
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
@@ -311,7 +318,9 @@ class TestSearchResultCreation {
         try (final Output output = new Output(outputStream)) {
             source.writePayloads(output);
         }
-        try (final Input input = new Input(new ByteArrayInputStream(outputStream.toByteArray()))) {
+
+        final byte[] bytes = outputStream.toByteArray();
+        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
             target.readPayloads(input);
         }
     }
