@@ -28,7 +28,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class DataPopupSupport {
+public class DataDisplaySupport {
 
     private final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider;
     private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
@@ -37,11 +37,11 @@ public class DataPopupSupport {
     private final Provider<SourceTabPlugin> sourceTabPluginProvider;
 
     @Inject
-    public DataPopupSupport(final EventBus eventBus,
-                            final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider,
-                            final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
-                            final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider,
-                            final Provider<SourceTabPlugin> sourceTabPluginProvider) {
+    public DataDisplaySupport(final EventBus eventBus,
+                              final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider,
+                              final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
+                              final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider,
+                              final Provider<SourceTabPlugin> sourceTabPluginProvider) {
 
         this.dataPresenterProvider = dataPresenterProvider;
         this.dataPreviewTabPluginProvider = dataPreviewTabPluginProvider;
@@ -52,7 +52,7 @@ public class DataPopupSupport {
 
             switch (showDataEvent.getDisplayMode()) {
                 case DIALOG:
-                    openDialog(showDataEvent);
+                    openPopupDialog(showDataEvent);
                     break;
                 case STROOM_TAB:
                     openStroomTab(showDataEvent);
@@ -73,7 +73,7 @@ public class DataPopupSupport {
         }
     }
 
-    private void openDialog(final ShowDataEvent showDataEvent) {
+    private void openPopupDialog(final ShowDataEvent showDataEvent) {
         final SourceLocation sourceLocation = showDataEvent.getSourceLocation();
         final ClassificationWrapperPresenter presenter;
         final String caption;
@@ -102,19 +102,6 @@ public class DataPopupSupport {
                 1000,
                 600,
                 true);
-
-//            final String locationInfo;
-//            if (e.getSourceLocation().getDataRange() != null
-//                    && e.getSourceLocation().getDataRange().getLocationFrom() != null
-//                    && e.getSourceLocation().getDataRange().getLocationTo() != null) {
-//                final DataRange dataRange = e.getSourceLocation().getDataRange();
-//                locationInfo = " (Line:Col Range: "
-//                        + dataRange.getLocationFrom().toString() + " to "
-//                        + dataRange.getLocationTo().toString()
-//                        + ")";
-//            } else {
-//                locationInfo = "";
-//            }
 
         ShowPopupEvent.fire(
                 presenter,

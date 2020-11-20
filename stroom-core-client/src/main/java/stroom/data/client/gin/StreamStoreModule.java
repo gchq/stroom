@@ -25,7 +25,7 @@ import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.data.client.presenter.DataPopupSupport;
+import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
@@ -81,7 +81,7 @@ public class StreamStoreModule extends PluginModule {
     @Override
     protected void configure() {
         bind(DataTypeUiManager.class).asEagerSingleton();
-        bind(DataPopupSupport.class).asEagerSingleton();
+        bind(DataDisplaySupport.class).asEagerSingleton();
 
         bindPlugin(SourceTabPlugin.class);
         bindPlugin(DataPreviewTabPlugin.class);
