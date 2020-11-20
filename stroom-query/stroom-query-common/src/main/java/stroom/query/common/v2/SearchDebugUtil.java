@@ -27,7 +27,7 @@ public class SearchDebugUtil {
     private static final Path dir;
 
     static {
-        dir = resolveDir("stroom-search-impl").resolve("src/test/resources/TestSearchResultCreation");
+        dir = resolveDir().resolve("src/test/resources/TestSearchResultCreation");
     }
 
     private static final boolean writeActual = true;
@@ -41,9 +41,10 @@ public class SearchDebugUtil {
         return dir;
     }
 
-    private static Path resolveDir(final String projectDir) {
-        Path root = Paths.get(".").toAbsolutePath().normalize();
-        while (root != null && !Files.isDirectory(root.resolve(projectDir))) {
+    private static Path resolveDir() {
+        final String path = SearchDebugUtil.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        Path root = Paths.get(path).toAbsolutePath().normalize();
+        while (root != null && !Files.isDirectory(root.resolve("stroom-query"))) {
             root = root.getParent();
         }
 
@@ -51,7 +52,7 @@ public class SearchDebugUtil {
             throw new RuntimeException("Path not found: " + dir);
         }
 
-        return root.resolve(projectDir);
+        return root.resolve("stroom-search").resolve("stroom-search-impl");
     }
 
     private static String getSuffix(final boolean actual) {
