@@ -80,6 +80,7 @@ public class DataPopupSupport {
 
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
+            dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
             dataPresenter.fetchData(sourceLocation);
             presenter = dataPresenter;
             caption = "Stream "

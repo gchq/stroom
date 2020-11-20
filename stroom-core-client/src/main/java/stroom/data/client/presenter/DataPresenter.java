@@ -136,6 +136,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     final NoNavigatorData noNavigatorData = new NoNavigatorData();
     final NavigatorData navigatorData = new NavigatorData();
 
+    private DisplayMode displayMode = null;
     private boolean errorMarkerMode = true;
 
     // TODO @AT Most of these currentXXX vars need to go and we just get/set on the currentSourceLocation
@@ -254,8 +255,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         : null)
                 .build();
 
-        ShowSourceEvent.fire(this, sourceLocation, DisplayMode.STROOM_TAB);
-//        sourceTabPlugin.open(sourceLocation, true);
+        // Open it in the same type of view as we are in now
+        ShowDataEvent.fire(
+                this,
+                sourceLocation,
+                DataViewType.SOURCE,
+                (displayMode != null ? displayMode : DisplayMode.STROOM_TAB));
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
@@ -458,6 +463,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             refreshHighlights(lastResult);
             refreshMarkers(lastResult);
         }
+    }
+
+    public void setDisplayMode(final DisplayMode displayMode) {
+        this.displayMode = displayMode;
     }
 
     public void fetchData(final Meta meta) {

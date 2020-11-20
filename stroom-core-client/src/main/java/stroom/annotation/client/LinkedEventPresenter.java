@@ -7,6 +7,7 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.data.client.presenter.ClassificationWrappedDataPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
@@ -60,6 +61,9 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         this.dataPresenter = dataPresenter;
         dataPresenter.setFormatOnLoad(true);
         dataPresenter.setNavigationControlsVisible(false);
+        // It is not in its own dialog but is part of this one and this will determine how the
+        // source view is opened if the user clicks that
+        dataPresenter.setDisplayMode(DisplayMode.DIALOG);
 
         this.addEventLinkPresenter = addEventLinkPresenter;
 

@@ -51,8 +51,9 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
         return super.openTabPresenter(
                 forceOpen,
                 new DataPreviewKey(sourceLocation),
-                sourceTabPresenter ->
-                        sourceTabPresenter.setSourceLocation(sourceLocation));
+                dataPreviewTabPresenter -> {
+                    dataPreviewTabPresenter.setSourceLocation(sourceLocation);
+                });
 
     }
 }

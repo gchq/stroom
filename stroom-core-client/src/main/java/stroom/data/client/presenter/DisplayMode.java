@@ -1,7 +1,13 @@
 package stroom.data.client.presenter;
 
 public enum DisplayMode {
+    /**
+     * Displays the presenter in a popup modal dialog
+     */
     DIALOG("popup"),
+    /**
+     * Displays the presenter in a top level stroom tab (not a browser tab)
+     */
     STROOM_TAB("tab");
 
     private final String name;
