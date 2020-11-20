@@ -27,6 +27,7 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -102,8 +103,8 @@ public final class FlatResult extends Result {
      */
     public static class Builder
             extends Result.Builder<FlatResult, Builder> {
-        private List<Field> structure = List.of();
-        private List<List<Object>> values = List.of();
+        private List<Field> structure = Collections.emptyList();
+        private List<List<Object>> values = Collections.emptyList();
         private Long overriddenSize = null;
 
         /**

@@ -34,7 +34,6 @@ import stroom.search.extraction.ExtractionReceiver;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -211,8 +210,7 @@ class TestSearchResultCreation {
         validateSearchResponse(searchResponse);
     }
 
-    @Ignore
-    @Test
+    //    @Test
     void testMultiAsyncPayloadTransfer() throws Exception {
         for (int i = 0; i < 1000; i++) {
             System.out.println("RUN " + i);
@@ -220,8 +218,7 @@ class TestSearchResultCreation {
         }
     }
 
-    @Ignore
-    @Test
+    //    @Test
     void testAsyncPayloadTransfer() throws Exception {
         final SearchRequest searchRequest = createSearchRequest();
 
