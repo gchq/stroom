@@ -2,6 +2,7 @@ package stroom.query.api.v2;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,19 +23,25 @@ class FlatResultBuilderTest {
         final FlatResult.Builder flatResultBuilder = new FlatResult.Builder()
                 .componentId(componentId)
                 .error(error);
+        final List<Field> fields = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
-                flatResultBuilder
-                        .addField(new Field.Builder()
+                fields
+                        .add(new Field.Builder()
                                 .id(String.format("id%d", x))
                                 .name(String.format("field%d", x))
                                 .expression("expression")
                                 .build())
         );
+
+        final List<List<Object>> list = new ArrayList<>();
         IntStream.range(0, numberResultSets).forEach(x -> {
             final List<Object> values = IntStream.range(0, numberFields).mapToObj(y ->
                     String.format("field%d_value%d", y, x)).collect(Collectors.toList());
-            flatResultBuilder.addValues(values);
+            values.add(values);
         });
+
+        flatResultBuilder.structure(fields);
+        flatResultBuilder.values(list);
         final FlatResult flatResult = flatResultBuilder.build();
 
         // Then

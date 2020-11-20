@@ -18,33 +18,40 @@ package stroom.query.common.v2;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 class Items implements Iterable<Item> {
-    private final List<Item> list;
+    private volatile List<Item> list;
     private final int trimmedSize;
     private final int maxSize;
-    private final Comparator<Item> comparator;
+    private final Function<List<Item>, List<Item>> groupingFunction;
+    private final Function<List<Item>, List<Item>> sortingFunction;
     private final Consumer<Item> removeHandler;
 
     private volatile boolean trimmed = true;
     private volatile boolean full;
 
     Items(final int trimmedSize,
-          final Comparator<Item> comparator,
+          final Function<List<Item>, List<Item>> groupingFunction,
+          final Function<List<Item>, List<Item>> sortingFunction,
           final Consumer<Item> removeHandler) {
         this.trimmedSize = trimmedSize;
-        this.maxSize = trimmedSize * 2;
-        this.comparator = comparator;
+        if (trimmedSize < Integer.MAX_VALUE / 2) {
+            this.maxSize = trimmedSize * 2;
+        } else {
+            this.maxSize = Integer.MAX_VALUE;
+        }
+        this.groupingFunction = groupingFunction;
+        this.sortingFunction = sortingFunction;
         this.removeHandler = removeHandler;
         list = new ArrayList<>();
     }
 
     synchronized void add(final Item item) {
-        if (comparator != null) {
+        if (groupingFunction != null || sortingFunction != null) {
             list.add(item);
             trimmed = false;
             if (list.size() > maxSize) {
@@ -62,15 +69,26 @@ class Items implements Iterable<Item> {
         return list.size();
     }
 
-    private void sortAndTrim() {
+    private synchronized void sortAndTrim() {
         if (!trimmed) {
-            // Sort the list before trimming if we have a comparator.
-            list.sort(comparator);
-            while (list.size() > trimmedSize) {
-                final Item lastItem = list.remove(list.size() - 1);
+            // We won't group, sort or trim lists with only a single item obviously.
+            if (list.size() > 1) {
+                // Group items.
+                if (groupingFunction != null) {
+                    list = groupingFunction.apply(list);
+                }
 
-                // Tell the remove handler that we have removed an item.
-                removeHandler.accept(lastItem);
+                // Sort the list before trimming if we have a comparator.
+                if (sortingFunction != null) {
+                    list = sortingFunction.apply(list);
+                }
+
+                while (list.size() > trimmedSize) {
+                    final Item lastItem = list.remove(list.size() - 1);
+
+                    // Tell the remove handler that we have removed an item.
+                    removeHandler.accept(lastItem);
+                }
             }
             trimmed = true;
         }

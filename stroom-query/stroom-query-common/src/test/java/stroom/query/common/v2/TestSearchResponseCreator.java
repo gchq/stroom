@@ -274,7 +274,7 @@ class TestSearchResponseCreator {
     }
 
     private Data createSingleItemDataObject() {
-        final Items items = new Items(100, null, remove -> LOGGER.info(remove.toString()));
+        final Items items = new Items(100, null, null, remove -> LOGGER.info(remove.toString()));
         final Generator[] generators = new Generator[3];
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();

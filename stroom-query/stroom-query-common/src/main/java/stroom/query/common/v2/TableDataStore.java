@@ -30,16 +30,17 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 public class TableDataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableDataStore.class);
 
-    private final Map<GroupKey, Item> groupingMap = new ConcurrentHashMap<>();
     private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
     private final CompiledFields compiledFields;
@@ -51,6 +52,9 @@ public class TableDataStore {
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
     private final ItemSerialiser itemSerialiser;
+
+    private final Function<List<Item>, List<Item>> groupingFunction;
+    private final Function<List<Item>, List<Item>> sortingFunction;
 
     private volatile boolean hasEnoughData;
 
@@ -69,18 +73,20 @@ public class TableDataStore {
         this.maxResults = maxResults;
         this.storeSize = storeSize;
         itemSerialiser = new ItemSerialiser(compiledFields);
+
+        groupingFunction = createGroupingFunction();
+        sortingFunction = createSortingFunction(compiledSorter);
     }
 
     void clear() {
         totalResultCount.set(0);
-        groupingMap.clear();
         childMap.clear();
     }
 
     boolean readPayload(final Input input) {
         final Item[] itemsArray = itemSerialiser.readArray(input);
         for (final Item item : itemsArray) {
-            addToGroupMap(item);
+            addToChildMap(item);
         }
 
         // Return success if we have not been asked to terminate and we are still willing to accept data.
@@ -148,7 +154,7 @@ public class TableDataStore {
             parentKey = key;
 
             final Item item = new Item(key, generators);
-            addToGroupMap(item);
+            addToChildMap(item);
         }
     }
 
@@ -179,8 +185,8 @@ public class TableDataStore {
         return generators;
     }
 
-    private void addToGroupMap(final Item item) {
-        LOGGER.trace(() -> "addToGroupMap called for item");
+    private void addToChildMap(final Item item) {
+        LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
             return;
         }
@@ -188,15 +194,76 @@ public class TableDataStore {
         // Update the total number of results that we have received.
         totalResultCount.getAndIncrement();
 
-        final GroupKey key = item.getKey();
-        if (key.getValues().length > 0) {
+        GroupKey parentKey;
+        if (item.getKey().getParent() != null) {
+            parentKey = item.getKey().getParent();
+        } else {
+            parentKey = Data.ROOT_KEY;
+        }
+
+        final Function<List<Item>, List<Item>> groupingFunction = getGroupingFunction(item.getKey());
+        final Function<List<Item>, List<Item>> sortingFunction = this.sortingFunction;
+
+        childMap.compute(parentKey, (k, v) -> {
+            Items result = v;
+
+            if (result == null) {
+                result = new Items(storeSize.size(item.getKey().getDepth()), groupingFunction, sortingFunction, removed ->
+                        remove(removed.getKey()));
+                result.add(item);
+                resultCount.incrementAndGet();
+
+            } else {
+                result.add(item);
+            }
+
+            return result;
+        });
+
+        // Some searches can be terminated early if the user is not sorting or grouping.
+        if (!hasEnoughData && !compiledSorter.hasSort() && !compiledDepths.hasGroup()) {
+            // No sorting or grouping so we can stop the search as soon as we have the number of results requested by
+            // the client
+            if (maxResults != null && totalResultCount.get() >= maxResults.size(0)) {
+                hasEnoughData = true;
+            }
+        }
+
+        LOGGER.trace(() -> "Finished adding items to the queue");
+    }
+
+    private Function<List<Item>, List<Item>> getGroupingFunction(final GroupKey groupKey) {
+        if (groupKey.getValues() != null && groupKey.getValues().length > 0) {
+            return groupingFunction;
+        }
+        return null;
+    }
+
+    private Function<List<Item>, List<Item>> createGroupingFunction() {
+        return this::groupItems;
+    }
+
+    private Function<List<Item>, List<Item>> createSortingFunction(final CompiledSorter compiledSorter) {
+        if (compiledSorter.hasSort()) {
+            return list -> {
+                list.sort(compiledSorter);
+                return list;
+            };
+        }
+        return null;
+    }
+
+    private List<Item> groupItems(final List<Item> list) {
+        // Group items in the list.
+        final Map<GroupKey, Item> groupingMap = new HashMap<>();
+        for (final Item item : list) {
+            final GroupKey key = item.getKey();
             groupingMap.compute(key, (k, v) -> {
                 Item result = v;
 
                 // Items with a null key values will not undergo partitioning and reduction as we don't want to
                 // group items with null key values as they are child items.
                 if (result == null) {
-                    addToChildMap(item);
                     result = item;
                 } else {
                     // Combine the new item into the original item.
@@ -212,63 +279,13 @@ public class TableDataStore {
                                 newGenerators[i],
                                 key.getDepth());
                     }
-                    result.setGenerators(combinedGenerators);
+                    result = new Item(k, combinedGenerators);
                 }
 
                 return result;
             });
-        } else {
-            addToChildMap(item);
         }
-
-        // Some searches can be terminated early if the user is not sorting or grouping.
-        if (!hasEnoughData && !compiledSorter.hasSort() && !compiledDepths.hasGroup()) {
-            // No sorting or grouping so we can stop the search as soon as we have the number of results requested by
-            // the client
-            if (maxResults != null && totalResultCount.get() >= maxResults.size(0)) {
-                hasEnoughData = true;
-            }
-        }
-
-        LOGGER.trace(() -> "Finished adding items to the queue");
-    }
-
-    private void addToChildMap(final Item item) {
-        GroupKey parentKey;
-        if (item.getKey().getParent() != null) {
-            parentKey = item.getKey().getParent();
-        } else {
-            parentKey = Data.ROOT_KEY;
-        }
-
-        childMap.compute(parentKey, (k, v) -> {
-            Items result = v;
-
-            if (result == null) {
-                result = new Items(storeSize.size(item.getKey().getDepth()), compiledSorter, removed ->
-                        remove(removed.getKey()));
-                result.add(item);
-                resultCount.incrementAndGet();
-
-            } else {
-                result.add(item);
-            }
-
-            return result;
-        });
-    }
-
-    private void remove(final GroupKey groupKey) {
-        if (groupKey != null) {
-            // Execute removal asynchronously to prevent blocking.
-            CompletableFuture.runAsync(() -> {
-                final Items items = childMap.remove(groupKey);
-                if (items != null) {
-                    resultCount.addAndGet(-items.size());
-                    items.forEach(item -> remove(item.getKey()));
-                }
-            });
-        }
+        return new ArrayList<>(groupingMap.values());
     }
 
     private Generator combine(final int groupDepth,
@@ -293,6 +310,19 @@ public class TableDataStore {
         }
 
         return output;
+    }
+
+    private void remove(final GroupKey groupKey) {
+        if (groupKey != null) {
+            // Execute removal asynchronously to prevent blocking.
+            CompletableFuture.runAsync(() -> {
+                final Items items = childMap.remove(groupKey);
+                if (items != null) {
+                    resultCount.addAndGet(-items.size());
+                    items.forEach(item -> remove(item.getKey()));
+                }
+            });
+        }
     }
 
     public Data getData() {

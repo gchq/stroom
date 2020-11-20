@@ -155,28 +155,40 @@ public class FlatResultCreator implements ResultCreator {
                     // integer max value.
                     final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
-                    totalResults = addResults(mappedData, rangeChecker, openGroups, items, results, 0,
-                            0, maxResults);
+                    final Map<Integer, List<Field>> groupFields = new HashMap<>();
+                    for (final Field field : fields) {
+                        if (field.getGroup() != null) {
+                            groupFields.computeIfAbsent(field.getGroup(), k ->
+                                    new ArrayList<>())
+                                    .add(field);
+                        }
+                    }
+
+                    totalResults = addResults(
+                            mappedData,
+                            rangeChecker,
+                            openGroups,
+                            items,
+                            results,
+                            0,
+                            0,
+                            maxResults,
+                            groupFields);
                 }
 
-                final FlatResult.Builder resultBuilder = new FlatResult.Builder()
+                final List<Field> structure = new ArrayList<>();
+                structure.add(new Field.Builder().name(":ParentKey").build());
+                structure.add(new Field.Builder().name(":Key").build());
+                structure.add(new Field.Builder().name(":Depth").build());
+                structure.addAll(this.fields);
+
+                return new FlatResult.Builder()
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults)
                         .error(error)
-                        .addField(new Field.Builder()
-                                .name(":ParentKey")
-                                .build())
-                        .addField(new Field.Builder()
-                                .name(":Key")
-                                .build())
-                        .addField(new Field.Builder()
-                                .name(":Depth")
-                                .build());
-                this.fields.forEach(resultBuilder::addField);
-
-                results.forEach(resultBuilder::addValues);
-
-                return resultBuilder.build();
+                        .structure(structure)
+                        .values(results)
+                        .build();
 
             } catch (final Exception e) {
                 LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
@@ -187,19 +199,18 @@ public class FlatResultCreator implements ResultCreator {
         return new FlatResult(resultRequest.getComponentId(), null, null, 0L, error);
     }
 
-    private int addResults(final Data data, final RangeChecker rangeChecker,
-                           final OpenGroups openGroups, final DataItems items, final List<List<Object>> results,
-                           final int depth, final int parentCount, final Sizes maxResults) {
+    private int addResults(final Data data,
+                           final RangeChecker rangeChecker,
+                           final OpenGroups openGroups,
+                           final DataItems items,
+                           final List<List<Object>> results,
+                           final int depth,
+                           final int parentCount,
+                           final Sizes maxResults,
+                           final Map<Integer, List<Field>> groupFields) {
         int count = parentCount;
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
-
-        final Map<Integer, List<Field>> groupFields = new HashMap<>();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                groupFields.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(field);
-            }
-        }
 
         for (final DataItem item : items) {
             if (rangeChecker.check(count)) {
@@ -242,8 +253,16 @@ public class FlatResultCreator implements ResultCreator {
                 if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
                     final DataItems childItems = data.get(item.getKey());
                     if (childItems.size() > 0) {
-                        count = addResults(data, rangeChecker, openGroups,
-                                childItems, results, depth + 1, count, maxResults);
+                        count = addResults(
+                                data,
+                                rangeChecker,
+                                openGroups,
+                                childItems,
+                                results,
+                                depth + 1,
+                                count,
+                                maxResults,
+                                groupFields);
                     }
                 }
             }

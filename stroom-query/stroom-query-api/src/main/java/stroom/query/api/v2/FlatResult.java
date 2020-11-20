@@ -27,8 +27,6 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -132,10 +130,8 @@ public final class FlatResult extends Result {
      */
     public static class Builder
             extends Result.Builder<FlatResult, Builder> {
-        private final List<Field> structure = new ArrayList<>();
-
-        private final List<List<Object>> values = new ArrayList<>();
-
+        private List<Field> structure;
+        private List<List<Object>> values;
         private Long overriddenSize = null;
 
         /**
@@ -144,39 +140,17 @@ public final class FlatResult extends Result {
          * @param fields the fields which act as headings for our data
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... fields) {
-            structure.addAll(Arrays.asList(fields));
+        public Builder structure(List<Field> structure) {
+            this.structure = structure;
             return this;
         }
-
-        /**
-         * Singular Add headings to our data
-         *
-         * @param field the field which act as headings for our data
-         * @return The {@link Builder}, enabling method chaining
-         */
-        public Builder addField(final Field field) {
-            return addFields(field);
-        }
-
-//        /**
-//         * Singular Add headings to our data
-//         *
-//         * @param name Name of the field
-//         * @param expression Expression to use for the field
-//         *
-//         * @return The {@link Builder}, enabling method chaining
-//         */
-//        public Builder addField(final String name, final String expression) {
-//            return addFields(new Field.Builder().name(name).expression(expression).build());
-//        }
 
         /**
          * @param values A collection of 'rows' to add to our values
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addValues(final List<Object> values) {
-            this.values.add(values);
+        public Builder values(final List<List<Object>> values) {
+            this.values = values;
             return this;
         }
 
