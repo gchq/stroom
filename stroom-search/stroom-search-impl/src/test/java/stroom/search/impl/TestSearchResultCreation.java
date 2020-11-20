@@ -652,6 +652,7 @@ class TestSearchResultCreation {
                 )
                 .addFields(new Field.Builder()
                         .expression("${UserId}")
+                        .sort(new Sort(1, SortDirection.ASCENDING)) // TODO : The original was not sorted but this makes the test results consistent
                         .format(Type.GENERAL)
                         .group(1)
                         .build()

@@ -621,6 +621,10 @@
       "group" : 0
     }, {
       "expression" : "${UserId}",
+      "sort" : {
+        "order" : 1,
+        "direction" : "ASCENDING"
+      },
       "format" : {
         "type" : "GENERAL"
       },
