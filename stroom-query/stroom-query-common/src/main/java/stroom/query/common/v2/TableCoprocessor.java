@@ -90,4 +90,9 @@ public class TableCoprocessor implements Coprocessor {
     public Data getData() {
         return tableDataStore.getData();
     }
+
+    @Override
+    public String toString() {
+        return tableSettings.toString();
+    }
 }

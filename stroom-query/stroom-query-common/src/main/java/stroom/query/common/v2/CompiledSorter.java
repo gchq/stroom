@@ -72,13 +72,14 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public int compare(final Item o1, final Item o2) {
+        final Generator[] generators1 = o1.getGenerators();
+        final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {
             final int fieldPos = compiledSort.getFieldIndex();
-            final Generator g1 = o1.generators[fieldPos];
-            final Generator g2 = o2.generators[fieldPos];
+            final Generator g1 = generators1[fieldPos];
+            final Generator g2 = generators2[fieldPos];
 
             int res = 0;
             if (g1 != null && g2 != null) {

@@ -104,22 +104,6 @@ public class TableDataStore {
         itemSerialiser.writeArray(output, itemsArray);
     }
 
-
-//
-//    boolean processPayload(final TablePayload payload) {
-//        final Item[] items = tablePayloadSerialiser.fromByteArray(payload.getData());
-//        for (final Item item : items) {
-//            addToGroupMap(item);
-//        }
-//
-//        // Return success if we have not been asked to terminate and we are still willing to accept data.
-//        return !Thread.currentThread().isInterrupted() && !hasEnoughData;
-//    }
-//
-//    Payload createPayload() {
-//
-//    }
-
     void add(final Val[] values) {
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
@@ -216,15 +200,19 @@ public class TableDataStore {
                     result = item;
                 } else {
                     // Combine the new item into the original item.
+                    final Generator[] existingGenerators = result.getGenerators();
+                    final Generator[] newGenerators = item.getGenerators();
+                    final Generator[] combinedGenerators = new Generator[existingGenerators.length];
                     for (int i = 0; i < compiledFields.size(); i++) {
                         final CompiledField compiledField = compiledFields.getField(i);
-                        result.generators[i] = combine(
+                        combinedGenerators[i] = combine(
                                 compiledField.getGroupDepth(),
                                 compiledDepths.getMaxDepth(),
-                                result.generators[i],
-                                item.generators[i],
+                                existingGenerators[i],
+                                newGenerators[i],
                                 key.getDepth());
                     }
+                    result.setGenerators(combinedGenerators);
                 }
 
                 return result;
@@ -257,7 +245,8 @@ public class TableDataStore {
             Items result = v;
 
             if (result == null) {
-                result = new Items(storeSize.size(item.getKey().getDepth()), compiledSorter, removed -> remove(removed.key));
+                result = new Items(storeSize.size(item.getKey().getDepth()), compiledSorter, removed ->
+                        remove(removed.getKey()));
                 result.add(item);
                 resultCount.incrementAndGet();
 

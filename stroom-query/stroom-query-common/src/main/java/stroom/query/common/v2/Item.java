@@ -24,8 +24,8 @@ import java.io.Serializable;
 public class Item implements Serializable {
     private static final long serialVersionUID = 4371018450667741005L;
 
-    GroupKey key;
-    Generator[] generators;
+    private final GroupKey key;
+    private volatile Generator[] generators;
 
     public Item(final GroupKey key,
                 final Generator[] generators) {
@@ -39,6 +39,10 @@ public class Item implements Serializable {
 
     public Generator[] getGenerators() {
         return generators;
+    }
+
+    public void setGenerators(final Generator[] generators) {
+        this.generators = generators;
     }
 
     @Override

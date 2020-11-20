@@ -35,12 +35,15 @@ public class ItemSerialiser {
     }
 
     void write(final Output output, final Item item) {
-        if (item.generators.length > Byte.MAX_VALUE) {
+        final GroupKey key = item.getKey();
+        final Generator[] generators = item.getGenerators();
+
+        if (generators.length > Byte.MAX_VALUE) {
             throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
 
-        GroupKeySerialiser.write(output, item.getKey());
-        for (final Generator generator : item.getGenerators()) {
+        GroupKeySerialiser.write(output, key);
+        for (final Generator generator : generators) {
             if (generator != null) {
                 output.writeBoolean(true);
                 generator.write(output);
