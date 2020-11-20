@@ -95,9 +95,13 @@ class DataServiceImpl implements DataService {
             final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria, file.getParent(), fileName, settings);
 
             if (result.getRecordsWritten() == 0) {
-                return null;
+                if (result.getMessageList() != null && result.getMessageList().size() > 0){
+                    throw new RuntimeException("Download failed with errors: " +
+                            result.getMessageList().stream().map(m -> m.getMessage()).
+                                    collect(Collectors.joining(", ")));
+                }
             }
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
+            return new ResourceGeneration(resourceKey, result.getMessageList());
         });
     }
 

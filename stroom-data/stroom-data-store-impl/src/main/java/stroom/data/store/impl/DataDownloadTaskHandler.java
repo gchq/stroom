@@ -38,6 +38,8 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,6 +163,7 @@ public class DataDownloadTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
+                        result.addMessage(new Message(Severity.WARNING,e.getMessage()));
                     }
                 }
 
