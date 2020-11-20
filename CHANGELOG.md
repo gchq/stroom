@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1948** : Made UI report errors that occur during download.
+
 * Issue **#1949** : Fixed bug in download for streams from multiple feeds.
 
 ## [v7.0-beta.70] - 2020-11-16
