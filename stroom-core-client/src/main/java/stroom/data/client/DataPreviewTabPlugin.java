@@ -18,7 +18,7 @@
 package stroom.data.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;
@@ -27,32 +27,32 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Optional;
 
-public class SourceTabPlugin extends AbstractTabPresenterPlugin<SourceKey, SourceTabPresenter> {
+public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabPresenter> {
 
     @Inject
-    public SourceTabPlugin(final EventBus eventBus,
-                           final ContentManager contentManager,
-                           final Provider<SourceTabPresenter> sourceTabPresenterProvider) {
-        super(eventBus, contentManager, sourceTabPresenterProvider);
+    public DataPreviewTabPlugin(final EventBus eventBus,
+                                final ContentManager contentManager,
+                                final Provider<DataPreviewTabPresenter> dataPreviewTabPresenterProvider) {
+        super(eventBus, contentManager, dataPreviewTabPresenterProvider);
     }
 
     @Override
     String getName() {
-        return "Source";
+        return "Data Preview";
     }
 
         /**
      * 4. This method will open the source and show it in the content pane.
      */
     @SuppressWarnings("unchecked")
-    public Optional<SourceTabPresenter> open(final SourceLocation sourceLocation,
+    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
                                              final boolean forceOpen) {
 
         return super.openTabPresenter(
                 forceOpen,
-                new SourceKey(sourceLocation),
+                new DataPreviewKey(sourceLocation),
                 sourceTabPresenter ->
-                        sourceTabPresenter.setSourceLocationUsingHighlight(sourceLocation));
+                        sourceTabPresenter.setSourceLocation(sourceLocation));
 
     }
 }

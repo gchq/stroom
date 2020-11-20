@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `viewType` and `displayType` args to `data(...)` dashboard expression.
+
 * Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
 
 * Add _progress_ bar to Source Data view and Data Preview to show location in the file.

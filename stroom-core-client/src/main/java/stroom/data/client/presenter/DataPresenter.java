@@ -127,6 +127,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final ProgressPresenter progressPresenter;
     private final MarkerListPresenter markerListPresenter;
     private final SourceTabPlugin sourceTabPlugin;
+    private final SourceOpenSupport sourceOpenSupport;
     private final UiConfigCache uiConfigCache;
 
     private final RestFactory restFactory;
@@ -182,6 +183,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
                          final SourceTabPlugin sourceTabPlugin,
+                         final SourceOpenSupport sourceOpenSupport,
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
@@ -193,6 +195,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
         this.sourceTabPlugin = sourceTabPlugin;
+        this.sourceOpenSupport = sourceOpenSupport;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
 
@@ -251,7 +254,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         : null)
                 .build();
 
-        sourceTabPlugin.open(sourceLocation, true);
+        ShowSourceEvent.fire(this, sourceLocation, DisplayMode.STROOM_TAB);
+//        sourceTabPlugin.open(sourceLocation, true);
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
@@ -265,13 +269,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void addTab(final TabData tab) {
-        getView().getTabBar().addTab(tab);
+        getView().getTabBar()
+                .addTab(tab);
         hideTab(tab, true);
         // tabs.add(tab);
     }
 
     private void hideTab(final TabData tab, final boolean hide) {
-        getView().getTabBar().setTabHidden(tab, hide);
+        getView().getTabBar()
+                .setTabHidden(tab, hide);
     }
 
     @Override

@@ -5,6 +5,8 @@ import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
+import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -34,6 +36,7 @@ import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
@@ -163,18 +166,34 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final int colFrom = (int) getParam(href, "colFrom", -1);
         final int lineTo = (int) getParam(href, "lineTo", -1);
         final int colTo = (int) getParam(href, "colTo", -1);
+        final DataViewType dataViewType= getParam(
+                href,
+                "viewType",
+                DataViewType::parse,
+                DataViewType.PREVIEW);
+        final DisplayMode displayMode = getParam(
+                href,
+                "displayType",
+                DisplayMode::parse,
+                DisplayMode.DIALOG);
 
         final SourceLocation.Builder builder = SourceLocation.builder(id)
                 .withPartNo(partNo)
-                .withSegmentNumber(recordNo)
-                .withDataRangeBuilder(dataRangeBuilder -> {
-                    if (lineFrom != -1 && colFrom != -1) {
-                        dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
-                    }
-                    if (lineTo != -1 && colTo != -1) {
-                        dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
-                    }
-                });
+                .withSegmentNumber(recordNo);
+
+        // In preview mode we only want to see the range requested, non-preview
+        // we want to see it all but with the selected range highlighted
+        if (DataViewType.PREVIEW.equals(dataViewType)) {
+            builder
+                    .withDataRangeBuilder(dataRangeBuilder -> {
+                        if (lineFrom != -1 && colFrom != -1) {
+                            dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
+                        }
+                        if (lineTo != -1 && colTo != -1) {
+                            dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
+                        }
+                    });
+        }
 
         // Add the highlight in case the user clicks through to the source view, then we can
         // highlight the range in there.  Can't highlight in data preview as the data may be formatted
@@ -185,9 +204,16 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     new DefaultLocation(lineTo, colTo)));
         }
 
-        final SourceLocation sourceLocation = builder.build();
-
-        ShowDataEvent.fire(this, sourceLocation);
+        ShowDataEvent.fire(
+                this,
+                builder.build(),
+                dataViewType,
+                displayMode);
+//        if (isPreview) {
+//            ShowDataEvent.fire(this, sourceLocation);
+//        } else {
+//            ShowSourceEvent.fire(this, sourceLocation, displayMode);
+//        }
     }
 
     private void openStepping(final String href) {
@@ -251,6 +277,40 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                                 }),
                 presenter,
                 presenter);
+    }
+
+//    private DisplayMode getDisplayModeParam(final String href,
+//                                        final String paramName,
+//                                        final DisplayMode defaultValue) {
+//        final String value = getParam(href, paramName);
+//        if (value == null || value.length() == 0) {
+//            return defaultValue;
+//        } else {
+//            return DisplayMode.parse(value);
+//        }
+//    }
+
+    private <T> T getParam(final String href,
+                           final String paramName,
+                           final Function<String, T> parseFunction,
+                           final T defaultValue) {
+        final String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return defaultValue;
+        } else {
+            return parseFunction.apply(value);
+        }
+    }
+
+    private boolean getBooleanParam(final String href,
+                                    final String paramName,
+                                    final boolean defaultValue) {
+        final String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return defaultValue;
+        } else {
+            return Boolean.parseBoolean(value);
+        }
     }
 
     private long getParam(final String href, final String paramName, final long def) {

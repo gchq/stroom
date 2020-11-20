@@ -16,6 +16,9 @@
 
 package stroom.data.client.presenter;
 
+import stroom.data.client.DataPreviewTabPlugin;
+import stroom.data.client.SourceTabPlugin;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -26,22 +29,78 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Provider;
 
 public class DataPopupSupport {
+
+    private final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider;
+    private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
+
+    private final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider;
+    private final Provider<SourceTabPlugin> sourceTabPluginProvider;
+
     @Inject
     public DataPopupSupport(final EventBus eventBus,
-                            final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider) {
+                            final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider,
+                            final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
+                            final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider,
+                            final Provider<SourceTabPlugin> sourceTabPluginProvider) {
 
-        eventBus.addHandler(ShowDataEvent.getType(), e -> {
+        this.dataPresenterProvider = dataPresenterProvider;
+        this.dataPreviewTabPluginProvider = dataPreviewTabPluginProvider;
+        this.sourcePresenterProvider = sourcePresenterProvider;
+        this.sourceTabPluginProvider = sourceTabPluginProvider;
+
+        eventBus.addHandler(ShowDataEvent.getType(), showDataEvent -> {
+
+            switch (showDataEvent.getDisplayMode()) {
+                case DIALOG:
+                    openDialog(showDataEvent);
+                    break;
+                case STROOM_TAB:
+                    openStroomTab(showDataEvent);
+                    break;
+                default:
+                    throw new RuntimeException("Unknown displayMode " + showDataEvent.getDisplayMode());
+            }
+        });
+    }
+
+    private void openStroomTab(final ShowDataEvent showDataEvent) {
+        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
+            dataPreviewTabPluginProvider.get()
+                    .open(showDataEvent.getSourceLocation(), true);
+        } else {
+            sourceTabPluginProvider.get()
+                    .open(showDataEvent.getSourceLocation(), true);
+        }
+    }
+
+    private void openDialog(final ShowDataEvent showDataEvent) {
+        final SourceLocation sourceLocation = showDataEvent.getSourceLocation();
+        final ClassificationWrapperPresenter presenter;
+        final String caption;
+
+        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
+            dataPresenter.fetchData(sourceLocation);
+            presenter = dataPresenter;
+            caption = "Stream "
+                    + sourceLocation.getId();
+        } else {
+            final ClassificationWrappedSourcePresenter sourcePresenter = sourcePresenterProvider.get();
+            sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
+            presenter = sourcePresenter;
+            // Convert to one based for UI;
+            caption = "Stream "
+                    + sourceLocation.getId() + ":"
+                    + (sourceLocation.getPartNo() + 1) + ":"
+                    + (sourceLocation.getSegmentNo() + 1);
+        }
 
-            dataPresenter.setFormatOnLoad(true);
-            dataPresenter.fetchData(e.getSourceLocation());
-
-            final PopupSize popupSize = new PopupSize(
-                    1400,
-                    800,
-                    1000,
-                    600,
-                    true);
+        final PopupSize popupSize = new PopupSize(
+                1400,
+                800,
+                1000,
+                600,
+                true);
 
 //            final String locationInfo;
 //            if (e.getSourceLocation().getDataRange() != null
@@ -56,20 +115,12 @@ public class DataPopupSupport {
 //                locationInfo = "";
 //            }
 
-            // Convert to one based for UI;
-            final String caption = "Data Preview "
-                    + e.getSourceLocation().getId() + ":"
-                    + (e.getSourceLocation().getPartNo() + 1) + ":"
-                    + (e.getSourceLocation().getSegmentNo() + 1);
-//                    + locationInfo;
-
-            ShowPopupEvent.fire(
-                    dataPresenter,
-                    dataPresenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    caption,
-                    null);
-        });
+        ShowPopupEvent.fire(
+                presenter,
+                presenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                caption,
+                null);
     }
 }

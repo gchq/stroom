@@ -17,6 +17,7 @@
 package stroom.data.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
@@ -27,6 +28,8 @@ import stroom.data.client.presenter.ClassificationWrapperPresenter.Classificatio
 import stroom.data.client.presenter.DataPopupSupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
@@ -42,6 +45,7 @@ import stroom.data.client.presenter.ProcessChoicePresenter.ProcessChoiceView;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
+import stroom.data.client.presenter.SourceOpenSupport;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
@@ -51,6 +55,7 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.CharacterNavigatorViewImpl;
 import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
@@ -78,8 +83,10 @@ public class StreamStoreModule extends PluginModule {
     protected void configure() {
         bind(DataTypeUiManager.class).asEagerSingleton();
         bind(DataPopupSupport.class).asEagerSingleton();
+        bind(SourceOpenSupport.class).asEagerSingleton();
 
         bindPlugin(SourceTabPlugin.class);
+        bindPlugin(DataPreviewTabPlugin.class);
 
         bind(DelegatingAceCompleter.class).asEagerSingleton();
 
@@ -95,6 +102,10 @@ public class StreamStoreModule extends PluginModule {
                 EditorPresenter.class,
                 EditorView.class,
                 EditorViewImpl.class);
+        bindPresenterWidget(
+                DataPreviewTabPresenter.class,
+                DataPreviewTabView.class,
+                DataPreviewTabViewImpl.class);
         bindPresenterWidget(
                 DataPresenter.class,
                 DataView.class,

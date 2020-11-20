@@ -34,6 +34,8 @@ import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.ItemNavigatorPresenter;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.client.presenter.ItemSelectionPresenter;
@@ -47,6 +49,7 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.CharacterNavigatorViewImpl;
 import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
@@ -119,14 +122,22 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 IFrameContentPresenter.class,
                 IFrameContentView.class,
                 IFrameContentViewImpl.class);
-
         bindPresenterWidget(
                 ClassificationWrapperPresenter.class,
                 ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);
-        bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
-        bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
-
+        bindPresenterWidget(
+                DataPreviewTabPresenter.class,
+                DataPreviewTabView.class,
+                DataPreviewTabViewImpl.class);
+        bindPresenterWidget(
+                DataPresenter.class,
+                DataView.class,
+                DataViewImpl.class);
+        bindPresenterWidget(
+                TextPresenter.class,
+                TextView.class,
+                TextViewImpl.class);
         bindPresenterWidget(
                 ProgressPresenter.class,
                 ProgressView.class,
