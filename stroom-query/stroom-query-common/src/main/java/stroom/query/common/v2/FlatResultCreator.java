@@ -320,7 +320,7 @@ public class FlatResultCreator implements ResultCreator {
 
             // Extract child fields from expressions.
             final FieldIndex childFieldIndex = new FieldIndex();
-            new CompiledFields(child.getFields(), childFieldIndex, paramMap);
+            CompiledFields.create(child.getFields(), childFieldIndex, paramMap);
 
             // Create the index mapping.
             parentFieldIndices = new int[childFieldIndex.size()];

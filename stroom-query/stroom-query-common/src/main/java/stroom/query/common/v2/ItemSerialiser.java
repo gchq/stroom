@@ -11,8 +11,8 @@ import com.esotericsoftware.kryo.io.Output;
 public class ItemSerialiser {
     private final CompiledField[] fields;
 
-    public ItemSerialiser(final CompiledFields fields) {
-        this.fields = fields.toArray();
+    public ItemSerialiser(final CompiledField[] fields) {
+        this.fields = fields;
     }
 
     Item read(final Input input) {

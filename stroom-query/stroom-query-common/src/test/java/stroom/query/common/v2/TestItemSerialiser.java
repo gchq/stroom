@@ -31,11 +31,11 @@ class TestItemSerialiser {
         fields.add(new Field.Builder().expression("count()").build());
         fields.add(new Field.Builder().expression("${StreamId}").build());
         fields.add(new Field.Builder().expression("${EventId}").build());
-        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndex, Map.of());
+        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
-            generators[i] = compiledFields.getField(i).getExpression().createGenerator();
+            generators[i] = compiledFields[i].getExpression().createGenerator();
         }
 
         final Val[] values = new Val[4];

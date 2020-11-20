@@ -43,10 +43,9 @@ public class TableDataStore {
 
     private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
-    private final CompiledFields compiledFields;
-    private final CompiledSorter compiledSorter;
+    private final CompiledField[] compiledFields;
+    private final CompiledSorter[] compiledSorters;
     private final CompiledDepths compiledDepths;
-    private final CompiledField[] fieldsArray;
     private final Sizes maxResults;
     private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -54,7 +53,7 @@ public class TableDataStore {
     private final ItemSerialiser itemSerialiser;
 
     private final Function<List<Item>, List<Item>> groupingFunction;
-    private final Function<List<Item>, List<Item>> sortingFunction;
+    private final boolean hasSort;
 
     private volatile boolean hasEnoughData;
 
@@ -63,19 +62,25 @@ public class TableDataStore {
                           final Map<String, String> paramMap,
                           final Sizes maxResults,
                           final Sizes storeSize) {
-        final CompiledFields compiledFields = new CompiledFields(tableSettings.getFields(), fieldIndex, paramMap);
-        final CompiledDepths compiledDepths = new CompiledDepths(compiledFields.toArray(), tableSettings.showDetail());
-        final CompiledSorter compiledSorter = new CompiledSorter(tableSettings.getFields());
-        this.fieldsArray = compiledFields.toArray();
-        this.compiledFields = compiledFields;
+        compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+        final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
+        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
         this.compiledDepths = compiledDepths;
-        this.compiledSorter = compiledSorter;
         this.maxResults = maxResults;
         this.storeSize = storeSize;
         itemSerialiser = new ItemSerialiser(compiledFields);
 
         groupingFunction = createGroupingFunction();
-        sortingFunction = createSortingFunction(compiledSorter);
+
+        // Find out if we have any sorting.
+        boolean hasSort = false;
+        for (final CompiledSorter sorter : compiledSorters) {
+            if (sorter != null) {
+                hasSort = true;
+                break;
+            }
+        }
+        this.hasSort = hasSort;
     }
 
     void clear() {
@@ -118,7 +123,7 @@ public class TableDataStore {
         GroupKey parentKey = null;
 
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
-            final Generator[] generators = new Generator[fieldsArray.length];
+            final Generator[] generators = new Generator[compiledFields.length];
 
             final int groupSize = groupSizeByDepth[depth];
             final boolean[] groupIndices = groupIndicesByDepth[depth];
@@ -130,8 +135,8 @@ public class TableDataStore {
             }
 
             int groupIndex = 0;
-            for (int fieldIndex = 0; fieldIndex < fieldsArray.length; fieldIndex++) {
-                final CompiledField compiledField = fieldsArray[fieldIndex];
+            for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
+                final CompiledField compiledField = compiledFields[fieldIndex];
 
                 final Expression expression = compiledField.getExpression();
                 if (expression != null) {
@@ -160,7 +165,7 @@ public class TableDataStore {
 
     public void write(final Val[] values,
                       final Output output) {
-        for (final CompiledField compiledField : fieldsArray) {
+        for (final CompiledField compiledField : compiledFields) {
             final Expression expression = compiledField.getExpression();
             if (expression != null) {
                 final Generator generator = expression.createGenerator();
@@ -172,9 +177,9 @@ public class TableDataStore {
 
     public Generator[] read(final Input input) {
         // Process list into fields.
-        final Generator[] generators = new Generator[fieldsArray.length];
-        for (int i = 0; i < fieldsArray.length; i++) {
-            final CompiledField compiledField = fieldsArray[i];
+        final Generator[] generators = new Generator[compiledFields.length];
+        for (int i = 0; i < compiledFields.length; i++) {
+            final CompiledField compiledField = compiledFields[i];
             final Expression expression = compiledField.getExpression();
             if (expression != null) {
                 final Generator generator = expression.createGenerator();
@@ -202,7 +207,7 @@ public class TableDataStore {
         }
 
         final Function<List<Item>, List<Item>> groupingFunction = getGroupingFunction(item.getKey());
-        final Function<List<Item>, List<Item>> sortingFunction = this.sortingFunction;
+        final Function<List<Item>, List<Item>> sortingFunction = compiledSorters[item.getKey().getDepth()];
 
         childMap.compute(parentKey, (k, v) -> {
             Items result = v;
@@ -221,7 +226,7 @@ public class TableDataStore {
         });
 
         // Some searches can be terminated early if the user is not sorting or grouping.
-        if (!hasEnoughData && !compiledSorter.hasSort() && !compiledDepths.hasGroup()) {
+        if (!hasEnoughData && !hasSort && !compiledDepths.hasGroup()) {
             // No sorting or grouping so we can stop the search as soon as we have the number of results requested by
             // the client
             if (maxResults != null && totalResultCount.get() >= maxResults.size(0)) {
@@ -243,16 +248,6 @@ public class TableDataStore {
         return this::groupItems;
     }
 
-    private Function<List<Item>, List<Item>> createSortingFunction(final CompiledSorter compiledSorter) {
-        if (compiledSorter.hasSort()) {
-            return list -> {
-                list.sort(compiledSorter);
-                return list;
-            };
-        }
-        return null;
-    }
-
     private List<Item> groupItems(final List<Item> list) {
         // Group items in the list.
         final Map<GroupKey, Item> groupingMap = new HashMap<>();
@@ -270,8 +265,8 @@ public class TableDataStore {
                     final Generator[] existingGenerators = result.getGenerators();
                     final Generator[] newGenerators = item.getGenerators();
                     final Generator[] combinedGenerators = new Generator[existingGenerators.length];
-                    for (int i = 0; i < compiledFields.size(); i++) {
-                        final CompiledField compiledField = compiledFields.getField(i);
+                    for (int i = 0; i < compiledFields.length; i++) {
+                        final CompiledField compiledField = compiledFields[i];
                         combinedGenerators[i] = combine(
                                 compiledField.getGroupDepth(),
                                 compiledDepths.getMaxDepth(),
