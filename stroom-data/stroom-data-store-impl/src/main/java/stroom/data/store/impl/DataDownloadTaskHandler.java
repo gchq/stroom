@@ -66,7 +66,6 @@ public class DataDownloadTaskHandler {
 
     private final AtomicLong fileCount = new AtomicLong(0);
     private String lastPossibleFileName;
-    private String lastFeedName;
 
     @Inject
     public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
@@ -116,12 +115,11 @@ public class DataDownloadTaskHandler {
                         metaMap.put("streamType", meta.getTypeName());
                         metaMap.put("streamId", String.valueOf(meta.getId()));
                         final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, format, metaMap, ZIP_EXTENSION);
-                        if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
+                        if (stroomZipOutputStream != null && !possibleFilename.equals(lastPossibleFileName)) {
                             stroomZipOutputStream.close();
                             stroomZipOutputStream = null;
                         }
                         lastPossibleFileName = possibleFilename;
-                        lastFeedName = meta.getFeedName();
 
                         // Open a zip output stream if we don't currently have one.
                         if (stroomZipOutputStream == null) {
