@@ -16,17 +16,10 @@
 
 package stroom.query.common.v2;
 
-import org.junit.jupiter.api.Disabled;
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.GroupKey;
-import stroom.dashboard.expression.v1.StaticValueFunction;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.junit.jupiter.api.Disabled;
 
 @Disabled
 class TestVisComponentResultCreator {
@@ -307,38 +300,38 @@ class TestVisComponentResultCreator {
 //            }
 //        }
 //    }
-
-    private Data createData() {
-        final Items<Item> items = new ItemsArrayList<>();
-        int seriesCount = 0;
-        for (int i = 100; i < 120; i++) {
-            for (int j = 20; j < 30; j++) {
-                seriesCount++;
-                final String series = "series " + seriesCount;
-                if (seriesCount == 5) {
-                    seriesCount = 0;
-                }
-
-                items.add(new Item(null, createGenerators(i + 10, j + 10, series), 0));
-                items.add(new Item(null, createGenerators(i - 5, j + 11, series), 0));
-                items.add(new Item(null, createGenerators(i + 3, j + 3, series), 0));
-                items.add(new Item(null, createGenerators(i - 2, j + 8, series), 0));
-            }
-        }
-
-        final Map<GroupKey, Items<Item>> map = new HashMap<>();
-        map.put(null, items);
-
-        return new Data(map, items.size(), items.size());
-    }
-
-    private Generator[] createGenerators(final int x, final int y, final String series) {
-        final Generator[] generators = new Generator[3];
-        generators[0] = new StaticValueFunction(ValInteger.create(x)).createGenerator();
-        generators[1] = new StaticValueFunction(ValInteger.create(y)).createGenerator();
-        generators[2] = new StaticValueFunction(ValString.create(series)).createGenerator();
-        return generators;
-    }
+//
+//    private Data createData() {
+//        final Items<Item> items = new ItemsArrayList<>();
+//        int seriesCount = 0;
+//        for (int i = 100; i < 120; i++) {
+//            for (int j = 20; j < 30; j++) {
+//                seriesCount++;
+//                final String series = "series " + seriesCount;
+//                if (seriesCount == 5) {
+//                    seriesCount = 0;
+//                }
+//
+//                items.add(new Item(null, createGenerators(i + 10, j + 10, series), 0));
+//                items.add(new Item(null, createGenerators(i - 5, j + 11, series), 0));
+//                items.add(new Item(null, createGenerators(i + 3, j + 3, series), 0));
+//                items.add(new Item(null, createGenerators(i - 2, j + 8, series), 0));
+//            }
+//        }
+//
+//        final Map<GroupKey, Items<Item>> map = new HashMap<>();
+//        map.put(null, items);
+//
+//        return new Data(map, items.size(), items.size());
+//    }
+//
+//    private Generator[] createGenerators(final int x, final int y, final String series) {
+//        final Generator[] generators = new Generator[3];
+//        generators[0] = new StaticValueFunction(ValInteger.create(x)).createGenerator();
+//        generators[1] = new StaticValueFunction(ValInteger.create(y)).createGenerator();
+//        generators[2] = new StaticValueFunction(ValString.create(series)).createGenerator();
+//        return generators;
+//    }
 
 //    private Field createField(final String fieldName, final Format.Type type) {
 //        return new Field.Builder().name(fieldName).expression(ParamUtil.makeParam(fieldName)).format(type).build();

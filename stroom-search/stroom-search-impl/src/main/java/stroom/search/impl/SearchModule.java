@@ -16,9 +16,9 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.api.ClusterServiceBinder;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.search.api.EventSearch;
+import stroom.query.common.v2.EventSearch;
+import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
@@ -37,20 +37,31 @@ public class SearchModule extends AbstractModule {
         install(new ExtractionModule());
 
         bind(EventSearch.class).to(EventSearchImpl.class);
+        bind(RemoteSearchResource.class).to(RemoteSearchResourceImpl.class);
+        bind(SizesProvider.class).to(SizesProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 
         RestResourcesBinder.create(binder())
-                .bind(StroomIndexQueryResourceImpl.class);
-
-        ClusterServiceBinder.create(binder())
-                .bind(RemoteSearchManager.SERVICE_NAME, RemoteSearchManager.class);
+                .bind(StroomIndexQueryResourceImpl.class)
+                .bind(RemoteSearchResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
                         .withName("Evict expired elements")
                         .withManagedState(false)
                         .withSchedule(PERIODIC, "10s"));
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {

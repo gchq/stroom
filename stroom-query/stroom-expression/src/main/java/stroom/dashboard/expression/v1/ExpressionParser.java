@@ -51,7 +51,7 @@ public class ExpressionParser {
         this.paramFactory = paramFactory;
     }
 
-    public Expression parse(final FieldIndexMap fieldIndexMap, final String input) throws ParseException {
+    public Expression parse(final FieldIndex fieldIndex, final String input) throws ParseException {
         if (input == null || input.trim().length() == 0) {
             return null;
         }
@@ -74,7 +74,7 @@ public class ExpressionParser {
         int lastSize = 0;
         while (objects.size() != lastSize) {
             lastSize = objects.size();
-            objects = processObjects(objects, fieldIndexMap);
+            objects = processObjects(objects, fieldIndex);
         }
 
         // We should have a single object.
@@ -89,7 +89,7 @@ public class ExpressionParser {
         return expression;
     }
 
-    private List<Param> processObjects(final List<Param> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+    private List<Param> processObjects(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
         Token functionStart = null;
         int start = -1;
         int end;
@@ -107,7 +107,7 @@ public class ExpressionParser {
                     }
 
                     end = i;
-                    final Function function = getFunction(objects, start, end, fieldIndexMap);
+                    final Function function = getFunction(objects, start, end, fieldIndex);
 
                     // Create a new list of objects to sandwich this function.
                     return sandwich(objects, function, start, end);
@@ -132,12 +132,12 @@ public class ExpressionParser {
         }
 
         // Any content that remains must be a parameter or parameter expression.
-        final Param param = getParam(copyList(objects, 0, objects.size() - 1), fieldIndexMap);
+        final Param param = getParam(copyList(objects, 0, objects.size() - 1), fieldIndex);
         return Collections.singletonList(param);
 
     }
 
-    private Function getFunction(final List<Param> objects, final int start, final int end, final FieldIndexMap fieldIndexMap) throws ParseException {
+    private Function getFunction(final List<Param> objects, final int start, final int end, final FieldIndex fieldIndex) throws ParseException {
         // Get the function.
         final Token functionToken = (Token) objects.get(start);
 
@@ -163,7 +163,7 @@ public class ExpressionParser {
                         }
 
                         final int paramEnd = i - 1;
-                        final Param param = getParam(copyList(objects, paramStart, paramEnd), fieldIndexMap);
+                        final Param param = getParam(copyList(objects, paramStart, paramEnd), fieldIndex);
                         paramList.add(param);
 
                         paramStart = -1;
@@ -177,7 +177,7 @@ public class ExpressionParser {
 
             // Capture last param if there is one.
             if (paramStart != -1) {
-                final Param param = getParam(copyList(objects, paramStart, functionEnd), fieldIndexMap);
+                final Param param = getParam(copyList(objects, paramStart, functionEnd), fieldIndex);
                 paramList.add(param);
             }
 
@@ -216,7 +216,7 @@ public class ExpressionParser {
         return function;
     }
 
-    private Param getParam(final List<Param> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+    private Param getParam(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
         List<Param> newObjects = objects;
 
         // If no objects are included to create this param then return null.
@@ -229,7 +229,7 @@ public class ExpressionParser {
             final Param object = newObjects.get(0);
             if (object instanceof Token) {
                 final Token token = (Token) object;
-                return paramFactory.create(fieldIndexMap, token);
+                return paramFactory.create(fieldIndex, token);
             }
             return object;
         }
@@ -238,14 +238,14 @@ public class ExpressionParser {
         int lastSize = 0;
         while (newObjects.size() > 1 && newObjects.size() != lastSize) {
             lastSize = newObjects.size();
-            newObjects = applyBODMAS(newObjects, fieldIndexMap);
+            newObjects = applyBODMAS(newObjects, fieldIndex);
         }
 
         // Repeatedly try and apply equality operators.
         lastSize = 0;
         while (newObjects.size() > 1 && newObjects.size() != lastSize) {
             lastSize = newObjects.size();
-            newObjects = applyEquality(newObjects, fieldIndexMap);
+            newObjects = applyEquality(newObjects, fieldIndex);
         }
 
         // If there is only a single object then turn it into a parameter if necessary and return.
@@ -253,7 +253,7 @@ public class ExpressionParser {
             final Param object = newObjects.get(0);
             if (object instanceof Token) {
                 final Token token = (Token) object;
-                return paramFactory.create(fieldIndexMap, token);
+                return paramFactory.create(fieldIndex, token);
             }
             return object;
         }
@@ -268,7 +268,7 @@ public class ExpressionParser {
         throw new ParseException("Unexpected '" + object.toString() + "'", -1);
     }
 
-    private List<Param> applyBODMAS(final List<Param> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+    private List<Param> applyBODMAS(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
         // If there is more than one object then apply BODMAS rules.
         for (final Type type : BODMAS) {
             for (int i = 0; i < objects.size(); i++) {
@@ -280,9 +280,9 @@ public class ExpressionParser {
                         int rightParamIndex = i + 1;
 
                         // Get left param.
-                        final Param leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndexMap);
+                        final Param leftParam = getParam(copyList(objects, leftParamIndex, leftParamIndex), fieldIndex);
                         // Get right param.
-                        final Param rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex), fieldIndexMap);
+                        final Param rightParam = getParam(copyList(objects, rightParamIndex, rightParamIndex), fieldIndex);
 
                         // Addition and subtraction without a preceding param are allowed. In this form plus can be
                         // ignored and minus will negate right param.
@@ -322,7 +322,7 @@ public class ExpressionParser {
         return objects;
     }
 
-    private List<Param> applyEquality(final List<Param> objects, final FieldIndexMap fieldIndexMap) throws ParseException {
+    private List<Param> applyEquality(final List<Param> objects, final FieldIndex fieldIndex) throws ParseException {
         // If there is more than one object then apply equality rules.
         for (final Type type : EQUALITY) {
             for (int i = 0; i < objects.size(); i++) {
@@ -331,9 +331,9 @@ public class ExpressionParser {
                     final Token token = (Token) object;
                     if (type.equals(token.getType())) {
                         // Get before param.
-                        final Param leftParam = getParam(copyList(objects, 0, i - 1), fieldIndexMap);
+                        final Param leftParam = getParam(copyList(objects, 0, i - 1), fieldIndex);
                         // Get after param.
-                        final Param rightParam = getParam(copyList(objects, i + 1, objects.size() - 1), fieldIndexMap);
+                        final Param rightParam = getParam(copyList(objects, i + 1, objects.size() - 1), fieldIndex);
 
                         if (leftParam == null) {
                             throw new ParseException("No parameter before operator", token.getStart());

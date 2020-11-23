@@ -18,77 +18,58 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.query.api.v2.Field;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class CompiledFields implements Iterable<CompiledField> {
-    private final List<CompiledField> compiledFields;
+public class CompiledFields {
+    private CompiledFields() {
+    }
 
-    public CompiledFields(final List<Field> fields,
-                          final FieldIndexMap fieldIndexMap,
-                          final Map<String, String> paramMap) {
-        if (null != fields) {
-            compiledFields = new ArrayList<>(fields.size());
-
-            final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
-            for (final Field field : fields) {
-                // Create compiled field.
-                int groupDepth = -1;
-                if (field.getGroup() != null) {
-                    groupDepth = field.getGroup();
-                }
-                Expression expression = null;
-                if (fieldIndexMap != null && field.getExpression() != null && field.getExpression().trim().length() > 0) {
-                    try {
-                        expression = expressionParser.parse(fieldIndexMap, field.getExpression());
-                        expression.setStaticMappedValues(paramMap);
-                    } catch (final ParseException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                }
-
-                CompiledFilter filter = null;
-                if (field.getFilter() != null) {
-                    filter = new CompiledFilter(field.getFilter(), paramMap);
-                }
-
-                final CompiledField compiledField = new CompiledField(field, groupDepth, expression, filter);
-
-                // Only include this field if it is used for display, grouping,
-                // sorting.
-                compiledFields.add(compiledField);
-            }
-        } else {
-            compiledFields = Collections.emptyList();
+    public static CompiledField[] create(final List<Field> fields,
+                                         final FieldIndex fieldIndex,
+                                         final Map<String, String> paramMap) {
+        if (fields == null) {
+            return new CompiledField[0];
         }
-    }
 
-    @Override
-    public Iterator<CompiledField> iterator() {
-        return compiledFields.iterator();
-    }
+        final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
+        final CompiledField[] compiledFields = new CompiledField[fields.size()];
+        int i = 0;
 
-    public int size() {
-        return compiledFields.size();
-    }
+        for (final Field field : fields) {
+            // Create compiled field.
+            int groupDepth = -1;
+            if (field.getGroup() != null) {
+                groupDepth = field.getGroup();
+            }
+            Expression expression = null;
+            if (field.getExpression() != null && field.getExpression().trim().length() > 0) {
+                try {
+                    expression = expressionParser.parse(fieldIndex, field.getExpression());
+                    expression.setStaticMappedValues(paramMap);
+                } catch (final ParseException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
 
-    public CompiledField getField(final int i) {
-        return compiledFields.get(i);
-    }
+            CompiledFilter filter = null;
+            if (field.getFilter() != null) {
+                filter = new CompiledFilter(field.getFilter(), paramMap);
+            }
 
-    @Override
-    public String toString() {
-        return "CompiledFields{" +
-                "compiledFields=" + compiledFields +
-                '}';
+            final CompiledField compiledField = new CompiledField(field, groupDepth, expression, filter);
+
+            // Only include this field if it is used for display, grouping,
+            // sorting.
+            compiledFields[i++] = compiledField;
+        }
+
+        return compiledFields;
     }
 }

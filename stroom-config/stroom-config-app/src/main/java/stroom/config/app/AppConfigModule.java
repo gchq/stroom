@@ -2,7 +2,6 @@ package stroom.config.app;
 
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
@@ -37,6 +36,7 @@ import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
@@ -72,17 +72,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
-
     private final ConfigHolder configHolder;
 
     public AppConfigModule(final ConfigHolder configHolder) {
@@ -114,9 +109,9 @@ public class AppConfigModule extends AbstractModule {
 
         bindConfig(AppConfig::getActivityConfig, AppConfig::setActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, AppConfig::setAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bindConfig(AppConfig::getByteBufferPoolConfig, AppConfig::setByteBufferPoolConfig, ByteBufferPoolConfig.class);
         bindConfig(AppConfig::getClusterConfig, AppConfig::setClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, AppConfig::setClusterLockConfig, ClusterLockConfig.class);
-        bindConfig(AppConfig::getClusterTaskConfig, AppConfig::setClusterTaskConfig, ClusterTaskConfig.class);
         bindConfig(AppConfig::getCommonDbConfig, AppConfig::setCommonDbConfig, CommonDbConfig.class);
         bindConfig(AppConfig::getContentPackImportConfig, AppConfig::setContentPackImportConfig, ContentPackImportConfig.class);
         bindConfig(AppConfig::getLegacyDbConfig, AppConfig::setLegacyDbConfig, LegacyDbConfig.class);

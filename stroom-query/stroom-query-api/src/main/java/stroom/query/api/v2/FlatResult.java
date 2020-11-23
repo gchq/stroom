@@ -27,8 +27,7 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,36 +38,20 @@ import java.util.Objects;
         description = "A result structure used primarily for visualisation data",
         parent = Result.class)
 public final class FlatResult extends Result {
-
-    private static final long serialVersionUID = 3826654996795750099L;
-
     @XmlElement
     @JsonProperty
-    private List<Field> structure;
+    private final List<Field> structure;
 
     @XmlElement
     @ApiModelProperty(value = "The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
     @JsonProperty
-    private List<List<Object>> values;
+    private final List<List<Object>> values;
 
     @XmlElement
     @ApiModelProperty(value = "The size of the result set being returned")
     @JsonProperty
-    private Long size;
-
-    public FlatResult() {
-    }
-
-    public FlatResult(final String componentId,
-                      final List<Field> structure,
-                      final List<List<Object>> values,
-                      final String error) {
-        super(componentId, error);
-        this.structure = structure;
-        this.values = values;
-        this.size = (long) values.size();
-    }
+    private final Long size;
 
     @JsonCreator
     public FlatResult(@JsonProperty("componentId") final String componentId,
@@ -86,24 +69,12 @@ public final class FlatResult extends Result {
         return structure;
     }
 
-    public void setStructure(final List<Field> structure) {
-        this.structure = structure;
-    }
-
     public List<List<Object>> getValues() {
         return values;
     }
 
-    public void setValues(final List<List<Object>> values) {
-        this.values = values;
-    }
-
     public Long getSize() {
         return size;
-    }
-
-    public void setSize(final Long size) {
-        this.size = size;
     }
 
     @Override
@@ -132,51 +103,27 @@ public final class FlatResult extends Result {
      */
     public static class Builder
             extends Result.Builder<FlatResult, Builder> {
-        private final List<Field> structure = new ArrayList<>();
-
-        private final List<List<Object>> values = new ArrayList<>();
-
+        private List<Field> structure = Collections.emptyList();
+        private List<List<Object>> values = Collections.emptyList();
         private Long overriddenSize = null;
 
         /**
          * Add headings to our data
          *
-         * @param fields the fields which act as headings for our data
+         * @param structure the fields which act as headings for our data
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... fields) {
-            structure.addAll(Arrays.asList(fields));
+        public Builder structure(List<Field> structure) {
+            this.structure = structure;
             return this;
         }
-
-        /**
-         * Singular Add headings to our data
-         *
-         * @param field the field which act as headings for our data
-         * @return The {@link Builder}, enabling method chaining
-         */
-        public Builder addField(final Field field) {
-            return addFields(field);
-        }
-
-//        /**
-//         * Singular Add headings to our data
-//         *
-//         * @param name Name of the field
-//         * @param expression Expression to use for the field
-//         *
-//         * @return The {@link Builder}, enabling method chaining
-//         */
-//        public Builder addField(final String name, final String expression) {
-//            return addFields(new Field.Builder().name(name).expression(expression).build());
-//        }
 
         /**
          * @param values A collection of 'rows' to add to our values
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addValues(final List<Object> values) {
-            this.values.add(values);
+        public Builder values(final List<List<Object>> values) {
+            this.values = values;
             return this;
         }
 
@@ -200,7 +147,7 @@ public final class FlatResult extends Result {
             if (null != overriddenSize) {
                 return new FlatResult(getComponentId(), structure, values, overriddenSize, getError());
             } else {
-                return new FlatResult(getComponentId(), structure, values, getError());
+                return new FlatResult(getComponentId(), structure, values, (long) values.size(), getError());
             }
         }
     }

@@ -9,7 +9,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -21,12 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
@@ -35,7 +31,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final SecurityContext securityContext;
     private final VolumeConfig volumeConfig;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
-    private final TempDirProvider tempDirProvider;
+    private final PathCreator pathCreator;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -46,13 +42,13 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final SecurityContext securityContext,
                                        final VolumeConfig volumeConfig,
                                        final ProcessingUserIdentityProvider processingUserIdentityProvider,
-                                       final TempDirProvider tempDirProvider) {
+                                       final PathCreator pathCreator) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
-        this.tempDirProvider = tempDirProvider;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -157,7 +153,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                     if (nodes.size() == paths.size()) {
                                         int i = 0;
                                         for (String path : paths) {
-                                            Path resolvedPath = getDefaultVolumesPath().get().resolve(path.trim());
+                                            Path resolvedPath = Paths.get(pathCreator.replaceSystemProperties(path));
 
                                             LOGGER.info("Creating index volume with path {}",
                                                     resolvedPath.toAbsolutePath().normalize());
@@ -207,35 +203,6 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         }
     }
 
-
-    private Optional<Path> getDefaultVolumesPath() {
-        return Stream.<Supplier<Optional<Path>>>of(
-                this::getApplicationJarDir,
-                this::getDotStroomDir,
-                () -> Optional.of(tempDirProvider.get()),
-                Optional::empty
-        )
-                .map(Supplier::get)
-                .filter(Optional::isPresent)
-                .findFirst()
-                .map(Optional::get);
-    }
-
-    private Optional<Path> getDotStroomDir() {
-        final String userHome = System.getProperty("user.home");
-        if (userHome == null) {
-            return Optional.empty();
-        } else {
-            final Path dotStroomDir = Paths.get(userHome)
-                    .resolve(".stroom");
-            if (Files.isDirectory(dotStroomDir)) {
-                return Optional.of(dotStroomDir);
-            } else {
-                return Optional.empty();
-            }
-        }
-    }
-
     private OptionalLong getDefaultVolumeLimit(final String path) {
         try {
             File parentDir = new File(path);
@@ -252,20 +219,6 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                     " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
             return OptionalLong.empty();
-        }
-    }
-
-    private Optional<Path> getApplicationJarDir() {
-        try {
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
-                return Optional.of(Paths.get(codeSourceLocation).getParent());
-            } else {
-                return Optional.empty();
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.warn(() -> LogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
-            return Optional.empty();
         }
     }
 }

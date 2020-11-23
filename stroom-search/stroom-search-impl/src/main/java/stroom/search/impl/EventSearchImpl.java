@@ -2,9 +2,9 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.search.api.EventSearch;
+import stroom.query.common.v2.EventRef;
+import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.EventSearch;
 import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;

@@ -16,20 +16,18 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.Values;
 
 import java.util.function.Consumer;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
-    FieldIndexMap fieldIndexes;
-    Consumer<Values> consumer;
+    FieldIndex fieldIndexes;
+    Consumer<Val[]> consumer;
     int count;
 
-    public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
+    public void setup(final FieldIndex fieldIndexes, final Consumer<Val[]> consumer) {
         this.fieldIndexes = fieldIndexes;
         this.consumer = consumer;
     }

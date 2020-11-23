@@ -26,6 +26,7 @@ import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProviderImpl;
@@ -75,6 +76,8 @@ public class Cli extends AbstractCommandLineTool {
     private Path contentDir;
     private Path tmpDir;
 
+    @Inject
+    private HomeDirProviderImpl homeDirProvider;
     @Inject
     private TempDirProviderImpl tempDirProvider;
     @Inject
@@ -174,6 +177,7 @@ public class Cli extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
+            homeDirProvider.setHomeDir(tempDir);
             tempDirProvider.setTempDir(tempDir);
 
             process();

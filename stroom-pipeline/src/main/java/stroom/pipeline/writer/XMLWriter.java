@@ -49,6 +49,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.util.CharBuffer;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 

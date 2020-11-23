@@ -19,38 +19,62 @@ package stroom.search.impl;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.task.shared.TaskId;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
+@JsonInclude(Include.NON_NULL)
 public class ClusterSearchTask implements Serializable {
+    private static final long serialVersionUID = -1305243739417365803L;
+
+    @JsonProperty
+    private final TaskId sourceTaskId;
+    @JsonProperty
     private final String taskName;
+    @JsonProperty
     private final QueryKey key;
+    @JsonProperty
     private final Query query;
+    @JsonProperty
     private final List<Long> shards;
+    @JsonProperty
     private final String[] storedFields;
-    private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
+    @JsonProperty
+    private final List<CoprocessorSettings> settings;
+    @JsonProperty
     private final String dateTimeLocale;
+    @JsonProperty
     private final long now;
 
-    public ClusterSearchTask(final String taskName,
-                             final QueryKey key,
-                             final Query query,
-                             final List<Long> shards,
-                             final String[] storedFields,
-                             final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
-                             final String dateTimeLocale,
-                             final long now) {
+    @JsonCreator
+    public ClusterSearchTask(@JsonProperty("sourceTaskId") final TaskId sourceTaskId,
+                             @JsonProperty("taskName") final String taskName,
+                             @JsonProperty("key") final QueryKey key,
+                             @JsonProperty("query") final Query query,
+                             @JsonProperty("shards") final List<Long> shards,
+                             @JsonProperty("storedFields") final String[] storedFields,
+                             @JsonProperty("settings") final List<CoprocessorSettings> settings,
+                             @JsonProperty("dateTimeLocale") final String dateTimeLocale,
+                             @JsonProperty("now") final long now) {
+        this.sourceTaskId = sourceTaskId;
         this.taskName = taskName;
         this.key = key;
         this.query = query;
         this.shards = shards;
         this.storedFields = storedFields;
-        this.coprocessorMap = coprocessorMap;
+        this.settings = settings;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
+    }
+
+    public TaskId getSourceTaskId() {
+        return sourceTaskId;
     }
 
     public String getTaskName() {
@@ -73,8 +97,8 @@ public class ClusterSearchTask implements Serializable {
         return storedFields;
     }
 
-    public Map<CoprocessorKey, CoprocessorSettings> getCoprocessorMap() {
-        return coprocessorMap;
+    public List<CoprocessorSettings> getSettings() {
+        return settings;
     }
 
     public String getDateTimeLocale() {

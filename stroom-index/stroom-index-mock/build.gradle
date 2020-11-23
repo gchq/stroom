@@ -29,7 +29,6 @@ dependencies {
     compile libs.eventLogging
     compile libs.guava
     compile libs.guice4
-    compile libs.hessian
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api

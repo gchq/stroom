@@ -16,20 +16,97 @@
 
 package stroom.query.common.v2;
 
-import java.util.Comparator;
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface Items<E> extends Iterable<E> {
-    boolean add(E item);
+class Items implements Iterable<Item> {
+    private volatile List<Item> list;
+    private final int trimmedSize;
+    private final int maxSize;
+    private final Function<List<Item>, List<Item>> groupingFunction;
+    private final Function<List<Item>, List<Item>> sortingFunction;
+    private final Consumer<Item> removeHandler;
 
-    boolean remove(E item);
+    private volatile boolean trimmed = true;
+    private volatile boolean full;
 
-    int size();
+    Items(final int trimmedSize,
+          final Function<List<Item>, List<Item>> groupingFunction,
+          final Function<List<Item>, List<Item>> sortingFunction,
+          final Consumer<Item> removeHandler) {
+        this.trimmedSize = trimmedSize;
+        if (trimmedSize < Integer.MAX_VALUE / 2) {
+            this.maxSize = trimmedSize * 2;
+        } else {
+            this.maxSize = Integer.MAX_VALUE;
+        }
+        this.groupingFunction = groupingFunction;
+        this.sortingFunction = sortingFunction;
+        this.removeHandler = removeHandler;
+        list = new ArrayList<>();
+    }
 
-    void sort(Comparator<E> comparator);
+    synchronized void add(final Item item) {
+        if (groupingFunction != null || sortingFunction != null) {
+            list.add(item);
+            trimmed = false;
+            if (list.size() > maxSize) {
+                sortAndTrim();
+            }
+        } else if (list.size() < trimmedSize) {
+            list.add(item);
+        } else {
+            full = true;
+            removeHandler.accept(item);
+        }
+    }
 
-    void sortAndTrim(int size, Comparator<E> comparator, RemoveHandler<E> removeHandler);
+    int size() {
+        return list.size();
+    }
 
-    interface RemoveHandler<E> {
-        void onRemove(E item);
+    private synchronized void sortAndTrim() {
+        if (!trimmed) {
+            // We won't group, sort or trim lists with only a single item obviously.
+            if (list.size() > 1) {
+                // Group items.
+                if (groupingFunction != null) {
+                    list = groupingFunction.apply(list);
+                }
+
+                // Sort the list before trimming if we have a comparator.
+                if (sortingFunction != null) {
+                    list = sortingFunction.apply(list);
+                }
+
+                while (list.size() > trimmedSize) {
+                    final Item lastItem = list.remove(list.size() - 1);
+
+                    // Tell the remove handler that we have removed an item.
+                    removeHandler.accept(lastItem);
+                }
+            }
+            trimmed = true;
+        }
+    }
+
+    private synchronized List<Item> copy() {
+        sortAndTrim();
+        return new ArrayList<>(list);
+    }
+
+    @Override
+    @Nonnull
+    public Iterator<Item> iterator() {
+        if (full) {
+            return list.iterator();
+        } else {
+            final List<Item> copy = copy();
+            return copy.iterator();
+        }
     }
 }

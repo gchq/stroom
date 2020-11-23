@@ -23,8 +23,6 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Values;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -218,7 +216,7 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            task.getReceiver().getValuesConsumer().accept(new Values(values));
+            task.getReceiver().getValuesConsumer().accept(values);
         } catch (final IOException | RuntimeException e) {
             error(task, e.getMessage(), e);
         }

@@ -35,29 +35,21 @@ import java.util.Objects;
         description = "Object for describing a set of results in a table form that supports grouped data",
         parent = Result.class)
 public final class TableResult extends Result {
-    private static final long serialVersionUID = -2964122512841756795L;
-
-    @ApiModelProperty(
-            required = true)
+    @ApiModelProperty(required = true)
     @JsonProperty
-    private List<Field> fields;
+    private final List<Field> fields;
 
-    @ApiModelProperty(
-            required = true)
+    @ApiModelProperty(required = true)
     @JsonProperty
-    private List<Row> rows;
+    private final List<Row> rows;
 
-    @ApiModelProperty(
-            required = true)
+    @ApiModelProperty(required = true)
     @JsonProperty
-    private OffsetRange resultRange;
+    private final OffsetRange resultRange;
 
     @ApiModelProperty(value = "The total number of results in this result set")
     @JsonProperty
-    private Integer totalResults;
-
-    public TableResult() {
-    }
+    private final Integer totalResults;
 
     @JsonCreator
     public TableResult(@JsonProperty("componentId") final String componentId,
@@ -77,32 +69,16 @@ public final class TableResult extends Result {
         return fields;
     }
 
-    public void setFields(final List<Field> fields) {
-        this.fields = fields;
-    }
-
     public List<Row> getRows() {
         return rows;
-    }
-
-    public void setRows(final List<Row> rows) {
-        this.rows = rows;
     }
 
     public OffsetRange getResultRange() {
         return resultRange;
     }
 
-    public void setResultRange(final OffsetRange resultRange) {
-        this.resultRange = resultRange;
-    }
-
     public Integer getTotalResults() {
         return totalResults;
-    }
-
-    public void setTotalResults(final Integer totalResults) {
-        this.totalResults = totalResults;
     }
 
     @Override

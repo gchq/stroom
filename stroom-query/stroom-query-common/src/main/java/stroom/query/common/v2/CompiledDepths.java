@@ -16,91 +16,100 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
-
 import java.util.Arrays;
-import java.util.List;
 
-public class CompiledDepths {
+class CompiledDepths {
     private final int maxGroupDepth;
     private final int maxDepth;
-    private final int[] depths;
-    private final boolean hasGroupBy;
+    private final int[] groupSizeByDepth;
+    private final boolean[][] groupIndicesByDepth;
+    private final boolean[][] valueIndicesByDepth;
 
-    public CompiledDepths(final List<Field> fields, boolean showDetail) {
+    CompiledDepths(final CompiledField[] compiledFields, final boolean showDetail) {
         int maxGroupDepth = -1;
+        int maxDepth = 0;
 
-        if (fields == null) {
-            depths = new int[0];
+        if (compiledFields == null) {
+            groupSizeByDepth = new int[0];
+            groupIndicesByDepth = new boolean[0][];
+            valueIndicesByDepth = new boolean[0][];
         } else {
-            depths = new int[fields.size()];
+            // Get the max group depth.
+            for (final CompiledField field : compiledFields) {
+                maxGroupDepth = Math.max(maxGroupDepth, field.getGroupDepth());
+            }
 
-            int i = 0;
-            for (final Field field : fields) {
-                // Create compiled field.
-                int groupDepth = -1;
-                if (field.getGroup() != null) {
-                    groupDepth = field.getGroup();
+            if (maxGroupDepth >= 0) {
+                maxDepth = maxGroupDepth + 1;
+            }
+            if (showDetail || maxDepth == 0) {
+                maxDepth++;
+            }
+
+            groupSizeByDepth = new int[maxDepth];
+            groupIndicesByDepth = new boolean[maxDepth][];
+            valueIndicesByDepth = new boolean[maxDepth][];
+
+            for (int depth = 0; depth < maxDepth; depth++) {
+                final boolean[] valueIndices = new boolean[compiledFields.length];
+                final boolean[] groupIndices = new boolean[compiledFields.length];
+
+                for (int i = 0; i < compiledFields.length; i++) {
+                    final CompiledField field = compiledFields[i];
+
+                    // Add a flag for each field index included in this group depth.
+                    if (field.getGroupDepth() == depth) {
+                        groupIndices[i] = true;
+                        groupSizeByDepth[depth] = groupSizeByDepth[depth] + 1;
+                        valueIndices[i] = true;
+                    } else if (field.getGroupDepth() != -1 && field.getGroupDepth() < depth) {
+                        valueIndices[i] = true;
+                    } else if (depth > maxGroupDepth) {
+                        valueIndices[i] = true;
+                    } else {
+                        if (field.getExpression() != null) {
+                            if (field.getExpression().hasAggregate()) {
+                                valueIndices[i] = true;
+                            }
+                        }
+                    }
                 }
-                maxGroupDepth = Math.max(maxGroupDepth, groupDepth);
-                depths[i++] = groupDepth;
+
+                valueIndicesByDepth[depth] = valueIndices;
+                groupIndicesByDepth[depth] = groupIndices;
             }
         }
 
         this.maxGroupDepth = maxGroupDepth;
-
-        // If we want the table to show details below the group level then we
-        // need to set max depth to be 1 greater than the max group depth.
-        if (showDetail) {
-            maxDepth = this.maxGroupDepth + 1;
-        } else {
-            maxDepth = this.maxGroupDepth;
-        }
-
-        hasGroupBy = maxGroupDepth >= 0;
+        this.maxDepth = maxDepth;
     }
 
-    /**
-     * This is the maximum depth of grouping, 0 based
-     *
-     * @return The maximum depth for all groups.
-     */
-    public int getMaxGroupDepth() {
-        return maxGroupDepth;
+    public boolean hasGroup() {
+        return maxGroupDepth != -1;
     }
 
-    /**
-     * @return The maximum depth (can be equal to max group depth or max group depth + 1 if showing detail).
-     */
+    public int[] getGroupSizeByDepth() {
+        return groupSizeByDepth;
+    }
+
+    public boolean[][] getGroupIndicesByDepth() {
+        return groupIndicesByDepth;
+    }
+
+    public boolean[][] getValueIndicesByDepth() {
+        return valueIndicesByDepth;
+    }
+
     public int getMaxDepth() {
         return maxDepth;
-    }
-
-    /**
-     * An array of all field depths.
-     *
-     * @return Get an array of depths for all fields.
-     */
-    public int[] getDepths() {
-        return depths;
-    }
-
-    /**
-     * True if one of more fields are grouped.
-     *
-     * @return True if one of more fields are grouped.
-     */
-    public boolean hasGroupBy() {
-        return hasGroupBy;
     }
 
     @Override
     public String toString() {
         return "CompiledDepths{" +
                 "maxGroupDepth=" + maxGroupDepth +
-                ", maxDepth=" + maxDepth +
-                ", depths=" + Arrays.toString(depths) +
-                ", hasGroupBy=" + hasGroupBy +
+                ", levels=" + maxDepth +
+                ", fieldIndicesByDepth=" + Arrays.toString(groupIndicesByDepth) +
                 '}';
     }
 }

@@ -23,36 +23,46 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
-public class CompiledSorter implements Serializable, Comparator<Item> {
-    private static final long serialVersionUID = -64195891930546352L;
-
+public class CompiledSorter implements Comparator<Item>, Function<List<Item>, List<Item>> {
     private static final ValComparator COMPARATOR = new ValComparator();
 
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
-    private final boolean hasSort;
 
-    public CompiledSorter(final List<Field> fields) {
-        int pos = 0;
+    private CompiledSorter() {
+    }
 
-        if (fields != null) {
-            for (final Field field : fields) {
-                if (field.getSort() != null) {
-                    // Remember sorting info.
-                    final Sort sort = field.getSort();
-                    final CompiledSort compiledSort = new CompiledSort(pos, sort);
-                    add(compiledSort);
+    public static CompiledSorter[] create(final int maxDepth, final CompiledField[] compiledFields) {
+        final CompiledSorter[] sorters = new CompiledSorter[maxDepth];
+
+        if (compiledFields != null) {
+            for (int depth = 0; depth < maxDepth; depth++) {
+
+                for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
+                    final CompiledField compiledField = compiledFields[fieldIndex];
+                    final Field field = compiledField.getField();
+                    if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
+                        // Remember sorting info.
+                        final Sort sort = field.getSort();
+                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort);
+
+                        CompiledSorter sorter = sorters[depth];
+                        if (sorter == null) {
+                            sorter = new CompiledSorter();
+                            sorters[depth] = sorter;
+                        }
+
+                        sorter.add(compiledSort);
+                    }
                 }
-
-                pos++;
             }
         }
 
-        hasSort = compiledSorts.size() > 0;
+        return sorters;
     }
 
     public void add(final CompiledSort compiledSort) {
@@ -72,13 +82,20 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Override
+    public List<Item> apply(final List<Item> items) {
+        items.sort(this);
+        return items;
+    }
+
     @Override
     public int compare(final Item o1, final Item o2) {
+        final Generator[] generators1 = o1.getGenerators();
+        final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {
             final int fieldPos = compiledSort.getFieldIndex();
-            final Generator g1 = o1.generators[fieldPos];
-            final Generator g2 = o2.generators[fieldPos];
+            final Generator g1 = generators1[fieldPos];
+            final Generator g2 = generators2[fieldPos];
 
             int res = 0;
             if (g1 != null && g2 != null) {
@@ -104,15 +121,14 @@ public class CompiledSorter implements Serializable, Comparator<Item> {
         return 0;
     }
 
-    boolean hasSort() {
-        return hasSort;
-    }
+//    boolean hasSort() {
+//        return hasSort;
+//    }
 
     @Override
     public String toString() {
         return "CompiledSorter{" +
                 "compiledSorts=" + compiledSorts +
-                ", hasSort=" + hasSort +
                 '}';
     }
 }

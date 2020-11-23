@@ -23,7 +23,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.search.coprocessor.Values;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -49,9 +48,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final int fieldIndex = fieldIndexes.get(name);
-                    if (fieldIndex >= 0) {
-                        values[fieldIndex] = ValString.create(value);
+                    final Integer pos = fieldIndexes.getPos(name);
+                    if (pos != null) {
+                        values[pos] = ValString.create(value);
                     }
                 }
             }
@@ -66,7 +65,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         if (RECORD.equals(localName)) {
             SearchDebugUtil.writeExtractionData(values);
 
-            consumer.accept(new Values(values));
+            consumer.accept(values);
             count++;
             values = null;
         }
