@@ -35,20 +35,16 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasItems;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.Count;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
@@ -61,6 +57,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
@@ -145,6 +142,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private String currentChildDataType;
     private long currentPartNo;
     private long currentSegmentNo;
+    private Set<String> currentAvailableStreamTypes = null;
 
     private DataType curDataType;
 
@@ -168,7 +166,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean steppingSource;
     private boolean formatOnLoad;
     private boolean ignoreActions;
-    private ButtonView viewSourceBtn;
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
     private String lastTabName;
 
@@ -206,14 +203,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         markerListPresenter.setDataPresenter(this);
 
         textPresenter.setUiHandlers(this);
-
-        viewSourceBtn = view.addButton(SvgPresets.RAW.title("View source data"));
-        viewSourceBtn.setEnabled(true);
-        viewSourceBtn.setVisible(true);
-        viewSourceBtn.addClickHandler(event -> {
-            openSourcePresenter();
-        });
-
         textPresenter.setWrapLines(true);
 
         addTab(infoTab);
@@ -225,6 +214,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
+        view.addSourceLinkClickHandler(event ->
+                openSourcePresenter());
+        view.setSourceLinkVisible(true);
         view.setNavigatorView(itemNavigatorPresenter.getView());
         view.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
@@ -296,11 +288,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     getView().getTabBar().selectTab(infoTab);
                     showHtmlPresenter();
                     fetchMetaInfoData(currentMetaId);
-                    viewSourceBtn.setVisible(false);
+                    getView().setSourceLinkVisible(false);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                 } else {
-                    viewSourceBtn.setVisible(true);
+                    getView().setSourceLinkVisible(true);
                     if (META.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.PROPERTIES;
                         fetchDataForCurrentStreamNo(META_DATA);
@@ -465,11 +457,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void fetchData(final Meta meta) {
-        this.currentMetaId = meta.getId();
-        this.currentStreamType = meta.getTypeName();
+        currentMetaId = meta.getId();
+        currentStreamType = meta.getTypeName();
         currentPartNo = 0;
         currentSegmentNo = 0;
         markerListPresenter.resetExpandedSeverities();
+        GWT.log("ID " + currentMetaId
+                + " streamType " + currentStreamType
+                + " part " + currentPartNo
+                + " seg " + currentSegmentNo);
         update(true);
     }
 
@@ -478,9 +474,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             if (isSameStreamAndPartAsLastTime()) {
                 // Same stream/part so we know this type is available and
                 // therefore no need to update tabs as
-                updateFromResource(fireEvents);
+//                if (INFO.equals(lastTabName)) {
+//                    refreshMetaInfoPresenterContent(currentMetaId);
+//                    refreshProgressBar(false);
+//                } else {
+                    updateFromResource(fireEvents);
+//                }
             } else {
-                // Different stream/part so we need to check which child stream types are available
+                    // Different stream/part so we need to check which child stream types are available
                 // and pick an appropriate one.
 
                 final Rest<Set<String>> rest = restFactory.create();
@@ -489,6 +490,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                             if (INFO.equals(lastTabName)) {
                                 refreshMetaInfoPresenterContent(currentMetaId);
                                 updateTabs(currentStreamType, availableChildStreamTypes);
+                                refreshProgressBar(false);
                             } else {
                                 // Tabs will be updated by updateFromResource
                                 setEffectiveChildStreamType(availableChildStreamTypes);
@@ -989,16 +991,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public interface DataView extends View {
 
-        ButtonView addButton(final SvgPreset preset);
+        void addSourceLinkClickHandler(final ClickHandler clickHandler);
 
-        ToggleButtonView addToggleButton(final SvgPreset onPreset,
-                                         final SvgPreset offPreset);
+        void setSourceLinkVisible(final boolean isVisible);
 
         TabBar getTabBar();
 
         LayerContainer getLayerContainer();
 
-        void setNavigatorView(ItemNavigatorView itemNavigatorView);
+        void setNavigatorView(final ItemNavigatorView itemNavigatorView);
 
         void setProgressView(final ProgressView progressView);
     }

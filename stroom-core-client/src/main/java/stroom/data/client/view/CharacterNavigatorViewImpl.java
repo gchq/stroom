@@ -43,7 +43,7 @@ import java.util.Set;
 public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNavigatorView {
 
     private static final String LINES_TITLE = "Lines";
-    private static final String CHARACTERS_TITLE = "Characters";
+    private static final String CHARACTERS_TITLE = "Chars";
     private static final String UNKNOWN_VALUE = "?";
     private static final int ZERO_TO_ONE_BASE_INCREMENT = 1;
     private static final String NUMBER_FORMAT = "#,###";

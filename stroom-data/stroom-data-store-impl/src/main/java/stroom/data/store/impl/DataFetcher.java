@@ -803,12 +803,9 @@ public class DataFetcher {
             currCharOffset = currCharOffset - 1; // undo the last ++ op
         }
 
-//        final RowCount<Long> totalCharCount = RowCount.of(
-//                startCharOffset + charData.length(),
-//                isTotalPageableItemsExact);
-
         if (!totalCharCount.isExact() && charReader.getLastCharOffsetRead().isPresent()) {
-            // Estimate the total chat count based on the ratio of chars to bytes seen so far
+            // Estimate the total char count based on the ratio of chars to bytes seen so far.
+            // The estimate will improve as we fetch further into the stream.
             final double avgCharsPerByte = charReader.getLastCharOffsetRead().get()
                     / (double) charReader.getLastByteOffsetRead().get();
 

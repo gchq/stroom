@@ -2,6 +2,7 @@ package stroom.widget.progress.client.presenter;
 
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -16,6 +17,7 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
     private static final String BAR_COLOUR_KNOWN_BOUNDED = "#1e88e5"; // Stroom blue
+    private static final String BAR_COLOUR_COMPLETE = "#15a32c"; // Stroom green
     private static final String BAR_COLOUR_UNKNOWN_BOUND = "#FFCA28"; // Material Design Amber 300
 
     private Progress progress;
@@ -129,9 +131,16 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         final String barColour;
         final String title;
         // TODO set colour via a style name
-        if (progress.hasKnownUpperBound()) {
-            barColour = BAR_COLOUR_KNOWN_BOUNDED;
-            title = TITLE_PREFIX;
+        if (progress.isComplete()) {
+            barColour = BAR_COLOUR_COMPLETE;
+            title = "All data visible in the editor";
+        } else if (progress.hasKnownUpperBound()) {
+                barColour = BAR_COLOUR_KNOWN_BOUNDED;
+                NumberFormat numberFormat = NumberFormat.getFormat("0.0");
+                title = TITLE_PREFIX
+                        + " ("
+                        + numberFormat.format(getWindowAsPercentage())
+                        + "%)";
         } else {
             barColour = BAR_COLOUR_UNKNOWN_BOUND;
             title = TITLE_PREFIX + " (total size unknown)";

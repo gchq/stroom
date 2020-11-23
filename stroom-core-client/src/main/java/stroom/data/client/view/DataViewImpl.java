@@ -26,8 +26,10 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.view.LinkTabBar;
 
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -41,7 +43,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     LinkTabBar tabBar;
 
     @UiField
-    ButtonPanel buttonPanel;
+    Label sourceLinkLabel;
 
     @UiField
     ResizeSimplePanel navigatorContainer;
@@ -56,17 +58,19 @@ public class DataViewImpl extends ViewImpl implements DataView {
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
+        sourceLinkLabel.setText("View Source");
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.addButton(preset);
+    public void setSourceLinkVisible(final boolean isVisible) {
+        sourceLinkLabel.setVisible(isVisible);
     }
 
     @Override
-    public ToggleButtonView addToggleButton(final SvgPreset onPreset,
-                                            final SvgPreset offPreset) {
-        return buttonPanel.addToggleButton(onPreset, offPreset);
+    public void addSourceLinkClickHandler(final ClickHandler clickHandler) {
+        if (clickHandler != null) {
+            sourceLinkLabel.addClickHandler(clickHandler);
+        }
     }
 
     @Override

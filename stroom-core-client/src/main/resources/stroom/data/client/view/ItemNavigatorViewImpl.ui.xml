@@ -4,17 +4,16 @@
              xmlns:btn="urn:import:stroom.widget.button.client">
     <ui:style>
         .itemNavigator {
-        position: relative;
-        text-align: right;
         }
 
         .label {
-        display: inline-block;
         margin: 0px;
         margin-top: 2px;
         cursor: pointer;
         padding-left: 0.75em;
         padding-right: 0.75em;
+        display: flex;
+        float: left;
         }
 
         .label:hover {
@@ -24,6 +23,8 @@
         .button {
         padding: 1px;
         text-align: center;
+        display: flex;
+        float: left;
         }
     </ui:style>
 
