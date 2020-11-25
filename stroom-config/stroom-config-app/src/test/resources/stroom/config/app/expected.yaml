@@ -365,7 +365,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "${stroom.temp}/refDataOffHeapStore"
+      localDir: "refDataOffHeapStore"
       lmdbSystemLibraryPath: null
       maxPutsBeforeCommit: 0
       maxReaders: 100
