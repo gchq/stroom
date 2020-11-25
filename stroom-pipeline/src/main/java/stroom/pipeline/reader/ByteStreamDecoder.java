@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
@@ -129,6 +130,31 @@ public class ByteStreamDecoder {
         }
 
         return result;
+    }
+
+//    private boolean isByteOrderMark(final ByteBuffer byteBuffer) {
+//
+//    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static interface ByteSupplier {
+        /**
+         * @return The byte represented as an unsigned value 0-255 or -1 if there are
+         * no more bytes to supply. This is equivalent to {@link InputStream#read()}.
+         *
+         * Care need to be taken when comparing signed byte values to the result of this
+         * method. Testing for -1 should be done before any kind of conversion/comparison
+         * to another value.
+         *
+         * e.g.
+         * int b = supplyUnsignedByte();
+         * if (b == -1) {
+         *     break;
+         * }
+         * if (arr[i] == (byte)
+         */
+        int supplyUnsignedByte();
     }
 
 
