@@ -17,7 +17,6 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentInputStream;
-import stroom.pipeline.refdata.util.ByteArrayUtils;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
 
@@ -482,7 +481,7 @@ public class RASegmentInputStream extends SegmentInputStream {
             return -1;
         }
 
-        LOGGER.info("bytes: {} {}", ByteArrayUtils.byteArrayToHex(b, off, len), b[off]);
+//        LOGGER.info("bytes: {} {}", ByteArrayUtils.byteArrayToHex(b, off, len), b[off]);
         return totalBytesRead;
     }
 
