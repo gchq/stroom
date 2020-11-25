@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix byte conversion bug with `read()` method in RASegmentInputStream.
+
 * Add `viewType` and `displayType` args to `data(...)` dashboard expression.
 
 * Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
