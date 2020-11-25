@@ -16,11 +16,13 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentInputStream;
+import stroom.pipeline.refdata.util.ByteArrayUtils;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -480,6 +482,7 @@ public class RASegmentInputStream extends SegmentInputStream {
             return -1;
         }
 
+        LOGGER.info("bytes: {} {}", ByteArrayUtils.byteArrayToHex(b, off, len), b[off]);
         return totalBytesRead;
     }
 
@@ -500,9 +503,11 @@ public class RASegmentInputStream extends SegmentInputStream {
     public int read() throws IOException {
         final int len = read(singleByte);
         if (len == -1) {
-            return -1;
+            return -1; // end of stream
         }
-        return singleByte[0];
+        // result of read must be 0-255 (unsigned) so we need to convert our
+        // signed byte to unsigned.
+        return singleByte[0] & 0xff;
     }
 
     /**
