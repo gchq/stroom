@@ -14,7 +14,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
-    private String localDir = "${stroom.temp}/refDataOffHeapStore";
+    private String localDir = "refDataOffHeapStore";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
     private int maxReaders = 100;
@@ -28,9 +28,9 @@ public class ReferenceDataConfig extends AbstractConfig {
             .build();
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The absolute directory path to use for storing the reference data store. It MUST be on " +
-            "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
-            "if it doesn't exist.")
+    @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
+            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. "+
+            "The directory will be created if it doesn't exist.")
     public String getLocalDir() {
         return localDir;
     }
