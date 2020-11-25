@@ -30,7 +30,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.shared.v2.ParamUtil;
+import stroom.query.api.v2.ParamUtil;
 
 import org.junit.jupiter.api.Test;
 

@@ -34,7 +34,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
-import stroom.query.shared.v2.ParamUtil;
+import stroom.query.api.v2.ParamUtil;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
