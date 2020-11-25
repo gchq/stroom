@@ -18,12 +18,11 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.BasicLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
@@ -52,7 +51,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(100);
     private static final int VALUE_BUFFER_SIZE = 1_000;
     private final int recCount = 1_000_000;
-    private Serde<String> stringSerde = new StringSerde();
+    private final Serde<String> stringSerde = new StringSerde();
     private BasicLmdbDb<String, String> basicLmdbDb;
 
     @BeforeEach

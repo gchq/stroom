@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ContentPackImportConfig extends AbstractConfig {
     private boolean enabled;
-    private String importDirectory;
+    private String importDirectory = "contentPackImport";
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
     @JsonPropertyDescription("If true any content packs found in 'contentPackImport' will be imported " +
@@ -41,6 +41,7 @@ public class ContentPackImportConfig extends AbstractConfig {
     public String toString() {
         return "ContentPackImportConfig{" +
                 "enabled=" + enabled +
+                ", importDirectory='" + importDirectory + '\'' +
                 '}';
     }
 }

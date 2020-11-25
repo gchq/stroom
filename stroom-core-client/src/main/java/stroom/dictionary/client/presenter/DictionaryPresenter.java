@@ -92,7 +92,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
-                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(DICTIONARY_RESOURCE)
                     .download(docRef);
         }));

@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.HasFindByName;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.writer.PathCreator;
+import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1948** : Made UI report errors that occur during download.
+
+* Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
+
 * Fix byte conversion bug with `read()` method in RASegmentInputStream.
 
 * Add `viewType` and `displayType` args to `data(...)` dashboard expression.

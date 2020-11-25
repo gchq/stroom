@@ -18,9 +18,8 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaService;
-import stroom.search.coprocessor.Values;
+import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -73,7 +72,7 @@ class StreamMapCreator {
             final long longEventId = getLong(storedData, eventIdIndex);
 
             // Stream may have been deleted but still be in the index
-            final Optional<Values> optValues = getData(longStreamId, longEventId, storedData);
+            final Optional<Val[]> optValues = getData(longStreamId, longEventId, storedData);
             optValues.ifPresent(data -> {
                 final Event event = new Event(longStreamId, longEventId, data);
                 storedDataMap.add(event);
@@ -82,7 +81,7 @@ class StreamMapCreator {
         }
     }
 
-    private Optional<Values> getData(final long longStreamId, final long longEventId, final Val[] storedData) {
+    private Optional<Val[]> getData(final long longStreamId, final long longEventId, final Val[] storedData) {
         if (longStreamId != -1 && longEventId != -1) {
             // Create a map to cache stream lookups. If we have cached more than a million streams then
             // discard the map and start again to avoid using too much memory.
@@ -103,7 +102,7 @@ class StreamMapCreator {
                 }
             });
 
-            if (!optional.isPresent()) {
+            if (optional.isEmpty()) {
                 // Likely stream has been deleted due to data retention rules so we can quietly ignore it
                 LOGGER.debug(() -> "Stream not found with id " + longStreamId);
             }
@@ -113,7 +112,7 @@ class StreamMapCreator {
                     final Throwable t = (Throwable) cached;
                     throw new ExtractionException(t.getMessage(), t);
                 } else if (cached instanceof Meta) {
-                    return new Values(storedData);
+                    return storedData;
                 } else {
                     throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
                 }

@@ -21,7 +21,7 @@ import stroom.dashboard.expression.v1.ExpressionTokeniser.Token;
 import java.text.ParseException;
 
 public class ParamFactory {
-    public Param create(final FieldIndexMap fieldIndexMap, final Token token) throws ParseException {
+    public Param create(final FieldIndex fieldIndexMap, final Token token) throws ParseException {
         final String value = token.toString();
 
         // Token should be string or number or field.

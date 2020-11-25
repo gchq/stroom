@@ -82,13 +82,13 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         @Override
         public void read(final Input input) {
             super.read(input);
-            current = ValSerialisers.read(input);
+            current = ValSerialiser.read(input);
         }
 
         @Override
         public void write(final Output output) {
             super.write(output);
-            ValSerialisers.write(output, current);
+            ValSerialiser.write(output, current);
         }
     }
 

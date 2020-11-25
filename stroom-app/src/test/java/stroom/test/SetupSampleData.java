@@ -16,13 +16,19 @@
 
 package stroom.test;
 
-import stroom.db.util.DbModule;
+import stroom.config.app.Config;
+import stroom.config.app.YamlUtil;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
-import stroom.util.io.TempDirProvider;
+import stroom.util.io.PathCreator;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -42,13 +48,29 @@ import com.google.inject.Injector;
  * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
+    private static final String CONTENT_PACK_DOWNLOAD_DIR = "~/.stroom/contentPackDownload";
+    private static final String CONTENT_RELEASES_URL = "https://github.com/gchq/stroom-content/releases/download/";
+
     public static void main(final String[] args) {
+        if (args.length != 1) {
+            throw new RuntimeException("Expected 1 argument that is the location of the config.");
+        }
+        final Path configFile = YamlUtil.getYamlFileFromArgs(args);
+        Config config;
+        try {
+            config = YamlUtil.readConfig(configFile);
+        } catch (final IOException e) {
+            throw new RuntimeException("Unable to read yaml config");
+        }
+
         // We are running stroom so want to use a proper db
-        final Injector injector = Guice.createInjector(new DbModule(), new CoreTestModule());
+        final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
+
+        final PathCreator pathCreator = injector.getInstance(PathCreator.class);
+        downloadContent(pathCreator, config);
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
-        final TempDirProvider tempDirProvider = injector.getInstance(TempDirProvider.class);
 
         final CommonTestControl commonTestControl = injector.getInstance(CommonTestControl.class);
 
@@ -67,5 +89,23 @@ public final class SetupSampleData {
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();
+    }
+
+    private static void downloadContent(final PathCreator pathCreator, final Config config) {
+        try {
+            final String downloadDir = pathCreator.replaceSystemProperties(CONTENT_PACK_DOWNLOAD_DIR);
+            final String importDir = pathCreator.replaceSystemProperties(
+                    config.getAppConfig().getContentPackImportConfig().getImportDirectory());
+
+            Path contentPackDownloadPath = Paths.get(downloadDir);
+            Path contentPackImportPath = Paths.get(importDir);
+
+            Files.createDirectories(contentPackDownloadPath);
+            Files.createDirectories(contentPackImportPath);
+
+            ContentPackDownloader.downloadAllPacks(CONTENT_RELEASES_URL, contentPackDownloadPath, contentPackImportPath);
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

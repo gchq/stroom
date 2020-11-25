@@ -307,10 +307,7 @@ task copyFilesForStroomDockerBuild() {
     dependsOn generateConfigFiles
 
     doFirst {
-        new File(stroomPluginsDir).mkdirs()
         def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/contentPacks"
-        def stroomDockerPluginsDir = "${stroomDockerBuildDir}/plugins"
-        new File(stroomPluginsDir).mkdirs()
 
         // Copy the stroom app fat jar
         copy {

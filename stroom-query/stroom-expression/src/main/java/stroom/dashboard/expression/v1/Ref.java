@@ -90,12 +90,12 @@ class Ref extends AbstractFunction {
 
         @Override
         public void read(final Input input) {
-            current = ValSerialisers.read(input);
+            current = ValSerialiser.read(input);
         }
 
         @Override
         public void write(final Output output) {
-            ValSerialisers.write(output, current);
+            ValSerialiser.write(output, current);
         }
     }
 }

@@ -16,8 +16,18 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-public interface Coprocessor extends PayloadFactory {
-    void receive(Val[] values);
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+public interface Coprocessor extends Receiver {
+    AtomicLong getValuesCount();
+
+    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException;
+
+    boolean readPayload(Input input);
+
+    void writePayload(Output output);
 }

@@ -20,7 +20,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
+import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,39 +34,40 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
-    static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
 
     private final ImportExportService importExportService;
     private final ContentPackImportConfig config;
-    private final TempDirProvider tempDirProvider;
     private final SecurityContext securityContext;
+    private final PathCreator pathCreator;
 
     @SuppressWarnings("unused")
     @Inject
     ContentPackImport(final ImportExportService importExportService,
                       final ContentPackImportConfig config,
-                      final TempDirProvider tempDirProvider,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final PathCreator pathCreator) {
         this.importExportService = importExportService;
         this.config = config;
-        this.tempDirProvider = tempDirProvider;
         this.securityContext = securityContext;
+        this.pathCreator = pathCreator;
     }
 
     public void startup() {
-        // TODO I'm not sure we want to scan all these dirs, see https://github.com/gchq/stroom/issues/1728
-        final List<Path> contentPacksDirs = getContentPackBaseDirs();
-        startup(contentPacksDirs);
+        if (config.getImportDirectory() != null) {
+            LOGGER.info("Configured import dir is '" + config.getImportDirectory() + "'");
+            final String resolvedPath = pathCreator.replaceSystemProperties(config.getImportDirectory());
+            LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
+
+            startup(List.of(Paths.get(resolvedPath)));
+        }
     }
 
     // pkg private for testing
@@ -156,53 +157,4 @@ public class ContentPackImport {
                     FileUtil.getCanonicalPath(contentPack), FileUtil.getCanonicalPath(destPath)), e);
         }
     }
-
-    private List<Path> getContentPackBaseDirs() {
-        // Look in a number of places for content packs:
-        //  Relative to the jar if we are running in a jar
-        //  ~/.stroom
-        // stroom.temp
-        return Stream.of(
-                getConfiguredContentPackImportDir(),
-                getApplicationJarDir(),
-                getDotStroomDir(),
-                Optional.of(tempDirProvider.get().resolve(CONTENT_PACK_IMPORT_DIR))
-        )
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-    }
-
-    Optional<Path> getConfiguredContentPackImportDir() {
-        return Optional.ofNullable(config.getImportDirectory())
-                .map(Paths::get);
-    }
-
-
-    private Optional<Path> getDotStroomDir() {
-        final String userHome = System.getProperty("user.home");
-        if (userHome == null) {
-            return Optional.empty();
-        } else {
-            final Path dotStroomDir = Paths.get(userHome)
-                    .resolve(".stroom")
-                    .resolve(CONTENT_PACK_IMPORT_DIR);
-            return Optional.of(dotStroomDir);
-        }
-    }
-
-    private Optional<Path> getApplicationJarDir() {
-        try {
-            //This isn't ideal when running in junit, as it will be the location of the junit class
-            //however it won't find any zips in here so will carry on regardless
-            final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            return Optional.of(Paths.get(codeSourceLocation)
-                    .getParent()
-                    .resolve(CONTENT_PACK_IMPORT_DIR));
-        } catch (final RuntimeException e) {
-            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
-            return Optional.empty();
-        }
-    }
-
 }

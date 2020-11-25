@@ -16,68 +16,83 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
-import stroom.mapreduce.v2.BlockingPairQueue;
-import stroom.mapreduce.v2.PairQueue;
-import stroom.mapreduce.v2.UnsafePairQueue;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 
-import java.util.List;
-import java.util.Map;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
-    private final PairQueue<GroupKey, Item> queue;
-    private final ItemMapper mapper;
+    private final TableSettings tableSettings;
+    private final TableDataStore tableDataStore;
 
-    private final CompiledDepths compiledDepths;
+    private final Consumer<Throwable> errorConsumer;
+    private final CountDownLatch completionState = new CountDownLatch(1);
+    private final AtomicLong valuesCount = new AtomicLong();
+    private final AtomicLong completionCount = new AtomicLong();
 
-    public TableCoprocessor(final TableCoprocessorSettings settings,
-                            final FieldIndexMap fieldIndexMap,
-                            final Map<String, String> paramMap) {
-        final TableSettings tableSettings = settings.getTableSettings();
-
-        final List<Field> fields = tableSettings.getFields();
-        compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
-        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
-
-        queue = new BlockingPairQueue<>(settings.getQueueCapacity());
-        mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());
+    public TableCoprocessor(final TableSettings tableSettings,
+                            final TableDataStore tableDataStore,
+                            final Consumer<Throwable> errorConsumer) {
+        this.tableSettings = tableSettings;
+        this.tableDataStore = tableDataStore;
+        this.errorConsumer = errorConsumer;
     }
 
-    public TableCoprocessor(final PairQueue<GroupKey, Item> queue, final CompiledFields compiledFields, final CompiledDepths compiledDepths) {
-        this.queue = queue;
-        this.compiledDepths = compiledDepths;
-        mapper = new ItemMapper(queue, compiledFields, compiledDepths.getMaxDepth(), compiledDepths.getMaxGroupDepth());
+    public TableSettings getTableSettings() {
+        return tableSettings;
     }
 
     @Override
-    public void receive(final Val[] values) {
-        mapper.collect(null, values);
+    public Consumer<Val[]> getValuesConsumer() {
+        return values -> {
+            valuesCount.incrementAndGet();
+            tableDataStore.add(values);
+        };
     }
 
     @Override
-    public Payload createPayload() {
-        final UnsafePairQueue<GroupKey, Item> outputQueue = new UnsafePairQueue<>();
+    public Consumer<Throwable> getErrorConsumer() {
+        return errorConsumer;
+    }
 
-        // Create a partitioner to perform result reduction if needed.
-        final ItemPartitioner partitioner = new ItemPartitioner(compiledDepths.getDepths(),
-                compiledDepths.getMaxDepth());
-        partitioner.setOutputCollector(outputQueue);
+    @Override
+    public Consumer<Long> getCompletionConsumer() {
+        return count -> {
+            completionCount.set(count);
+            completionState.countDown();
+        };
+    }
 
-        // Partition the data prior to forwarding to the target node.
-        partitioner.read(queue);
+    @Override
+    public boolean readPayload(final Input input) {
+        return tableDataStore.readPayload(input);
+    }
 
-        // Perform partitioning.
-        partitioner.partition();
+    @Override
+    public void writePayload(final Output output) {
+        tableDataStore.writePayload(output);
+    }
 
-        // Don't create a payload if the queue is empty.
-        if (outputQueue.size() == 0) {
-            return null;
-        }
+    public AtomicLong getValuesCount() {
+        return valuesCount;
+    }
 
-        return new TablePayload(outputQueue);
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.await(timeout, unit);
+    }
+
+    public Data getData() {
+        return tableDataStore.getData();
+    }
+
+    @Override
+    public String toString() {
+        return tableSettings.toString();
     }
 }

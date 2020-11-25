@@ -21,6 +21,8 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 
 import javax.inject.Inject;
@@ -34,13 +36,14 @@ public class ExtendedPathCreator extends PathCreator {
     private final Provider<NodeInfo> nodeInfo;
 
     @Inject
-    ExtendedPathCreator(final TempDirProvider tempDirProvider,
+    ExtendedPathCreator(final HomeDirProvider homeDirProvider,
+                        final TempDirProvider tempDirProvider,
                         final Provider<FeedHolder> feedHolder,
                         final Provider<PipelineHolder> pipelineHolder,
                         final Provider<MetaHolder> metaHolder,
                         final Provider<SearchIdHolder> searchIdHolder,
                         final Provider<NodeInfo> nodeInfo) {
-        super(tempDirProvider);
+        super(homeDirProvider, tempDirProvider);
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.metaHolder = metaHolder;

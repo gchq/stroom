@@ -2739,14 +2739,14 @@ class TestExpressionParser {
     }
 
     private void createExpression(final String expression, final int valueCount, final Consumer<Expression> consumer) {
-        final FieldIndexMap fieldIndexMap = new FieldIndexMap();
+        final FieldIndex fieldIndex = new FieldIndex();
         for (int i = 1; i <= valueCount; i++) {
-            fieldIndexMap.create("val" + i, true);
+            fieldIndex.create("val" + i);
         }
 
         Expression exp;
         try {
-            exp = parser.parse(fieldIndexMap, expression);
+            exp = parser.parse(fieldIndex, expression);
         } catch (final ParseException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

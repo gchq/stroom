@@ -16,11 +16,9 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
-import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
@@ -28,6 +26,8 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.Data.DataItem;
+import stroom.query.common.v2.Data.DataItems;
 import stroom.query.common.v2.format.FieldFormatter;
 
 import org.slf4j.Logger;
@@ -65,7 +65,8 @@ public class FlatResultCreator implements ResultCreator {
                 final TableSettings parent = tableSettings.get(i);
                 final TableSettings child = tableSettings.get(i + 1);
 
-                // Create a set of sizes that are the minimum values for the combination of user provided sizes for the parent table and the default maximum sizes.
+                // Create a set of sizes that are the minimum values for the combination of user provided sizes for the
+                // parent table and the default maximum sizes.
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
 
@@ -81,7 +82,9 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final GroupKey key) {
-        if (key == null || key.getValues() == null) {
+        if (key == null ||
+                key.getValues() == null ||
+                key.getValues().length == 0) {
             return null;
         }
 
@@ -137,46 +140,57 @@ public class FlatResultCreator implements ResultCreator {
                 long totalResults = 0;
 
                 // Get top level items.
-                final Items<Item> items = mappedData.getChildMap().get(null);
-
-                final List<List<Object>> results = new ArrayList<>();
-
-                if (items != null) {
+                final DataItems items = mappedData.get();
+                final List<List<Object>> results = new ArrayList<>(items.size());
+                if (items.size() > 0) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
                     final OpenGroups openGroups = OpenGroupsFactory.create(resultRequest.getOpenGroups());
 
                     // Extract the maxResults settings from the last TableSettings object in the chain.
-                    // Do not constrain the max results with the default max results as the result size will have already
-                    // been constrained by the previous table mapping.
+                    // Do not constrain the max results with the default max results as the result size will have
+                    // already been constrained by the previous table mapping.
                     final List<TableSettings> mappings = resultRequest.getMappings();
                     final TableSettings tableSettings = mappings.get(mappings.size() - 1);
-                    // Create a set of max result sizes that are determined by the supplied max results or default to integer max value.
+                    // Create a set of max result sizes that are determined by the supplied max results or default to
+                    // integer max value.
                     final Sizes maxResults = Sizes.create(tableSettings.getMaxResults(), Integer.MAX_VALUE);
 
-                    totalResults = addResults(mappedData, rangeChecker, openGroups, items, results, 0,
-                            0, maxResults);
+                    final Map<Integer, List<Field>> groupFields = new HashMap<>();
+                    for (final Field field : fields) {
+                        if (field.getGroup() != null) {
+                            groupFields.computeIfAbsent(field.getGroup(), k ->
+                                    new ArrayList<>())
+                                    .add(field);
+                        }
+                    }
+
+                    totalResults = addResults(
+                            mappedData,
+                            rangeChecker,
+                            openGroups,
+                            items,
+                            results,
+                            0,
+                            0,
+                            maxResults,
+                            groupFields);
                 }
 
-                final FlatResult.Builder resultBuilder = new FlatResult.Builder()
+                final List<Field> structure = new ArrayList<>();
+                structure.add(new Field.Builder().name(":ParentKey").build());
+                structure.add(new Field.Builder().name(":Key").build());
+                structure.add(new Field.Builder().name(":Depth").build());
+                structure.addAll(this.fields);
+
+                return new FlatResult.Builder()
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults)
                         .error(error)
-                        .addField(new Field.Builder()
-                                .name(":ParentKey")
-                                .build())
-                        .addField(new Field.Builder()
-                                .name(":Key")
-                                .build())
-                        .addField(new Field.Builder()
-                                .name(":Depth")
-                                .build());
-                this.fields.forEach(resultBuilder::addField);
+                        .structure(structure)
+                        .values(results)
+                        .build();
 
-                results.forEach(resultBuilder::addValues);
-
-                return resultBuilder.build();
-
-            } catch (final RuntimeException e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error creating result for resultRequest {}", resultRequest.getComponentId(), e);
                 error = e.getMessage();
             }
@@ -185,78 +199,79 @@ public class FlatResultCreator implements ResultCreator {
         return new FlatResult(resultRequest.getComponentId(), null, null, 0L, error);
     }
 
-    private int addResults(final Data data, final RangeChecker rangeChecker,
-                           final OpenGroups openGroups, final Items<Item> items, final List<List<Object>> results,
-                           final int depth, final int parentCount, final Sizes maxResults) {
+    private int addResults(final Data data,
+                           final RangeChecker rangeChecker,
+                           final OpenGroups openGroups,
+                           final DataItems items,
+                           final List<List<Object>> results,
+                           final int depth,
+                           final int parentCount,
+                           final Sizes maxResults,
+                           final Map<Integer, List<Field>> groupFields) {
         int count = parentCount;
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        final Map<Integer, List<Field>> groupFields = new HashMap<>();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                groupFields.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(field);
+        for (final DataItem item : items) {
+            if (rangeChecker.check(count)) {
+                final List<Object> resultList = new ArrayList<>(fields.size() + 3);
+
+                if (item.getKey() != null) {
+                    resultList.add(toNodeKey(groupFields, item.getKey().getParent()));
+                    resultList.add(toNodeKey(groupFields, item.getKey()));
+                } else {
+                    resultList.add(null);
+                    resultList.add(null);
+                }
+                resultList.add(depth);
+
+                // Convert all list into fully resolved objects evaluating
+                // functions where necessary.
+                int i = 0;
+                for (final Field field : fields) {
+                    final Val val = item.getValue(i);
+                    Object result = null;
+                    if (val != null) {
+                        // Convert all list into fully resolved
+                        // objects evaluating functions where necessary.
+                        if (fieldFormatter != null) {
+                            result = fieldFormatter.format(field, val);
+                        } else {
+                            result = convert(field, val);
+                        }
+                    }
+
+                    resultList.add(result);
+                    i++;
+                }
+
+                // Add the values.
+                results.add(resultList);
+                resultCountAtThisLevel++;
+
+                // Add child results if a node is open.
+                if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
+                    final DataItems childItems = data.get(item.getKey());
+                    if (childItems.size() > 0) {
+                        count = addResults(
+                                data,
+                                rangeChecker,
+                                openGroups,
+                                childItems,
+                                results,
+                                depth + 1,
+                                count,
+                                maxResults,
+                                groupFields);
+                    }
+                }
             }
-        }
 
-        if (items != null) {
-            for (final Item item : items) {
-                if (rangeChecker.check(count)) {
+            // Increment the position.
+            count++;
 
-                    final List<Object> values = new ArrayList<>(fields.size() + 3);
-
-                    if (item.getKey() != null) {
-                        values.add(toNodeKey(groupFields, item.getKey().getParent()));
-                        values.add(toNodeKey(groupFields, item.getKey()));
-                    } else {
-                        values.add(null);
-                        values.add(null);
-                    }
-                    values.add(depth);
-
-                    // Convert all list into fully resolved objects evaluating
-                    // functions where necessary.
-                    int i = 0;
-                    for (final Field field : fields) {
-                        final Generator generator = item.getGenerators()[i];
-                        Object value = null;
-                        if (generator != null) {
-                            // Convert all list into fully resolved
-                            // objects evaluating functions where necessary.
-                            final Val val = generator.eval();
-                            if (val != null) {
-                                if (fieldFormatter != null) {
-                                    value = fieldFormatter.format(field, val);
-                                } else {
-                                    value = convert(field, val);
-                                }
-                            }
-                        }
-
-                        values.add(value);
-                        i++;
-                    }
-
-                    // Add the values.
-                    results.add(values);
-                    resultCountAtThisLevel++;
-
-                    // Add child results if a node is open.
-                    if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
-                        final Items<Item> childItems = data.getChildMap().get(item.getKey());
-                        if (childItems != null) {
-                            count = addResults(data, rangeChecker, openGroups,
-                                    childItems, results, depth + 1, count, maxResults);
-                        }
-                    }
-                }
-
-                // Increment the position.
-                count++;
-
-                if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
-                    break;
-                }
+            if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
+                break;
             }
         }
 
@@ -275,28 +290,6 @@ public class FlatResultCreator implements ResultCreator {
         return val.toString();
     }
 
-    private String[] getTypes(final Field[] fields) {
-        String[] types = null;
-        if (fields != null) {
-            types = new String[fields.length];
-            for (int i = 0; i < types.length; i++) {
-                final Field field = fields[i];
-                final Type type = getType(field);
-                types[i] = type.name();
-            }
-        }
-        return types;
-    }
-
-    private Type getType(final Field field) {
-        Type type = Type.GENERAL;
-        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
-            type = field.getFormat().getType();
-        }
-
-        return type;
-    }
-
     @FunctionalInterface
     private interface RangeChecker {
         boolean check(long count);
@@ -308,11 +301,8 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class Mapper {
-        private final String[] parentFields;
-        private final FieldIndexMap fieldIndexMap;
-        private final CompiledFields compiledFields;
-        private final CompiledDepths compiledDepths;
-        private final TablePayloadHandler tablePayloadHandler;
+        private final int[] parentFieldIndices;
+        private final TableDataStore tableDataStore;
         private final int maxItems;
 
         Mapper(final TableSettings parent,
@@ -321,52 +311,58 @@ public class FlatResultCreator implements ResultCreator {
                final int maxItems) {
             this.maxItems = maxItems;
 
-            parentFields = new String[parent.getFields().size()];
-            int i = 0;
+            final FieldIndex parentFieldIndex = new FieldIndex();
+
+            // Parent fields are now table column names.
             for (final Field field : parent.getFields()) {
-                parentFields[i++] = field.getName();
+                parentFieldIndex.create(field.getName());
             }
 
-            fieldIndexMap = new FieldIndexMap(true);
+            // Extract child fields from expressions.
+            final FieldIndex childFieldIndex = new FieldIndex();
+            CompiledFields.create(child.getFields(), childFieldIndex, paramMap);
 
-            final TableCoprocessorSettings tableCoprocessorSettings = new TableCoprocessorSettings(child);
-            final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
+            // Create the index mapping.
+            parentFieldIndices = new int[childFieldIndex.size()];
+            for (int i = 0; i < childFieldIndex.size(); i++) {
+                final String childField = childFieldIndex.getField(i);
+                final Integer parentIndex = parentFieldIndex.getPos(childField);
+                if (parentIndex == null) {
+                    parentFieldIndices[i] = -1;
+                } else {
+                    parentFieldIndices[i] = parentIndex;
+                }
+            }
 
-            final List<Field> fields = tableSettings.getFields();
-            compiledDepths = new CompiledDepths(fields, tableSettings.showDetail());
-            compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
-
-            // Create a set of max result sizes that are determined by the supplied max results or default to integer max value.
+            // Create a set of max result sizes that are determined by the supplied max results or default to integer
+            // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
-            tablePayloadHandler = new TablePayloadHandler(child.getFields(), true, maxResults, null);
+            tableDataStore = new TableDataStore(
+                    child,
+                    childFieldIndex,
+                    paramMap,
+                    maxResults,
+                    Sizes.create(Integer.MAX_VALUE));
         }
 
         public Data map(final Data data) {
-            // Create a new table coprocessor to receive data.
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(new UnsafePairQueue<>(), compiledFields, compiledDepths);
-
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
-            final Items<Item> items = data.getChildMap().get(null);
+            final DataItems items = data.get();
 
-            int itemCount = 0;
-            tablePayloadHandler.clear();
-            if (items != null) {
-                for (final Item item : items) {
-                    final Generator[] generators = item.getGenerators();
-                    final Val[] values = new Val[fieldIndexMap.size()];
-                    for (int i = 0; i < generators.length; i++) {
-                        final Generator generator = generators[i];
-                        if (generator != null) {
-                            final int index = fieldIndexMap.get(parentFields[i]);
-                            if (index >= 0) {
-                                values[index] = generator.eval();
-                            }
+            tableDataStore.clear();
+            if (items.size() > 0) {
+                int itemCount = 0;
+                for (final DataItem item : items) {
+                    final Val[] values = new Val[parentFieldIndices.length];
+                    for (int i = 0; i < parentFieldIndices.length; i++) {
+                        final int index = parentFieldIndices[i];
+                        if (index != -1) {
+                            final Val val = item.getValue(index); // TODO : @66 Currently evaluating more values than will be needed.
+                            values[i] = val;
                         }
                     }
-
-                    // TODO : Receive Object[] for lazy + nested evaluation.
-                    tableCoprocessor.receive(values);
+                    tableDataStore.add(values);
 
                     // Trim the data to the parent first level result size.
                     itemCount++;
@@ -374,11 +370,9 @@ public class FlatResultCreator implements ResultCreator {
                         break;
                     }
                 }
-                final TablePayload payload = (TablePayload) tableCoprocessor.createPayload();
-                tablePayloadHandler.addQueue(payload.getQueue());
             }
 
-            return tablePayloadHandler.getData();
+            return tableDataStore.getData();
         }
     }
 

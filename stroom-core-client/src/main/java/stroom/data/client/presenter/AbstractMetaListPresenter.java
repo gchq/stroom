@@ -639,7 +639,7 @@ public abstract class AbstractMetaListPresenter
     private void download(final FindMetaCriteria criteria) {
         final Rest<ResourceGeneration> rest = restFactory.create();
         rest
-                .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                 .call(DATA_RESOURCE)
                 .download(criteria);
     }
