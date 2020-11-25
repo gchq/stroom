@@ -16,17 +16,18 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.task.server.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
+import stroom.util.net.HostNameUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -153,11 +154,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
 
     private String getHostName() {
         if (hostName == null) {
-            try {
-                hostName = InetAddress.getLocalHost().getHostName();
-            } catch (final Exception ex) {
-                hostName = "Unknown";
-            }
+            hostName = HostNameUtil.determineHostName();
         }
         return hostName;
     }
