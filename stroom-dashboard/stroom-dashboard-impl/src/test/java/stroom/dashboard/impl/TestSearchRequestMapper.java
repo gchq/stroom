@@ -18,10 +18,6 @@
 package stroom.dashboard.impl;
 
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
@@ -29,8 +25,13 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,14 +52,21 @@ class TestSearchRequestMapper {
     }
 
     private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
-            Map<String, ComponentResultRequest> componentResultRequestMap,
+            List<ComponentResultRequest> componentResultRequests,
             List<ResultRequest> resultRequests) {
 
-        assertThat(componentResultRequestMap.size()).isEqualTo(resultRequests.size());
+        assertThat(componentResultRequests.size()).isEqualTo(resultRequests.size());
         assertThat("componentSettingsMapKey").isEqualTo(resultRequests.get(0).getComponentId());
-        assertThat(componentResultRequestMap.get("componentSettingsMapKey").getFetch()).isEqualTo(resultRequests.get(0).getFetch());
 
-        TableResultRequest tableResultRequest = ((TableResultRequest) componentResultRequestMap.get("componentSettingsMapKey"));
+        final Optional<ComponentResultRequest> optional = componentResultRequests
+                .stream()
+                .filter(request -> request.getComponentId().equals("componentSettingsMapKey"))
+                .findFirst();
+
+        assertThat(optional).isNotEmpty();
+        assertThat(optional.get().getFetch()).isEqualTo(resultRequests.get(0).getFetch());
+
+        TableResultRequest tableResultRequest = ((TableResultRequest) optional.get());
         ResultRequest resultRequest = resultRequests.get(0);
         assertThat(tableResultRequest.getRequestedRange().getOffset().toString()).isEqualTo(resultRequest.getRequestedRange().getOffset().toString());
         assertThat(tableResultRequest.getRequestedRange().getLength().toString()).isEqualTo(resultRequest.getRequestedRange().getLength().toString());

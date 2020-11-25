@@ -27,7 +27,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
@@ -461,7 +461,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         assertThat(indexRef).as("Index is null").isNotNull();
 
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(indexRef, expressionIn.build());
+        final Query query = new Query.Builder().dataSource(indexRef).expression(expressionIn.build()).build();
 
         final CountDownLatch complete = new CountDownLatch(1);
 
@@ -525,7 +525,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         final Field timeField = new Field.Builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
-                .format(Type.DATE_TIME)
+                .format(Format.DATE_TIME)
                 .build();
 
         final Field statusField = new Field.Builder()
@@ -534,13 +534,14 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        return new TableSettings(
-                null,
-                Arrays.asList(streamIdField, eventIdField, timeField, statusField),
-                extractValues,
-                resultPipeline,
-                null,
-                null);
+        return new TableSettings.Builder()
+                .addFields(streamIdField)
+                .addFields(eventIdField)
+                .addFields(timeField)
+                .addFields(statusField)
+                .extractValues(extractValues)
+                .extractionPipeline(resultPipeline)
+                .build();
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,

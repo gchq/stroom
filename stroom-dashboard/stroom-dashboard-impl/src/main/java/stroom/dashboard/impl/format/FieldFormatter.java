@@ -17,7 +17,7 @@
 package stroom.dashboard.impl.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Field;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,6 +16,40 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.ResultComponent;
+import stroom.dashboard.client.main.SearchModel;
+import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings.Builder;
+import stroom.dashboard.shared.VisResultRequest;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.VisResult;
+import stroom.script.client.ScriptCache;
+import stroom.script.shared.FetchLinkedScriptRequest;
+import stroom.script.shared.ScriptDoc;
+import stroom.script.shared.ScriptResource;
+import stroom.util.client.JSONUtil;
+import stroom.util.shared.EqualsUtil;
+import stroom.visualisation.client.presenter.VisFunction;
+import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
+import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
+import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisualisationDoc;
+import stroom.visualisation.shared.VisualisationResource;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
@@ -31,37 +65,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.main.ResultComponent;
-import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.query.QueryPresenter;
-import stroom.dashboard.client.table.TablePresenter;
-import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentResult;
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dashboard.shared.VisResult;
-import stroom.dashboard.shared.VisResultRequest;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.script.client.ScriptCache;
-import stroom.script.shared.FetchLinkedScriptRequest;
-import stroom.script.shared.ScriptDoc;
-import stroom.script.shared.ScriptResource;
-import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsUtil;
-import stroom.visualisation.client.presenter.VisFunction;
-import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
-import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
-import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.VisualisationDoc;
-import stroom.visualisation.shared.VisualisationResource;
 
 import java.util.List;
 
@@ -76,7 +79,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
-    private final VisResultRequest visResultRequest = new VisResultRequest(0, MAX_RESULTS);
+    private VisResultRequest visResultRequest = new VisResultRequest.Builder()
+            .requestedRange(new OffsetRange(0, MAX_RESULTS))
+            .build();
     private final VisPane visPane;
     private final VisFrame visFrame;
     private VisComponentSettings visSettings;
@@ -194,15 +199,19 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private void updateTableId(final String tableId) {
-        visSettings.setTableId(tableId);
+        final VisComponentSettings.Builder builder = new Builder(visSettings);
+
+        builder.tableId(tableId);
 
         final Component component = getComponents().get(visSettings.getTableId());
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            visSettings.setTableSettings(tablePresenter.getSettings());
+            builder.tableSettings(tablePresenter.getSettings());
             final String queryId = tablePresenter.getSettings().getQueryId();
             setQueryId(queryId);
         }
+
+        visSettings = builder.build();
     }
 
     private void setQueryId(final String queryId) {
@@ -251,9 +260,13 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
         if (wantsData) {
-            visResultRequest.setFetch(Fetch.CHANGES);
+            visResultRequest = new VisResultRequest.Builder(visResultRequest)
+                    .fetch(Fetch.CHANGES)
+                    .build();
         } else {
-            visResultRequest.setFetch(Fetch.NONE);
+            visResultRequest = new VisResultRequest.Builder(visResultRequest)
+                    .fetch(Fetch.NONE)
+                    .build();
         }
     }
 
@@ -267,7 +280,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void setData(final ComponentResult componentResult) {
+    public void setData(final Result componentResult) {
         try {
             if (visSettings != null && visSettings.getVisualisation() != null) {
                 if (componentResult != null) {
@@ -518,8 +531,22 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        visSettings = getSettings();
-        visResultRequest.setVisDashboardSettings(visSettings);
+        final ComponentSettings settings = componentConfig.getSettings();
+        if (settings instanceof VisComponentSettings) {
+            visSettings = (VisComponentSettings) settings;
+        } else {
+            visSettings = new VisComponentSettings.Builder().build();
+        }
+
+        visResultRequest = new VisResultRequest.Builder(visResultRequest)
+                .visDashboardSettings(visSettings)
+                .build();
+    }
+
+    @Override
+    public ComponentConfig write() {
+        ComponentConfig componentConfig = super.write();
+        return new ComponentConfig.Builder(componentConfig).settings(visSettings).build();
     }
 
     @Override
@@ -555,17 +582,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public VisComponentSettings getSettings() {
-        ComponentSettings settings = getComponentConfig().getSettings();
-        if (!(settings instanceof VisComponentSettings)) {
-            settings = createSettings();
-            getComponentConfig().setSettings(settings);
-        }
-
-        return (VisComponentSettings) settings;
-    }
-
-    private ComponentSettings createSettings() {
-        return new VisComponentSettings();
+        return visSettings;
     }
 
     @Override
@@ -575,10 +592,11 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final VisResultRequest visResultRequest = new VisResultRequest(0, MAX_RESULTS);
-        visResultRequest.setVisDashboardSettings(visSettings);
-        visResultRequest.setFetch(Fetch.ALL);
-        return visResultRequest;
+        return new VisResultRequest.Builder()
+                .requestedRange(new OffsetRange(0, MAX_RESULTS))
+                .visDashboardSettings(visSettings)
+                .fetch(Fetch.ALL)
+                .build();
     }
 
     private JSONObject combineSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {

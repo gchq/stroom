@@ -34,7 +34,7 @@ import java.util.Objects;
 @ApiModel(
         description = "Object for describing a set of results in a table form that supports grouped data",
         parent = Result.class)
-public final class TableResult extends Result {
+public class TableResult extends Result {
     @ApiModelProperty(required = true)
     @JsonProperty
     private final List<Field> fields;

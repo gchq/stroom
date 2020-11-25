@@ -14,7 +14,7 @@ class DateTimeFormatBuilderTest {
         final Integer offsetHours = 3;
         final Integer offsetMinutes = 5;
 
-        final DateTimeFormat dateTimeFormat = new DateTimeFormat.Builder()
+        final DateTimeFormatSettings dateTimeFormat = new DateTimeFormatSettings.Builder()
                 .pattern(pattern)
                 .timeZone(new TimeZone.Builder()
                         .id(timeZoneId)

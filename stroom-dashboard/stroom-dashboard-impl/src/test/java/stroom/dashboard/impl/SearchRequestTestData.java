@@ -19,22 +19,26 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Filter;
-import stroom.dashboard.shared.Format;
-import stroom.dashboard.shared.NumberFormatSettings;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.TimeZone;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Sort;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeZone;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SearchRequestTestData {
@@ -63,27 +67,44 @@ public class SearchRequestTestData {
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");
 
         final String componentId = "componentSettingsMapKey";
-        TableComponentSettings tableSettings = new TableComponentSettings();
-        tableSettings.setQueryId("someQueryId");
-        tableSettings.addField(new Field("1", "name1", "expression1",
-                new Sort(1, Sort.SortDirection.ASCENDING),
-                new Filter("include1", "exclude1"),
-                new Format(
-                        Format.Type.NUMBER,
-                        new NumberFormatSettings(1, false))
-                , 1, 200, true, false));
-        tableSettings.addField(new Field("2", "name2", "expression2",
-                new Sort(2, Sort.SortDirection.DESCENDING),
-                new Filter("include2", "exclude2"),
-                new Format(
-                        Format.Type.DATE_TIME,
-                        createDateTimeFormat())
-                , 2, 200, true, false));
-        tableSettings.setExtractValues(false);
-        tableSettings.setExtractionPipeline(
-                new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
-        tableSettings.setMaxResults(new int[]{1, 2});
-        tableSettings.setShowDetail(false);
+        TableComponentSettings tableSettings = new TableComponentSettings.Builder()
+                .queryId("someQueryId")
+                .addFields(new Field.Builder()
+                        .id("1")
+                        .name("name1")
+                        .expression("expression1")
+                        .sort(new Sort(1, Sort.SortDirection.ASCENDING))
+                        .filter(new Filter("include1", "exclude1"))
+                        .format(new Format.Builder()
+                                .type(Format.Type.NUMBER)
+                                .settings(new NumberFormatSettings(1, false))
+                                .build())
+                        .group(1)
+                        .width(200)
+                        .visible(true)
+                        .special(false)
+                        .build())
+                .addFields(new Field.Builder()
+                        .id("2")
+                        .name("name2")
+                        .expression("expression2")
+                        .sort(new Sort(2, Sort.SortDirection.DESCENDING))
+                        .filter(new Filter("include2", "exclude2"))
+                        .format(new Format.Builder()
+                                .type(Type.DATE_TIME)
+                                .settings(createDateTimeFormat())
+                                .build())
+                        .group(2)
+                        .width(200)
+                        .visible(true)
+                        .special(false)
+                        .build())
+                .extractValues(false)
+                .extractionPipeline(
+                        new DocRef("docRefType2", "docRefUuid2", "docRefName2"))
+                .maxResults(List.of(1, 2))
+                .showDetail(false)
+                .build();
 
         Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
         componentSettingsMap.put(componentId, tableSettings);
@@ -101,16 +122,20 @@ public class SearchRequestTestData {
                 .storeHistory(false)
                 .build();
 
-        final Map<String, ComponentResultRequest> componentResultRequestMap = new HashMap<>();
+        final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
-            TableResultRequest tableResultRequest = new TableResultRequest();
-            tableResultRequest.setTableSettings((TableComponentSettings) entry.getValue());
-            tableResultRequest.setFetch(Fetch.CHANGES);
-            componentResultRequestMap.put(entry.getKey(), tableResultRequest);
+            final TableComponentSettings tableComponentSettings = (TableComponentSettings) entry.getValue();
+            final TableSettings ts = new TableComponentSettings.Builder(tableComponentSettings).buildTableSettings();
+            TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+                    .componentId(entry.getKey())
+                    .tableSettings(ts)
+                    .fetch(Fetch.CHANGES)
+                    .build();
+            componentResultRequests.add(tableResultRequest);
         }
 
         return new stroom.dashboard.shared.SearchRequest(
-                dashboardQueryKey(), search, componentResultRequestMap, "en-gb");
+                dashboardQueryKey(), search, componentResultRequests, "en-gb");
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {

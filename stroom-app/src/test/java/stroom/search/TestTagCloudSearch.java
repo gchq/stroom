@@ -18,10 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -41,10 +37,14 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -82,21 +82,26 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .name("Text")
                 .expression(ParamUtil.makeParam("Text"))
                 .group(0)
-                .format(Format.Type.TEXT)
+                .format(Format.TEXT)
                 .build();
 
         // Create count field.
         final Field fldCount = new Field.Builder()
                 .name("Count")
                 .expression("count()")
-                .format(Format.Type.NUMBER)
+                .format(Format.NUMBER)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultTextPipeline();
-        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, resultPipeline, null, null);
+        final TableSettings tableSettings = new TableSettings.Builder()
+                .addFields(fldText)
+                .addFields(fldCount)
+                .extractValues(true)
+                .extractionPipeline(resultPipeline)
+                .build();
 
         final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final Query query = new Query(indexRef, expression.build());
+        final Query query = new Query.Builder().dataSource(indexRef).expression(expression.build()).build();
 
         final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
 

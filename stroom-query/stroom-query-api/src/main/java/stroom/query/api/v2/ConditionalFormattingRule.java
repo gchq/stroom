@@ -1,7 +1,4 @@
-package stroom.dashboard.shared;
-
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.RandomId;
+package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,11 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({
@@ -24,37 +16,19 @@ import java.util.Objects;
         "textColor",
         "enabled"})
 @JsonInclude(Include.NON_NULL)
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "conditionFormattingRule", propOrder = {
-        "id",
-        "expression",
-        "hide",
-        "backgroundColor",
-        "textColor",
-        "enabled"})
-public class ConditionalFormattingRule implements Serializable {
-    @XmlElement(name = "id")
+public class ConditionalFormattingRule {
     @JsonProperty("id")
-    private String id;
-    @XmlElement(name = "expression")
+    private final String id;
     @JsonProperty("expression")
-    private ExpressionOperator expression;
-    @XmlElement(name = "hide")
+    private final ExpressionOperator expression;
     @JsonProperty("hide")
-    private boolean hide;
-    @XmlElement(name = "backgroundColor")
+    private final boolean hide;
     @JsonProperty("backgroundColor")
-    private String backgroundColor;
-    @XmlElement(name = "textColor")
+    private final String backgroundColor;
     @JsonProperty("textColor")
-    private String textColor;
-    @XmlElement(name = "enabled")
+    private final String textColor;
     @JsonProperty("enabled")
-    private boolean enabled;
-
-    public ConditionalFormattingRule() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    private final boolean enabled;
 
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
@@ -75,48 +49,24 @@ public class ConditionalFormattingRule implements Serializable {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public ExpressionOperator getExpression() {
         return expression;
-    }
-
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
     }
 
     public boolean isHide() {
         return hide;
     }
 
-    public void setHide(final boolean hide) {
-        this.hide = hide;
-    }
-
     public String getBackgroundColor() {
         return backgroundColor;
-    }
-
-    public void setBackgroundColor(final String backgroundColor) {
-        this.backgroundColor = backgroundColor;
     }
 
     public String getTextColor() {
         return textColor;
     }
 
-    public void setTextColor(final String textColor) {
-        this.textColor = textColor;
-    }
-
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     @Override
@@ -201,7 +151,7 @@ public class ConditionalFormattingRule implements Serializable {
 
         public ConditionalFormattingRule build() {
             if (id == null) {
-                id = RandomId.createId(5);
+                throw new NullPointerException("Null rule id");
             }
 
             return new ConditionalFormattingRule(

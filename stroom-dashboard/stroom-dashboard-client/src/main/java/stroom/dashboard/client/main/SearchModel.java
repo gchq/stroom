@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -29,8 +28,11 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.Result;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -275,7 +277,7 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final ComponentResult componentResult = result.getResults().get(componentId);
+                final Result componentResult = result.getResults().get(componentId);
                 resultComponent.setData(componentResult);
             }
 
@@ -319,15 +321,14 @@ public class SearchModel {
             return null;
         }
 
-        final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+        final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
-            requestMap.put(componentId, componentResultRequest);
+            requests.add(componentResultRequest);
         }
 
-        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     /**
@@ -366,15 +367,14 @@ public class SearchModel {
             return null;
         }
 
-        final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+        final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
-            requestMap.put(componentId, componentResultRequest);
+            requests.add(componentResultRequest);
         }
 
-        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {

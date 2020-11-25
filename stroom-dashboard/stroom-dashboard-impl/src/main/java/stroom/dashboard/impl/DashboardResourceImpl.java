@@ -34,7 +34,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
 import stroom.dashboard.shared.SearchRequest;
@@ -42,11 +41,13 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -80,6 +81,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -166,27 +168,41 @@ class DashboardResourceImpl implements DashboardResource {
                 if (request.getSearchRequest() == null) {
                     throw new EntityServiceException("Query is empty");
                 }
+
                 final SearchRequest searchRequest = request.getSearchRequest();
+                final SearchRequest.Builder builder = new SearchRequest.Builder(searchRequest);
+                final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
 
                 // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
-                if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
+                if (searchRequest.getComponentResultRequests() != null) {
                     searchRequest.getComponentResultRequests()
-                            .forEach((k, componentResultRequest) ->
-                                    componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+                            .forEach(componentResultRequest -> {
 
-                    // Remove special fields.
-                    searchRequest.getComponentResultRequests().forEach((k, v) -> {
-                        if (v instanceof TableResultRequest) {
-                            final TableResultRequest tableResultRequest = (TableResultRequest) v;
-                            tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
-                        }
-                    });
+                                ComponentResultRequest newRequest = null;
+                                if (componentResultRequest instanceof TableResultRequest) {
+                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                                    // Remove special fields.
+                                    tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
+                                    newRequest = new TableResultRequest.Builder(tableResultRequest)
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                } else if (componentResultRequest instanceof VisResultRequest) {
+                                    final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+                                    newRequest = new VisResultRequest.Builder(visResultRequest)
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                }
+
+                                componentResultRequests.add(newRequest);
+                            });
                 }
+
+                builder.componentResultRequests(componentResultRequests);
 
                 // Convert our internal model to the model used by the api
                 stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                         request.getDashboardQueryKey(),
-                        searchRequest);
+                        builder.build());
 
                 if (apiSearchRequest == null) {
                     throw new EntityServiceException("Query could not be mapped to a SearchRequest");
@@ -276,16 +292,19 @@ class DashboardResourceImpl implements DashboardResource {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().get(request.getComponentId());
-                if (componentResultRequest == null) {
+                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
+                        .stream()
+                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
+                        .findFirst();
+                if (optional.isEmpty()) {
                     throw new EntityServiceException("No component result request found");
                 }
 
-                if (!(componentResultRequest instanceof TableResultRequest)) {
+                if (!(optional.get() instanceof TableResultRequest)) {
                     throw new EntityServiceException("Component result request is not a table");
                 }
 
-                final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 

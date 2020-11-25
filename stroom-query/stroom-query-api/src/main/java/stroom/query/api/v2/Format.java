@@ -16,6 +16,8 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -23,87 +25,51 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.HasDisplayValue;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
+@JsonPropertyOrder({"type", "settings", "wrap"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes the formatting that will be applied to values in a field")
-public final class Format implements Serializable {
-    private static final long serialVersionUID = -5380825645719299089L;
+public class Format {
+    public static final List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
+    public static final Format GENERAL = new Builder().type(Type.GENERAL).build();
+    public static final Format NUMBER = new Builder().type(Type.NUMBER).build();
+    public static final Format DATE_TIME = new Builder().type(Type.DATE_TIME).build();
+    public static final Format TEXT = new Builder().type(Type.TEXT).build();
 
-    @XmlElement
     @ApiModelProperty(
             value = "The formatting type to apply",
             example = "NUMBER",
             required = true)
     @JsonProperty
-    private Type type;
-
-    @XmlElement
+    private final Type type;
     @JsonProperty
-    private NumberFormat numberFormat;
-
-    @XmlElement
+    private final FormatSettings settings;
     @JsonProperty
-    private DateTimeFormat dateTimeFormat;
-
-    public Format() {
-    }
-
-    public Format(final Type type) {
-        this.type = type;
-    }
-
-    public Format(final NumberFormat numberFormat) {
-        this.type = Type.NUMBER;
-        this.numberFormat = numberFormat;
-    }
-
-    public Format(final DateTimeFormat dateTimeFormat) {
-        this.type = Type.DATE_TIME;
-        this.dateTimeFormat = dateTimeFormat;
-    }
+    private final Boolean wrap;
 
     @JsonCreator
     public Format(@JsonProperty("type") final Type type,
-                  @JsonProperty("numberFormat") final NumberFormat numberFormat,
-                  @JsonProperty("dateTimeFormat") final DateTimeFormat dateTimeFormat) {
+                  @JsonProperty("settings") final FormatSettings settings,
+                  @JsonProperty("wrap") final Boolean wrap) {
         this.type = type;
-        this.numberFormat = numberFormat;
-        this.dateTimeFormat = dateTimeFormat;
+        this.settings = settings;
+        this.wrap = wrap;
     }
 
     public Type getType() {
         return type;
     }
 
-    public void setType(final Type type) {
-        this.type = type;
+    public FormatSettings getSettings() {
+        return settings;
     }
 
-    public NumberFormat getNumberFormat() {
-        return numberFormat;
-    }
-
-    public void setNumberFormat(final NumberFormat numberFormat) {
-        this.numberFormat = numberFormat;
-    }
-
-    public DateTimeFormat getDateTimeFormat() {
-        return dateTimeFormat;
-    }
-
-    public void setDateTimeFormat(final DateTimeFormat dateTimeFormat) {
-        this.dateTimeFormat = dateTimeFormat;
+    public Boolean getWrap() {
+        return wrap;
     }
 
     @Override
@@ -112,21 +78,21 @@ public final class Format implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         final Format format = (Format) o;
         return type == format.type &&
-                Objects.equals(numberFormat, format.numberFormat) &&
-                Objects.equals(dateTimeFormat, format.dateTimeFormat);
+                Objects.equals(settings, format.settings) &&
+                Objects.equals(wrap, format.wrap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, numberFormat, dateTimeFormat);
+        return Objects.hash(type, settings, wrap);
     }
 
     @Override
     public String toString() {
         return "Format{" +
                 "type=" + type +
-                ", numberFormat=" + numberFormat +
-                ", dateTimeFormat=" + dateTimeFormat +
+                ", settings=" + settings +
+                ", wrap=" + wrap +
                 '}';
     }
 
@@ -153,22 +119,16 @@ public final class Format implements Serializable {
      */
     public static class Builder {
         private Type type;
-
-        private NumberFormat numberFormat;
-
-        private DateTimeFormat dateTimeFormat;
+        private FormatSettings settings;
+        private Boolean wrap;
 
         public Builder() {
         }
 
         public Builder(final Format format) {
             this.type = format.type;
-            if (format.numberFormat != null) {
-                this.numberFormat = new NumberFormat.Builder(format.numberFormat).build();
-            }
-            if (format.dateTimeFormat != null) {
-                this.dateTimeFormat = format.dateTimeFormat;
-            }
+            this.settings = format.settings;
+            this.wrap = format.wrap;
         }
 
         /**
@@ -180,30 +140,18 @@ public final class Format implements Serializable {
             return this;
         }
 
-        public NumberFormat.Builder number() {
-            this.type = Type.NUMBER;
-            return new NumberFormat.Builder();
-        }
-
-        public Builder number(final NumberFormat value) {
-            this.numberFormat = value;
-            this.type = Type.NUMBER;
+        public Builder settings(final FormatSettings settings) {
+            this.settings = settings;
             return this;
         }
 
-        public DateTimeFormat.Builder dateTime() {
-            this.type = Type.DATE_TIME;
-            return new DateTimeFormat.Builder();
-        }
-
-        public Builder dateTime(final DateTimeFormat value) {
-            this.dateTimeFormat = value;
-            this.type = Type.DATE_TIME;
+        public Builder wrap(final Boolean wrap) {
+            this.wrap = wrap;
             return this;
         }
 
         public Format build() {
-            return new Format(type, numberFormat, dateTimeFormat);
+            return new Format(type, settings, wrap);
         }
     }
 }

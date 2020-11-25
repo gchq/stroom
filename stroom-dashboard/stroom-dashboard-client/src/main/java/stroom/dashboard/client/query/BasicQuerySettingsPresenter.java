@@ -16,9 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.shared.Automate;
@@ -28,8 +25,13 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class BasicQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView> {
@@ -67,8 +69,7 @@ public class BasicQuerySettingsPresenter
 
         Automate automate = settings.getAutomate();
         if (automate == null) {
-            automate = new Automate();
-            settings.setAutomate(automate);
+            automate = new Automate.Builder().build();
         }
 
         getView().setQueryOnOpen(automate.isOpen());
@@ -77,21 +78,22 @@ public class BasicQuerySettingsPresenter
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        super.write(componentData);
+    public ComponentConfig write(final ComponentConfig componentConfig) {
+        ComponentConfig result = super.write(componentConfig);
+        final QueryComponentSettings oldSettings = (QueryComponentSettings) result.getSettings();
+        final QueryComponentSettings newSettings = writeSettings(oldSettings);
+        return new ComponentConfig.Builder(result).settings(newSettings).build();
+    }
 
-        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
-        settings.setDataSource(getDataSource());
-
-        Automate automate = settings.getAutomate();
-        if (automate == null) {
-            automate = new Automate();
-            settings.setAutomate(automate);
-        }
-
-        automate.setOpen(getView().isQueryOnOpen());
-        automate.setRefresh(getView().isAutoRefresh());
-        automate.setRefreshInterval(getView().getRefreshInterval());
+    private QueryComponentSettings writeSettings(final QueryComponentSettings settings) {
+        return new QueryComponentSettings.Builder(settings)
+                .dataSource(getDataSource())
+                .automate(new Automate.Builder()
+                        .open(getView().isQueryOnOpen())
+                        .refresh(getView().isAutoRefresh())
+                        .refreshInterval(getView().getRefreshInterval())
+                        .build())
+                .build();
     }
 
     @Override
@@ -115,25 +117,18 @@ public class BasicQuerySettingsPresenter
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
-        if (super.isDirty(componentData)) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
+        if (super.isDirty(componentConfig)) {
             return true;
         }
 
-        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
-        Automate automate = settings.getAutomate();
-        if (automate == null) {
-            automate = new Automate();
-            settings.setAutomate(automate);
-        }
+        final QueryComponentSettings oldSettings = (QueryComponentSettings) componentConfig.getSettings();
+        final QueryComponentSettings newSettings = writeSettings(oldSettings);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(settings.getDataSource(), getDataSource());
-        builder.append(automate.isOpen(), getView().isQueryOnOpen());
-        builder.append(automate.isRefresh(), getView().isAutoRefresh());
-        builder.append(automate.getRefreshInterval(), getView().getRefreshInterval());
+        final boolean equal = Objects.equals(oldSettings.getDataSource(), newSettings.getDataSource()) &&
+                Objects.equals(oldSettings.getAutomate(), newSettings.getAutomate());
 
-        return !builder.isEquals();
+        return !equal;
     }
 
     public interface BasicQuerySettingsView extends BasicSettingsTabPresenter.SettingsView {

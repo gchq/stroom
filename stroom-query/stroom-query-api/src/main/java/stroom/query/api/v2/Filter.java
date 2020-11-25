@@ -23,38 +23,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "Filter", propOrder = {"includes", "excludes"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
         "both can be supplied")
-public final class Filter implements Serializable {
-    private static final long serialVersionUID = 7327802315955158337L;
-
-    @XmlElement
+public final class Filter {
     @ApiModelProperty(
             value = "Only results matching this filter will be included",
             example = "^[0-9]{3}$")
     @JsonProperty
-    private String includes;
+    private final String includes;
 
-    @XmlElement
     @ApiModelProperty(
             value = "Only results NOT matching this filter will be included",
             example = "^[0-9]{3}$")
     @JsonProperty
-    private String excludes;
-
-    public Filter() {
-    }
+    private final String excludes;
 
     @JsonCreator
     public Filter(@JsonProperty("includes") final String includes,
@@ -67,16 +53,8 @@ public final class Filter implements Serializable {
         return includes;
     }
 
-    public void setExcludes(final String excludes) {
-        this.excludes = excludes;
-    }
-
     public String getExcludes() {
         return excludes;
-    }
-
-    public void setIncludes(final String includes) {
-        this.includes = includes;
     }
 
     @Override
@@ -118,8 +96,8 @@ public final class Filter implements Serializable {
 
         /**
          * Set the inclusion regex
-         * @param value Only results matching this filter will be included
          *
+         * @param value Only results matching this filter will be included
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder includes(final String value) {
@@ -129,8 +107,8 @@ public final class Filter implements Serializable {
 
         /**
          * Set the exclusion regex
-         * @param value Only results NOT matching this filter will be included
          *
+         * @param value Only results NOT matching this filter will be included
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder excludes(final String value) {

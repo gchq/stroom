@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class NumberFormatBuilderTest {
+class NumberFormatSettingsBuilderTest {
     @Test
     void doesBuild() {
         final Integer decimalPlaces = 5;
         final Boolean useSeperator = true;
 
-        final NumberFormat numberFormat = new NumberFormat.Builder()
+        final NumberFormatSettings numberFormat = new NumberFormatSettings.Builder()
                 .decimalPlaces(decimalPlaces)
                 .useSeparator(useSeperator)
                 .build();

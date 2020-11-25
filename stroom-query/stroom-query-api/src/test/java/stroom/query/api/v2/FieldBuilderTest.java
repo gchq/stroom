@@ -1,5 +1,7 @@
 package stroom.query.api.v2;
 
+import stroom.query.api.v2.Format.Type;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +32,8 @@ class FieldBuilderTest {
                         .excludes(filterExcludes)
                         .build())
                 .format(new Format.Builder()
-                        .number(new NumberFormat.Builder()
+                        .type(Type.NUMBER)
+                        .settings(new NumberFormatSettings.Builder()
                                 .decimalPlaces(numberFormatDecimalPlaces)
                                 .useSeparator(numberFormatUseSeperator)
                                 .build())
@@ -52,9 +55,10 @@ class FieldBuilderTest {
 
         assertThat(field.getFormat()).isNotNull();
         assertThat(field.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field.getFormat().getNumberFormat()).isNotNull();
-        assertThat(field.getFormat().getDateTimeFormat()).isNull();
-        assertThat(field.getFormat().getNumberFormat().getDecimalPlaces()).isEqualTo(numberFormatDecimalPlaces);
-        assertThat(field.getFormat().getNumberFormat().getUseSeparator()).isEqualTo(numberFormatUseSeperator);
+        assertThat(field.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) field.getFormat().getSettings()).getDecimalPlaces())
+                .isEqualTo(numberFormatDecimalPlaces);
+        assertThat(((NumberFormatSettings) field.getFormat().getSettings()).getUseSeparator())
+                .isEqualTo(numberFormatUseSeperator);
     }
 }

@@ -85,7 +85,10 @@ class TestStoredQueryDao {
         refQuery.setName("Ref query");
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query(indexRef, new ExpressionOperator(true, Op.AND, Collections.emptyList())));
+        refQuery.setQuery(new Query.Builder()
+                .dataSource(indexRef)
+                .expression(new ExpressionOperator(true, Op.AND, Collections.emptyList()))
+                .build());
         AuditUtil.stamp(securityContext.getUserId(), refQuery);
         storedQueryDao.create(refQuery);
 
@@ -98,7 +101,10 @@ class TestStoredQueryDao {
         testQuery.setName("Test query");
         testQuery.setDashboardUuid(dashboardRef.getUuid());
         testQuery.setComponentId(QUERY_COMPONENT);
-        testQuery.setQuery(new Query(indexRef, root.build()));
+        testQuery.setQuery(new Query.Builder()
+                .dataSource(indexRef)
+                .expression(root.build())
+                .build());
         AuditUtil.stamp(securityContext.getUserId(), testQuery);
         testQuery = storedQueryDao.create(testQuery);
 

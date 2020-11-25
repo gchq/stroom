@@ -1,5 +1,7 @@
 package stroom.query.api.v2;
 
+import stroom.query.api.v2.Format.Type;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -57,8 +59,9 @@ class TableSettingsBuilderTest {
                                 .includes(field1FilterIncludes)
                                 .excludes(field1FilterExcludes)
                                 .build())
-                        .format(new Format.Builder().number(
-                                new NumberFormat.Builder()
+                        .format(new Format.Builder()
+                                .type(Type.NUMBER)
+                                .settings(new NumberFormatSettings.Builder()
                                         .decimalPlaces(field1NumberFormatDecimalPlaces)
                                         .useSeparator(field1NumberFormatUseSeperator)
                                         .build())
@@ -77,8 +80,9 @@ class TableSettingsBuilderTest {
                                 .includes(field2FilterIncludes)
                                 .excludes(field2FilterExcludes)
                                 .build())
-                        .format(new Format.Builder().number(
-                                new NumberFormat.Builder()
+                        .format(new Format.Builder()
+                                .type(Type.NUMBER)
+                                .settings(new NumberFormatSettings.Builder()
                                         .decimalPlaces(field2NumberFormatDecimalPlaces)
                                         .useSeparator(field2NumberFormatUseSeperator)
                                         .build())
@@ -112,10 +116,11 @@ class TableSettingsBuilderTest {
 
         assertThat(field1.getFormat()).isNotNull();
         assertThat(field1.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field1.getFormat().getNumberFormat()).isNotNull();
-        assertThat(field1.getFormat().getDateTimeFormat()).isNull();
-        assertThat(field1.getFormat().getNumberFormat().getDecimalPlaces()).isEqualTo(field1NumberFormatDecimalPlaces);
-        assertThat(field1.getFormat().getNumberFormat().getUseSeparator()).isEqualTo(field1NumberFormatUseSeperator);
+        assertThat(field1.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) field1.getFormat().getSettings()).getDecimalPlaces())
+                .isEqualTo(field1NumberFormatDecimalPlaces);
+        assertThat(((NumberFormatSettings) field1.getFormat().getSettings()).getUseSeparator())
+                .isEqualTo(field1NumberFormatUseSeperator);
 
         final Field field2 = tableSettings.getFields().get(1);
         assertThat(field2.getName()).isEqualTo(field2Name);
@@ -132,10 +137,11 @@ class TableSettingsBuilderTest {
 
         assertThat(field2.getFormat()).isNotNull();
         assertThat(field2.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field2.getFormat().getNumberFormat()).isNotNull();
-        assertThat(field2.getFormat().getDateTimeFormat()).isNull();
-        assertThat(field2.getFormat().getNumberFormat().getDecimalPlaces()).isEqualTo(field2NumberFormatDecimalPlaces);
-        assertThat(field2.getFormat().getNumberFormat().getUseSeparator()).isEqualTo(field2NumberFormatUseSeperator);
+        assertThat(field2.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) field2.getFormat().getSettings()).getDecimalPlaces())
+                .isEqualTo(field2NumberFormatDecimalPlaces);
+        assertThat(((NumberFormatSettings) field2.getFormat().getSettings()).getUseSeparator())
+                .isEqualTo(field2NumberFormatUseSeperator);
 
     }
 }

@@ -24,12 +24,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,38 +31,27 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A row of data in a result set")
-public final class Row implements Serializable {
-    private static final long serialVersionUID = 4379892306375080112L;
-
-    @XmlElement
+public final class Row {
     @ApiModelProperty(
             value = "TODO",
             required = true)
     @JsonProperty
-    private String groupKey;
+    private final String groupKey;
 
-    @XmlElementWrapper(name = "values")
-    @XmlElement(name = "value")
     @ApiModelProperty(
             value = "The value for this row of data. The values in the list are in the same order as the fields in " +
                     "the ResultRequest",
             required = true)
     @JsonProperty
-    private List<String> values;
+    private final List<String> values;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
             example = "0",
             required = true)
     @JsonProperty
-    private Integer depth;
-
-    public Row() {
-    }
+    private final Integer depth;
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
@@ -84,24 +67,12 @@ public final class Row implements Serializable {
         return groupKey;
     }
 
-    public void setGroupKey(final String groupKey) {
-        this.groupKey = groupKey;
-    }
-
     public List<String> getValues() {
         return values;
     }
 
-    public void setValues(final List<String> values) {
-        this.values = values;
-    }
-
     public Integer getDepth() {
         return depth;
-    }
-
-    public void setDepth(final Integer depth) {
-        this.depth = depth;
     }
 
     @Override
@@ -140,7 +111,6 @@ public final class Row implements Serializable {
 
         /**
          * @param value TODO
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder groupKey(final String value) {
@@ -151,17 +121,15 @@ public final class Row implements Serializable {
         /**
          * @param values The value for this row of data.
          *               The values in the list are in the same order as the fields in the ResultRequest
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addValues(final String...values) {
+        public Builder addValues(final String... values) {
             this.values.addAll(Arrays.asList(values));
             return this;
         }
 
         /**
          * @param value The grouping depth, where 0 is the top level of grouping, or where there is no grouping
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder depth(final Integer value) {
@@ -173,5 +141,4 @@ public final class Row implements Serializable {
             return new Row(groupKey, values, depth);
         }
     }
-
 }

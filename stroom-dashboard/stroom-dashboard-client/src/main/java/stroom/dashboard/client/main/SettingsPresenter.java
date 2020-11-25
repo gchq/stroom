@@ -28,6 +28,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
@@ -94,12 +95,14 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
         }
     }
 
-    public void write(final ComponentConfig componentData) {
+    public ComponentConfig write(ComponentConfig componentConfig) {
+        ComponentConfig result = componentConfig;
         for (final Entry<TabData, ComponentDataModifier> entry : modifiers.entrySet()) {
             if (!getView().getTabBar().isTabHidden(entry.getKey())) {
-                entry.getValue().write(componentData);
+                result = entry.getValue().write(result);
             }
         }
+        return result;
     }
 
     public boolean validate() {

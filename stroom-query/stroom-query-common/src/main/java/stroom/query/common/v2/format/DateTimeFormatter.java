@@ -18,13 +18,12 @@ package stroom.query.common.v2.format;
 
 import stroom.dashboard.expression.v1.DateUtil;
 import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.DateTimeFormat;
+import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.TimeZone;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 
 public class DateTimeFormatter implements Formatter {
     private final java.time.format.DateTimeFormatter format;
@@ -35,7 +34,7 @@ public class DateTimeFormatter implements Formatter {
         this.zone = zone;
     }
 
-    public static DateTimeFormatter create(final DateTimeFormat dateTimeFormat, final String dateTimeLocale) {
+    public static DateTimeFormatter create(final DateTimeFormatSettings dateTimeFormat, final String dateTimeLocale) {
         java.time.format.DateTimeFormatter format = null;
         ZoneId zone = ZoneOffset.UTC;
 

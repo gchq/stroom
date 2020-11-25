@@ -17,14 +17,14 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format;
-import stroom.dashboard.shared.Format.Type;
+import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
 import stroom.util.shared.CompareUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 

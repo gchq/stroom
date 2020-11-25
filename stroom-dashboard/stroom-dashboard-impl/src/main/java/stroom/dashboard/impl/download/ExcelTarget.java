@@ -16,6 +16,12 @@
 
 package stroom.dashboard.impl.download;
 
+import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.NumberFormatSettings;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -24,11 +30,6 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.NumberFormatSettings;
 
 import java.io.IOException;
 import java.io.OutputStream;

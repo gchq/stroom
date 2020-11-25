@@ -32,23 +32,15 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.cf.ExpressionMatcher;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.ConditionalFormattingRule;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Field.Builder;
-import stroom.dashboard.shared.Format;
-import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -65,18 +57,27 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.processor.shared.ProcessorExpressionUtil;
+import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Field.Builder;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.Expander;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
@@ -124,7 +125,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final LocationManager locationManager;
-    private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
+    private TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+            .requestedRange(new OffsetRange(0, 100))
+            .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addFieldButton;
@@ -227,7 +230,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
-            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
+            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                    .openGroup(result.getGroupKey(), !value.isExpanded())
+                    .build();
             refresh();
         });
     }
@@ -241,7 +246,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final com.google.gwt.view.client.Range range = event.getNewRange();
-            tableResultRequest.setRange(range.getStart(), range.getLength());
+            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                    .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
+                    .build();
             if (!ignoreRangeChange) {
                 refresh();
             }
@@ -313,17 +320,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         if (indexField != null) {
                             switch (indexField.getType()) {
                                 case FieldTypes.DATE:
-                                    fieldBuilder.format(new Format(Type.DATE_TIME));
+                                    fieldBuilder.format(Format.DATE_TIME);
                                     break;
                                 case FieldTypes.INTEGER:
                                 case FieldTypes.LONG:
                                 case FieldTypes.FLOAT:
                                 case FieldTypes.DOUBLE:
                                 case FieldTypes.ID:
-                                    fieldBuilder.format(new Format(Type.NUMBER));
+                                    fieldBuilder.format(Format.NUMBER);
                                     break;
                                 default:
-                                    fieldBuilder.format(new Format(Type.GENERAL));
+                                    fieldBuilder.format(Format.GENERAL);
                                     break;
                             }
                         }
@@ -335,14 +342,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             final Field count = new Field.Builder()
                     .name("Count")
-                    .format(new Format(Type.NUMBER))
+                    .format(Format.NUMBER)
                     .expression("count()")
                     .build();
             addFields.add(count);
 
             final Field countGroups = new Field.Builder()
                     .name("Count Groups")
-                    .format(new Format(Type.NUMBER))
+                    .format(Format.NUMBER)
                     .expression("countGroups()")
                     .build();
             addFields.add(countGroups);
@@ -395,12 +402,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
-                            tableResultRequest.setTableSettings(TablePresenter.this.tableResultRequest.getTableSettings());
-                            tableResultRequest.setFetch(Fetch.ALL);
+                            final TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+                                    .componentId(getComponentConfig().getId())
+                                    .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                                    .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
+                                    .fetch(Fetch.ALL)
+                                    .build();
 
-                            final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
-                            requestMap.put(getComponentConfig().getId(), tableResultRequest);
+                            final List<ComponentResultRequest> requests = new ArrayList<>();
+                            requests.add(tableResultRequest);
 
                             final Search search = new Search.Builder()
                                     .dataSourceRef(activeSearch.getDataSourceRef())
@@ -412,7 +422,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
-                            final SearchRequest searchRequest = new SearchRequest(queryKey, search, requestMap, timeZones.getTimeZone());
+                            final SearchRequest searchRequest = new SearchRequest(queryKey, search, requests, timeZones.getTimeZone());
 
                             final DownloadSearchResultsRequest downloadSearchResultsRequest = new DownloadSearchResultsRequest(
                                     applicationInstanceIdProvider.get(),
@@ -453,7 +463,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
-        tableResultRequest.setTableSettings(tableSettings.copy());
+        final TableSettings tableSettings = new TableComponentSettings.Builder(this.tableSettings)
+                .buildTableSettings();
+        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                .tableSettings(tableSettings)
+                .build();
     }
 
     @Override
@@ -464,14 +478,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
         if (wantsData) {
-            tableResultRequest.setFetch(Fetch.CHANGES);
+            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                    .fetch(Fetch.CHANGES)
+                    .build();
         } else {
-            tableResultRequest.setFetch(Fetch.NONE);
+            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                    .fetch(Fetch.NONE)
+                    .build();
         }
     }
 
     @Override
-    public void setData(final ComponentResult componentResult) {
+    public void setData(final Result componentResult) {
         ignoreRangeChange = true;
 
         try {
@@ -480,12 +498,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final TableResult tableResult = (TableResult) componentResult;
 
                 final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
-                final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
+                final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    dataGrid.setRowData(valuesRange.getOffset(), values);
+                    dataGrid.setRowData(valuesRange.getOffset().intValue(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults(), true);
                 }
 
@@ -513,7 +531,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .orElse(Type.GENERAL);
 
         try {
-            final ExpressionTerm.Condition[] conditions;
             switch (colType) {
                 case NUMBER:
                     return new LongField(field.getName(), true);
@@ -782,7 +799,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void updateFields() {
         if (tableSettings.getFields() == null) {
-            tableSettings.setFields(new ArrayList<>());
+            tableSettings = new TableComponentSettings.Builder(tableSettings).fields(new ArrayList<>()).build();
         }
 
         // Update columns.
@@ -820,7 +837,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     requiredSpecialDsFields.forEach(requiredSpecialDsField ->
                             tableSettings.getFields().removeIf(field ->
                                     !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
-                    tableSettings.setModelVersion(CURRENT_MODEL_VERSION.toString());
+                    tableSettings = new TableComponentSettings.Builder(tableSettings)
+                            .modelVersion(CURRENT_MODEL_VERSION.toString())
+                            .build();
                 }
 
                 // Add special fields.
@@ -900,33 +919,40 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        tableSettings = getSettings();
+        ComponentSettings settings = componentConfig.getSettings();
+        if (settings instanceof TableComponentSettings) {
+            tableSettings = (TableComponentSettings) settings;
+        } else {
+            tableSettings = createSettings();
+        }
 
         // Ensure all fields have ids.
         if (tableSettings.getFields() != null) {
+            final List<Field> fields = new ArrayList<>();
             tableSettings.getFields().forEach(field -> {
+                Field f = field;
                 if (field.getId() == null) {
-                    field.setId(createRandomFieldId());
+                    f = new Field.Builder(field).id(createRandomFieldId()).build();
                 } else {
                     usedFieldIds.add(field.getId());
                 }
+                fields.add(f);
             });
+            tableSettings = new TableComponentSettings.Builder(tableSettings).fields(fields).build();
         }
-
-        fieldsManager.setTableSettings(tableSettings);
     }
 
     @Override
-    public void write(final ComponentConfig componentConfig) {
-        super.write(componentConfig);
-        componentConfig.setSettings(tableSettings);
+    public ComponentConfig write() {
+        ComponentConfig componentConfig = super.write();
+        return new ComponentConfig.Builder(componentConfig).settings(tableSettings).build();
     }
 
     @Override
     public void link() {
         String queryId = tableSettings.getQueryId();
         queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
-        tableSettings.setQueryId(queryId);
+        tableSettings = new TableComponentSettings.Builder(tableSettings).queryId(queryId).build();
         setQueryId(queryId);
     }
 
@@ -943,19 +969,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
-        tableResultRequest.setTableSettings(tableSettings);
-        tableResultRequest.setFetch(Fetch.ALL);
-        return tableResultRequest;
+        final TableSettings tableSettings = new TableComponentSettings.Builder(this.tableSettings)
+                .buildTableSettings();
+        return new TableResultRequest.Builder(tableResultRequest)
+                .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                .tableSettings(tableSettings)
+                .fetch(Fetch.ALL)
+                .build();
     }
 
     @Override
     public void reset() {
-        final int length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
+        final long length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
         dataGrid.setRowData(0, new ArrayList<>());
         dataGrid.setRowCount(0, true);
-        dataGrid.setVisibleRange(0, length);
-        tableResultRequest.setRange(0, length);
+        dataGrid.setVisibleRange(0, (int) length);
+        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                .requestedRange(new OffsetRange(0L, length))
+                .build();
     }
 
     void clearAndRefresh() {
@@ -976,26 +1007,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public TableComponentSettings getSettings() {
-        ComponentSettings settings = getComponentConfig().getSettings();
-        if (!(settings instanceof TableComponentSettings)) {
-            settings = createSettings();
-            getComponentConfig().setSettings(settings);
-        }
-
-        return (TableComponentSettings) settings;
+        return this.tableSettings;
     }
 
-    private ComponentSettings createSettings() {
-        final TableComponentSettings tableSettings = new TableComponentSettings();
+    public void setSettings(final TableComponentSettings tableSettings) {
+        this.tableSettings = tableSettings;
+    }
 
-        int[] arr = null;
+    private TableComponentSettings createSettings() {
+        List<Integer> arr = null;
         if (maxResults != null && maxResults.length > 0) {
-            arr = new int[1];
-            arr[0] = maxResults[0];
+            arr = new ArrayList<>();
+            arr.add(maxResults[0]);
         }
 
-        tableSettings.setMaxResults(arr);
-        return tableSettings;
+        return new TableComponentSettings.Builder().maxResults(arr).build();
     }
 
     public Set<String> getHighlights() {
@@ -1035,8 +1061,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     suffix = " " + count;
                 }
 
-                field = new Field.Builder()
-                        .copy(field)
+                field = new Field.Builder(field)
                         .name(fieldName + suffix)
                         .id(createRandomFieldId())
                         .build();

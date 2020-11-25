@@ -29,5 +29,5 @@ public interface ComponentDataModifier {
 
     void read(ComponentConfig componentConfig);
 
-    void write(ComponentConfig componentConfig);
+    ComponentConfig write(ComponentConfig componentConfig);
 }

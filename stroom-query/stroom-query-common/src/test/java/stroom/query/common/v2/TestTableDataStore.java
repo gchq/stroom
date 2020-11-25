@@ -52,7 +52,7 @@ class TestTableDataStore {
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
-                        .format(Format.Type.TEXT)
+                        .format(Format.TEXT)
                         .build())
                 .build();
 
@@ -68,9 +68,11 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         // Make sure we only get 50 results.
-        final ResultRequest tableResultRequest = new ResultRequest(
-                "componentX",
-                tableSettings, new OffsetRange(0, 3000));
+        final ResultRequest tableResultRequest = new ResultRequest.Builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 3000))
+                .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                 fieldFormatter,
                 defaultMaxResultsSizes);
@@ -104,8 +106,11 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest =
-                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+        final ResultRequest tableResultRequest = new ResultRequest.Builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 3000))
+                .build();
         checkResults(data, tableResultRequest, 0, false);
     }
 
@@ -134,7 +139,11 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+                new ResultRequest.Builder()
+                        .componentId("componentX")
+                        .addMappings(tableSettings)
+                        .requestedRange(new OffsetRange(0, 3000))
+                        .build();
         checkResults(data, tableResultRequest, 0, true);
     }
 
@@ -177,7 +186,11 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+                new ResultRequest.Builder()
+                        .componentId("componentX")
+                        .addMappings(tableSettings)
+                        .requestedRange(new OffsetRange(0, 3000))
+                        .build();
         checkResults(data, tableResultRequest, 0, false);
     }
 
@@ -220,7 +233,11 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest("componentX", tableSettings, new OffsetRange(0, 3000));
+                new ResultRequest.Builder()
+                        .componentId("componentX")
+                        .addMappings(tableSettings)
+                        .requestedRange(new OffsetRange(0, 3000))
+                        .build();
         checkResults(data, tableResultRequest, 1, false);
     }
 
@@ -261,10 +278,12 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest(
-                "componentX",
-                tableSettings,
-                new OffsetRange(0, 3000));
+        final ResultRequest tableResultRequest =
+                new ResultRequest.Builder()
+                        .componentId("componentX")
+                        .addMappings(tableSettings)
+                        .requestedRange(new OffsetRange(0, 3000))
+                        .build();
         checkResults(data, tableResultRequest, 1, false);
     }
 

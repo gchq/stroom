@@ -269,15 +269,24 @@ public final class SearchRequest implements Serializable {
      * Builder for constructing a {@link SearchRequest}
      */
     public static class Builder {
-
-        private final List<ResultRequest> resultRequests = new ArrayList<>();
+        private List<ResultRequest> resultRequests;
         private QueryKey key;
         private Query query;
         private String dateTimeLocale;
-
         private Boolean incremental;
-
         private Long timeout;
+
+        public Builder() {
+        }
+
+        public Builder(final SearchRequest searchRequest) {
+            this.resultRequests = searchRequest.resultRequests;
+            this.key = searchRequest.key;
+            this.query = searchRequest.query;
+            this.dateTimeLocale = searchRequest.dateTimeLocale;
+            this.incremental = searchRequest.incremental;
+            this.timeout = searchRequest.timeout;
+        }
 
         /**
          * @param value A unique key to identify the instance of the search by. This key is used to identify multiple
@@ -313,7 +322,15 @@ public final class SearchRequest implements Serializable {
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder addResultRequests(final ResultRequest... values) {
+            if (resultRequests == null) {
+                this.resultRequests = new ArrayList<>();
+            }
             this.resultRequests.addAll(Arrays.asList(values));
+            return this;
+        }
+
+        public Builder resultRequests(final List<ResultRequest> resultRequests) {
+            this.resultRequests = resultRequests;
             return this;
         }
 

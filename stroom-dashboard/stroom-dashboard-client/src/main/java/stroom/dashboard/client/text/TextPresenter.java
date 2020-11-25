@@ -25,7 +25,6 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -42,6 +41,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.query.api.v2.Field;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DefaultLocation;
@@ -455,7 +455,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
-        textSettings = getSettings();
+
+        final TextComponentSettings.Builder builder;
+
+        final ComponentSettings settings = componentConfig.getSettings();
+        if (settings instanceof TextComponentSettings) {
+            builder = new TextComponentSettings.Builder(textSettings);
+        } else {
+            builder = new TextComponentSettings.Builder();
+        }
 
         final Version version = Version.parse(textSettings.getModelVersion());
         final boolean old = version.lt(CURRENT_MODEL_VERSION);
@@ -465,15 +473,23 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (textSettings.getStreamIdField() == null
                 || (old && IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName()))
                 || (old && textSettings.getStreamIdField().isSpecial())) {
-            textSettings.setStreamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
+            builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
         }
         if (textSettings.getRecordNoField() == null
                 || (old && IndexConstants.EVENT_ID.equals(textSettings.getRecordNoField().getName()))
                 || (old && textSettings.getRecordNoField().isSpecial())) {
-            textSettings.setRecordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+            builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
 
-        textSettings.setModelVersion(CURRENT_MODEL_VERSION.toString());
+        builder.modelVersion(CURRENT_MODEL_VERSION.toString());
+
+        textSettings = builder.build();
+    }
+
+    @Override
+    public ComponentConfig write() {
+        ComponentConfig componentConfig = super.write();
+        return new ComponentConfig.Builder(componentConfig).settings(textSettings).build();
     }
 
     @Override
@@ -486,7 +502,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             newTableId = null;
         }
 
-        textSettings.setTableId(newTableId);
+        textSettings = new TextComponentSettings.Builder(textSettings).tableId(newTableId).build();
         update(currentTablePresenter);
     }
 
@@ -499,20 +515,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public ComponentType getType() {
         return TYPE;
-    }
-
-    private TextComponentSettings getSettings() {
-        ComponentSettings settings = getComponentConfig().getSettings();
-        if (!(settings instanceof TextComponentSettings)) {
-            settings = createSettings();
-            getComponentConfig().setSettings(settings);
-        }
-
-        return (TextComponentSettings) settings;
-    }
-
-    private ComponentSettings createSettings() {
-        return new TextComponentSettings();
     }
 
     @Override

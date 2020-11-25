@@ -18,10 +18,10 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.query.api.v2.Field;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -46,6 +46,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements ExpressionUiHandlers {
@@ -56,6 +57,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
     private Field field;
+    private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
@@ -68,9 +70,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         view.setUiHandlers(this);
     }
 
-    public void show(final TablePresenter tablePresenter, final Field field) {
+    public void show(final TablePresenter tablePresenter,
+                     final Field field,
+                     final BiConsumer<Field, Field> fieldChangeConsumer) {
         this.tablePresenter = tablePresenter;
         this.field = field;
+        this.fieldChangeConsumer = fieldChangeConsumer;
 
         if (field.getExpression() != null) {
             getView().setExpression(field.getExpression());
@@ -92,7 +97,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 HidePopupEvent.fire(tablePresenter, this);
             } else {
                 if (expression == null) {
-                    field.setExpression(null);
+                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(null).build());
                     tablePresenter.setDirty(true);
                     tablePresenter.clearAndRefresh();
                     HidePopupEvent.fire(tablePresenter, this);
@@ -102,7 +107,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    field.setExpression(expression);
+                                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(expression).build());
                                     tablePresenter.setDirty(true);
                                     tablePresenter.clearAndRefresh();
                                     HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
@@ -154,7 +159,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private List<Item> createMenuItems() {
         final List<Item> children = new ArrayList<>();
         int item = 0;
-        children.add(createAggregateFunctons(item++, "Aggregate"));
+        children.add(createAggregateFunctions(item++, "Aggregate"));
         children.add(createCastFunctions(item++, "Cast"));
         children.add(createDateFunctions(item++, "Date"));
         children.add(createLinkFunctions(item++, "Link"));
@@ -170,7 +175,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return children;
     }
 
-    private Item createAggregateFunctons(final int pos, final String func) {
+    private Item createAggregateFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));

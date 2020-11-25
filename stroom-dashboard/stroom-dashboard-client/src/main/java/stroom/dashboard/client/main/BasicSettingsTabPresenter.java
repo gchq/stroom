@@ -16,11 +16,14 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentConfig.Builder;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.shared.ComponentConfig;
-import stroom.util.shared.EqualsUtil;
+
+import java.util.Objects;
 
 public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.SettingsView>
         extends AbstractSettingsTabPresenter<V> {
@@ -30,14 +33,16 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        getView().setId(componentData.getId());
-        getView().setName(componentData.getName());
+    public void read(final ComponentConfig componentConfig) {
+        getView().setId(componentConfig.getId());
+        getView().setName(componentConfig.getName());
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        componentData.setName(getView().getName());
+    public ComponentConfig write(final ComponentConfig componentConfig) {
+        return new Builder(componentConfig)
+                .name(getView().getName())
+                .build();
     }
 
     @Override
@@ -46,8 +51,12 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
-        return !EqualsUtil.isEquals(componentData.getName(), getView().getName());
+    public boolean isDirty(final ComponentConfig componentConfig) {
+        final ComponentConfig newComponentConfig = write(componentConfig);
+
+        final boolean equal = Objects.equals(componentConfig.getName(), newComponentConfig.getName());
+
+        return !equal;
     }
 
     public interface SettingsView extends View {

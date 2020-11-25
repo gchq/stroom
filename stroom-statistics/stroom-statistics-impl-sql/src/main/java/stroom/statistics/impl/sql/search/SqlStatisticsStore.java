@@ -1,7 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
@@ -45,11 +44,11 @@ public class SqlStatisticsStore implements Store {
         this.searchKey = searchRequest.getKey().toString();
 
         // convert the search into something stats understands
-        final ExpressionOperator expression = ExpressionUtil.replaceExpressionParameters(searchRequest);
-        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(statisticStoreDoc, expression, searchRequest.getDateTimeLocale());
+        final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(statisticStoreDoc, updatedSearchRequest.getQuery().getExpression(), searchRequest.getDateTimeLocale());
 
         // Create coprocessors.
-        coprocessors = coprocessorsFactory.create(searchRequest);
+        coprocessors = coprocessorsFactory.create(updatedSearchRequest);
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Create the object that will receive results.

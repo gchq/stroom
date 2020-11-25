@@ -16,7 +16,10 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,61 +27,59 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
-@JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group"})
+@JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
-public final class Field implements Serializable {
-    private static final long serialVersionUID = 7327802315955158337L;
-
-    @XmlElement
+public final class Field implements HasDisplayValue {
     @ApiModelProperty(value = "The internal id of the field for equality purposes")
     @JsonProperty
-    private String id;
+    private final String id;
 
-    @XmlElement
     @ApiModelProperty(value = "The name of the field for display purposes")
     @JsonProperty
-    private String name;
+    private final String name;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The expression to use to generate the value for this field",
             required = true,
             example = "SUM(${count})")
     @JsonProperty
-    private String expression;
+    private final String expression;
 
-    @XmlElement
     @JsonProperty
-    private Sort sort;
+    private final Sort sort;
 
-    @XmlElement
     @JsonProperty
-    private Filter filter;
+    private final Filter filter;
 
-    @XmlElement
     @JsonProperty
-    private Format format;
+    private final Format format;
 
-    @XmlElement
     @ApiModelProperty(
             value = "If this field is to be grouped then this defines the level of grouping, with 0 being the top " +
                     "level of grouping, 1 being the next level down, etc.")
     @JsonProperty
-    private Integer group;
+    private final Integer group;
 
-    public Field() {
-    }
+    // Settings for visible table only.
+    @ApiModelProperty(
+            value = "IGNORE: UI use only",
+            hidden = true)
+    @JsonProperty
+    private final Integer width;
+    @ApiModelProperty(
+            value = "IGNORE: UI use only",
+            hidden = true)
+    @JsonProperty
+    private final Boolean visible;
+    @ApiModelProperty(
+            value = "IGNORE: UI use only",
+            hidden = true)
+    @JsonProperty
+    private final Boolean special;
 
     @JsonCreator
     public Field(@JsonProperty("id") final String id,
@@ -87,7 +88,10 @@ public final class Field implements Serializable {
                  @JsonProperty("sort") final Sort sort,
                  @JsonProperty("filter") final Filter filter,
                  @JsonProperty("format") final Format format,
-                 @JsonProperty("group") final Integer group) {
+                 @JsonProperty("group") final Integer group,
+                 @JsonProperty("width") final Integer width,
+                 @JsonProperty("visible") final Boolean visible,
+                 @JsonProperty("special") final Boolean special) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -95,74 +99,73 @@ public final class Field implements Serializable {
         this.filter = filter;
         this.format = format;
         this.group = group;
+        if (width != null) {
+            this.width = width;
+        } else {
+            this.width = 200;
+        }
+        if (visible != null) {
+            this.visible = visible;
+        } else {
+            this.visible = true;
+        }
+        this.special = special;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     public String getExpression() {
         return expression;
     }
 
-    public void setExpression(final String expression) {
-        this.expression = expression;
-    }
-
     public Sort getSort() {
         return sort;
-    }
-
-    public void setSort(final Sort sort) {
-        this.sort = sort;
     }
 
     public Filter getFilter() {
         return filter;
     }
 
-    public void setFilter(final Filter filter) {
-        this.filter = filter;
-    }
-
     public Format getFormat() {
         return format;
-    }
-
-    public void setFormat(final Format format) {
-        this.format = format;
     }
 
     public Integer getGroup() {
         return group;
     }
 
-    public void setGroup(final Integer group) {
-        this.group = group;
+    public Integer getWidth() {
+        return width;
     }
 
-    public Field copy() {
-        final Field field = new Field();
-        field.name = name;
-        field.expression = expression;
-        field.sort = sort;
-        field.filter = filter;
-        field.format = format;
-        field.group = group;
+    public Boolean isVisible() {
+        return visible;
+    }
 
-        return field;
+    public Boolean isSpecial() {
+        return special;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getDisplayValue() {
+        return name;
+    }
+
+    public static boolean equalsId(final Field lhs, final Field rhs) {
+        if (lhs == null && rhs == null) {
+            return true;
+        }
+        if (lhs != null && rhs != null) {
+            return Objects.equals(lhs.id, rhs.id);
+        }
+        return false;
     }
 
     @Override
@@ -176,12 +179,15 @@ public final class Field implements Serializable {
                 Objects.equals(sort, field.sort) &&
                 Objects.equals(filter, field.filter) &&
                 Objects.equals(format, field.format) &&
-                Objects.equals(group, field.group);
+                Objects.equals(group, field.group) &&
+                Objects.equals(width, field.width) &&
+                Objects.equals(visible, field.visible) &&
+                Objects.equals(special, field.special);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, expression, sort, filter, format, group);
+        return Objects.hash(id, name, expression, sort, filter, format, group, width, visible, special);
     }
 
     @Override
@@ -193,6 +199,9 @@ public final class Field implements Serializable {
                 ", sort=" + sort +
                 ", filter=" + filter +
                 ", format=" + format +
+                ", width=" + width +
+                ", visible=" + visible +
+                ", special=" + special +
                 ", group=" + group +
                 '}';
     }
@@ -208,6 +217,9 @@ public final class Field implements Serializable {
         private Filter filter;
         private Format format;
         private Integer group;
+        private Integer width;
+        private Boolean visible;
+        private Boolean special;
 
         /**
          * @param name       The name of the field for display purposes
@@ -229,16 +241,13 @@ public final class Field implements Serializable {
             this.id = field.id;
             this.name = field.name;
             this.expression = field.expression;
-            if (field.sort != null) {
-                this.sort = new Sort.Builder(field.sort).build();
-            }
-            if (field.filter != null) {
-                this.filter = new Filter.Builder(field.filter).build();
-            }
-            if (field.format != null) {
-                this.format = new Format.Builder(field.format).build();
-            }
+            this.sort = field.sort;
+            this.filter = field.filter;
+            this.format = field.format;
             this.group = field.group;
+            this.width = field.width;
+            this.visible = field.visible;
+            this.special = field.special;
         }
 
         /**
@@ -296,15 +305,6 @@ public final class Field implements Serializable {
         }
 
         /**
-         * @param value Formatting type to apply to the value
-         * @return The {@link Builder}, enabling method chaining
-         */
-        public Builder format(final Format.Type value) {
-            this.format = new Format(value);
-            return this;
-        }
-
-        /**
          * Set the group level
          *
          * @param group The group level to apply to this field
@@ -315,8 +315,23 @@ public final class Field implements Serializable {
             return this;
         }
 
+        public Builder width(final Integer width) {
+            this.width = width;
+            return this;
+        }
+
+        public Builder visible(final Boolean visible) {
+            this.visible = visible;
+            return this;
+        }
+
+        public Builder special(final Boolean special) {
+            this.special = special;
+            return this;
+        }
+
         public Field build() {
-            return new Field(id, name, expression, sort, filter, format, group);
+            return new Field(id, name, expression, sort, filter, format, group, width, visible, special);
         }
     }
 }

@@ -37,22 +37,30 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-BKJT6|89WRT",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
-        "expression" : "${StreamId}"
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
-        "expression" : "${EventId}"
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : true,
       "extractionPipeline" : {
@@ -83,22 +91,30 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-BKJT6|89WRT",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
-        "expression" : "${StreamId}"
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
-        "expression" : "${EventId}"
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : true,
       "extractionPipeline" : {
@@ -115,17 +131,23 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       } ],
       "maxResults" : [ 20, 20 ],
       "showDetail" : true
@@ -147,7 +169,9 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -159,22 +183,30 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
-        "expression" : "${StreamId}"
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
-        "expression" : "${EventId}"
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : true,
       "extractionPipeline" : {
@@ -205,7 +237,9 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -217,22 +251,30 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
-        "expression" : "${StreamId}"
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
-        "expression" : "${EventId}"
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : true,
       "extractionPipeline" : {
@@ -251,7 +293,9 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -261,7 +305,9 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 1
+        "group" : 1,
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -270,12 +316,16 @@
         },
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       } ],
       "maxResults" : [ 20, 10, 500 ],
       "showDetail" : true
@@ -297,7 +347,9 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -309,22 +361,30 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
-        "expression" : "${StreamId}"
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
-        "expression" : "${EventId}"
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : true,
       "extractionPipeline" : {
@@ -342,7 +402,9 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -352,7 +414,9 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 1
+        "group" : 1,
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${EventTime}",
         "sort" : {
@@ -361,12 +425,16 @@
         },
         "format" : {
           "type" : "DATE_TIME"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true
       } ],
       "maxResults" : [ 20, 100, 1000 ],
       "showDetail" : true

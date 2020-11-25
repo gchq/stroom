@@ -33,6 +33,10 @@ public interface Component extends TabData, Layer, HasDisplayValue {
 
     ComponentConfig getComponentConfig();
 
+    void setComponentName(String name);
+
+//    void setComponentConfig(ComponentConfig componentConfig);
+
     /**
      * Link components together.
      */
@@ -60,5 +64,5 @@ public interface Component extends TabData, Layer, HasDisplayValue {
 
     void read(ComponentConfig componentConfig);
 
-    void write(ComponentConfig componentConfig);
+    ComponentConfig write();
 }
