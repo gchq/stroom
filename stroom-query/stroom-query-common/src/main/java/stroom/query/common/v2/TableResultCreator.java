@@ -18,6 +18,8 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
+import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
@@ -29,13 +31,22 @@ import stroom.query.common.v2.Data.DataItem;
 import stroom.query.common.v2.Data.DataItems;
 import stroom.query.common.v2.format.FieldFormatter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
+
     private final FieldFormatter fieldFormatter;
     private final Sizes defaultMaxResultsSizes;
     private volatile List<Field> latestFields;
@@ -76,8 +87,16 @@ public class TableResultCreator implements ResultCreator {
             // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
             final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
+            // Create the row creator.
+            Optional<RowCreator> optionalRowCreator =
+                    ConditionalFormattingRowCreator.create(fieldFormatter, tableSettings);
+            if (optionalRowCreator.isEmpty()) {
+                optionalRowCreator = SimpleRowCreator.create(fieldFormatter);
+            }
+            final RowCreator rowCreator = optionalRowCreator.orElse(null);
+
             totalResults = addTableResults(data,
-                    latestFields,
+                    latestFields.toArray(new Field[0]),
                     maxResults,
                     offset,
                     length,
@@ -85,7 +104,8 @@ public class TableResultCreator implements ResultCreator {
                     resultList,
                     Data.ROOT_KEY,
                     0,
-                    0);
+                    0,
+                    rowCreator);
         } catch (final RuntimeException e) {
             if (e.getMessage() == null || e.getMessage().isBlank()) {
                 error = e.getClass().getName();
@@ -94,11 +114,17 @@ public class TableResultCreator implements ResultCreator {
             }
         }
 
-        return new TableResult(resultRequest.getComponentId(), latestFields, resultList, new OffsetRange(offset, resultList.size()), totalResults, error);
+        return new TableResult(
+                resultRequest.getComponentId(),
+                latestFields,
+                resultList,
+                new OffsetRange(offset, resultList.size()),
+                totalResults,
+                error);
     }
 
     private int addTableResults(final Data data,
-                                final List<Field> fields,
+                                final Field[] fields,
                                 final Sizes maxResults,
                                 final int offset,
                                 final int length,
@@ -106,7 +132,8 @@ public class TableResultCreator implements ResultCreator {
                                 final List<Row> resultList,
                                 final GroupKey parentKey,
                                 final int depth,
-                                final int position) {
+                                final int position,
+                                final RowCreator rowCreator) {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int pos = position;
         int resultCountAtThisLevel = 0;
@@ -114,44 +141,199 @@ public class TableResultCreator implements ResultCreator {
         final DataItems items = data.get(parentKey);
         if (items != null) {
             for (final DataItem item : items) {
+                if (resultList.size() >= length) {
+                    break;
+                }
+
                 final GroupKey groupKey = item.getKey();
+                boolean hide = false;
 
                 // If the result is within the requested window (offset + length) then add it.
-                if (pos >= offset && resultList.size() < length) {
-                    final List<String> stringValues = new ArrayList<>(fields.size());
-                    int i = 0;
+                if (pos >= offset) {
+                    final Row row = rowCreator.create(fields, item);
+                    if (row != null) {
+                        resultList.add(row);
+                    } else {
+                        hide = true;
+                    }
+                } else if (rowCreator.hidesRows()) {
+                    final Row row = rowCreator.create(fields, item);
+                    if (row == null) {
+                        hide = true;
+                    }
+                }
 
-                    for (final Field field : fields) {
-                        final Val val = item.getValue(i);
-                        final String string = fieldFormatter.format(field, val);
-                        stringValues.add(string);
-                        i++;
+                if (!hide) {
+                    // Increment the overall position.
+                    pos++;
+
+                    // Add child results if a node is open.
+                    if (groupKey != null && openGroups != null && openGroups.contains(item.getKey().toString())) {
+                        pos = addTableResults(
+                                data,
+                                fields,
+                                maxResults,
+                                offset,
+                                length,
+                                openGroups,
+                                resultList,
+                                item.getKey(),
+                                depth + 1,
+                                pos,
+                                rowCreator);
                     }
 
-                    resultList.add(new Row(item.getKey().toString(), stringValues, item.getKey().getDepth()));
-                }
-
-                // Increment the overall position.
-                pos++;
-
-                // Add child results if a node is open.
-                if (groupKey != null && openGroups != null && openGroups.contains(item.getKey().toString())) {
-                    pos = addTableResults(data, fields, maxResults, offset, length, openGroups, resultList,
-                            item.getKey(), depth + 1, pos);
-                }
-
-                // Increment the total results at this depth.
-                resultCountAtThisLevel++;
-                // Stop adding results if we have reached the maximum for this level.
-                if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
-                    break;
+                    // Increment the total results at this depth.
+                    resultCountAtThisLevel++;
+                    // Stop adding results if we have reached the maximum for this level.
+                    if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
+                        break;
+                    }
                 }
             }
         }
         return pos;
     }
 
-    public List<Field> getFields() {
-        return latestFields;
+    private interface RowCreator {
+        Row create(Field[] fields, DataItem item);
+
+        boolean hidesRows();
+    }
+
+    private static class SimpleRowCreator implements RowCreator {
+        private final FieldFormatter fieldFormatter;
+
+        private SimpleRowCreator(final FieldFormatter fieldFormatter) {
+            this.fieldFormatter = fieldFormatter;
+        }
+
+        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter) {
+            return Optional.of(new SimpleRowCreator(fieldFormatter));
+        }
+
+        @Override
+        public Row create(final Field[] fields, final DataItem item) {
+            final List<String> stringValues = new ArrayList<>(fields.length);
+            for (int i = 0; i < fields.length; i++) {
+                final Field field = fields[i];
+                final Val val = item.getValue(i);
+                final String string = fieldFormatter.format(field, val);
+                stringValues.add(string);
+            }
+
+            return new Row.Builder()
+                    .groupKey(item.getKey().toString())
+                    .values(stringValues)
+                    .depth(item.getKey().getDepth())
+                    .build();
+        }
+
+        @Override
+        public boolean hidesRows() {
+            return false;
+        }
+    }
+
+    private static class ConditionalFormattingRowCreator implements RowCreator {
+        private final FieldFormatter fieldFormatter;
+        private final List<ConditionalFormattingRule> rules;
+        private final ConditionalFormattingExpressionMatcher expressionMatcher;
+
+        private ConditionalFormattingRowCreator(final FieldFormatter fieldFormatter,
+                                                final List<ConditionalFormattingRule> rules,
+                                                final ConditionalFormattingExpressionMatcher expressionMatcher) {
+            this.fieldFormatter = fieldFormatter;
+            this.rules = rules;
+            this.expressionMatcher = expressionMatcher;
+        }
+
+        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
+                                                  final TableSettings tableSettings) {
+            // Create conditional formatting expression matcher.
+            List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
+            if (rules != null) {
+                rules = rules
+                        .stream()
+                        .filter(ConditionalFormattingRule::isEnabled)
+                        .collect(Collectors.toList());
+                if (rules.size() > 0) {
+                    final ConditionalFormattingExpressionMatcher expressionMatcher =
+                            new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
+                    return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter, rules, expressionMatcher));
+                }
+            }
+
+            return Optional.empty();
+        }
+
+        @Override
+        public Row create(final Field[] fields, final DataItem item) {
+            Row row = null;
+
+            final Map<String, Object> fieldIdToValueMap = new HashMap<>();
+            final List<String> stringValues = new ArrayList<>(fields.length);
+            for (int i = 0; i < fields.length; i++) {
+                final Field field = fields[i];
+                final Val val = item.getValue(i);
+                final String string = fieldFormatter.format(field, val);
+                stringValues.add(string);
+                fieldIdToValueMap.put(field.getName(), string);
+            }
+
+            // Find a matching rule.
+            ConditionalFormattingRule matchingRule = null;
+
+            try {
+                for (final ConditionalFormattingRule rule : rules) {
+                    try {
+                        final ExpressionOperator operator = rule.getExpression();
+                        final boolean match = expressionMatcher.match(fieldIdToValueMap, operator);
+                        if (match) {
+                            matchingRule = rule;
+                            break;
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+            if (matchingRule != null) {
+                if (!matchingRule.isHide()) {
+                    final Row.Builder builder = new Row.Builder()
+                            .groupKey(item.getKey().toString())
+                            .values(stringValues)
+                            .depth(item.getKey().getDepth());
+
+                    if (matchingRule.getBackgroundColor() != null
+                            && !matchingRule.getBackgroundColor().isEmpty()) {
+                        builder.backgroundColor(matchingRule.getBackgroundColor());
+                    }
+                    if (matchingRule.getTextColor() != null
+                            && !matchingRule.getTextColor().isEmpty()) {
+                        builder.textColor(matchingRule.getTextColor());
+                    }
+
+                    row = builder.build();
+                }
+            } else {
+                final Row.Builder builder = new Row.Builder()
+                        .groupKey(item.getKey().toString())
+                        .values(stringValues)
+                        .depth(item.getKey().getDepth());
+
+                row = builder.build();
+            }
+
+            return row;
+        }
+
+        @Override
+        public boolean hidesRows() {
+            return true;
+        }
     }
 }

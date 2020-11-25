@@ -30,7 +30,6 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.dashboard.client.table.cf.ExpressionMatcher;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -59,7 +58,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -67,12 +65,12 @@ import stroom.query.api.v2.Field.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.ParamUtil;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -570,105 +568,55 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             maxDepth++;
         }
 
-        final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(tableSettings.getFields());
-
         final List<TableRow> processed = new ArrayList<>(values.size());
-        int hiddenRowCount = 0;
         for (final Row row : values) {
-            boolean hide = false;
             SafeStylesBuilder rowStyle = new SafeStylesBuilder();
 
-            // Conditional formatting
-            if (rules != null && rules.size() > 0) {
-                try {
-                    ConditionalFormattingRule matchingRule = null;
-                    for (final ConditionalFormattingRule rule : rules) {
-                        try {
-                            if (rule.isEnabled()) {
-                                final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-                                for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
-                                    final Field field = fields.get(i);
-                                    final String value = row.getValues().get(i);
-                                    fieldIdToValueMap.put(field.getName(), value);
-                                }
-
-                                final ExpressionOperator operator = rule.getExpression();
-                                final boolean match = expressionMatcher.match(fieldIdToValueMap, operator);
-                                if (match) {
-                                    matchingRule = rule;
-                                    break;
-                                }
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-                    }
-                    if (matchingRule != null) {
-                        if (matchingRule.isHide()) {
-                            hide = true;
-                        } else {
-                            if (matchingRule.getBackgroundColor() != null
-                                    && !matchingRule.getBackgroundColor().isEmpty()) {
-                                rowStyle.trustedBackgroundColor(matchingRule.getBackgroundColor());
-                            }
-                            if (matchingRule.getTextColor() != null
-                                    && !matchingRule.getTextColor().isEmpty()) {
-                                rowStyle.trustedColor(matchingRule.getTextColor());
-                            }
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    GWT.log(e.getMessage());
-                }
+            // Row styles.
+            if (row.getBackgroundColor() != null
+                    && !row.getBackgroundColor().isEmpty()) {
+                rowStyle.trustedBackgroundColor(row.getBackgroundColor());
+            }
+            if (row.getTextColor() != null
+                    && !row.getTextColor().isEmpty()) {
+                rowStyle.trustedColor(row.getTextColor());
             }
 
-            if (!hide) {
-                final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
-                for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
-                    final Field field = fields.get(i);
-                    final String value = row.getValues().get(i) != null
-                            ? row.getValues().get(i)
-                            : "";
+            final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
+            for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
+                final Field field = fields.get(i);
+                final String value = row.getValues().get(i) != null
+                        ? row.getValues().get(i)
+                        : "";
 
-                    SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
-                    stylesBuilder.append(rowStyle.toSafeStyles());
+                SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
+                stylesBuilder.append(rowStyle.toSafeStyles());
 
-                    // Wrap
-                    if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
-                        stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
-                    }
-                    // Grouped
-                    if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
-                        stylesBuilder.fontWeight(Style.FontWeight.BOLD);
-                    }
-
-                    final String style = stylesBuilder.toSafeStyles().asString();
-
-                    final TableRow.Cell cell = new TableRow.Cell(value, style);
-                    cellsMap.put(field.getId(), cell);
+                // Wrap
+                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                    stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
+                }
+                // Grouped
+                if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                    stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
-                // Create an expander for the row.
-                Expander expander = null;
-                if (row.getDepth() < maxDepth) {
-                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
-                    expander = new Expander(row.getDepth(), open, false);
-                } else if (row.getDepth() > 0) {
-                    expander = new Expander(row.getDepth(), false, true);
-                }
+                final String style = stylesBuilder.toSafeStyles().asString();
 
-                processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
-
-            } else {
-                hiddenRowCount++;
+                final TableRow.Cell cell = new TableRow.Cell(value, style);
+                cellsMap.put(field.getId(), cell);
             }
-        }
 
-        // Add some empty rows to the end if we have some hidden ones.
-        // This is rubbish but currently necessary to deal with the way tables work in GWT.
-        for (int i = 0; i < hiddenRowCount; i++) {
-            processed.add(null);
+            // Create an expander for the row.
+            Expander expander = null;
+            if (row.getDepth() < maxDepth) {
+                final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                expander = new Expander(row.getDepth(), open, false);
+            } else if (row.getDepth() > 0) {
+                expander = new Expander(row.getDepth(), false, true);
+            }
+
+            processed.add(new TableRow(expander, row.getGroupKey(), cellsMap));
         }
 
         // Set the expander column width.

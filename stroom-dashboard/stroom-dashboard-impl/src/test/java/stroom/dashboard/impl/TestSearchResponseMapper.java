@@ -42,7 +42,11 @@ class TestSearchResponseMapper {
 
     private SearchResponse getSearchResponse() {
         final List<Field> fields = Collections.singletonList(new Field.Builder().id("test").name("test").expression("${test}").build());
-        final List<Row> rows = Collections.singletonList(new Row("groupKey", Collections.singletonList("test"), 5));
+        final List<Row> rows = Collections.singletonList(new Row.Builder()
+                .groupKey("groupKey")
+                .values(Collections.singletonList("test"))
+                .depth(5)
+                .build());
         final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
         return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Collections.singletonList("some error"), false);
     }

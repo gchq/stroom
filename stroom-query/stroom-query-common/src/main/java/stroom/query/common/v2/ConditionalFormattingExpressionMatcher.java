@@ -15,9 +15,9 @@
  *
  */
 
-package stroom.dashboard.client.table.cf;
+package stroom.query.common.v2;
 
-import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.dashboard.expression.v1.DateUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -26,10 +26,9 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.util.shared.CompareUtil;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.regexp.shared.RegExp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -37,35 +36,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
-public class ExpressionMatcher {
+public class ConditionalFormattingExpressionMatcher {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionalFormattingExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
-    private final Map<String, Field> fieldNameToFieldMap;
-    private final Map<String, String> fieldNameToJsDateFormat;
+    private final Map<String, Pattern> patternCache = new HashMap<>();
 
-    public ExpressionMatcher(final List<Field> fields) {
+    private final Map<String, Field> fieldNameToFieldMap;
+
+    public ConditionalFormattingExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Field field : fields) {
             fieldNameToFieldMap.putIfAbsent(field.getName(), field);
         }
-
-        // For any date cols with a format str, convert the string to js moment syntax
-        this.fieldNameToJsDateFormat = new HashMap<>();
-
-        fields.stream()
-                .filter(field ->
-                        field.getFormat() != null
-                                && field.getFormat().getType() != null
-                                && field.getFormat().getType().equals(Format.Type.DATE_TIME)
-                                && field.getFormat().getSettings() != null
-                                && field.getFormat().getSettings() instanceof DateTimeFormatSettings
-                                && ((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern() != null)
-                .forEach(field -> ClientDateUtil.convertJavaFormatToJs(((DateTimeFormatSettings) field.getFormat()
-                        .getSettings())
-                        .getPattern())
-                        .ifPresent(format ->
-                                fieldNameToJsDateFormat.putIfAbsent(field.getName(), format)));
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -248,7 +233,7 @@ public class ExpressionMatcher {
                 final BigDecimal num2 = getNumber(fieldName, termValue);
                 int compVal = CompareUtil.compareBigDecimal(num1, num2);
 
-                GWT.log(num1 + " " + num2 + " " + compVal);
+                LOGGER.debug(num1 + " " + num2 + " " + compVal);
 
                 return compVal > 0;
             }
@@ -311,9 +296,11 @@ public class ExpressionMatcher {
 
     private boolean isStringMatch(final String termValue, final Object attribute) {
         if (termValue.contains("*")) {
-            final String pattern = termValue.replaceAll("\\*", ".*");
-            final RegExp regExp = RegExp.compile(pattern);
-            return regExp.test(attribute.toString());
+            final Pattern pattern = patternCache.computeIfAbsent(termValue, k -> {
+                final String regex = k.replaceAll("\\*", ".*");
+                return Pattern.compile(regex);
+            });
+            return pattern.matcher(attribute.toString()).matches();
         }
         return termValue.equals(attribute.toString());
     }
@@ -326,13 +313,7 @@ public class ExpressionMatcher {
         } else if (termValue == null || termValue.isEmpty()) {
             return true;
         } else {
-            String attributeStr = attribute.toString();
-            if (termValue.contains("*")) {
-                final String pattern = termValue.replaceAll("\\*", ".*");
-                final RegExp regExp = RegExp.compile(pattern);
-                return regExp.test(attributeStr);
-            }
-            return attributeStr.contains(termValue);
+            return isStringMatch(termValue, attribute) || attribute.toString().contains(termValue);
         }
     }
 
@@ -360,16 +341,9 @@ public class ExpressionMatcher {
         } else {
             if (value instanceof String) {
                 String valueStr = (String) value;
-                final String jsFormat = fieldNameToJsDateFormat.get(fieldName);
                 try {
-                    if (jsFormat != null) {
-                        return ClientDateUtil.parseWithJsFormat(valueStr, jsFormat);
-                    } else {
-                        // Just have a stab treating it as an ISO format
-                        return ClientDateUtil.fromISOString(valueStr);
-                    }
+                    return DateUtil.parseNormalDateTimeString(valueStr);
                 } catch (final NumberFormatException e) {
-                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
                     throw new MatchException(
                             "Unable to parse a date/time from value \"" + valueStr + "\"");
                 }
@@ -389,9 +363,8 @@ public class ExpressionMatcher {
                 String valueStr = (String) value;
                 try {
                     // This is a term value so will be IDO format
-                    return ClientDateUtil.fromISOString(valueStr);
+                    return DateUtil.parseNormalDateTimeString(valueStr);
                 } catch (final NumberFormatException e) {
-                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
                     throw new MatchException(
                             "Unable to parse a date/time from value \"" + valueStr + "\"");
                 }
