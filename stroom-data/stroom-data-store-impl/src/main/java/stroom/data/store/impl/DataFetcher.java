@@ -37,7 +37,6 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -62,12 +61,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
-import stroom.util.shared.Count;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
 
@@ -610,17 +609,15 @@ public class DataFetcher {
 
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
-        try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding)) {
-            final RawResult rawResult = extractDataRange(
-                    sourceLocation,
-                    bomRemovalIS,
-                    encoding,
-                    segmentInputStream.size());
-            // Non-segmented data exists within parts so set the item info
-            rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
-            rawResult.setTotalItemCount(Count.of(partCount, true));
-            return rawResult;
-        }
+        final RawResult rawResult = extractDataRange(
+                sourceLocation,
+                segmentInputStream,
+                encoding,
+                segmentInputStream.size());
+        // Non-segmented data exists within parts so set the item info
+        rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
+        rawResult.setTotalItemCount(Count.of(partCount, true));
+        return rawResult;
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
@@ -665,7 +662,7 @@ public class DataFetcher {
         final DataRange dataRange = sourceLocation.getOptDataRange()
                 .orElse(DataRange.fromCharOffset(0, sourceConfig.getMaxCharactersPerFetch()));
 
-        final CharReader charReader = new CharReader(inputStream, encoding);
+        final CharReader charReader = new CharReader(inputStream, false, encoding);
 
         final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
                 dataRange);

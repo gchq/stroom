@@ -1,8 +1,17 @@
 package stroom.data.store.impl;
 
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
+import stroom.pipeline.refdata.util.ByteArrayUtils;
 
+import io.vavr.Tuple;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.BOMInputStream;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +19,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +40,7 @@ class TestCharReader {
         final String text = "this is my test string😀Я.";
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        final CharReader charReader = new CharReader(inputStream, utf8.name());
+        final CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         final StringBuilder stringBuilder = new StringBuilder();
 
@@ -52,7 +67,7 @@ class TestCharReader {
         final String text = "ЯR.ЯR";
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        final CharReader charReader = new CharReader(inputStream, utf8.name());
+        final CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         int byteOffset = 0;
         int charOffset = 0;
@@ -72,7 +87,7 @@ class TestCharReader {
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream, utf8.name());
+        CharReader charReader = new CharReader(inputStream,false,  utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -89,7 +104,7 @@ class TestCharReader {
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream, utf8.name());
+        CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -97,6 +112,177 @@ class TestCharReader {
                 "i",
                 14,
                 14);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testDifferentCharsets() {
+
+        final String inputStr = "This is a line\n"
+                + "and so is this 😀.\n"
+                + "This is a \t tab";
+
+        // The LE/BE charsets should NOT have a bom according to the standard but add them anyway to
+        // check that we can cope with them being there. The bom in utf8 is optional.
+        final Map<String, List<ByteOrderMark>> BOM_MAP = Map.of(
+                StandardCharsets.UTF_8.name(), List.of(ByteOrderMark.UTF_8), // add optional bom
+                StandardCharsets.UTF_16.name(), Collections.emptyList(), // java adds a bom
+                Charset.forName("UTF-32").name(), Collections.emptyList(), // java adds a bom
+                StandardCharsets.UTF_16BE.name(), List.of(ByteOrderMark.UTF_16BE),
+                StandardCharsets.UTF_16LE.name(), List.of(ByteOrderMark.UTF_16LE),
+                Charset.forName("UTF-32LE").name(), List.of(ByteOrderMark.UTF_32LE),
+                Charset.forName("UTF-32BE").name(), List.of(ByteOrderMark.UTF_32BE),
+                StandardCharsets.US_ASCII.name(), Collections.emptyList(), // no concept of BOM
+                StandardCharsets.ISO_8859_1.name(), Collections.emptyList()); // no concept of BOM
+
+        return Stream.of(
+                StandardCharsets.UTF_8,
+                StandardCharsets.UTF_16,
+                Charset.forName("UTF-32"),
+                StandardCharsets.UTF_16BE,
+                StandardCharsets.UTF_16LE,
+                StandardCharsets.US_ASCII,
+                StandardCharsets.ISO_8859_1)
+                .flatMap(charset -> {
+                    final List<ByteOrderMark> list = BOM_MAP.get(charset.name());
+                    if (list.isEmpty()) {
+                        return Stream.of(Tuple.of(charset, (ByteOrderMark) null));
+                    } else {
+                        return list
+                                .stream()
+                                .map(byteOrderMark -> Tuple.of(charset, byteOrderMark));
+                    }
+                })
+                .map(tuple2 -> {
+                    final Charset charset = tuple2._1();
+                    final ByteOrderMark byteOrderMark = tuple2._2();
+                    final String testName = charset.displayName()
+                            + "__"
+                            + (byteOrderMark != null ? byteOrderMark.toString() : "NO-BOM");
+
+                    return DynamicTest.dynamicTest(testName, () -> {
+                        LOGGER.info("Charset {}, byteOrderMark {}",
+                                charset.name(),
+                                byteOrderMark != null
+                                        ? ByteArrayUtils.byteArrayToHex(byteOrderMark.getBytes())
+                                        : "null");
+
+                        byte[] bytes = inputStr.getBytes(charset);
+
+                        LOGGER.info("String len {}, bytes len {}, bytes:\n{}\nstr: \n{}",
+                                inputStr.length(),
+                                bytes.length,
+                                ByteArrayUtils.byteArrayToHex(bytes),
+                                new String(bytes, charset));
+
+                        if (byteOrderMark != null) {
+                            // Test requires us to manually add a bom at the beginning to ensure we can decode
+                            // with the bom
+                            byte[] newArr = new byte[bytes.length + byteOrderMark.length()];
+                            System.arraycopy(byteOrderMark.getBytes(), 0, newArr, 0, byteOrderMark.length());
+                            System.arraycopy(bytes, 0, newArr, byteOrderMark.length(), bytes.length);
+
+                            bytes = newArr;
+                            LOGGER.info("String len {}, bytes len {}, bytes:\n{}\nstr: \n{}",
+                                    inputStr.length(),
+                                    bytes.length,
+                                    ByteArrayUtils.byteArrayToHex(bytes),
+                                    new String(bytes, charset));
+                        }
+
+                        final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+                        final CharReader charReader = new CharReader(
+                                inputStream,
+                                false,
+                                charset.name());
+                        final List<DecodedChar> decodedChars = new ArrayList<>();
+
+                        // Read all chars and verify expected count
+                        while (true) {
+                            final Optional<DecodedChar> optDecodedChar = charReader.read();
+                            if (optDecodedChar.isEmpty()) {
+                                break;
+                            } else {
+                                decodedChars.add(optDecodedChar.get());
+                            }
+                        }
+
+                        // Check first char is right.
+                        Assertions.assertThat(decodedChars.get(0).getAsString())
+                                .isEqualTo(String.valueOf(inputStr.charAt(0)));
+
+                        // Check right number of 'characters'
+                        Assertions.assertThat(decodedChars)
+                                .hasSize(inputStr.length() -1); // -1 to account for 2 char emoji
+                    });
+                });
+    }
+
+    @Disabled // Was verifying behaviour of commons.io BOMInputStream
+    @Test
+    void testBomInputStream() throws IOException {
+        final String inputStr = "Hello";
+        byte[] strBytes = inputStr.getBytes(StandardCharsets.UTF_16LE);
+        byte[] bytes = new byte[strBytes.length + 2];
+
+        bytes[0] = (byte) 0xFF;
+        bytes[1] = (byte) 0xFE;
+        System.arraycopy(strBytes, 0, bytes, 2, strBytes.length);
+
+        LOGGER.info("{}", ByteArrayUtils.byteArrayToHex(bytes));
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            stringBuilder.append(bytes[i])
+                    .append(" ");
+        }
+        LOGGER.info(stringBuilder.toString());
+
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        final BOMInputStream bomInputStream = new BOMInputStream(
+                byteArrayInputStream,
+                false,
+                ByteOrderMark.UTF_16LE,
+                ByteOrderMark.UTF_16BE);
+
+        final byte[] singleByteArr = new byte[1];
+        int cnt;
+
+        do {
+            cnt = bomInputStream.read(singleByteArr);
+            LOGGER.info("{}", ByteArrayUtils.byteArrayToHex(singleByteArr));
+        } while (cnt > 0);
+    }
+
+    @Disabled // for manual testing
+    @Test
+    void testBitmapReference() throws IOException {
+
+        // This file is UTF16-LE with a BOM
+        final byte[] bytes = FileUtils.readFileToByteArray(Paths.get(
+                "../../stroom-core/src/test/resources/samples/input/BITMAP-REFERENCE~1.in").toFile());
+        LOGGER.info("\n{}", ByteArrayUtils.byteArrayToAllForms(bytes));
+
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+
+        final CharReader charReader = new CharReader(
+                byteArrayInputStream,
+                false,
+                StandardCharsets.UTF_16LE.name());
+        final List<DecodedChar> decodedChars = new ArrayList<>();
+
+        // Read all chars and verify expected count
+        StringBuilder stringBuilder = new StringBuilder();
+        while (true) {
+            final Optional<DecodedChar> optDecodedChar = charReader.read();
+            if (optDecodedChar.isEmpty()) {
+                break;
+            } else {
+
+                decodedChars.add(optDecodedChar.get());
+                stringBuilder.append(optDecodedChar.get().getAsString());
+            }
+        }
+        LOGGER.info("\n{}", stringBuilder.toString());
     }
 
     private void readNTimesAndAssert(final CharReader charReader,
@@ -129,6 +315,13 @@ class TestCharReader {
             assertThat(decodedChar.getAsString()).isEqualTo(expectedStr);
             assertThat(charReader.getLastByteOffsetRead()).hasValue(expectedByteOffset);
             assertThat(charReader.getLastCharOffsetRead()).hasValue(expectedCharOffset);
+        }
+    }
+
+    private static class Dummy extends ByteOrderMark {
+
+        public Dummy() {
+            super("x", 0);
         }
     }
 }

@@ -62,7 +62,7 @@ public class ByteStreamDecoder {
             byte b = 0;
             try {
                 final Byte suppliedByte = byteSupplier.get();
-                if (suppliedByte == null || suppliedByte == -1) {
+                if (suppliedByte == null) {
                     // end of stream
                     endOfSupply = true;
                     break;
