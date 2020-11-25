@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1.28] - 2020-11-25
+
 * Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
 
 
@@ -2300,7 +2302,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.27...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.28...6.1
+[v6.1.28]: https://github.com/gchq/stroom/compare/v6.1.27...v6.1.28
 [v6.1.27]: https://github.com/gchq/stroom/compare/v6.1.26...v6.1.27
 [v6.1.26]: https://github.com/gchq/stroom/compare/v6.1.25...v6.1.26
 [v6.1.25]: https://github.com/gchq/stroom/compare/v6.1.24...v6.1.25
