@@ -7,19 +7,40 @@ import stroom.testdata.XmlAttributesDataWriterBuilder;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
+import io.vavr.Tuple;
+import org.apache.commons.io.ByteOrderMark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Stream;
 
 public class SampleDataGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleDataGenerator.class);
+
+    private static final String multipleLanguagesFileName = "multiple_languages.json";
+
+    private final StoreCreationTool storeCreationTool;
+
+    private final Path templatesDir;
+
+    @Inject
+    public SampleDataGenerator(final StoreCreationTool storeCreationTool) {
+        this.storeCreationTool = storeCreationTool;
+
+        templatesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+                .resolve(SetupSampleDataBean.ROOT_DIR_NAME)
+                .resolve("templates");
+    }
 
     /**
      * To aid testing the generation without running {@link SetupSampleData}
@@ -30,7 +51,8 @@ public class SampleDataGenerator {
                 .resolve("generated")
                 .resolve("input");
 
-        new SampleDataGenerator().generateData(dir);
+        new SampleDataGenerator(null)
+                .generateData(dir);
     }
 
     public void generateData(final Path dir) {
@@ -192,6 +214,56 @@ public class SampleDataGenerator {
                 .consumedBy(DataGenerator.getFileOutputConsumer(eventsFile))
                 .rowCount(userCount)
                 .generate();
+    }
+
+    private void generateCharsetData(final Path dir) {
+
+        final Path multipleLanguagesFile = templatesDir.resolve(multipleLanguagesFileName);
+
+        try {
+            final String content = Files.readString(multipleLanguagesFile, StandardCharsets.UTF_8);
+
+            Stream.of(
+                    Tuple.of("UTF8_BOM", StandardCharsets.UTF_8, ByteOrderMark.UTF_8),
+                    Tuple.of("UTF8_NO_BOM", StandardCharsets.UTF_8, (ByteOrderMark) null),
+
+                    Tuple.of("UTF16LE_BOM", StandardCharsets.UTF_16LE, ByteOrderMark.UTF_16LE),
+                    Tuple.of("UTF16LE_NO_BOM", StandardCharsets.UTF_16LE, (ByteOrderMark) null),
+                    Tuple.of("UTF16BE_BOM", StandardCharsets.UTF_16BE, ByteOrderMark.UTF_16BE),
+                    Tuple.of("UTF16BE_NO_BOM", StandardCharsets.UTF_16BE, (ByteOrderMark) null),
+                    Tuple.of("UTF16_BOM", StandardCharsets.UTF_16, ByteOrderMark.UTF_16LE),
+                    Tuple.of("UTF16_BOM", StandardCharsets.UTF_16, ByteOrderMark.UTF_16BE),
+
+                    Tuple.of("UTF32LE_BOM", Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE),
+                    Tuple.of("UTF32LE_NO_BOM", Charset.forName("UTF-32LE"), (ByteOrderMark) null),
+                    Tuple.of("UTF32BE_BOM", Charset.forName("UTF-32BE"), ByteOrderMark.UTF_32BE),
+                    Tuple.of("UTF32BE_NO_BOM", Charset.forName("UTF-32BE"), (ByteOrderMark) null),
+                    Tuple.of("UTF32_BOM", Charset.forName("UTF-32"), ByteOrderMark.UTF_32LE),
+                    Tuple.of("UTF32_BOM", Charset.forName("UTF-32"), ByteOrderMark.UTF_32BE))
+                    .forEach(tuple3 -> {
+                        final String feedName = "CHARSET_" + tuple3._1();
+                        final String folderPath = "Feeds and Translations/Character Sets";
+                        generateDataForCharset(feedName, folderPath, tuple3._2(), tuple3._3());
+                    });
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error reading file {}",
+                    multipleLanguagesFile.toAbsolutePath()), e);
+        }
+    }
+
+    private void generateDataForCharset(final String feedName,
+                                        final String folderPath,
+                                        final Charset charset,
+                                        final ByteOrderMark byteOrderMark) {
+        LOGGER.info("Creating feed {} in {} for charset {} and BOM {}",
+                feedName, folderPath, charset, byteOrderMark);
+
+        storeCreationTool.ensurePath(folderPath);
+
+
+
     }
 
     private Path makeInputFilePath(final Path dir,
