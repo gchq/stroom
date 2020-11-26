@@ -7,12 +7,22 @@
       "type" : "table",
       "queryId" : "query-JT8D7",
       "fields" : [ {
+        "id" : "table-IIO1T|C3JOV",
+        "name" : "Feed",
+        "expression" : "${Feed}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 262,
+        "visible" : true,
+        "special" : false
+      }, {
         "id" : "table-IIO1T|JTI4N",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "sort" : {
-          "order" : 0,
-          "direction" : "DESCENDING"
+          "order" : 1,
+          "direction" : "ASCENDING"
         },
         "format" : {
           "type" : "DATE_TIME"
@@ -24,6 +34,10 @@
         "id" : "table-IIO1T|ZM081",
         "name" : "UserId",
         "expression" : "${UserId}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
         "format" : {
           "type" : "GENERAL"
         },
@@ -144,11 +158,17 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "BETWEEN",
           "value" : "2020-06-01T00:00:00.000Z,2020-06-05T00:00:00.000Z"
+        }, {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2020-10-01T00:00:00.000Z,2020-10-31T00:00:00.000Z"
         } ]
       },
       "automate" : {
@@ -189,15 +209,15 @@
         "id" : "table-IIO1T|JF4LB",
         "name" : "src-id",
         "expression" : "${src-id}",
-        "width" : 83,
+        "width" : 50,
         "visible" : true,
         "special" : false
       },
       "partNoField" : {
         "id" : "table-IIO1T|KM4VR",
         "name" : "src-partNo",
-        "expression" : "${src-PartNo}",
-        "width" : 200,
+        "expression" : "${src-partNo}",
+        "width" : 72,
         "visible" : true,
         "special" : false
       },
@@ -205,7 +225,7 @@
         "id" : "table-IIO1T|DGJKJ",
         "name" : "src-recordNo",
         "expression" : "${src-recordNo}",
-        "width" : 200,
+        "width" : 89,
         "visible" : true,
         "special" : false
       },
@@ -213,7 +233,7 @@
         "id" : "table-IIO1T|4VERB",
         "name" : "src-lineFrom",
         "expression" : "${src-lineFrom}",
-        "width" : 200,
+        "width" : 81,
         "visible" : true,
         "special" : false
       },
@@ -221,7 +241,7 @@
         "id" : "table-IIO1T|2QMF7",
         "name" : "src-colFrom",
         "expression" : "${src-colFrom}",
-        "width" : 200,
+        "width" : 81,
         "visible" : true,
         "special" : false
       },
@@ -229,7 +249,7 @@
         "id" : "table-IIO1T|WJNZI",
         "name" : "src-lineTo",
         "expression" : "${src-lineTo}",
-        "width" : 200,
+        "width" : 70,
         "visible" : true,
         "special" : false
       },
@@ -237,7 +257,7 @@
         "id" : "table-IIO1T|ATRU5",
         "name" : "src-colTo",
         "expression" : "${src-colTo}",
-        "width" : 200,
+        "width" : 79,
         "visible" : true,
         "special" : false
       },
@@ -257,7 +277,7 @@
       "type" : "tabLayout",
       "preferredSize" : {
         "width" : 200,
-        "height" : 81
+        "height" : 97
       },
       "tabs" : [ {
         "id" : "query-JT8D7"
@@ -267,7 +287,7 @@
       "type" : "tabLayout",
       "preferredSize" : {
         "width" : 200,
-        "height" : 463
+        "height" : 447
       },
       "tabs" : [ {
         "id" : "table-IIO1T"
