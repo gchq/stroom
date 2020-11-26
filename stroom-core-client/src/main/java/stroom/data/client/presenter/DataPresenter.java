@@ -300,7 +300,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     getView().setSourceLinkVisible(true);
                     if (META.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.PROPERTIES;
-                        fetchDataForCurrentStreamNo(META_DATA);
+                        fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
                     } else if (CONTEXT.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.XML;
@@ -341,7 +341,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
            } else if (!isInErrorMarkerMode() && ERROR.equals(streamType)) {
                editorMode = AceEditorMode.TEXT;
                refreshTextPresenterContent();
-           } else if (META_DATA.equals(streamType)) {
+           } else if (StreamTypeNames.META.equals(streamType)) {
                editorMode = AceEditorMode.PROPERTIES;
                refreshTextPresenterContent();
            } else if (CONTEXT.equals(streamType)) {
@@ -831,7 +831,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         GWT.log("streamType " + currentStreamType
                 + " childStreamType " + currentSourceLocation.getChildType()
-                + " availableChildStreamTypes " + availableChildStreamTypes);
+                + " availableChildStreamTypes " + availableChildStreamTypes
+                + " effectiveChildStreamType " + effectiveChildStreamType);
 
         if (availableChildStreamTypes == null) {
             // Hide all links
@@ -844,7 +845,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             hideTab(infoTab, false); // info always available
             hideTab(errorTab, !ERROR.equals(streamType));
             hideTab(dataTab, streamType == null);
-            hideTab(metaTab, !availableChildStreamTypes.contains(META_DATA));
+            hideTab(metaTab, !availableChildStreamTypes.contains(StreamTypeNames.META));
             hideTab(contextTab, !availableChildStreamTypes.contains(CONTEXT));
         }
 
@@ -888,14 +889,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 effectiveChildStreamType = null;
                 setActiveTab(newActiveTab, streamType);
                 showMarkerPresenter();
-            } else if (META_DATA.equals(streamType)) {
+            } else if (StreamTypeNames.META.equals(effectiveChildStreamType)) {
                 newActiveTab = metaTab;
-                effectiveChildStreamType = META;
+//                effectiveChildStreamType = StreamTypeNames.META;
                 setActiveTab(newActiveTab, streamType);
                 showTextPresenter();
-            } else if (CONTEXT.equals(streamType)) {
+            } else if (StreamTypeNames.CONTEXT.equals(effectiveChildStreamType)) {
                 newActiveTab = contextTab;
-                effectiveChildStreamType = CONTEXT;
+//                effectiveChildStreamType = StreamTypeNames.CONTEXT;
                 setActiveTab(newActiveTab, streamType);
                 showTextPresenter();
             } else {
