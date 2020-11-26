@@ -1,5 +1,6 @@
 package stroom.data.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.Count;
@@ -54,14 +55,56 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
     }
 
     public void hide(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            write();
+
+        if (!ok || isDataRangeValid()) {
+            if (ok) {
+                write();
+            }
+            HidePopupEvent.fire(
+                    CharacterRangeSelectionPresenter.this,
+                    CharacterRangeSelectionPresenter.this,
+                    autoClose,
+                    ok);
         }
-        HidePopupEvent.fire(
-                CharacterRangeSelectionPresenter.this,
-                CharacterRangeSelectionPresenter.this,
-                autoClose,
-                ok);
+    }
+
+    private boolean isDataRangeValid() {
+        boolean result = true;
+        String msg = "";
+
+        final DataRange dataRange = getView().getDataRange();
+
+        if (dataRange.getLocationFrom() != null
+                && dataRange.getLocationTo() != null
+                && dataRange.getLocationTo().isBefore(dataRange.getLocationFrom())) {
+            msg = "To location " + dataRange.getLocationTo()
+                    + " is before from location " + dataRange.getLocationFrom();
+            result = false;
+        } else if (dataRange.getLocationFrom() != null
+                && dataRange.getLocationTo() != null
+                && dataRange.getLocationTo().equals(dataRange.getLocationFrom())) {
+            msg = "From location " + dataRange.getLocationFrom()
+                    + " is equal to the to location " + dataRange.getLocationTo();
+            result = false;
+        } else if (dataRange.getCharOffsetFrom() != null
+                && dataRange.getCharOffsetTo() != null
+                && dataRange.getCharOffsetTo() < dataRange.getCharOffsetFrom()) {
+            msg = "To offset " + dataRange.getCharOffsetTo() + 1 // to one based
+                    + " is before from offset " + dataRange.getCharOffsetFrom() + 1; // to one based
+            result = false;
+        } else if (dataRange.getCharOffsetFrom() != null
+                && dataRange.getCharOffsetTo() != null
+                && dataRange.getCharOffsetTo().equals(dataRange.getCharOffsetFrom())) {
+            msg = "From offset " + dataRange.getCharOffsetFrom() + 1 // to one based
+                    + " is equal to to offset" + dataRange.getCharOffsetTo() + 1; // to one based
+            result = false;
+        }
+
+        if (!result) {
+            AlertEvent.fireError(CharacterRangeSelectionPresenter.this, msg, null);
+        }
+
+        return result;
     }
 
     public interface CharacterRangeSelectionView extends View {
