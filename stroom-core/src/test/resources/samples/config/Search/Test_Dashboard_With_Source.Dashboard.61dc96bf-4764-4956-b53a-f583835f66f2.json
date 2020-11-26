@@ -17,56 +17,87 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "width" : 168,
+        "width" : 171,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|ZM081",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 123,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|4AC9G",
-        "name" : "Raw",
-        "expression" : "data('Raw Log',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo})",
-        "width" : 97,
+        "name" : "Preview Popup",
+        "expression" : "data('Preview',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo})",
+        "width" : 100,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|03LKG",
+        "name" : "Source Popup",
+        "expression" : "data('Source',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'source')",
+        "width" : 99,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|9LW5Z",
+        "name" : "Preview Tab",
+        "expression" : "data('Preview',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'preview', 'tab')",
+        "width" : 90,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|FYPSZ",
+        "name" : "Source Tab",
+        "expression" : "data('Source',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'source', 'tab')",
+        "width" : 79,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|JF4LB",
         "name" : "src-id",
         "expression" : "${src-id}",
-        "width" : 83,
+        "width" : 50,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|KM4VR",
         "name" : "src-partNo",
         "expression" : "${src-partNo}",
-        "width" : 89,
+        "width" : 72,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|DGJKJ",
         "name" : "src-recordNo",
         "expression" : "${src-recordNo}",
-        "width" : 99,
+        "width" : 89,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|4VERB",
         "name" : "src-lineFrom",
         "expression" : "${src-lineFrom}",
-        "width" : 90,
+        "width" : 81,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|2QMF7",
         "name" : "src-colFrom",
         "expression" : "${src-colFrom}",
-        "width" : 83,
+        "width" : 81,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|WJNZI",
         "name" : "src-lineTo",
         "expression" : "${src-lineTo}",
-        "width" : 84,
+        "width" : 70,
         "visible" : true,
         "special" : false
       }, {
@@ -77,25 +108,15 @@
         "visible" : true,
         "special" : false
       }, {
-        "id" : "table-IIO1T|ZM081",
-        "name" : "UserId",
-        "expression" : "${UserId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "StreamId",
-        "name" : "StreamId",
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : false,
         "special" : true
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -107,7 +128,8 @@
         "name" : "Example extraction"
       },
       "maxResults" : [ 1000000 ],
-      "conditionalFormattingRules" : [ ]
+      "conditionalFormattingRules" : [ ],
+      "modelVersion" : "6.1.26"
     }
   }, {
     "type" : "query",
@@ -130,7 +152,7 @@
         } ]
       },
       "automate" : {
-        "open" : false,
+        "open" : true,
         "refresh" : false,
         "refreshInterval" : "10s"
       }
@@ -154,7 +176,8 @@
         "special" : false
       },
       "showAsHtml" : false,
-      "showStepping" : true
+      "showStepping" : true,
+      "modelVersion" : "6.1.26"
     }
   }, {
     "type" : "text",
@@ -219,7 +242,8 @@
         "special" : false
       },
       "showAsHtml" : false,
-      "showStepping" : true
+      "showStepping" : true,
+      "modelVersion" : "6.1.26"
     }
   } ],
   "layout" : {
