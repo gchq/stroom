@@ -648,13 +648,11 @@ public class DataFetcher {
         long startByteOffset = -1;
 
         int currBufferLen = 0;
-//        String currChar = "";
         Optional<DecodedChar> optDecodeChar = Optional.empty();
         boolean isFirstChar = true;
         int extraCharCount = 0;
 
         boolean foundRange = false;
-        boolean reachedEndOfRange = false;
         boolean isMultiLine = false;
         Count<Long> totalCharCount = Count.of(0L, false);
 
@@ -685,8 +683,14 @@ public class DataFetcher {
             final DecodedChar decodedChar = optDecodeChar.get();
 
             if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount)) {
+
                 // On or after the first requested char
                 foundRange = true;
+
+//                LOGGER.info("{}:{} {}",
+//                        currLineNo,
+//                        currColNo,
+//                        decodedChar.isLineBreak() ? "\\n" : decodedChar.getAsString());
 
                 boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
                         currLineNo, currColNo, currCharOffset, currByteOffset, charsInRangeCount);
@@ -695,12 +699,10 @@ public class DataFetcher {
                     extraCharCount++;
                 }
 
-                // For multi-line data continue past the desired range a bit to try to complete the line
+                // For multi-line data continue past the desired range a bit (up to a limit) to try to complete the line
                 // to make it look better in the UI.
                 if (isCharAfterRequestedRange
-                        && (!isMultiLine
-                        || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
-                        || decodedChar.isLineBreak()))) {
+                        && hasReachedLimitOfLineContinuation(decodedChar, currColNo, extraCharCount, isMultiLine)) {
                     // This is the char after our requested range
                     // or requested range continued to the end of the line
                     // or we have blown the max chars limit
@@ -710,7 +712,7 @@ public class DataFetcher {
                     }
                     break;
                 } else {
-                    // Inside the requested range
+                    // Inside the requested range (or continuing past it a bit to the end of the line)
                     charsInRangeCount += decodedChar.getCharCount();
                     // Record the start position for the requested range
                     if (startCharOffset == -1) {
@@ -843,6 +845,22 @@ public class DataFetcher {
         final RawResult rawResult = new RawResult(resultLocation, charData);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
+    }
+
+    private boolean hasReachedLimitOfLineContinuation(final DecodedChar decodedChar,
+                                                      final int currColNo,
+                                                      final int extraCharCount,
+                                                      final boolean isMultiLine) {
+        // Don't continue to use chars beyond the range if
+        //   it is single line data
+        //   we have hit our line continuation limit
+        //   we are on a line break, i.e our inc. range ended just before or sometime before the end of line
+        //   we are on the first char of a line, i.e. our inc. range ended on a line break so this is first char
+        //     after that
+        return !isMultiLine
+                || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
+                || decodedChar.isLineBreak()
+                || currColNo == 1);
     }
 
     /**
