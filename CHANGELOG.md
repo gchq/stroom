@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Moved content download to Java.
 
+* All paths in the config YAML including logging config can now be made relative to the home dir.
+
 * Issue **#1912** : Moved dashboard table conditional formatting logic to server.
 
 * Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
