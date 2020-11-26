@@ -6,6 +6,7 @@ import stroom.util.shared.Count;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -22,17 +23,14 @@ public class CharacterRangeSelectionViewImpl
     private static final String RADIO_BUTTON_GROUP = "RadioBtnGrp";
     private static final long ZERO_TO_ONE_BASED_INCREMENT = 1L;
     private static final long ONE_TO_ZERO_BASED_DECREMENT = 1L;
+    private static final NumberFormat numberFormatter = NumberFormat.getFormat("#,###");
 
     private final Widget widget;
 
     @UiField
     Label lblTotalCharCount;
 
-//    @UiField
-//    Grid sourceGrid;
-//    @UiField
-//    Grid grid;
-
+    // from line:col => line;col
     @UiField(provided = true)
     RadioButton radioLocationToLocation;
     @UiField
@@ -44,6 +42,7 @@ public class CharacterRangeSelectionViewImpl
     @UiField
     LineColInput lineColTo;
 
+    // from line:col => char count
     @UiField(provided = true)
     RadioButton radioLocationWithCount;
     @UiField
@@ -55,6 +54,7 @@ public class CharacterRangeSelectionViewImpl
     @UiField
     ValueSpinner charCountSpinner1;
 
+    // from char offset => char offset
     @UiField(provided = true)
     RadioButton radioOffsetToOffset;
     @UiField
@@ -66,6 +66,7 @@ public class CharacterRangeSelectionViewImpl
     @UiField
     ValueSpinner charOffsetToSpinner1; // one based
 
+    // from char offset => char count
     @UiField(provided = true)
     RadioButton radioOffsetWithCount;
     @UiField
@@ -214,18 +215,12 @@ public class CharacterRangeSelectionViewImpl
         }
     }
 
-    private String getCountText(final Count<Long> count) {
-        return "of " + (count.isExact()
-                ? count.getCount()
-                : "?");
-    }
-
     private void updateCountLabels() {
         final String prefix = totalCharCount.isExact()
                 ? ""
-                : "approx. ";
+                : "~";
 
-        lblTotalCharCount.setText(prefix + totalCharCount.getCount());
+        lblTotalCharCount.setText(prefix + numberFormatter.format(totalCharCount.getCount()));
     }
 
     @Override

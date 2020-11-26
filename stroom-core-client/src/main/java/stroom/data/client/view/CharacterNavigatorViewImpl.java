@@ -29,16 +29,13 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNavigatorView {
 
@@ -46,15 +43,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private static final String CHARACTERS_TITLE = "Chars";
     private static final String UNKNOWN_VALUE = "?";
     private static final int ZERO_TO_ONE_BASE_INCREMENT = 1;
-    private static final String NUMBER_FORMAT = "#,###";
+    private static final NumberFormat numberFormatter = NumberFormat.getFormat("#,###");
 
-    private static Binder binder;
-//    private ProgressPresenter progressPresenter;
-
-    // Selection controls for the char data in the selected record and/or part
-    // Always visible
-//    @UiField
-//    SimplePanel progressBarPanel;
     @UiField
     Label lblLines;
     @UiField
@@ -70,8 +60,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     SvgButton refreshBtn;
 
     private HasCharacterData display;
-
-    private final Set<FocusWidget> focussed = new HashSet<>();
 
     private ClickHandler labelClickHandler;
 
@@ -175,10 +163,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         // Increment allows for switching from zero to one based
         return value
                 .map(val -> val + increment)
-                .map(val -> {
-                    final NumberFormat formatter = NumberFormat.getFormat(NUMBER_FORMAT);
-                    return formatter.format(val);
-                })
+                .map(numberFormatter::format)
                 .orElse(UNKNOWN_VALUE);
     }
 
@@ -188,8 +173,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private String getLongValueForLabel(final Count<Long> value, final int increment) {
         // Increment allows for switching from zero to one based
         if (value != null && value.getCount() != null) {
-            final NumberFormat formatter = NumberFormat.getFormat(NUMBER_FORMAT);
-            String str = formatter.format(value.getCount() + increment);
+            String str = numberFormatter.format(value.getCount() + increment);
             if (value.isExact()) {
                 return str;
             } else {
@@ -203,10 +187,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private String getIntValueForLabel(final Optional<Integer> value) {
         // Increment allows for switching from zero to one based
         return value
-                .map(val -> {
-                    final NumberFormat formatter = NumberFormat.getFormat(NUMBER_FORMAT);
-                    return formatter.format(val);
-                })
+                .map(numberFormatter::format)
                 .orElse(UNKNOWN_VALUE);
     }
 
@@ -217,16 +198,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     public void setDisplay(final HasCharacterData display) {
         this.display = display;
     }
-
-//    @Override
-//    public void setProgressPresenter(final ProgressPresenter progressPresenter) {
-//        this.progressPresenter = progressPresenter;
-//    }
-
-//    @Override
-//    public void setProgressView(final ProgressView progressView) {
-//        this.progressBarPanel.setWidget(progressView.asWidget());
-//    }
 
     // Characters UI handlers
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -282,9 +253,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 //        lblOf.setText("?");
 //    }
     public void refreshNavigator() {
-
         refreshCharacterControls();
-//        refreshProgressBar();
     }
 
 
