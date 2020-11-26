@@ -1,0 +1,43 @@
+{
+  "contentPacks" : [ {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.2/core-xml-schemas-v2.2.zip",
+    "name" : "core-xml-schemas",
+    "version" : "2.2"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.4.2/event-logging-xml-schema-v3.4.2.zip",
+    "name" : "event-logging-xml-schema",
+    "version" : "3.4.2"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip",
+    "name" : "internal-dashboards",
+    "version" : "1.1"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.1/internal-statistics-sql-v2.1.zip",
+    "name" : "internal-statistics-sql",
+    "version" : "2.1"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip",
+    "name" : "internal-statistics-stroom-stats",
+    "version" : "2.1"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.2/standard-pipelines-v0.2.zip",
+    "name" : "standard-pipelines",
+    "version" : "0.2"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip",
+    "name" : "stroom-101",
+    "version" : "1.0"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/stroom-logs-v2.0-alpha.5/stroom-logs-v2.0-alpha.5.zip",
+    "name" : "stroom-logs",
+    "version" : "2.0-alpha.5"
+  }, {
+    "url" : "https://github.com/gchq/stroom-content/releases/download/template-pipelines-v0.3/template-pipelines-v0.3.zip",
+    "name" : "template-pipelines",
+    "version" : "0.3"
+  }, {
+    "url" : "https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.2.1/visualisations-production-v3.2.1.zip",
+    "name" : "visualisations-production",
+    "version" : "3.2.1"
+  } ]
+}

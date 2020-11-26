@@ -48,9 +48,6 @@ import java.nio.file.Paths;
  * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
-    private static final String CONTENT_PACK_DOWNLOAD_DIR = "~/.stroom/contentPackDownload";
-    private static final String CONTENT_RELEASES_URL = "https://github.com/gchq/stroom-content/releases/download/";
-
     public static void main(final String[] args) {
         if (args.length != 1) {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");
@@ -63,11 +60,13 @@ public final class SetupSampleData {
             throw new RuntimeException("Unable to read yaml config");
         }
 
+        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.json");
+
         // We are running stroom so want to use a proper db
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
 
         final PathCreator pathCreator = injector.getInstance(PathCreator.class);
-        downloadContent(pathCreator, config);
+        downloadContent(contentPackDefinition, pathCreator, config);
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
@@ -91,9 +90,9 @@ public final class SetupSampleData {
         injector.getInstance(TaskManager.class).shutdown();
     }
 
-    private static void downloadContent(final PathCreator pathCreator, final Config config) {
+    private static void downloadContent(final Path contentPacksDefinition, final PathCreator pathCreator, final Config config) {
         try {
-            final String downloadDir = pathCreator.replaceSystemProperties(CONTENT_PACK_DOWNLOAD_DIR);
+            final String downloadDir = pathCreator.replaceSystemProperties(ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR);
             final String importDir = pathCreator.replaceSystemProperties(
                     config.getAppConfig().getContentPackImportConfig().getImportDirectory());
 
@@ -103,7 +102,7 @@ public final class SetupSampleData {
             Files.createDirectories(contentPackDownloadPath);
             Files.createDirectories(contentPackImportPath);
 
-            ContentPackDownloader.downloadAllPacks(CONTENT_RELEASES_URL, contentPackDownloadPath, contentPackImportPath);
+            ContentPackDownloader.downloadPacks(contentPacksDefinition, contentPackDownloadPath, contentPackImportPath);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
