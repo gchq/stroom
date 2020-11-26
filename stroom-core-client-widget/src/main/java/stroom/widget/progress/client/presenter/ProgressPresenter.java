@@ -20,6 +20,8 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
     private static final String BAR_COLOUR_COMPLETE = "#15a32c"; // Stroom green
     private static final String BAR_COLOUR_UNKNOWN_BOUND = "#FFCA28"; // Material Design Amber 300
 
+    private static final NumberFormat DEFAULT_PERCENT_FORMAT = NumberFormat.getFormat("0.0");
+
     private Progress progress;
     private double computedUpperBound = 0;
     private double uncertaintyFactor = UNCERTAINTY_FACTOR_MAX;
@@ -136,10 +138,9 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
             title = "All data visible in the editor";
         } else if (progress.hasKnownUpperBound()) {
                 barColour = BAR_COLOUR_KNOWN_BOUNDED;
-                NumberFormat numberFormat = NumberFormat.getFormat("0.0");
                 title = TITLE_PREFIX
                         + " ("
-                        + numberFormat.format(getWindowAsPercentage())
+                        + formatPercentage(getWindowAsPercentage())
                         + "%)";
         } else {
             barColour = BAR_COLOUR_UNKNOWN_BOUND;
@@ -147,6 +148,21 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         }
         getView().setProgressBarColour(barColour);
         getView().setTitle(title);
+    }
+
+    private String formatPercentage(final double percentage) {
+        // I'm sure there is a neater way of doing this
+        if (percentage > 0.1) {
+            return DEFAULT_PERCENT_FORMAT.format(percentage);
+        } else if (percentage > 0.01) {
+            return NumberFormat.getFormat("0.00").format(percentage);
+        } else if (percentage > 0.001) {
+            return NumberFormat.getFormat("0.000").format(percentage);
+        } else if (percentage > 0.0001) {
+            return NumberFormat.getFormat("0.0000").format(percentage);
+        } else {
+            return NumberFormat.getFormat("0.00000").format(percentage);
+        }
     }
 
     public interface ProgressView extends View {
