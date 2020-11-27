@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix missing favicon.
 
+* Issue **#1808** : Fix bug with permission handling for Retention Policy feature.
+
 * Issue **#1948** : Made UI report errors that occur during download.
 
 * Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
