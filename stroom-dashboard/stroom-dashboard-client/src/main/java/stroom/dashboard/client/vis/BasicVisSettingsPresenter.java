@@ -16,6 +16,24 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.main.SettingsPresenter;
+import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.query.api.v2.Field;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.client.JSONUtil;
+import stroom.util.shared.EqualsUtil;
+import stroom.visualisation.shared.VisualisationDoc;
+import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -23,30 +41,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.client.main.BasicSettingsTabPresenter;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.SettingsPresenter;
-import stroom.dashboard.client.table.TablePresenter;
-import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.client.JSONUtil;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.EqualsUtil;
-import stroom.visualisation.shared.VisualisationDoc;
-import stroom.visualisation.shared.VisualisationResource;
-import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVisSettingsPresenter.BasicVisSettingsView>
         implements BasicVisSettingsUiHandlers {
@@ -95,7 +96,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         fieldNames = new ArrayList<>();
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Field> fields = tablePresenter.getSettings().getFields();
+            final List<Field> fields = tablePresenter.getTableSettings().getFields();
             if (fields != null && fields.size() > 0) {
                 for (final Field field : fields) {
                     if (!fieldNames.contains(field.getName())) {
@@ -195,14 +196,19 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        super.write(componentData);
+    public ComponentConfig write(final ComponentConfig componentConfig) {
+        ComponentConfig result = super.write(componentConfig);
+        final VisComponentSettings oldSettings = (VisComponentSettings) result.getSettings();
+        final VisComponentSettings newSettings = writeSettings(oldSettings);
+        return new ComponentConfig.Builder(result).settings(newSettings).build();
+    }
 
-        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
-
-        settings.setTableId(getTableId());
-        settings.setVisualisation(getSelectedVisualisation());
-        settings.setJson(getJSON());
+    private VisComponentSettings writeSettings(final VisComponentSettings settings) {
+        return new VisComponentSettings.Builder(settings)
+                .tableId(getTableId())
+                .visualisation(getSelectedVisualisation())
+                .json(getJSON())
+                .build();
     }
 
     private String getTableId() {
@@ -227,19 +233,19 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
-        if (super.isDirty(componentData)) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
+        if (super.isDirty(componentConfig)) {
             return true;
         }
 
-        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
+        final VisComponentSettings oldSettings = (VisComponentSettings) componentConfig.getSettings();
+        final VisComponentSettings newSettings = writeSettings(oldSettings);
 
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(settings.getTableId(), getTableId());
-        builder.append(settings.getVisualisation(), getSelectedVisualisation());
-        builder.append(settings.getJson(), getJSON());
+        final boolean equal = Objects.equals(oldSettings.getTableId(), newSettings.getTableId()) &&
+                Objects.equals(oldSettings.getVisualisation(), newSettings.getVisualisation()) &&
+                Objects.equals(oldSettings.getJson(), newSettings.getJson());
 
-        return !builder.isEquals();
+        return !equal;
     }
 
     private DocRef getSelectedVisualisation() {

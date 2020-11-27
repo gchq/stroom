@@ -24,40 +24,27 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"offset", "length"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The offset and length of a range of data in a sub-set of a query result set")
-public final class OffsetRange implements Serializable {
-    private static final long serialVersionUID = 5045453517852867315L;
-
-    @XmlElement
+public final class OffsetRange {
     @ApiModelProperty(
             value = "The start offset for this sub-set of data, where zero is the offset of the first record " +
                     "in the full result set",
             example = "0",
             required = true)
     @JsonProperty
-    private Long offset;
+    private final Long offset;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The length in records of the sub-set of results",
             example = "100",
             required = true)
     @JsonProperty
-    private Long length;
+    private final Long length;
 
-    public OffsetRange() {
-    }
 
     public OffsetRange(final Integer offset, final Integer length) {
         this.offset = offset.longValue();
@@ -75,16 +62,8 @@ public final class OffsetRange implements Serializable {
         return offset;
     }
 
-    public void setOffset(final Long offset) {
-        this.offset = offset;
-    }
-
     public Long getLength() {
         return length;
-    }
-
-    public void setLength(final Long length) {
-        this.length = length;
     }
 
     @Override
@@ -119,7 +98,6 @@ public final class OffsetRange implements Serializable {
         /**
          * @param value The start offset for this sub-set of data,
          *              where zero is the offset of the first record in the full result set
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder offset(final Long value) {
@@ -129,7 +107,6 @@ public final class OffsetRange implements Serializable {
 
         /**
          * @param value The length in records of the sub-set of results
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder length(final Long value) {

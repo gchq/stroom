@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,31 +22,26 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"jsonData", "dataPoints", "error"})
+@JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
-public class VisResult implements ComponentResult {
+public class VisResult extends Result {
     @JsonProperty
     private final String jsonData;
     @JsonProperty
     private final long dataPoints;
-    @JsonProperty
-    private final String error;
 
     @JsonCreator
-    public VisResult(@JsonProperty("jsonData") final String jsonData,
+    public VisResult(@JsonProperty("componentId") final String componentId,
+                     @JsonProperty("jsonData") final String jsonData,
                      @JsonProperty("dataPoints") final long dataPoints,
                      @JsonProperty("error") final String error) {
+        super(componentId, error);
         this.jsonData = jsonData;
         this.dataPoints = dataPoints;
-        this.error = error;
     }
 
     public String getJsonData() {
         return jsonData;
-    }
-
-    public String getError() {
-        return error;
     }
 
     @Override

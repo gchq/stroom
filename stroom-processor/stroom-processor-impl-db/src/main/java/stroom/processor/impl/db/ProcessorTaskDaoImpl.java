@@ -924,9 +924,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     final int priority = record.get(PROCESSOR_FILTER.PRIORITY);
                     final TaskStatus status = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS));
                     final int count = record.get(COUNT);
-                    final DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
+                    DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
                     final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
-                    pipelineDocRef.setName(pipelineName.orElse(null));
+                    if (pipelineName.isPresent()) {
+                        pipelineDocRef = new DocRef.Builder(pipelineDocRef).name(pipelineName.get()).build();
+                    }
                     return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, count);
                 }));
 

@@ -1,7 +1,8 @@
 package stroom.query.api.v2;
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +17,7 @@ class QueryBuilderTest {
         final String dataSourceUuid = UUID.randomUUID().toString();
 
         final Query query = new Query.Builder()
-                .dataSource(dataSourceType, dataSourceUuid, dataSourceName)
+                .dataSource(new DocRef(dataSourceType, dataSourceUuid, dataSourceName))
                 .addParam("someKey0", "someValue0")
                 .addParam("someKey1", "someValue1")
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)

@@ -27,7 +27,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
+import stroom.query.api.v2.ParamUtil;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;

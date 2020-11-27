@@ -16,6 +16,8 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -23,54 +25,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.HasDisplayValue;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The timezone to apply to a date time value")
 @JsonInclude(Include.NON_NULL)
-public final class TimeZone implements Serializable {
-    private static final long serialVersionUID = 1200175661441813029L;
-
-    @XmlElement
-    //TODO needs better description
+public final class TimeZone {
     @ApiModelProperty(
-            value = "The required type of time zone",
+            value = "How the time zone will be specified, e.g. " +
+                    "from provided client 'Local' time, " +
+                    "'UTC', " +
+                    "a recognised timezone 'Id' " +
+                    "or an 'Offset' from UTC in hours and minutes.",
             required = true)
     @JsonProperty
-    private Use use;
+    private final Use use;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The id of the time zone, conforming to java.time.ZoneId",
             example = "GMT")
     @JsonProperty
-    private String id;
+    private final String id;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The number of hours this timezone is offset from UTC",
             example = "-1")
     @JsonProperty
-    private Integer offsetHours;
+    private final Integer offsetHours;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The number of minutes this timezone is offset from UTC",
             example = "-30")
     @JsonProperty
-    private Integer offsetMinutes;
-
-    public TimeZone() {
-    }
+    private final Integer offsetMinutes;
 
     @JsonCreator
     public TimeZone(@JsonProperty("use") final Use use,
@@ -84,62 +72,35 @@ public final class TimeZone implements Serializable {
     }
 
     public static TimeZone local() {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.LOCAL;
-        return timeZone;
+        return new TimeZone(Use.LOCAL, null, null, null);
     }
 
     public static TimeZone utc() {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.UTC;
-        return timeZone;
+        return new TimeZone(Use.UTC, null, null, null);
     }
 
     public static TimeZone fromId(final String id) {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.ID;
-        timeZone.id = id;
-        return timeZone;
+        return new TimeZone(Use.ID, id, null, null);
     }
 
     public static TimeZone fromOffset(final int offsetHours, final int offsetMinutes) {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.OFFSET;
-        timeZone.offsetHours = offsetHours;
-        timeZone.offsetMinutes = offsetMinutes;
-        return timeZone;
+        return new TimeZone(Use.OFFSET, null, offsetHours, offsetMinutes);
     }
 
     public Use getUse() {
         return use;
     }
 
-    public void setUse(final Use use) {
-        this.use = use;
-    }
-
     public String getId() {
         return id;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
     }
 
     public Integer getOffsetHours() {
         return offsetHours;
     }
 
-    public void setOffsetHours(final Integer offsetHours) {
-        this.offsetHours = offsetHours;
-    }
-
     public Integer getOffsetMinutes() {
         return offsetMinutes;
-    }
-
-    public void setOffsetMinutes(final Integer offsetMinutes) {
-        this.offsetMinutes = offsetMinutes;
     }
 
     @Override

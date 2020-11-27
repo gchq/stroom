@@ -16,6 +16,8 @@
 
 package stroom.config.app;
 
+import stroom.util.logging.LogUtil;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
@@ -29,8 +31,6 @@ import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -87,12 +87,15 @@ public class YamlUtil {
 
     /**
      * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
+     *
      * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
-        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
+        final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
+                new SubstitutingSourceProvider(
+                        new FileConfigurationSourceProvider(),
+                        new EnvironmentVariableSubstitutor(false))
+        );
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
 
@@ -117,6 +120,7 @@ public class YamlUtil {
     /**
      * Reads a yaml file that matches the structure of an {@link AppConfig} object tree without the
      * DropWizard specific config.
+     *
      * @throws IOException
      */
 //    public static AppConfig readAppConfig(final Path appConfigFile, final boolean willFailOnUnknownProps) throws IOException {
@@ -137,7 +141,6 @@ public class YamlUtil {
 //
 //        return mapper.readerFor(AppConfig.class).readValue(substitutedInputStream);
 //    }
-
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
         final YAMLFactory yf = new YAMLFactory();
         final ObjectMapper mapper = new ObjectMapper(yf);
@@ -145,6 +148,7 @@ public class YamlUtil {
         mapper.writeValue(outputStream, config);
 
     }
+
     public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
         config.setAppConfig(appConfig);

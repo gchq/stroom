@@ -16,7 +16,7 @@ class RowBuilderTest {
 
         final Row row = new Row.Builder()
                 .depth(depth)
-                .addValues(values.toArray(new String[2]))
+                .values(values)
                 .groupKey(groupKey)
                 .build();
 

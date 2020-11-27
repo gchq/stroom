@@ -24,96 +24,57 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "ResultRequest", propOrder = {"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
         "e.g. sorted, grouped, limited, etc.")
-public final class ResultRequest implements Serializable {
-    private static final long serialVersionUID = -7455554742243923562L;
-
-    @XmlElement
+public final class ResultRequest {
     @ApiModelProperty(
             value = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
     @JsonProperty
-    private String componentId;
+    private final String componentId;
 
-    @XmlElementWrapper(name = "mappings")
-    @XmlElement(name = "mappings")
     @ApiModelProperty(required = true)
     @JsonProperty
-    private List<TableSettings> mappings;
+    private final List<TableSettings> mappings;
 
-    @XmlElement
     @ApiModelProperty(required = true)
     @JsonProperty
-    private OffsetRange requestedRange;
+    private final OffsetRange requestedRange;
 
-    @XmlElementWrapper(name = "openGroups")
-    @XmlElement(name = "key")
     //TODO complete documentation
     @ApiModelProperty(
             value = "TODO",
             required = true)
     @JsonProperty
-    private List<String> openGroups;
+    private final Set<String> openGroups;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
                     "provide a TableResult object",
             required = true)
     @JsonProperty
-    private ResultStyle resultStyle;
+    private final ResultStyle resultStyle;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The fetch mode for the query. NONE means fetch no data, ALL means fetch all known results, " +
                     "CHANGES means fetch only those records not see in previous requests")
     @JsonProperty
-    private Fetch fetch;
-
-    public ResultRequest() {
-    }
-
-    public ResultRequest(final String componentId) {
-        this.componentId = componentId;
-    }
-
-    public ResultRequest(final String componentId, final TableSettings mappings) {
-        this(componentId, Collections.singletonList(mappings), null);
-    }
-
-    public ResultRequest(final String componentId, final TableSettings mappings, final OffsetRange requestedRange) {
-        this(componentId, Collections.singletonList(mappings), requestedRange);
-    }
-
-    public ResultRequest(final String componentId, final List<TableSettings> mappings, final OffsetRange requestedRange) {
-        this.componentId = componentId;
-        this.mappings = mappings;
-        this.requestedRange = requestedRange;
-        this.resultStyle = ResultStyle.FLAT;
-    }
+    private final Fetch fetch;
 
     @JsonCreator
     public ResultRequest(@JsonProperty("componentId") final String componentId,
                          @JsonProperty("mappings") final List<TableSettings> mappings,
                          @JsonProperty("requestedRange") final OffsetRange requestedRange,
-                         @JsonProperty("openGroups") final List<String> openGroups,
+                         @JsonProperty("openGroups") final Set<String> openGroups,
                          @JsonProperty("resultStyle") final ResultStyle resultStyle,
                          @JsonProperty("fetch") final Fetch fetch) {
         this.componentId = componentId;
@@ -128,40 +89,20 @@ public final class ResultRequest implements Serializable {
         return componentId;
     }
 
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
-    }
-
     public List<TableSettings> getMappings() {
         return mappings;
-    }
-
-    public void setMappings(final List<TableSettings> mappings) {
-        this.mappings = mappings;
     }
 
     public OffsetRange getRequestedRange() {
         return requestedRange;
     }
 
-    public void setRequestedRange(final OffsetRange requestedRange) {
-        this.requestedRange = requestedRange;
-    }
-
-    public List<String> getOpenGroups() {
+    public Set<String> getOpenGroups() {
         return openGroups;
-    }
-
-    public void setOpenGroups(final List<String> openGroups) {
-        this.openGroups = openGroups;
     }
 
     public ResultStyle getResultStyle() {
         return resultStyle;
-    }
-
-    public void setResultStyle(final ResultStyle resultStyle) {
-        this.resultStyle = resultStyle;
     }
 
     /**
@@ -172,10 +113,6 @@ public final class ResultRequest implements Serializable {
      */
     public Fetch getFetch() {
         return fetch;
-    }
-
-    public void setFetch(final Fetch fetch) {
-        this.fetch = fetch;
     }
 
     @Override
@@ -229,7 +166,7 @@ public final class ResultRequest implements Serializable {
 
         private OffsetRange requestedRange;
 
-        private List<String> openGroups;
+        private Set<String> openGroups;
 
         private ResultRequest.ResultStyle resultStyle;
 
@@ -272,7 +209,7 @@ public final class ResultRequest implements Serializable {
          */
         public Builder addOpenGroups(final String... values) {
             if (values.length > 0 && openGroups == null) {
-                openGroups = new ArrayList<>();
+                openGroups = new HashSet<>();
             }
 
             this.openGroups.addAll(Arrays.asList(values));

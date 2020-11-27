@@ -16,96 +16,57 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.OffsetRange;
+import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
+@JsonPropertyOrder({
+        "componentId",
+        "fetch",
+        "tableSettings",
+        "requestedRange",
+        "openGroups"})
 @JsonInclude(Include.NON_NULL)
 public class TableResultRequest extends ComponentResultRequest {
-    @XmlElement
     @JsonProperty
-    private TableComponentSettings tableSettings;
-
-    @XmlElement
+    private final TableSettings tableSettings;
     @JsonProperty
-    private OffsetRange<Integer> requestedRange;
-
-    @XmlElement
+    private final OffsetRange requestedRange;
     @JsonProperty
-    private Set<String> openGroups;
-
-    public TableResultRequest() {
-        requestedRange = new OffsetRange<>(0, 100);
-    }
-
-    public TableResultRequest(final int offset, final int length) {
-        requestedRange = new OffsetRange<>(offset, length);
-    }
+    private final Set<String> openGroups;
 
     @JsonCreator
-    public TableResultRequest(@JsonProperty("tableSettings") final TableComponentSettings tableSettings,
-                              @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
-                              @JsonProperty("openGroups") final Set<String> openGroups,
-                              @JsonProperty("fetch") final Fetch fetch) {
-        super(fetch);
+    public TableResultRequest(@JsonProperty("componentId") final String componentId,
+                              @JsonProperty("fetch") final Fetch fetch,
+                              @JsonProperty("tableSettings") final TableSettings tableSettings,
+                              @JsonProperty("requestedRange") final OffsetRange requestedRange,
+                              @JsonProperty("openGroups") final Set<String> openGroups) {
+        super(componentId, fetch);
         this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
     }
 
-    public TableComponentSettings getTableSettings() {
+    public TableSettings getTableSettings() {
         return tableSettings;
     }
 
-    public void setTableSettings(final TableComponentSettings tableSettings) {
-        this.tableSettings = tableSettings;
-    }
-
-    public OffsetRange<Integer> getRequestedRange() {
+    public OffsetRange getRequestedRange() {
         return requestedRange;
-    }
-
-    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
-        this.requestedRange = requestedRange;
     }
 
     public Set<String> getOpenGroups() {
         return openGroups;
-    }
-
-    public void setOpenGroups(final Set<String> openGroups) {
-        this.openGroups = openGroups;
-    }
-
-    public void setGroupOpen(final String group, final boolean open) {
-        if (openGroups == null) {
-            openGroups = new HashSet<>();
-        }
-
-        if (open) {
-            openGroups.add(group);
-        } else {
-            openGroups.remove(group);
-        }
-    }
-
-    public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange<>(offset, length);
     }
 
     public boolean isGroupOpen(final String group) {
@@ -113,27 +74,18 @@ public class TableResultRequest extends ComponentResultRequest {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
-
-        TableResultRequest that = (TableResultRequest) o;
-
-        return new EqualsBuilder()
-                .append(tableSettings, that.tableSettings)
-                .append(requestedRange, that.requestedRange)
-                .append(openGroups, that.openGroups)
-                .isEquals();
+        final TableResultRequest that = (TableResultRequest) o;
+        return Objects.equals(tableSettings, that.tableSettings) &&
+                Objects.equals(requestedRange, that.requestedRange) &&
+                Objects.equals(openGroups, that.openGroups);
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(tableSettings);
-        hashCodeBuilder.append(requestedRange);
-        hashCodeBuilder.append(openGroups);
-        return hashCodeBuilder.toHashCode();
+        return Objects.hash(tableSettings, requestedRange, openGroups);
     }
 
     @Override
@@ -143,5 +95,67 @@ public class TableResultRequest extends ComponentResultRequest {
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
                 '}';
+    }
+
+    public static class Builder {
+        private String componentId;
+        private Fetch fetch;
+        private TableSettings tableSettings;
+        private OffsetRange requestedRange = new OffsetRange(0, 100);
+        private Set<String> openGroups;
+
+        public Builder() {
+        }
+
+        public Builder(final TableResultRequest tableResultRequest) {
+            this.componentId = tableResultRequest.getComponentId();
+            this.fetch = tableResultRequest.getFetch();
+            this.tableSettings = tableResultRequest.tableSettings;
+            this.requestedRange = tableResultRequest.requestedRange;
+            this.openGroups = tableResultRequest.openGroups;
+        }
+
+        public Builder componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
+        }
+
+        public Builder fetch(final Fetch fetch) {
+            this.fetch = fetch;
+            return this;
+        }
+
+        public Builder tableSettings(final TableSettings tableSettings) {
+            this.tableSettings = tableSettings;
+            return this;
+        }
+
+        public Builder requestedRange(final OffsetRange requestedRange) {
+            this.requestedRange = requestedRange;
+            return this;
+        }
+
+        public Builder openGroups(final Set<String> openGroups) {
+            this.openGroups = openGroups;
+            return this;
+        }
+
+        public Builder openGroup(final String group, final boolean open) {
+            if (openGroups == null) {
+                openGroups = new HashSet<>();
+            }
+
+            if (open) {
+                openGroups.add(group);
+            } else {
+                openGroups.remove(group);
+            }
+
+            return this;
+        }
+
+        public TableResultRequest build() {
+            return new TableResultRequest(componentId, fetch, tableSettings, requestedRange, openGroups);
+        }
     }
 }

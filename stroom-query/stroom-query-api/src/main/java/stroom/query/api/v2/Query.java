@@ -16,21 +16,15 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.DocRef;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,42 +35,25 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
-@XmlRootElement(name = "query")
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = Query.CLASS_DESC)
-public final class Query implements Serializable {
-
-    private static final long serialVersionUID = 9055582579670841979L;
-
+public final class Query {
     public static final String CLASS_DESC = "The query terms for the search";
 
-    @XmlElement
     @ApiModelProperty(
             required = true)
     @JsonProperty
-    private DocRef dataSource;
+    private final DocRef dataSource;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The root logical operator in the query expression tree",
             required = true)
     @JsonProperty
-    private ExpressionOperator expression;
+    private final ExpressionOperator expression;
 
-    @XmlElementWrapper(name = "params")
-    @XmlElement(name = "param")
     @ApiModelProperty(
             value = "A list of key/value pairs that provide additional information about the query")
     @JsonProperty
-    private List<Param> params;
-
-    public Query() {
-    }
-
-    public Query(final DocRef dataSource, final ExpressionOperator expression) {
-        this(dataSource, expression, null);
-    }
+    private final List<Param> params;
 
     @JsonCreator
     public Query(@JsonProperty("dataSource") final DocRef dataSource,
@@ -91,24 +68,12 @@ public final class Query implements Serializable {
         return dataSource;
     }
 
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public ExpressionOperator getExpression() {
         return expression;
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
-    }
-
     public List<Param> getParams() {
         return params;
-    }
-
-    public void setParams(final List<Param> params) {
-        this.params = params;
     }
 
     @Override
@@ -139,16 +104,21 @@ public final class Query implements Serializable {
      * Builder for constructing a {@link Query}
      */
     public static class Builder {
-
         private DocRef dataSource;
-
         private ExpressionOperator expression;
+        private List<Param> params;
 
-        private final List<Param> params = new ArrayList<>();
+        public Builder() {
+        }
+
+        public Builder(final Query query) {
+            this.dataSource = query.dataSource;
+            this.expression = query.expression;
+            this.params = query.params;
+        }
 
         /**
          * @param value A DocRef that points to the data source of the query
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder dataSource(final DocRef value) {
@@ -156,20 +126,19 @@ public final class Query implements Serializable {
             return this;
         }
 
-        /**
-         * Shortcut function for creating the datasource {@link DocRef} in one go
-         * @param type The type of the datasource
-         * @param uuid The UUID of the datasource
-         * @param name The name of the datasource
-         * @return this builder, with the completed datasource added.
-         */
-        public Builder dataSource(final String type, final String uuid, final String name) {
-            return this.dataSource(new DocRef.Builder().type(type).uuid(uuid).name(name).build());
-        }
+//        /**
+//         * Shortcut function for creating the datasource {@link DocRef} in one go
+//         * @param type The type of the datasource
+//         * @param uuid The UUID of the datasource
+//         * @param name The name of the datasource
+//         * @return this builder, with the completed datasource added.
+//         */
+//        public Builder dataSource(final String type, final String uuid, final String name) {
+//            return this.dataSource(new DocRef.Builder().type(type).uuid(uuid).name(name).build());
+//        }
 
         /**
          * @param value he root logical addOperator in the query expression tree
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder expression(final ExpressionOperator value) {
@@ -179,7 +148,8 @@ public final class Query implements Serializable {
 
         /**
          * Shortcut function to add a parameter and go straight back to building the query
-         * @param key The parameter key
+         *
+         * @param key   The parameter key
          * @param value The parameter value
          * @return this builder with the completed parameter added.
          */
@@ -189,11 +159,18 @@ public final class Query implements Serializable {
 
         /**
          * @param values A list of key/value pairs that provide additional information about the query
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addParams(final Param...values) {
+        public Builder addParams(final Param... values) {
+            if (this.params == null) {
+                params = new ArrayList<>();
+            }
             this.params.addAll(Arrays.asList(values));
+            return this;
+        }
+
+        public Builder params(final List<Param> params) {
+            this.params = params;
             return this;
         }
 

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,17 +22,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @JsonInclude(Include.NON_NULL)
-public class NumberFormatSettings implements FormatSettings {
+@ApiModel(description = "The definition of a format to apply to numeric data")
+public final class NumberFormatSettings implements FormatSettings {
     private static final int DEFAULT_DECIMAL_PLACES = 0;
     private static final boolean DEFAULT_USE_SEPARATOR = false;
 
+    @ApiModelProperty(
+            value = "The number of decimal places",
+            example = "2",
+            required = true)
     @JsonProperty
     private final Integer decimalPlaces;
+
+    @ApiModelProperty(
+            value = "Whether to use a thousands separator or not. Defaults to false",
+            example = "true")
     @JsonProperty
     private final Boolean useSeparator;
 
@@ -49,6 +60,10 @@ public class NumberFormatSettings implements FormatSettings {
 
     public Boolean getUseSeparator() {
         return useSeparator;
+    }
+
+    public boolean useSeparator() {
+        return useSeparator != null && useSeparator;
     }
 
     @Override
@@ -80,8 +95,41 @@ public class NumberFormatSettings implements FormatSettings {
                 '}';
     }
 
-    @Override
-    public FormatSettings copy() {
-        return new NumberFormatSettings(decimalPlaces, useSeparator);
+    /**
+     * Builder for constructing a {@link NumberFormatSettings}
+     */
+    public static class Builder {
+        private Integer decimalPlaces;
+        private Boolean useSeparator;
+
+        public Builder() {
+        }
+
+        public Builder(final NumberFormatSettings numberFormat) {
+            this.decimalPlaces = numberFormat.decimalPlaces;
+            this.useSeparator = numberFormat.useSeparator;
+        }
+
+        /**
+         * @param value Number of decimal places to apply to the number format
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder decimalPlaces(final Integer value) {
+            this.decimalPlaces = value;
+            return this;
+        }
+
+        /**
+         * @param value Whether to use a thousands separator or not.
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder useSeparator(final Boolean value) {
+            this.useSeparator = value;
+            return this;
+        }
+
+        public NumberFormatSettings build() {
+            return new NumberFormatSettings(decimalPlaces, useSeparator);
+        }
     }
 }

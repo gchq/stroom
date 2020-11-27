@@ -18,12 +18,12 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
+import stroom.query.api.v2.Field;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -59,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -76,6 +77,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
     private Field field;
+    private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
@@ -105,7 +107,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     .keySet()
                     .stream()
                     .map(fieldName -> {
-                        final String fieldExpression ="${" + fieldName + "}";
+                        final String fieldExpression = "${" + fieldName + "}";
                         final String snippet = "\\" + fieldExpression + "${0}"; // escape our $ for snippet engine
                         return new AceCompletionSnippet(
                                 fieldName,
@@ -150,9 +152,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 buildFieldsCompletionProvider());
     }
 
-    public void show(final TablePresenter tablePresenter, final Field field) {
+    public void show(final TablePresenter tablePresenter,
+                     final Field field,
+                     final BiConsumer<Field, Field> fieldChangeConsumer) {
         this.tablePresenter = tablePresenter;
         this.field = field;
+        this.fieldChangeConsumer = fieldChangeConsumer;
 
         if (field.getExpression() != null) {
             editorPresenter.setText(field.getExpression());
@@ -210,7 +215,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 HidePopupEvent.fire(tablePresenter, this);
             } else {
                 if (expression == null) {
-                    field.setExpression(null);
+                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(null).build());
                     tablePresenter.setDirty(true);
                     tablePresenter.clearAndRefresh();
                     HidePopupEvent.fire(tablePresenter, this);
@@ -220,7 +225,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    field.setExpression(expression);
+                                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(expression).build());
                                     tablePresenter.setDirty(true);
                                     tablePresenter.clearAndRefresh();
                                     HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
@@ -310,10 +315,9 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 //                .build();
 
 
-
         final List<Item> children = new ArrayList<>();
         int item = 0;
-        children.add(createAggregateFunctons(item++, "Aggregate"));
+        children.add(createAggregateFunctions(item++, "Aggregate"));
         children.add(createCastFunctions(item++, "Cast"));
         children.add(createDateFunctions(item++, "Date"));
         children.add(createLinkFunctions(item++, "Link"));
@@ -329,7 +333,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return children;
     }
 
-    private Item createAggregateFunctons(final int pos, final String func) {
+    private Item createAggregateFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "average($)", "average("));
@@ -564,36 +568,36 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private String getSnippetFromFunction(final FunctionDef functionDef) {
-            // replace($, regex, replacement) ==> replace(${1}, ${2:regex}, ${3:replacement})$0
+        // replace($, regex, replacement) ==> replace(${1}, ${2:regex}, ${3:replacement})$0
 
-            final StringBuilder stringBuilder = new StringBuilder()
-                    .append(functionDef.getName())
-                    .append("(");
+        final StringBuilder stringBuilder = new StringBuilder()
+                .append(functionDef.getName())
+                .append("(");
 
-            for (int i = 0; i < functionDef.getArgs().size(); i++) {
-                final String arg = functionDef.getArgs().get(i);
-                final int snippetArgNo = i + 1;
-                if (i != 0) {
-                    // put commas back in
-                    stringBuilder
-                            .append(", ");
-                }
+        for (int i = 0; i < functionDef.getArgs().size(); i++) {
+            final String arg = functionDef.getArgs().get(i);
+            final int snippetArgNo = i + 1;
+            if (i != 0) {
+                // put commas back in
                 stringBuilder
-                        .append("${")
-                        .append(snippetArgNo);
-
-                if (!arg.equals("$")) {
-                    stringBuilder
-                            .append(":")
-                            .append(arg);
-                }
-                stringBuilder
-                        .append("}");
+                        .append(", ");
             }
+            stringBuilder
+                    .append("${")
+                    .append(snippetArgNo);
 
-            stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
+            if (!arg.equals("$")) {
+                stringBuilder
+                        .append(":")
+                        .append(arg);
+            }
+            stringBuilder
+                    .append("}");
+        }
 
-            return stringBuilder.toString();
+        stringBuilder.append(")${0}"); // cursor pos after all args are tabbed through
+
+        return stringBuilder.toString();
     }
 
     private AceCompletion createAceCompletionValue(final String text,
@@ -639,7 +643,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             final String funcName = text.substring(0, text.indexOf("("));
             try {
                 String argsStr = text.substring(text.indexOf("(") + 1);
-                argsStr = argsStr.substring(0, argsStr.length() -1);
+                argsStr = argsStr.substring(0, argsStr.length() - 1);
                 final String[] args = argsStr.split(",\\s?");
                 final StringBuilder stringBuilder = new StringBuilder()
                         .append(funcName)
@@ -664,7 +668,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 return funcName + "(...)";
             }
         }
-}
+    }
 
     private Optional<String> getSnippetFromText(final String text) {
         try {
@@ -679,7 +683,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             } else {
                 final String funcName = text.substring(0, text.indexOf("("));
                 String argsStr = text.substring(text.indexOf("(") + 1);
-                argsStr = argsStr.substring(0, argsStr.length() -1);
+                argsStr = argsStr.substring(0, argsStr.length() - 1);
                 // Remove any square brackets for optional args
                 final String[] args = argsStr.replaceAll("[\\[\\]]", "")
                         .split(",\\s?");
@@ -738,9 +742,9 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         //   should have static getName(), getDescription(), getArgs(), etc. then we would not need
         //   this enum.
         // Aggregate functions
-        AVERAGE( "average", "The mean of all values in the group.",
+        AVERAGE("average", "The mean of all values in the group.",
                 "field"),
-        COUNT( "count", "The count of all values in the group."),
+        COUNT("count", "The count of all values in the group."),
         COUNT_GROUPS("countGroups", ""),
         COUNT_UNIQUE("countUnique", "", "field"),
         JOINING("joining", "", "field", "delimiter", "limit"),
@@ -751,7 +755,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         VARIANCE("variance", "", "field"),
 
         // Cast functions
-        TO_BOOLEAN( "toBoolean", "Case the value to a boolean type.",
+        TO_BOOLEAN("toBoolean", "Case the value to a boolean type.",
                 "value");
 
         private final String name;
@@ -831,7 +835,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     /**
      * TODO Once we have function definitions (name, desc, args) on the actual functions in
-     *   stroom-expression we need to reinstate a variant of this to build the menu.
+     * stroom-expression we need to reinstate a variant of this to build the menu.
      */
     public static class MenuBuilder {
 

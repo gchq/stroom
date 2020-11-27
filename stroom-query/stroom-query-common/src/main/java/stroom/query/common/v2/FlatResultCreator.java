@@ -389,7 +389,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class OpenGroupsFactory {
-        public static OpenGroups create(final List<String> openGroups) {
+        public static OpenGroups create(final Set<String> openGroups) {
             if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;
             }

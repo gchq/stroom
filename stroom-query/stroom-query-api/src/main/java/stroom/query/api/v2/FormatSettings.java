@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlSeeAlso({NumberFormatSettings.class, DateTimeFormatSettings.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -36,6 +33,4 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 })
 public interface FormatSettings {
     boolean isDefault();
-
-    FormatSettings copy();
 }

@@ -16,19 +16,11 @@
 
 package stroom.query.common.v2;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.assertj.core.util.diff.DiffUtils;
-import org.assertj.core.util.diff.Patch;
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.query.api.v2.DateTimeFormat;
+import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -37,7 +29,7 @@ import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.NumberFormat;
+import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
@@ -49,6 +41,16 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.test.util.ConsoleColour;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.assertj.core.util.diff.DiffUtils;
+import org.assertj.core.util.diff.Patch;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -80,7 +82,7 @@ class TestSerialisation {
         return new SearchRequest.Builder()
                 .key("1234")
                 .query(new Query.Builder()
-                        .dataSource("docRefType", "docRefUuid", "docRefName")
+                        .dataSource(new DocRef("docRefType", "docRefUuid", "docRefName"))
                         .expression(new ExpressionOperator.Builder(Op.AND)
                                 .addTerm("field1", Condition.EQUALS, "value1")
                                 .addOperator(new ExpressionOperator.Builder(Op.AND).build())
@@ -103,7 +105,10 @@ class TestSerialisation {
                                         .expression("expression1")
                                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
                                         .filter(new Filter("include1", "exclude1"))
-                                        .format(new Format(new NumberFormat(1, false)))
+                                        .format(new Format.Builder()
+                                                .type(Type.NUMBER)
+                                                .settings(new NumberFormatSettings(1, false))
+                                                .build())
                                         .group(1)
                                         .build())
                                 .addFields(new Field.Builder()
@@ -112,7 +117,10 @@ class TestSerialisation {
                                         .expression("expression2")
                                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
                                         .filter(new Filter("include2", "exclude2"))
-                                        .format(new Format(createDateTimeFormat()))
+                                        .format(new Format.Builder()
+                                                .type(Type.DATE_TIME)
+                                                .settings(createDateTimeFormat())
+                                                .build())
                                         .group(2)
                                         .build())
                                 .extractValues(false)
@@ -126,9 +134,9 @@ class TestSerialisation {
                 .build();
     }
 
-    private static DateTimeFormat createDateTimeFormat() {
+    private static DateTimeFormatSettings createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
-        return new DateTimeFormat("yyyy-MM-dd'T'HH:mm:ss", timeZone);
+        return new DateTimeFormatSettings("yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 
     @Test
@@ -282,20 +290,56 @@ class TestSerialisation {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(new Field.Builder().id("test").name("test").expression("${test}").build());
+        final List<Field> fields = Collections.singletonList(new Field.Builder()
+                .id("test")
+                .name("test")
+                .expression("${test}")
+                .build());
         final List<String> values = Collections.singletonList("test");
-        final List<Row> rows = Collections.singletonList(new Row("groupKey", values, 5));
-
-        final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
-        return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Collections.singletonList("some error"), false);
+        final List<Row> rows = Collections.singletonList(new Row.Builder()
+                .groupKey("groupKey")
+                .values(values)
+                .depth(5)
+                .build());
+        final TableResult tableResult = new TableResult("table-1234",
+                fields,
+                rows,
+                new OffsetRange(1, 2),
+                1,
+                "tableResultError");
+        return new SearchResponse(
+                Arrays.asList("highlight1", "highlight2"),
+                Arrays.asList(tableResult, getVisResult1()),
+                Collections.singletonList("some error"),
+                false);
     }
 
     private FlatResult getVisResult1() {
         final List<Field> structure = new ArrayList<>();
-        structure.add(new Field.Builder().id("val1").name("val1").expression("${val1}").format(Type.GENERAL).build());
-        structure.add(new Field.Builder().id("val2").name("val2").expression("${val2}").format(Type.NUMBER).build());
-        structure.add(new Field.Builder().id("val3").name("val3").expression("${val3}").format(Type.NUMBER).build());
-        structure.add(new Field.Builder().id("val4").name("val4").expression("${val4}").format(Type.GENERAL).build());
+        structure.add(new Field.Builder()
+                .id("val1")
+                .name("val1")
+                .expression("${val1}")
+                .format(Format.GENERAL)
+                .build());
+        structure.add(new Field.Builder()
+                .id("val2")
+                .name("val2")
+                .expression("${val2}")
+                .format(Format.NUMBER)
+                .build());
+        structure.add(new Field.Builder()
+                .id("val3")
+                .name("val3")
+                .expression("${val3}")
+                .format(Format.NUMBER)
+                .build());
+        structure.add(new Field.Builder()
+                .id("val4")
+                .name("val4")
+                .expression("${val4}")
+                .format(Format.GENERAL)
+                .build());
 
         final List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));

@@ -17,16 +17,16 @@
 package stroom.query.common.v2.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.NumberFormat;
+import stroom.query.api.v2.NumberFormatSettings;
 
 public class NumberFormatter implements Formatter {
-    private final NumberFormat numberFormat;
+    private final NumberFormatSettings numberFormat;
 
-    private NumberFormatter(final NumberFormat numberFormat) {
+    private NumberFormatter(final NumberFormatSettings numberFormat) {
         this.numberFormat = numberFormat;
     }
 
-    public static NumberFormatter create(final NumberFormat numberFormat) {
+    public static NumberFormatter create(final NumberFormatSettings numberFormat) {
         return new NumberFormatter(numberFormat);
     }
 

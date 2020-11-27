@@ -25,7 +25,6 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -42,6 +41,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.query.api.v2.Field;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DataRange;
@@ -77,7 +77,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private final Provider<HtmlPresenter> htmlPresenterProvider;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
-    private TextComponentSettings textSettings;
     private List<FetchDataRequest> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Long currentStreamId;
@@ -121,7 +120,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         Scheduler.get().scheduleDeferred(() -> {
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
-                    && textSettings.isShowStepping()
+                    && getTextSettings().isShowStepping()
                     && securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
@@ -259,14 +258,14 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (textSettings != null) {
+            if (getTextSettings() != null) {
                 final Component component = event.getComponent();
-                if (textSettings.getTableId() == null) {
+                if (getTextSettings().getTableId() == null) {
                     if (component instanceof TablePresenter) {
                         currentTablePresenter = (TablePresenter) component;
                         update(currentTablePresenter);
                     }
-                } else if (EqualsUtil.isEquals(textSettings.getTableId(), event.getComponentId())) {
+                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
                     if (component instanceof TablePresenter) {
                         currentTablePresenter = (TablePresenter) component;
                         update(currentTablePresenter);
@@ -295,13 +294,13 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             if (tablePresenter != null) {
                 final List<TableRow> selection = tablePresenter.getSelectedRows();
                 if (selection != null && selection.size() == 1) {
-                    final Field streamIdField = chooseBestField(tablePresenter, textSettings.getStreamIdField());
-                    final Field partNoField = chooseBestField(tablePresenter, textSettings.getPartNoField());
-                    final Field recordNoField = chooseBestField(tablePresenter, textSettings.getRecordNoField());
-                    final Field lineFromField = chooseBestField(tablePresenter, textSettings.getLineFromField());
-                    final Field colFromField = chooseBestField(tablePresenter, textSettings.getColFromField());
-                    final Field lineToField = chooseBestField(tablePresenter, textSettings.getLineToField());
-                    final Field colToField = chooseBestField(tablePresenter, textSettings.getColToField());
+                    final Field streamIdField = chooseBestField(tablePresenter, getTextSettings().getStreamIdField());
+                    final Field partNoField = chooseBestField(tablePresenter, getTextSettings().getPartNoField());
+                    final Field recordNoField = chooseBestField(tablePresenter, getTextSettings().getRecordNoField());
+                    final Field lineFromField = chooseBestField(tablePresenter, getTextSettings().getLineFromField());
+                    final Field colFromField = chooseBestField(tablePresenter, getTextSettings().getColFromField());
+                    final Field lineToField = chooseBestField(tablePresenter, getTextSettings().getLineToField());
+                    final Field colToField = chooseBestField(tablePresenter, getTextSettings().getColToField());
 
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
@@ -314,17 +313,17 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentColTo = getLong(colToField, selected);
 
                     // Validate settings.
-                    if (textSettings.getStreamIdField() == null) {
+                    if (getTextSettings().getStreamIdField() == null) {
                         message = "No stream id field is configured";
 
-                    } else if (textSettings.getStreamIdField() != null && currentStreamId == null) {
+                    } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
                         message = "No stream id found in selection";
 
-                    } else if (textSettings.getRecordNoField() == null &&
-                            !(textSettings.getLineFromField() != null && textSettings.getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                    } else if (getTextSettings().getRecordNoField() == null &&
+                            !(getTextSettings().getLineFromField() != null && getTextSettings().getLineToField() != null)) { // Allow just line positions to be used rather than record no.
                         message = "No record number field is configured";
 
-                    } else if (textSettings.getRecordNoField() != null && currentRecordNo == null) {
+                    } else if (getTextSettings().getRecordNoField() != null && currentRecordNo == null) {
                         message = "No record number field found in selection";
 
                     } else {
@@ -390,9 +389,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //                        }
 
                         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
-
-                        request.setPipeline(textSettings.getPipeline());
-                        request.setShowAsHtml(textSettings.isShowAsHtml());
+                        request.setPipeline(getTextSettings().getPipeline());
+                        request.setShowAsHtml(getTextSettings().isShowAsHtml());
 
                         ensureFetchDataQueue();
                         fetchDataQueue.add(request);
@@ -412,7 +410,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private Field chooseBestField(final TablePresenter tablePresenter, final Field field) {
         if (field != null) {
-            final TableComponentSettings tableComponentSettings = tablePresenter.getSettings();
+            final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
             final List<Field> fields = tableComponentSettings.getFields();
             // Try and choose by id.
             for (final Field f : fields) {
@@ -507,7 +505,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             if (!securityContext.hasAppPermission(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION)) {
                 return "You do not have permission to display this item";
-            } else if (textSettings.getPipeline() == null) {
+            } else if (getTextSettings().getPipeline() == null) {
                 return "You must choose a pipeline to display this item";
             }
         }
@@ -560,30 +558,44 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
-        textSettings = getSettings();
 
-        final Version version = Version.parse(textSettings.getModelVersion());
+        final TextComponentSettings.Builder builder;
+
+        final ComponentSettings settings = componentConfig.getSettings();
+        if (settings instanceof TextComponentSettings) {
+            builder = new TextComponentSettings.Builder(getTextSettings());
+        } else {
+            builder = new TextComponentSettings.Builder();
+        }
+
+        final Version version = Version.parse(getTextSettings().getModelVersion());
         final boolean old = version.lt(CURRENT_MODEL_VERSION);
 
         // special field names have changed from EventId to __event_id__ so we need to deal
         // with those and replace them, also rebuild existing special fields just in case
-        if (textSettings.getStreamIdField() == null
-                || (old && IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName()))
-                || (old && textSettings.getStreamIdField().isSpecial())) {
-            textSettings.setStreamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
+        if (getTextSettings().getStreamIdField() == null
+                || (old && IndexConstants.STREAM_ID.equals(getTextSettings().getStreamIdField().getName()))
+                || (old && getTextSettings().getStreamIdField().isSpecial())) {
+            builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
         }
-        if (textSettings.getRecordNoField() == null
-                || (old && IndexConstants.EVENT_ID.equals(textSettings.getRecordNoField().getName()))
-                || (old && textSettings.getRecordNoField().isSpecial())) {
-            textSettings.setRecordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+        if (getTextSettings().getRecordNoField() == null
+                || (old && IndexConstants.EVENT_ID.equals(getTextSettings().getRecordNoField().getName()))
+                || (old && getTextSettings().getRecordNoField().isSpecial())) {
+            builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
 
-        textSettings.setModelVersion(CURRENT_MODEL_VERSION.toString());
+        builder.modelVersion(CURRENT_MODEL_VERSION.toString());
+
+        setSettings(builder.build());
+    }
+
+    private TextComponentSettings getTextSettings() {
+        return (TextComponentSettings) getSettings();
     }
 
     @Override
     public void link() {
-        final String tableId = textSettings.getTableId();
+        final String tableId = getTextSettings().getTableId();
         String newTableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
@@ -591,7 +603,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             newTableId = null;
         }
 
-        textSettings.setTableId(newTableId);
+        setSettings(new TextComponentSettings.Builder(getTextSettings())
+                .tableId(newTableId)
+                .build());
         update(currentTablePresenter);
     }
 
@@ -604,20 +618,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public ComponentType getType() {
         return TYPE;
-    }
-
-    private TextComponentSettings getSettings() {
-        ComponentSettings settings = getComponentConfig().getSettings();
-        if (!(settings instanceof TextComponentSettings)) {
-            settings = createSettings();
-            getComponentConfig().setSettings(settings);
-        }
-
-        return (TextComponentSettings) settings;
-    }
-
-    private ComponentSettings createSettings() {
-        return new TextComponentSettings();
     }
 
     @Override

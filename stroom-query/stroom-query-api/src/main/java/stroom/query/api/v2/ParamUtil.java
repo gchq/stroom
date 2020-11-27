@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.shared.v2;
+package stroom.query.api.v2;
 
 import java.util.ArrayList;
 import java.util.List;

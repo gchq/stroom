@@ -44,6 +44,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -152,58 +153,81 @@ class DashboardStoreImpl implements DashboardStore {
             if (doc.getDashboardConfig() != null) {
                 final List<ComponentConfig> components = doc.getDashboardConfig().getComponents();
                 if (components != null && components.size() > 0) {
+                    final List<ComponentConfig> newComponents = new ArrayList<>();
+
                     components.forEach(componentConfig -> {
-                        final ComponentSettings componentSettings = componentConfig.getSettings();
+                        ComponentSettings componentSettings = componentConfig.getSettings();
                         if (componentSettings != null) {
                             if (componentSettings instanceof QueryComponentSettings) {
                                 final QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentSettings;
-                                remapQueryComponentSettings(queryComponentSettings, dependencyRemapper);
+                                componentSettings = remapQueryComponentSettings(queryComponentSettings, dependencyRemapper);
 
                             } else if (componentSettings instanceof TableComponentSettings) {
                                 final TableComponentSettings tableComponentSettings = (TableComponentSettings) componentSettings;
-                                remapTableComponentSettings(tableComponentSettings, dependencyRemapper);
+                                componentSettings = remapTableComponentSettings(tableComponentSettings, dependencyRemapper);
 
                             } else if (componentSettings instanceof VisComponentSettings) {
                                 final VisComponentSettings visComponentSettings = (VisComponentSettings) componentSettings;
-                                remapVisComponentSettings(visComponentSettings, dependencyRemapper);
+                                componentSettings = remapVisComponentSettings(visComponentSettings, dependencyRemapper);
 
                             } else if (componentSettings instanceof TextComponentSettings) {
                                 final TextComponentSettings textComponentSettings = (TextComponentSettings) componentSettings;
-                                remapTextComponentSettings(textComponentSettings, dependencyRemapper);
+                                componentSettings = remapTextComponentSettings(textComponentSettings, dependencyRemapper);
                             }
                         }
+
+                        final ComponentConfig newConfig = new ComponentConfig.Builder(componentConfig)
+                                .settings(componentSettings)
+                                .build();
+                        newComponents.add(newConfig);
                     });
+
+                    doc.getDashboardConfig().setComponents(newComponents);
                 }
             }
         };
     }
 
-    private void remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings, final DependencyRemapper dependencyRemapper) {
-        queryComponentSettings.setDataSource(dependencyRemapper.remap(queryComponentSettings.getDataSource()));
+    private QueryComponentSettings remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings, final DependencyRemapper dependencyRemapper) {
+        final QueryComponentSettings.Builder builder = new QueryComponentSettings.Builder(queryComponentSettings);
+
+        builder.dataSource(dependencyRemapper.remap(queryComponentSettings.getDataSource()));
 
         if (queryComponentSettings.getExpression() != null) {
-            dependencyRemapper.remapExpression(queryComponentSettings.getExpression());
+            builder.expression(dependencyRemapper.remapExpression(queryComponentSettings.getExpression()));
         }
+
+        return builder.build();
     }
 
-    private void remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
+    private TableComponentSettings remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
+        final TableComponentSettings.Builder builder = new TableComponentSettings.Builder(tableComponentSettings);
+
         if (tableComponentSettings.getExtractionPipeline() != null &&
                 tableComponentSettings.getExtractionPipeline().getUuid() != null &&
                 tableComponentSettings.getExtractionPipeline().getUuid().length() > 0) {
-            tableComponentSettings.setExtractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
+            builder.extractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
         }
+
+        return builder.build();
     }
 
-    private void remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {
-        visComponentSettings.setVisualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
+    private VisComponentSettings remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {
+        final VisComponentSettings.Builder builder = new VisComponentSettings.Builder(visComponentSettings);
+
+        builder.visualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
 
         if (visComponentSettings.getTableSettings() != null) {
-            remapTableComponentSettings(visComponentSettings.getTableSettings(), dependencyRemapper);
+            builder.tableSettings(remapTableComponentSettings(visComponentSettings.getTableSettings(), dependencyRemapper));
         }
+
+        return builder.build();
     }
 
-    private void remapTextComponentSettings(final TextComponentSettings textComponentSettings, final DependencyRemapper dependencyRemapper) {
-        textComponentSettings.setPipeline(dependencyRemapper.remap(textComponentSettings.getPipeline()));
+    private TextComponentSettings remapTextComponentSettings(final TextComponentSettings textComponentSettings, final DependencyRemapper dependencyRemapper) {
+        final TextComponentSettings.Builder builder = new TextComponentSettings.Builder(textComponentSettings);
+        builder.pipeline(dependencyRemapper.remap(textComponentSettings.getPipeline()));
+        return builder.build();
     }
 
     ////////////////////////////////////////////////////////////////////////

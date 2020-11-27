@@ -34,7 +34,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
 import stroom.dashboard.shared.SearchRequest;
@@ -42,11 +41,13 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -76,10 +77,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -166,27 +165,41 @@ class DashboardResourceImpl implements DashboardResource {
                 if (request.getSearchRequest() == null) {
                     throw new EntityServiceException("Query is empty");
                 }
+
                 final SearchRequest searchRequest = request.getSearchRequest();
+                final SearchRequest.Builder builder = new SearchRequest.Builder(searchRequest);
+                final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
 
                 // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
-                if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
+                if (searchRequest.getComponentResultRequests() != null) {
                     searchRequest.getComponentResultRequests()
-                            .forEach((k, componentResultRequest) ->
-                                    componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+                            .forEach(componentResultRequest -> {
 
-                    // Remove special fields.
-                    searchRequest.getComponentResultRequests().forEach((k, v) -> {
-                        if (v instanceof TableResultRequest) {
-                            final TableResultRequest tableResultRequest = (TableResultRequest) v;
-                            tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
-                        }
-                    });
+                                ComponentResultRequest newRequest = null;
+                                if (componentResultRequest instanceof TableResultRequest) {
+                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                                    // Remove special fields.
+                                    tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
+                                    newRequest = new TableResultRequest.Builder(tableResultRequest)
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                } else if (componentResultRequest instanceof VisResultRequest) {
+                                    final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+                                    newRequest = new VisResultRequest.Builder(visResultRequest)
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                }
+
+                                componentResultRequests.add(newRequest);
+                            });
                 }
+
+                builder.componentResultRequests(componentResultRequests);
 
                 // Convert our internal model to the model used by the api
                 stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                         request.getDashboardQueryKey(),
-                        searchRequest);
+                        builder.build());
 
                 if (apiSearchRequest == null) {
                     throw new EntityServiceException("Query could not be mapped to a SearchRequest");
@@ -276,16 +289,19 @@ class DashboardResourceImpl implements DashboardResource {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().get(request.getComponentId());
-                if (componentResultRequest == null) {
+                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
+                        .stream()
+                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
+                        .findFirst();
+                if (optional.isEmpty()) {
                     throw new EntityServiceException("No component result request found");
                 }
 
-                if (!(componentResultRequest instanceof TableResultRequest)) {
+                if (!(optional.get() instanceof TableResultRequest)) {
                     throw new EntityServiceException("Component result request is not a table");
                 }
 
-                final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 
@@ -402,7 +418,8 @@ class DashboardResourceImpl implements DashboardResource {
         SearchResponse result;
 
         boolean newSearch = false;
-        final Search search = searchRequest.getSearch();
+        SearchRequest updatedSearchRequest = searchRequest;
+        Search search = updatedSearchRequest.getSearch();
 
         try {
             synchronized (DashboardResourceImpl.class) {
@@ -439,18 +456,17 @@ class DashboardResourceImpl implements DashboardResource {
                                     "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
             // Add a param for `currentUser()`
-            if (searchRequest.getSearch() != null) {
-                Map<String, String> paramMap = searchRequest.getSearch().getParamMap();
-                if (paramMap != null) {
-                    paramMap = new HashMap<>(paramMap);
-                } else {
-                    paramMap = new HashMap<>();
-                }
-                paramMap.put("currentUser()", securityContext.getUserId());
-                searchRequest.getSearch().setParamMap(paramMap);
+            List<Param> params = search.getParams();
+            if (params != null) {
+                params = new ArrayList<>(params);
+            } else {
+                params = new ArrayList<>();
             }
+            params.add(new Param("currentUser()", securityContext.getUserId()));
+            search = new Search.Builder(search).params(params).build();
+            updatedSearchRequest = new SearchRequest.Builder(updatedSearchRequest).search(search).build();
 
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
@@ -482,16 +498,7 @@ class DashboardResourceImpl implements DashboardResource {
             try {
                 // Add this search to the history so the user can get back to
                 // this search again.
-                List<Param> params;
-                if (search.getParamMap() != null && search.getParamMap().size() > 0) {
-                    params = new ArrayList<>(search.getParamMap().size());
-                    for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
-                        params.add(new Param(entry.getKey(), entry.getValue()));
-                    }
-                } else {
-                    params = null;
-                }
-
+                final List<Param> params = search.getParams();
                 final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
 
                 final StoredQuery storedQuery = new StoredQuery();

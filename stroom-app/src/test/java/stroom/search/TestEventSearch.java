@@ -18,8 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -38,12 +36,14 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
+import stroom.query.api.v2.ParamUtil;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -103,7 +103,7 @@ class TestEventSearch extends AbstractSearchTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(indexRef, expressionIn.build());
+        final Query query = new Query.Builder().dataSource(indexRef).expression(expressionIn.build()).build();
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = search(searchRequest);
 
@@ -178,11 +178,16 @@ class TestEventSearch extends AbstractSearchTest {
         final Field timeField = new Field.Builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
-                .format(Format.Type.DATE_TIME)
+                .format(Format.DATE_TIME)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, resultPipeline, null, null);
+        return new TableSettings.Builder()
+                .addFields(idField)
+                .addFields(timeField)
+                .extractValues(extractValues)
+                .extractionPipeline(resultPipeline)
+                .build();
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField,

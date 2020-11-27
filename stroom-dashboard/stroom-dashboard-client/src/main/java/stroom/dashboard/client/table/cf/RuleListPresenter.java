@@ -19,7 +19,7 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dashboard.shared.ConditionalFormattingRule;
+import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;

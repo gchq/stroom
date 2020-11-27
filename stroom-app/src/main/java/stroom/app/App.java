@@ -38,6 +38,7 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.config.app.StroomConfigurationSourceProvider;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
@@ -128,9 +129,12 @@ public class App extends Application<Config> {
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
-                bootstrap.getConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false)));
+        bootstrap.setConfigurationSourceProvider(
+                new StroomConfigurationSourceProvider(
+                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                                new EnvironmentVariableSubstitutor(false))
+                )
+        );
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new AssetsBundle(

@@ -18,9 +18,9 @@ package stroom.dashboard.client.text;
 
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
-import stroom.dashboard.shared.Field;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.ItemListBox;
+import stroom.query.api.v2.Field;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.dom.client.Style.Unit;

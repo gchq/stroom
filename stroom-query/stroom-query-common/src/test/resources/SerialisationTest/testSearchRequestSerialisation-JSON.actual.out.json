@@ -50,12 +50,15 @@
         },
         "format" : {
           "type" : "NUMBER",
-          "numberFormat" : {
+          "settings" : {
+            "type" : "number",
             "decimalPlaces" : 1,
             "useSeparator" : false
           }
         },
-        "group" : 1
+        "group" : 1,
+        "width" : 200,
+        "visible" : true
       }, {
         "id" : "id2",
         "name" : "name2",
@@ -70,7 +73,8 @@
         },
         "format" : {
           "type" : "DATE_TIME",
-          "dateTimeFormat" : {
+          "settings" : {
+            "type" : "date",
             "pattern" : "yyyy-MM-dd'T'HH:mm:ss",
             "timeZone" : {
               "use" : "OFFSET",
@@ -79,7 +83,9 @@
             }
           }
         },
-        "group" : 2
+        "group" : 2,
+        "width" : 200,
+        "visible" : true
       } ],
       "extractValues" : false,
       "extractionPipeline" : {

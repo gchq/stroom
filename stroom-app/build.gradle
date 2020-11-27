@@ -19,8 +19,9 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 import org.reflections.util.ConfigurationBuilder
 import org.reflections.util.FilterBuilder
-import java.nio.file.Paths
+
 import java.nio.file.Files
+import java.nio.file.Paths
 
 ext.moduleName = 'stroom.app'
 
@@ -369,7 +370,7 @@ swagger {
             keyName = 'Authorization'
         }
         // Defing the named security definition to use for the whole API
-        security = [ [ ApiKeyAuth : [] ] ]
+        security = [[ApiKeyAuth: []]]
         swaggerDirectory = "${swaggerDir}"
     }
 }
@@ -386,62 +387,62 @@ task prepareSwaggerClasses {
     doLast {
         // Get all jars from the compile classpath
         def urls = project.configurations.compileClasspath.resolve()
-            .collect { 
-                it.toURI().toURL() 
-            }
+                .collect {
+                    it.toURI().toURL()
+                }
 
         // Add each one to the gradle build script classpath
         // so the swagger plugin can see them all.
         // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
-        urls.each { 
+        urls.each {
             //println "classpath url ${it}"
-            buildscript.classLoader.addURL it 
+            buildscript.classLoader.addURL it
         }
 
         // Now filter down to just our stroom jars
         def stroomUrls = urls
-            .findAll {
-                // We need the version in there as jars are versioned
-                // when we set an explicit build version
-                boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
-                //if (isStroomJar) {
+                .findAll {
+                    // We need the version in there as jars are versioned
+                    // when we set an explicit build version
+                    boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
+                    //if (isStroomJar) {
                     //println it.toString()
-                //}
-                return isStroomJar
-            }
-            .findAll {
-                // ensure it exists - it should really
-                Files.isRegularFile(Paths.get(it.toURI()))
-            }
-            .sort {
-                it.toString()
-            }
-            .unique();
+                    //}
+                    return isStroomJar
+                }
+                .findAll {
+                    // ensure it exists - it should really
+                    Files.isRegularFile(Paths.get(it.toURI()))
+                }
+                .sort {
+                    it.toString()
+                }
+                .unique();
 
         // Scan all the stroom pkgs in the stroom jars
         // Filter should be redundant if we only look in stroom jars, but what the heck
         ConfigurationBuilder configBuilder = new ConfigurationBuilder()
-             .filterInputsBy(new FilterBuilder().includePackage("stroom"))
-             .setUrls(stroomUrls)
-             .setScanners(
-                new TypeAnnotationsScanner(), 
-                new SubTypesScanner()
-             );
+                .filterInputsBy(new FilterBuilder().includePackage("stroom"))
+                .setUrls(stroomUrls)
+                .setScanners(
+                        new TypeAnnotationsScanner(),
+                        new SubTypesScanner()
+                );
 
         // Find all the @Api classes
         Reflections reflections = new Reflections(configBuilder);
         Set<Class<?>> restClasses = reflections
-            .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
+                .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
 
         logger.info("Adding API classes to Swagger spec")
 
         // Add them to a list for swagger to scan over
         restClasses
-            .sort { it.name }
-            .each {
-                restResourceClassNames.add(it.name)
-                logger.info it.name
-            }
+                .sort { it.name }
+                .each {
+                    restResourceClassNames.add(it.name)
+                    logger.info it.name
+                }
         print "Using swagger directory ${swaggerDir}"
     }
 }
@@ -468,7 +469,7 @@ task copySupportingFiles(type: Copy) {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
         //exec {
-            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
         //}
     }
 }
@@ -487,7 +488,7 @@ task downloadSendArgs(type: Download) {
 
 task makeSendExecutable {
     dependsOn downloadSend
-    doLast{
+    doLast {
         // The args script is sourced so doesn't need execute perms
         exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
@@ -578,13 +579,28 @@ shadowDistTar.enabled = false
 
 
 task setupSampleDataApplication(type: JavaExec) {
-    dependsOn this:compileJava
-    dependsOn this:compileTestJava
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
+
+    args = ['local.yml']
+}
+
+task downloadStroomContentApp(type: JavaExec) {
+    println "Downloading content packs to ${contentPackDownloadDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, contentPackImportDir]
 }
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available

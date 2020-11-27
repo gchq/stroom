@@ -329,9 +329,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
-            final ComponentConfig componentData = new ComponentConfig();
-            component.write(componentData);
-            componentDataList.add(componentData);
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
         }
 
         final DashboardConfig dashboardConfig = new DashboardConfig();
@@ -523,10 +522,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     id = type.getId() + "-" + RandomId.createId(5);
                 }
 
-                final ComponentConfig componentData = new ComponentConfig();
-                componentData.setType(type.getId());
-                componentData.setId(id);
-                componentData.setName(type.getName());
+                final ComponentConfig componentData = new ComponentConfig.Builder()
+                        .type(type.getId())
+                        .id(id)
+                        .name(type.getName())
+                        .build();
 
                 final Component componentPresenter = addComponent(componentData.getType(), componentData);
                 if (componentPresenter != null) {

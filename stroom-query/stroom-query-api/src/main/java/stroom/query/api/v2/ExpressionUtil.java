@@ -189,25 +189,26 @@ public class ExpressionUtil {
         return builder.build();
     }
 
-    public static ExpressionOperator replaceExpressionParameters(final SearchRequest searchRequest) {
-        ExpressionOperator expression = null;
-        if (searchRequest != null) {
-            expression = replaceExpressionParameters(searchRequest.getQuery());
+    public static SearchRequest replaceExpressionParameters(final SearchRequest searchRequest) {
+        SearchRequest result = searchRequest;
+        if (searchRequest != null && searchRequest.getQuery() != null) {
+            final Query query = replaceExpressionParameters(searchRequest.getQuery());
+            result = new SearchRequest.Builder(searchRequest).query(query).build();
         }
-        return expression;
+        return result;
     }
 
-    public static ExpressionOperator replaceExpressionParameters(final Query query) {
-        ExpressionOperator expression = null;
+    public static Query replaceExpressionParameters(Query query) {
+        Query result = query;
         if (query != null) {
-            expression = query.getExpression();
+            ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
                 final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
                 expression = replaceExpressionParameters(expression, paramMap);
             }
-            query.setExpression(expression);
+            result = new Query.Builder(query).expression(expression).build();
         }
-        return expression;
+        return result;
     }
 
     private static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,

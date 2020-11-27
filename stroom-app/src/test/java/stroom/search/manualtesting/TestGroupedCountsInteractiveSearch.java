@@ -19,12 +19,6 @@
 package stroom.search.manualtesting;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
@@ -33,7 +27,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.shared.v2.ParamUtil;
+import stroom.query.api.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
@@ -42,6 +36,13 @@ import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -187,18 +188,16 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         final Field countField = new Field.Builder()
                 .name("Count")
                 .expression("count()")
-                .format(new Format(Format.Type.NUMBER))
+                .format(Format.NUMBER)
                 .build();
 
         List<Field> fields = Arrays.asList(groupedUserId, countField);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
-        final TableSettings tableSettings = new TableSettings.Builder()
+        return new TableSettings.Builder()
                 .addFields(fields)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)
                 .build();
-
-        return tableSettings;
     }
 }
