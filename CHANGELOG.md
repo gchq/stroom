@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+
 * Fix missing favicon.
 
 * Issue **#1808** : Fix bug with permission handling for Retention Policy feature.
