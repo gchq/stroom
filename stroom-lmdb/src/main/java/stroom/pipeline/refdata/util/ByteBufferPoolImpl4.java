@@ -96,10 +96,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         final OptionalInt optMaxSize = pooledByteBufferCounts == null
                 ? OptionalInt.empty()
                 : pooledByteBufferCounts.keySet()
-                .stream()
-                .filter(ByteBufferPoolImpl4::isPowerOf10)
-                .mapToInt(Integer::intValue)
-                .max();
+                    .stream()
+                    .filter(ByteBufferPoolImpl4::isPowerOf10)
+                    .mapToInt(Integer::intValue)
+                    .max();
 
         if (optMaxSize.isPresent()) {
             // Going from a zero based offset to a count so have to add one.
@@ -139,10 +139,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 (pooledByteBufferCounts == null
                         ? "null"
                         : pooledByteBufferCounts.entrySet()
-                        .stream()
-                        .sorted(Entry.comparingByKey())
-                        .map(entry -> entry.getKey() + "=" + entry.getValue())
-                        .collect(Collectors.joining(","))),
+                            .stream()
+                            .sorted(Entry.comparingByKey())
+                            .map(entry -> entry.getKey() + "=" + entry.getValue())
+                            .collect(Collectors.joining(","))),
                 String.join(",", msgs));
     }
 
@@ -172,7 +172,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     private ByteBuffer getBuffer(final int minCapacity) {
         final int offset = getOffset(minCapacity);
         if (isUnPooled(offset)) {
-            // Too big a buffer to pool or configured not to pool so just create one
+            LOGGER.warn("Using un-pooled buffer, size: {}", minCapacity);
+            // Too big a buffer to pool so just create one
             return getUnPooledBuffer(minCapacity);
         } else {
             final BlockingQueue<ByteBuffer> byteBufferQueue = pooledBufferQueues[offset];

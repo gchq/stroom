@@ -1,5 +1,27 @@
 package stroom.hyperlink.client;
 
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
+import stroom.core.client.ContentManager;
+import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.presenter.DisplayMode;
+import stroom.data.client.presenter.ShowDataEvent;
+import stroom.iframe.client.presenter.IFrameContentPresenter;
+import stroom.iframe.client.presenter.IFramePresenter;
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.TextRange;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -11,28 +33,10 @@ import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
-import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.EventId;
-import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.ShowDataEvent;
-import stroom.iframe.client.presenter.IFrameContentPresenter;
-import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.RenamePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
@@ -97,50 +101,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case TAB: {
-                    final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
-                    presenter.setUrl(hyperlink.getHref());
-                    presenter.setCustomTitle(customTitle);
-                    presenter.setIcon(hyperlink.getIcon());
-                    contentManager.open(callback ->
-                                    ConfirmEvent.fire(this,
-                                            "Are you sure you want to close?",
-                                            res -> {
-                                                if (res) {
-                                                    presenter.close();
-                                                }
-                                                callback.closeTab(res);
-                                            })
-                            , presenter, presenter);
+                    openTab(hyperlink, customTitle);
                     break;
                 }
                 case DIALOG: {
-                    final PopupSize popupSize = new PopupSize(800, 600, true);
-                    final IFramePresenter presenter = iFramePresenterProvider.get();
-                    final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 -> RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
-                    presenter.setUrl(hyperlink.getHref());
-                    presenter.setCustomTitle(customTitle);
-
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            handlerRegistration.removeHandler();
-                            presenter.close();
-                        }
-                    };
-
-                    ShowPopupEvent.fire(this,
-                            presenter,
-                            PopupType.CLOSE_DIALOG,
-                            null,
-                            popupSize,
-                            presenter.getLabel(),
-                            popupUiHandlers,
-                            null);
+                    openDialog(hyperlink, customTitle);
                     break;
                 }
                 case BROWSER: {
@@ -148,54 +113,15 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     break;
                 }
                 case STEPPING: {
-                    final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 0);
-                    final long recordNo = getParam(href, "recordNo", 0);
-                    BeginPipelineSteppingEvent.fire(this, id, null, null, new StepLocation(id, partNo, recordNo), null);
+                    openStepping(href);
                     break;
                 }
                 case DATA: {
-                    final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 1);
-                    final long recordNo = getParam(href, "recordNo", 0);
-                    final int lineFrom = (int) getParam(href, "lineFrom", -1);
-                    final int colFrom = (int) getParam(href, "colFrom", -1);
-                    final int lineTo = (int) getParam(href, "lineTo", -1);
-                    final int colTo = (int) getParam(href, "colTo", -1);
-
-                    Highlight highlight = null;
-                    if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
-                        highlight = new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo));
-                    }
-
-                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
-                    ShowDataEvent.fire(this, sourceLocation);
+                    openData(href);
                     break;
                 }
                 case ANNOTATION: {
-                    final Long annotationId = getLongParam(href, "annotationId");
-                    final Long streamId = getLongParam(href, "streamId");
-                    final Long eventId = getLongParam(href, "eventId");
-                    final String title = getParam(href, "title");
-                    final String subject = getParam(href, "subject");
-                    final String status = getParam(href, "status");
-                    final String assignedTo = getParam(href, "assignedTo");
-                    final String comment = getParam(href, "comment");
-
-                    final Annotation annotation = new Annotation();
-                    annotation.setId(annotationId);
-                    annotation.setTitle(title);
-                    annotation.setSubject(subject);
-                    annotation.setStatus(status);
-                    annotation.setAssignedTo(assignedTo);
-                    annotation.setComment(comment);
-
-                    final List<EventId> linkedEvents = new ArrayList<>();
-                    if (streamId != null && eventId != null) {
-                        linkedEvents.add(new EventId(streamId, eventId));
-                    }
-
-                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+                    openAnnotation(href);
                     break;
                 }
                 default:
@@ -203,6 +129,187 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             }
         } else {
             Window.open(href, "_blank", "");
+        }
+    }
+
+    private void openAnnotation(final String href) {
+        final Long annotationId = getLongParam(href, "annotationId");
+        final Long streamId = getLongParam(href, "streamId");
+        final Long eventId = getLongParam(href, "eventId");
+        final String title = getParam(href, "title");
+        final String subject = getParam(href, "subject");
+        final String status = getParam(href, "status");
+        final String assignedTo = getParam(href, "assignedTo");
+        final String comment = getParam(href, "comment");
+
+        final Annotation annotation = new Annotation();
+        annotation.setId(annotationId);
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+        annotation.setAssignedTo(assignedTo);
+        annotation.setComment(comment);
+
+        final List<EventId> linkedEvents = new ArrayList<>();
+        if (streamId != null && eventId != null) {
+            linkedEvents.add(new EventId(streamId, eventId));
+        }
+
+        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+    }
+
+    private void openData(final String href) {
+        final long id = getParam(href, "id", -1);
+        final long partNo = getParam(href, "partNo", 1) - 1; // convert to zero based
+        final long recordNo = getParam(href, "recordNo", 1) - 1; // convert to zero based
+        final int lineFrom = (int) getParam(href, "lineFrom", -1);
+        final int colFrom = (int) getParam(href, "colFrom", -1);
+        final int lineTo = (int) getParam(href, "lineTo", -1);
+        final int colTo = (int) getParam(href, "colTo", -1);
+        final DataViewType dataViewType= getParam(
+                href,
+                "viewType",
+                DataViewType::parse,
+                DataViewType.PREVIEW);
+        final DisplayMode displayMode = getParam(
+                href,
+                "displayType",
+                DisplayMode::parse,
+                DisplayMode.DIALOG);
+
+        final SourceLocation.Builder builder = SourceLocation.builder(id)
+                .withPartNo(partNo)
+                .withSegmentNumber(recordNo);
+
+        // In preview mode we only want to see the range requested, non-preview
+        // we want to see it all but with the selected range highlighted
+        if (DataViewType.PREVIEW.equals(dataViewType)) {
+            builder
+                    .withDataRangeBuilder(dataRangeBuilder -> {
+                        if (lineFrom != -1 && colFrom != -1) {
+                            dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
+                        }
+                        if (lineTo != -1 && colTo != -1) {
+                            dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
+                        }
+                    });
+        }
+
+        // Add the highlight in case the user clicks through to the source view, then we can
+        // highlight the range in there.  Can't highlight in data preview as the data may be formatted
+        // so the line/cols won't marry up.
+        if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+            builder.withHighlight(new TextRange(
+                    new DefaultLocation(lineFrom, colFrom),
+                    new DefaultLocation(lineTo, colTo)));
+        }
+
+        ShowDataEvent.fire(
+                this,
+                builder.build(),
+                dataViewType,
+                displayMode);
+//        if (isPreview) {
+//            ShowDataEvent.fire(this, sourceLocation);
+//        } else {
+//            ShowSourceEvent.fire(this, sourceLocation, displayMode);
+//        }
+    }
+
+    private void openStepping(final String href) {
+        final long id = getParam(href, "id", -1);
+        final long partNo = getParam(href, "partNo", 0);
+        final long recordNo = getParam(href, "recordNo", 0);
+        BeginPipelineSteppingEvent.fire(
+                this,
+                id,
+                null,
+                null,
+                new StepLocation(id, partNo, recordNo),
+                null);
+    }
+
+    private void openDialog(final Hyperlink hyperlink, final String customTitle) {
+        final PopupSize popupSize = new PopupSize(800, 600, true);
+        final IFramePresenter presenter = iFramePresenterProvider.get();
+        final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
+                RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
+        presenter.setUrl(hyperlink.getHref());
+        presenter.setCustomTitle(customTitle);
+
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                handlerRegistration.removeHandler();
+                presenter.close();
+            }
+        };
+
+        ShowPopupEvent.fire(this,
+                presenter,
+                PopupType.CLOSE_DIALOG,
+                null,
+                popupSize,
+                presenter.getLabel(),
+                popupUiHandlers,
+                null);
+    }
+
+    private void openTab(final Hyperlink hyperlink, final String customTitle) {
+        final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
+        presenter.setUrl(hyperlink.getHref());
+        presenter.setCustomTitle(customTitle);
+        presenter.setIcon(hyperlink.getIcon());
+        contentManager.open(
+                callback ->
+                        ConfirmEvent.fire(this,
+                                "Are you sure you want to close?",
+                                res -> {
+                                    if (res) {
+                                        presenter.close();
+                                    }
+                                    callback.closeTab(res);
+                                }),
+                presenter,
+                presenter);
+    }
+
+//    private DisplayMode getDisplayModeParam(final String href,
+//                                        final String paramName,
+//                                        final DisplayMode defaultValue) {
+//        final String value = getParam(href, paramName);
+//        if (value == null || value.length() == 0) {
+//            return defaultValue;
+//        } else {
+//            return DisplayMode.parse(value);
+//        }
+//    }
+
+    private <T> T getParam(final String href,
+                           final String paramName,
+                           final Function<String, T> parseFunction,
+                           final T defaultValue) {
+        final String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return defaultValue;
+        } else {
+            return parseFunction.apply(value);
+        }
+    }
+
+    private boolean getBooleanParam(final String href,
+                                    final String paramName,
+                                    final boolean defaultValue) {
+        final String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return defaultValue;
+        } else {
+            return Boolean.parseBoolean(value);
         }
     }
 

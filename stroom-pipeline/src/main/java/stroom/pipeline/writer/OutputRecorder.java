@@ -16,12 +16,13 @@
 
 package stroom.pipeline.writer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,12 +59,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
     @Override
-    public Object getData(final Highlight highlight) {
+    public Object getData(final TextRange textRange) {
         return destination.getData();
     }
 
     @Override
-    public void clear(final Highlight highlight) {
+    public void clear(final TextRange textRange) {
         destination.clear();
     }
 

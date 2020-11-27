@@ -16,59 +16,162 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.DataRange;
+import stroom.util.shared.TextRange;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.Highlight;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.function.Consumer;
 
+/**
+ * Defines the location of some (typically character) data
+ */
 @JsonInclude(Include.NON_NULL)
-public class SourceLocation implements Comparable<SourceLocation> {
+public class SourceLocation {
+
+    public static final int MAX_ERRORS_PER_PAGE = 100;
+
     @JsonProperty
-    private final long id;
+    private final long id; // The meta ID
     @JsonProperty
-    private final String childType;
+    private final String childType; // null for actual data, else non null (e.g. context/meta)
     @JsonProperty
-    private final long partNo;
+    private final long partNo; // For multipart data only, aka streamNo, 0 for non multi-part data, zero based
+    // TODO @AT Change to an OffsetRange to support error segments
     @JsonProperty
-    private final long recordNo;
+    private final long segmentNo; // optional for segmented data only (segment aka record), zero based
+//    private final OffsetRange<Long> segmentNoRange;
     @JsonProperty
-    private final Highlight highlight;
+    private final DataRange dataRange; // The optional specified range of the character data which may be a subset
+    @JsonProperty
+    private final TextRange highlight; // The optional highlighted range of the character data which may be a subset
+    @JsonProperty
+    private final boolean truncateToWholeLines;
 
     @JsonCreator
     public SourceLocation(@JsonProperty("id") final long id,
                           @JsonProperty("childType") final String childType,
                           @JsonProperty("partNo") final long partNo,
-                          @JsonProperty("recordNo") final long recordNo,
-                          @JsonProperty("highlight") final Highlight highlight) {
+                          @JsonProperty("segmentNo") final long segmentNo,
+                          @JsonProperty("dataRange") final DataRange dataRange,
+                          @JsonProperty("highlight") final TextRange highlight,
+                          @JsonProperty("truncateToWholeLines") final boolean truncateToWholeLines) {
         this.id = id;
         this.childType = childType;
         this.partNo = partNo;
-        this.recordNo = recordNo;
+        this.segmentNo = segmentNo;
+        this.dataRange = dataRange;
         this.highlight = highlight;
+        this.truncateToWholeLines = truncateToWholeLines;
+    }
+
+    private SourceLocation(final Builder builder) {
+        id = builder.id;
+        partNo = builder.partNo;
+        childType = builder.childType;
+        segmentNo = builder.segmentNo;
+        dataRange = builder.dataRange;
+        highlight = builder.highlight;
+        truncateToWholeLines = builder.truncateToWholeLines;
+    }
+
+    public static Builder builder(final long id) {
+        return new Builder(id);
+    }
+
+    public Builder clone() {
+        return new Builder(this);
     }
 
     public long getId() {
         return id;
     }
 
+    /**
+     * @return The type of the child stream that is being requested.
+     */
     public String getChildType() {
         return childType;
     }
 
+    @JsonIgnore
+    public Optional<String> getOptChildType() {
+        return Optional.ofNullable(childType);
+    }
+
+    /**
+     * @return Part number in the stream (aka streamNo), zero based. Non multi-part streams would have
+     * a single part with number zero.
+     */
     public long getPartNo() {
         return partNo;
     }
 
-    public long getRecordNo() {
-        return recordNo;
+    /**
+     * @return The segment number (AKA record number), zero based
+     */
+    public long getSegmentNo() {
+        return segmentNo;
     }
 
-    public Highlight getHighlight() {
+    @JsonIgnore
+    public OptionalLong getOptSegmentNo() {
+        return OptionalLong.of(segmentNo);
+    }
+
+    /**
+     * @return The range of data specified, may be null
+     */
+    public DataRange getDataRange() {
+        return dataRange;
+    }
+
+    @JsonIgnore
+    public Optional<DataRange> getOptDataRange() {
+        return Optional.ofNullable(dataRange);
+    }
+
+    /**
+     * @return The range of data that is highlighted, may be null.
+     */
+    public TextRange getHighlight() {
         return highlight;
+    }
+
+    @JsonIgnore
+    public Optional<TextRange> getOptHighlight() {
+        return Optional.ofNullable(highlight);
+    }
+
+    public boolean isTruncateToWholeLines() {
+        return truncateToWholeLines;
+    }
+
+    public boolean isSameSource(final SourceLocation other) {
+        if (other == null) {
+            return false;
+        } else {
+            return this.id == other.id
+                    && this.partNo == other.partNo
+                    && Objects.equals(this.childType, other.childType);
+        }
+    }
+
+    public boolean isSameLocation(final SourceLocation other) {
+        if (other == null) {
+            return false;
+        } else {
+            return this.isSameSource(other)
+                    && this.segmentNo == other.segmentNo
+                    && Objects.equals(this.dataRange, other.dataRange);
+        }
     }
 
     @Override
@@ -78,35 +181,103 @@ public class SourceLocation implements Comparable<SourceLocation> {
         final SourceLocation that = (SourceLocation) o;
         return id == that.id &&
                 partNo == that.partNo &&
-                recordNo == that.recordNo &&
+                segmentNo == that.segmentNo &&
+                truncateToWholeLines == that.truncateToWholeLines &&
                 Objects.equals(childType, that.childType) &&
+                Objects.equals(dataRange, that.dataRange) &&
                 Objects.equals(highlight, that.highlight);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, childType, partNo, recordNo, highlight);
-    }
-
-    @Override
-    public int compareTo(final SourceLocation o) {
-        final CompareBuilder builder = new CompareBuilder();
-        builder.append(id, o.id);
-        builder.append(childType, o.childType);
-        builder.append(partNo, o.partNo);
-        builder.append(recordNo, o.recordNo);
-        builder.append(highlight, o.highlight);
-        return builder.toComparison();
+        return Objects.hash(id, childType, partNo, segmentNo, dataRange, highlight, truncateToWholeLines);
     }
 
     @Override
     public String toString() {
-        return "DataLocation{" +
+        return "SourceLocation{" +
                 "id=" + id +
-                ", childType=" + childType +
+                ", childType='" + childType + '\'' +
                 ", partNo=" + partNo +
-                ", recordNo=" + recordNo +
+                ", segmentNo=" + segmentNo +
+                ", dataRange=" + dataRange +
                 ", highlight=" + highlight +
+                ", truncateToWholeLines=" + truncateToWholeLines +
                 '}';
+    }
+
+    public static final class Builder {
+        private final long id;
+        private long partNo = 0; // Non multipart data has segment no of zero by default, zero based
+        private String childType;
+        private long segmentNo = 0; // Non-segmented data has no segment no., zero based
+        private DataRange dataRange;
+        private TextRange highlight;
+        private boolean truncateToWholeLines = false;
+
+        private Builder(final long id) {
+            this.id = id;
+        }
+
+        private Builder(final SourceLocation currentSourceLocation) {
+            this.id = currentSourceLocation.id;
+            this.partNo = currentSourceLocation.partNo;
+            this.childType = currentSourceLocation.childType;
+            this.segmentNo = currentSourceLocation.segmentNo;
+            this.dataRange = currentSourceLocation.dataRange;
+            this.highlight = currentSourceLocation.highlight;
+            this.truncateToWholeLines = currentSourceLocation.truncateToWholeLines;
+        }
+
+        /**
+         * Zero based
+         */
+        public Builder withPartNo(final Long partNo) {
+            if (partNo != null) {
+                this.partNo = partNo;
+            }
+            return this;
+        }
+
+        public Builder withChildStreamType(final String childStreamType) {
+            this.childType = childStreamType;
+            return this;
+        }
+
+        /**
+         * Zero based
+         */
+        public Builder withSegmentNumber(final Long segmentNo) {
+            if (segmentNo != null) {
+                this.segmentNo = segmentNo;
+            }
+            return this;
+        }
+
+        public Builder withDataRange(final DataRange dataRange) {
+            this.dataRange = dataRange;
+            return this;
+        }
+
+        public Builder withDataRangeBuilder(final Consumer<DataRange.Builder> dataRangeBuilder) {
+            final DataRange.Builder builder = DataRange.builder();
+            dataRangeBuilder.accept(builder);
+            this.dataRange = builder.build();
+            return this;
+        }
+
+        public Builder withHighlight(final TextRange highlight) {
+            this.highlight = highlight;
+            return this;
+        }
+
+        public Builder truncateToWholeLines() {
+            this.truncateToWholeLines = true;
+            return this;
+        }
+
+        public SourceLocation build() {
+            return new SourceLocation(this);
+        }
     }
 }

@@ -20,7 +20,7 @@ class Data extends AbstractLink {
     static final String NAME = "data";
 
     public Data(final String name) {
-        super(name, 2, 8);
+        super(name, 2, 10);
     }
 
     @Override
@@ -53,8 +53,13 @@ class Data extends AbstractLink {
             append(sb, 5, "colFrom");
             append(sb, 6, "lineTo");
             append(sb, 7, "colTo");
+            append(sb, 8, "viewType");
+            append(sb, 9, "displayType");
 
-            return makeLink(getEscapedString(childGenerators[0].eval()), EncodingUtil.encodeUrl(sb.toString()), "data");
+            return makeLink(
+                    getEscapedString(childGenerators[0].eval()),
+                    EncodingUtil.encodeUrl(sb.toString()),
+                    "data");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {

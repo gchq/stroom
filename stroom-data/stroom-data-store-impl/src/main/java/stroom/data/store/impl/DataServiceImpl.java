@@ -95,9 +95,13 @@ class DataServiceImpl implements DataService {
             final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria, file.getParent(), fileName, settings);
 
             if (result.getRecordsWritten() == 0) {
-                return null;
+                if (result.getMessageList() != null && result.getMessageList().size() > 0){
+                    throw new RuntimeException("Download failed with errors: " +
+                            result.getMessageList().stream().map(m -> m.getMessage()).
+                                    collect(Collectors.joining(", ")));
+                }
             }
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
+            return new ResourceGeneration(resourceKey, result.getMessageList());
         });
     }
 
@@ -175,6 +179,8 @@ class DataServiceImpl implements DataService {
                         entries.add(new DataInfoSection.Entry(key, convertTime(value)));
                     } else if (key.toLowerCase().contains("size")) {
                         entries.add(new DataInfoSection.Entry(key, convertSize(value)));
+                    } else if (key.toLowerCase().contains("count")) {
+                        entries.add(new DataInfoSection.Entry(key, convertCount(value)));
                     } else {
                         entries.add(new DataInfoSection.Entry(key, value));
                     }
@@ -212,6 +218,15 @@ class DataServiceImpl implements DataService {
     private String convertSize(final String value) {
         try {
             return ModelStringUtil.formatIECByteSizeString(Long.parseLong(value));
+        } catch (RuntimeException e) {
+            // Ignore.
+        }
+        return value;
+    }
+
+    private String convertCount(final String value) {
+        try {
+            return ModelStringUtil.formatCsv(Long.parseLong(value));
         } catch (RuntimeException e) {
             // Ignore.
         }

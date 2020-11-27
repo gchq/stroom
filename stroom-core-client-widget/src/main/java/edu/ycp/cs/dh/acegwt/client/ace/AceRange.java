@@ -10,6 +10,12 @@ public final class AceRange extends JavaScriptObject {
     protected AceRange() {
     }
 
+    /**
+     * @param startRow One based, inclusive
+     * @param startColumn Zero based, inclusive
+     * @param endRow One based, inclusive
+     * @param endColumn Zero based, exclusive
+     */
     public static AceRange create(int startRow, int startColumn, int endRow, int endColumn) {
         return toJsObject(startRow, startColumn, endRow, endColumn).cast();
     }

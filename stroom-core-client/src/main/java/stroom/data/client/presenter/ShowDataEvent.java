@@ -1,21 +1,40 @@
 package stroom.data.client.presenter;
 
+import stroom.pipeline.shared.SourceLocation;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.pipeline.shared.SourceLocation;
 
 public class ShowDataEvent extends GwtEvent<ShowDataEvent.Handler> {
     private static Type<ShowDataEvent.Handler> TYPE;
 
     private final SourceLocation sourceLocation;
+    private final DataViewType dataViewType;
+    private final DisplayMode displayMode;
 
-    private ShowDataEvent(final SourceLocation sourceLocation) {
+    private ShowDataEvent(final SourceLocation sourceLocation,
+                          final DataViewType dataViewType,
+                          final DisplayMode displayMode) {
         this.sourceLocation = sourceLocation;
+        this.dataViewType = dataViewType;
+        this.displayMode = displayMode;
     }
 
-    public static void fire(final HasHandlers source, final SourceLocation sourceLocation) {
-        source.fireEvent(new ShowDataEvent(sourceLocation));
+
+    public static void fire(final HasHandlers source,
+                            final SourceLocation sourceLocation,
+                            final DataViewType dataViewType,
+                            final DisplayMode displayMode) {
+        source.fireEvent(new ShowDataEvent(sourceLocation, dataViewType, displayMode));
+    }
+
+    public static void fire(final HasHandlers source,
+                            final SourceLocation sourceLocation) {
+        source.fireEvent(new ShowDataEvent(
+                sourceLocation,
+                DataViewType.PREVIEW,
+                DisplayMode.DIALOG));
     }
 
     public static Type<Handler> getType() {
@@ -38,6 +57,16 @@ public class ShowDataEvent extends GwtEvent<ShowDataEvent.Handler> {
     public SourceLocation getSourceLocation() {
         return sourceLocation;
     }
+
+    public DataViewType getDataViewType() {
+        return dataViewType;
+    }
+
+    public DisplayMode getDisplayMode() {
+        return displayMode;
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public interface Handler extends EventHandler {
         void onShow(ShowDataEvent event);

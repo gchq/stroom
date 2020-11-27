@@ -2,6 +2,7 @@ package stroom.test;
 
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.testdata.DataGenerator;
+import stroom.testdata.DataWriter;
 import stroom.testdata.FlatDataWriterBuilder;
 import stroom.testdata.XmlAttributesDataWriterBuilder;
 import stroom.util.io.FileUtil;
@@ -37,10 +38,23 @@ public class SampleDataGenerator {
 
         ensureAndCleanDir(dir);
 
-        int shortLoremText = 4;
-        int longLoremText = 200;
+        final int shortLoremText = 4;
+        final int longLoremText = 200;
         // Increment the random seed each time so each data set has different but predictable data
         long randomSeed = 0;
+
+        final DataWriter csvDataWriter = FlatDataWriterBuilder.builder()
+                        .delimitedBy(",")
+                        .enclosedBy("\"")
+                        .outputHeaderRow(true)
+                        .build();
+
+        final DataWriter xmlDataWriter = XmlAttributesDataWriterBuilder.builder()
+                .namespace("records:2")
+                .rootElementName("records")
+                .recordElementName("record")
+                .fieldValueElementName("data")
+                .build();
 
         // Data that has one record per line
         // One with long lines, one with short
@@ -49,6 +63,7 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
+                csvDataWriter,
                 shortLoremText,
                 LocalDateTime.of(2020,6,1,0,0),
                 randomSeed++);
@@ -58,29 +73,63 @@ public class SampleDataGenerator {
                 2,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
+                csvDataWriter,
                 longLoremText,
                 LocalDateTime.of(2020,7,1,0,0),
                 randomSeed++);
 
         // Data that is all on one massive single line
-        // One with long lines, one with short
         generateDataViewRawData(
                 dir,
                 1,
                 "DATA_VIEWING_SINGLE_LINE-EVENTS",
                 "|",
+                csvDataWriter,
                 shortLoremText,
                 LocalDateTime.of(2020,8,1,0,0),
                 randomSeed++);
 
-        generateRefDataForEffectiveDateTesting(
-                dir);
+        // XML data that is all on one massive single line
+        generateDataViewRawData(
+                dir,
+                1,
+                "DATA_VIEWING_XML_SINGLE_LINE-EVENTS",
+                "",
+                xmlDataWriter,
+                shortLoremText,
+                LocalDateTime.of(2020,9,1,0,0),
+                randomSeed++);
+
+        // Data that has one record per line
+        // One with long lines, one with short
+        generateDataViewRawData(
+                dir,
+                1,
+                "DATA_VIEWING_XML_MULTI_LINE-EVENTS",
+                "\n",
+                xmlDataWriter,
+                shortLoremText,
+                LocalDateTime.of(2020,10,1,0,0),
+                randomSeed++);
+
+        generateDataViewRawData(
+                dir,
+                2,
+                "DATA_VIEWING_XML_MULTI_LINE-EVENTS",
+                "\n",
+                xmlDataWriter,
+                longLoremText,
+                LocalDateTime.of(2020,11,1,0,0),
+                randomSeed++);
+
+        generateRefDataForEffectiveDateTesting(dir);
     }
 
     private void generateDataViewRawData(final Path dir,
                                          final int fileNo,
                                          final String feedName,
                                          final String recordSeparator,
+                                         final DataWriter dataWriter,
                                          final int loremWordCount,
                                          final LocalDateTime startDate,
                                          final long randomSeed) {
@@ -126,13 +175,9 @@ public class SampleDataGenerator {
                 .addFieldDefinition(DataGenerator.fakerField(
                         "lorum",
                         faker -> String.join(" ", faker.lorem().words(loremWordCount))))
-                .setDataWriter(FlatDataWriterBuilder.builder()
-                        .delimitedBy(",")
-                        .enclosedBy("\"")
-                        .outputHeaderRow(true)
-                        .build())
+                .setDataWriter(dataWriter)
                 .consumedBy(DataGenerator.getFileOutputConsumer(file, recordSeparator))
-                .rowCount(5_000)
+                .rowCount(2_000)
                 .withRandomSeed(randomSeed)
                 .generate();
     }

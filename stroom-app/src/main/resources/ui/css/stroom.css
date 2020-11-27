@@ -416,6 +416,11 @@ td {
 	background: #bbdefb !important;
 }
 
+.statusIcon {
+	padding-top: 1px !important;
+	cursor: default !important;
+}
+
 .dataTable td {
 	cursor: pointer;
 	overflow: hidden !important;
@@ -574,6 +579,10 @@ td {
 .gwt-PasswordTextBox-readonly {
   color: #666;
   background-color: rgba(255, 255, 255, 0.5);
+}
+
+.gwt-Label-disabled {
+  color: #666;
 }
 
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */

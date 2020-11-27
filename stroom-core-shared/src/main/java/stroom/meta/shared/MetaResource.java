@@ -40,6 +40,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface MetaResource extends RestResource, DirectRestService {
+
     @PUT
     @Path("update/status")
     @ApiOperation(

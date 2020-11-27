@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.gin;
 
-import com.google.inject.Singleton;
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
 import stroom.dashboard.client.main.ComponentRegistry;
@@ -33,6 +32,8 @@ import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 
+import com.google.inject.Singleton;
+
 public class DashboardModule extends PluginModule {
     @Override
     protected void configure() {
@@ -41,9 +42,19 @@ public class DashboardModule extends PluginModule {
         bind(ComponentRegistry.class).in(Singleton.class);
 
         bindPlugin(DashboardPlugin.class);
-        bindPresenterWidget(DashboardPresenter.class, DashboardPresenter.DashboardView.class, DashboardViewImpl.class);
-        bindPresenterWidget(DashboardLayoutPresenter.class, DashboardLayoutPresenter.DashboardLayoutView.class, DashboardLayoutViewImpl.class);
-        bindPresenterWidget(RenameTabPresenter.class, RenameTabView.class, RenameTabViewImpl.class);
+
+        bindPresenterWidget(
+                DashboardPresenter.class,
+                DashboardPresenter.DashboardView.class,
+                DashboardViewImpl.class);
+        bindPresenterWidget(
+                DashboardLayoutPresenter.class,
+                DashboardLayoutPresenter.DashboardLayoutView.class,
+                DashboardLayoutViewImpl.class);
+        bindPresenterWidget(
+                RenameTabPresenter.class,
+                RenameTabView.class,
+                RenameTabViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
         bindSharedView(HTMLView.class, HTMLViewImpl.class);

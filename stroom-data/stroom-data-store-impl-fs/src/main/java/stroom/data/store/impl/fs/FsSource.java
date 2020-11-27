@@ -36,6 +36,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -205,6 +207,26 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
             }
             return new SegmentInputStreamProvider(source, k);
         });
+    }
+
+    @Override
+    public Set<String> getChildTypes() {
+
+        // You may have files like this:
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.ctx.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bdy.dat
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.meta.bgz
+        // ./store/RAW_EVENTS/2020/09/16/DATA_FETCHER=003.revt.mf.dat
+        // We wan't to ignore the internal .bdy., .seg. and .mf. ones
+        // and boil it down to (in this case) Raw Events, Meta & Context
+
+        final List<Path> allDescendantStreamFileList = fileSystemStreamPathHelper.findAllDescendantStreamFileList(getFile());
+        return allDescendantStreamFileList.stream()
+                .map(fileSystemStreamPathHelper::decodeStreamType)
+                .collect(Collectors.toSet());
     }
 
     private InternalSource getChild(final String streamTypeName) {

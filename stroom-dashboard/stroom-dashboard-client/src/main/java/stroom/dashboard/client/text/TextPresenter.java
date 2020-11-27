@@ -44,10 +44,10 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.OffsetRange;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
 import com.google.gwt.core.client.GWT;
@@ -109,9 +109,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         view.setUiHandlers(this);
     }
 
-    private void showData(final String data, final String classification, final Set<String> highlightStrings,
+    private void showData(final String data,
+                          final String classification,
+                          final Set<String> highlightStrings,
                           final boolean isHtml) {
-        final List<Highlight> highlights = getHighlights(data, highlightStrings);
+//        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
         // visible first.
@@ -147,21 +149,31 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     rawPresenter = rawPresenterProvider.get();
                     rawPresenter.setReadOnly(true);
                     rawPresenter.getLineNumbersOption().setOn(false);
+                    rawPresenter.getLineWrapOption().setOn(true);
                 }
 
                 getView().setContent(rawPresenter.getView());
 
+                if (highlightStrings != null && !highlightStrings.isEmpty()) {
+                    rawPresenter.setFormattedHighlights(formattedText ->
+                            getHighlights(formattedText, highlightStrings));
+                } else {
+                    rawPresenter.setFormattedHighlights(null);
+                }
+
                 rawPresenter.setText(data, true);
-                rawPresenter.setHighlights(highlights);
+//                rawPresenter.setHighlights(highlights);
                 rawPresenter.setControlsVisible(playButtonVisible);
             }
         });
     }
 
-    private List<Highlight> getHighlights(final String input, final Set<String> highlightStrings) {
-        // final StringBuilder output = new StringBuilder(input);
-
-        final List<Highlight> highlights = new ArrayList<>();
+    /**
+     * The ranges returned are line/col positions in the input text. Thus the input text should
+     * not be changed/formatted after the highlight ranges have been generated.
+     */
+    private List<TextRange> getHighlights(final String input, final Set<String> highlightStrings) {
+        final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
         if (highlightStrings != null && highlightStrings.size() > 0) {
@@ -173,23 +185,28 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                 final char[] highlightChars = highlight.toLowerCase().toCharArray();
                 final int highlightLength = highlightChars.length;
 
-                boolean inElement = false;
+                boolean inElementTag = false;
                 boolean inEscapedElement = false;
                 int lineNo = 1;
-                int colNo = 0;
+                int colNo = 1;
+                char lastInputChar = 0;
                 for (int i = 0; i < inputLength; i++) {
                     final char inputChar = inputChars[i];
 
-                    if (inputChar == '\n') {
+                    if (lastInputChar == '\n') {
                         lineNo++;
-                        colNo = 0;
+                        colNo = 1;
                     }
+                    lastInputChar = inputChar;
 
-                    if (!inElement && !inEscapedElement) {
+                    if (!inElementTag && !inEscapedElement) {
                         if (inputChar == '<') {
-                            inElement = true;
-                        } else if (inputChar == '&' && i + 3 < inputLength && inputChars[i + 1] == 'l'
-                                && inputChars[i + 2] == 't' && inputChars[i + 3] == ';') {
+                            inElementTag = true;
+                        } else if (inputChar == '&'
+                                && i + 3 < inputLength
+                                && inputChars[i + 1] == 'l'
+                                && inputChars[i + 2] == 't'
+                                && inputChars[i + 3] == ';') {
                             inEscapedElement = true;
                         } else {
                             // If we aren't in an element or escaped element
@@ -205,19 +222,25 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                             }
 
                             if (found) {
-                                final Highlight hl = new Highlight(
+                                // All one based and inclusive
+                                final TextRange hl = new TextRange(
                                         new DefaultLocation(lineNo, colNo),
-                                        new DefaultLocation(lineNo, colNo + highlightLength));
+                                        new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
                                 highlights.add(hl);
 
                                 i += highlightLength;
+                                // carry on looking for more instances of this highlight string
                             }
                         }
-                    } else if (inElement && inputChar == '>') {
-                        inElement = false;
+                    } else if (inElementTag && inputChar == '>') {
+                        inElementTag = false;
 
-                    } else if (inEscapedElement && inputChar == '&' && i + 3 < inputLength && inputChars[i + 1] == 'g'
-                            && inputChars[i + 2] == 't' && inputChars[i + 3] == ';') {
+                    } else if (inEscapedElement
+                            && inputChar == '&'
+                            && i + 3 < inputLength
+                            && inputChars[i + 1] == 'g'
+                            && inputChars[i + 2] == 't'
+                            && inputChars[i + 3] == ';') {
                         inEscapedElement = false;
                     }
 
@@ -304,41 +327,68 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         message = "No record number field found in selection";
 
                     } else {
-                        Highlight highlight = null;
-                        if (currentLineFrom != null && currentColFrom != null && currentLineTo != null && currentColTo != null) {
-                            highlight = new Highlight(
+                        DataRange dataRange = null;
+                        TextRange highlight = null;
+                        if (currentLineFrom != null
+                                && currentColFrom != null
+                                && currentLineTo != null
+                                && currentColTo != null) {
+                            dataRange = DataRange.between(
+                                    new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
+                                    new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
+
+                            highlight = new TextRange(
                                     new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
                                     new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
                         }
-                        final SourceLocation sourceLocation = new SourceLocation(
-                                currentStreamId,
-                                null,
-                                currentPartNo != null ? currentPartNo : 1,
-                                currentRecordNo != null ? currentRecordNo : 1,
-                                highlight);
+
+                        final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
+                                .withPartNo(currentPartNo != null ? currentPartNo - 1: 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1: 0) // make zero based
+                                .withDataRange(dataRange)
+                                .withHighlight(highlight)
+                                .build();
 
                         currentHighlightStrings = tablePresenter.getHighlights();
 
-                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
-                        OffsetRange<Long> currentPageRange;
+//                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
+
+//                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
+//                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
+//                                .withChildStreamType(null);
+
+//                        request.setStreamId(currentStreamId);
+//                        request.setStreamRange(currentStreamRange);
+//                        request.setChildStreamType(null);
 
                         // If we have a source highlight then use it.
-                        if (highlight != null) {
-                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
-                            // -1 to offset to make zero based
-                            // +1 to length to make inclusive
-                            currentPageRange = new OffsetRange<>(
-                                    highlight.getFrom().getLineNo() - 1L,
-                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
-                        } else {
-                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
-                        }
+//                        if (highlight != null) {
+//                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
+//                            // -1 to offset to make zero based
+//                            // +1 to length to make inclusive
+//                            currentPageRange = new OffsetRange<>(
+//                                    highlight.getFrom().getLineNo() - 1L,
+//                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
+//                        } else {
+//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+//                        }
 
-                        final FetchDataRequest request = new FetchDataRequest();
-                        request.setStreamId(currentStreamId);
-                        request.setStreamRange(currentStreamRange);
-                        request.setPageRange(currentPageRange);
-                        request.setChildStreamType(null);
+                        // TODO @AT Fix/implement
+                        // If we have a source highlight then use it.
+//                        if (highlight != null) {
+////                            dataRangeBuilder
+////                                    .fromLocation(highlight.getFrom())
+////                                    .toLocation(highlight.getTo());
+//                        } else {
+////                            // TODO assume this is segmented data
+//////                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
+//////                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
+////
+////                            // Convert it to zero based
+////                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);
+//                        }
+
+                        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
                         request.setPipeline(getTextSettings().getPipeline());
                         request.setShowAsHtml(getTextSettings().isShowAsHtml());
 
@@ -377,6 +427,60 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
         return null;
     }
+
+    private long getStartLine(final TextRange highlight) {
+        int lineNoFrom = highlight.getFrom().getLineNo();
+        if (lineNoFrom == 1) {
+            // Content starts on first line so convert to an offset as the server code
+            // works in zero based line numbers
+            return lineNoFrom - 1;
+        } else {
+            //
+            return lineNoFrom;
+        }
+    }
+
+    private long getLineCount(final TextRange highlight) {
+        int lineNoFrom = highlight.getFrom().getLineNo();
+        if (lineNoFrom == 1) {
+            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;
+        } else {
+            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo();
+        }
+    }
+
+//    private Long getLong(final Field field, List<Field> fields, final Row row) {
+//        if (field != null && fields != null && row != null) {
+//            int index = -1;
+//
+//            if (index == -1 && field.getId() != null) {
+//                // Try matching on id alone.
+//                for (int i = 0; i < fields.size(); i++) {
+//                    if (field.getId().equals(fields.get(i).getId())) {
+//                        index = i;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if (index == -1 && field.getName() != null) {
+//                // Try matching on name alone.
+//                for (int i = 0; i < fields.size(); i++) {
+//                    if (field.getName().equals(fields.get(i).getName())) {
+//                        index = i;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if (index != -1) {
+//                if (row.getValues().size() > index) {
+//                    return getLong(row.getValues().get(index));
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
     private Long getLong(final Field field, final TableRow row) {
         if (field != null && row != null) {
@@ -522,8 +626,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
                     currentPartNo != null ? currentPartNo : 1,
-                    currentRecordNo != null ? currentRecordNo : 1);
-            BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, stepLocation, null);
+                    currentRecordNo != null ? currentRecordNo : -1);
+
+            BeginPipelineSteppingEvent.fire(
+                    this,
+                    currentStreamId,
+                    null,
+                    null,
+                    stepLocation,
+                    null);
         } else {
             AlertEvent.fireError(this, "No stream id", null);
         }

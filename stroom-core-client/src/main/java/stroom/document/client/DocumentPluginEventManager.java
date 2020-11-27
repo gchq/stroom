@@ -740,10 +740,9 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(priority, SvgPresets.PERMISSIONS, SvgPresets.PERMISSIONS, "Permissions", null,
+        return new IconMenuItem(priority, SvgPresets.LOCKED_AMBER, SvgPresets.LOCKED_AMBER, "Permissions", null,
                 enabled, command);
     }
-
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {
         documentPluginRegistry.register(entityType, plugin);

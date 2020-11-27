@@ -39,6 +39,21 @@ public class OffsetRange<T extends Number> {
         this.length = length;
     }
 
+    public static <T extends Number> OffsetRange<T> of(final T offset,
+                                                       final T length) {
+        return new OffsetRange<>(offset, length);
+    }
+
+    public static OffsetRange<Long> zeroLong() {
+        // Avoids class cast issues when auto boxing
+        return new OffsetRange<>(Long.valueOf(0), Long.valueOf(0));
+    }
+
+    public static OffsetRange<Integer> zeroInt() {
+        // Avoids class cast issues when auto boxing
+        return new OffsetRange<>(Integer.valueOf(0), Integer.valueOf(0));
+    }
+
     public T getOffset() {
         return offset;
     }

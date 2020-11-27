@@ -583,7 +583,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         // Check that the user has permission to update this item.
         if (!securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException(
-                    securityContext.getUserId(), "You are not authorised to update this document");
+                    securityContext.getUserId(), "You are not authorised to update " + document.getType() +
+                    (((document.getName() != null) && document.getName().length() > 0)? " " + document.getName() : "")
+            + " (" + document.getUuid() + ")");
         }
 
         try {

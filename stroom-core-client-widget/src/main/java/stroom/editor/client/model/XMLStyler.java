@@ -16,7 +16,7 @@
 
 package stroom.editor.client.model;
 
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,8 +86,8 @@ public class XMLStyler {
      * @return An HTML string of the formatted and styled XML.
      */
     public String processXML(final String input, final boolean applyStyle, final boolean format, final int startLineNo,
-                             final List<Highlight> highlights) {
-        List<Highlight> remainingHighlights = null;
+                             final List<TextRange> highlights) {
+        List<TextRange> remainingHighlights = null;
         if (highlights != null) {
             remainingHighlights = new ArrayList<>(highlights);
         }
@@ -182,7 +182,7 @@ public class XMLStyler {
                 if (!inHighlight) {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
-                    final Highlight highlight = remainingHighlights.get(0);
+                    final TextRange highlight = remainingHighlights.get(0);
                     if ((lineNo == highlight.getFrom().getLineNo() && colNo >= highlight.getFrom().getColNo())
                             || lineNo > highlight.getFrom().getLineNo()) {
                         inHighlight = true;
@@ -191,7 +191,7 @@ public class XMLStyler {
                 } else {
                     // We assume highlights are in appearance order so get the
                     // first from the list.
-                    final Highlight highlight = remainingHighlights.get(0);
+                    final TextRange highlight = remainingHighlights.get(0);
                     if ((lineNo == highlight.getTo().getLineNo() && colNo >= highlight.getTo().getColNo())
                             || lineNo > highlight.getTo().getLineNo()) {
                         inHighlight = false;

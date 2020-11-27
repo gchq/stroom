@@ -22,11 +22,12 @@ import stroom.pipeline.xml.converter.AbstractParser;
 import stroom.pipeline.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.util.CharBuffer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -61,7 +62,7 @@ public class DS3Parser extends AbstractParser {
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final AttributesImpl ROOT_ATTS = new AttributesImpl();
-    private static final Logger LOGGER = LoggerFactory.getLogger(DS3Parser.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DS3Parser.class);
     private static final int RECOVERY_MODE = -99;
 
     static {
@@ -134,7 +135,13 @@ public class DS3Parser extends AbstractParser {
 
         // Loop round the top level expressions as many times as necessary to
         // match as much content as possible.
-        process(root, reader, null, 0, 0, MatchOrder.SEQUENCE, root.isIgnoreErrors());
+        process(root,
+                reader,
+                null,
+                0,
+                0,
+                MatchOrder.SEQUENCE,
+                root.isIgnoreErrors());
 
         // Make sure we consumed all of the input (ignoring trailing
         // whitespace).
@@ -183,7 +190,13 @@ public class DS3Parser extends AbstractParser {
                     // try and match any other expressions until the next pass.
                     if (advance <= 0 && advance != RECOVERY_MODE) {
                         expression = (Expression) node;
-                        advance = processExpression(expression, buffer, parentMatchCount, matchCount, level, matchOrder,
+                        advance = processExpression(
+                                expression,
+                                buffer,
+                                parentMatchCount,
+                                matchCount,
+                                level,
+                                matchOrder,
                                 ignoreErrors);
                         // If we found a match then increase the match count.
                         if (advance > 0) {
@@ -196,7 +209,13 @@ public class DS3Parser extends AbstractParser {
                         processGroup((Group) node, buffer, parentMatch, parentMatchCount, level);
                     } else if (node.getNodeType() == NodeType.DATA) {
                         storeData((Data) node, buffer, parentMatch, parentMatchCount);
-                        processData((Data) node, buffer, parentMatch, parentMatchCount, level, matchOrder,
+                        processData(
+                                (Data) node,
+                                buffer,
+                                parentMatch,
+                                parentMatchCount,
+                                level,
+                                matchOrder,
                                 ignoreErrors);
                     } else if (node.getNodeType() == NodeType.VAR) {
                         storeData((Var) node, buffer, parentMatch, parentMatchCount);
@@ -441,7 +460,9 @@ public class DS3Parser extends AbstractParser {
      * Store data against a node for future retrieval by this node or by remote
      * reference from another node in the case of var elements.
      */
-    private void storeData(final StoreNode node, final Buffer buffer, final Match parentMatch,
+    private void storeData(final StoreNode node,
+                           final Buffer buffer,
+                           final Match parentMatch,
                            final int parentMatchCount) throws IOException, SAXException {
         final int referencedGroups[] = node.getAllReferencedGroups();
 
@@ -519,7 +540,13 @@ public class DS3Parser extends AbstractParser {
             }
 
             // Process the sub buffer with sub expressions.
-            process(node, subBuffer, null, parentMatchCount, level + 1, node.getMatchOrder(), node.isIgnoreErrors());
+            process(node,
+                    subBuffer,
+                    null,
+                    parentMatchCount,
+                    level + 1,
+                    node.getMatchOrder(),
+                    node.isIgnoreErrors());
 
             // Make sure we consumed all of the sub buffer (ignoring trailing
             // whitespace).
@@ -558,7 +585,9 @@ public class DS3Parser extends AbstractParser {
                             .toString()
                             .replace("\n", "\\n"));
         } else {
-            messageBuffer.append(buffer.unsafeCopy().toString().replace("\n", "\\n"));
+            messageBuffer.append(buffer.unsafeCopy()
+                    .toString()
+                    .replace("\n", "\\n"));
         }
     }
 
@@ -593,7 +622,13 @@ public class DS3Parser extends AbstractParser {
         }
 
         // Process the buffer with sub expressions.
-        process(node, buffer, parentMatch, parentMatchCount, level + 1, matchOrder, ignoreErrors);
+        process(node,
+                buffer,
+                parentMatch,
+                parentMatchCount,
+                level + 1,
+                matchOrder,
+                ignoreErrors);
         // Output the end element for data if we outputted a start element.
         if (outputEndElement) {
             endData();
@@ -628,6 +663,7 @@ public class DS3Parser extends AbstractParser {
         if (!inRecord) {
             inRecord = true;
 
+            LOGGER.trace(() -> LogUtil.message("startRecord location: {}", reader.getCurrentLocationAsStart()));
             getContentHandler().startElement(NAMESPACE, XML_ELEMENT_RECORD, XML_ELEMENT_RECORD, EMPTY_ATTS);
         }
     }
@@ -636,6 +672,7 @@ public class DS3Parser extends AbstractParser {
         if (inRecord) {
             inRecord = false;
 
+            LOGGER.trace(() -> LogUtil.message("endRecord location: {}", reader.getCurrentLocationAsEnd()));
             getContentHandler().endElement(NAMESPACE, XML_ELEMENT_RECORD, XML_ELEMENT_RECORD);
         }
     }
@@ -656,17 +693,24 @@ public class DS3Parser extends AbstractParser {
             // regex's.
             final Runnable command = () -> {
                 final ExecutionProfilerTopN top10 = new ExecutionProfilerTopN(root, 10);
-                final StringBuilder debugLine = new StringBuilder();
-                debugLine.append("process() - Top 10 executions : ");
-                for (final ExecutionProfiler ex : top10.getTopN()) {
-                    debugLine.append("\n\t");
-                    debugLine.append(ex.getExecutionString());
-                    debugLine.append(" (");
-                    debugLine.append(ModelStringUtil.formatCsv(ex.getTotalExecutionCount()));
-                    debugLine.append(") ");
-                    debugLine.append(ModelStringUtil.formatDurationString(ex.getTotalExecutionTime()));
+                // No point logging if we have no executions
+                long totalExecutionTime = top10.getTopN().stream()
+                        .mapToLong(ExecutionProfiler::getTotalExecutionTime)
+                        .sum();
+
+                if (!top10.getTopN().isEmpty() || totalExecutionTime > 0) {
+                    final StringBuilder debugLine = new StringBuilder();
+                    debugLine.append("process() - Top 10 executions : ");
+                    for (final ExecutionProfiler ex : top10.getTopN()) {
+                        debugLine.append("\n\t");
+                        debugLine.append(ex.getExecutionString());
+                        debugLine.append(" (");
+                        debugLine.append(ModelStringUtil.formatCsv(ex.getTotalExecutionCount()));
+                        debugLine.append(") ");
+                        debugLine.append(ModelStringUtil.formatDurationString(ex.getTotalExecutionTime()));
+                    }
+                    LOGGER.debug(debugLine.toString());
                 }
-                LOGGER.debug(debugLine.toString());
             };
 
             profilingExecutor = Executors.newSingleThreadScheduledExecutor();

@@ -14,6 +14,10 @@ public class EventId {
     @JsonProperty
     private final long eventId;
 
+    /**
+     * @param streamId
+     * @param eventId One based
+     */
     @JsonCreator
     public EventId(@JsonProperty("streamId") final long streamId,
                    @JsonProperty("eventId") final long eventId) {
@@ -25,6 +29,9 @@ public class EventId {
         return streamId;
     }
 
+    /**
+     * One based
+     */
     public long getEventId() {
         return eventId;
     }
