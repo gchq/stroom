@@ -70,6 +70,8 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
 import java.io.BufferedOutputStream;
@@ -413,8 +415,6 @@ public class DataFetcher {
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
-        RawResult rawResult;
-
 
         final DataType dataType = segmentInputStream.count() > 1
                 ? DataType.SEGMENTED
@@ -424,12 +424,13 @@ public class DataFetcher {
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         final Charset charset = Charset.forName(encoding);
-        final float averageBytesPerChar = charset.newEncoder().averageBytesPerChar();
 
 //        LOGGER.info("Size in bytes: {}, avgBytesPerChar: {}, approxChars: {}",
 //                ModelStringUtil.formatIECByteSizeString(segmentInputStream.size()),
 //                averageBytesPerChar,
 //                segmentInputStream.size() / averageBytesPerChar);
+
+        final RawResult rawResult;
 
         if (DataType.SEGMENTED.equals(dataType)) {
             rawResult = getSegmentedData(sourceLocation, segmentInputStream, encoding);
@@ -437,6 +438,31 @@ public class DataFetcher {
             // Non-segmented data
             rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
+
+        return buildFetchDataResult(
+                feedName,
+                streamTypeName,
+                segmentInputStream,
+                availableChildStreamTypes,
+                streamSource,
+                inputStreamProvider,
+                fetchDataRequest,
+                dataType,
+                charset,
+                rawResult);
+    }
+
+    @NotNull
+    private FetchDataResult buildFetchDataResult(final String feedName,
+                                                 final String streamTypeName,
+                                                 final SegmentInputStream segmentInputStream,
+                                                 final Set<String> availableChildStreamTypes,
+                                                 final Source streamSource,
+                                                 final InputStreamProvider inputStreamProvider,
+                                                 final FetchDataRequest fetchDataRequest,
+                                                 final DataType dataType,
+                                                 final Charset charset,
+                                                 final RawResult rawResult) {
         rawResult.setTotalBytes(segmentInputStream.size());
         if (rawResult.getTotalCharacterCount() == null) {
             rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
@@ -463,57 +489,17 @@ public class DataFetcher {
             }
 
         } else {
-//                    // Try and pretty print XML.
-//                    try {
-//                        output = XMLUtil.prettyPrintXML(rawData);
-//                    } catch (final RuntimeException e) {
-//                        // Ignore.
-//                    }
-//
-//            // If we failed to pretty print XML then return raw data.
-//            if (output == null) {
             output = rawResult.getRawData();
-//            }
         }
 
         // Set the result.
         final String classification = feedProperties.getDisplayClassification(feedName);
-//        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(dataRange.getPartNo(), partsToReturn);
-        final Count<Long> streamsCount = new Count<>(partCount, true);
-//        final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
-//        final RowCount<Long> pageRowCount;
-//        final OffsetRange<Long> resultPageRange;
-//        if (DataType.SEGMENTED.equals(dataType)) {
-//                pageRowCount = new RowCount<>(rawResult.getSegmentsInPartCount(), true);
-//                // Always one segment per result
-//                resultPageRange = OffsetRange.of(
-//                        rawResult.getSourceLocation().getSegmentNo(),
-//                        1L);
-//
-//        } else {
-////            long charsInResult = rawResult.getSourceLocation().getOptDataRange()
-////                    .map(DataRange::getOptLength)
-////                    .filter(OptionalLong::isPresent)
-////                    .map(OptionalLong::getAsLong)
-////                    .orElse(0L);
-//
-//            // TODO @AT can we get a total count of all chars available
-//            // Make it one bigger than what we currently know
-////            long charTotal = rawResult.getSourceLocation().getDataRange().getCharOffsetFrom() +
-////                    rawResult.getSourceLocation().getDataRange().getLength() + 1;
-//            pageRowCount = new RowCount<>(null, false);
-//
-//            resultPageRange = OffsetRange.of(
-//                    rawResult.getSourceLocation().getDataRange().getCharOffsetFrom(),
-//                    rawResult.getSourceLocation().getDataRange().getLength());
-//        }
 
         return new FetchDataResult(
                 feedName,
                 streamTypeName,
                 classification,
                 rawResult.getSourceLocation(),
-//                resultStreamsRange,
                 rawResult.getItemRange(),
                 rawResult.getTotalItemCount(),
                 rawResult.getTotalCharacterCount(),
@@ -591,7 +577,7 @@ public class DataFetcher {
 
         // Get the data from the stream.
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
-        RawResult rawResult = extractDataRange(
+        final RawResult rawResult = extractDataRange(
                 sourceLocation,
                 segmentInputStream,
                 encoding,
@@ -607,13 +593,13 @@ public class DataFetcher {
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding) throws IOException {
 
-//        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
-
         final RawResult rawResult = extractDataRange(
                 sourceLocation,
                 segmentInputStream,
                 encoding,
                 segmentInputStream.size());
+
+
         // Non-segmented data exists within parts so set the item info
         rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
@@ -621,9 +607,9 @@ public class DataFetcher {
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
-                                       final InputStream inputStream,
-                                       final String encoding,
-                                       final long streamSizeBytes) throws IOException {
+                                                 final InputStream inputStream,
+                                                 final String encoding,
+                                                 final long streamSizeBytes) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -763,6 +749,7 @@ public class DataFetcher {
             }
         }
 
+
         final StringBuilder strBuilderResultRange = new StringBuilder();
 
 
@@ -796,7 +783,6 @@ public class DataFetcher {
 //            strBuilderResultRange.append(TRUNCATED_TEXT);
 //        }
 
-        final String charData = strBuilderResultRange.toString();
 
         if (optDecodeChar.isPresent() && optDecodeChar.filter(DecodedChar::isLineBreak).isPresent()) {
             currCharOffset = currCharOffset - 1; // undo the last ++ op
@@ -812,16 +798,24 @@ public class DataFetcher {
         }
 
         // The range returned may differ to that requested if we have continued to the end of the line
-        final DataRange actualDataRange = DataRange.builder()
-                .fromCharOffset(startCharOffset)
-                .fromByteOffset(startByteOffset)
-                .fromLocation(DefaultLocation.of(startLineNo, startColNo))
-                .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
-                .toCharOffset(currCharOffset)
-                .toByteOffset(charReader.getLastByteOffsetRead()
-                        .orElseThrow())
-                .withLength((long) charData.length())
-                .build();
+        final DataRange actualDataRange;
+        final String charData;
+        if (foundRange) {
+            charData = strBuilderResultRange.toString();
+            actualDataRange = DataRange.builder()
+                    .fromCharOffset(startCharOffset)
+                    .fromByteOffset(startByteOffset)
+                    .fromLocation(DefaultLocation.of(startLineNo, startColNo))
+                    .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
+                    .toCharOffset(currCharOffset)
+                    .toByteOffset(charReader.getLastByteOffsetRead()
+                            .orElseThrow())
+                    .withLength((long) charData.length())
+                    .build();
+        } else {
+            actualDataRange = null;
+            charData = "Error: Requested range not found";
+        }
 
         // Define the range that we are actually returning, which may be bigger or smaller than requested
         // e.g. if we have continued to the end of the line or we have hit a char limit

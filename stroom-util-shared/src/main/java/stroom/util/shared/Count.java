@@ -48,6 +48,16 @@ public class Count<T extends Number> {
         return new Count<>(count, exact);
     }
 
+    public static Count<Long> zeroLong() {
+        // Avoids class cast issues when auto boxing
+        return new Count<>(Long.valueOf(0), true);
+    }
+
+    public static Count<Integer> zeroInt() {
+        // Avoids class cast issues when auto boxing
+        return new Count<>(Integer.valueOf(0), true);
+    }
+
     public static <T extends Number> Count<T> exactly(final T count) {
         return new Count<>(count, true);
     }

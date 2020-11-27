@@ -105,42 +105,55 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     private void refreshCharacterControls() {
         if (display != null
-                && display.areNavigationControlsVisible()
-                && display.getCharOffsetFrom().isPresent()
-                && display.getCharOffsetTo().isPresent()) {
+                && display.areNavigationControlsVisible()) {
 
-            String linesLbl = "";
-            if (display.getLineFrom().isPresent() && display.getLineTo().isPresent()) {
-                linesLbl += LINES_TITLE
+
+            if (display.getCharOffsetFrom().isPresent()
+                    && display.getCharOffsetTo().isPresent()) {
+
+                String linesLbl = "";
+                if (display.getLineFrom().isPresent() && display.getLineTo().isPresent()) {
+                    linesLbl += LINES_TITLE
+                            + " "
+                            + getIntValueForLabel(display.getLineFrom())
+                            + " to "
+                            + getIntValueForLabel(display.getLineTo());
+                }
+                lblLines.setText(linesLbl);
+
+                final String charactersLbl = CHARACTERS_TITLE
                         + " "
-                        + getIntValueForLabel(display.getLineFrom())
+                        + getLongValueForLabel(display.getCharOffsetFrom(), ZERO_TO_ONE_BASE_INCREMENT)
                         + " to "
-                        + getIntValueForLabel(display.getLineTo());
+                        + getLongValueForLabel(display.getCharOffsetTo(), ZERO_TO_ONE_BASE_INCREMENT)
+                        + " of "
+                        + getLongValueForLabel(display.getTotalChars());
+
+                lblCharacters.setText(charactersLbl);
+
+                final long charFrom = display.getCharOffsetFrom().get();
+                final long charTo = display.getCharOffsetTo().get();
+
+                showHeadCharactersBtn.setEnabled(charFrom > 0);
+                advanceCharactersBackwardBtn.setEnabled(charFrom > 0);
+
+                advanceCharactersForwardBtn.setEnabled(
+                        charTo < display.getTotalChars()
+                                .asOptional()
+                                .map(total -> total - 1)
+                                .orElse(Long.MAX_VALUE));
+
+            } else {
+                // No char range, must be an error
+                lblLines.setText(LINES_TITLE + " 0 to 0");
+                lblCharacters.setText(CHARACTERS_TITLE
+                        + " 0 to 0 of "
+                        + getLongValueForLabel(display.getTotalChars()));
+                showHeadCharactersBtn.setEnabled(false);
+                advanceCharactersBackwardBtn.setEnabled(false);
+                advanceCharactersForwardBtn.setEnabled(false);
+                refreshBtn.setEnabled(false);
             }
-            lblLines.setText(linesLbl);
-
-            final String charactersLbl = CHARACTERS_TITLE
-                    + " "
-                    + getLongValueForLabel(display.getCharOffsetFrom(), ZERO_TO_ONE_BASE_INCREMENT)
-                    + " to "
-                    + getLongValueForLabel(display.getCharOffsetTo(), ZERO_TO_ONE_BASE_INCREMENT)
-                    + " of "
-                    + getLongValueForLabel(display.getTotalChars());
-
-            lblCharacters.setText(charactersLbl);
-
-            final long charFrom = display.getCharOffsetFrom().get();
-            final long charTo = display.getCharOffsetTo().get();
-
-            showHeadCharactersBtn.setEnabled(charFrom > 0);
-            advanceCharactersBackwardBtn.setEnabled(charFrom > 0);
-
-            advanceCharactersForwardBtn.setEnabled(
-                    charTo < display.getTotalChars()
-                            .asOptional()
-                            .map(total -> total - 1)
-                            .orElse(Long.MAX_VALUE));
-
             setCharactersControlVisibility(true);
         } else {
             setCharactersControlVisibility(false);
@@ -148,6 +161,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     }
 
     private void setCharactersControlVisibility(final boolean isVisible) {
+        lblLines.setVisible(isVisible);
         lblCharacters.setVisible(isVisible);
         showHeadCharactersBtn.setVisible(isVisible);
         advanceCharactersBackwardBtn.setVisible(isVisible);

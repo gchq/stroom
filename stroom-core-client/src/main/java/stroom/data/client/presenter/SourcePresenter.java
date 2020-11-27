@@ -358,24 +358,25 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         || exactCharCount == null) {
                     exactCharCount = fetchDataResult.getTotalCharacterCount();
                 }
+                // hold this separately as we may change the highlight without fetching new data
+                currentHighlight = receivedSourceLocation.getHighlight();
             } else {
                 exactCharCount = null;
+                currentHighlight = null;
             }
 
-            lastResult = (FetchDataResult) result;
-            // hold this separately as we may change the highlight without fetching new data
-            currentHighlight = receivedSourceLocation.getHighlight();
-
+            lastResult = fetchDataResult;
             setTitle(lastResult);
             classificationUiHandlers.setClassification(result.getClassification());
 
             updateEditor();
-
             updateNavigator(result);
             refreshProgressBar(true);
         } else {
-
-            // TODO @AT Fire alert, should never get this
+            AlertEvent.fireError(
+                    SourcePresenter.this,
+                    "Unexpected type " + result.getClass().getName(),
+                    null);
         }
     }
 
