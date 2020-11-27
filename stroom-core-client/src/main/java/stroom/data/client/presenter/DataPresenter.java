@@ -268,16 +268,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure tabs don't do anything in stepping mode.
         if (!steppingSource) {
             if (tab != null) {
-                errorMarkerMode = null;
+                // Clear the text presenter while we wait for the new data to come down
+                textPresenter.setText(null);
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {
                     setActiveTab(infoTab, null);
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
-//                    getView().getTabBar().selectTab(infoTab);
                     showHtmlPresenter();
                     fetchMetaInfoData(getCurrentMetaId());
                     getView().setSourceLinkVisible(false);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
+                    refreshTextPresenterContent();
                 } else {
                     getView().setSourceLinkVisible(true);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
@@ -305,7 +306,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
                         fetchDataForCurrentStreamNo(null);
                     }
-                    refreshProgressBar(true);
                 }
                 lastTabName = tab.getLabel();
             }
@@ -317,22 +317,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
            final String tabName = tabData.getLabel();
            if (INFO_TAB_NAME.equals(tabName)) {
                editorMode = AceEditorMode.TEXT;
-               refreshTextPresenterContent();
            } else if (isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
                // Not a text editor
            } else if (!isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
                editorMode = AceEditorMode.TEXT;
-               refreshTextPresenterContent();
            } else if (StreamTypeNames.META.equals(streamType)) {
                editorMode = AceEditorMode.PROPERTIES;
-               refreshTextPresenterContent();
            } else if (StreamTypeNames.CONTEXT.equals(streamType)) {
                editorMode = AceEditorMode.XML;
-               refreshTextPresenterContent();
            } else {
                // Default to xml mode
                editorMode = AceEditorMode.XML;
-               refreshTextPresenterContent();
            }
        }
     }
@@ -617,14 +612,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             itemNavigatorPresenter.setRefreshing(true);
 
             // Create the action queue and delayed refresh timer if we haven't
-            // already.
+            // already. This allows the user to hit the next/prev btn multiple times without
+            // sending a request for each. The downside is that is makes the page slower
             ensureActionQueue();
 
             // Add the action and schedule the timer.
             actionQueue.add(request);
             delayedFetchDataTimer.cancel();
-            delayedFetchDataTimer.schedule(250);
-
+            delayedFetchDataTimer.schedule(100);
         } else {
             clear(fireEvents);
         }
