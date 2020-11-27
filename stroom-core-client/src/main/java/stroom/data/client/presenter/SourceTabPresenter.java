@@ -33,7 +33,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.FILE;
+        return SvgPresets.FILE_RAW;
     }
 
     @Override

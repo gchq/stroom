@@ -41,6 +41,8 @@ public final class SvgPresets {
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
     public static final SvgPreset FILE = new SvgPreset("images/file.svg", "File", true);
+    public static final SvgPreset FILE_RAW = new SvgPreset("images/file-raw.svg", "Raw File", true);
+    public static final SvgPreset FILE_FORMATTED = new SvgPreset("images/file-formatted.svg", "Formatted File", true);
     public static final SvgPreset FILTER = new SvgPreset("images/filter.svg", "Filter", true);
     public static final SvgPreset FOLDER = new SvgPreset("images/folder.svg", "Folder", true);
     public static final SvgPreset FOLDER_TREE = new SvgPreset("images/folder-tree.svg", "Folder Tree", true);

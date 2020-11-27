@@ -33,7 +33,7 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
 
     @Override
     public Icon getIcon() {
-        return SvgPresets.FILE;
+        return SvgPresets.FILE_FORMATTED;
     }
 
     @Override
