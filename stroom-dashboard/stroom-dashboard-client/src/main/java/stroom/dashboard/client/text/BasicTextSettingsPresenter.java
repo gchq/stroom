@@ -86,7 +86,7 @@ public class BasicTextSettingsPresenter
     private void addFieldNames(final Component component, final List<Field> allFields) {
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Field> fields = tablePresenter.getSettings().getFields();
+            final List<Field> fields = tablePresenter.getTableSettings().getFields();
             if (fields != null && fields.size() > 0) {
                 for (final Field field : fields) {
                     allFields.add(field);

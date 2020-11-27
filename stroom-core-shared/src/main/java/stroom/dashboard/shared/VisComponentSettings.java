@@ -29,11 +29,11 @@ import java.util.Objects;
 @JsonPropertyOrder({"tableId", "visualisation", "json", "tableSettings"})
 @JsonInclude(Include.NON_NULL)
 public class VisComponentSettings implements ComponentSettings {
-    @JsonProperty("tableId")
+    @JsonProperty
     private final String tableId;
-    @JsonProperty("visualisation")
+    @JsonProperty
     private final DocRef visualisation;
-    @JsonProperty("json")
+    @JsonProperty
     private final String json;
     @JsonProperty
     private final TableComponentSettings tableSettings;

@@ -100,7 +100,7 @@ public class RenameFieldPresenter
                 // are renamed too.
                 tablePresenter.handleFieldRename(field.getName(), newFieldName);
 
-                final boolean isNameInUse = tablePresenter.getSettings()
+                final boolean isNameInUse = tablePresenter.getTableSettings()
                         .getFields()
                         .stream()
                         .map(Field::getName)

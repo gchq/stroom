@@ -144,8 +144,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
-
-    private TableComponentSettings tableSettings;
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private final Set<String> usedFieldIds = new HashSet<>();
@@ -276,7 +274,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(), getSettings(), dataGrid.getSelectionModel().getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), getTableSettings(), dataGrid.getSelectionModel().getSelectedItems());
             }
         }));
     }
@@ -414,7 +412,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .dataSourceRef(activeSearch.getDataSourceRef())
                                     .expression(activeSearch.getExpression())
                                     .componentSettingsMap(activeSearch.getComponentSettingsMap())
-                                    .paramMap(activeSearch.getParamMap())
+                                    .params(activeSearch.getParams())
                                     .incremental(true)
                                     .storeHistory(false)
                                     .queryInfo(activeSearch.getQueryInfo())
@@ -453,7 +451,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> idList = annotationManager.getEventIdList(getSettings(), dataGrid.getSelectionModel().getSelectedItems());
+        final List<EventId> idList = annotationManager.getEventIdList(getTableSettings(), dataGrid.getSelectionModel().getSelectedItems());
         final boolean enabled = idList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
@@ -461,7 +459,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
-        final TableSettings tableSettings = new TableComponentSettings.Builder(this.tableSettings)
+        final TableSettings tableSettings = new TableComponentSettings.Builder(getTableSettings())
                 .buildTableSettings();
         tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
                 .tableSettings(tableSettings)
@@ -554,7 +552,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = tableSettings.showDetail();
+        final boolean showDetail = getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
                 final int group = field.getGroup();
@@ -657,9 +655,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void handleFieldRename(final String oldName,
                            final String newName) {
         if (!Objects.equals(oldName, newName)) {
-            if (tableSettings != null && tableSettings.getConditionalFormattingRules() != null) {
+            if (getTableSettings() != null && getTableSettings().getConditionalFormattingRules() != null) {
                 final AtomicBoolean wasModified = new AtomicBoolean(false);
-                tableSettings.getConditionalFormattingRules().stream()
+                getTableSettings().getConditionalFormattingRules().stream()
                         .map(ConditionalFormattingRule::getExpression)
                         .forEach(expressionOperator -> {
                             boolean wasRuleModified = renameField(expressionOperator, oldName, newName);
@@ -746,8 +744,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        if (tableSettings.getFields() == null) {
-            tableSettings = new TableComponentSettings.Builder(tableSettings).fields(new ArrayList<>()).build();
+        if (getTableSettings().getFields() == null) {
+            setSettings(new TableComponentSettings.Builder(getTableSettings()).fields(new ArrayList<>()).build());
         }
 
         // Update columns.
@@ -774,25 +772,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             // add them.
             if (requiredSpecialFields.size() > 0) {
                 // Remove all special fields as we will re-add them with the right names if there are any.
-                tableSettings.getFields().removeIf(Field::isSpecial);
+                getTableSettings().getFields().removeIf(Field::isSpecial);
 
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
-                final Version version = Version.parse(tableSettings.getModelVersion());
+                final Version version = Version.parse(getTableSettings().getModelVersion());
                 final boolean old = version.lt(CURRENT_MODEL_VERSION);
                 if (old) {
                     requiredSpecialDsFields.forEach(requiredSpecialDsField ->
-                            tableSettings.getFields().removeIf(field ->
+                            getTableSettings().getFields().removeIf(field ->
                                     !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
-                    tableSettings = new TableComponentSettings.Builder(tableSettings)
+                    setSettings(new TableComponentSettings.Builder(getTableSettings())
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
-                            .build();
+                            .build());
                 }
 
                 // Add special fields.
                 requiredSpecialFields.forEach(field ->
-                        tableSettings.getFields().add(field));
+                        getTableSettings().getFields().add(field));
             }
 
 //        GWT.log(tableSettings.getFields().stream()
@@ -838,7 +836,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
         existingColumns.clear();
 
-        final List<Field> fields = tableSettings.getFields();
+        final List<Field> fields = getTableSettings().getFields();
         addExpanderColumn();
         fieldsManager.setFieldsStartIndex(1);
 
@@ -867,17 +865,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
+        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+                .componentId(componentConfig.getId())
+                .build();
+
         ComponentSettings settings = componentConfig.getSettings();
-        if (settings instanceof TableComponentSettings) {
-            tableSettings = (TableComponentSettings) settings;
-        } else {
-            tableSettings = createSettings();
+        if (!(settings instanceof TableComponentSettings)) {
+            setSettings(createSettings());
         }
 
         // Ensure all fields have ids.
-        if (tableSettings.getFields() != null) {
+        if (getTableSettings().getFields() != null) {
             final List<Field> fields = new ArrayList<>();
-            tableSettings.getFields().forEach(field -> {
+            getTableSettings().getFields().forEach(field -> {
                 Field f = field;
                 if (field.getId() == null) {
                     f = new Field.Builder(field).id(createRandomFieldId()).build();
@@ -886,28 +886,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 }
                 fields.add(f);
             });
-            tableSettings = new TableComponentSettings.Builder(tableSettings).fields(fields).build();
+            setSettings(new TableComponentSettings.Builder(getTableSettings()).fields(fields).build());
         }
     }
 
-    @Override
-    public ComponentConfig write() {
-        ComponentConfig componentConfig = super.write();
-        return new ComponentConfig.Builder(componentConfig).settings(tableSettings).build();
+    public TableComponentSettings getTableSettings() {
+        return (TableComponentSettings) getSettings();
     }
 
     @Override
     public void link() {
-        String queryId = tableSettings.getQueryId();
+        String queryId = getTableSettings().getQueryId();
         queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
-        tableSettings = new TableComponentSettings.Builder(tableSettings).queryId(queryId).build();
+        setSettings(new TableComponentSettings.Builder(getTableSettings()).queryId(queryId).build());
         setQueryId(queryId);
     }
 
     @Override
     protected void changeSettings() {
         super.changeSettings();
-        setQueryId(tableSettings.getQueryId());
+        setQueryId(getTableSettings().getQueryId());
     }
 
     @Override
@@ -917,7 +915,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final TableSettings tableSettings = new TableComponentSettings.Builder(this.tableSettings)
+        final TableSettings tableSettings = new TableComponentSettings.Builder(getTableSettings())
                 .buildTableSettings();
         return new TableResultRequest.Builder(tableResultRequest)
                 .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
@@ -951,15 +949,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public List<TableRow> getSelectedRows() {
         return dataGrid.getSelectionModel().getSelectedItems();
-    }
-
-    @Override
-    public TableComponentSettings getSettings() {
-        return this.tableSettings;
-    }
-
-    public void setSettings(final TableComponentSettings tableSettings) {
-        this.tableSettings = tableSettings;
     }
 
     private TableComponentSettings createSettings() {
@@ -1003,7 +992,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final String fieldName = field.getName();
                 String suffix = "";
                 int count = 1;
-                final Set<String> currentFields = tableSettings.getFields().stream().map(Field::getName).collect(Collectors.toSet());
+                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(Collectors.toSet());
                 while (currentFields.contains(fieldName + suffix)) {
                     count++;
                     suffix = " " + count;

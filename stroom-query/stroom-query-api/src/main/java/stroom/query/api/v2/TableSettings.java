@@ -124,7 +124,7 @@ public final class TableSettings {
 
     public boolean extractValues() {
         if (extractValues == null) {
-            return false;
+            return true;
         }
         return extractValues;
     }
@@ -263,7 +263,11 @@ public final class TableSettings {
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
         public Builder extractValues(final Boolean value) {
-            this.extractValues = value;
+            if (value != null && value) {
+                this.extractValues = null;
+            } else {
+                this.extractValues = Boolean.FALSE;
+            }
             return this;
         }
 

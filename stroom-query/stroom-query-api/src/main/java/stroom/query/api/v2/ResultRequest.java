@@ -26,8 +26,10 @@ import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @JsonPropertyOrder({"componentId", "mappings", "requestedRange", "openGroups", "resultStyle", "fetch"})
 @JsonInclude(Include.NON_NULL)
@@ -53,7 +55,7 @@ public final class ResultRequest {
             value = "TODO",
             required = true)
     @JsonProperty
-    private final List<String> openGroups;
+    private final Set<String> openGroups;
 
     @ApiModelProperty(
             value = "The style of results required. FLAT will provide a FlatResult object, while TABLE will " +
@@ -72,7 +74,7 @@ public final class ResultRequest {
     public ResultRequest(@JsonProperty("componentId") final String componentId,
                          @JsonProperty("mappings") final List<TableSettings> mappings,
                          @JsonProperty("requestedRange") final OffsetRange requestedRange,
-                         @JsonProperty("openGroups") final List<String> openGroups,
+                         @JsonProperty("openGroups") final Set<String> openGroups,
                          @JsonProperty("resultStyle") final ResultStyle resultStyle,
                          @JsonProperty("fetch") final Fetch fetch) {
         this.componentId = componentId;
@@ -95,7 +97,7 @@ public final class ResultRequest {
         return requestedRange;
     }
 
-    public List<String> getOpenGroups() {
+    public Set<String> getOpenGroups() {
         return openGroups;
     }
 
@@ -164,7 +166,7 @@ public final class ResultRequest {
 
         private OffsetRange requestedRange;
 
-        private List<String> openGroups;
+        private Set<String> openGroups;
 
         private ResultRequest.ResultStyle resultStyle;
 
@@ -207,7 +209,7 @@ public final class ResultRequest {
          */
         public Builder addOpenGroups(final String... values) {
             if (values.length > 0 && openGroups == null) {
-                openGroups = new ArrayList<>();
+                openGroups = new HashSet<>();
             }
 
             this.openGroups.addAll(Arrays.asList(values));

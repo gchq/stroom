@@ -59,11 +59,11 @@ public class SearchResponseMapper {
                     .collect(Collectors.joining("\n"));
         }
 
-        Map<String, Result> results = null;
+        List<Result> results = null;
         if (searchResponse.getResults() != null) {
-            results = new HashMap<>();
+            results = new ArrayList<>();
             for (final Result result : searchResponse.getResults()) {
-                results.put(result.getComponentId(), mapResult(result));
+                results.add(mapResult(result));
             }
         }
 

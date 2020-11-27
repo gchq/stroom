@@ -40,7 +40,6 @@ import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -53,7 +52,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -76,15 +74,13 @@ public class SearchRequestMapper {
             return null;
         }
 
-        final stroom.query.api.v2.SearchRequest copy = new SearchRequest.Builder()
+        return new SearchRequest.Builder()
                 .key(new QueryKey(queryKey.getUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
                 .dateTimeLocale(searchRequest.getDateTimeLocale())
                 .incremental(searchRequest.getSearch().isIncremental())
                 .build();
-
-        return copy;
     }
 
     private Query mapQuery(final stroom.dashboard.shared.SearchRequest searchRequest) {
@@ -94,14 +90,14 @@ public class SearchRequestMapper {
 
         Param searchExpressionParam = null;
         List<Param> params = null;
-        if (searchRequest.getSearch().getParamMap() != null && searchRequest.getSearch().getParamMap().size() > 0) {
-            params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
-            for (final Entry<String, String> entry : searchRequest.getSearch().getParamMap().entrySet()) {
-                final Param param = new Param(entry.getKey(), entry.getValue());
-                if (EXPRESSION_JSON_PARAM_KEY.equals(param.getKey()))
+        if (searchRequest.getSearch().getParams() != null && searchRequest.getSearch().getParams().size() > 0) {
+            params = new ArrayList<>(searchRequest.getSearch().getParams().size());
+            for (final Param param : searchRequest.getSearch().getParams()) {
+                if (EXPRESSION_JSON_PARAM_KEY.equals(param.getKey())) {
                     searchExpressionParam = param;
-                else
+                } else {
                     params.add(param);
+                }
             }
         }
 
@@ -115,8 +111,7 @@ public class SearchRequestMapper {
                 final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson, ExpressionOperator.class);
                 ExpressionOperator expression = new ExpressionOperator(true, ExpressionOperator.Op.AND,
                         searchRequest.getSearch().getExpression(), suppliedExpression);
-                final Query query = new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
-                return query;
+                return new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
 
             } catch (IOException ex) {
                 throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
@@ -226,43 +221,43 @@ public class SearchRequestMapper {
 //
 //        return list;
 //    }
-
-    private List<Integer> mapIntArray(final int[] arr) {
-        if (arr == null || arr.length == 0) {
-            return null;
-        }
-
-        final List<Integer> copy = new ArrayList<>(arr.length);
-        for (int i = 0; i < arr.length; i++) {
-            copy.add(arr[i]);
-        }
-
-        return copy;
-    }
-
-    private <T> List<T> mapCollection(final Class<T> clazz, final Collection<T> collection) {
-        if (collection == null || collection.size() == 0) {
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        List<T> copy = new ArrayList<>(collection.size());
-        int i = 0;
-        for (final T t : collection) {
-            copy.add(t);
-        }
-
-        return copy;
-    }
-
-    private stroom.query.api.v2.OffsetRange mapOffsetRange(final OffsetRange<Integer> offsetRange) {
-        if (offsetRange == null) {
-            return null;
-        }
-
-        return new stroom.query.api.v2.OffsetRange(offsetRange.getOffset(), offsetRange.getLength());
-    }
-
+//
+//    private List<Integer> mapIntArray(final int[] arr) {
+//        if (arr == null || arr.length == 0) {
+//            return null;
+//        }
+//
+//        final List<Integer> copy = new ArrayList<>(arr.length);
+//        for (int i = 0; i < arr.length; i++) {
+//            copy.add(arr[i]);
+//        }
+//
+//        return copy;
+//    }
+//
+//    private <T> List<T> mapCollection(final Class<T> clazz, final Collection<T> collection) {
+//        if (collection == null || collection.size() == 0) {
+//            return null;
+//        }
+//
+//        @SuppressWarnings("unchecked")
+//        List<T> copy = new ArrayList<>(collection.size());
+//        int i = 0;
+//        for (final T t : collection) {
+//            copy.add(t);
+//        }
+//
+//        return copy;
+//    }
+//
+//    private stroom.query.api.v2.OffsetRange mapOffsetRange(final OffsetRange<Integer> offsetRange) {
+//        if (offsetRange == null) {
+//            return null;
+//        }
+//
+//        return new stroom.query.api.v2.OffsetRange(offsetRange.getOffset(), offsetRange.getLength());
+//    }
+//
 //    private stroom.query.api.v2.Sort mapSort(final Sort sort) {
 //        if (sort == null) {
 //            return null;
@@ -625,7 +620,7 @@ public class SearchRequestMapper {
                 for (final Tab tab : visSettings.getTabs()) {
                     if (tab.getControls() != null) {
                         for (final Control control : tab.getControls()) {
-                            if (control.getId() != null && control != null) {
+                            if (control != null && control.getId() != null) {
                                 controls.put(control.getId(), control);
                             }
                         }

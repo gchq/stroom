@@ -164,7 +164,7 @@ public class FieldsManager implements HeadingListener {
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Field field = getField(fromIndex);
         if (field != null) {
-            final List<Field> fields = tablePresenter.getSettings().getFields();
+            final List<Field> fields = tablePresenter.getTableSettings().getFields();
             fields.remove(field);
 
             final int destIndex = toIndex - fieldsStartIndex;
@@ -190,7 +190,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private void changeSort(final Field field, final SortDirection direction) {
-        final List<Field> fields = tablePresenter.getSettings().getFields();
+        final List<Field> fields = tablePresenter.getTableSettings().getFields();
         boolean change = false;
 
         if (direction == null) {
@@ -306,15 +306,15 @@ public class FieldsManager implements HeadingListener {
     }
 
     private List<Field> getFields() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getSettings().getFields() != null) {
-            return new ArrayList<>(tablePresenter.getSettings().getFields());
+        if (tablePresenter.getSettings() != null && tablePresenter.getTableSettings().getFields() != null) {
+            return new ArrayList<>(tablePresenter.getTableSettings().getFields());
         }
         return new ArrayList<>();
     }
 
     private void updateFields(final List<Field> fields) {
         tablePresenter.setSettings(
-                new TableComponentSettings.Builder(tablePresenter.getSettings())
+                new TableComponentSettings.Builder(tablePresenter.getTableSettings())
                         .fields(fields)
                         .build());
     }

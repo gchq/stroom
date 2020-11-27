@@ -120,7 +120,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView warningsButton;
 
     private String params;
-    private QueryComponentSettings queryComponentSettings;
     private String currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
@@ -243,7 +242,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 favouritesPresenter.show(
                         QueryPresenter.this,
                         getComponents().getDashboard().getUuid(),
-                        queryComponentSettings.getDataSource(),
+                        getQuerySettings().getDataSource(),
                         root);
 
             }
@@ -290,7 +289,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             deleteItemButton.setTitle("Delete");
         }
 
-        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+        final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
             downloadQueryButton.setEnabled(false);
@@ -321,12 +320,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         expressionPresenter.init(restFactory, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(queryComponentSettings.getDataSource(), dataSourceRef);
+        builder.append(getQuerySettings().getDataSource(), dataSourceRef);
 
         if (!builder.isEquals()) {
-            queryComponentSettings = new QueryComponentSettings.Builder(queryComponentSettings)
+            setSettings(new QueryComponentSettings.Builder(getQuerySettings())
                     .dataSource(dataSourceRef)
-                    .build();
+                    .build());
             setDirty(true);
         }
 
@@ -342,7 +341,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void addTerm() {
-        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+        final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -370,7 +369,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final ExpressionOperator root = expressionPresenter.write();
 
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(queryComponentSettings.getDataSource());
+        queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
 
         final EntityChooser chooser = pipelineSelection.get();
@@ -478,7 +477,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        final DocRef dataSourceRef = queryComponentSettings.getDataSource();
+        final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -501,18 +500,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         super.read(componentConfig);
 
         final ComponentSettings settings = componentConfig.getSettings();
-        if (settings instanceof QueryComponentSettings) {
-            queryComponentSettings = (QueryComponentSettings) settings;
-        } else {
-            queryComponentSettings = new QueryComponentSettings.Builder()
-                    .build();
+        if (!(settings instanceof QueryComponentSettings)) {
+            setSettings(new QueryComponentSettings.Builder()
+                    .build());
         }
 
-        if (queryComponentSettings.getAutomate() == null) {
+        if (getQuerySettings().getAutomate() == null) {
             final Automate automate = new Automate.Builder().build();
-            this.queryComponentSettings = new QueryComponentSettings.Builder(queryComponentSettings)
+            setSettings(new QueryComponentSettings.Builder(getQuerySettings())
                     .automate(automate)
-                    .build();
+                    .build());
         }
 
         // Create and register the search model.
@@ -521,10 +518,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
-        loadDataSource(queryComponentSettings.getDataSource());
+        loadDataSource(getQuerySettings().getDataSource());
 
         // Read expression.
-        ExpressionOperator root = queryComponentSettings.getExpression();
+        ExpressionOperator root = getQuerySettings().getExpression();
         if (root == null) {
             root = new ExpressionOperator.Builder(Op.AND).build();
         }
@@ -534,12 +531,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public ComponentConfig write() {
         // Write expression.
-        queryComponentSettings = new QueryComponentSettings.Builder(queryComponentSettings)
+        setSettings(new QueryComponentSettings.Builder(getQuerySettings())
                 .expression(expressionPresenter.write())
-                .build();
+                .build());
+        return super.write();
+    }
 
-        ComponentConfig componentConfig = super.write();
-        return new ComponentConfig.Builder(componentConfig).settings(queryComponentSettings).build();
+    private QueryComponentSettings getQuerySettings() {
+        return (QueryComponentSettings) getSettings();
     }
 
     @Override
@@ -556,7 +555,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (!initialised) {
             initialised = true;
             // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
-            final Automate automate = queryComponentSettings.getAutomate();
+            final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
             }
@@ -566,7 +565,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public void changeSettings() {
         super.changeSettings();
-        loadDataSource(queryComponentSettings.getDataSource());
+        loadDataSource(getQuerySettings().getDataSource());
     }
 
     @Override
@@ -603,7 +602,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
         autoRefreshTimer = null;
 
-        final Automate automate = queryComponentSettings.getAutomate();
+        final Automate automate = getQuerySettings().getAutomate();
         if (automate.isRefresh()) {
             try {
                 final String interval = automate.getRefreshInterval();
@@ -676,7 +675,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void downloadQuery() {
-        if (queryComponentSettings.getDataSource() != null) {
+        if (getQuerySettings().getDataSource() != null) {
 
             final SearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),

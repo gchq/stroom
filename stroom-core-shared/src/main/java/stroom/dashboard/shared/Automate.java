@@ -29,10 +29,8 @@ import java.util.Objects;
 public class Automate {
     @JsonProperty("open")
     private final boolean open;
-
     @JsonProperty("refresh")
     private final boolean refresh;
-
     @JsonProperty("refreshInterval")
     private final String refreshInterval;
 

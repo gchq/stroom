@@ -31,6 +31,7 @@ import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableSettings;
@@ -109,15 +110,13 @@ public class SearchRequestTestData {
         Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
         componentSettingsMap.put(componentId, tableSettings);
 
-        Map<String, String> paramMap = new HashMap<>();
-        paramMap.put("param1", "val1");
-        paramMap.put("param2", "val2");
+        final List<Param> params = List.of(new Param("param1", "val1"), new Param("param2", "val2"));
 
         final Search search = new Search.Builder()
                 .dataSourceRef(docRef)
                 .expression(expressionOperator.build())
                 .componentSettingsMap(componentSettingsMap)
-                .paramMap(paramMap)
+                .params(params)
                 .incremental(true)
                 .storeHistory(false)
                 .build();

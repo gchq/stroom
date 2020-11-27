@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TabConfig;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -84,6 +85,16 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         return componentConfig;
     }
 
+    public ComponentSettings getSettings() {
+        return componentConfig.getSettings();
+    }
+
+    public void setSettings(final ComponentSettings componentSettings) {
+        componentConfig = new ComponentConfig.Builder(componentConfig)
+                .settings(componentSettings)
+                .build();
+    }
+
     @Override
     public void setComponentName(final String name) {
         componentConfig = new ComponentConfig.Builder(componentConfig)
@@ -103,7 +114,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
                 if (ok) {
                     if (settingsPresenter.validate()) {
                         final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                        settingsPresenter.write(componentConfig);
+                        componentConfig = settingsPresenter.write(componentConfig);
 
                         if (dirty) {
                             changeSettings();

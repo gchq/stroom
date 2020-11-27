@@ -21,14 +21,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class SearchRequest implements Serializable {
-    private static final long serialVersionUID = -6668626615097471925L;
-
+public class SearchRequest {
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty

@@ -77,10 +77,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -421,7 +418,8 @@ class DashboardResourceImpl implements DashboardResource {
         SearchResponse result;
 
         boolean newSearch = false;
-        final Search search = searchRequest.getSearch();
+        SearchRequest updatedSearchRequest = searchRequest;
+        Search search = updatedSearchRequest.getSearch();
 
         try {
             synchronized (DashboardResourceImpl.class) {
@@ -458,18 +456,17 @@ class DashboardResourceImpl implements DashboardResource {
                                     "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
             // Add a param for `currentUser()`
-            if (searchRequest.getSearch() != null) {
-                Map<String, String> paramMap = searchRequest.getSearch().getParamMap();
-                if (paramMap != null) {
-                    paramMap = new HashMap<>(paramMap);
-                } else {
-                    paramMap = new HashMap<>();
-                }
-                paramMap.put("currentUser()", securityContext.getUserId());
-                searchRequest.getSearch().setParamMap(paramMap);
+            List<Param> params = search.getParams();
+            if (params != null) {
+                params = new ArrayList<>(params);
+            } else {
+                params = new ArrayList<>();
             }
+            params.add(new Param("currentUser()", securityContext.getUserId()));
+            search = new Search.Builder(search).params(params).build();
+            updatedSearchRequest = new SearchRequest.Builder(updatedSearchRequest).search(search).build();
 
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
@@ -501,16 +498,7 @@ class DashboardResourceImpl implements DashboardResource {
             try {
                 // Add this search to the history so the user can get back to
                 // this search again.
-                List<Param> params;
-                if (search.getParamMap() != null && search.getParamMap().size() > 0) {
-                    params = new ArrayList<>(search.getParamMap().size());
-                    for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
-                        params.add(new Param(entry.getKey(), entry.getValue()));
-                    }
-                } else {
-                    params = null;
-                }
-
+                final List<Param> params = search.getParams();
                 final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
 
                 final StoredQuery storedQuery = new StoredQuery();

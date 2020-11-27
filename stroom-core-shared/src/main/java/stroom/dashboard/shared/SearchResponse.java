@@ -16,16 +16,16 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.Result;
+import stroom.util.shared.ToStringBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import stroom.query.api.v2.Result;
-import stroom.util.shared.ToStringBuilder;
-
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -59,14 +59,14 @@ public class SearchResponse {
     private final boolean complete;
 
     @JsonProperty
-    private final Map<String, Result> results;
+    private final List<Result> results;
 
     @JsonCreator
     public SearchResponse(@JsonProperty("queryKey") final DashboardQueryKey queryKey,
                           @JsonProperty("highlights") final Set<String> highlights,
                           @JsonProperty("errors") final String errors,
                           @JsonProperty("complete") final boolean complete,
-                          @JsonProperty("results") final Map<String, Result> results) {
+                          @JsonProperty("results") final List<Result> results) {
         this.queryKey = queryKey;
         this.highlights = highlights;
         this.errors = errors;
@@ -90,7 +90,7 @@ public class SearchResponse {
         return complete;
     }
 
-    public Map<String, Result> getResults() {
+    public List<Result> getResults() {
         return results;
     }
 

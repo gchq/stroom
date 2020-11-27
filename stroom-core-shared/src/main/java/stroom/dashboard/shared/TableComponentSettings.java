@@ -124,7 +124,7 @@ public class TableComponentSettings implements ComponentSettings {
 
     public boolean extractValues() {
         if (extractValues == null) {
-            return false;
+            return true;
         }
         return extractValues;
     }
@@ -262,7 +262,11 @@ public class TableComponentSettings implements ComponentSettings {
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
         public Builder extractValues(final Boolean value) {
-            this.extractValues = value;
+            if (value != null && value) {
+                this.extractValues = null;
+            } else {
+                this.extractValues = Boolean.FALSE;
+            }
             return this;
         }
 

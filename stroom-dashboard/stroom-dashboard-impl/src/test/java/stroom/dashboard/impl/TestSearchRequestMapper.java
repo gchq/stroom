@@ -46,8 +46,8 @@ class TestSearchRequestMapper {
     private static void verify_Search_to_Query_mapping(Search search, Query query) {
         assertThat(search.getDataSourceRef()).isEqualTo(query.getDataSource());
         assertThat(search.getExpression()).isEqualTo(query.getExpression());
-        assertThat(search.getParamMap().size()).isEqualTo(query.getParams().size());
-        assertThat(search.getParamMap().get("param1")).isEqualTo(query.getParams().get(0).getValue());
+        assertThat(search.getParams().size()).isEqualTo(query.getParams().size());
+        assertThat(search.getParams().get(0).getValue()).isEqualTo(query.getParams().get(0).getValue());
         // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
     }
 

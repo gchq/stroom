@@ -59,9 +59,9 @@ public class TextComponentSettings implements ComponentSettings {
     private final Field lineToField;
     @JsonProperty
     private final Field colToField;
-    @JsonProperty("pipeline")
+    @JsonProperty
     private final DocRef pipeline;
-    @JsonProperty("showAsHtml")
+    @JsonProperty
     private final boolean showAsHtml;
     @JsonProperty
     private final boolean showStepping;
