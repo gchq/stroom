@@ -59,7 +59,6 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataPresenter = dataPresenter;
-        dataPresenter.setFormatOnLoad(true);
         dataPresenter.setNavigationControlsVisible(false);
         // It is not in its own dialog but is part of this one and this will determine how the
         // source view is opened if the user clicks that

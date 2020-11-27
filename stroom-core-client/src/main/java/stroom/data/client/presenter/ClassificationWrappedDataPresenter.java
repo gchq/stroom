@@ -52,10 +52,6 @@ public class ClassificationWrappedDataPresenter
         this.sourceLocation = null;
     }
 
-    public void setFormatOnLoad(final boolean formatOnLoad) {
-        dataPresenter.setFormatOnLoad(formatOnLoad);
-    }
-
     public void setNavigationControlsVisible(final boolean visible) {
         dataPresenter.setNavigationControlsVisible(visible);
     }

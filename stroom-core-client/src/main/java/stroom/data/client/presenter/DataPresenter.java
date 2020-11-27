@@ -155,7 +155,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
-    private boolean formatOnLoad;
     private boolean ignoreActions;
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
     private String lastTabName;
@@ -888,9 +887,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         textPresenter.setMode(editorMode);
         // Only want to try to format (which formats as XML) if we know the
         // data is likely to be XML, else it can mess up the formatting of error text.
-        boolean isFormatted = formatOnLoad && AceEditorMode.XML.equals(editorMode);
-
-        textPresenter.setText(data, isFormatted);
+        textPresenter.setText(data, AceEditorMode.XML.equals(editorMode));
         textPresenter.setControlsVisible(playButtonVisible);
     }
 
@@ -950,10 +947,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
-    }
-
-    public void setFormatOnLoad(final boolean formatOnLoad) {
-        this.formatOnLoad = formatOnLoad;
     }
 
     public void setNavigationControlsVisible(final boolean visible) {

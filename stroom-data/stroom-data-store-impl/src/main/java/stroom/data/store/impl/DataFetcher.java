@@ -69,6 +69,7 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.Summary;
+import stroom.util.shared.TextRange;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -800,6 +801,7 @@ public class DataFetcher {
         // The range returned may differ to that requested if we have continued to the end of the line
         final DataRange actualDataRange;
         final String charData;
+        final TextRange highlight;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
@@ -812,9 +814,11 @@ public class DataFetcher {
                             .orElseThrow())
                     .withLength((long) charData.length())
                     .build();
+            highlight = sourceLocation.getHighlight();
         } else {
             actualDataRange = null;
             charData = "Error: Requested range not found";
+            highlight = null;
         }
 
         // Define the range that we are actually returning, which may be bigger or smaller than requested
@@ -823,7 +827,7 @@ public class DataFetcher {
                 .withPartNo(sourceLocation.getPartNo())
                 .withChildStreamType(sourceLocation.getOptChildType()
                         .orElse(null))
-                .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
+                .withHighlight(highlight) // pass the requested highlight back
                 .withDataRange(actualDataRange);
 
         if (segmentNumber != null) {

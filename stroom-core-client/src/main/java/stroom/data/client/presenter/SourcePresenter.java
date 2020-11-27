@@ -358,12 +358,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         || exactCharCount == null) {
                     exactCharCount = fetchDataResult.getTotalCharacterCount();
                 }
-                // hold this separately as we may change the highlight without fetching new data
-                currentHighlight = receivedSourceLocation.getHighlight();
             } else {
                 exactCharCount = null;
                 currentHighlight = null;
             }
+            // hold this separately as we may change the highlight without fetching new data
+            currentHighlight = receivedSourceLocation != null
+                    ? receivedSourceLocation.getHighlight()
+                    : null;
 
             lastResult = fetchDataResult;
             setTitle(lastResult);

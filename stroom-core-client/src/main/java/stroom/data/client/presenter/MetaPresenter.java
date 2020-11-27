@@ -106,7 +106,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         setInSlot(DATA, dataPresenter);
 
         dataPresenter.setBeginSteppingHandler(this);
-        dataPresenter.setFormatOnLoad(true);
 
         // Process
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
