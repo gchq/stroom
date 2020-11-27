@@ -91,7 +91,7 @@ class TableSettingsBuilderTest {
                 .extractionPipeline(extractPipelineType, extractPipelineUuid, extractPipelineName)
                 .build();
 
-        assertThat(tableSettings.getExtractValues()).isEqualTo(extractValues);
+        assertThat(tableSettings.extractValues()).isEqualTo(extractValues);
         assertThat(tableSettings.getShowDetail()).isEqualTo(showDetail);
         assertThat(tableSettings.getQueryId()).isEqualTo(queryId);
 
