@@ -851,7 +851,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    private DataSourceFieldsMap getIndexFieldsMap() {
+    DataSourceFieldsMap getIndexFieldsMap() {
         if (currentSearchModel != null
                 && currentSearchModel.getIndexLoader() != null
                 && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
@@ -999,7 +999,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public Set<String> getHighlights() {
-        if (currentSearchModel != null && currentSearchModel.getCurrentResult() != null
+        if (currentSearchModel != null
+                && currentSearchModel.getCurrentResult() != null
                 && currentSearchModel.getCurrentResult().getHighlights() != null) {
             return currentSearchModel.getCurrentResult().getHighlights();
         }

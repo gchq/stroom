@@ -37,6 +37,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 class FsPathHelper {
     /**
@@ -274,6 +276,28 @@ class FsPathHelper {
         builder.append(".");
         builder.append(getFileStoreType(streamTypeName));
         return Paths.get(builder.toString());
+    }
+
+    String decodeStreamType(final Path path) {
+        Objects.requireNonNull(path);
+
+        final Pattern internalTypesPattern = Pattern.compile("\\.(" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.BOUNDARY_INDEX) + "|" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.SEGMENT_INDEX) + "|" +
+                StreamTypeExtensions.getExtension(InternalStreamTypeNames.MANIFEST) + ")");
+
+        // remove the internal types e.g. .revt.bdy. => .revt.
+        final String pathStr = internalTypesPattern.matcher(path.toString())
+                .replaceFirst("");
+
+        final String[] splits = pathStr.split("\\.");
+
+        if (splits.length >= 3) {
+            final String typeExt = splits[splits.length - 2];
+            return StreamTypeExtensions.getType(typeExt);
+        } else {
+            throw new RuntimeException("Unable to extract type from " + pathStr);
+        }
     }
 
     /**

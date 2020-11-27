@@ -16,21 +16,26 @@
 
 package stroom.pipeline.xml.converter.json;
 
+import stroom.pipeline.xml.converter.AbstractParser;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonTokenId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.pipeline.xml.converter.AbstractParser;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class JSONParser extends AbstractParser {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONParser.class);
+
     public static final String XML_ELEMENT_MAP = "map";
     public static final String XML_ELEMENT_ARRAY = "array";
     public static final String XML_ELEMENT_STRING = "string";
@@ -145,12 +150,11 @@ public class JSONParser extends AbstractParser {
     }
 
     private void startElement(final String elementName, final String key) throws SAXException {
+        LOGGER.trace("startElm");
         atts = EMPTY_ATTS;
         if (key != null) {
             final AttributesImpl newAtts = new AttributesImpl();
-            if (key != null) {
-                newAtts.addAttribute(EMPTY_STRING, XML_ATTRIBUTE_KEY, XML_ATTRIBUTE_KEY, XML_TYPE_STRING, key);
-            }
+            newAtts.addAttribute(EMPTY_STRING, XML_ATTRIBUTE_KEY, XML_ATTRIBUTE_KEY, XML_TYPE_STRING, key);
             atts = newAtts;
         }
 
@@ -158,6 +162,7 @@ public class JSONParser extends AbstractParser {
     }
 
     private void endElement(final String elementName) throws SAXException {
+        LOGGER.trace("endElm");
         getContentHandler().endElement(NAMESPACE, elementName, elementName);
     }
 

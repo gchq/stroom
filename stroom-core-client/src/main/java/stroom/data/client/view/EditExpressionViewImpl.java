@@ -56,7 +56,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     @Override

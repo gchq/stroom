@@ -66,6 +66,7 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 
 import org.slf4j.Logger;
@@ -564,8 +565,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
-            ComparisonHelper.compare(expectedFile, actualFile, false, true);
-            Files.deleteIfExists(actualFile);
+            boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile, 0);
+            if (areFilesTheSame) {
+                Files.deleteIfExists(actualFile);
+            } else {
+                throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)));
+            }
         } catch (final IOException | RuntimeException e) {
             exceptions.add(e);
         }

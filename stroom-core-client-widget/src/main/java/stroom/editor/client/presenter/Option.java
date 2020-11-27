@@ -21,25 +21,52 @@ public class Option {
     private String text;
     private boolean on;
     private boolean available;
+    private boolean defaultValue;
+    private boolean defaultAvailability;
 
-    public Option(final String text, final boolean on, final boolean available, final ChangeHandler changeHandler) {
+    public Option(final String text,
+                  final boolean on,
+                  final boolean available,
+                  final ChangeHandler changeHandler) {
         this.text = text;
         this.on = on;
+        this.defaultValue = on;
         this.available = available;
+        this.defaultAvailability = available;
         this.changeHandler = changeHandler;
+        // Ensure the change handler is in sync with our state
+        if (changeHandler != null) {
+            changeHandler.onChange(on);
+        }
     }
 
     public boolean isOn() {
         return on;
     }
 
-    public void setOn(final boolean on) {
-        if (this.on != on) {
+    public void setOn(final boolean on, final boolean force) {
+        if (force || this.on != on) {
             this.on = on;
             if (changeHandler != null) {
                 changeHandler.onChange(on);
             }
         }
+    }
+
+    public void setOn(final boolean on) {
+        setOn(on, false);
+    }
+
+    public void setOn() {
+        setOn(true, false);
+    }
+
+    public void setOff() {
+        setOn(false, false);
+    }
+
+    public void setToDefaultState() {
+        setOn(defaultValue, false);
     }
 
     public boolean isAvailable() {
@@ -50,11 +77,24 @@ public class Option {
         this.available = available;
     }
 
+    public void setAvailable() {
+        this.available = true;
+    }
+
+    public void setUnavailable() {
+        this.available = false;
+    }
+
+    public void setToDefaultAvailability() {
+        setAvailable(defaultAvailability);
+    }
+
     public String getText() {
         if (on) {
-            return text + " (ON)";
+            return text + " (<span style=\"color: green\">ON</span>)";
+        } else {
+            return text + " (<span style=\"color: red\">OFF</span>)";
         }
-        return text + " (OFF)";
     }
 
     public boolean isOk() {

@@ -691,6 +691,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
     /**
      * Make entryCount very big for manual performance testing or profiling
+     * 50_000 takes about 4mins and makes a 250Mb db file.
      */
     @Test
     void testBigLoadForPerfTesting() {
@@ -836,6 +837,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         List<RefStreamDefinition> refStreamDefs1 = null;
         List<RefStreamDefinition> refStreamDefs2 = null;
 
+        final Instant startInstant = Instant.now();
+
         if (doLoad) {
             LOGGER.info("-------------------------load starts here--------------------------------------");
             refStreamDefs1 = loadBulkData(
@@ -860,6 +863,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
             refStreamDefs2 = loadBulkData(
                     refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+
+            LAMBDA_LOGGER.info("Completed both loads in {}",
+                    Duration.between(startInstant, Instant.now()).toString());
         }
 
         if (doAsserts) {
@@ -1030,7 +1036,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         return IntStream.rangeClosed(1, count)
                 .boxed()
-                .map(i -> buildRefStreamDefintion(i + offset))
+                .map(i -> buildRefStreamDefinition(i + offset))
                 .collect(Collectors.toList());
     }
 
@@ -1057,6 +1063,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
+        final Instant startInstant = Instant.now();
+
         buildRefStreamDefs(refStreamDefinitionCount, refStreamDefinitionOffset)
                 .forEach(refStreamDefinition -> {
                     refStreamDefinitions.add(refStreamDefinition);
@@ -1075,10 +1083,18 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             });
                 });
 
+        LAMBDA_LOGGER.info("Loaded {} ref stream definitions in {}",
+                refStreamDefinitionCount, Duration.between(startInstant, Instant.now()).toString());
+
+        LOGGER.info("Counts:, KeyValue: {}, KeyRangeValue: {}, ProcInfo: {}",
+                refDataStore.getKeyValueEntryCount(),
+                refDataStore.getKeyRangeValueEntryCount(),
+                refDataStore.getProcessingInfoEntryCount());
+
         return refStreamDefinitions;
     }
 
-    private RefStreamDefinition buildRefStreamDefintion(final long i) {
+    private RefStreamDefinition buildRefStreamDefinition(final long i) {
         return new RefStreamDefinition(
                 FIXED_PIPELINE_UUID,
                 FIXED_PIPELINE_VERSION,

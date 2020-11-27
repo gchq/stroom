@@ -7,66 +7,111 @@
       "type" : "table",
       "queryId" : "query-JT8D7",
       "fields" : [ {
+        "id" : "table-IIO1T|C3JOV",
+        "name" : "Feed",
+        "expression" : "${Feed}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 262,
+        "visible" : true,
+        "special" : false
+      }, {
         "id" : "table-IIO1T|JTI4N",
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "sort" : {
-          "order" : 0,
-          "direction" : "DESCENDING"
+          "order" : 1,
+          "direction" : "ASCENDING"
         },
         "format" : {
           "type" : "DATE_TIME"
         },
-        "width" : 168,
+        "width" : 171,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|ZM081",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 123,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|4AC9G",
-        "name" : "Raw",
-        "expression" : "data('Raw Log',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo})",
-        "width" : 97,
+        "name" : "Preview Popup",
+        "expression" : "data('Preview',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo})",
+        "width" : 100,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|03LKG",
+        "name" : "Source Popup",
+        "expression" : "data('Source',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'source')",
+        "width" : 99,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|9LW5Z",
+        "name" : "Preview Tab",
+        "expression" : "data('Preview',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'preview', 'tab')",
+        "width" : 90,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|FYPSZ",
+        "name" : "Source Tab",
+        "expression" : "data('Source',${src-id},${src-partNo},'',${src-lineFrom},${src-colFrom},${src-lineTo},${src-colTo}, 'source', 'tab')",
+        "width" : 79,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|JF4LB",
         "name" : "src-id",
         "expression" : "${src-id}",
-        "width" : 83,
+        "width" : 50,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|KM4VR",
         "name" : "src-partNo",
-        "expression" : "${src-PartNo}",
-        "width" : 89,
+        "expression" : "${src-partNo}",
+        "width" : 72,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|DGJKJ",
         "name" : "src-recordNo",
         "expression" : "${src-recordNo}",
-        "width" : 99,
+        "width" : 89,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|4VERB",
         "name" : "src-lineFrom",
         "expression" : "${src-lineFrom}",
-        "width" : 90,
+        "width" : 81,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|2QMF7",
         "name" : "src-colFrom",
         "expression" : "${src-colFrom}",
-        "width" : 83,
+        "width" : 81,
         "visible" : true,
         "special" : false
       }, {
         "id" : "table-IIO1T|WJNZI",
         "name" : "src-lineTo",
         "expression" : "${src-lineTo}",
-        "width" : 84,
+        "width" : 70,
         "visible" : true,
         "special" : false
       }, {
@@ -77,25 +122,15 @@
         "visible" : true,
         "special" : false
       }, {
-        "id" : "table-IIO1T|ZM081",
-        "name" : "UserId",
-        "expression" : "${UserId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true,
-        "special" : false
-      }, {
-        "id" : "StreamId",
-        "name" : "StreamId",
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : false,
         "special" : true
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -107,7 +142,8 @@
         "name" : "Example extraction"
       },
       "maxResults" : [ 1000000 ],
-      "conditionalFormattingRules" : [ ]
+      "conditionalFormattingRules" : [ ],
+      "modelVersion" : "6.1.26"
     }
   }, {
     "type" : "query",
@@ -122,15 +158,21 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "OR",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "BETWEEN",
           "value" : "2020-06-01T00:00:00.000Z,2020-06-05T00:00:00.000Z"
+        }, {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2020-10-01T00:00:00.000Z,2020-10-31T00:00:00.000Z"
         } ]
       },
       "automate" : {
-        "open" : false,
+        "open" : true,
         "refresh" : false,
         "refreshInterval" : "10s"
       }
@@ -142,19 +184,20 @@
     "settings" : {
       "type" : "text",
       "streamIdField" : {
-        "name" : "StreamId",
+        "name" : "__stream_id__",
         "width" : 200,
         "visible" : true,
         "special" : false
       },
       "recordNoField" : {
-        "name" : "EventId",
+        "name" : "__event_id__",
         "width" : 200,
         "visible" : true,
         "special" : false
       },
       "showAsHtml" : false,
-      "showStepping" : true
+      "showStepping" : true,
+      "modelVersion" : "6.1.26"
     }
   }, {
     "type" : "text",
@@ -166,15 +209,15 @@
         "id" : "table-IIO1T|JF4LB",
         "name" : "src-id",
         "expression" : "${src-id}",
-        "width" : 83,
+        "width" : 50,
         "visible" : true,
         "special" : false
       },
       "partNoField" : {
         "id" : "table-IIO1T|KM4VR",
         "name" : "src-partNo",
-        "expression" : "${src-PartNo}",
-        "width" : 200,
+        "expression" : "${src-partNo}",
+        "width" : 72,
         "visible" : true,
         "special" : false
       },
@@ -182,7 +225,7 @@
         "id" : "table-IIO1T|DGJKJ",
         "name" : "src-recordNo",
         "expression" : "${src-recordNo}",
-        "width" : 200,
+        "width" : 89,
         "visible" : true,
         "special" : false
       },
@@ -190,7 +233,7 @@
         "id" : "table-IIO1T|4VERB",
         "name" : "src-lineFrom",
         "expression" : "${src-lineFrom}",
-        "width" : 200,
+        "width" : 81,
         "visible" : true,
         "special" : false
       },
@@ -198,7 +241,7 @@
         "id" : "table-IIO1T|2QMF7",
         "name" : "src-colFrom",
         "expression" : "${src-colFrom}",
-        "width" : 200,
+        "width" : 81,
         "visible" : true,
         "special" : false
       },
@@ -206,7 +249,7 @@
         "id" : "table-IIO1T|WJNZI",
         "name" : "src-lineTo",
         "expression" : "${src-lineTo}",
-        "width" : 200,
+        "width" : 70,
         "visible" : true,
         "special" : false
       },
@@ -214,12 +257,13 @@
         "id" : "table-IIO1T|ATRU5",
         "name" : "src-colTo",
         "expression" : "${src-colTo}",
-        "width" : 200,
+        "width" : 79,
         "visible" : true,
         "special" : false
       },
       "showAsHtml" : false,
-      "showStepping" : true
+      "showStepping" : true,
+      "modelVersion" : "6.1.26"
     }
   } ],
   "layout" : {
@@ -233,7 +277,7 @@
       "type" : "tabLayout",
       "preferredSize" : {
         "width" : 200,
-        "height" : 81
+        "height" : 97
       },
       "tabs" : [ {
         "id" : "query-JT8D7"
@@ -243,7 +287,7 @@
       "type" : "tabLayout",
       "preferredSize" : {
         "width" : 200,
-        "height" : 463
+        "height" : 447
       },
       "tabs" : [ {
         "id" : "table-IIO1T"

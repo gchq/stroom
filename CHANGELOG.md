@@ -7,13 +7,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix missing favicon.
+
 * Issue **#1808** : Fix bug with permission handling for Retention Policy feature.
 
 * Issue **#1948** : Made UI report errors that occur during download.
 
 * Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
 
+* Fix byte conversion bug with `read()` method in RASegmentInputStream.
+
+* Add `viewType` and `displayType` args to `data(...)` dashboard expression.
+
+* Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
+
+* Add _progress_ bar to Source Data view and Data Preview to show location in the file.
+
+* Issue **#1678** : Fix data display in dashboard text pane.
+
+* Issue **#1679** : Fix data display in dashboard text pane.
+
+* Issue **#1777** : Fix sub stream tab selection when switching streams in data screen.
+
+* Issue **#1647** : Right align numeric columns in data screen.
+
+* Issue **#1872** : Fix display of source data when data has no line breaks.
+
+* Add completion and snippets to dashboard expression builder.
+
+* Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
+
+* Replace stream Info icon on data screen with a sub-stream type tab.
+
+* Add Source View tab available from Data Preview screen to show the unformatted source data.
+
+* Fix highlighting while stepping single line data.
+
+* Add completion and snippets to edit screens using the ACE editor.
+
+* Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
+
 * Issue **#1949** : Fixed bug in download for streams from multiple feeds.
+
 
 ## [v7.0-beta.70] - 2020-11-16
 

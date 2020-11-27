@@ -648,6 +648,11 @@ public class MockStore implements Store, Clearable {
         }
 
         @Override
+        public Set<String> getChildTypes() {
+            throw new UnsupportedOperationException("TODO");
+        }
+
+        @Override
         public long count() throws IOException {
             final InputStream data = getInputStream();
             final InputStream boundaryIndex = getChildInputStream(InternalStreamTypeNames.BOUNDARY_INDEX);

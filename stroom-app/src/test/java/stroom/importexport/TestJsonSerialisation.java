@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,6 +35,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -152,6 +155,8 @@ class TestJsonSerialisation {
                     }
 
                     Assertions.assertThat(json2)
+                            .describedAs(
+                                    "%s - Checking default values on (de)serialisation", clazz.getName())
                             .isEqualTo(json1);
                 }
             }
@@ -176,8 +181,8 @@ class TestJsonSerialisation {
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {
                             Assertions.assertThat(keyType.getTypeName())
-                                    .withFailMessage(
-                                            "Bad key type, maps must have string keys")
+                                    .describedAs(
+                                            "%s - Bad key type, maps must have string keys", clazz.getName())
                                     .isEqualTo(String.class.getName());
                         }
                     }
@@ -237,15 +242,15 @@ class TestJsonSerialisation {
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(additionalGetters)
-                            .withFailMessage("Additional getters: %s", additionalGetters)
+                            .describedAs("%s - Additional getters: %s", clazz.getName(), additionalGetters)
                             .isEmpty();
 
                     softly.assertThat(additionalSetters)
-                            .withFailMessage("Additional setters: %s", additionalSetters)
+                            .describedAs("%s - Additional setters: %s", clazz.getName(), additionalSetters)
                             .isEmpty();
 
                     softly.assertThat(uselessIgnore)
-                            .withFailMessage("Useless ignore: %s", uselessIgnore)
+                            .describedAs("%s - Useless @JsonIgnore annotation: %s", clazz.getName(), uselessIgnore)
                             .isEmpty();
                 });
             }
@@ -255,7 +260,7 @@ class TestJsonSerialisation {
 
     private void dumpErrors(final Map<String, String> classErrors) {
         classErrors.forEach((className, msg) ->
-            LOGGER.error("Class {} has error: {}", className, msg));
+            LOGGER.error("Class {} has error(s): \n{}", className, msg));
     }
 
     /**
@@ -274,13 +279,31 @@ class TestJsonSerialisation {
                 final AtomicInteger jsonCreatorCount = new AtomicInteger(0);
                 final Set<String> fieldsWithoutAnnotations = new HashSet<>();
                 final Set<String> methodsWithAnnotations = new HashSet<>();
+                final Set<String> constructorPropNames = new HashSet<>();
+                final Set<String> fieldPropNames;
 
                 for (final Constructor<?> constructor : clazz.getDeclaredConstructors()) {
                     final JsonCreator jsonCreator = constructor.getAnnotation(JsonCreator.class);
                     if (jsonCreator != null) {
                         jsonCreatorCount.incrementAndGet();
+                        constructorPropNames.addAll(getConstructorPropNames(constructor));
                     }
                 }
+
+                fieldPropNames = getAllFields(clazz).stream()
+                        .filter(field -> field.getDeclaredAnnotation(JsonIgnore.class) == null
+                                && field.getDeclaredAnnotation(JsonProperty.class) != null)
+                        .map(field -> {
+                            final JsonProperty jsonProperty = field.getDeclaredAnnotation(JsonProperty.class);
+                            if (!jsonProperty.value().isEmpty()) {
+                                return jsonProperty.value();
+                            } else {
+                                return field.getName();
+                            }
+                        })
+                        .collect(Collectors.toSet());
+
+//                    LOGGER.info("{}", fieldPropNames);
 
                 final Field[] fields = clazz.getDeclaredFields();
                 for (final Field field : fields) {
@@ -303,26 +326,31 @@ class TestJsonSerialisation {
                 }
 
                 SoftAssertions.assertSoftly(softly -> {
+                    softly.assertThat(constructorPropNames)
+                            .describedAs("%s - JsonProperties defined in the constructor must have a" +
+                                    "corresponding JsonProperty on the field.", clazz.getName())
+                            .containsExactlyInAnyOrderElementsOf(fieldPropNames);
+
                     softly.assertThat(hasJsonInclude)
-                            .withFailMessage("No JsonInclude")
+                            .describedAs("%s - Missing JsonInclude annotation.", clazz.getName())
                             .isTrue();
 //                                softly.assertThat(hasJsonPropertyOrder)
 //                                        .withFailMessage("No JsonPropertyOrder")
 //                                        .isTrue();
                     softly.assertThat(jsonCreatorCount)
                             .withFailMessage(
-                                    "Should have exactly one JsonCreator, found %s",
-                                    jsonCreatorCount.get())
+                                    "%s - Should have exactly one JsonCreator, found %s",
+                                    clazz.getName(), jsonCreatorCount.get())
                             .hasValue(1);
                     softly.assertThat(fieldsWithoutAnnotations)
                             .withFailMessage(
-                                    "Fields without annotations: %s",
-                                    fieldsWithoutAnnotations)
+                                    "%s - Fields without annotations: %s",
+                                    clazz.getName(), fieldsWithoutAnnotations)
                             .isEmpty();
                     softly.assertThat(methodsWithAnnotations)
                             .withFailMessage(
-                                    "Methods with annotations: %s",
-                                    methodsWithAnnotations)
+                                    "%s - Methods with annotations: %s",
+                                    clazz.getName(), methodsWithAnnotations)
                             .isEmpty();
                 });
             }
@@ -355,6 +383,21 @@ class TestJsonSerialisation {
     }
 
 
+
+    private Set<String> getConstructorPropNames(final Constructor<?> constructor) {
+        final Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
+        final HashSet<String> propNames = new HashSet<>();
+        for (Annotation[] singleParamAnnos : parameterAnnotations) {
+            for (Annotation annotation : singleParamAnnos) {
+                if (JsonProperty.class.isAssignableFrom(annotation.annotationType())) {
+                    JsonProperty jsonProperty = (JsonProperty) annotation;
+                    propNames.add(jsonProperty.value());
+                    break;
+                }
+            }
+        }
+        return propNames;
+    }
 
     private String checkAllGettersAndSetters(final Class<?> clazz) {
         final StringBuilder sb = new StringBuilder();
@@ -608,6 +651,19 @@ class TestJsonSerialisation {
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets all @{@link JsonProperty} annotated fields on this obj and its supers
+     */
+    private <T> List<Field> getAllFields(final Class<T> clazz) {
+        final List<Field> fields = new ArrayList<>();
+        Class<?> clazz2 = clazz;
+        while (clazz2 != Object.class) {
+            fields.addAll(Arrays.asList(clazz2.getDeclaredFields()));
+            clazz2 = clazz2.getSuperclass();
+        }
+        return fields;
     }
 }
 

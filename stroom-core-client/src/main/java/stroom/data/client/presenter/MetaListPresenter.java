@@ -61,15 +61,51 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", MetaFields.RAW_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", MetaFields.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", MetaFields.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", MetaFields.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", MetaFields.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-        addAttributeColumn("Retention", DataRetentionFields.RETENTION_AGE_FIELD, Function.identity(), ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Raw",
+                MetaFields.RAW_SIZE,
+                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Disk",
+                MetaFields.FILE_SIZE,
+                v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Read",
+                MetaFields.REC_READ,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Write",
+                MetaFields.REC_WRITE,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                ColumnSizeConstants.SMALL_COL);
+        addRightAlignedAttributeColumn(
+                "Fatal",
+                MetaFields.REC_FATAL,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Error",
+                MetaFields.REC_ERROR,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Warn",
+                MetaFields.REC_WARN,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addRightAlignedAttributeColumn(
+                "Info",
+                MetaFields.REC_INFO,
+                v -> ModelStringUtil.formatCsv(Long.valueOf(v)),
+                40);
+        addAttributeColumn(
+                "Retention",
+                DataRetentionFields.RETENTION_AGE_FIELD,
+                Function.identity(),
+                ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }

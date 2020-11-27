@@ -16,12 +16,13 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.util.shared.OffsetRange;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.OffsetRange;
 
 @JsonInclude(Include.NON_NULL)
 public class VisResultRequest extends ComponentResultRequest {
@@ -36,7 +37,9 @@ public class VisResultRequest extends ComponentResultRequest {
 
     @JsonCreator
     public VisResultRequest(@JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
-                            @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange) {
+                            @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
+                            @JsonProperty("fetch") final Fetch fetch) {
+        super(fetch);
         this.visDashboardSettings = visDashboardSettings;
         this.requestedRange = requestedRange;
     }

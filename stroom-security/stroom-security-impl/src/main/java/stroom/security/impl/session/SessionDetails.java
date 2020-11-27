@@ -36,11 +36,11 @@ public class SessionDetails {
     private String nodeName;
 
     @JsonCreator
-    public SessionDetails(@JsonProperty("username") final String userName,
-                   @JsonProperty("createMs") final long createMs,
-                   @JsonProperty("lastAccessedMss") final long lastAccessedMs,
-                   @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
-                   @JsonProperty("nodeName") final String nodeName) {
+    public SessionDetails(@JsonProperty("userName") final String userName,
+                          @JsonProperty("createMs") final long createMs,
+                          @JsonProperty("lastAccessedMs") final long lastAccessedMs,
+                          @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
+                          @JsonProperty("nodeName") final String nodeName) {
         this.userName = userName;
         this.createMs = createMs;
         this.lastAccessedMs = lastAccessedMs;
