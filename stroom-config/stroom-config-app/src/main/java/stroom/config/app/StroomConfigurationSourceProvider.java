@@ -9,13 +9,18 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
 import io.dropwizard.configuration.ConfigurationSourceProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomConfigurationSourceProvider.class);
+
     private static final String CURRENT_LOG_FILENAME = "currentLogFilename:";
     private static final String ARCHIVED_LOG_FILENAME_PATTERN = "archivedLogFilenamePattern:";
 
@@ -76,12 +81,18 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                     value = string.substring(start);
                 }
 
-                value = trim(value);
-                value = pathCreator.replaceSystemProperties(value);
+                String newValue = trim(value);
+                newValue = pathCreator.replaceSystemProperties(newValue);
 
                 sb.append(" \"");
-                sb.append(value);
+                sb.append(newValue);
                 sb.append("\"");
+                if (!Objects.equals(value, newValue)) {
+                    LOGGER.info("Replacing value [{}] with [{}] for {}",
+                            value,
+                            newValue,
+                            fieldName);
+                }
 
                 start = end;
 

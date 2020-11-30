@@ -94,8 +94,7 @@ public class YamlUtil {
         final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
                 new SubstitutingSourceProvider(
                         new FileConfigurationSourceProvider(),
-                        new EnvironmentVariableSubstitutor(false))
-        );
+                        new EnvironmentVariableSubstitutor(false)));
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
 

@@ -1,8 +1,11 @@
 package stroom.util.io;
 
+import stroom.util.logging.LogUtil;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -33,6 +36,12 @@ public class TempDirProviderImpl implements TempDirProvider {
 
             if (path == null) {
                 throw new NullPointerException("Temp dir is null");
+            }
+            try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error ensuring temp directory {} exits",
+                        path.toAbsolutePath()), e);
             }
 
             // If this isn't an absolute path then make it so relative to the home path.

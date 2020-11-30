@@ -1,12 +1,14 @@
 package stroom.index.impl.selection;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
-import javax.inject.Singleton;;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import javax.inject.Singleton;
 import java.util.List;
+
+;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
@@ -15,7 +17,7 @@ public class VolumeConfig extends AbstractConfig {
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
-    private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/defaultIndexVolume");
+    private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
     private List<String> defaultIndexVolumeGroupNodes = List.of("node1a");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
 
@@ -51,8 +53,8 @@ public class VolumeConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing index volume groups are present a default volume group will be created on application " +
-            "start. Use property defaultIndexVolumeGroupName to define its name")
+    @JsonPropertyDescription("If no existing index volume groups are present a default volume group will be " +
+            "created on application start. Use property defaultIndexVolumeGroupName to define its name")
     public boolean isCreateDefaultIndexVolumesOnStart() {
         return createDefaultIndexVolumesOnStart;
     }
@@ -61,8 +63,9 @@ public class VolumeConfig extends AbstractConfig {
         this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
     }
 
-    @JsonPropertyDescription("The name of the default index volume group that is created if none exist on application start. " +
-            "Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths and defaultIndexVolumeGroupNodes to specify details.")
+    @JsonPropertyDescription("The name of the default index volume group that is created if none exist on " +
+            "application start. Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths " +
+            "and defaultIndexVolumeGroupNodes to specify details.")
     public String getDefaultIndexVolumeGroupName(){
         return defaultIndexVolumeGroupName;
     }
@@ -73,8 +76,10 @@ public class VolumeConfig extends AbstractConfig {
 
     @JsonPropertyDescription("The paths on the nodes that hold the data and are created " +
             "on the defined list of nodes if the default index is created on application start. " +
-            "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
+            "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple " +
+            "nodes but there must always be the same number of elements in this list as in property " +
+            "defaultIndexVolumeGroupNodes. If a path is a relative path then it will be treated as being " +
+            "relative to stroom.path.home.")
     public List<String> getDefaultIndexVolumeGroupPaths(){
         return defaultIndexVolumeGroupPaths;
     }

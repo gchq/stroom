@@ -31,9 +31,12 @@ def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
-def releaseBuildDir = 'build/release'
-def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
-def configSchemaFile = releaseBuildDir + '/config/config-schema.yml'
+def releaseBuildDir = "${projectDir}/build/release"
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
+def stroomZipDistContentPacksDir = "${releaseBuildDir}/content_packs"
+def stroomDockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -289,7 +292,6 @@ task migrate(type: JavaExec) {
     args 'migrate', '../local.yml'
 }
 
-def stroomDockerBuildDir = "${projectDir}/docker/build"
 
 clean {
     delete stroomDockerBuildDir
@@ -301,14 +303,40 @@ task generateConfigFiles(type: JavaExec) {
     main = "stroom.dist.GenerateDistributionConfig"
 }
 
+task downloadStroomContentForDocker(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomDockerContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
+}
+
+task downloadStroomContentForZipDist(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomZipDistContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomZipDistContentPacksDir]
+}
+
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
-    dependsOn parent.downloadStroomContent
+    //dependsOn parent.downloadStroomContent
     dependsOn generateConfigFiles
+    dependsOn downloadStroomContentForDocker
 
     doFirst {
-        def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/contentPacks"
 
         // Copy the stroom app fat jar
         copy {
@@ -319,10 +347,10 @@ task copyFilesForStroomDockerBuild() {
         // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
-        copy {
-            from "${contentPackDownloadDir}"
-            into stroomDockerContentPacksDir
-        }
+        //copy {
+            //from "${contentPackDownloadDir}"
+            //into stroomDockerContentPacksDir
+        //}
     }
 }
 
@@ -496,10 +524,10 @@ task makeSendExecutable {
     }
 }
 
-task copyContentPackToDistribution(type: Copy) {
-    from contentPackDownloadDir
-    into "${releaseBuildDir}/contentPacks"
-}
+//task copyContentPackToDistribution(type: Copy) {
+    //from contentPackDownloadDir
+    //into "${releaseBuildDir}/contentPacks"
+//}
 
 // Create an example yaml config file from the compile-time defaults
 task generateConfigDefaultsYamlFile(type: JavaExec) {
@@ -520,8 +548,7 @@ task buildDistribution(type: Zip) {
     dependsOn downloadSend
     dependsOn downloadSendArgs
     dependsOn makeSendExecutable
-    dependsOn parent.downloadStroomContent
-    dependsOn copyContentPackToDistribution
+    dependsOn downloadStroomContentForZipDist
     dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
@@ -590,26 +617,11 @@ task setupSampleDataApplication(type: JavaExec) {
     args = ['local.yml']
 }
 
-task downloadStroomContentApp(type: JavaExec) {
-    println "Downloading content packs to ${contentPackDownloadDir}"
-
-    dependsOn this: compileJava
-    dependsOn this: compileTestJava
-    // We need to set the working directory as the stroom root
-    workingDir '../'
-    classpath = sourceSets.test.runtimeClasspath
-    main = 'stroom.test.DownloadStroomContentApp'
-
-    args = [contentPackDefinitionFile, contentPackDownloadDir, contentPackImportDir]
-}
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
 ////for its test. This is a TODO as stroom-connectors needs a big refactor once we
 ////decide what we are doing with plugable client libs and pipeline elements.
 //tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
-
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-
 
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
@@ -630,3 +642,5 @@ tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
+
+// vim: set tabstop=4 shiftwidth=4 expandtab:
