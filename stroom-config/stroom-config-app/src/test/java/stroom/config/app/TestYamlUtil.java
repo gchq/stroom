@@ -147,7 +147,11 @@ class TestYamlUtil {
     }
 
     public static Path getStroomAppFile(final String filename) throws FileNotFoundException {
-        final String codeSourceLocation = TestYamlUtil.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        final String codeSourceLocation = TestYamlUtil.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .getPath();
 
         Path path = Paths.get(codeSourceLocation);
         while (path != null && !path.getFileName().toString().equals("stroom-config")) {
