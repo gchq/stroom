@@ -24,7 +24,7 @@
 #}
 {#- Define all the jinja2 variable values for each distribution type #}
 {%- if distribution == "docker" %}
-  {%- set stroomHome = '/sroom' %}
+  {%- set stroomHome = '/stroom' %}
   {%- set includeEnvVarSubstitution = true %}
 {%- elif distribution == "zip" %}
   {%- set stroomHome = '.' %}
