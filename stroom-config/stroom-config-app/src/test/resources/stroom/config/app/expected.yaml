@@ -86,7 +86,7 @@ appConfig:
       maxPoolSize: 30
   contentPackImport:
     enabled: false
-    importDirectory: "contentPackImport"
+    importDirectory: "content_pack_import"
   core:
     db:
       connection:
@@ -170,7 +170,7 @@ appConfig:
     filesystemVolume:
       volumeSelector: "RoundRobin"
       defaultStreamVolumePaths:
-      - "volumes/defaultStreamVolume"
+      - "volumes/default_stream_volume"
       defaultStreamVolumeFilesystemUtilisation: 0.9
       createDefaultStreamVolumesOnStart: true
       feedPathCache:
@@ -341,8 +341,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    home: null
-    temp: "/tmp"
+    home: "."
+    temp: "/tmp/stroom"
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -365,7 +365,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "refDataOffHeapStore"
+      localDir: "reference_data"
       lmdbSystemLibraryPath: null
       maxPutsBeforeCommit: 0
       maxReaders: 100
@@ -442,7 +442,7 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "${stroom.temp}/proxy"
+    proxyDir: "proxy_repo"
     proxyThreads: 10
     maxFileScan: 100000
     maxConcurrentMappedFiles: 100000
@@ -840,7 +840,7 @@ appConfig:
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeGroupName: "Default Volume Group"
     defaultIndexVolumeGroupPaths:
-    - "volumes/defaultIndexVolume"
+    - "volumes/default_index_volume"
     defaultIndexVolumeGroupNodes:
     - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
