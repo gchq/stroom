@@ -85,7 +85,7 @@ RUN \
     mkdir -p /stroom-proxy && \
     mkdir -p /stroom-proxy/certs && \
     mkdir -p /stroom-proxy/config && \
-    mkdir -p /stroom-proxy/config-fallback && \
+    mkdir -p /stroom-proxy/config_fallback && \
     mkdir -p /stroom-proxy/content && \
     mkdir -p /stroom-proxy/logs/access && \
     mkdir -p /stroom-proxy/logs/receive && \
@@ -101,7 +101,7 @@ COPY --chown=proxy:proxy *.sh /stroom-proxy/
 
 # This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
-COPY --chown=proxy:proxy build/config.yml /stroom-proxy/config-fallback/config.yml
+COPY --chown=proxy:proxy build/config.yml /stroom-proxy/config_fallback/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-proxy-app-all.jar /stroom-proxy/
 
