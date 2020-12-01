@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
 
+* Issue **#1960** : Fix the data preview display of empty streams.
+
 * Moved content download to Java.
 
 * All paths in the config YAML including logging config can now be made relative to the home dir.
