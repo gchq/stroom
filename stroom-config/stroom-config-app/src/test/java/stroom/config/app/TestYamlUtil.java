@@ -1,10 +1,7 @@
 package stroom.config.app;
 
-import stroom.util.ConsoleColour;
-import stroom.util.logging.LogUtil;
+import stroom.test.common.util.DiffUtil;
 
-import org.assertj.core.util.diff.DiffUtils;
-import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +13,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,43 +50,24 @@ class TestYamlUtil {
         // write the actual out so we can compare in other tools
         Files.write(actualFile, actualLines);
 
-        final Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);
+        final List<String> diffLines = new ArrayList<>();
 
-        final List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(
-            expectedFile.toString(),
-            actualFile.toString(),
-            expectedLines,
-            patch,
-            3);
+        final boolean haveDifferences = DiffUtil.unifiedDiff(
+                expectedFile, actualFile, diffLines::add, true, 3);
 
-        if (!unifiedDiff.isEmpty()) {
+        if (haveDifferences) {
             LOGGER.error("\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                "\n  If the difference is what you would expect based on the changes you have made to the config model " +
-                "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml");
+                    "\n  If the difference is what you would expect based on the changes you have made to the config model " +
+                    "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml\n{}",
+                    String.join("\n", diffLines));
 
-            System.out.println("");
-            unifiedDiff.forEach(diffLine -> {
-
-                final ConsoleColour lineColour;
-                if (diffLine.startsWith("+")) {
-                    lineColour = ConsoleColour.GREEN;
-                } else if (diffLine.startsWith("-")) {
-                    lineColour = ConsoleColour.RED;
-                } else {
-                    lineColour = ConsoleColour.NO_COLOUR;
-                }
-
-                System.out.println(ConsoleColour.colourise(diffLine, lineColour));
-            });
-            System.out.println(LogUtil.message("\nvimdiff {} {}", expectedFile, actualFile));
+            LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
         }
 
         assertThat(actualLines.equals(expectedLines))
             .withFailMessage("Expected and actual YAML do not match!")
             .isEqualTo(true);
     }
-
-
 
     static Path getExpectedYamlFilePath() {
         return getBasePath().resolve(EXPECTED_YAML_FILE_NAME);
@@ -147,7 +126,11 @@ class TestYamlUtil {
     }
 
     public static Path getStroomAppFile(final String filename) throws FileNotFoundException {
-        final String codeSourceLocation = TestYamlUtil.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        final String codeSourceLocation = TestYamlUtil.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .getPath();
 
         Path path = Paths.get(codeSourceLocation);
         while (path != null && !path.getFileName().toString().equals("stroom-config")) {

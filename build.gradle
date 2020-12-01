@@ -275,12 +275,15 @@ ext.libs = [
         zzDUMMYzz                      : "makes sorting this array easier"
 ]
 
+// Defines the content packs that will be donwloaded/copied for SetupSampleData,
+// docker builds and zip distributions
 def contentPackDefinitionFile = "content-packs.json"
 ext.contentPackDefinitionFile = contentPackDefinitionFile
+
+// Directory potentially shared with other stroom version builds to hold the immutable downloaded
+// content pack zips. Packs will be downloaded to here if they don't exist or copied if they do.
 def contentPackDownloadDir = "${System.properties['user.home']}/.stroom/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
-def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
-ext.contentPackImportDir = contentPackImportDir
 
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project ->
@@ -303,7 +306,6 @@ allprojects {
     }
 
 }
-
 
 // Variable to capture the version of slf4j defined in the DW BOM, so
 // we can use it to set the version of slf4j when we do a dependency
@@ -664,35 +666,35 @@ configure(projectsToBePublished) {
 //    artifacts.archives packageTests
 //}
 
-task clearContentPackDownloadDir(type: Delete) {
-    doLast {
-        println "Clearing ${contentPackDownloadDir}"
-        def downloadDir = Paths.get(contentPackDownloadDir)
-        if (Files.exists(downloadDir)) {
-            // Cleans out any zip files in the contentPackDownloadDir
-            delete fileTree(downloadDir) {
-                include '**/*.zip'
-            }
-        }
-    }
-}
+//task clearContentPackDownloadDir(type: Delete) {
+    //doLast {
+        //println "Clearing ${contentPackDownloadDir}"
+        //def downloadDir = Paths.get(contentPackDownloadDir)
+        //if (Files.exists(downloadDir)) {
+            //// Cleans out any zip files in the contentPackDownloadDir
+            //delete fileTree(downloadDir) {
+                //include '**/*.zip'
+            //}
+        //}
+    //}
+//}
 
-task clearContentPackImportDir(type: Delete) {
-    doLast {
-        println "Clearing ${contentPackImportDir}"
-        def importDir = Paths.get(contentPackImportDir)
-        if (Files.exists(importDir)) {
-            // Cleans out any zip files in the contentPackImportDir
-            delete fileTree(importDir) {
-                include '**/*.zip'
-            }
-        }
-    }
-}
+//task clearContentPackImportDir(type: Delete) {
+    //doLast {
+        //println "Clearing ${contentPackImportDir}"
+        //def importDir = Paths.get(contentPackImportDir)
+        //if (Files.exists(importDir)) {
+            //// Cleans out any zip files in the contentPackImportDir
+            //delete fileTree(importDir) {
+                //include '**/*.zip'
+            //}
+        //}
+    //}
+//}
 
-task downloadStroomContent() {
-    dependsOn ':stroom-app:downloadStroomContentApp'
-}
+//task downloadStroomContent() {
+    //dependsOn ':stroom-app:downloadStroomContentApp'
+//}
 
 //task downloadStroomContent() {
 //    doLast {
@@ -794,10 +796,10 @@ task dependenciesPng() {
     }
 }
 
-task clean() {
-    dependsOn clearContentPackImportDir
-    dependsOn clearContentPackDownloadDir
-}
+//task clean() {
+    ////dependsOn clearContentPackImportDir
+    //dependsOn clearContentPackDownloadDir
+//}
 
 // Accept the T&Cs for publishing build scans
 if (hasProperty('buildScan')) {
