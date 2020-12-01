@@ -2,7 +2,7 @@ package stroom.dist;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.YamlUtil;
-import stroom.util.ConsoleColour;
+import stroom.test.common.util.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
@@ -10,8 +10,6 @@ import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.interpret.JinjavaInterpreter;
 import com.hubspot.jinjava.lib.filter.Filter;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.util.diff.DiffUtils;
-import org.assertj.core.util.diff.Patch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +20,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GenerateDistributionConfig {
 
@@ -75,8 +71,9 @@ public class GenerateDistributionConfig {
         final List<Path> generatedFiles = new ArrayList<>();
 
         CONTEXTS.forEach(context -> {
-            LOGGER.info("======================================================================");
+            LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             LOGGER.info("Building template for {} distribution", context.get(DIST_KEY));
+            LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
             final String renderedTemplate = jinjava.render(configTemplate, context);
 
@@ -94,7 +91,11 @@ public class GenerateDistributionConfig {
 
                 Files.writeString(outputFileNameFile, renderedTemplate);
 
+                LOGGER.info("Verifying {} can be read into Config tree",
+                        outputFileNameFile.toAbsolutePath().normalize());
+                LOGGER.info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
                 verifyOutputFile(outputFileNameFile);
+                LOGGER.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -112,46 +113,16 @@ public class GenerateDistributionConfig {
 
     public static void unifiedDiff(final Path file1, final Path file2) {
 
-        try (final Stream<String> expectedStream = Files.lines(file1);
-             final Stream<String> actualStream = Files.lines(file2)) {
+        final List<String> diffLines = new ArrayList<>();
 
-            final List<String> expectedLines = expectedStream.collect(Collectors.toList());
-            final List<String> actualLines = actualStream.collect(Collectors.toList());
+        final boolean haveDifferences = DiffUtil.unifiedDiff(
+                file1, file2, diffLines::add, true, 3);
 
-            final Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);
-
-            final List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(
-                    file1.toString(),
-                    file2.toString(),
-                    expectedLines,
-                    patch,
-                    3);
-
-            if (!unifiedDiff.isEmpty()) {
-                LOGGER.info("Comparing {} and {}",
-                        FileUtil.getCanonicalPath(file1),
-                        FileUtil.getCanonicalPath(file2));
-
-                System.out.println("");
-                System.out.println("================================================================================");
-                unifiedDiff.forEach(diffLine -> {
-
-                    final ConsoleColour lineColour;
-                    if (diffLine.startsWith("+")) {
-                        lineColour = ConsoleColour.GREEN;
-                    } else if (diffLine.startsWith("-")) {
-                        lineColour = ConsoleColour.RED;
-                    } else {
-                        lineColour = ConsoleColour.NO_COLOUR;
-                    }
-
-                    System.out.println(ConsoleColour.colourise(diffLine, lineColour));
-                });
-                System.out.println("================================================================================");
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (haveDifferences) {
+            LOGGER.info("Comparing {} and {}\n{}",
+                    FileUtil.getCanonicalPath(file1),
+                    FileUtil.getCanonicalPath(file2),
+                    String.join("\n", diffLines));
         }
     }
 

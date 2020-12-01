@@ -24,10 +24,10 @@
 #}
 {#- Define all the jinja2 variable values for each distribution type #}
 {%- if distribution == "docker" %}
-  {%- set rootPath = '/stroom/' %}
+  {%- set stroomHome = '/stroom' %}
   {%- set includeEnvVarSubstitution = true %}
 {%- elif distribution == "zip" %}
-  {%- set rootPath = '' %}
+  {%- set stroomHome = '.' %}
   {%- set includeEnvVarSubstitution = false %}
 {%- endif %}
 # Stroom configuration file
@@ -50,19 +50,19 @@ server:
       port: {{ 8080 | envVar('STROOM_APP_PORT') }}
   adminConnectors:
     - type: http
-      port: ${STROOM_ADMIN_PORT:-8081}
+      port: {{ 8081 | envVar('STROOM_ADMIN_PORT') }}
 
   requestLog:
     appenders:
       # Log appender for the web server request logging
     - type: file
-      currentLogFilename: {{ rootPath }}logs/access/access.log
+      currentLogFilename: logs/access/access.log
       threshold: ALL
       queueSize: 256
       discardingThreshold: 0
       archive: true
       # Rolled and gzipped every minute
-      archivedLogFilenamePattern: {{ rootPath }}logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
       archivedFileCount: 100
       timeZone: UTC
 
@@ -86,13 +86,13 @@ logging:
       additive: false
       appenders:
         - type: file
-          currentLogFilename: {{ rootPath }}logs/events/event.log
+          currentLogFilename: logs/events/event.log
           threshold: ALL
           queueSize: 256
           discardingThreshold: 0
           archive: true
           # Rolled every minute
-          archivedLogFilenamePattern: {{ rootPath }}logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
+          archivedLogFilenamePattern: logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
           archivedFileCount: 100
           timeZone: UTC
           logFormat: "%msg%n"
@@ -102,13 +102,13 @@ logging:
       additive: false
       appenders:
         - type: file
-          currentLogFilename: {{ rootPath }}logs/migration/migration.log
+          currentLogFilename: logs/migration/migration.log
           threshold: ALL
           queueSize: 256
           discardingThreshold: 0
           archive: true
           # Rolled every day
-          archivedLogFilenamePattern: {{ rootPath }}logs/migration/migration-%d{yyyy-MM-dd}.log
+          archivedLogFilenamePattern: logs/migration/migration-%d{yyyy-MM-dd}.log
           archivedFileCount: 10
           timeZone: UTC
           logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
@@ -125,13 +125,13 @@ logging:
 
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
-    currentLogFilename: {{ rootPath }}logs/app/app.log
+    currentLogFilename: logs/app/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
     # Rolled and gzipped every minute
-    archivedLogFilenamePattern: {{ rootPath }}logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+    archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
     timeZone: UTC
@@ -140,12 +140,12 @@ logging:
 
   # Size rolled logs for admins (10x100M), not curl'd to stroom
   - type: file
-    currentLogFilename: {{ rootPath }}logs/app.log
+    currentLogFilename: logs/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: {{ rootPath }}logs/app-%i.log
+    archivedLogFilenamePattern: logs/app-%i.log
     archivedFileCount: 10
     maxFileSize: "100MB"
     timeZone: UTC
@@ -154,7 +154,7 @@ logging:
 
 
 # This section contains the Stroom configuration properties
-# For mor information see:
+# For more information see:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
 appConfig:
@@ -177,12 +177,8 @@ appConfig:
   nodeUri:
     hostname: "{{ 'localhost' | envVar('STROOM_HOST') }}"
   path:
+    home: "{{ stroomHome }}"
     temp: "/tmp/stroom"
-  pipeline:
-    referenceData:
-      localDir: "{{ (rootPath + 'ref-data/offHeapStore') | envVar('STROOM_REF_DATA_STORE_DIR') }}"
-  proxyAggregation:
-    proxyDir: "{{ (rootPath + 'proxy-repo') | envVar('STROOM_PROXY_DIR') }}"
   # The public address for stroom, typically the public address of nginx
   publicUri:
     hostname: "{{ 'localhost' | envVar('API_GATEWAY_HOST') }}"
@@ -200,13 +196,5 @@ appConfig:
       kafkaConfigUuid:
     internal:
       enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
-  volumes:
-    createDefaultIndexVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_INDEX_VOLUMES') }}"
-    defaultIndexVolumeGroupPaths: {{ ('[ \"' + rootPath + 'volumes/defaultIndexVolume\"]') | envVar('STROOM_DEFAULT_INDEX_VOLUME_PATHS') }}
-    defaultIndexVolumeGroupNodes: {{ ('[ \"' + 'node1a' + '\"]' )| envVar('STROOM_DEFAULT_INDEX_VOLUME_NODES') }}
-  data:
-    filesystemVolume:
-      createDefaultStreamVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_STREAM_VOLUMES') }}"
-      defaultStreamVolumePaths: {{ ('[ \"' + rootPath + 'volumes/defaultStreamVolume\"]') | envVar('STROOM_DEFAULT_STREAM_VOLUME_PATHS') }}
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

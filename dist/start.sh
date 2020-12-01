@@ -135,6 +135,7 @@ start_stroom() {
   tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
   local tailing_pid="$!"
 
+  # STROOM_ADMIN_PORT is exported in scripts.env
   wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
 
   kill_log_tailing "${tailing_pid}"
@@ -186,6 +187,7 @@ check_or_create_pid_file() {
 main() {
 
   local script_args=( $@ )
+  # PATH_TO_APP_LOG is exported in scripts.env
   local -r path_to_start_log="./logs/start.sh.log"
   local -r path_to_migration_log="./logs/migration/migration.log"
   local -r maxWaitSecs=240
