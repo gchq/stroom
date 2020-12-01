@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
+
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
@@ -155,8 +157,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DataRetentionRules writeDocument(final DataRetentionRules document) {
-        return securityContext.secureResult(() ->
-                store.writeDocument(document));
+        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+        // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
+        return securityContext.secureResult(MANAGE_POLICIES_PERMISSION,
+                () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
+
     }
 
     ////////////////////////////////////////////////////////////////////////

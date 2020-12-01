@@ -16,14 +16,6 @@
 
 package stroom.dashboard.client.gin;
 
-import com.google.inject.Singleton;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.RootPresenter;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
-import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
@@ -34,14 +26,35 @@ import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.data.client.presenter.CharacterNavigatorPresenter;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
+import stroom.data.client.presenter.ItemNavigatorPresenter;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.presenter.ItemSelectionPresenter;
+import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
+import stroom.data.client.presenter.SourcePresenter;
+import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.client.view.CharacterNavigatorViewImpl;
+import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
+import stroom.data.client.view.ItemNavigatorViewImpl;
+import stroom.data.client.view.ItemSelectionViewImpl;
+import stroom.data.client.view.SourceTabViewImpl;
+import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -58,6 +71,18 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.progress.client.view.ProgressViewImpl;
+
+import com.google.inject.Singleton;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.gwtplatform.mvp.client.RootPresenter;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 
 public class DashboardAppModule extends AbstractPresenterModule {
     @Override
@@ -72,17 +97,74 @@ public class DashboardAppModule extends AbstractPresenterModule {
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
-        bindPresenter(DashboardMainPresenter.class, DashboardMainView.class, DashboardMainViewImpl.class, DashboardMainProxy.class);
+        bindPresenter(
+                DashboardMainPresenter.class,
+                DashboardMainView.class,
+                DashboardMainViewImpl.class,
+                DashboardMainProxy.class);
 
         bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
-        bindPresenterWidget(EntityTreePresenter.class, EntityTreePresenter.EntityTreeView.class, EntityTreeViewImpl.class);
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
-        bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
-        bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
-        bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
-        bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
-        bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
+        bindPresenterWidget(
+                EntityTreePresenter.class,
+                EntityTreePresenter.EntityTreeView.class,
+                EntityTreeViewImpl.class);
+        bindPresenterWidget(
+                EditorPresenter.class,
+                EditorView.class,
+                EditorViewImpl.class);
+        bindPresenterWidget(
+                IFramePresenter.class,
+                IFrameView.class,
+                IFrameViewImpl.class);
+        bindPresenterWidget(
+                IFrameContentPresenter.class,
+                IFrameContentView.class,
+                IFrameContentViewImpl.class);
+        bindPresenterWidget(
+                ClassificationWrapperPresenter.class,
+                ClassificationWrapperView.class,
+                ClassificationWrapperViewImpl.class);
+        bindPresenterWidget(
+                DataPreviewTabPresenter.class,
+                DataPreviewTabView.class,
+                DataPreviewTabViewImpl.class);
+        bindPresenterWidget(
+                DataPresenter.class,
+                DataView.class,
+                DataViewImpl.class);
+        bindPresenterWidget(
+                TextPresenter.class,
+                TextView.class,
+                TextViewImpl.class);
+        bindPresenterWidget(
+                ProgressPresenter.class,
+                ProgressView.class,
+                ProgressViewImpl.class);
+        bindPresenterWidget(
+                SourceTabPresenter.class,
+                SourceTabView.class,
+                SourceTabViewImpl.class);
+        bindPresenterWidget(
+                SourcePresenter.class,
+                SourceView.class,
+                SourceViewImpl.class);
+        bindPresenterWidget(
+                CharacterRangeSelectionPresenter.class,
+                CharacterRangeSelectionView.class,
+                CharacterRangeSelectionViewImpl.class);
+        bindPresenterWidget(
+                CharacterNavigatorPresenter.class,
+                CharacterNavigatorView.class,
+                CharacterNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemNavigatorPresenter.class,
+                ItemNavigatorView.class,
+                ItemNavigatorViewImpl.class);
+        bindPresenterWidget(
+                ItemSelectionPresenter.class,
+                ItemSelectionView.class,
+                ItemSelectionViewImpl.class);
     }
 }

@@ -16,8 +16,10 @@
 
 package stroom.query.common.v2.format;
 
+import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.NumberFormatSettings;
 
 public class FormatterFactory {
     private final String dateTimeLocale;
@@ -38,9 +40,9 @@ public class FormatterFactory {
             case TEXT:
                 return StringFormatter.create();
             case NUMBER:
-                return NumberFormatter.create(field.getFormat().getNumberFormat());
+                return NumberFormatter.create((NumberFormatSettings) field.getFormat().getSettings());
             case DATE_TIME:
-                return DateTimeFormatter.create(field.getFormat().getDateTimeFormat(), dateTimeLocale);
+                return DateTimeFormatter.create((DateTimeFormatSettings) field.getFormat().getSettings(), dateTimeLocale);
             default:
                 return Unformatted.create();
         }

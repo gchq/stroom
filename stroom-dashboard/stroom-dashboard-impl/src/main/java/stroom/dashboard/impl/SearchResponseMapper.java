@@ -22,18 +22,16 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import stroom.dashboard.impl.download.TypeConverter;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dashboard.shared.TableResult;
-import stroom.dashboard.shared.VisResult;
-import stroom.dashboard.shared.VisResult.Store;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.VisResult;
+import stroom.query.api.v2.VisResult.Store;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Result;
-import stroom.util.shared.OffsetRange;
+import stroom.query.api.v2.Row;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,33 +59,32 @@ public class SearchResponseMapper {
                     .collect(Collectors.joining("\n"));
         }
 
-        Map<String, ComponentResult> results = null;
+        List<Result> results = null;
         if (searchResponse.getResults() != null) {
-            results = new HashMap<>();
+            results = new ArrayList<>();
             for (final Result result : searchResponse.getResults()) {
-                results.put(result.getComponentId(), mapResult(result));
+                results.add(mapResult(result));
             }
         }
 
         return new SearchResponse(queryKey, highlights, errors, searchResponse.complete(), results);
     }
 
-    private ComponentResult mapResult(final Result result) {
+    private Result mapResult(final Result result) {
         if (result == null) {
             return null;
         }
 
         if (result instanceof stroom.query.api.v2.TableResult) {
-            final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
+            return result;
 
-            final List<Field> fields = mapFields(tableResult.getFields());
-            final List<Row> rows = mapRows(tableResult.getRows());
-            OffsetRange<Integer> resultRange = null;
-            if (tableResult.getResultRange() != null) {
-                resultRange = new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue());
-            }
-
-            return new TableResult(fields, rows, resultRange, tableResult.getTotalResults(), tableResult.getError());
+//            final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
+//
+//            final List<Field> fields = tableResult.getFields();
+//            final List<Row> rows = tableResult.getRows();
+//            stroom.query.api.v2.OffsetRange resultRange = tableResult.getResultRange();
+//
+//            return new TableResult(tableResult.getComponentId(), fields, rows, resultRange, tableResult.getTotalResults(), tableResult.getError());
         } else if (result instanceof FlatResult) {
             final FlatResult visResult = (FlatResult) result;
             return mapVisResult(visResult);
@@ -95,45 +92,45 @@ public class SearchResponseMapper {
 
         return null;
     }
+//
+//    private List<Field> mapFields(final List<stroom.query.api.v2.Field> fields) {
+//        final List<Field> copy = new ArrayList<>();
+//        if (fields != null) {
+//            for (final stroom.query.api.v2.Field field : fields) {
+//                final Field item = new Field.Builder()
+//                        .id(field.getId())
+//                        .name(field.getName())
+//                        .expression(field.getExpression())
+//                        .group(field.getGroup())
+//                        .width(-1)
+//                        .visible(true)
+//                        .special(false)
+//                        .build();
+//                copy.add(item);
+//            }
+//        }
+//        return copy;
+//    }
+//
+//    private List<Row> mapRows(final List<stroom.query.api.v2.Row> rows) {
+//        final List<Row> copy = new ArrayList<>();
+//        if (rows != null) {
+//            for (final stroom.query.api.v2.Row row : rows) {
+//                final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
+//                copy.add(item);
+//            }
+//        }
+//        return copy;
+//    }
 
-    private List<Field> mapFields(final List<stroom.query.api.v2.Field> fields) {
-        final List<Field> copy = new ArrayList<>();
-        if (fields != null) {
-            for (final stroom.query.api.v2.Field field : fields) {
-                final Field item = new Field.Builder()
-                        .id(field.getId())
-                        .name(field.getName())
-                        .expression(field.getExpression())
-                        .group(field.getGroup())
-                        .width(-1)
-                        .visible(true)
-                        .special(false)
-                        .build();
-                copy.add(item);
-            }
-        }
-        return copy;
-    }
-
-    private List<Row> mapRows(final List<stroom.query.api.v2.Row> rows) {
-        final List<Row> copy = new ArrayList<>();
-        if (rows != null) {
-            for (final stroom.query.api.v2.Row row : rows) {
-                final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
-                copy.add(item);
-            }
-        }
-        return copy;
-    }
-
-    private VisResult mapVisResult(final FlatResult visResult) {
+    private VisResult mapVisResult(final FlatResult result) {
         String json = null;
-        String error = visResult.getError();
+        String error = result.getError();
 
         if (error == null) {
             try {
-                final List<stroom.query.api.v2.Field> fields = visResult.getStructure();
-                if (fields != null && visResult.getValues() != null) {
+                final List<stroom.query.api.v2.Field> fields = result.getStructure();
+                if (fields != null && result.getValues() != null) {
                     int valueOffset = 0;
 
                     final Map<Integer, List<String>> typeMap = new HashMap<>();
@@ -194,7 +191,7 @@ public class SearchResponseMapper {
                     final int valueCount = fields.size() - valueOffset;
 
                     final Map<Object, List<List<Object>>> map = new HashMap<>();
-                    for (final List<Object> row : visResult.getValues()) {
+                    for (final List<Object> row : result.getValues()) {
                         map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
@@ -209,7 +206,7 @@ public class SearchResponseMapper {
             }
         }
 
-        return new VisResult(json, visResult.getSize(), error);
+        return new VisResult(result.getComponentId(), json, result.getSize(), error);
     }
 
     private ObjectMapper getMapper(final boolean indent) {

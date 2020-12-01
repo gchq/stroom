@@ -76,12 +76,12 @@ class SearchableStoreFactory implements StoreFactory {
             final Query query = searchRequest.getQuery();
 
             // Replace expression parameters.
-            final ExpressionOperator expression = ExpressionUtil.replaceExpressionParameters(searchRequest);
+            final SearchRequest updatedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             // Create a handler for search results.
-            final Coprocessors coprocessors = coprocessorsFactory.create(searchRequest);
+            final Coprocessors coprocessors = coprocessorsFactory.create(updatedSearchRequest);
 
-            return buildStore(taskContext, searchRequest, searchable, coprocessors, expression);
+            return buildStore(taskContext, updatedSearchRequest, searchable, coprocessors, updatedSearchRequest.getQuery().getExpression());
         }).get();
     }
 

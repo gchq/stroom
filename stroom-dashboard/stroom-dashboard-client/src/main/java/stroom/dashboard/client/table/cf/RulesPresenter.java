@@ -21,15 +21,14 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ConditionalFormattingRule;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.IntegerField;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -46,7 +45,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RulesPresenter
@@ -193,7 +191,10 @@ public class RulesPresenter
     }
 
     private void add() {
-        final ConditionalFormattingRule newRule = new ConditionalFormattingRule.Builder().enabled(true).build();
+        final ConditionalFormattingRule newRule = new ConditionalFormattingRule.Builder()
+                .id(RandomId.createId(5))
+                .enabled(true)
+                .build();
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
@@ -240,31 +241,31 @@ public class RulesPresenter
                 "Edit Rule",
                 new PopupUiHandlers() {
 
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ConditionalFormattingRule rule = editRulePresenter.write();
-                    final int index = rules.indexOf(existingRule);
-                    rules.remove(index);
-                    rules.add(index, rule);
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final ConditionalFormattingRule rule = editRulePresenter.write();
+                            final int index = rules.indexOf(existingRule);
+                            rules.remove(index);
+                            rules.add(index, rule);
 
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
 
-                    // Only mark the policies as dirty if the rule was actually changed.
-                    if (!existingRule.equals(rule)) {
-                        setDirty(true);
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
+                        }
+
+                        HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
                     }
-                }
 
-                HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
 
@@ -311,9 +312,12 @@ public class RulesPresenter
     }
 
     @Override
-    public void write(final ComponentConfig componentConfig) {
-        final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
-        settings.setConditionalFormattingRules(rules);
+    public ComponentConfig write(final ComponentConfig componentConfig) {
+        final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
+        final TableComponentSettings newSettings = new TableComponentSettings.Builder(oldSettings)
+                .conditionalFormattingRules(rules)
+                .build();
+        return new ComponentConfig.Builder(componentConfig).settings(newSettings).build();
     }
 
     @Override

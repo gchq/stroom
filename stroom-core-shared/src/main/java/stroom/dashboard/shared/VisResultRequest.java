@@ -16,27 +16,35 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.ResultRequest.Fetch;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.OffsetRange;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
+@JsonPropertyOrder({
+        "componentId",
+        "fetch",
+        "visDashboardSettings",
+        "requestedRange"})
 @JsonInclude(Include.NON_NULL)
 public class VisResultRequest extends ComponentResultRequest {
     @JsonProperty
-    private VisComponentSettings visDashboardSettings;
+    private final VisComponentSettings visDashboardSettings;
     @JsonProperty
-    private OffsetRange<Integer> requestedRange;
-
-    public VisResultRequest(final int offset, final int length) {
-        requestedRange = new OffsetRange<>(offset, length);
-    }
+    private final OffsetRange requestedRange;
 
     @JsonCreator
-    public VisResultRequest(@JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
-                            @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange) {
+    public VisResultRequest(@JsonProperty("componentId") final String componentId,
+                            @JsonProperty("fetch") final Fetch fetch,
+                            @JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
+                            @JsonProperty("requestedRange") final OffsetRange requestedRange) {
+        super(componentId, fetch);
         this.visDashboardSettings = visDashboardSettings;
         this.requestedRange = requestedRange;
     }
@@ -45,19 +53,70 @@ public class VisResultRequest extends ComponentResultRequest {
         return visDashboardSettings;
     }
 
-    public void setVisDashboardSettings(final VisComponentSettings visDashboardSettings) {
-        this.visDashboardSettings = visDashboardSettings;
-    }
-
-    public OffsetRange<Integer> getRequestedRange() {
+    public OffsetRange getRequestedRange() {
         return requestedRange;
     }
 
-    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
-        this.requestedRange = requestedRange;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final VisResultRequest that = (VisResultRequest) o;
+        return Objects.equals(visDashboardSettings, that.visDashboardSettings) &&
+                Objects.equals(requestedRange, that.requestedRange);
     }
 
-    public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange<>(offset, length);
+    @Override
+    public int hashCode() {
+        return Objects.hash(visDashboardSettings, requestedRange);
+    }
+
+    @Override
+    public String toString() {
+        return "VisResultRequest{" +
+                "visDashboardSettings=" + visDashboardSettings +
+                ", requestedRange=" + requestedRange +
+                '}';
+    }
+
+    public static class Builder {
+        private String componentId;
+        private Fetch fetch;
+        private VisComponentSettings visDashboardSettings;
+        private OffsetRange requestedRange;
+
+        public Builder() {
+        }
+
+        public Builder(final VisResultRequest visResultRequest) {
+            this.componentId = visResultRequest.getComponentId();
+            this.fetch = visResultRequest.getFetch();
+            this.visDashboardSettings = visResultRequest.visDashboardSettings;
+            this.requestedRange = visResultRequest.requestedRange;
+        }
+
+        public Builder componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
+        }
+
+        public Builder fetch(final Fetch fetch) {
+            this.fetch = fetch;
+            return this;
+        }
+
+        public Builder visDashboardSettings(final VisComponentSettings visDashboardSettings) {
+            this.visDashboardSettings = visDashboardSettings;
+            return this;
+        }
+
+        public Builder requestedRange(final OffsetRange requestedRange) {
+            this.requestedRange = requestedRange;
+            return this;
+        }
+
+        public VisResultRequest build() {
+            return new VisResultRequest(componentId, fetch, visDashboardSettings, requestedRange);
+        }
     }
 }

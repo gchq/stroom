@@ -33,15 +33,24 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.Location;
 import stroom.util.xml.XMLUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
@@ -53,6 +62,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -68,43 +78,21 @@ import java.util.zip.ZipInputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-// TODO : Reinstate tests.
-//@Disabled("Removed test data")
+// TODO : Need to try and migrate tests from v4 code base to give better coverage
 class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
     private static final String CONFIG_EXTENSION = ".ds3.xml";
 
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 
-    @Test
-    void testBuildConfig() {
-        final RootFactory rootFactory = new RootFactory();
-
-        final ExpressionFactory headings = new RegexFactory(rootFactory, "headingsRegex", "^[^\n]+");
-        final GroupFactory headingGroup = new GroupFactory(headings, "headingGroup");
-        final ExpressionFactory heading = new RegexFactory(headingGroup, "headingRegex", "[^,]+");
-        new VarFactory(heading, "heading");
-
-        final ExpressionFactory record = new RegexFactory(rootFactory, "recordRegex", "^\n[\\S].+(\n[\\s]+.*)*");
-        final GroupFactory partGroup = new GroupFactory(record, "partGroup");
-        final ExpressionFactory part = new RegexFactory(partGroup, "partRegex", "\n?([^,]+),?");
-        new DataFactory(part, "part", "$heading$", "$1");
-
-        // Compile the configuration.
-        rootFactory.compile();
-
-        final Root linkedConfig = rootFactory.newInstance(new VarMap());
-        LOGGER.debug("\n" + linkedConfig.toString());
-    }
-
-    // TODO : Add new test data to fully exercise DS3.
-
     @TestFactory
-    Collection<DynamicTest> testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
+    Collection<DynamicTest> testProcessInputFiles() throws IOException {
         // Get the testing directory.
         final Path testDir = getTestDir();
         final List<Path> paths = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*" + CONFIG_EXTENSION)) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(
+                testDir,
+                "*" + CONFIG_EXTENSION)) {
             stream.forEach(paths::add);
         }
 
@@ -136,6 +124,339 @@ class TestDS3 extends StroomUnitTest {
         return dynamicTests;
     }
 
+    @Test
+    void testBuildConfig() {
+        final RootFactory rootFactory = new RootFactory();
+
+        final ExpressionFactory headings = new RegexFactory(
+                rootFactory,
+                "headingsRegex",
+                "^[^\n]+");
+        final GroupFactory headingGroup = new GroupFactory(headings, "headingGroup");
+        final ExpressionFactory heading = new RegexFactory(
+                headingGroup,
+                "headingRegex",
+                "[^,]+");
+        new VarFactory(heading, "heading");
+
+        final ExpressionFactory record = new RegexFactory(
+                rootFactory,
+                "recordRegex",
+                "^\n[\\S].+(\n[\\s]+.*)*");
+        final GroupFactory partGroup = new GroupFactory(record, "partGroup");
+        final ExpressionFactory part = new RegexFactory(
+                partGroup,
+                "partRegex",
+                "\n?([^,]+),?");
+        new DataFactory(part, "part", "$heading$", "$1");
+
+        // Compile the configuration.
+        rootFactory.compile();
+
+        final Root linkedConfig = rootFactory.newInstance(new VarMap());
+        LOGGER.debug("\n" + linkedConfig.toString());
+    }
+
+    @Test
+    void testLocation_rows() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "\n");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello\nworld\ngoodbye\nworld";
+
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(
+                        makeRange(1,1, 1, 5),
+                        makeRange(2,1, 2, 5),
+                        makeRange(3,1, 3, 7),
+                        makeRange(4,1, 4, 5)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                "|");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello|world|goodbye|world";
+        //                       000000000111111111122222222222
+        //                       123456789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 6),
+                        makeRange(1,7, 1, 12),
+                        makeRange(1,13, 1, 20),
+                        makeRange(1,21, 1, 25)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine_contained() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                0,
+                -1,
+                null,
+                "|",
+                null,
+                "\"",
+                "\"");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "\"hello\"|\"world\"|\"goodbye\"|\"world\"";
+        //                        000000 00 011111 11 11122222 22 222233 33333333
+        //                        123456 78 901234 56 78901234 56 789012 34567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 8),
+                        makeRange(1,9, 1, 16),
+                        makeRange(1,17, 1, 26),
+                        makeRange(1,27, 1, 33)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine_contained_2charDelim() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                0,
+                -1,
+                null,
+                "||",
+                null,
+                "<",
+                ">");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "<hello>||<world>||<goodbye>||<world>";
+        //                       0000000001111111111222222222233333333333
+        //                       1234567890123456789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 9),
+                        makeRange(1,10, 1, 18),
+                        makeRange(1,19, 1, 29),
+                        makeRange(1,30, 1, 36)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_singleLine_2charDelim() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "||");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello||world||goodbye||world";
+        //                       000000000011111111112222222222
+        //                       123456789012345678901234567890
+
+        // Make sure the location ranges for each record are correct
+        // source record is taken to be word + delim, e.g. hello||
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(
+                        makeRange(1,1, 1, 7),
+                        makeRange(1,8, 1, 14),
+                        makeRange(1,15, 1, 23),
+                        makeRange(1,24, 1, 28)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "hello",
+                        "world",
+                        "goodbye",
+                        "world");
+    }
+
+    @Test
+    void testLocation_emojis() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(
+                rootFactory,
+                "split",
+                "|");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        // Emojis take up two chars each
+        final String inputStr = "🙂|🙁|👊|🖐";
+        //                       0 00 00 0000111111111122222222222
+        //                       1 23 45 6789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 3),
+                        makeRange(1,4, 1, 6),
+                        makeRange(1,7, 1, 9),
+                        makeRange(1,10, 1, 11)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "🙂",
+                        "🙁",
+                        "👊",
+                        "🖐");
+    }
+
+    @Test
+    void testLocation_singleLine_regex() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final RegexFactory regexFactory = new RegexFactory(
+                rootFactory,
+                "regex",
+                "[A-Z][a-z]{2}");
+        new DataFactory(regexFactory, "rowData", "row", "$0");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "FriSatSunMon";
+        //                       000000000011
+        //                       123456789012
+
+        // Make sure the location ranges for each record are correct
+        // source record is taken to be word + delim, e.g. hello||
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 3),
+                        makeRange(1,4, 1, 6),
+                        makeRange(1,7, 1, 9),
+                        makeRange(1,10, 1, 12)));
+
+        Assertions.assertThat(loggingContentHandler.getValues())
+                .containsExactly(
+                        "Fri",
+                        "Sat",
+                        "Sun",
+                        "Mon");
+    }
+
+
+    private LoggingContentHandler doLocationTest(final Root root,
+                                                 final String inputStr,
+                                                 final List<TextRange> expectedRanges)
+            throws IOException, SAXException {
+
+        LOGGER.info("root:\n{}", root.toString());
+
+        DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
+
+        LOGGER.info("Input:\n-----\n{}\n-----", inputStr);
+
+        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
+        final LocationFactory locationFactory = new DefaultLocationFactory();
+        final LoggingContentHandler contentHandler = new LoggingContentHandler(ds3Parser);
+
+        ds3Parser.setContentHandler(contentHandler);
+        ds3Parser.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+        ds3Parser.parse(new InputSource(new StringReader(inputStr)));
+
+        LOGGER.info("Expecting source ranges:\n{}",
+                rangesToString(expectedRanges, inputStr));
+
+        LOGGER.info("Actual source ranges:\n{}",
+                rangesToString(contentHandler.textRanges, inputStr));
+
+        Assertions.assertThat(contentHandler.getTextRanges())
+                .containsExactlyElementsOf(expectedRanges);
+
+        return contentHandler;
+    }
+
+    private String rangesToString(final List<TextRange> ranges, final String inputStr) {
+
+        return AsciiTable.builder(ranges)
+                .withColumn(Column.of( "Source", (TextRange range) ->
+                        "[" + extractRange(inputStr, range.getFrom(), range.getTo()) + "]"))
+                .withColumn(Column.of("From", range ->
+                        range.getFrom().toString()))
+                .withColumn(Column.of("To", range ->
+                        range.getTo().toString()))
+                .build();
+    }
+
+    private TextRange makeRange(final int fromLine,
+                                final int fromCol,
+                                final int toLine,
+                                final int toCol) {
+        return new TextRange(
+                DefaultLocation.of(fromLine, fromCol),
+                DefaultLocation.of(toLine, toCol));
+    }
+
+
     private DynamicTest negativeTest(final String stem, final String type) {
         return createTest(stem, "~" + type, true);
     }
@@ -158,7 +479,9 @@ class TestDS3 extends StroomUnitTest {
 
     private void test(final String stem,
                       final String testType,
-                      final boolean expectedErrors) throws IOException, TransformerConfigurationException, SAXException {
+                      final boolean expectedErrors)
+            throws IOException, TransformerConfigurationException, SAXException {
+
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -222,7 +545,8 @@ class TestDS3 extends StroomUnitTest {
 
                 if (zipInput) {
                     final StreamLocationFactory locationFactory = new StreamLocationFactory();
-                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+                    reader.setErrorHandler(
+                            new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
 
                     try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input))) {
                         ZipEntry entry = zipInputStream.getNextEntry();
@@ -234,7 +558,8 @@ class TestDS3 extends StroomUnitTest {
                             try {
                                 if (entry.getName().endsWith(".dat")) {
                                     reader.parse(new InputSource(new BufferedReader(new InputStreamReader(
-                                            new IgnoreCloseInputStream(zipInputStream), StreamUtil.DEFAULT_CHARSET))));
+                                            new IgnoreCloseInputStream(zipInputStream),
+                                            StreamUtil.DEFAULT_CHARSET))));
                                 }
                             } finally {
                                 zipInputStream.closeEntry();
@@ -245,7 +570,10 @@ class TestDS3 extends StroomUnitTest {
 
                 } else {
                     final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
-                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+                    reader.setErrorHandler(new ErrorHandlerAdaptor(
+                            "DS3Parser",
+                            locationFactory,
+                            errorReceiver));
 
                     reader.parse(new InputSource(Files.newBufferedReader(input)));
                 }
@@ -340,8 +668,191 @@ class TestDS3 extends StroomUnitTest {
         }
     }
 
+    /**
+     * @param input The string to extract the range from
+     * @param from Inclusive
+     * @param to Inclusive
+     * @return The extracted string
+     */
+    public String extractRange(final String input, final Location from, final Location to) {
+        final StringReader stringReader = new StringReader(input);
+        final StringBuilder output = new StringBuilder();
+        int line = 1;
+        int col = 1;
+        int lastChar = -1;
+        boolean isFirstChar = true;
+
+        int chr;
+
+        try {
+            while (true) {
+                chr = stringReader.read();
+                if (chr == -1) {
+                    break;
+                }
+
+                if (isFirstChar) {
+                    isFirstChar = false;
+                } else if (lastChar == '\n') {
+                    line++;
+                    col = 1;
+                } else if (chr == '\n') {
+                    // Do nothing
+                } else {
+                    col++;
+                }
+                lastChar = chr;
+
+                boolean isOnOrPastFromLocation = line > from.getLineNo()
+                        || (line == from.getLineNo() && col >= from.getColNo());
+                boolean isBeforeOrOnToLocation = line < to.getLineNo()
+                        || (line == to.getLineNo() && col <= to.getColNo());
+
+                if (isOnOrPastFromLocation && isBeforeOrOnToLocation) {
+                    output.append(charToVisible((char) chr));
+                }
+                if (!isBeforeOrOnToLocation) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return output.toString();
+    }
+
+    private String charToVisible(final char c) {
+        if (c == 0) {
+            return "";
+        } else if (c == '\n') {
+            return "↵";
+        } else if (c == '\t') {
+            return "↹";
+        } else {
+            return String.valueOf(c);
+        }
+    }
+
+
     private static class ReaderConfigurationException extends RuntimeException {
 
+    }
+
+    private static class LoggingContentHandler implements ContentHandler {
+
+        private final DS3Parser ds3Parser;
+        private Locator locator;
+        private List<TextRange> textRanges = new ArrayList<>();
+        private List<String> values = new ArrayList<>();
+
+        private LoggingContentHandler(final DS3Parser ds3Parser) {
+            this.ds3Parser = ds3Parser;
+        }
+
+        public List<TextRange> getTextRanges() {
+            return textRanges;
+        }
+
+        public List<String> getValues() {
+            return values;
+        }
+
+        @Override
+        public void setDocumentLocator(final Locator locator) {
+//            LOGGER.info("setDocumentLocator() called");
+            this.locator = locator;
+        }
+
+        @Override
+        public void startDocument() throws SAXException {
+            LOGGER.info("startDocument() called");
+        }
+
+        @Override
+        public void endDocument() throws SAXException {
+            LOGGER.info("endDocument() called");
+        }
+
+        @Override
+        public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
+//            LOGGER.info("startPrefixMapping() called");
+        }
+
+        @Override
+        public void endPrefixMapping(final String prefix) throws SAXException {
+//            LOGGER.info("endPrefixMapping() called");
+        }
+
+        @Override
+        public void startElement(final String uri,
+                                 final String localName,
+                                 final String qName,
+                                 final Attributes atts) throws SAXException {
+            LOGGER.info("startElement({}) called", localName);
+            if (localName.equals("record")) {
+//                LOGGER.info("  [{}:{}]", locator.getLineNumber(), locator.getColumnNumber());
+//                stringBuilder = new StringBuilder();
+            }
+            if (localName.equals("data")) {
+                final String value = atts.getValue("value");
+                LOGGER.info("  value: [{}]", value);
+                values.add(value);
+            }
+        }
+
+        @Override
+        public void endElement(final String uri,
+                               final String localName,
+                               final String qName) throws SAXException {
+            LOGGER.info("endElement({}) called", localName);
+            if (localName.equals("record")) {
+
+                if (locator instanceof DSLocator) {
+                    DSLocator dsLocator = (DSLocator) locator;
+                    LOGGER.info("  [{}:{}] => [{}:{}]",
+                            dsLocator.getLineNumber(),
+                            dsLocator.getColumnNumber(),
+                            dsLocator.getRecordEndLocator().getLineNumber(),
+                            dsLocator.getRecordEndLocator().getColumnNumber());
+
+                    textRanges.add(new TextRange(
+                            DefaultLocation.of(dsLocator.getLineNumber(), dsLocator.getColumnNumber()),
+                            DefaultLocation.of(
+                                    dsLocator.getRecordEndLocator().getLineNumber(),
+                                    dsLocator.getRecordEndLocator().getColumnNumber())));
+                } else {
+                    throw new RuntimeException("Expecting a DSLocator");
+                }
+            }
+        }
+
+//        private void logLocation(final Locator from, final Locator to) {
+//            LOGGER.info("  Line: {}, col: {}", locator.getLineNumber(), locator.getColumnNumber());
+//        }
+//
+//        private void logLocation(final Locator from, final Locator to) {
+//            LOGGER.info("  Line: {}, col: {}", locator.getLineNumber(), locator.getColumnNumber());
+//        }
+
+        @Override
+        public void characters(final char[] ch, final int start, final int length) throws SAXException {
+//            LOGGER.info("characters() called");
+        }
+
+        @Override
+        public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
+//            LOGGER.info("ignorableWhitespace() called");
+        }
+
+        @Override
+        public void processingInstruction(final String target, final String data) throws SAXException {
+//            LOGGER.info("processingInstruction() called");
+        }
+
+        @Override
+        public void skippedEntity(final String name) throws SAXException {
+//            LOGGER.info("skippedEntity() called");
+        }
     }
 
 }

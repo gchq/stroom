@@ -9,12 +9,13 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
-    private String localDir = "${stroom.temp}/refDataOffHeapStore";
+    private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
     private int maxReaders = 100;
@@ -27,10 +28,12 @@ public class ReferenceDataConfig extends AbstractConfig {
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
+    @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The absolute directory path to use for storing the reference data store. It MUST be on " +
-            "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
-            "if it doesn't exist.")
+    @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
+            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. "+
+            "The directory will be created if it doesn't exist." +
+            "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
     public String getLocalDir() {
         return localDir;
     }
@@ -41,7 +44,7 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @ValidFilePath
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The absolute path to a provided LMDB system library file. If unset the LMDB binary " +
+    @JsonPropertyDescription("The path to a provided LMDB system library file. If unset the LMDB binary " +
             "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
             "installed or want to make use of a package manager provided instance. If you set this property care needs " +
             " to be taken over version compatibility between the version of LMDBJava (that Stroom uses to interact with " +

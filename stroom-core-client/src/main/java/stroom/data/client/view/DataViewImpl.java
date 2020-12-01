@@ -16,51 +16,66 @@
 
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.tab.client.view.LinkTabBar;
+
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.HasRows;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.client.presenter.DataPresenter.DataView;
-import stroom.data.pager.client.Pager;
-import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {
     private final Widget widget;
+
     @UiField
     LinkTabBar tabBar;
+
     @UiField
-    Pager segmentPager;
+    Label sourceLinkLabel;
+
     @UiField
-    Pager dataPager;
+    ResizeSimplePanel navigatorContainer;
+
     @UiField
     LayerContainer layerContainer;
+
+    @UiField
+    SimplePanel progressBarPanel;
+
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
+        sourceLinkLabel.setText("View Source");
+    }
+
+    @Override
+    public void setSourceLinkVisible(final boolean isVisible) {
+        sourceLinkLabel.setVisible(isVisible);
+    }
+
+    @Override
+    public void addSourceLinkClickHandler(final ClickHandler clickHandler) {
+        if (clickHandler != null) {
+            sourceLinkLabel.addClickHandler(clickHandler);
+        }
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void showSegmentPager(final boolean show) {
-        segmentPager.setVisible(show);
-    }
-
-    @Override
-    public void setSegmentPagerRows(final HasRows display) {
-        segmentPager.setDisplay(display);
-    }
-
-    @Override
-    public void setDataPagerRows(final HasRows display) {
-        dataPager.setDisplay(display);
     }
 
     @Override
@@ -74,8 +89,21 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public void setRefreshing(final boolean refreshing) {
-        dataPager.setRefreshing(refreshing);
+    public void setNavigatorView(final ItemNavigatorView itemNavigatorView) {
+        if (itemNavigatorView != null) {
+            navigatorContainer.setWidget(itemNavigatorView.asWidget());
+        } else {
+            navigatorContainer.clear();
+        }
+    }
+
+    @Override
+    public void setProgressView(final ProgressView progressView) {
+        if (progressView != null) {
+            progressBarPanel.setWidget(progressView.asWidget());
+        } else {
+            progressBarPanel.clear();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {

@@ -16,6 +16,8 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -23,42 +25,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.HasDisplayValue;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"order", "direction"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Sort", propOrder = {"order", "direction"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes the sorting applied to a field")
-public final class Sort implements Serializable {
-    private static final long serialVersionUID = 4530846367973824427L;
-
-    @XmlElement
+public final class Sort {
     @ApiModelProperty(
             value = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
                     "field to sort on",
             example = "0",
             required = true)
     @JsonProperty
-    private Integer order;
+    private final Integer order;
 
-    @XmlElement
     @ApiModelProperty(
             value = "The direction to sort in, ASCENDING or DESCENDING",
             example = "ASCENDING",
             required = true)
     @JsonProperty
-    private SortDirection direction;
-
-    public Sort() {
-    }
+    private final SortDirection direction;
 
     @JsonCreator
     public Sort(@JsonProperty("order") final Integer order,
@@ -71,16 +58,8 @@ public final class Sort implements Serializable {
         return order;
     }
 
-    public void setOrder(final Integer order) {
-        this.order = order;
-    }
-
     public SortDirection getDirection() {
         return direction;
-    }
-
-    public void setDirection(final SortDirection direction) {
-        this.direction = direction;
     }
 
     @Override

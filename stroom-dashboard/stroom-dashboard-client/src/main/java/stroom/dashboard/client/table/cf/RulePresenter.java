@@ -17,10 +17,11 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.dashboard.shared.ConditionalFormattingRule;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.util.shared.RandomId;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,8 +60,10 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
 
     ConditionalFormattingRule write() {
         String id = null;
-        if (originalRule != null) {
+        if (originalRule != null && originalRule.getId() != null) {
             id = originalRule.getId();
+        } else {
+            id = RandomId.createId(5);
         }
 
         final ExpressionOperator expression = editExpressionPresenter.write();

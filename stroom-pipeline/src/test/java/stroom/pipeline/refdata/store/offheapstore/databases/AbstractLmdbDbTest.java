@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,12 +52,24 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     }
 
     @AfterEach
-    final void teardown() {
+    final void teardown() throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
         lmdbEnv = null;
         if (Files.isDirectory(dbDir)) {
+            Files.list(dbDir)
+                    .filter(path -> path.endsWith("data.mdb"))
+                    .forEach(path -> {
+                        try {
+                            long fileSizeBytes = Files.size(path);
+                            LOGGER.info("LMDB file size: {}",
+                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
             FileUtil.deleteDir(dbDir);
         }
     }

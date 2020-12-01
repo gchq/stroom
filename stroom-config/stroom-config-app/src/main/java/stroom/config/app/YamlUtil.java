@@ -16,6 +16,11 @@
 
 package stroom.config.app;
 
+import stroom.util.logging.LogUtil;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
@@ -29,14 +34,15 @@ import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.util.logging.LogUtil;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 
 public class YamlUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(YamlUtil.class);
@@ -86,13 +92,16 @@ public class YamlUtil {
     }
 
     /**
-     * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
+     * Reads a yaml file that matches the structure of a complete DropWizard {@link Config}
+     * object tree. The file undergoes substitution and validation.
+     *
      * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
-        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
+        final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
+                new SubstitutingSourceProvider(
+                        new FileConfigurationSourceProvider(),
+                        new EnvironmentVariableSubstitutor(false)));
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
 
@@ -115,28 +124,29 @@ public class YamlUtil {
     }
 
     /**
-     * Reads a yaml file that matches the structure of an {@link AppConfig} object tree without the
-     * DropWizard specific config.
+     * Reads a YAML string that has already been through the drop wizard env var substitution.
+     *
      * @throws IOException
      */
-//    public static AppConfig readAppConfig(final Path appConfigFile, final boolean willFailOnUnknownProps) throws IOException {
-//
-//        final String string = Files.readString(appConfigFile, StandardCharsets.UTF_8);
-//        final StringSubstitutor substitutor = new StringSubstitutor(StringLookupFactory.INSTANCE.environmentVariableStringLookup());
-//        final String substituted = substitutor.replace(string);
-//        final InputStream substitutedInputStream = new ByteArrayInputStream(substituted.getBytes(StandardCharsets.UTF_8));
-//
-//        final YAMLFactory yf = new YAMLFactory();
-//        final ObjectMapper mapper = new ObjectMapper(yf);
-//        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//
-////        final YAMLFactory yf = new YAMLFactory();
-////        final ObjectMapper mapper = new ObjectMapper(yf);
-////        final AppConfig config = mapper.readerFor(AppConfig.class).readValue(inputStream);
-////        FieldMapper.copy(config, appConfig);
-//
-//        return mapper.readerFor(AppConfig.class).readValue(substitutedInputStream);
-//    }
+    public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
+
+        Objects.requireNonNull(yamlStr);
+
+        final Yaml yaml = new Yaml();
+        final Map<String, Object> obj = yaml.load(yamlStr);
+
+        // fail on unknown so it skips over all the drop wiz yaml content that has no
+        // corresponding annotated props in DummyConfig
+        final ObjectMapper mapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        try {
+            final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
+            return dummyConfig.getAppConfig();
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Error parsing yaml string", e);
+        }
+    }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
         final YAMLFactory yf = new YAMLFactory();
@@ -145,6 +155,7 @@ public class YamlUtil {
         mapper.writeValue(outputStream, config);
 
     }
+
     public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
         config.setAppConfig(appConfig);
@@ -162,5 +173,24 @@ public class YamlUtil {
         Config config = new Config();
         config.setAppConfig(appConfig);
         writeConfig(config, path);
+    }
+
+    /**
+     * Used to simulate the {@link Config} class that wraps {@link AppConfig} when we are not
+     * interested in anything in {@link Config} except {@link AppConfig}.
+     */
+    private static class DummyConfig {
+
+        @JsonProperty("appConfig")
+        private final AppConfig appConfig;
+
+        @JsonCreator
+        public DummyConfig(@JsonProperty("appConfig") final AppConfig appConfig) {
+            this.appConfig = appConfig;
+        }
+
+        public AppConfig getAppConfig() {
+            return appConfig;
+        }
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.shared.Format.Type;
+import stroom.query.api.v2.Format.Type;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public interface FormatUihandlers extends PopupUiHandlers {

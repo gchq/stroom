@@ -18,7 +18,6 @@
 package stroom.dashboard;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -34,6 +33,8 @@ import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.shared.VisualisationDoc;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -75,11 +76,12 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         final String type = "table";
                         final String id = type + "_" + System.currentTimeMillis();
 
-                        final ComponentConfig componentData = new ComponentConfig();
-                        componentData.setType(type);
-                        componentData.setId(id);
-                        componentData.setName("table" + " " + i + ":" + j + ":" + k);
-                        componentData.setSettings(visSettings);
+                        final ComponentConfig componentData = new ComponentConfig.Builder()
+                                .type(type)
+                                .id(id)
+                                .name("table" + " " + i + ":" + j + ":" + k)
+                                .settings(visSettings)
+                                .build();
                         components.add(componentData);
 
                         final TabConfig tabConfig = new TabConfig(id, true);
@@ -114,9 +116,8 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         vis.setScriptRef(scriptRef);
         visualisationStore.writeDocument(vis);
 
-        final VisComponentSettings visSettings = new VisComponentSettings();
-        visSettings.setVisualisation(visRef);
-
-        return visSettings;
+        return new VisComponentSettings.Builder()
+                .visualisation(visRef)
+                .build();
     }
 }

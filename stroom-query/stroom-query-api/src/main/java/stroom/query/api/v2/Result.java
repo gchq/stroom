@@ -25,49 +25,33 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlSeeAlso;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
-        @JsonSubTypes.Type(value = FlatResult.class, name = "vis")
+        @JsonSubTypes.Type(value = FlatResult.class, name = "flat"),
+        @JsonSubTypes.Type(value = VisResult.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Result", propOrder = "componentId")
-@XmlSeeAlso({TableResult.class, FlatResult.class})
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(
         description = "Base object for describing a set of result data",
-        subTypes = {TableResult.class, FlatResult.class})
-public abstract class Result implements Serializable {
-    private static final long serialVersionUID = -7455554742243923562L;
-
-    @XmlElement
+        subTypes = {TableResult.class, FlatResult.class, VisResult.class})
+public abstract class Result {
     //TODO add an example value
     @ApiModelProperty(
             value = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
             required = true)
     @JsonProperty
-    private String componentId;
+    private final String componentId;
 
-    @XmlElement
     @ApiModelProperty(value = "If an error has occurred producing this result set then this will have details " +
             "of the error")
     @JsonProperty
-    private String error;
-
-    public Result() {
-    }
+    private final String error;
 
     @JsonCreator
     public Result(@JsonProperty("componentId") final String componentId,
@@ -80,16 +64,8 @@ public abstract class Result implements Serializable {
         return componentId;
     }
 
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
-    }
-
     public String getError() {
         return error;
-    }
-
-    public void setError(final String error) {
-        this.error = error;
     }
 
     @Override
@@ -108,26 +84,25 @@ public abstract class Result implements Serializable {
 
     @Override
     public String toString() {
-        return "ComponentResult{" +
-                "componentId='" + componentId + "\', " +
-                "error='" + error + '\'' +
+        return "Result{" +
+                "componentId='" + componentId + '\'' +
+                ", error='" + error + '\'' +
                 '}';
     }
 
     /**
      * Builder for constructing a {@link Result}. This class is abstract and must be overridden for
      * each known Result implementation class.
-     * @param <T> The result class type, either Flat or Table
+     *
+     * @param <T>           The result class type, either Flat or Table
      * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
     public static abstract class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
-
         private String componentId;
         private String error;
 
         /**
          * @param value The ID of the component that this result set was requested for. See ResultRequest in SearchRequest
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public CHILD_CLASS componentId(final String value) {
@@ -137,7 +112,6 @@ public abstract class Result implements Serializable {
 
         /**
          * @param value If an error has occurred producing this result set then this will have details
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public CHILD_CLASS error(final String value) {

@@ -592,23 +592,23 @@ class TestConfigMapper {
         return new AppConfig();
     }
 
-    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {
-        ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
-
-        ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
-
-        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
-                .create(
-                        Config.class,
-                        io.dropwizard.jersey.validation.Validators.newValidator(),
-                        Jackson.newObjectMapper(),
-                        "dw");
-        Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
-
-        return config.getAppConfig();
-    }
+//    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {
+//        ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
+//                new FileConfigurationSourceProvider(),
+//                new EnvironmentVariableSubstitutor(false));
+//
+//        ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+//
+//        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
+//                .create(
+//                        Config.class,
+//                        io.dropwizard.jersey.validation.Validators.newValidator(),
+//                        Jackson.newObjectMapper(),
+//                        "dw");
+//        Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
+//
+//        return config.getAppConfig();
+//    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

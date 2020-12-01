@@ -1,16 +1,23 @@
 package stroom.test;
 
 import stroom.content.ContentPack;
+import stroom.content.ContentPackCollection;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -18,62 +25,88 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public class ContentPackDownloader extends AbstractContentDownloader {
-    public static final String URL_PREFIX = "https://github.com/gchq/stroom-content/releases/download/";
+public class ContentPackDownloader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackDownloader.class);
+    public static final String CONTENT_PACK_DOWNLOAD_DIR = "~/.stroom/contentPackDownload";
 
-    private static void download(final String url, final Path file) throws IOException {
+    private static void download(final String url,
+                                 final Path file) throws IOException {
         try (final InputStream in = new URL(url).openStream()) {
             Files.copy(in, file, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
-    private static void download(final String url,
+    private static void download(final ContentPack contentPack,
                                  final Path contentPackDownloadDir,
                                  final Path contentPackImportDir) {
+        final String url = contentPack.getUrl();
+        Objects.requireNonNull(url);
+        final String filename;
         try {
-            final String filename = Paths.get(new URI(url).getPath()).getFileName().toString();
-            final Path downloadFile = contentPackDownloadDir.resolve(filename);
-            final Path importFile = contentPackImportDir.resolve(filename);
-            if (Files.isRegularFile(downloadFile)) {
-                LOGGER.info(url + " has already been downloaded");
-            } else {
-                LOGGER.info("Downloading " + url + " into " + FileUtil.getCanonicalPath(contentPackDownloadDir));
-                download(url, downloadFile);
-            }
+            filename = Paths.get(new URI(url).getPath())
+                    .getFileName()
+                    .toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(LogUtil.message("URL {} is invalid: {}", url, e.getMessage()), e);
+        }
 
-            if (!Files.isRegularFile(importFile)) {
-                LOGGER.info("Copying from " + downloadFile + " to " + importFile);
-                StreamUtil.copyFile(downloadFile, importFile);
+        try {
+            Files.createDirectories(contentPackDownloadDir);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error ensuring {} exists: {}",
+                    contentPackDownloadDir, e.getMessage()), e);
+        }
+
+        final Path downloadFile = contentPackDownloadDir.resolve(filename);
+        final Path importFile = contentPackImportDir.resolve(filename);
+        if (Files.isRegularFile(downloadFile)) {
+            LOGGER.info(url + " has already been downloaded");
+        } else {
+            LOGGER.info("Downloading " + url + " into " + FileUtil.getCanonicalPath(contentPackDownloadDir));
+            try {
+                download(url, downloadFile);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error downloading {}: {}", url, e.getMessage()), e);
             }
-        } catch (final IOException | URISyntaxException e) {
-            LOGGER.error(e.getMessage(), e);
+        }
+
+        try {
+            Files.createDirectories(contentPackImportDir);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error ensuring {} exists: {}",
+                    contentPackImportDir, e.getMessage()), e);
+        }
+
+        if (!Files.isRegularFile(importFile)) {
+            LOGGER.info("Copying from " + downloadFile + " to " + importFile);
+            try {
+                StreamUtil.copyFile(downloadFile, importFile);
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error copying {} to {}: {}",
+                        downloadFile, importFile, e.getMessage()), e);
+            }
+        } else {
+            LOGGER.info("File {} already exists", importFile.toAbsolutePath().normalize());
         }
     }
 
-    private static void download(final String url,
-                                 final Path contentPackDownloadDir,
-                                 final Path contentPackImportDir,
-                                 final String packName,
-                                 final String packVer) {
-        final String packUrl = url + packName + "-" + packVer + "/" + packName + "-" + packVer + ".zip";
-        download(packUrl, contentPackDownloadDir, contentPackImportDir);
-    }
-
-    public static void downloadAllPacks(final String url,
-                                        final Path contentPackDownloadDir,
-                                        final Path contentPackImportDir) {
-        download(url, contentPackDownloadDir, contentPackImportDir, "core-xml-schemas", "v2.2");
-        download(url, contentPackDownloadDir, contentPackImportDir, "event-logging-xml-schema", "v3.4.2");
-        download(url, contentPackDownloadDir, contentPackImportDir, "internal-dashboards", "v1.1");
-        download(url, contentPackDownloadDir, contentPackImportDir, "internal-statistics-sql", "v2.1");
-        download(url, contentPackDownloadDir, contentPackImportDir, "internal-statistics-stroom-stats", "v2.1");
-        download(url, contentPackDownloadDir, contentPackImportDir, "standard-pipelines", "v0.2");
-        download(url, contentPackDownloadDir, contentPackImportDir, "stroom-101", "v1.0");
-        download(url, contentPackDownloadDir, contentPackImportDir, "stroom-logs", "v2.0-alpha.5");
-        download(url, contentPackDownloadDir, contentPackImportDir, "template-pipelines", "v0.3");
-        download("https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.2.1/visualisations-production-v3.2.1.zip", contentPackDownloadDir, contentPackImportDir);
+    public static void downloadPacks(final Path contentPacksDefinition,
+                                     final Path contentPackDownloadDir,
+                                     final Path contentPackImportDir) {
+        try {
+            final ObjectMapper mapper = new ObjectMapper();
+            final ContentPackCollection contentPacks = mapper.readValue(
+                    contentPacksDefinition.toFile(),
+                    ContentPackCollection.class);
+            contentPacks.getContentPacks().forEach(contentPack ->
+                    download(contentPack, contentPackDownloadDir, contentPackImportDir));
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     public static Path downloadContentPack(final ContentPack contentPack, final Path destDir) {
@@ -88,19 +121,19 @@ public class ContentPackDownloader extends AbstractContentDownloader {
         Preconditions.checkNotNull(conflictMode);
         Preconditions.checkArgument(Files.isDirectory(destDir));
 
-        Path destFilePath = buildDestFilePath(contentPack.getNameAsStr(), contentPack.getVersion(), destDir);
+        Path destFilePath = buildDestFilePath(contentPack, destDir);
         boolean destFileExists = Files.isRegularFile(destFilePath);
 
         if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
-                    contentPack.getNameAsStr(),
+                    contentPack.getName(),
                     FileUtil.getCanonicalPath(destFilePath));
             return destFilePath;
         }
 
         if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
             LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
-                    contentPack.getNameAsStr(),
+                    contentPack.getName(),
                     FileUtil.getCanonicalPath(destFilePath));
             try {
                 Files.delete(destFilePath);
@@ -110,9 +143,9 @@ public class ContentPackDownloader extends AbstractContentDownloader {
             }
         }
 
-        URL fileUrl = buildFileUrl(contentPack.getNameAsStr(), contentPack.getVersion());
+        final URL fileUrl = getUrl(contentPack);
         LOGGER.info("Downloading contentPack {} from {} to {}",
-                contentPack.getNameAsStr(),
+                contentPack.getName(),
                 fileUrl.toString(),
                 FileUtil.getCanonicalPath(destFilePath));
 
@@ -121,4 +154,60 @@ public class ContentPackDownloader extends AbstractContentDownloader {
         return destFilePath;
     }
 
+    private static URL getUrl(final ContentPack contentPack) {
+        try {
+            return new URL(contentPack.getUrl());
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Url " +
+                    contentPack.getUrl() +
+                    " for content pack " +
+                    contentPack.getName() +
+                    " and version " +
+                    contentPack.getVersion() +
+                    " is badly formed", e);
+        }
+    }
+
+    static Path buildDestFilePath(final ContentPack contentPack, final Path destDir) {
+        final String filename = contentPack.toFileName();
+        return destDir.resolve(filename);
+    }
+
+    private static boolean isRedirected(Map<String, List<String>> header) {
+        for (String hv : header.get(null)) {
+            if (hv.contains(" 301 ")
+                    || hv.contains(" 302 ")) return true;
+        }
+        return false;
+    }
+
+    static void downloadFile(final URL fileUrl, final Path destFilename) {
+        URL effectiveUrl = fileUrl;
+        try {
+            HttpURLConnection http = (HttpURLConnection) effectiveUrl.openConnection();
+            Map<String, List<String>> header = http.getHeaderFields();
+            while (isRedirected(header)) {
+                effectiveUrl = new URL(header.get("Location").get(0));
+                http = (HttpURLConnection) effectiveUrl.openConnection();
+                header = http.getHeaderFields();
+            }
+
+            // Create a temp file as the download destination to avoid overwriting an existing file.
+            final Path tempFile = Files.createTempFile("stroom", "download");
+            try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                StreamUtil.streamToStream(http.getInputStream(), fos);
+            }
+
+            // Atomically move the downloaded file to the destination so that concurrent tests don't overwrite the file.
+            Files.move(tempFile, destFilename);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error downloading url %s to %s",
+                    fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);
+        }
+    }
+
+    public enum ConflictMode {
+        OVERWRITE_EXISTING,
+        KEEP_EXISTING
+    }
 }

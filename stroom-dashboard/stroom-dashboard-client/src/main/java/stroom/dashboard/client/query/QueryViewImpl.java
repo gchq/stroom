@@ -64,7 +64,7 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     @Override

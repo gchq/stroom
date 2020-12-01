@@ -17,13 +17,9 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TabConfig;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -34,6 +30,12 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractComponentPresenter<V extends View> extends MyPresenterWidget<V>
         implements Component, HasDirtyHandlers {
@@ -71,19 +73,33 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
-    public void write(final ComponentConfig componentConfig) {
-        componentConfig.setType(this.componentConfig.getType());
-        componentConfig.setId(this.componentConfig.getId());
-        componentConfig.setName(this.componentConfig.getName());
-        componentConfig.setSettings(this.componentConfig.getSettings());
+    public ComponentConfig write() {
         if (settingsPresenter != null) {
-            settingsPresenter.write(componentConfig);
+            componentConfig = settingsPresenter.write(componentConfig);
         }
+        return componentConfig;
     }
 
     @Override
     public ComponentConfig getComponentConfig() {
         return componentConfig;
+    }
+
+    public ComponentSettings getSettings() {
+        return componentConfig.getSettings();
+    }
+
+    public void setSettings(final ComponentSettings componentSettings) {
+        componentConfig = new ComponentConfig.Builder(componentConfig)
+                .settings(componentSettings)
+                .build();
+    }
+
+    @Override
+    public void setComponentName(final String name) {
+        componentConfig = new ComponentConfig.Builder(componentConfig)
+                .name(name)
+                .build();
     }
 
     @Override
@@ -98,7 +114,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
                 if (ok) {
                     if (settingsPresenter.validate()) {
                         final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                        settingsPresenter.write(componentConfig);
+                        componentConfig = settingsPresenter.write(componentConfig);
 
                         if (dirty) {
                             changeSettings();

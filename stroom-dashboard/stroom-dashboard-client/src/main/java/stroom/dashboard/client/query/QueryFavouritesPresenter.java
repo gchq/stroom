@@ -17,13 +17,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.CellList;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
@@ -46,6 +39,14 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.CellList;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
@@ -120,7 +121,10 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
 
                             } else {
-                                final Query query = new Query(currentDataSource, currentExpression);
+                                final Query query = new Query.Builder()
+                                        .dataSource(currentDataSource)
+                                        .expression(currentExpression)
+                                        .build();
                                 final StoredQuery queryEntity = new StoredQuery();
                                 queryEntity.setQuery(query);
                                 queryEntity.setDashboardUuid(currentDashboardUuid);

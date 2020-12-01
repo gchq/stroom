@@ -4,7 +4,6 @@ import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -19,9 +18,6 @@ import java.util.List;
  * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
-
-    private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
-
     private ImportExportService importExportService;
 
     @Inject
@@ -41,15 +37,6 @@ public class ContentImportService {
         ));
     }
 
-    public void importVisualisations() {
-
-        final Path contentPackDirPath = FileSystemTestUtil.getContentPackDownloadsDir();
-
-        final Path packPath = VisualisationsDownloader.downloadVisualisations(
-                VISUALISATIONS_VERSION, contentPackDirPath);
-        importExportService.performImportWithoutConfirmation(packPath);
-    }
-
     public void importContentPacks(final List<ContentPack> packs) {
         packs.forEach(pack -> {
             final Path packPath = ContentPackDownloader.downloadContentPack(
@@ -59,6 +46,4 @@ public class ContentImportService {
             importExportService.performImportWithoutConfirmation(packPath);
         });
     }
-
-
 }

@@ -179,6 +179,8 @@ class DataServiceImpl implements DataService {
                         entries.add(new DataInfoSection.Entry(key, convertTime(value)));
                     } else if (key.toLowerCase().contains("size")) {
                         entries.add(new DataInfoSection.Entry(key, convertSize(value)));
+                    } else if (key.toLowerCase().contains("count")) {
+                        entries.add(new DataInfoSection.Entry(key, convertCount(value)));
                     } else {
                         entries.add(new DataInfoSection.Entry(key, value));
                     }
@@ -216,6 +218,15 @@ class DataServiceImpl implements DataService {
     private String convertSize(final String value) {
         try {
             return ModelStringUtil.formatIECByteSizeString(Long.parseLong(value));
+        } catch (RuntimeException e) {
+            // Ignore.
+        }
+        return value;
+    }
+
+    private String convertCount(final String value) {
+        try {
+            return ModelStringUtil.formatCsv(Long.parseLong(value));
         } catch (RuntimeException e) {
             // Ignore.
         }

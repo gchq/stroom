@@ -37,6 +37,8 @@
     </ui:style>
 
     <g:FlowPanel styleName="{style.paging}">
+        <g:Label ui:field="lblTitle" styleName="{style.label}"/>
+        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
         <g:Label ui:field="lblFrom" styleName="{style.label}"/>
         <g:TextBox ui:field="txtFrom" styleName="{style.textBox}" visible="false"/>
         <g:Label ui:field="lblToSeparator" text="&nbsp;to&nbsp;" styleName="{style.label}"/>

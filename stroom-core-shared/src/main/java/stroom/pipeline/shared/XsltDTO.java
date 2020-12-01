@@ -1,24 +1,22 @@
 package stroom.pipeline.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class XsltDTO extends DocRef {
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String data;
-
-    public XsltDTO() {
-    }
+    private final String data;
 
     public XsltDTO(final XsltDoc doc) {
         super(XsltDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
-        setData(doc.getData());
-        setDescription(doc.getDescription());
+        data = doc.getData();
+        description = doc.getDescription();
     }
 
     @JsonCreator
@@ -36,15 +34,7 @@ public class XsltDTO extends DocRef {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getData() {
         return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
     }
 }

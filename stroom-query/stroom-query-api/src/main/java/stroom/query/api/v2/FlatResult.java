@@ -24,31 +24,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
 @JsonInclude(Include.NON_NULL)
-@XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(
         description = "A result structure used primarily for visualisation data",
         parent = Result.class)
 public final class FlatResult extends Result {
-    @XmlElement
     @JsonProperty
     private final List<Field> structure;
 
-    @XmlElement
     @ApiModelProperty(value = "The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
     @JsonProperty
     private final List<List<Object>> values;
 
-    @XmlElement
     @ApiModelProperty(value = "The size of the result set being returned")
     @JsonProperty
     private final Long size;

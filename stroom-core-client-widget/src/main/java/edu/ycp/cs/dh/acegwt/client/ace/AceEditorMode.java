@@ -20,12 +20,26 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Enumeration for ACE editor modes.
  * Note that the corresponding .js file must be loaded
  * before a mode can be set.
  */
 public enum AceEditorMode {
+
+
+    /**
+     * Used for stroom-expression syntax editors
+     */
+    STROOM_EXPRESSION("stroom_expression"),
+
+
     /**
      * ABAP (Advanced Business Application Programming).
      */
@@ -483,8 +497,25 @@ public enum AceEditorMode {
 
     private final String name;
 
+    // Added by at055612
+    private static final Map<String, AceEditorMode> NAME_TO_MODES_MAP;
+
+    // Added by at055612
+    static {
+       NAME_TO_MODES_MAP = Stream.of(AceEditorMode.values())
+               .collect(Collectors.toMap(Enum::name, Function.identity()));
+    }
+
     private AceEditorMode(String name) {
         this.name = name;
+    }
+
+    // Added by at055612
+    public static AceEditorMode fromName(final String name) {
+        Objects.requireNonNull(name);
+        AceEditorMode mode = NAME_TO_MODES_MAP.get(name);
+        Objects.requireNonNull(mode);
+        return mode;
     }
 
     /**

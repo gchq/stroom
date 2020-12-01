@@ -17,22 +17,20 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.annotations.ApiModelProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,62 +44,59 @@ import java.util.Objects;
         "conditionalFormattingRules",
         "modelVersion"})
 @JsonInclude(Include.NON_NULL)
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "table")
-@XmlType(name = "TableComponentSettings", propOrder = {
-        "queryId",
-        "fields",
-        "extractValues",
-        "extractionPipeline",
-        "maxResults",
-        "showDetail",
-        "conditionalFormattingRules",
-        "modelVersion"
-})
-public class TableComponentSettings extends ComponentSettings {
+public class TableComponentSettings implements ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
-    @XmlElement(name = "queryId")
-    @JsonProperty("queryId")
-    private String queryId;
-    @XmlElementWrapper(name = "fields")
-    @XmlElements({@XmlElement(name = "field", type = Field.class)})
-    @JsonProperty("fields")
-    private List<Field> fields;
-    @XmlElement(name = "extractValues")
-    @JsonProperty("extractValues")
-    private Boolean extractValues;
-    @XmlElement(name = "extractionPipeline")
-    @JsonProperty("extractionPipeline")
-    private DocRef extractionPipeline;
-    @XmlElementWrapper(name = "maxResults")
-    @XmlElement(name = "level")
-    @JsonProperty("maxResults")
-    private int[] maxResults = DEFAULT_MAX_RESULTS;
-    @XmlElement(name = "showDetail")
-    @JsonProperty("showDetail")
-    private Boolean showDetail;
-    @XmlElementWrapper(name = "conditionalFormattingRules")
-    @XmlElements({@XmlElement(name = "conditionalFormattingRule", type = ConditionalFormattingRule.class)})
+
+    @ApiModelProperty(
+            value = "TODO",
+            required = true)
+    @JsonProperty
+    private final String queryId;
+
+    @ApiModelProperty(required = true)
+    @JsonProperty
+    private final List<Field> fields;
+
+    @ApiModelProperty(
+            value = "TODO")
+    @JsonProperty
+    private final Boolean extractValues;
+
+    @JsonProperty
+    private final DocRef extractionPipeline;
+
+    @ApiModelProperty(
+            value = "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means " +
+                    "1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field " +
+                    "system defaults will apply",
+            example = "1000,10,1")
+    @JsonProperty
+    private final List<Integer> maxResults;
+
+    @ApiModelProperty(
+            value = "When grouping is used a value of true indicates that the results will include the full detail of " +
+                    "any results aggregated into a group as well as their aggregates. A value of false will only " +
+                    "include the aggregated values for each group. Defaults to false.")
+    @JsonProperty
+    private final Boolean showDetail;
+
+    @ApiModelProperty(
+            value = "IGNORE: UI use only",
+            hidden = true)
     @JsonProperty("conditionalFormattingRules")
-    private List<ConditionalFormattingRule> conditionalFormattingRules;
+    private final List<ConditionalFormattingRule> conditionalFormattingRules;
+    @ApiModelProperty(
+            value = "IGNORE: UI use only",
+            hidden = true)
     @JsonProperty("modelVersion")
-    @XmlElement(name = "modelVersion")
-    private String modelVersion;
-
-    public TableComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public TableComponentSettings(final List<Field> fields) {
-        this.fields = fields;
-    }
+    private final String modelVersion;
 
     @JsonCreator
     public TableComponentSettings(@JsonProperty("queryId") final String queryId,
                                   @JsonProperty("fields") final List<Field> fields,
                                   @JsonProperty("extractValues") final Boolean extractValues,
                                   @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-                                  @JsonProperty("maxResults") final int[] maxResults,
+                                  @JsonProperty("maxResults") final List<Integer> maxResults,
                                   @JsonProperty("showDetail") final Boolean showDetail,
                                   @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
                                   @JsonProperty("modelVersion") final String modelVersion) {
@@ -119,44 +114,12 @@ public class TableComponentSettings extends ComponentSettings {
         return queryId;
     }
 
-    public void setQueryId(final String queryId) {
-        this.queryId = queryId;
-    }
-
     public List<Field> getFields() {
         return fields;
     }
 
-    public void setFields(final List<Field> fields) {
-        this.fields = fields;
-    }
-
-    public void addField(final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-
-        Objects.requireNonNull(field.getId(), "Field id is null");
-
-        fields.add(field);
-    }
-
-    public void removeField(final Field field) {
-        if (fields != null) {
-            fields.remove(field);
-        }
-    }
-
     public Boolean getExtractValues() {
         return extractValues;
-    }
-
-    public void setExtractValues(final Boolean extractValues) {
-        if (extractValues != null && extractValues) {
-            this.extractValues = null;
-        } else {
-            this.extractValues = Boolean.FALSE;
-        }
     }
 
     public boolean extractValues() {
@@ -170,36 +133,12 @@ public class TableComponentSettings extends ComponentSettings {
         return extractionPipeline;
     }
 
-    public void setExtractionPipeline(final DocRef extractionPipeline) {
-        this.extractionPipeline = extractionPipeline;
-    }
-
-    public int[] getMaxResults() {
-        if (maxResults == null || maxResults.length == 0) {
-            return DEFAULT_MAX_RESULTS;
-        }
-
+    public List<Integer> getMaxResults() {
         return maxResults;
-    }
-
-    public void setMaxResults(final int[] maxResults) {
-        if (maxResults == null || maxResults.length == 0) {
-            this.maxResults = DEFAULT_MAX_RESULTS;
-        } else {
-            this.maxResults = maxResults;
-        }
     }
 
     public Boolean getShowDetail() {
         return showDetail;
-    }
-
-    public void setShowDetail(final Boolean showDetail) {
-        if (showDetail != null && showDetail) {
-            this.showDetail = Boolean.TRUE;
-        } else {
-            this.showDetail = null;
-        }
     }
 
     public boolean showDetail() {
@@ -213,16 +152,8 @@ public class TableComponentSettings extends ComponentSettings {
         return conditionalFormattingRules;
     }
 
-    public void setConditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
-        this.conditionalFormattingRules = conditionalFormattingRules;
-    }
-
     public String getModelVersion() {
         return modelVersion;
-    }
-
-    public void setModelVersion(final String modelVersion) {
-        this.modelVersion = modelVersion;
     }
 
     @Override
@@ -234,7 +165,7 @@ public class TableComponentSettings extends ComponentSettings {
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
-                Arrays.equals(maxResults, that.maxResults) &&
+                Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion);
@@ -242,50 +173,197 @@ public class TableComponentSettings extends ComponentSettings {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(queryId, fields, extractValues, extractionPipeline, showDetail, conditionalFormattingRules, modelVersion);
-        result = 31 * result + Arrays.hashCode(maxResults);
-        return result;
+        return Objects.hash(queryId, fields, extractValues, extractionPipeline, maxResults, showDetail, conditionalFormattingRules, modelVersion);
     }
 
     @Override
     public String toString() {
-        return "TableComponentSettings{" +
+        return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + Arrays.toString(maxResults) +
+                ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
                 '}';
     }
 
-    public TableComponentSettings copy() {
-        List<Field> fieldsCopy = null;
-        if (fields != null) {
-            fieldsCopy = new ArrayList<>(fields.size());
-            for (final Field field : fields) {
-                fieldsCopy.add(new Field.Builder().copy(field).build());
-            }
+    /**
+     * Builder for constructing a {@link TableSettings tableSettings}
+     */
+    public static class Builder {
+        protected String queryId;
+        protected List<Field> fields;
+        protected Boolean extractValues;
+        protected DocRef extractionPipeline;
+        protected List<Integer> maxResults;
+        protected Boolean showDetail;
+        protected List<ConditionalFormattingRule> conditionalFormattingRules;
+        protected String modelVersion;
+
+        public Builder() {
         }
 
-        int[] maxResultCopy = null;
-        if (maxResults != null) {
-            maxResultCopy = new int[maxResults.length];
-            for (int i = 0; i < maxResults.length; i++) {
-                maxResultCopy[i] = maxResults[i];
-            }
+        public Builder(final TableComponentSettings tableSettings) {
+            this.queryId = tableSettings.getQueryId();
+            this.fields = tableSettings.getFields() == null
+                    ? null : new ArrayList<>(tableSettings.getFields());
+            this.extractValues = tableSettings.getExtractValues();
+            this.extractionPipeline = tableSettings.getExtractionPipeline();
+            this.maxResults = tableSettings.getMaxResults() == null
+                    ? null : new ArrayList<>(tableSettings.getMaxResults());
+            this.showDetail = tableSettings.getShowDetail();
+            this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
+                    ? null : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+            this.modelVersion = tableSettings.getModelVersion();
         }
 
-        return new TableComponentSettings(
-                queryId,
-                fieldsCopy,
-                extractValues,
-                extractionPipeline,
-                maxResultCopy,
-                showDetail,
-                conditionalFormattingRules,
-                modelVersion);
+        /**
+         * @param value The ID for the query that wants these results
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder queryId(final String value) {
+            this.queryId = value;
+            return this;
+        }
+
+        public Builder fields(final List<Field> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        /**
+         * @param values Add expected fields to the output table
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder addFields(final Field... values) {
+            return addFields(Arrays.asList(values));
+        }
+
+        /**
+         * Convenience function for adding multiple fields that are already in a collection.
+         *
+         * @param values The fields to add
+         * @return this builder, with the fields added.
+         */
+        public Builder addFields(final Collection<Field> values) {
+            if (this.fields == null) {
+                this.fields = new ArrayList<>(values);
+            } else {
+                this.fields.addAll(values);
+            }
+            return this;
+        }
+
+        /**
+         * @param value TODO - unknown purpose
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder extractValues(final Boolean value) {
+            if (value != null && value) {
+                this.extractValues = null;
+            } else {
+                this.extractValues = Boolean.FALSE;
+            }
+            return this;
+        }
+
+        /**
+         * @param value The reference to the extraction pipeline that will be used on the results
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder extractionPipeline(final DocRef value) {
+            this.extractionPipeline = value;
+            return this;
+        }
+
+        /**
+         * Shortcut function for creating the extractionPipeline {@link DocRef} in one go
+         *
+         * @param type The type of the extractionPipeline
+         * @param uuid The UUID of the extractionPipeline
+         * @param name The name of the extractionPipeline
+         * @return this builder, with the completed extractionPipeline added.
+         */
+        public Builder extractionPipeline(final String type,
+                                          final String uuid,
+                                          final String name) {
+            return this.extractionPipeline(new DocRef.Builder().type(type).uuid(uuid).name(name).build());
+        }
+
+        public Builder maxResults(final List<Integer> maxResults) {
+            this.maxResults = maxResults;
+            return this;
+        }
+
+        /**
+         * @param values The max result value
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder addMaxResults(final Integer... values) {
+            return addMaxResults(Arrays.asList(values));
+        }
+
+        /**
+         * Add a collection of max result values
+         *
+         * @param values The list of max result values
+         * @return this builder
+         */
+        public Builder addMaxResults(final Collection<Integer> values) {
+            if (this.maxResults == null) {
+                this.maxResults = new ArrayList<>(values);
+            } else {
+                this.maxResults.addAll(values);
+            }
+            return this;
+        }
+
+        /**
+         * @param value When grouping is used a value of true indicates that the results will include
+         *              the full detail of any results aggregated into a group as well as their aggregates.
+         *              A value of false will only include the aggregated values for each group. Defaults to false.
+         * @return The {@link TableSettings.Builder}, enabling method chaining
+         */
+        public Builder showDetail(final Boolean value) {
+            this.showDetail = value;
+            return this;
+        }
+
+        public Builder conditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
+            this.conditionalFormattingRules = conditionalFormattingRules;
+            return this;
+        }
+
+        public Builder modelVersion(final String modelVersion) {
+            this.modelVersion = modelVersion;
+            return this;
+        }
+
+        public TableComponentSettings build() {
+            return new TableComponentSettings(
+                    queryId,
+                    fields,
+                    extractValues,
+                    extractionPipeline,
+                    maxResults,
+                    showDetail,
+                    conditionalFormattingRules,
+                    modelVersion);
+        }
+
+        public TableSettings buildTableSettings() {
+            return new TableSettings(
+                    queryId,
+                    fields,
+                    extractValues,
+                    extractionPipeline,
+                    maxResults,
+                    showDetail,
+                    conditionalFormattingRules,
+                    modelVersion);
+        }
     }
 }

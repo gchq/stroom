@@ -30,7 +30,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -42,13 +41,10 @@ import java.util.Objects;
 @ApiModel(description = DocRef.CLASS_DESC)
 @JsonPropertyOrder({"type", "uuid", "name"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
+public class DocRef implements Comparable<DocRef>, HasDisplayValue {
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
             "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
 
-    private static final long serialVersionUID = -2121399789820829359L;
-
-    @XmlElement
     @ApiModelProperty(
             value = "The type of the 'document' that this DocRef refers to",
             example = "StroomStatsStore",
@@ -89,6 +85,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
     public DocRef(final String type, String uuid) {
         this.type = type;
         this.uuid = uuid;
+        this.name = null;
     }
 
     /**
@@ -214,10 +211,17 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
      */
     public static class Builder {
         private String type;
-
         private String uuid;
-
         private String name;
+
+        public Builder() {
+        }
+
+        public Builder(final DocRef docRef) {
+            this.type = docRef.type;
+            this.uuid = docRef.uuid;
+            this.name = docRef.name;
+        }
 
         /**
          * @param value The type of the 'document' that this docRef points to an instance of. Supported types are defined

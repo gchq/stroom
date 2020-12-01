@@ -37,7 +37,7 @@ public class DependencyRemapper {
         return remap;
     }
 
-    public void remapExpression(final ExpressionOperator expressionOperator) {
+    public ExpressionOperator remapExpression(final ExpressionOperator expressionOperator) {
         if (expressionOperator.getChildren() != null) {
             expressionOperator.getChildren().forEach(expressionItem -> {
                 if (expressionItem instanceof ExpressionOperator) {
@@ -48,6 +48,7 @@ public class DependencyRemapper {
                 }
             });
         }
+        return expressionOperator;
     }
 
     public Set<DocRef> getDependencies() {

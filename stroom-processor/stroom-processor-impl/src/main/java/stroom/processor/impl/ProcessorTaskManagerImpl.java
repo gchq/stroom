@@ -760,7 +760,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         }
 
-        final Query query = new Query(queryData.getDataSource(), queryData.getExpression());
+        final Query query = new Query.Builder()
+                .dataSource(queryData.getDataSource())
+                .expression(queryData.getExpression())
+                .build();
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");
