@@ -295,6 +295,7 @@ task migrate(type: JavaExec) {
 
 clean {
     delete stroomDockerBuildDir
+    delete releaseBuildDir
 }
 
 // Generate the confi.yml files for the zip and docker distributions
@@ -604,7 +605,6 @@ shadowDistTar.enabled = false
 ////}
 //}
 
-
 task setupSampleDataApplication(type: JavaExec) {
     dependsOn this: compileJava
     dependsOn this: compileTestJava
@@ -616,7 +616,6 @@ task setupSampleDataApplication(type: JavaExec) {
 
     args = ['local.yml']
 }
-
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
 ////for its test. This is a TODO as stroom-connectors needs a big refactor once we
