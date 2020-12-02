@@ -252,9 +252,11 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
     protected void readHeaderMarker() throws IOException {
         fillFromRawStreamBuffer(headerMarkerRawBuffer);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream");
+            invalid();
         }
     }
+
+    abstract void invalid() throws IOException;
 
     /**
      * Read 1 byte of uncompressed data.

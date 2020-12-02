@@ -17,6 +17,7 @@
 package stroom.streamstore.server.fs;
 
 import stroom.io.StreamCloser;
+import stroom.util.io.FileUtil;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -253,5 +254,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     @Override
     protected InputStream getRawStream() {
         return new RAInputStreamBufferAdaptor();
+    }
+
+    @Override
+    void invalid() throws IOException {
+        throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(file) + "\"");
     }
 }

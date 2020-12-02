@@ -16,6 +16,8 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.util.io.FileUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class BlockGZIPFileVerifier {
     // File being read
+    private final File file;
     private final RandomAccessFile raFile;
     private final InputStream stream;
 
@@ -73,6 +76,7 @@ public class BlockGZIPFileVerifier {
      * Constructor to open a Block GZIP File.
      */
     public BlockGZIPFileVerifier(final File bgz) throws IOException {
+        file = bgz;
         raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
     }
@@ -233,7 +237,7 @@ public class BlockGZIPFileVerifier {
     private void readHeaderMarker() throws IOException {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream");
+            throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(file) + "\"");
         }
     }
 

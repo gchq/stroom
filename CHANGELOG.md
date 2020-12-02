@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.16] - 2020-12-02
+
 * Issue **#1964** : BGZIP files are now closed on exception. 
 
 ## [v5.5.15] - 2020-10-08
