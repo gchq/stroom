@@ -44,6 +44,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -208,7 +209,11 @@ class DataServiceImpl implements DataService {
 
     private String convertTime(final String value) {
         try {
-            return DateUtil.createNormalDateTimeString(Long.parseLong(value));
+            long valLong = Long.parseLong(value);
+            return DateUtil.createNormalDateTimeString(valLong)
+                    + " ("
+                    + valLong
+                    + ")";
         } catch (RuntimeException e) {
             // Ignore.
         }
@@ -217,7 +222,11 @@ class DataServiceImpl implements DataService {
 
     private String convertSize(final String value) {
         try {
-            return ModelStringUtil.formatIECByteSizeString(Long.parseLong(value));
+            long valLong = Long.parseLong(value);
+            return ModelStringUtil.formatIECByteSizeString(valLong)
+                    + " ("
+                    + NumberFormat.getIntegerInstance().format(valLong)
+                    + ")";
         } catch (RuntimeException e) {
             // Ignore.
         }
