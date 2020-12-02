@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Add byte count to Info tab, make date values consistent
+* Change reference data lookup request object to support string or epoch millis date.
+
+* Add byte count to Info tab, make date values consistent.
 
 * Fix problem of wrong charset being used.
 

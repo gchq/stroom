@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.date.DateUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,7 +13,6 @@ import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
@@ -30,8 +30,10 @@ public class RefDataLookupRequest {
     @JsonProperty
     private final String key;
 
-    @Min(0)
     @JsonProperty
+    private final String effectiveTime; // could be date str or epoch ms
+
+    @JsonIgnore
     private final long effectiveTimeEpochMs;
 
     @Valid
@@ -43,13 +45,24 @@ public class RefDataLookupRequest {
     @JsonCreator
     public RefDataLookupRequest(@JsonProperty("mapName") final String mapName,
                                 @JsonProperty("key") final String key,
-                                @JsonProperty("effectiveTimeEpochMs") final Long effectiveTimeEpochMs,
+                                @JsonProperty("effectiveTime") final String effectiveTime,
                                 @JsonProperty("referenceLoaders") final List<ReferenceLoader> referenceLoaders) {
         this.mapName = mapName;
         this.key = key;
-        this.effectiveTimeEpochMs = effectiveTimeEpochMs != null
-                ? effectiveTimeEpochMs
-                : Instant.now().toEpochMilli();
+
+        this.effectiveTime = effectiveTime;
+        long epochMs;
+
+        try {
+            epochMs = Long.parseLong(effectiveTime);
+        } catch (NumberFormatException e) {
+            try {
+                epochMs = DateUtil.parseNormalDateTimeString(effectiveTime);
+            } catch (Exception exception) {
+                throw new IllegalArgumentException("Invalid date " + effectiveTime);
+            }
+        }
+        this.effectiveTimeEpochMs = epochMs;
         this.referenceLoaders = referenceLoaders;
     }
 
@@ -61,6 +74,14 @@ public class RefDataLookupRequest {
         return key;
     }
 
+    /**
+     * @return data string or epoch ms
+     */
+    public String getEffectiveTime() {
+        return effectiveTime;
+    }
+
+    @JsonIgnore
     public long getEffectiveTimeEpochMs() {
         return effectiveTimeEpochMs;
     }
