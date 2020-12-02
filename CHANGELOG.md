@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed default dashboard time zone to use UTC.
+
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
 
 ## [v6.0.36] - 2020-04-09
 

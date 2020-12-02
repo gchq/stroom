@@ -46,8 +46,8 @@ BEGIN
     FROM TEMP_AGG
     WHERE TEMP_AGG.CT > 0
     ON DUPLICATE KEY UPDATE
-       VAL = TEMP_AGG.VAL,
-       CT = TEMP_AGG.CT;
+       VAL = VALUES(VAL),
+       CT = VALUES(CT);
 
     SET p_rowCount = ROW_COUNT();
 
@@ -98,8 +98,8 @@ BEGIN
         TEMP_AGG.CT AS CT
     FROM TEMP_AGG
     ON DUPLICATE KEY UPDATE
-        VAL = TEMP_AGG.VAL,
-        CT = TEMP_AGG.CT;
+        VAL = VALUES(VAL),
+        CT = VALUES(CT);
 
     SET p_rowCount = ROW_COUNT();
 
