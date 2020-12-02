@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
-## [v7.0-beta.71] - 2020-11-02
+## [v7.0-beta.71] - 2020-12-02
 
 * Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
 
