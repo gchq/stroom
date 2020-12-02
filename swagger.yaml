@@ -1,0 +1,834 @@
+---
+swagger: "2.0"
+info:
+  description: "Various APIs for interacting with stroom and its data"
+  version: "v1"
+  title: "stroom API"
+  contact:
+    name: "GCHQ"
+    url: "https://github.com/gchq/stroom"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost:8080"
+basePath: "/api"
+tags:
+- name: "authorisation - v1"
+  description: "Stroom Authorisation API"
+- name: "sqlstatistics query - v2"
+  description: "Stroom SQL Statistics Query API"
+- name: "stroom-index query - v2"
+  description: "Stroom Index Query API"
+schemes:
+- "http"
+- "https"
+paths:
+  /authorisation/v1/isAuthorised:
+    post:
+      tags:
+      - "authorisation - v1"
+      summary: "Submit a request to verify if the user has the requested permission\
+        \ on a 'document'"
+      description: ""
+      operationId: "isAuthorised"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "AuthorisationRequest"
+        required: false
+        schema:
+          $ref: "#/definitions/AuthorisationRequest"
+      responses:
+        default:
+          description: "successful operation"
+  /sqlstatistics/v2/dataSource:
+    post:
+      tags:
+      - "sqlstatistics query - v2"
+      summary: "Submit a request for a data source definition, supplying the DocRef\
+        \ for the data source"
+      description: ""
+      operationId: "getDataSource"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "DocRef"
+        required: false
+        schema:
+          $ref: "#/definitions/DocRef"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/DataSource"
+  /sqlstatistics/v2/destroy:
+    post:
+      tags:
+      - "sqlstatistics query - v2"
+      summary: "Destroy a running query"
+      description: ""
+      operationId: "destroy"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "QueryKey"
+        required: false
+        schema:
+          $ref: "#/definitions/QueryKey"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "boolean"
+  /sqlstatistics/v2/search:
+    post:
+      tags:
+      - "sqlstatistics query - v2"
+      summary: "Submit a search request"
+      description: ""
+      operationId: "search"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "SearchRequest"
+        required: false
+        schema:
+          $ref: "#/definitions/SearchRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/SearchResponse"
+  /stroom-index/v2/dataSource:
+    post:
+      tags:
+      - "stroom-index query - v2"
+      summary: "Submit a request for a data source definition, supplying the DocRef\
+        \ for the data source"
+      description: ""
+      operationId: "getDataSource"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "DocRef"
+        required: false
+        schema:
+          $ref: "#/definitions/DocRef"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/DataSource"
+  /stroom-index/v2/destroy:
+    post:
+      tags:
+      - "stroom-index query - v2"
+      summary: "Destroy a running query"
+      description: ""
+      operationId: "destroy"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "QueryKey"
+        required: false
+        schema:
+          $ref: "#/definitions/QueryKey"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "boolean"
+  /stroom-index/v2/search:
+    post:
+      tags:
+      - "stroom-index query - v2"
+      summary: "Submit a search request"
+      description: ""
+      operationId: "search"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "SearchRequest"
+        required: false
+        schema:
+          $ref: "#/definitions/SearchRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/SearchResponse"
+definitions:
+  AuthorisationRequest:
+    type: "object"
+    required:
+    - "docRef"
+    - "permission"
+    properties:
+      docRef:
+        readOnly: true
+        $ref: "#/definitions/DocRef"
+      permission:
+        type: "string"
+        example: "UPDATE"
+        description: "The permission (e.g. UPDATE) that the user is requesting to\
+          \ use with the document"
+        readOnly: true
+    description: "A request to determine if the user has the requested permission\
+      \ on a 'document'"
+  DataSource:
+    type: "object"
+    required:
+    - "fields"
+    properties:
+      fields:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          xml:
+            name: "field"
+          $ref: "#/definitions/DataSourceField"
+    description: "The definition of a data source, describing the fields available"
+    xml:
+      name: "dataSource"
+  DataSourceField:
+    type: "object"
+    required:
+    - "conditions"
+    - "docRefType"
+    - "name"
+    - "queryable"
+    - "type"
+    properties:
+      type:
+        type: "string"
+        description: "The data type for the field"
+        enum:
+        - "FIELD"
+        - "NUMERIC_FIELD"
+        - "DATE_FIELD"
+        - "ID"
+        - "DOC_REF"
+      docRefType:
+        type: "string"
+        description: "The doc ref type for the field"
+      name:
+        type: "string"
+        example: "field1"
+        description: "The name of the field"
+      queryable:
+        type: "boolean"
+        example: true
+        description: "Whether the field can be used in predicate in a query"
+      conditions:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "The supported predicate conditions for this field"
+        items:
+          type: "string"
+          xml:
+            name: "condition"
+          enum:
+          - "CONTAINS"
+          - "EQUALS"
+          - "GREATER_THAN"
+          - "GREATER_THAN_OR_EQUAL_TO"
+          - "LESS_THAN"
+          - "LESS_THAN_OR_EQUAL_TO"
+          - "BETWEEN"
+          - "IN"
+          - "IN_DICTIONARY"
+          - "IN_FOLDER"
+          - "IS_DOC_REF"
+    description: "The definition of a field within a data source"
+  DateTimeFormat:
+    type: "object"
+    required:
+    - "pattern"
+    - "timeZone"
+    properties:
+      pattern:
+        type: "string"
+        description: "A date time formatting pattern string conforming to the specification\
+          \ of java.time.format.DateTimeFormatter"
+      timeZone:
+        $ref: "#/definitions/TimeZone"
+    description: "The string formatting to apply to a date value"
+  DocRef:
+    type: "object"
+    required:
+    - "name"
+    - "type"
+    - "uuid"
+    properties:
+      type:
+        type: "string"
+        example: "StroomStatsStore"
+        description: "The type of the 'document' that this DocRef refers to"
+      uuid:
+        type: "string"
+        example: "9f6184b4-bd78-48bc-b0cd-6e51a357f6a6"
+        description: "The unique identifier for this 'document'"
+      name:
+        type: "string"
+        example: "MyStatistic"
+        description: "The name for the data source"
+    description: "A class for describing a unique reference to a 'document' in stroom.\
+      \  A 'document' is an entity in stroom such as a data source dictionary or pipeline."
+    xml:
+      name: "doc"
+  ExpressionItem:
+    type: "object"
+    required:
+    - "enabled"
+    discriminator: "type"
+    properties:
+      enabled:
+        type: "boolean"
+        example: true
+        description: "Whether this item in the expression tree is enabled or not"
+    description: "Base type for an item in an expression tree"
+  ExpressionOperator:
+    type: "object"
+    required:
+    - "enabled"
+    - "op"
+    properties:
+      op:
+        type: "string"
+        description: "The logical addOperator type"
+        enum:
+        - "AND"
+        - "OR"
+        - "NOT"
+      children:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          $ref: "#/definitions/ExpressionItem"
+      enabled:
+        type: "boolean"
+        example: true
+        description: "Whether this item in the expression tree is enabled or not"
+    description: "A logical addOperator term in a query expression tree"
+  ExpressionTerm:
+    allOf:
+    - $ref: "#/definitions/ExpressionItem"
+    - type: "object"
+      required:
+      - "condition"
+      - "field"
+      properties:
+        field:
+          type: "string"
+          description: "The name of the field that is being evaluated in this predicate\
+            \ term"
+        condition:
+          type: "string"
+          description: "The condition of the predicate term"
+          enum:
+          - "CONTAINS"
+          - "EQUALS"
+          - "GREATER_THAN"
+          - "GREATER_THAN_OR_EQUAL_TO"
+          - "LESS_THAN"
+          - "LESS_THAN_OR_EQUAL_TO"
+          - "BETWEEN"
+          - "IN"
+          - "IN_DICTIONARY"
+          - "IN_FOLDER"
+          - "IS_DOC_REF"
+        value:
+          type: "string"
+          description: "The value that the field value is being evaluated against.\
+            \ Not required if a dictionary is supplied"
+        docRef:
+          description: "The DocRef that the field value is being evaluated against\
+            \ if the condition is IN_DICTIONARY, IN_FOLDER or IS_DOC_REF"
+          $ref: "#/definitions/DocRef"
+      description: "A predicate term in a query expression tree"
+  Field:
+    type: "object"
+    required:
+    - "expression"
+    properties:
+      name:
+        type: "string"
+        description: "The name of the field for display purposes"
+      expression:
+        type: "string"
+        example: "SUM(${count})"
+        description: "The expression to use to generate the value for this field"
+      sort:
+        $ref: "#/definitions/Sort"
+      filter:
+        $ref: "#/definitions/Filter"
+      format:
+        $ref: "#/definitions/Format"
+      group:
+        type: "integer"
+        format: "int32"
+        description: "If this field is to be grouped then this defines the level of\
+          \ grouping, with 0 being the top level of grouping, 1 being the next level\
+          \ down, etc."
+    description: "Describes a field in a result set. The field can have various expressions\
+      \ applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping"
+  Filter:
+    type: "object"
+    properties:
+      includes:
+        type: "string"
+        example: "^[0-9]{3}$"
+        description: "Only results matching this filter will be included"
+      excludes:
+        type: "string"
+        example: "^[0-9]{3}$"
+        description: "Only results NOT matching this filter will be included"
+    description: "A pair of regular expression filters (inclusion and exclusion) to\
+      \ apply to the field.  Either or both can be supplied"
+  FlatResult:
+    allOf:
+    - $ref: "#/definitions/Result"
+    - type: "object"
+      properties:
+        structure:
+          type: "array"
+          items:
+            $ref: "#/definitions/Field"
+        values:
+          type: "array"
+          description: "The 2 dimensional array containing the result set. The positions\
+            \ in the inner array correspond to the positions in the 'structure' property"
+          items:
+            type: "array"
+            items:
+              type: "object"
+        size:
+          type: "integer"
+          format: "int64"
+          description: "The size of the result set being returned"
+      description: "A result structure used primarily for visualisation data"
+  Format:
+    type: "object"
+    required:
+    - "type"
+    properties:
+      type:
+        type: "string"
+        example: "NUMBER"
+        description: "The formatting type to apply"
+        enum:
+        - "GENERAL"
+        - "NUMBER"
+        - "DATE_TIME"
+        - "TEXT"
+      numberFormat:
+        $ref: "#/definitions/NumberFormat"
+      dateTimeFormat:
+        $ref: "#/definitions/DateTimeFormat"
+    description: "Describes the formatting that will be applied to values in a field"
+  NumberFormat:
+    type: "object"
+    required:
+    - "decimalPlaces"
+    properties:
+      decimalPlaces:
+        type: "integer"
+        format: "int32"
+        example: 2
+        description: "The number of decimal places"
+      useSeparator:
+        type: "boolean"
+        example: true
+        description: "Whether to use a thousands separator or not. Defaults to false"
+    description: "The definition of a format to apply to numeric data"
+  OffsetRange:
+    type: "object"
+    required:
+    - "length"
+    - "offset"
+    properties:
+      offset:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "The start offset for this sub-set of data, where zero is the\
+          \ offset of the first record in the full result set"
+      length:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "The length in records of the sub-set of results"
+    description: "The offset and length of a range of data in a sub-set of a query\
+      \ result set"
+  Param:
+    type: "object"
+    required:
+    - "key"
+    - "value"
+    properties:
+      key:
+        type: "string"
+        description: "The property key"
+      value:
+        type: "string"
+        description: "The property value"
+    description: "A key value pair that describes a property of a query"
+  Query:
+    type: "object"
+    required:
+    - "dataSource"
+    - "expression"
+    properties:
+      dataSource:
+        $ref: "#/definitions/DocRef"
+      expression:
+        description: "The root logical operator in the query expression tree"
+        $ref: "#/definitions/ExpressionOperator"
+      params:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "A list of key/value pairs that provide additional information\
+          \ about the query"
+        items:
+          xml:
+            name: "param"
+          $ref: "#/definitions/Param"
+    description: "The query terms for the search"
+    xml:
+      name: "query"
+  QueryKey:
+    type: "object"
+    required:
+    - "uuid"
+    properties:
+      uuid:
+        type: "string"
+        example: "7740bcd0-a49e-4c22-8540-044f85770716"
+        description: "The UUID that makes up the query key"
+    description: "A unique key to identify the instance of the search by. This key\
+      \ is used to identify multiple requests for the same search when running in\
+      \ incremental mode."
+  Result:
+    type: "object"
+    required:
+    - "componentId"
+    discriminator: "type"
+    properties:
+      componentId:
+        type: "string"
+        description: "The ID of the component that this result set was requested for.\
+          \ See ResultRequest in SearchRequest"
+      error:
+        type: "string"
+        description: "If an error has occurred producing this result set then this\
+          \ will have details of the error"
+    description: "Base object for describing a set of result data"
+  ResultRequest:
+    type: "object"
+    required:
+    - "componentId"
+    - "mappings"
+    - "openGroups"
+    - "requestedRange"
+    - "resultStyle"
+    properties:
+      componentId:
+        type: "string"
+        description: "The ID of the component that will receive the results corresponding\
+          \ to this ResultRequest"
+      mappings:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          xml:
+            name: "mappings"
+          $ref: "#/definitions/TableSettings"
+      requestedRange:
+        $ref: "#/definitions/OffsetRange"
+      openGroups:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "TODO"
+        items:
+          type: "string"
+          xml:
+            name: "key"
+      resultStyle:
+        type: "string"
+        description: "The style of results required. FLAT will provide a FlatResult\
+          \ object, while TABLE will provide a TableResult object"
+        enum:
+        - "FLAT"
+        - "TABLE"
+      fetch:
+        type: "string"
+        description: "The fetch mode for the query. NONE means fetch no data, ALL\
+          \ means fetch all known results, CHANGES means fetch only those records\
+          \ not see in previous requests"
+        enum:
+        - "NONE"
+        - "CHANGES"
+        - "ALL"
+    description: "A definition for how to return the raw results of the query in the\
+      \ SearchResponse, e.g. sorted, grouped, limited, etc."
+  Row:
+    type: "object"
+    required:
+    - "depth"
+    - "groupKey"
+    - "values"
+    properties:
+      groupKey:
+        type: "string"
+        description: "TODO"
+      values:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "The value for this row of data. The values in the list are in\
+          \ the same order as the fields in the ResultRequest"
+        items:
+          type: "string"
+          xml:
+            name: "value"
+      depth:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "The grouping depth, where 0 is the top level of grouping, or\
+          \ where there is no grouping"
+    description: "A row of data in a result set"
+  SearchRequest:
+    type: "object"
+    required:
+    - "dateTimeLocale"
+    - "incremental"
+    - "key"
+    - "query"
+    - "resultRequests"
+    properties:
+      key:
+        $ref: "#/definitions/QueryKey"
+      query:
+        $ref: "#/definitions/Query"
+      resultRequests:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          xml:
+            name: "resultRequest"
+          $ref: "#/definitions/ResultRequest"
+      dateTimeLocale:
+        type: "string"
+        description: "The locale to use when formatting date values in the search\
+          \ results. The value is the string form of a java.time.ZoneId"
+      incremental:
+        type: "boolean"
+        description: "If true the response will contain all results found so far,\
+          \ typically no results on the first request. Future requests for the same\
+          \ query key may return more results. Intended for use on longer running\
+          \ searches to allow partial result sets to be returned as soon as they are\
+          \ available rather than waiting for the full result set."
+      timeout:
+        type: "integer"
+        format: "int64"
+        description: "Set the maximum time (in ms) for the server to wait for a complete\
+          \ result set. The timeout applies to both incremental and non incremental\
+          \ queries, though the behaviour is slightly different. The timeout will\
+          \ make the server wait for which ever comes first out of the query completing\
+          \ or the timeout period being reached. If no value is supplied then for\
+          \ an incremental query a default value of 0 will be used (i.e. returning\
+          \ immediately) and for a non-incremental query the server's default timeout\
+          \ period will be used. For an incremental query, if the query has not completed\
+          \ by the end of the timeout period, it will return the currently know results\
+          \ with complete=false, however for a non-incremental query it will return\
+          \ no results, complete=false and details of the timeout in the error field"
+    description: "A request for new search or a follow up request for more data for\
+      \ an existing iterative search"
+    xml:
+      name: "searchRequest"
+  SearchResponse:
+    type: "object"
+    required:
+    - "highlights"
+    properties:
+      highlights:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "A list of strings to highlight in the UI that should correlate\
+          \ with the search query."
+        items:
+          type: "string"
+          xml:
+            name: "highlight"
+      results:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          $ref: "#/definitions/Result"
+      errors:
+        type: "array"
+        xml:
+          wrapped: true
+        description: "A list of errors that occurred in running the query"
+        items:
+          type: "string"
+          xml:
+            name: "error"
+      complete:
+        type: "boolean"
+        description: "True if the query has returned all known results"
+    description: "The response to a search request, that may or may not contain results.\
+      \ The results may only be a partial set if an iterative screech was requested"
+    xml:
+      name: "searchResponse"
+  Sort:
+    type: "object"
+    required:
+    - "direction"
+    - "order"
+    properties:
+      order:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Where multiple fields are sorted this value describes the sort\
+          \ order, with 0 being the first field to sort on"
+      direction:
+        type: "string"
+        example: "ASCENDING"
+        description: "The direction to sort in, ASCENDING or DESCENDING"
+        enum:
+        - "ASCENDING"
+        - "DESCENDING"
+    description: "Describes the sorting applied to a field"
+  TableResult:
+    allOf:
+    - $ref: "#/definitions/Result"
+    - type: "object"
+      required:
+      - "resultRange"
+      - "rows"
+      properties:
+        rows:
+          type: "array"
+          items:
+            $ref: "#/definitions/Row"
+        resultRange:
+          $ref: "#/definitions/OffsetRange"
+        totalResults:
+          type: "integer"
+          format: "int32"
+          description: "The total number of results in this result set"
+      description: "Object for describing a set of results in a table form that supports\
+        \ grouped data"
+  TableSettings:
+    type: "object"
+    required:
+    - "fields"
+    - "queryId"
+    properties:
+      queryId:
+        type: "string"
+        description: "TODO"
+      fields:
+        type: "array"
+        xml:
+          wrapped: true
+        items:
+          xml:
+            name: "field"
+          $ref: "#/definitions/Field"
+      extractValues:
+        type: "boolean"
+        description: "TODO"
+      extractionPipeline:
+        $ref: "#/definitions/DocRef"
+      maxResults:
+        type: "array"
+        example: "1000,10,1"
+        xml:
+          wrapped: true
+        description: "Defines the maximum number of results to return at each grouping\
+          \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
+          \ 1 and 1 at level 2. In the absence of this field system defaults will\
+          \ apply"
+        items:
+          type: "integer"
+          format: "int32"
+          xml:
+            name: "val"
+      showDetail:
+        type: "boolean"
+        description: "When grouping is used a value of true indicates that the results\
+          \ will include the full detail of any results aggregated into a group as\
+          \ well as their aggregates. A value of false will only include the aggregated\
+          \ values for each group. Defaults to false."
+    description: "An object to describe how the query results should be returned,\
+      \ including which fields should be included and what sorting, grouping, filtering,\
+      \ limiting, etc. should be applied"
+  TimeZone:
+    type: "object"
+    required:
+    - "use"
+    properties:
+      use:
+        type: "string"
+        description: "The required type of time zone"
+        enum:
+        - "LOCAL"
+        - "UTC"
+        - "ID"
+        - "OFFSET"
+      id:
+        type: "string"
+        example: "GMT"
+        description: "The id of the time zone, conforming to java.time.ZoneId"
+      offsetHours:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "The number of hours this timezone is offset from UTC"
+      offsetMinutes:
+        type: "integer"
+        format: "int32"
+        example: -30
+        description: "The number of minutes this timezone is offset from UTC"
+    description: "The timezone to apply to a date time value"
