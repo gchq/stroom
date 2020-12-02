@@ -177,7 +177,8 @@ class CliTranslationTaskHandler {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
 
                     try {
-                        pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
+                        pipeline.process(dataStream, feedProperties.getEncoding(
+                                feedName, feedProperties.getStreamTypeName(feedName), null));
                     } catch (final RuntimeException e) {
                         outputError(e);
                     }

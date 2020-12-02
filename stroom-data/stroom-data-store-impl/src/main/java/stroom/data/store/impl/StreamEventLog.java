@@ -116,6 +116,7 @@ public class StreamEventLog {
     public void viewStream(final String eventId,
                            final String feedName,
                            final String streamTypeName,
+                           final String childStreamType,
                            final DocRef pipelineRef,
                            final Throwable th) {
         securityContext.insecure(() -> {
@@ -124,7 +125,8 @@ public class StreamEventLog {
                     final Event event = eventLoggingService.createAction("View", "Viewing Stream");
                     final ObjectOutcome objectOutcome = new ObjectOutcome();
                     event.getEventDetail().setView(objectOutcome);
-                    objectOutcome.getObjects().add(createStreamObject(eventId, feedName, streamTypeName, pipelineRef));
+                    objectOutcome.getObjects()
+                            .add(createStreamObject(eventId, feedName, streamTypeName, childStreamType, pipelineRef));
                     objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                     eventLoggingService.log(event);
                 }
@@ -151,6 +153,7 @@ public class StreamEventLog {
     private event.logging.Object createStreamObject(final String eventId,
                                                     final String feedName,
                                                     final String streamTypeName,
+                                                    final String childStreamType,
                                                     final DocRef pipelineRef) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");
@@ -160,6 +163,9 @@ public class StreamEventLog {
         }
         if (streamTypeName != null) {
             object.getData().add(EventLoggingUtil.createData("StreamType", streamTypeName));
+        }
+        if (childStreamType != null) {
+            object.getData().add(EventLoggingUtil.createData("ChildStreamType", childStreamType));
         }
         if (pipelineRef != null) {
             object.getData().add(convertDocRef("Pipeline", pipelineRef));
