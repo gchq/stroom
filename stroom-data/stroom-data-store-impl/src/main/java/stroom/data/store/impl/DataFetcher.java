@@ -800,9 +800,13 @@ public class DataFetcher {
                     .withLength((long) charData.length())
                     .build();
             highlight = sourceLocation.getHighlight();
+        } else if (strBuilderResultRange.length() == 0) {
+            actualDataRange = null;
+            charData = "## No Data ##";
+            highlight = null;
         } else {
             actualDataRange = null;
-            charData = "Error: Requested range not found";
+            charData = "## Error: Requested range not found ##";
             highlight = null;
         }
 

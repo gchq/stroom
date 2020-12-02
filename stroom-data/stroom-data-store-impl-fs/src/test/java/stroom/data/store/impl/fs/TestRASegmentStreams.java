@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.annotation.Nonnull;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +90,7 @@ class TestRASegmentStreams {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(dir.resolve("main.dat"), true) {
                     @Override
-                    public int read(final byte[] b, final int off, int len) throws IOException {
+                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }
@@ -118,7 +119,7 @@ class TestRASegmentStreams {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(dir.resolve("main.dat"), true) {
                     @Override
-                    public int read(final byte[] b, final int off, int len) throws IOException {
+                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }
@@ -396,7 +397,7 @@ class TestRASegmentStreams {
 
     private String streamToString(final InputStream inputStream, final int bufferLength) throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int len = 0;
+        int len;
 
         if (bufferLength == 0) {
             while ((len = inputStream.read()) != -1) {
