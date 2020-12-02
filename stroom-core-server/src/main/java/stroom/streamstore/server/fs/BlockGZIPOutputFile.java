@@ -27,6 +27,8 @@ import stroom.io.SeekableOutputStream;
 import stroom.io.StreamCloser;
 import stroom.util.io.FileUtil;
 
+import javax.annotation.Nonnull;
+
 /**
  * @see BlockGZIPConstants
  */
@@ -48,10 +50,9 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
     private GZIPOutputStream currentStreamGzip;
-    private long currentRawBlockStartPos = 0;
 
     // The block size we are using
-    private int blockSize;
+    private final int blockSize;
     // The current 'logical' uncompressed data item we have written
     private long position = 0;
     // The current block number we are on
@@ -88,24 +89,30 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         FileUtil.deleteFile(lockFile);
 
         this.raFile = new RandomAccessFile(lockFile, BlockGZIPConstants.READ_WRITE);
+        try {
+            // Write a marker
+            mainBuffer.write(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER);
+            // At the start of the block file write the block size an empty place
+            // for the index offset and the marker
+            // we
+            mainBuffer.writeLong(blockSize);
+            // Uncompressed Data Length
+            mainBuffer.writeLong(0);
+            // Index POS
+            mainBuffer.writeLong(0);
+            // End POS
+            mainBuffer.writeLong(0);
 
-        // Write a marker
-        mainBuffer.write(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER);
-        // At the start of the block file write the block size an empty place
-        // for the index offset and the marker
-        // we
-        mainBuffer.writeLong(blockSize);
-        // Uncompressed Data Length
-        mainBuffer.writeLong(0);
-        // Index POS
-        mainBuffer.writeLong(0);
-        // End POS
-        mainBuffer.writeLong(0);
+            flushMainBuffer();
 
-        flushMainBuffer();
+            // Make sure the streams are closed.
+            streamCloser.add(mainBuffer).add(indexBuffer).add(raFile);
 
-        // Make sure the streams are closed.
-        streamCloser.add(mainBuffer).add(indexBuffer).add(raFile);
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     /**
@@ -149,7 +156,7 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         currentBlockEndPos = (blockCount + 1) * blockSize;
 
         // Record the start Pos
-        currentRawBlockStartPos = raFile.getChannel().position();
+        final long currentRawBlockStartPos = raFile.getChannel().position();
 
         // Record the index
         indexBuffer.writeLong(currentRawBlockStartPos);
@@ -181,13 +188,13 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     }
 
     @Override
-    public void write(final byte[] b) throws IOException {
+    public void write(@Nonnull final byte[] b) throws IOException {
         // Delegate
         write(b, 0, b.length);
     }
 
     @Override
-    public void write(final byte[] bytes, final int offset, final int length) throws IOException {
+    public void write(@Nonnull final byte[] bytes, final int offset, final int length) throws IOException {
         if (currentStreamBuffer == null) {
             startGzipBlock();
         }
@@ -259,8 +266,6 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
         } finally {
             try {
                 streamCloser.close();
-            } catch (IOException e) {
-                throw e;
             } finally {
                 super.close();
             }
@@ -287,12 +292,12 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     }
 
     @Override
-    public long getSize() throws IOException {
+    public long getSize() {
         return getPosition();
     }
 
     @Override
-    public void seek(long pos) throws IOException {
+    public void seek(long pos) {
         throw new UnsupportedOperationException();
     }
 

@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.annotation.Nonnull;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -84,7 +85,7 @@ public class TestRASegmentStreams extends StroomUnitTest {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(new File(dir, "main.dat"), true) {
                     @Override
-                    public int read(final byte[] b, final int off, int len) throws IOException {
+                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }
@@ -113,7 +114,7 @@ public class TestRASegmentStreams extends StroomUnitTest {
         final RASegmentInputStream inputStream = new RASegmentInputStream(
                 new UncompressedInputStream(new File(dir, "main.dat"), true) {
                     @Override
-                    public int read(final byte[] b, final int off, int len) throws IOException {
+                    public int read(@Nonnull final byte[] b, final int off, int len) throws IOException {
                         if (len > 3) {
                             len = 3;
                         }

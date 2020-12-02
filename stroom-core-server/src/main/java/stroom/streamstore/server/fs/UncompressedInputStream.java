@@ -16,17 +16,18 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.SeekableInputStream;
+import stroom.io.StreamCloser;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import stroom.io.SeekableInputStream;
-import stroom.io.StreamCloser;
-
 /**
  * A stream that interfaces with a random access file.
- *
+ * <p>
  * if lazy it is assumed that a missing file means a blank stream.
  */
 public class UncompressedInputStream extends InputStream implements SeekableInputStream {
@@ -36,18 +37,20 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     private long lastMarkPosition;
 
     // Use to help track non-closed streams
-    private StreamCloser streamCloser = new StreamCloser();
+    private final StreamCloser streamCloser = new StreamCloser();
 
     public UncompressedInputStream(final File file, boolean lazy) throws IOException {
-        if (lazy && !file.isFile()) {
-            raFile = null;
-            streamAdaptor = null;
-        } else {
-            raFile = new RandomAccessFile(file, BlockGZIPConstants.READ_ONLY);
-            streamAdaptor = new BlockBufferedInputStream(new RandomAccessStreamAdaptor(raFile));
+        RandomAccessFile randomAccessFile = null;
+        BlockBufferedInputStream blockBufferedInputStream = null;
 
-            streamCloser.add(raFile).add(streamAdaptor);
+        if (!lazy || file.isFile()) {
+            randomAccessFile = new RandomAccessFile(file, BlockGZIPConstants.READ_ONLY);
+            blockBufferedInputStream = new BlockBufferedInputStream(new RandomAccessStreamAdaptor(randomAccessFile));
+            streamCloser.add(randomAccessFile).add(blockBufferedInputStream);
         }
+
+        raFile = randomAccessFile;
+        streamAdaptor = blockBufferedInputStream;
     }
 
     /**
@@ -68,11 +71,10 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param b
-     *            to fill
+     * @param b to fill
      */
     @Override
-    public int read(final byte[] b) throws IOException {
+    public int read(@Nonnull final byte[] b) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -86,15 +88,12 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param b
-     *            to fill
-     * @param off
-     *            offset
-     * @param len
-     *            length
+     * @param b   to fill
+     * @param off offset
+     * @param len length
      */
     @Override
-    public int read(final byte[] b, final int off, final int len) throws IOException {
+    public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -111,15 +110,13 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
     }
 
     @Override
-    public long getPosition() throws IOException {
+    public long getPosition() {
         return position;
     }
 
@@ -158,8 +155,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     }
 
     /**
-     * @param n
-     *            bytes to skip
+     * @param n bytes to skip
      * @return how many we skipped
      */
     @Override

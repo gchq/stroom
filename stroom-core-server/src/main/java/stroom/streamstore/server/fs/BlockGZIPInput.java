@@ -153,18 +153,20 @@ public abstract class BlockGZIPInput extends InputStream implements SeekableInpu
     protected void init() throws IOException {
         // Create a buffer for the reading
         currentRawStreamBuffer = createBufferedInputStream(true);
+        try {
+            // Check Header Marker
+            readHeaderMarker();
 
-        // Check Header Marker
-        readHeaderMarker();
+            // Read Header
+            blockSize = (int) readLong();
+            dataLength = readLong();
+            idxStart = readLong();
+            eof = readLong();
 
-        // Read Header
-        blockSize = (int) readLong();
-        dataLength = readLong();
-        idxStart = readLong();
-        eof = readLong();
-
-        // Make sure the stream is closed.
-        streamCloser.add(currentRawStreamBuffer);
+        } finally {
+            // Make sure the stream is closed.
+            streamCloser.add(currentRawStreamBuffer);
+        }
     }
 
     protected abstract InputStream getRawStream();

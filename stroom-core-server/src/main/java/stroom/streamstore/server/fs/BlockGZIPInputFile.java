@@ -16,12 +16,13 @@
 
 package stroom.streamstore.server.fs;
 
+import stroom.io.StreamCloser;
+
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-
-import stroom.io.StreamCloser;
 
 /**
  * @see BlockGZIPConstants
@@ -49,12 +50,12 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         }
 
         @Override
-        public int read(final byte[] b) throws IOException {
+        public int read(@Nonnull final byte[] b) throws IOException {
             return getRaFile().read(b);
         }
 
         @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
+        public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
             return getRaFile().read(b, off, len);
         }
     }
@@ -64,13 +65,18 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
      */
     public BlockGZIPInputFile(final File bgz) throws IOException {
         this.raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
-        this.file = bgz;
+        try {
+            this.file = bgz;
+            raFile.seek(0);
+            init();
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
 
-        raFile.seek(0);
-        init();
-
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     /**
@@ -79,13 +85,18 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     public BlockGZIPInputFile(final File bgz, final int rawBufferSize) throws IOException {
         super(rawBufferSize);
         this.raFile = new RandomAccessFile(bgz, BlockGZIPConstants.READ_ONLY);
-        this.file = bgz;
+        try {
+            this.file = bgz;
+            raFile.seek(0);
+            init();
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
 
-        raFile.seek(0);
-        init();
-
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     /**
@@ -169,8 +180,6 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
@@ -233,8 +242,7 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
         final BlockGZIPInputFile is = new BlockGZIPInputFile(new File(args[0]));
 
         final byte[] buffer = new byte[1024];
-        int len = 0;
-
+        int len;
         while ((len = is.read(buffer)) != -1) {
             System.out.write(buffer, 0, len);
         }
@@ -246,5 +254,4 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     protected InputStream getRawStream() {
         return new RAInputStreamBufferAdaptor();
     }
-
 }
