@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix syntax highlighting for Meta streams in Source view.
+
 * Fix bug in PreviewInputStream read() method.
 
 * Moved content download to Java.
