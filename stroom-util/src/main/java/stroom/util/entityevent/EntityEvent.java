@@ -58,4 +58,12 @@ public class EntityEvent {
     public interface Handler {
         void onChange(EntityEvent event);
     }
+
+    @Override
+    public String toString() {
+        return "EntityEvent{" +
+                "docRef=" + docRef +
+                ", action=" + action +
+                '}';
+    }
 }

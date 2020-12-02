@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+
 * Issue **#1960** : Fix the data preview display of empty streams.
 
 * Moved content download to Java.
