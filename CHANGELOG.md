@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed default dashboard time zone to use UTC.
+
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
+
 ## [v6.1.28] - 2020-11-25
 
 * Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
