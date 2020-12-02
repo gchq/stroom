@@ -19,9 +19,9 @@ package stroom.streamstore.server.fs;
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -40,17 +40,20 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     private long lastMarkPosition;
 
     // Use to help track non-closed streams
-    private StreamCloser streamCloser = new StreamCloser();
+    private final StreamCloser streamCloser = new StreamCloser();
 
     public UncompressedInputStream(final Path file, boolean lazy) throws IOException {
-        if (lazy && !Files.isRegularFile(file)) {
-            raFile = null;
-            streamAdaptor = null;
-        } else {
-            raFile = FileChannel.open(file, StandardOpenOption.READ);
-            streamAdaptor = new BlockBufferedInputStream(Channels.newInputStream(raFile));
-            streamCloser.add(raFile).add(streamAdaptor);
+        FileChannel fileChannel = null;
+        BlockBufferedInputStream blockBufferedInputStream = null;
+
+        if (!lazy || Files.isRegularFile(file)) {
+            fileChannel = FileChannel.open(file, StandardOpenOption.READ);
+            blockBufferedInputStream = new BlockBufferedInputStream(Channels.newInputStream(fileChannel));
+            streamCloser.add(fileChannel).add(blockBufferedInputStream);
         }
+
+        raFile = fileChannel;
+        streamAdaptor = blockBufferedInputStream;
     }
 
     /**
@@ -74,7 +77,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
      * @param b to fill
      */
     @Override
-    public int read(final byte[] b) throws IOException {
+    public int read(@Nonnull final byte[] b) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -93,7 +96,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
      * @param len length
      */
     @Override
-    public int read(final byte[] b, final int off, final int len) throws IOException {
+    public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -110,15 +113,13 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
     }
 
     @Override
-    public long getPosition() throws IOException {
+    public long getPosition() {
         return position;
     }
 

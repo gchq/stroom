@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1964** : BGZIP files are now closed on exception.
+
 * Changed default dashboard time zone to use UTC.
 
 * Fixed SQL statistics upsert statements for MySQL 5.7.

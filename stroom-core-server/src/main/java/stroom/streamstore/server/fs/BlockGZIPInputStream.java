@@ -46,4 +46,9 @@ public class BlockGZIPInputStream extends BlockGZIPInput {
     protected InputStream getRawStream() {
         return inputStream;
     }
+
+    @Override
+    void invalid() throws IOException {
+        throw new IOException("Does not look like a Block GZIP V1 Stream");
+    }
 }

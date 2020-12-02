@@ -17,6 +17,7 @@
 package stroom.streamstore.server.fs;
 
 import stroom.io.StreamCloser;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,13 +44,19 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
      */
     public BlockGZIPInputFile(final Path bgz) throws IOException {
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
-        this.file = bgz;
+        try {
+            this.file = bgz;
+            raFile.position(0);
+            init();
 
-        raFile.position(0);
-        init();
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
 
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     /**
@@ -58,13 +65,20 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     public BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
         super(rawBufferSize);
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
-        this.file = bgz;
+        try {
+            this.file = bgz;
 
-        raFile.position(0);
-        init();
+            raFile.position(0);
+            init();
 
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
+
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     public static void main(final String[] args) throws IOException {
@@ -161,8 +175,6 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
@@ -224,5 +236,10 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     @Override
     protected InputStream getRawStream() {
         return Channels.newInputStream(raFile);
+    }
+
+    @Override
+    void invalid() throws IOException {
+        throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(file) + "\"");
     }
 }
