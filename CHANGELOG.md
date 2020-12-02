@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix bug in PreviewInputStream read() method.
+
 * Moved content download to Java.
 
 * All paths in the config YAML including logging config can now be made relative to the home dir.
