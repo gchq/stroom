@@ -16,6 +16,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @JsonInclude(Include.NON_NULL)
 public class RefDataLookupRequest {
@@ -34,7 +35,7 @@ public class RefDataLookupRequest {
     private final String effectiveTime; // could be date str or epoch ms
 
     @JsonIgnore
-    private final long effectiveTimeEpochMs;
+    private final Long effectiveTimeEpochMs;
 
     @Valid
     @NotNull
@@ -51,18 +52,22 @@ public class RefDataLookupRequest {
         this.key = key;
 
         this.effectiveTime = effectiveTime;
-        long epochMs;
+        if (effectiveTime != null) {
+            long epochMs;
 
-        try {
-            epochMs = Long.parseLong(effectiveTime);
-        } catch (NumberFormatException e) {
             try {
-                epochMs = DateUtil.parseNormalDateTimeString(effectiveTime);
-            } catch (Exception exception) {
-                throw new IllegalArgumentException("Invalid date " + effectiveTime);
+                epochMs = Long.parseLong(effectiveTime);
+            } catch (NumberFormatException e) {
+                try {
+                    epochMs = DateUtil.parseNormalDateTimeString(effectiveTime);
+                } catch (Exception exception) {
+                    throw new IllegalArgumentException("Invalid date " + effectiveTime);
+                }
             }
+            this.effectiveTimeEpochMs = epochMs;
+        } else {
+            this.effectiveTimeEpochMs = null;
         }
-        this.effectiveTimeEpochMs = epochMs;
         this.referenceLoaders = referenceLoaders;
     }
 
@@ -82,8 +87,8 @@ public class RefDataLookupRequest {
     }
 
     @JsonIgnore
-    public long getEffectiveTimeEpochMs() {
-        return effectiveTimeEpochMs;
+    public Optional<Long> getOptEffectiveTimeAsEpochMs() {
+        return Optional.ofNullable(effectiveTimeEpochMs);
     }
 
     public List<ReferenceLoader> getReferenceLoaders() {
