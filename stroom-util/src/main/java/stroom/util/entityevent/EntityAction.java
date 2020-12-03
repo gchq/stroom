@@ -19,7 +19,10 @@ package stroom.util.entityevent;
 import stroom.docref.HasDisplayValue;
 
 public enum EntityAction implements HasDisplayValue {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");
+    CREATE("Create"),
+    UPDATE("Update"),
+    DELETE("Delete"),
+    CLEAR_CACHE("Clear Cache");
 
     private final String displayValue;
 

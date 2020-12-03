@@ -35,7 +35,8 @@ public class StatisticStoreModule extends AbstractModule {
         bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(StatisticsDataSourceCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(StatisticsDataSourceCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(StatisticsDataSourceCacheImpl.class);

@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamCloser;
 
 import java.io.IOException;
@@ -44,13 +45,19 @@ class BlockGZIPInputFile extends BlockGZIPInput {
      */
     BlockGZIPInputFile(final Path bgz) throws IOException {
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
-        this.file = bgz;
+        try {
+            this.file = bgz;
+            raFile.position(0);
+            init();
 
-        raFile.position(0);
-        init();
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
 
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     /**
@@ -59,13 +66,20 @@ class BlockGZIPInputFile extends BlockGZIPInput {
     BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
         super(rawBufferSize);
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
-        this.file = bgz;
+        try {
+            this.file = bgz;
 
-        raFile.position(0);
-        init();
+            raFile.position(0);
+            init();
 
-        // Make sure the streams are closed.
-        streamCloser.add(raFile);
+            // Make sure the streams are closed.
+            streamCloser.add(raFile);
+
+        } catch (final IOException e) {
+            streamCloser.close();
+            raFile.close();
+            throw e;
+        }
     }
 
     static void main(final String[] args) throws IOException {
@@ -223,5 +237,10 @@ class BlockGZIPInputFile extends BlockGZIPInput {
     @Override
     protected InputStream getRawStream() {
         return Channels.newInputStream(raFile);
+    }
+
+    @Override
+    void invalid(final String message) throws IOException {
+        throw new IOException(message + " \"" + FileUtil.getCanonicalPath(file) + "\"");
     }
 }

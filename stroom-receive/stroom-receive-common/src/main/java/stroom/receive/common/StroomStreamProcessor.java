@@ -31,6 +31,7 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
 import stroom.util.io.StreamUtil;
+import stroom.util.net.HostNameUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
@@ -42,8 +43,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +52,7 @@ import java.util.UUID;
 public class StroomStreamProcessor {
     private static final String ZERO_CONTENT = "0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
-    private static String hostName;
+    private static volatile String hostName;
 
     private final AttributeMap globalAttributeMap;
     private final List<? extends StroomStreamHandler> stroomStreamHandlerList;
@@ -73,11 +72,7 @@ public class StroomStreamProcessor {
 
     public String getHostName() {
         if (hostName == null) {
-            try {
-                setHostName(InetAddress.getLocalHost().getHostName());
-            } catch (final UnknownHostException e) {
-                setHostName("Unknown");
-            }
+            StroomStreamProcessor.hostName = HostNameUtil.determineHostName();
         }
         return hostName;
     }

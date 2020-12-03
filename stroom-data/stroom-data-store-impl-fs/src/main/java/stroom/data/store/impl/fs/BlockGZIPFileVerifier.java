@@ -16,6 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.util.io.FileUtil;
+
+import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,19 +35,21 @@ import java.util.zip.GZIPInputStream;
  */
 class BlockGZIPFileVerifier {
     // File being read
+    private final Path path;
     private final RandomAccessFile raFile;
     private final InputStream stream;
 
     // Used a a buffer to read longs into
-    private byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
-    private LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
-    private byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
-    private byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
+    private final byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
+    private final LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
+    private final byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
+    private final byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
 
     /**
      * Constructor to open a Block GZIP File.
      */
     private BlockGZIPFileVerifier(final Path bgz) throws IOException {
+        path = bgz;
         raFile = new RandomAccessFile(bgz.toFile(), BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
     }
@@ -212,7 +217,7 @@ class BlockGZIPFileVerifier {
     private void readHeaderMarker() throws IOException {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream");
+            throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(path) + "\"");
         }
     }
 
@@ -225,15 +230,13 @@ class BlockGZIPFileVerifier {
             return getRaFile().read();
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
-        public int read(final byte[] b) throws IOException {
+        public int read(@Nonnull final byte[] b) throws IOException {
             return getRaFile().read(b);
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
+        public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
             return getRaFile().read(b, off, len);
         }
     }

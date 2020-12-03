@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix bug in PreviewInputStream read() method.
 
+* Issue **#1964** : BGZIP files are now closed on exception.
+
+* Changed default dashboard time zone to use UTC.
+
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
+* Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
+
+
+## [v7.0-beta.71] - 2020-12-02
+
+* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+
+* Issue **#1960** : Fix the data preview display of empty streams.
+
 * Moved content download to Java.
 
 * All paths in the config YAML including logging config can now be made relative to the home dir.
@@ -2875,7 +2890,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.70...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.71...HEAD
+[v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
 [v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
 [v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
 [v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
