@@ -1,6 +1,6 @@
 package stroom.config.app;
 
-import stroom.test.common.util.DiffUtil;
+import stroom.util.io.DiffUtil;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -13,9 +13,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,33 +39,34 @@ class TestYamlUtil {
         final Path expectedFile = getExpectedYamlFilePath();
         final Path actualFile = getActualYamlFilePath();
 
-        final String expected = Files.readString(expectedFile);
         final String actual = getYamlFromJavaModel();
 
         // The expected file has already had the DW lines removed
-        final List<String> expectedLines = expected.lines().collect(Collectors.toList());
         final List<String> actualLines = GenerateExpectedYaml.removeDropWizardLines(actual);
 
         // write the actual out so we can compare in other tools
         Files.write(actualFile, actualLines);
 
-        final List<String> diffLines = new ArrayList<>();
-
-        final boolean haveDifferences = DiffUtil.unifiedDiff(
-                expectedFile, actualFile, diffLines::add, true, 3);
-
-        if (haveDifferences) {
-            LOGGER.error("\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                    "\n  If the difference is what you would expect based on the changes you have made to the config model " +
-                    "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml\n{}",
+        final Consumer<List<String>> diffLinesConsumer = diffLines -> {
+            LOGGER.error(
+                    "\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
+                            "\n  If the difference is what you would expect based on the changes you have made to the config model " +
+                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml\n{}",
                     String.join("\n", diffLines));
 
             LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
-        }
+        };
 
-        assertThat(actualLines.equals(expectedLines))
+        final boolean haveDifferences = DiffUtil.unifiedDiff(
+                expectedFile,
+                actualFile,
+                true,
+                3,
+                diffLinesConsumer);
+
+        assertThat(haveDifferences)
             .withFailMessage("Expected and actual YAML do not match!")
-            .isEqualTo(true);
+            .isFalse();
     }
 
     static Path getExpectedYamlFilePath() {
