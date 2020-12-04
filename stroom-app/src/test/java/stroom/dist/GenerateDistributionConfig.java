@@ -2,7 +2,7 @@ package stroom.dist;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.YamlUtil;
-import stroom.test.common.util.DiffUtil;
+import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
@@ -103,27 +103,26 @@ public class GenerateDistributionConfig {
 
         if (generatedFiles.size() > 1) {
             for (int i = 1; i < generatedFiles.size(); i++) {
-                Path file1 = generatedFiles.get(0);
-                Path file2 = generatedFiles.get(i);
+                final Path file1 = generatedFiles.get(0);
+                final Path file2 = generatedFiles.get(i);
 
-                unifiedDiff(file1, file2);
+                outputUnifiedDiff(file1, file2);
             }
         }
     }
 
-    public static void unifiedDiff(final Path file1, final Path file2) {
+    public static void outputUnifiedDiff(final Path file1, final Path file2) {
 
-        final List<String> diffLines = new ArrayList<>();
-
-        final boolean haveDifferences = DiffUtil.unifiedDiff(
-                file1, file2, diffLines::add, true, 3);
-
-        if (haveDifferences) {
-            LOGGER.info("Comparing {} and {}\n{}",
-                    FileUtil.getCanonicalPath(file1),
-                    FileUtil.getCanonicalPath(file2),
-                    String.join("\n", diffLines));
-        }
+        DiffUtil.unifiedDiff(
+                file1,
+                file2,
+                true,
+                3,
+                diffLines ->
+                        LOGGER.info("Comparing {} and {}\n{}",
+                                FileUtil.getCanonicalPath(file1),
+                                FileUtil.getCanonicalPath(file2),
+                                String.join("\n", diffLines)));
     }
 
     private static void verifyOutputFile(final Path configFile) throws IOException {

@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix bug in PreviewInputStream read() method.
 
+* Improve the way the YAML logger paths are modified on boot.
+
 * Issue **#1964** : BGZIP files are now closed on exception.
 
 * Changed default dashboard time zone to use UTC.
