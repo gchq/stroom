@@ -82,9 +82,9 @@ public class RefDataStoreModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder
-                        .withName("Ref Data Off-heap Store Purge")
-                        .withDescription("Purge old reference data from the off heap store as configured")
-                        .withSchedule(CRON, "0 2 *"));
+                        .name("Ref Data Off-heap Store Purge")
+                        .description("Purge old reference data from the off heap store as configured")
+                        .schedule(CRON, "0 2 *"));
 
     }
 

@@ -632,7 +632,7 @@ public class AnnotationEditPresenter
         final EventId eventId = EventId.parse(value);
         if (eventId != null) {
             // Create a data link.
-            final Hyperlink hyperlink = new Hyperlink.Builder()
+            final Hyperlink hyperlink = Hyperlink.builder()
                     .text(value)
                     .href("?id=" + eventId.getStreamId() + "&partNo=1&recordNo=" + eventId.getEventId())
                     .type(HyperlinkType.DATA.name().toLowerCase())

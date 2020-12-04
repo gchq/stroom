@@ -42,47 +42,58 @@ class TableSettingsBuilderTest {
         final Integer field2NumberFormatDecimalPlaces = 6;
         final Boolean field2NumberFormatUseSeperator = false;
 
-        final TableSettings tableSettings = new TableSettings.Builder()
+        final TableSettings tableSettings = TableSettings
+                .builder()
                 .extractValues(extractValues)
                 .showDetail(showDetail)
                 .queryId(queryId)
-                .addFields(new Field.Builder()
+                .addFields(Field
+                        .builder()
                         .id(field1Name)
                         .name(field1Name)
                         .group(field1Group)
-                        .sort(new Sort.Builder()
+                        .sort(Sort
+                                .builder()
                                 .order(field1SortOrder)
                                 .direction(field1SortDirection)
                                 .build())
                         .expression(field1Expression)
-                        .filter(new Filter.Builder()
+                        .filter(Filter
+                                .builder()
                                 .includes(field1FilterIncludes)
                                 .excludes(field1FilterExcludes)
                                 .build())
-                        .format(new Format.Builder()
+                        .format(Format
+                                .builder()
                                 .type(Type.NUMBER)
-                                .settings(new NumberFormatSettings.Builder()
+                                .settings(NumberFormatSettings
+                                        .builder()
                                         .decimalPlaces(field1NumberFormatDecimalPlaces)
                                         .useSeparator(field1NumberFormatUseSeperator)
                                         .build())
                                 .build())
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field
+                        .builder()
                         .id(field2Name)
                         .name(field2Name)
                         .group(field2Group)
-                        .sort(new Sort.Builder()
+                        .sort(Sort
+                                .builder()
                                 .order(field2SortOrder)
                                 .direction(field2SortDirection)
                                 .build())
                         .expression(field2Expression)
-                        .filter(new Filter.Builder()
+                        .filter(Filter
+                                .builder()
                                 .includes(field2FilterIncludes)
                                 .excludes(field2FilterExcludes)
                                 .build())
-                        .format(new Format.Builder()
+                        .format(Format
+                                .builder()
                                 .type(Type.NUMBER)
-                                .settings(new NumberFormatSettings.Builder()
+                                .settings(NumberFormatSettings
+                                        .builder()
                                         .decimalPlaces(field2NumberFormatDecimalPlaces)
                                         .useSeparator(field2NumberFormatUseSeperator)
                                         .build())

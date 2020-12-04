@@ -41,8 +41,8 @@ class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(new Field.Builder().id("test").name("test").expression("${test}").build());
-        final List<Row> rows = Collections.singletonList(new Row.Builder()
+        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression("${test}").build());
+        final List<Row> rows = Collections.singletonList(Row.builder()
                 .groupKey("groupKey")
                 .values(Collections.singletonList("test"))
                 .depth(5)
@@ -53,10 +53,10 @@ class TestSearchResponseMapper {
 
     private FlatResult getVisResult1() {
         List<Field> structure = new ArrayList<>();
-        structure.add(new Field.Builder().name("val1").format(Format.GENERAL).build());
-        structure.add(new Field.Builder().name("val2").format(Format.NUMBER).build());
-        structure.add(new Field.Builder().name("val3").format(Format.NUMBER).build());
-        structure.add(new Field.Builder().name("val4").format(Format.GENERAL).build());
+        structure.add(Field.builder().name("val1").format(Format.GENERAL).build());
+        structure.add(Field.builder().name("val2").format(Format.NUMBER).build());
+        structure.add(Field.builder().name("val3").format(Format.NUMBER).build());
+        structure.add(Field.builder().name("val4").format(Format.GENERAL).build());
 
         List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));

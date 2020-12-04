@@ -145,6 +145,14 @@ public final class ResultRequest {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public enum ResultStyle {
         FLAT,
         TABLE
@@ -159,18 +167,25 @@ public final class ResultRequest {
     /**
      * Builder for constructing a {@link ResultRequest}
      */
-    public static class Builder {
+    public static final class Builder {
         private String componentId;
-
         private List<TableSettings> mappings;
-
         private OffsetRange requestedRange;
-
         private Set<String> openGroups;
-
         private ResultRequest.ResultStyle resultStyle;
-
         private ResultRequest.Fetch fetch;
+
+        private Builder() {
+        }
+
+        private Builder(final ResultRequest resultRequest) {
+            componentId = resultRequest.componentId;
+            mappings = resultRequest.mappings;
+            requestedRange = resultRequest.requestedRange;
+            openGroups = resultRequest.openGroups;
+            resultStyle = resultRequest.resultStyle;
+            fetch = resultRequest.fetch;
+        }
 
         /**
          * @param value The ID of the component that will receive the results corresponding to this ResultRequest

@@ -99,7 +99,15 @@ public class ConditionalFormattingRule {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String id;
         private ExpressionOperator expression;
         private boolean hide;
@@ -107,10 +115,10 @@ public class ConditionalFormattingRule {
         private String textColor;
         private boolean enabled;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final ConditionalFormattingRule rule) {
+        private Builder(final ConditionalFormattingRule rule) {
             this.id = rule.id;
             this.expression = rule.expression;
             this.hide = rule.hide;

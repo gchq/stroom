@@ -292,8 +292,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
-                    .withDetail("Total buffers in pool", getCurrentPoolSize());
+            SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+                    .addDetail("Total buffers in pool", getCurrentPoolSize());
 
             SortedMap<Integer, Long> capacityCountsMap = null;
             try {
@@ -314,17 +314,17 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 }
 
                 builder
-                        .withDetail("Buffer capacity counts", capacityCountsMap)
-                        .withDetail("Total size (bytes)", totalSizeBytes);
+                        .addDetail("Buffer capacity counts", capacityCountsMap)
+                        .addDetail("Total size (bytes)", totalSizeBytes);
             } catch (Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
-                builder.withDetail("Buffer capacity counts", "Error getting counts");
+                builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
             return builder.build();
         } catch (RuntimeException e) {
-            return SystemInfoResult.builder(getSystemInfoName())
-                    .withError(e)
+            return SystemInfoResult.builder().name(getSystemInfoName())
+                    .addError(e)
                     .build();
         }
     }

@@ -72,11 +72,11 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final MetaProperties lockfile1 = new MetaProperties.Builder()
+        final MetaProperties lockfile1 = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final MetaProperties nolockfile1 = new MetaProperties.Builder()
+        final MetaProperties nolockfile1 = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -186,7 +186,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)

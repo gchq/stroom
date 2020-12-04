@@ -48,9 +48,9 @@ public class SearchModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .withName("Evict expired elements")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "10s"));
+                        .name("Evict expired elements")
+                        .managed(false)
+                        .schedule(PERIODIC, "10s"));
     }
 
     @Override

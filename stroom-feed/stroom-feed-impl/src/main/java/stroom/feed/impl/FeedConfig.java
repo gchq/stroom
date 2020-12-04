@@ -18,7 +18,7 @@ public class FeedConfig extends AbstractConfig {
     private String unknownClassification = "UNKNOWN CLASSIFICATION";
     private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
 
-    private CacheConfig feedDocCache = new CacheConfig.Builder()
+    private CacheConfig feedDocCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();

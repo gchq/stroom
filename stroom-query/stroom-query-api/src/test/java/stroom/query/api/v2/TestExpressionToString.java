@@ -16,57 +16,57 @@
 
 package stroom.query.api.v2;
 
-import org.junit.jupiter.api.Test;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionToString {
     @Test
     void TestSingleLine() {
-        ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND).enabled(false);
+        ExpressionOperator.Builder builder = ExpressionOperator.builder().enabled(false);
         single("", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         single("AND {}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field", Condition.EQUALS, "value");
         single("AND {field = value}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field1", Condition.EQUALS, "value1");
         builder.addTerm("field2", Condition.EQUALS, "value2");
         single("AND {field1 = value1, field2 = value2}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().build());
         single("AND {AND {}}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).enabled(false).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().enabled(false).build());
         single("AND {}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field", Condition.EQUALS, "value");
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder.addOperator(ExpressionOperator.builder().build());
         single("AND {field = value, AND {}}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().build());
         builder.addTerm("field", Condition.EQUALS, "value");
         single("AND {AND {}, field = value}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND)
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder()
                 .addTerm("nestedField", Condition.EQUALS, "nestedValue")
                 .build());
         builder.addTerm("field", Condition.EQUALS, "value");
         single("AND {AND {nestedField = nestedValue}, field = value}", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true)
-                .addOperator(new ExpressionOperator.Builder(Op.AND)
+        builder = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder()
                         .addTerm("nestedField1", Condition.EQUALS, "nestedValue1")
                         .addTerm("nestedField2", Condition.EQUALS, "nestedValue2")
                         .build())
@@ -76,48 +76,48 @@ class TestExpressionToString {
 
     @Test
     void TestMultiLine() {
-        ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND).enabled(false);
+        ExpressionOperator.Builder builder = ExpressionOperator.builder().enabled(false);
         multi("", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         multi("AND", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field", Condition.EQUALS, "value");
         multi("AND\n  field = value", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field1", Condition.EQUALS, "value1");
         builder.addTerm("field2", Condition.EQUALS, "value2");
         multi("AND\n  field1 = value1\n  field2 = value2", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().build());
         multi("AND\n  AND", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).enabled(false).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().enabled(false).build());
         multi("AND", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
+        builder = ExpressionOperator.builder();
         builder.addTerm("field", Condition.EQUALS, "value");
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder.addOperator(ExpressionOperator.builder().build());
         multi("AND\n  field = value\n  AND", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND).build());
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder().build());
         builder.addTerm("field", Condition.EQUALS, "value");
         multi("AND\n  AND\n  field = value", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true);
-        builder.addOperator(new ExpressionOperator.Builder(Op.AND)
+        builder = ExpressionOperator.builder();
+        builder.addOperator(ExpressionOperator.builder()
                 .addTerm("nestedField", Condition.EQUALS, "nestedValue")
                 .build());
         builder.addTerm("field", Condition.EQUALS, "value");
         multi("AND\n  AND\n    nestedField = nestedValue\n  field = value", builder);
 
-        builder = new ExpressionOperator.Builder(Op.AND).enabled(true)
-                .addOperator(new ExpressionOperator.Builder(Op.AND)
+        builder = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder()
                         .addTerm("nestedField1", Condition.EQUALS, "nestedValue1")
                         .addTerm("nestedField2", Condition.EQUALS, "nestedValue2")
                         .build())

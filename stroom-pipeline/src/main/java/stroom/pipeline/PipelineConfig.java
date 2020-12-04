@@ -19,15 +19,15 @@ public class PipelineConfig extends AbstractConfig {
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
     private XsltConfig xsltConfig = new XsltConfig();
-    private CacheConfig httpClientCache = new CacheConfig.Builder()
+    private CacheConfig httpClientCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig pipelineDataCache = new CacheConfig.Builder()
+    private CacheConfig pipelineDataCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig documentPermissionCache = new CacheConfig.Builder()
+    private CacheConfig documentPermissionCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

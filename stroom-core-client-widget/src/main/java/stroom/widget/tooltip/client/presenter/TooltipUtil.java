@@ -17,6 +17,9 @@
 package stroom.widget.tooltip.client.presenter;
 
 
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.Builder;
+
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -94,7 +97,7 @@ public final class TooltipUtil {
         return new Builder();
     }
 
-    public static class Builder {
+    public static final class Builder {
         private final SafeHtmlBuilder buffer;
 
         private Builder() {

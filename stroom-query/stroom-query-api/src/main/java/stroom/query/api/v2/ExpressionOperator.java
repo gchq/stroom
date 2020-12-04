@@ -16,13 +16,6 @@
 
 package stroom.query.api.v2;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
@@ -35,6 +28,14 @@ import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -44,6 +45,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,7 +65,7 @@ public final class ExpressionOperator extends ExpressionItem {
             value = "The logical addOperator type",
             required = true)
     @JsonProperty
-    private Op op;
+    private Op op; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     @XmlElementWrapper(name = "children")
     @XmlElements({
@@ -71,9 +73,10 @@ public final class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     @JsonProperty
-    private List<ExpressionItem> children;
+    private List<ExpressionItem> children; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     public ExpressionOperator() {
+        // TODO : XML serilisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator
@@ -81,28 +84,12 @@ public final class ExpressionOperator extends ExpressionItem {
                               @JsonProperty("op") final Op op,
                               @JsonProperty("children") final List<ExpressionItem> children) {
         super(enabled);
-        setOp(op);
-        setChildren(children);
-    }
-
-    public ExpressionOperator(final Boolean enabled, final Op op, final ExpressionItem... children) {
-        super(enabled);
-        setOp(op);
-        if (children != null && children.length > 0) {
-            this.children = Arrays.asList(children);
-        }
+        this.op = op;
+        this.children = children;
     }
 
     public Op getOp() {
         return op;
-    }
-
-    public void setOp(final Op op) {
-        if (op == null || Op.AND.equals(op)) {
-            this.op = null;
-        } else {
-            this.op = op;
-        }
     }
 
     public Op op() {
@@ -114,14 +101,6 @@ public final class ExpressionOperator extends ExpressionItem {
 
     public List<ExpressionItem> getChildren() {
         return children;
-    }
-
-    public void setChildren(final List<ExpressionItem> children) {
-        if (children != null && children.size() > 0) {
-            this.children = children;
-        } else {
-            this.children = null;
-        }
     }
 
     @Override
@@ -188,48 +167,48 @@ public final class ExpressionOperator extends ExpressionItem {
         }
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link ExpressionOperator}
      */
-    public static class Builder
-            extends ExpressionItem.Builder<ExpressionOperator, Builder> {
+    public static final class Builder extends ExpressionItem.Builder<ExpressionOperator, Builder> {
         private Op op;
+        private List<ExpressionItem> children = new ArrayList<>();
 
-        private final List<ExpressionItem> children = new ArrayList<>();
-
-        /**
-         * No args constructor, defaults to using AND as the operator.
-         */
-        public Builder() {
+        private Builder() {
         }
 
-        /**
-         * @param op Set the logical operator to apply to all the children items
-         */
-        public Builder(final Op op) {
-            this.op = op;
+        private Builder(final ExpressionOperator expressionOperator) {
+            super(expressionOperator);
+            this.op = expressionOperator.op;
         }
 
-        /**
-         * Construct a builder setting enabled and op
-         *
-         * @param enabled Is this Expression Operator enabled
-         * @param op      The op
-         */
-        public Builder(final Boolean enabled, final Op op) {
-            super(enabled);
-            this.op = op;
-        }
+//
+//        /**
+//         * @param op Set the logical operator to apply to all the children items
+//         */
+//        private Builder(final Op op) {
+//            this.op = op;
+//        }
+//
+//        /**
+//         * Construct a builder setting enabled and op
+//         *
+//         * @param enabled Is this Expression Operator enabled
+//         * @param op      The op
+//         */
+//        private Builder(final Boolean enabled, final Op op) {
+//            super(enabled);
+//            this.op = op;
+//        }
 
-        @Override
-        protected ExpressionOperator.Builder self() {
-            return this;
-        }
-
-        @Override
-        public ExpressionOperator build() {
-            return new ExpressionOperator(getEnabled(), op, children);
-        }
 
         /**
          * Changes the operator of this builder
@@ -239,6 +218,11 @@ public final class ExpressionOperator extends ExpressionItem {
          */
         public Builder op(final Op op) {
             this.op = op;
+            return this;
+        }
+
+        public Builder children(final List<ExpressionItem> children) {
+            this.children = children;
             return this;
         }
 
@@ -315,12 +299,11 @@ public final class ExpressionOperator extends ExpressionItem {
         public Builder addTerm(final String field,
                                final ExpressionTerm.Condition condition,
                                final String value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field)
-                            .condition(condition)
-                            .value(value)
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field)
+                    .condition(condition)
+                    .value(value)
+                    .build());
         }
 
         /**
@@ -334,29 +317,27 @@ public final class ExpressionOperator extends ExpressionItem {
         public Builder addTerm(final BooleanField field,
                                final ExpressionTerm.Condition condition,
                                final boolean value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(String.valueOf(value))
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(String.valueOf(value))
+                    .build());
         }
 
         public Builder addTerm(final DateField field,
                                final ExpressionTerm.Condition condition,
                                final String value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(value)
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(value)
+                    .build());
         }
 
         public Builder addTerm(final DocRefField field,
                                final ExpressionTerm.Condition condition,
                                final DocRef docRef) {
-            return addTerm(new ExpressionTerm.Builder()
+            return addTerm(ExpressionTerm.builder()
                     .field(field.getName())
                     .condition(condition)
                     .docRef(docRef)
@@ -366,7 +347,7 @@ public final class ExpressionOperator extends ExpressionItem {
         public Builder addTerm(final IdField field,
                                final ExpressionTerm.Condition condition,
                                final long value) {
-            return addTerm(new ExpressionTerm.Builder()
+            return addTerm(ExpressionTerm.builder()
                     .field(field.getName())
                     .condition(condition)
                     .value(String.valueOf(value))
@@ -376,66 +357,88 @@ public final class ExpressionOperator extends ExpressionItem {
         public Builder addTerm(final IntegerField field,
                                final ExpressionTerm.Condition condition,
                                final int value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(String.valueOf(value))
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(String.valueOf(value))
+                    .build());
         }
 
         public Builder addTerm(final LongField field,
                                final ExpressionTerm.Condition condition,
                                final long value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(String.valueOf(value))
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(String.valueOf(value))
+                    .build());
         }
 
         public Builder addTerm(final FloatField field,
                                final ExpressionTerm.Condition condition,
                                final float value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(String.valueOf(value))
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(String.valueOf(value))
+                    .build());
         }
 
         public Builder addTerm(final DoubleField field,
                                final ExpressionTerm.Condition condition,
                                final double value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(String.valueOf(value))
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(String.valueOf(value))
+                    .build());
         }
 
         public Builder addTerm(final TextField field,
                                final ExpressionTerm.Condition condition,
                                final String value) {
-            return addTerm(
-                    new ExpressionTerm.Builder()
-                            .field(field.getName())
-                            .condition(condition)
-                            .value(value)
-                            .build());
+            return addTerm(ExpressionTerm.builder()
+                    .field(field.getName())
+                    .condition(condition)
+                    .value(value)
+                    .build());
         }
 
         public Builder addTerm(final String field,
                                final ExpressionTerm.Condition condition,
                                final DocRef docRef) {
-            return addTerm(new ExpressionTerm.Builder()
+            return addTerm(ExpressionTerm.builder()
                     .field(field)
                     .condition(condition)
                     .docRef(docRef)
                     .build());
+        }
+
+        @Override
+        ExpressionOperator.Builder self() {
+            return this;
+        }
+
+        @Override
+        public ExpressionOperator build() {
+            Boolean enabled = this.enabled;
+            if (Boolean.TRUE.equals(enabled)) {
+                enabled = null;
+            }
+
+            Op op = this.op;
+            if (Op.AND.equals(op)) {
+                op = null;
+            }
+
+            List<ExpressionItem> children = this.children;
+            if (children.size() == 0) {
+                children = null;
+            } else {
+                children = Collections.unmodifiableList(children);
+            }
+
+            return new ExpressionOperator(enabled, op, children);
         }
     }
 }

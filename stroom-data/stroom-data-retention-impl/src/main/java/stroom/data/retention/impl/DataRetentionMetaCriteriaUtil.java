@@ -25,14 +25,14 @@ public final class DataRetentionMetaCriteriaUtil {
         // We add the rules within a NOT so the data matching each rule's expression is
         // NOT deleted in the period. A rule defines what is to be retained.
 
-        final Builder outer = new ExpressionOperator.Builder(Op.AND);
-//                .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
+        final Builder outer = ExpressionOperator.builder();
+//                .addOperator(ExpressionOperator.builder().op(Op.NOT).addOperator(inner.build()).build())
 
         if (rules != null && !rules.isEmpty()) {
             if (rules.size() == 1) {
                 outer.addOperator(negateOperator(rules.get(0).getExpression()));
             } else {
-                final Builder inner = new ExpressionOperator.Builder(Op.OR);
+                final Builder inner = ExpressionOperator.builder().op(Op.OR);
                 for (final DataRetentionRule rule : rules) {
                     // Ignore empty AND{} or OR{} as they just equal true
 //                    if (!canIgnoreOperator(rule.getExpression())) {
@@ -66,7 +66,7 @@ public final class DataRetentionMetaCriteriaUtil {
     }
 
     private static ExpressionOperator negateOperator(final ExpressionOperator expressionOperator) {
-        return new ExpressionOperator.Builder(Op.NOT)
+        return ExpressionOperator.builder().op(Op.NOT)
                 .addOperator(expressionOperator)
                 .build();
     }

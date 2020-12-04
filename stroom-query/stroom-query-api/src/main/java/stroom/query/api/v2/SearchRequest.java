@@ -265,10 +265,18 @@ public final class SearchRequest implements Serializable {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link SearchRequest}
      */
-    public static class Builder {
+    public static final class Builder {
         private List<ResultRequest> resultRequests;
         private QueryKey key;
         private Query query;
@@ -276,10 +284,10 @@ public final class SearchRequest implements Serializable {
         private Boolean incremental;
         private Long timeout;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final SearchRequest searchRequest) {
+        private Builder(final SearchRequest searchRequest) {
             this.resultRequests = searchRequest.resultRequests;
             this.key = searchRequest.key;
             this.query = searchRequest.query;

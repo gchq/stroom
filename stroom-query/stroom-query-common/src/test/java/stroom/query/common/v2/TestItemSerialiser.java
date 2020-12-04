@@ -26,11 +26,11 @@ class TestItemSerialiser {
     void test() {
         final FieldIndex fieldIndex = new FieldIndex();
         final List<Field> fields = new ArrayList<>();
-        fields.add(new Field.Builder().expression("roundMinute(${EventTime})").build());
-        fields.add(new Field.Builder().expression("${UserId}").build());
-        fields.add(new Field.Builder().expression("count()").build());
-        fields.add(new Field.Builder().expression("${StreamId}").build());
-        fields.add(new Field.Builder().expression("${EventId}").build());
+        fields.add(Field.builder().expression("roundMinute(${EventTime})").build());
+        fields.add(Field.builder().expression("${UserId}").build());
+        fields.add(Field.builder().expression("count()").build());
+        fields.add(Field.builder().expression("${StreamId}").build());
+        fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
         final Generator[] generators = new Generator[fields.size()];

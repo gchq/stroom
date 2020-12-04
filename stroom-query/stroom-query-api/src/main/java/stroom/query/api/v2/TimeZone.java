@@ -152,23 +152,27 @@ public final class TimeZone {
         }
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
 
     /**
      * Builder for constructing a {@link TimeZone timeZone}
      */
-    public static class Builder {
+    public static final class Builder {
         private Use use;
-
         private String id;
-
         private Integer offsetHours;
-
         private Integer offsetMinutes;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final TimeZone timeZone) {
+        private Builder(final TimeZone timeZone) {
             this.use = timeZone.use;
             this.id = timeZone.id;
             this.offsetHours = timeZone.offsetHours;

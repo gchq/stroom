@@ -14,7 +14,8 @@ class RowBuilderTest {
         final List<String> values = Arrays.asList("qwerty", "asdfg");
         final String groupKey = "someGroup";
 
-        final Row row = new Row.Builder()
+        final Row row = Row
+                .builder()
                 .depth(depth)
                 .values(values)
                 .groupKey(groupKey)

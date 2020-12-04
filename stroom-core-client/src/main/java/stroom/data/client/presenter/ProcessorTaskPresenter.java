@@ -59,7 +59,7 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+                final ExpressionOperator.Builder root = ExpressionOperator.builder();
                 if (row.getPipeline() != null) {
                     root.addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }

@@ -57,7 +57,8 @@ public class TestInvalidCharFilterReader {
 
     private String convert2(final String string) throws IOException {
         final StringWriter writer = new StringWriter();
-        try (final FindReplaceFilter reader = new FindReplaceFilter.Builder()
+        try (final FindReplaceFilter reader = FindReplaceFilter
+                .builder()
                 .find("\u0005")
                 .replacement("")
                 .reader(new StringReader(string))

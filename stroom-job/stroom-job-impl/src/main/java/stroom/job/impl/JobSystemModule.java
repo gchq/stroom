@@ -51,11 +51,11 @@ public class JobSystemModule extends AbstractModule {
         // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(FetchNewTasks.class, builder -> builder
-                        .withName("Fetch new tasks")
-                        .withDescription("Every 10 seconds the Stroom lifecycle service will try and " +
+                        .name("Fetch new tasks")
+                        .description("Every 10 seconds the Stroom lifecycle service will try and " +
                                 "fetch new tasks for execution.")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "10s"));
+                        .managed(false)
+                        .schedule(PERIODIC, "10s"));
 
         // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
         LifecycleBinder.create(binder())

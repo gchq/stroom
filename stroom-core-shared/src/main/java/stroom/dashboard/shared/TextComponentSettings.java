@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.Search.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Field;
 
@@ -185,7 +186,15 @@ public class TextComponentSettings implements ComponentSettings {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String tableId;
         private Field streamIdField;
         private Field partNoField;
@@ -199,10 +208,10 @@ public class TextComponentSettings implements ComponentSettings {
         private boolean showStepping;
         private String modelVersion;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final TextComponentSettings textComponentSettings) {
+        private Builder(final TextComponentSettings textComponentSettings) {
             this.tableId = textComponentSettings.tableId;
             this.streamIdField = textComponentSettings.streamIdField;
             this.partNoField = textComponentSettings.partNoField;

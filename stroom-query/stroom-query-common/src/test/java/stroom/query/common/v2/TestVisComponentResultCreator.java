@@ -175,16 +175,16 @@ class TestVisComponentResultCreator {
 //    }
 
     private TableSettings getParentTableSettings() {
-        return new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        return TableSettings.builder()
+                .addFields(Field.builder()
                         .name("x")
                         .expression("${x}")
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .name("y")
                         .expression("${y}")
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .name("series")
                         .expression("${series}")
                         .build())
@@ -334,7 +334,7 @@ class TestVisComponentResultCreator {
 //    }
 
 //    private Field createField(final String fieldName, final Format.Type type) {
-//        return new Field.Builder().name(fieldName).expression(ParamUtil.makeParam(fieldName)).format(type).build();
+//        return Field.builder().name(fieldName).expression(ParamUtil.makeParam(fieldName)).format(type).build();
 //    }
 //
 //    private ObjectMapper createMapper(final boolean indent) {

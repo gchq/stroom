@@ -19,6 +19,7 @@ package stroom.statistics.impl.sql;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
@@ -222,7 +223,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             //incremental but with a 10s timeout so should get our results on 1st try
             SearchResponse searchResponse = doSearch(
                     tags,
-                    ExpressionOperator.Op.AND,
+                    Op.AND,
                     true,
                     queryKey,
                     OptionalLong.of(10_000));
@@ -249,7 +250,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
     }
@@ -271,7 +272,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, Collections.singleton(null),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -296,7 +297,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, Collections.singleton(nastyVal),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, ExpressionOperator.Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -346,13 +347,13 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final boolean isIncremental) {
-        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
+        return doSearch(searchTags, Op.AND, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final boolean isIncremental,
                                     final String queryKey) {
-        return doSearch(searchTags, ExpressionOperator.Op.AND, isIncremental, queryKey, OptionalLong.empty());
+        return doSearch(searchTags, Op.AND, isIncremental, queryKey, OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
@@ -368,7 +369,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                                     final String queryKey,
                                     final OptionalLong optTimeout) {
 
-        final ExpressionOperator.Builder operatorBuilder = new ExpressionOperator.Builder(op);
+        final ExpressionOperator.Builder operatorBuilder = ExpressionOperator.builder().op(op);
         operatorBuilder
                 .addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, ExpressionTerm.Condition.BETWEEN, DATE_RANGE);
 
@@ -376,10 +377,10 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             operatorBuilder.addTerm(tag.getTag(), ExpressionTerm.Condition.EQUALS, tag.getValue());
         }
 
-        final SearchRequest.Builder searchBuilder = new SearchRequest.Builder()
+        final SearchRequest.Builder searchBuilder = SearchRequest.builder()
                 .key(queryKey)
                 .incremental(isIncremental)
-                .query(new Query.Builder()
+                .query(Query.builder()
                         .expression(operatorBuilder.build())
                         .dataSource(DocRefUtil.create(statisticStoreDoc))
                         .build());
@@ -389,7 +390,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         COMPONENT_IDS.forEach(componentId -> {
             final TableSettings tableSettings = createTableSettings(componentId);
 
-            searchBuilder.addResultRequests(new ResultRequest.Builder()
+            searchBuilder.addResultRequests(ResultRequest.builder()
                     .componentId(componentId)
                     .addMappings(tableSettings)
                     .resultStyle(ResultRequest.ResultStyle.TABLE)
@@ -406,7 +407,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private TableSettings createTableSettings(final String componentId) {
-        final TableSettings.Builder tableSettingsBuilder = new TableSettings.Builder();
+        final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
 
 
         List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(componentId);
@@ -417,7 +418,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private void addField(String name, final TableSettings.Builder tableSettingsBuilder) {
-        final Field field = new Field.Builder()
+        final Field field = Field.builder()
                 .name(name)
                 .expression(ParamUtil.makeParam(name))
                 .build();

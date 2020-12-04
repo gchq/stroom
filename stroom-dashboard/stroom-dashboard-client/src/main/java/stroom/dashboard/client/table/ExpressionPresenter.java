@@ -135,7 +135,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private void setupEditor() {
-
         editorPresenter.setMode(AceEditorMode.STROOM_EXPRESSION);
         editorPresenter.setReadOnly(false);
 
@@ -215,7 +214,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 HidePopupEvent.fire(tablePresenter, this);
             } else {
                 if (expression == null) {
-                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(null).build());
+                    fieldChangeConsumer.accept(field, field.copy().expression(null).build());
                     tablePresenter.setDirty(true);
                     tablePresenter.clearAndRefresh();
                     HidePopupEvent.fire(tablePresenter, this);
@@ -225,7 +224,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    fieldChangeConsumer.accept(field, new Field.Builder(field).expression(expression).build());
+                                    fieldChangeConsumer.accept(field, field.copy().expression(expression).build());
                                     tablePresenter.setDirty(true);
                                     tablePresenter.clearAndRefresh();
                                     HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);

@@ -28,7 +28,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
@@ -36,26 +35,20 @@ import java.util.Objects;
 @XmlType(name = "Param", propOrder = {"key", "value"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A key value pair that describes a property of a query")
-public final class Param implements Serializable {
-
-    private static final long serialVersionUID = 9055582579670841979L;
-
+public final class Param {
     @XmlElement
     @ApiModelProperty(
             value = "The property key",
             required = true)
     @JsonProperty
-    private String key;
+    private final String key;
 
     @XmlElement
     @ApiModelProperty(
             value = "The property value",
             required = true)
     @JsonProperty
-    private String value;
-
-    public Param() {
-    }
+    private final String value;
 
     @JsonCreator
     public Param(@JsonProperty("key") final String key,
@@ -68,16 +61,8 @@ public final class Param implements Serializable {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public String getValue() {
         return value;
-    }
-
-    public void setValue(final String value) {
-        this.value = value;
     }
 
     @Override
@@ -102,16 +87,31 @@ public final class Param implements Serializable {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Param}
      */
-    public static class Builder {
+    public static final class Builder {
         private String key;
         private String value;
 
+        private Builder() {
+        }
+
+        private Builder(final Param param) {
+            key = param.key;
+            value = param.value;
+        }
+
         /**
          * @param value The property key
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder key(final String value) {
@@ -121,7 +121,6 @@ public final class Param implements Serializable {
 
         /**
          * @param value The property value
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder value(final String value) {

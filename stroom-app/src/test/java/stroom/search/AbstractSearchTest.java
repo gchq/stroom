@@ -92,7 +92,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query.Builder().dataSource(indexRef).expression(expressionIn.build()).build();
+        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 

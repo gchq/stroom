@@ -119,11 +119,12 @@ public class BasicTableSettingsPresenter
         ComponentConfig result = super.write(componentConfig);
         final TableComponentSettings oldSettings = (TableComponentSettings) result.getSettings();
         final TableComponentSettings newSettings = writeSettings(oldSettings);
-        return new ComponentConfig.Builder(result).settings(newSettings).build();
+        return result.copy().settings(newSettings).build();
     }
 
     private TableComponentSettings writeSettings(final TableComponentSettings settings) {
-        return new TableComponentSettings.Builder(settings)
+        return settings
+                .copy()
                 .queryId(getQueryId())
                 .extractValues(extractValues())
                 .extractionPipeline(getPipeline())

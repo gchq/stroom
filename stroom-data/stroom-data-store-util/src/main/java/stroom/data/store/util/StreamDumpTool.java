@@ -145,7 +145,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
                           final DataDownloadTaskHandler dataDownloadTaskHandler) {
         System.out.println("Dumping data for " + feedName);
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);

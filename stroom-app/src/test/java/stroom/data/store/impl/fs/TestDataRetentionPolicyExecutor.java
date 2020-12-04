@@ -113,12 +113,12 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         setupDataRetentionRules(feedName);
 
-        final MetaProperties oldFile = new MetaProperties.Builder()
+        final MetaProperties oldFile = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(oldDate.toInstant().toEpochMilli())
                 .build();
-        final MetaProperties newFile = new MetaProperties.Builder()
+        final MetaProperties newFile = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(newDate.toInstant().toEpochMilli())
@@ -165,7 +165,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         final DocRef docRef = dataRetentionRulesService.createDocument("test");
         DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
         dataRetentionRules.setRules(Collections.singletonList(rule));

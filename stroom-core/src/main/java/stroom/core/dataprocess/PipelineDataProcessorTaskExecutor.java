@@ -584,7 +584,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
                 // Create a processing info stream to write all processing
                 // information to.
-                final MetaProperties dataProperties = new MetaProperties.Builder()
+                final MetaProperties dataProperties = MetaProperties.builder()
                         .feedName(meta.getFeedName())
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)

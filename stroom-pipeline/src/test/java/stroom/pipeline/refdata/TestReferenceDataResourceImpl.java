@@ -45,12 +45,12 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 null,
                 List.of(
                         new ReferenceLoader(
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("LoaderPipeline")
                                         .type(PipelineDoc.DOCUMENT_TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
@@ -82,12 +82,12 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 null,
                 List.of(
                         new ReferenceLoader(
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("LoaderPipeline")
                                         .type(PipelineDoc.DOCUMENT_TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
@@ -119,12 +119,12 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 null,
                 List.of(
                         new ReferenceLoader(
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("LoaderPipeline")
                                         .type(PipelineDoc.DOCUMENT_TYPE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-                                new DocRef.Builder()
+                                DocRef.builder()
                                         .name("RefFeed")
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())

@@ -37,7 +37,7 @@ class TestIndexShardDaoImpl {
 //    void createAndGet() {
 //        // Given
 //        final String partitionName = "ALL";
-//        final DocRef index = new DocRef.Builder()
+//        final DocRef index = DocRef.builder()
 //                .uuid(UUID.randomUUID().toString())
 //                .name(TestData.createIndexName())
 //                .type(IndexDoc.DOCUMENT_TYPE)
@@ -74,7 +74,7 @@ class TestIndexShardDaoImpl {
     void createShardEmptyGroup() {
         // Given
         final String partitionName = "ALL";
-        final DocRef index = new DocRef.Builder()
+        final DocRef index = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(TestData.createIndexName())
                 .type(IndexDoc.DOCUMENT_TYPE)
@@ -86,7 +86,8 @@ class TestIndexShardDaoImpl {
 
         // When
         createGroup(volumeGroupName);
-        final IndexShardKey indexShardKey = new IndexShardKey.Builder()
+        final IndexShardKey indexShardKey = IndexShardKey
+                .builder()
                 .indexUuid(index.getUuid())
                 .partition(partitionName)
                 .shardNo(0)
@@ -104,7 +105,7 @@ class TestIndexShardDaoImpl {
     void createShardNonExistentGroup() {
         // Given
         final String partitionName = "ALL";
-        final DocRef index = new DocRef.Builder()
+        final DocRef index = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(TestData.createIndexName())
                 .type(IndexDoc.DOCUMENT_TYPE)
@@ -115,7 +116,8 @@ class TestIndexShardDaoImpl {
         final String volumeGroupName = TestData.createVolumeGroupName();
 
         // When
-        final IndexShardKey indexShardKey = new IndexShardKey.Builder()
+        final IndexShardKey indexShardKey = IndexShardKey
+                .builder()
                 .indexUuid(index.getUuid())
                 .partition(partitionName)
                 .shardNo(0)

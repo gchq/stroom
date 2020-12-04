@@ -258,9 +258,9 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
-                    .withDetail("Size", getCurrentPoolSize())
-                    .withDetail("Largest buffer", largestBufferInPool.get());
+            SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+                    .addDetail("Size", getCurrentPoolSize())
+                    .addDetail("Largest buffer", largestBufferInPool.get());
 
             SortedMap<Integer, Long> capacityCountsMap = null;
             try {
@@ -271,10 +271,10 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
                         .stream()
                         .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
 
-                builder.withDetail("Buffer capacity counts", capacityCountsMap);
+                builder.addDetail("Buffer capacity counts", capacityCountsMap);
             } catch (Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
-                builder.withDetail("Buffer capacity counts", "Error getting counts");
+                builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
 //            if (LOGGER.isDebugEnabled()) {
@@ -286,8 +286,8 @@ public class ByteBufferPoolImpl2 implements ByteBufferPool {
 
             return builder.build();
         } catch (RuntimeException e) {
-            return SystemInfoResult.builder(getSystemInfoName())
-                    .withError(e)
+            return SystemInfoResult.builder().name(getSystemInfoName())
+                    .addError(e)
                     .build();
         }
     }

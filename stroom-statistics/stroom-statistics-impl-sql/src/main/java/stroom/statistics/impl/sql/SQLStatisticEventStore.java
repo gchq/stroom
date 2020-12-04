@@ -506,8 +506,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                     .collect(Collectors.toList());
         }
 
-        return SystemInfoResult.builder(getSystemInfoName())
-                .withDetail("poolObjects", poolDetails)
+        return SystemInfoResult.builder().name(getSystemInfoName())
+                .addDetail("poolObjects", poolDetails)
                 .build();
     }
 

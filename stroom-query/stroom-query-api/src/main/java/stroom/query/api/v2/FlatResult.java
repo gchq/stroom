@@ -91,14 +91,29 @@ public final class FlatResult extends Result {
         return size + " rows";
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link FlatResult}
      */
-    public static class Builder
-            extends Result.Builder<FlatResult, Builder> {
+    public static final class Builder extends Result.Builder<FlatResult, Builder> {
         private List<Field> structure = Collections.emptyList();
         private List<List<Object>> values = Collections.emptyList();
-        private Long overriddenSize = null;
+        private Long overriddenSize;
+
+        private Builder() {
+        }
+
+        private Builder(final FlatResult flatResult) {
+            this.structure = flatResult.structure;
+            this.values = flatResult.values;
+        }
 
         /**
          * Add headings to our data
@@ -138,9 +153,9 @@ public final class FlatResult extends Result {
 
         public FlatResult build() {
             if (null != overriddenSize) {
-                return new FlatResult(getComponentId(), structure, values, overriddenSize, getError());
+                return new FlatResult(componentId, structure, values, overriddenSize, error);
             } else {
-                return new FlatResult(getComponentId(), structure, values, (long) values.size(), getError());
+                return new FlatResult(componentId, structure, values, (long) values.size(), error);
             }
         }
     }

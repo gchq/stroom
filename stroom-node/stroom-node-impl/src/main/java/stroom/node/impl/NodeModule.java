@@ -57,17 +57,17 @@ public class NodeModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(JavaHeapHistogramStatistics.class, jobBuilder -> jobBuilder
-                        .withName("Java Heap Histogram Statistics")
-                        .withDescription("Generate Java heap map histogram and record statistic events " +
+                        .name("Java Heap Histogram Statistics")
+                        .description("Generate Java heap map histogram and record statistic events " +
                                 "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
                                 "consequences!")
-                        .withSchedule(Schedule.ScheduleType.CRON, "0 * *")
-                        .withEnabledState(false))
+                        .schedule(Schedule.ScheduleType.CRON, "0 * *")
+                        .enabled(false))
                 .bindJobTo(NodeStatus.class, jobBuilder -> jobBuilder
-                        .withName("Node Status")
-                        .withDescription("Job to record status of node (CPU and Memory usage)")
-                        .withSchedule(Schedule.ScheduleType.CRON, "* * *")
-                        .withAdvancedState(false));
+                        .name("Node Status")
+                        .description("Job to record status of node (CPU and Memory usage)")
+                        .schedule(Schedule.ScheduleType.CRON, "* * *")
+                        .advanced(false));
     }
 
     private static class JavaHeapHistogramStatistics extends RunnableWrapper {

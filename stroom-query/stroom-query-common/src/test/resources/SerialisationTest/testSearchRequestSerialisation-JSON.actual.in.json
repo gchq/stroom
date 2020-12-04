@@ -16,8 +16,6 @@
         "condition" : "EQUALS",
         "value" : "value1"
       }, {
-        "type" : "operator"
-      }, {
         "type" : "term",
         "field" : "field2",
         "condition" : "BETWEEN",

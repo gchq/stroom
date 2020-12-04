@@ -10,7 +10,8 @@ class NumberFormatSettingsBuilderTest {
         final Integer decimalPlaces = 5;
         final Boolean useSeperator = true;
 
-        final NumberFormatSettings numberFormat = new NumberFormatSettings.Builder()
+        final NumberFormatSettings numberFormat = NumberFormatSettings
+                .builder()
                 .decimalPlaces(decimalPlaces)
                 .useSeparator(useSeperator)
                 .build();

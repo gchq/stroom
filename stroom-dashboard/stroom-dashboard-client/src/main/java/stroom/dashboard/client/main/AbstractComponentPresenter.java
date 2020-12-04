@@ -90,14 +90,16 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     public void setSettings(final ComponentSettings componentSettings) {
-        componentConfig = new ComponentConfig.Builder(componentConfig)
+        componentConfig = componentConfig
+                .copy()
                 .settings(componentSettings)
                 .build();
     }
 
     @Override
     public void setComponentName(final String name) {
-        componentConfig = new ComponentConfig.Builder(componentConfig)
+        componentConfig = componentConfig
+                .copy()
                 .name(name)
                 .build();
     }

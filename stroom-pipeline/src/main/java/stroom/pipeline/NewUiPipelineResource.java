@@ -119,7 +119,7 @@ public class NewUiPipelineResource implements RestResource {
     }
 
     private DocRef getDocRef(final String pipelineId) {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .uuid(pipelineId)
                 .type(PipelineDoc.DOCUMENT_TYPE)
                 .build();

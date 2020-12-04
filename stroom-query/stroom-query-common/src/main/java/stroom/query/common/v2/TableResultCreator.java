@@ -222,7 +222,7 @@ public class TableResultCreator implements ResultCreator {
                 stringValues.add(string);
             }
 
-            return new Row.Builder()
+            return Row.builder()
                     .groupKey(item.getKey().toString())
                     .values(stringValues)
                     .depth(item.getKey().getDepth())
@@ -303,7 +303,7 @@ public class TableResultCreator implements ResultCreator {
 
             if (matchingRule != null) {
                 if (!matchingRule.isHide()) {
-                    final Row.Builder builder = new Row.Builder()
+                    final Row.Builder builder = Row.builder()
                             .groupKey(item.getKey().toString())
                             .values(stringValues)
                             .depth(item.getKey().getDepth());
@@ -320,7 +320,7 @@ public class TableResultCreator implements ResultCreator {
                     row = builder.build();
                 }
             } else {
-                final Row.Builder builder = new Row.Builder()
+                final Row.Builder builder = Row.builder()
                         .groupKey(item.getKey().toString())
                         .values(stringValues)
                         .depth(item.getKey().getDepth());

@@ -15,11 +15,11 @@ public class IndexShardSearchConfig extends AbstractConfig {
     private int maxDocIdQueueSize = 1000000;
     private int maxThreads = DEFAULT_MAX_THREADS;
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
-    private CacheConfig searchResultCache = new CacheConfig.Builder()
+    private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig indexShardSearcherCache = new CacheConfig.Builder()
+    private CacheConfig indexShardSearcherCache = CacheConfig.builder()
             .maximumSize(2L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();

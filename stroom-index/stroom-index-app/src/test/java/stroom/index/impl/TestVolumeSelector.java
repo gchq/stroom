@@ -87,9 +87,9 @@ class TestVolumeSelector extends StroomUnitTest {
         final Node node1 = Node.create("node1");
         final Node node2 = Node.create("node2");
 
-        final IndexVolume v1 = new IndexVolume.Builder()
+        final IndexVolume v1 = IndexVolume.builder()
                 .nodeName(node1.getName()).path("path1").bytesUsed(1000L).bytesTotal(10000L).build();
-        final IndexVolume v2 = new IndexVolume.Builder()
+        final IndexVolume v2 = IndexVolume.builder()
                 .nodeName(node2.getName()).path("path2").bytesUsed(5000L).bytesTotal(10000L).build();
 
         return List.of(v1, v2);

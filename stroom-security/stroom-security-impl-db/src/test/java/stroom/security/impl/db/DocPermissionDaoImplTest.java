@@ -47,7 +47,7 @@ class DocPermissionDaoImplTest {
     }
 
     private User createUser(final String name) {
-        User user = new User.Builder()
+        User user = User.builder()
                 .name(name)
                 .uuid(UUID.randomUUID().toString())
                 .build();
@@ -151,7 +151,7 @@ class DocPermissionDaoImplTest {
     }
 
     private DocRef createTestDocRef() {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .type("Simple")
                 .uuid(UUID.randomUUID().toString())
                 .build();

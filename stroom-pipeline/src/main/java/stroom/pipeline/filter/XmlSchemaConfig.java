@@ -10,7 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class XmlSchemaConfig extends AbstractConfig {
-    private CacheConfig cacheConfig = new CacheConfig.Builder()
+    private CacheConfig cacheConfig = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

@@ -22,7 +22,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
 
-    private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
+    private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

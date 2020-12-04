@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.Search.Builder;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -91,16 +92,24 @@ public class VisComponentSettings implements ComponentSettings {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String tableId;
         private DocRef visualisation;
         private String json;
         private TableComponentSettings tableSettings;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final VisComponentSettings visComponentSettings) {
+        private Builder(final VisComponentSettings visComponentSettings) {
             this.tableId = visComponentSettings.tableId;
             this.visualisation = visComponentSettings.visualisation;
             this.json = visComponentSettings.json;

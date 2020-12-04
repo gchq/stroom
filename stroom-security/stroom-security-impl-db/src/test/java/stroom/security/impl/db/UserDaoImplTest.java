@@ -152,7 +152,7 @@ class UserDaoImplTest {
     }
 
     private User createUser(final String name, boolean group) {
-        User user = new User.Builder()
+        User user = User.builder()
                 .name(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)

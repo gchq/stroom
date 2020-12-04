@@ -19,21 +19,26 @@ class ResultRequestBuilderTest {
         final String queryId2 = "someQueryId2";
 
         // When
-        final ResultRequest resultRequest = new ResultRequest.Builder()
+        final ResultRequest resultRequest = ResultRequest
+                .builder()
                 .componentId(componentId)
                 .fetch(fetch)
                 .addOpenGroups(openGroup0, openGroup1)
-                .requestedRange(new OffsetRange.Builder()
+                .requestedRange(OffsetRange
+                        .builder()
                         .length(rangeLength)
                         .offset(rangeOffset)
                         .build())
-                .addMappings(new TableSettings.Builder()
+                .addMappings(TableSettings
+                        .builder()
                         .queryId(queryId0)
                         .build())
-                .addMappings(new TableSettings.Builder()
+                .addMappings(TableSettings
+                        .builder()
                         .queryId(queryId1)
                         .build())
-                .addMappings(new TableSettings.Builder()
+                .addMappings(TableSettings
+                        .builder()
                         .queryId(queryId2)
                         .build())
                 .build();

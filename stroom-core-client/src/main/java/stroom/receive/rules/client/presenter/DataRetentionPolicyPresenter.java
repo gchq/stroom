@@ -61,7 +61,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             0,
             "Default Retain All Rule",
             true,
-            new ExpressionOperator.Builder(Op.AND).build());
+            ExpressionOperator.builder().build());
 
     private final DataRetentionPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -406,7 +406,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 System.currentTimeMillis(),
                 "",
                 true,
-                new ExpressionOperator.Builder(Op.AND).build());
+                ExpressionOperator.builder().build());
 
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);

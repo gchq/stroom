@@ -177,12 +177,13 @@ public class FlatResultCreator implements ResultCreator {
                 }
 
                 final List<Field> structure = new ArrayList<>();
-                structure.add(new Field.Builder().name(":ParentKey").build());
-                structure.add(new Field.Builder().name(":Key").build());
-                structure.add(new Field.Builder().name(":Depth").build());
+                structure.add(Field.builder().name(":ParentKey").build());
+                structure.add(Field.builder().name(":Key").build());
+                structure.add(Field.builder().name(":Depth").build());
                 structure.addAll(this.fields);
 
-                return new FlatResult.Builder()
+                return FlatResult
+                        .builder()
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults)
                         .error(error)

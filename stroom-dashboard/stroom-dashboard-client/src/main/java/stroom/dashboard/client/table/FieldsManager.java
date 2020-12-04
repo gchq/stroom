@@ -16,16 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Provider;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.data.grid.client.DataGridViewImpl.Heading;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.query.api.v2.Field;
@@ -43,6 +34,15 @@ import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.ImageIcon;
+
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -184,7 +184,7 @@ public class FieldsManager implements HeadingListener {
     public void resizeColumn(final int colIndex, final int size) {
         final Field field = getField(colIndex);
         if (field != null) {
-            replaceField(field, new Field.Builder(field).width(size).build());
+            replaceField(field, field.copy().width(size).build());
             tablePresenter.setDirty(true);
         }
     }
@@ -196,7 +196,7 @@ public class FieldsManager implements HeadingListener {
         if (direction == null) {
             if (field.getSort() != null) {
                 final int order = field.getSort().getOrder();
-                replaceField(field, new Field.Builder(field).sort(null).build());
+                replaceField(field, field.copy().sort(null).build());
                 increaseSortOrder(fields, order);
                 change = true;
             }
@@ -205,7 +205,7 @@ public class FieldsManager implements HeadingListener {
             if (sort == null) {
                 final int lowestSortOrder = getLowestSortOrder(fields);
                 final Sort newSort = new Sort(lowestSortOrder + 1, direction);
-                replaceField(field, new Field.Builder(field).sort(newSort).build());
+                replaceField(field, field.copy().sort(newSort).build());
                 change = true;
             } else {
                 final int lowestSortOrder = getLowestSortOrder(fields);
@@ -216,7 +216,7 @@ public class FieldsManager implements HeadingListener {
                     increaseSortOrder(fields, field.getSort().getOrder());
 
                     final Sort newSort = new Sort(lowestSortOrder, direction);
-                    replaceField(field, new Field.Builder(field).sort(newSort).build());
+                    replaceField(field, field.copy().sort(newSort).build());
 
                     change = true;
                 }
@@ -248,7 +248,7 @@ public class FieldsManager implements HeadingListener {
             final Sort sort = field.getSort();
             if (sort != null && sort.getOrder() > order) {
                 final Sort newSort = new Sort(sort.getOrder() - 1, sort.getDirection());
-                replaceField(field, new Field.Builder(field).sort(newSort).build());
+                replaceField(field, field.copy().sort(newSort).build());
             }
         }
     }
@@ -314,13 +314,14 @@ public class FieldsManager implements HeadingListener {
 
     private void updateFields(final List<Field> fields) {
         tablePresenter.setSettings(
-                new TableComponentSettings.Builder(tablePresenter.getTableSettings())
+                tablePresenter.getTableSettings()
+                        .copy()
                         .fields(fields)
                         .build());
     }
 
     private void showField(final Field field) {
-        replaceField(field, new Field.Builder(field).visible(true).build());
+        replaceField(field, field.copy().visible(true).build());
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
         tablePresenter.clearAndRefresh();
@@ -330,7 +331,7 @@ public class FieldsManager implements HeadingListener {
         if (getVisibleFieldCount() <= 1) {
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all fields", null);
         } else {
-            replaceField(field, new Field.Builder(field).visible(false).build());
+            replaceField(field, field.copy().visible(false).build());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
             tablePresenter.clearAndRefresh();
@@ -471,7 +472,7 @@ public class FieldsManager implements HeadingListener {
 
     private void setGroup(final Field field, final Integer group) {
         if (!Objects.equals(field.getGroup(), group)) {
-            replaceField(field, new Field.Builder(field).group(group).build());
+            replaceField(field, field.copy().group(group).build());
             fixGroups(getFields());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
@@ -521,7 +522,7 @@ public class FieldsManager implements HeadingListener {
             final Integer depth = depths.get(i);
             final List<Field> groupedFields = map.get(depth);
             for (final Field field : groupedFields) {
-                replaceField(field, new Field.Builder(field).group(i).build());
+                replaceField(field, field.copy().group(i).build());
             }
         }
 

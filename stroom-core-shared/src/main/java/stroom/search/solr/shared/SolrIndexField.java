@@ -16,14 +16,15 @@
 
 package stroom.search.solr.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -502,7 +503,15 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         return conditions;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
         private String fieldName;
         private String fieldType;
@@ -523,6 +532,32 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         private boolean sortMissingFirst;
         private boolean sortMissingLast;
         private List<Condition> supportedConditions;
+
+        private Builder() {
+        }
+
+        private Builder(final SolrIndexField solrIndexField) {
+            this.fieldUse = solrIndexField.fieldUse;
+            this.fieldName = solrIndexField.fieldName;
+            this.fieldType = solrIndexField.fieldType;
+            this.defaultValue = solrIndexField.defaultValue;
+            this.stored = solrIndexField.stored;
+            this.indexed = solrIndexField.indexed;
+            this.uninvertible = solrIndexField.uninvertible;
+            this.docValues = solrIndexField.docValues;
+            this.multiValued = solrIndexField.multiValued;
+            this.required = solrIndexField.required;
+            this.omitNorms = solrIndexField.omitNorms;
+            this.omitTermFreqAndPositions = solrIndexField.omitTermFreqAndPositions;
+            this.omitPositions = solrIndexField.omitPositions;
+            this.termVectors = solrIndexField.termVectors;
+            this.termPositions = solrIndexField.termPositions;
+            this.termOffsets = solrIndexField.termOffsets;
+            this.termPayloads = solrIndexField.termPayloads;
+            this.sortMissingFirst = solrIndexField.sortMissingFirst;
+            this.sortMissingLast = solrIndexField.sortMissingLast;
+            this.supportedConditions = solrIndexField.supportedConditions;
+        }
 
         public Builder fieldUse(final SolrIndexFieldType fieldUse) {
             this.fieldUse = fieldUse;

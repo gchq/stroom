@@ -84,7 +84,7 @@ class TestDocRefPredicateFactory {
     }
 
     private DocRef createDocRef(final Tuple2<String, String> nameUuidTuple) {
-        return new DocRef.Builder().name(nameUuidTuple._1()).uuid(nameUuidTuple._2()).build();
+        return DocRef.builder().name(nameUuidTuple._1()).uuid(nameUuidTuple._2()).build();
     }
 
     private void logNodes(final String msg,

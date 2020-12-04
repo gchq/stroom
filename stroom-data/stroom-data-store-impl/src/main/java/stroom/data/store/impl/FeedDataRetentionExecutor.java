@@ -113,7 +113,7 @@ public class FeedDataRetentionExecutor {
 //    }
 //
 //    private ExpressionOperator.Builder periodToExpression(final String field, final Period period) {
-//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 //        if (period != null) {
 //            if (period.getFromMs() != null && period.getToMs() != null) {
 //                builder

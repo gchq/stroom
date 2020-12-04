@@ -392,7 +392,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final List<ExplorerNode> children = filteredModel.getChildren(null);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                final ExplorerNode copy = child.copy();
+                final ExplorerNode copy = child.copy().build();
                 result.getRootNodes().add(copy);
                 addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 0, result);
             }
@@ -428,7 +428,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final List<ExplorerNode> newChildren = new ArrayList<>();
             parent.setChildren(newChildren);
             for (final ExplorerNode child : children) {
-                final ExplorerNode copy = child.copy();
+                final ExplorerNode copy = child.copy().build();
                 newChildren.add(copy);
                 addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, currentDepth + 1, result);
             }

@@ -1,6 +1,11 @@
 package stroom.query.api.v2;
 
+import stroom.query.api.v2.SearchResponse.FlatResultBuilder;
+import stroom.query.api.v2.SearchResponse.TableResultBuilder;
+
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,19 +21,20 @@ class SearchResponseBuilderTest {
         final String flatResultComponentId2 = "flatResult2";
 
         // When
-        final SearchResponse searchResponse = new SearchResponse.FlatResultBuilder()
+        final SearchResponse searchResponse = new FlatResultBuilder()
                 .complete(true)
-                .addErrors(error0, error1)
-                .addHighlights(highlight0)
-                .addResults(new FlatResult.Builder()
-                        .componentId(flatResultComponentId0)
-                        .build())
-                .addResults(new FlatResult.Builder()
-                        .componentId(flatResultComponentId1)
-                        .build())
-                .addResults(new FlatResult.Builder()
-                        .componentId(flatResultComponentId2)
-                        .build())
+                .errors(List.of(error0, error1))
+                .highlights(List.of(highlight0))
+                .results(List.of(
+                        FlatResult.builder()
+                                .componentId(flatResultComponentId0)
+                                .build(),
+                        FlatResult.builder()
+                                .componentId(flatResultComponentId1)
+                                .build(),
+                        FlatResult.builder()
+                                .componentId(flatResultComponentId2)
+                                .build()))
                 .build();
 
         // Then
@@ -58,19 +64,20 @@ class SearchResponseBuilderTest {
         final String flatResultComponentId2 = "tableResult2";
 
         // When
-        final SearchResponse searchResponse = new SearchResponse.TableResultBuilder()
+        final SearchResponse searchResponse = new TableResultBuilder()
                 .complete(true)
-                .addErrors(error0, error1)
-                .addHighlights(highlight0)
-                .addResults(new TableResult.Builder()
-                        .componentId(flatResultComponentId0)
-                        .build())
-                .addResults(new TableResult.Builder()
-                        .componentId(flatResultComponentId1)
-                        .build())
-                .addResults(new TableResult.Builder()
-                        .componentId(flatResultComponentId2)
-                        .build())
+                .errors(List.of(error0, error1))
+                .highlights(List.of(highlight0))
+                .results(List.of(
+                        TableResult.builder()
+                                .componentId(flatResultComponentId0)
+                                .build(),
+                        TableResult.builder()
+                                .componentId(flatResultComponentId1)
+                                .build(),
+                        TableResult.builder()
+                                .componentId(flatResultComponentId2)
+                                .build()))
                 .build();
 
         // Then

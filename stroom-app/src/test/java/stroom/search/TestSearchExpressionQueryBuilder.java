@@ -51,8 +51,7 @@ public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTes
                 ZoneOffset.UTC.getId(),
                 System.currentTimeMillis());
 
-        final ExpressionOperator expressionOperator = new ExpressionOperator
-                .Builder()
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(
                         "test",
                         ExpressionTerm.Condition.IN_DICTIONARY,

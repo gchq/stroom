@@ -152,12 +152,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
-        final QueryComponentSettings queryComponentSettings = new QueryComponentSettings.Builder()
+        final QueryComponentSettings queryComponentSettings = QueryComponentSettings.builder()
                 .dataSource(indexRef)
                 .expression(createExpression(dictionary).build())
                 .build();
 
-        final ComponentConfig query = new ComponentConfig.Builder()
+        final ComponentConfig query = ComponentConfig.builder()
                 .id("query-1234")
                 .name("Query")
                 .type("query")
@@ -165,12 +165,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                 .build();
 
         // Create table.
-        final TableComponentSettings tableSettings = new TableComponentSettings.Builder()
+        final TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .extractValues(true)
                 .extractionPipeline(pipelineRef)
                 .build();
 
-        final ComponentConfig table = new ComponentConfig.Builder()
+        final ComponentConfig table = ComponentConfig.builder()
                 .id("table-1234")
                 .name("Table")
                 .type("table")
@@ -178,13 +178,13 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                 .build();
 
         // Create visualisation.
-        final VisComponentSettings visSettings = new VisComponentSettings.Builder()
+        final VisComponentSettings visSettings = VisComponentSettings.builder()
                 .tableId("table-1234")
                 .tableSettings(tableSettings)
                 .visualisation(visRef)
                 .build();
 
-        final ComponentConfig visualisation = new ComponentConfig.Builder()
+        final ComponentConfig visualisation = ComponentConfig.builder()
                 .id("visualisation-1234")
                 .name("Visualisation")
                 .type("vis")
@@ -298,7 +298,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
-        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder root = ExpressionOperator.builder();
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
         root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;

@@ -79,17 +79,25 @@ public final class Filter {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Filter}
      */
-    public static class Builder {
+    public static final class Builder {
         private String includes;
         private String excludes;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Filter filter) {
+        private Builder(final Filter filter) {
             this.includes = filter.includes;
             this.excludes = filter.excludes;
         }

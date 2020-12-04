@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.Search.Builder;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.TableSettings;
@@ -97,17 +98,25 @@ public class TableResultRequest extends ComponentResultRequest {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String componentId;
         private Fetch fetch;
         private TableSettings tableSettings;
         private OffsetRange requestedRange = new OffsetRange(0, 100);
         private Set<String> openGroups;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final TableResultRequest tableResultRequest) {
+        private Builder(final TableResultRequest tableResultRequest) {
             this.componentId = tableResultRequest.getComponentId();
             this.fetch = tableResultRequest.getFetch();
             this.tableSettings = tableResultRequest.tableSettings;

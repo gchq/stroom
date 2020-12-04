@@ -65,7 +65,7 @@ public class DependencyServiceImpl implements DependencyService {
             .thenComparing(TO_TYPE_COMPARATOR)
             .thenComparing(TO_NAME_COMPARATOR);
 
-    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = new ExpressionOperator.Builder(Op.AND).build();
+    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = ExpressionOperator.builder().build();
 
     private static final FilterFieldMappers<Dependency> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),

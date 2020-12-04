@@ -76,7 +76,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         final String type = "table";
                         final String id = type + "_" + System.currentTimeMillis();
 
-                        final ComponentConfig componentData = new ComponentConfig.Builder()
+                        final ComponentConfig componentData = ComponentConfig.builder()
                                 .type(type)
                                 .id(id)
                                 .name("table" + " " + i + ":" + j + ":" + k)
@@ -116,7 +116,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         vis.setScriptRef(scriptRef);
         visualisationStore.writeDocument(vis);
 
-        return new VisComponentSettings.Builder()
+        return VisComponentSettings.builder()
                 .visualisation(visRef)
                 .build();
     }

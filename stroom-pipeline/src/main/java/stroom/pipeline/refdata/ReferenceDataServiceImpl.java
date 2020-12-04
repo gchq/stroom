@@ -675,7 +675,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private Predicate<RefStoreEntry> buildDocRefFieldPredicate(final ExpressionTerm expressionTerm,
                                                                final Function<RefStoreEntry, DocRef> valueExtractor) {
-        final DocRef termValue = new DocRef.Builder()
+        final DocRef termValue = DocRef.builder()
                 .uuid(expressionTerm.getValue())
                 .build();
         if (expressionTerm.getCondition().equals(Condition.IS_DOC_REF)) {

@@ -25,7 +25,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
@@ -140,7 +139,7 @@ public class StreamTaskResource implements RestResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
 
-        final ExpressionOperator.Builder builder = new Builder();
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         addFiltering(filter, builder);
 
         addSorting(filter, criteria);

@@ -206,8 +206,16 @@ public class SourceLocation {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public static final class Builder {
-        private final long id;
+        private long id;
         private long partNo = 0; // Non multipart data has segment no of zero by default, zero based
         private String childType;
         private long segmentNo = 0; // Non-segmented data has no segment no., zero based
@@ -217,6 +225,9 @@ public class SourceLocation {
 
         private Builder(final long id) {
             this.id = id;
+        }
+
+        private Builder() {
         }
 
         private Builder(final SourceLocation currentSourceLocation) {

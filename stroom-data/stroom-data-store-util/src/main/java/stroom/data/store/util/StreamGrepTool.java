@@ -120,7 +120,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
     }
 
     private void process(final Injector injector) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);

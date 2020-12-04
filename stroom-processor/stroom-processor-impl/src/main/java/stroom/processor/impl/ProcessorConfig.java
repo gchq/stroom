@@ -21,19 +21,19 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
 
-    private CacheConfig processorCache = new CacheConfig.Builder()
+    private CacheConfig processorCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
-    private CacheConfig processorFilterCache = new CacheConfig.Builder()
+    private CacheConfig processorFilterCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
-    private CacheConfig processorNodeCache = new CacheConfig.Builder()
+    private CacheConfig processorNodeCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig processorFeedCache = new CacheConfig.Builder()
+    private CacheConfig processorFeedCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

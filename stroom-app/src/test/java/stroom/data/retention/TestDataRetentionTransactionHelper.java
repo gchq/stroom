@@ -60,7 +60,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         final Meta metaInsideRetention = metaService.create(
-                new MetaProperties.Builder()
+                MetaProperties.builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(now)
@@ -68,7 +68,7 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                         .build());
 
         final Meta metaOutsideRetention = metaService.create(
-                new MetaProperties.Builder()
+                MetaProperties.builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(timeOutsideRetentionPeriod)

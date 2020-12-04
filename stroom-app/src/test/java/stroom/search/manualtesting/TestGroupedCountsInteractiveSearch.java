@@ -134,7 +134,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     @Disabled
     void testGroupedCounts() {
         //we want all data here
-        final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder();
         expressionBuilder.addTerm("UserId", ExpressionTerm.Condition.EQUALS, "*");
 
         final List<String> componentIds = Collections.singletonList("table-1");
@@ -179,13 +179,13 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
     private TableSettings createTableSettings(Boolean extractValues) {
 
-        final Field groupedUserId = new Field.Builder()
+        final Field groupedUserId = Field.builder()
                 .name("User")
                 .expression(ParamUtil.makeParam("User"))
                 .group(0)
                 .build();
 
-        final Field countField = new Field.Builder()
+        final Field countField = Field.builder()
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)
@@ -194,7 +194,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         List<Field> fields = Arrays.asList(groupedUserId, countField);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
-        return new TableSettings.Builder()
+        return TableSettings.builder()
                 .addFields(fields)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)

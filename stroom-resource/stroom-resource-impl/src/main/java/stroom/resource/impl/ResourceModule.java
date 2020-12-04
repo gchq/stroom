@@ -34,10 +34,10 @@ public class ResourceModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DeleteTempFile.class, builder -> builder
-                        .withName("Delete temp file")
-                        .withDescription("Deletes the resource store temporary file.")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "1h"));
+                        .name("Delete temp file")
+                        .description("Deletes the resource store temporary file.")
+                        .managed(false)
+                        .schedule(PERIODIC, "1h"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ResourceStoreStartup.class)

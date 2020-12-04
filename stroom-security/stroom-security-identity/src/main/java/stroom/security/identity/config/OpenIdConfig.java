@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 public class OpenIdConfig extends AbstractConfig {
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
 
-    private CacheConfig accessCodeCache = new CacheConfig.Builder()
+    private CacheConfig accessCodeCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

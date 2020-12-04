@@ -2,6 +2,7 @@ package stroom.pipeline.shared.stepping;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,11 +49,29 @@ public class FindElementDocRequest {
         return pipelineName;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private PipelineElement pipelineElement;
         private List<PipelineProperty> properties;
         private String feedName;
         private String pipelineName;
+
+        private Builder() {
+        }
+
+        private Builder(final FindElementDocRequest findElementDocRequest) {
+            this.pipelineElement = findElementDocRequest.pipelineElement;
+            this.properties = findElementDocRequest.properties;
+            this.feedName = findElementDocRequest.feedName;
+            this.pipelineName = findElementDocRequest.pipelineName;
+        }
 
         public Builder pipelineElement(final PipelineElement pipelineElement) {
             this.pipelineElement = pipelineElement;

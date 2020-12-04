@@ -148,7 +148,8 @@ public class SearchModel {
                         dashboardUUID.getDashboardUuid(),
                         dashboardUUID.getComponentId());
 
-                currentSearch = new Search.Builder()
+                currentSearch = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(componentSettingsMap)
@@ -222,7 +223,8 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search.Builder()
+                    currentSearch = Search
+                            .builder()
                             .dataSourceRef(dataSourceRef)
                             .expression(currentExpression)
                             .componentSettingsMap(resultComponentMap)
@@ -364,7 +366,8 @@ public class SearchModel {
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
-                search = new Search.Builder()
+                search = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)

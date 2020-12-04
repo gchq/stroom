@@ -10,7 +10,7 @@ import javax.inject.Singleton;
 @Singleton
 public class SearchableConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
-    private CacheConfig searchResultCache = new CacheConfig.Builder()
+    private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

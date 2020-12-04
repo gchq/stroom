@@ -36,14 +36,14 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
     @BeforeEach
     void setUp() {
         LOGGER.info("Setup");
-        
+
         when(stroomEventLoggingService.createEvent())
                 .thenReturn(new Event());
 
         doAnswer(invocation -> {
-                    LOGGER.info("log() called for {}", invocation.getArguments()[0]);
-                    return null;
-                })
+            LOGGER.info("log() called for {}", invocation.getArguments()[0]);
+            return null;
+        })
                 .when(stroomEventLoggingService).log(Mockito.any());
     }
 
@@ -70,10 +70,11 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
     }
 
     private SystemInfoResult buildSystemInfoResult(final String name) {
-        return SystemInfoResult.builder(name)
-                    .withDetail("key1", "value1")
-                    .withDetail("key2", "value2")
-                    .build();
+        return SystemInfoResult.builder()
+                .name(name)
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
+                .build();
     }
 
     @NotNull
@@ -84,6 +85,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
             public String getSystemInfoName() {
                 return systemInfoResult.getName();
             }
+
             @Override
             public SystemInfoResult getSystemInfo() {
                 return systemInfoResult;

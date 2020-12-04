@@ -15,7 +15,6 @@ import java.util.Objects;
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder(alphabetic = true)
 public class SystemInfoResult {
-
     @NotNull
     @JsonProperty("name")
     private final String name;
@@ -47,10 +46,6 @@ public class SystemInfoResult {
         return description;
     }
 
-    public static Builder builder(final String name) {
-        return new Builder(name);
-    }
-
     @Override
     public String toString() {
         return "SystemInfoResult{" +
@@ -75,46 +70,63 @@ public class SystemInfoResult {
         return Objects.hash(name, description, details);
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        private final String name;
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private String name;
         private String description = null;
-        private final Map<String, Object> detailMap = new HashMap<>();
+        private Map<String, Object> details = new HashMap<>();
 
-        public Builder(final String name) {
-            this.name = name;
+        private Builder() {
         }
 
-        public Builder withDescription(final String description) {
+        private Builder(final SystemInfoResult systemInfoResult) {
+            name = systemInfoResult.name;
+            description = systemInfoResult.description;
+            details = systemInfoResult.details;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(final String description) {
             this.description = description;
             return this;
         }
 
-        public Builder withDetail(final String key, final Object value) {
+        public Builder addDetail(final String key, final Object value) {
             Objects.requireNonNull(key);
-            detailMap.put(key, value);
+            details.put(key, value);
             return this;
         }
 
-        public Builder withError(final Throwable error) {
+        public Builder addError(final Throwable error) {
             Objects.requireNonNull(error);
-            detailMap.put("error", error.getMessage());
+            details.put("error", error.getMessage());
 
             return this;
         }
 
-        public Builder withError(final String error) {
+        public Builder addError(final String error) {
             Objects.requireNonNull(error);
-            detailMap.put("error", error);
+            details.put("error", error);
 
             return this;
         }
 
         public SystemInfoResult build() {
-            if (detailMap.isEmpty()) {
+            if (details.isEmpty()) {
                 return new SystemInfoResult(name, description, Collections.emptyMap());
             } else {
-                return new SystemInfoResult(name, description, detailMap);
+                return new SystemInfoResult(name, description, details);
             }
         }
     }

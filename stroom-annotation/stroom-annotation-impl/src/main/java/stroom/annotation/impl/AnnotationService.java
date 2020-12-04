@@ -57,7 +57,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
         checkPermission();
 
-        final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+        final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                 .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
                 .build();
 

@@ -103,7 +103,7 @@ class TestEventSearch extends AbstractSearchTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query.Builder().dataSource(indexRef).expression(expressionIn.build()).build();
+        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = search(searchRequest);
 
@@ -170,19 +170,19 @@ class TestEventSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
-        final Field idField = new Field.Builder()
+        final Field idField = Field.builder()
                 .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
                 .build();
 
-        final Field timeField = new Field.Builder()
+        final Field timeField = Field.builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        return new TableSettings.Builder()
+        return TableSettings.builder()
                 .addFields(idField)
                 .addFields(timeField)
                 .extractValues(extractValues)
@@ -196,7 +196,7 @@ class TestEventSearch extends AbstractSearchTest {
                                                        final String to,
                                                        final String wordsField,
                                                        final String wordsTerm) {
-        return new ExpressionOperator.Builder()
+        return ExpressionOperator.builder()
                 .addTerm(userField, Condition.EQUALS, userTerm)
                 .addTerm("EventTime", Condition.BETWEEN, from + "," + to)
                 .addTerm(wordsField, Condition.EQUALS, wordsTerm);

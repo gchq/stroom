@@ -94,7 +94,7 @@ class OpenIdResourceImpl implements OpenIdResource {
     @Override
     public String openIdConfiguration() {
         try {
-            final OpenIdConfigurationResponse response = new OpenIdConfigurationResponse.Builder()
+            final OpenIdConfigurationResponse response = OpenIdConfigurationResponse.builder()
                     .authorizationEndpoint(uriFactory.publicUri("/oauth2/v1/noauth/auth").toString())
                     .idTokenSigningSlgValuesSupported(new String[]{"RS256"})
                     .issuer(tokenConfig.getJwsIssuer())

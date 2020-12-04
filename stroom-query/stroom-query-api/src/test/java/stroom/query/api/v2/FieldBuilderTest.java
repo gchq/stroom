@@ -19,21 +19,26 @@ class FieldBuilderTest {
         final Integer numberFormatDecimalPlaces = 5;
         final Boolean numberFormatUseSeperator = true;
 
-        final Field field = new Field.Builder()
+        final Field field = Field
+                .builder()
                 .id(name)
                 .name(name)
                 .expression(expression)
-                .sort(new Sort.Builder()
+                .sort(Sort
+                        .builder()
                         .order(sortOrder)
                         .direction(sortDirection)
                         .build())
-                .filter(new Filter.Builder()
+                .filter(Filter
+                        .builder()
                         .includes(filterIncludes)
                         .excludes(filterExcludes)
                         .build())
-                .format(new Format.Builder()
+                .format(Format
+                        .builder()
                         .type(Type.NUMBER)
-                        .settings(new NumberFormatSettings.Builder()
+                        .settings(NumberFormatSettings
+                                .builder()
                                 .decimalPlaces(numberFormatDecimalPlaces)
                                 .useSeparator(numberFormatUseSeperator)
                                 .build())

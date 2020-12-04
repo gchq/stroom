@@ -29,7 +29,6 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dashboard.shared.VisComponentSettings.Builder;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -199,7 +198,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private void updateTableId(final String tableId) {
-        final VisComponentSettings.Builder builder = new Builder(getVisSettings());
+        final VisComponentSettings.Builder builder = getVisSettings().copy();
 
         builder.tableId(tableId);
 
@@ -538,7 +537,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         final ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof VisComponentSettings)) {
-            setSettings(new VisComponentSettings.Builder().build());
+            setSettings(VisComponentSettings.builder().build());
         }
     }
 
@@ -581,7 +580,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public ComponentResultRequest getResultRequest() {
         // Update table settings.
         updateLinkedTableSettings();
-        return new VisResultRequest.Builder()
+        return VisResultRequest
+                .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
                 .requestedRange(new OffsetRange(0, MAX_RESULTS))
@@ -593,7 +593,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public ComponentResultRequest createDownloadQueryRequest() {
         // Update table settings.
         updateLinkedTableSettings();
-        return new VisResultRequest.Builder()
+        return VisResultRequest
+                .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
                 .requestedRange(new OffsetRange(0, MAX_RESULTS))
@@ -607,7 +608,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         if (linkedTablePresenter != null) {
             tableComponentSettings = linkedTablePresenter.getTableSettings();
         }
-        setSettings(new VisComponentSettings.Builder(getVisSettings())
+        setSettings(getVisSettings()
+                .copy()
                 .tableSettings(tableComponentSettings)
                 .build());
     }

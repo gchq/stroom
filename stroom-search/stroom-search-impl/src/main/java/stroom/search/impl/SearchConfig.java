@@ -27,11 +27,11 @@ public class SearchConfig extends AbstractConfig {
     private ExtractionConfig extractionConfig = new ExtractionConfig();
     private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
 
-    private CacheConfig resultStoreCache = new CacheConfig.Builder()
+    private CacheConfig resultStoreCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
-    private CacheConfig remoteSearchResultCache = new CacheConfig.Builder()
+    private CacheConfig remoteSearchResultCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();

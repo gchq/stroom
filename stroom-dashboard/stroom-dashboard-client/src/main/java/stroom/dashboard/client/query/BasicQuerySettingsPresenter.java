@@ -69,7 +69,7 @@ public class BasicQuerySettingsPresenter
 
         Automate automate = settings.getAutomate();
         if (automate == null) {
-            automate = new Automate.Builder().build();
+            automate = Automate.builder().build();
         }
 
         getView().setQueryOnOpen(automate.isOpen());
@@ -82,13 +82,14 @@ public class BasicQuerySettingsPresenter
         ComponentConfig result = super.write(componentConfig);
         final QueryComponentSettings oldSettings = (QueryComponentSettings) result.getSettings();
         final QueryComponentSettings newSettings = writeSettings(oldSettings);
-        return new ComponentConfig.Builder(result).settings(newSettings).build();
+        return result.copy().settings(newSettings).build();
     }
 
     private QueryComponentSettings writeSettings(final QueryComponentSettings settings) {
-        return new QueryComponentSettings.Builder(settings)
+        return settings
+                .copy()
                 .dataSource(getDataSource())
-                .automate(new Automate.Builder()
+                .automate(Automate.builder()
                         .open(getView().isQueryOnOpen())
                         .refresh(getView().isAutoRefresh())
                         .refreshInterval(getView().getRefreshInterval())

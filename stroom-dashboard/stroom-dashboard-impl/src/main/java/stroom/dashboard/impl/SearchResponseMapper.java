@@ -97,7 +97,7 @@ public class SearchResponseMapper {
 //        final List<Field> copy = new ArrayList<>();
 //        if (fields != null) {
 //            for (final stroom.query.api.v2.Field field : fields) {
-//                final Field item = new Field.Builder()
+//                final Field item = Field.builder()
 //                        .id(field.getId())
 //                        .name(field.getName())
 //                        .expression(field.getExpression())

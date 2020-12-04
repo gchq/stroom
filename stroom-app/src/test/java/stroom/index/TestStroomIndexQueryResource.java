@@ -56,11 +56,10 @@ class TestStroomIndexQueryResource {
 
     private static SearchRequest getSearchRequest() {
         final QueryKey queryKey = new QueryKey("Some UUID");
-        final Query query = new Query.Builder()
+        final Query query = Query.builder()
                 .dataSource(new DocRef("docRefType", "docRefUuid", "docRefName"))
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                .expression(ExpressionOperator.builder()
                         .addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1")
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build())
                         .addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2")
                         .build())
                 .build();

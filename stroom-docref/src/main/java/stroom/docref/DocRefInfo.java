@@ -122,45 +122,66 @@ public class DocRefInfo {
         return Objects.hash(docRef, createTime, updateTime, createUser, updateUser, otherInfo);
     }
 
-    public static class Builder {
-        private final DocRefInfo instance;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public Builder() {
-            this.instance = new DocRefInfo();
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private DocRef docRef;
+        private Long createTime;
+        private Long updateTime;
+        private String createUser;
+        private String updateUser;
+        private String otherInfo;
+
+        private Builder() {
+        }
+
+        private Builder(final DocRefInfo docRefInfo) {
+            this.docRef = docRefInfo.docRef;
+            this.createTime = docRefInfo.createTime;
+            this.updateTime = docRefInfo.updateTime;
+            this.createUser = docRefInfo.createUser;
+            this.updateUser = docRefInfo.updateUser;
+            this.otherInfo = docRefInfo.otherInfo;
         }
 
         public Builder docRef(final DocRef value) {
-            this.instance.docRef = value;
+            this.docRef = value;
             return this;
         }
 
-        public Builder createTime(final Long value) {
-            this.instance.setCreateTime(value);
+        public Builder createTime(final Long createTime) {
+            this.createTime = createTime;
             return this;
         }
 
-        public Builder createUser(final String value) {
-            this.instance.setCreateUser(value);
+        public Builder updateTime(final Long updateTime) {
+            this.updateTime = updateTime;
             return this;
         }
 
-        public Builder updateTime(final Long value) {
-            this.instance.setUpdateTime(value);
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
             return this;
         }
 
-        public Builder updateUser(final String value) {
-            this.instance.setUpdateUser(value);
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
             return this;
         }
 
-        public Builder otherInfo(final String value) {
-            this.instance.setOtherInfo(value);
+        public Builder otherInfo(final String otherInfo) {
+            this.otherInfo = otherInfo;
             return this;
         }
 
         public DocRefInfo build() {
-            return instance;
+            return new DocRefInfo(docRef, createTime, updateTime, createUser, updateUser, otherInfo);
         }
     }
 }

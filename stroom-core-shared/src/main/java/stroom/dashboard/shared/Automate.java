@@ -16,6 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.Builder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -79,15 +82,23 @@ public class Automate {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private boolean open;
         private boolean refresh;
         private String refreshInterval = "10s";
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Automate automate) {
+        private Builder(final Automate automate) {
             this.open = automate.open;
             this.refresh = automate.refresh;
             this.refreshInterval = automate.refreshInterval;

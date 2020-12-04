@@ -121,7 +121,7 @@ public class DataRetentionImpactPresenter
         updateButtonStates();
 
         criteria = new FindDataRetentionImpactCriteria();
-        criteria.setExpression(new ExpressionOperator.Builder(Op.AND).build());
+        criteria.setExpression(ExpressionOperator.builder().build());
 
         initColumns();
 

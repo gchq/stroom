@@ -28,50 +28,6 @@ public class IndexShardKey {
     // The time that the partition that this shard belongs to ends
     private final Long partitionToTime;
 
-    public static class Builder {
-
-        private String indexUuid;
-        private String partition;
-        private int shardNo;
-        private Long partitionFromTime;
-        private Long partitionToTime;
-
-        public Builder() {
-        }
-
-        public Builder indexUuid(final String indexUuid) {
-            this.indexUuid = indexUuid;
-            return this;
-        }
-
-        public Builder partition(final String partition) {
-            this.partition = partition;
-            return this;
-        }
-
-        public Builder shardNo(final int shardNo) {
-            this.shardNo = shardNo;
-            return this;
-        }
-
-        public Builder partitionFromTime(final Long partitionFromTime) {
-            this.partitionFromTime = partitionFromTime;
-            return this;
-        }
-
-        public Builder partitionToTime(final Long partitionToTime) {
-            this.partitionToTime = partitionToTime;
-            return this;
-        }
-
-        public IndexShardKey build() {
-            Objects.requireNonNull(indexUuid);
-            Objects.requireNonNull(partition);
-
-            return new IndexShardKey(indexUuid, partition, partitionFromTime, partitionToTime, shardNo);
-        }
-    }
-
     public IndexShardKey(final String indexUuid,
                          final String partition,
                          final Long partitionFromTime,
@@ -128,5 +84,64 @@ public class IndexShardKey {
                 ", partitionFromTime=" + partitionFromTime +
                 ", partitionToTime=" + partitionToTime +
                 '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private String indexUuid;
+        private String partition;
+        private int shardNo;
+        private Long partitionFromTime;
+        private Long partitionToTime;
+
+        private Builder() {
+        }
+
+        private Builder(final IndexShardKey indexShardKey) {
+            this.indexUuid = indexShardKey.indexUuid;
+            this.partition = indexShardKey.partition;
+            this.shardNo = indexShardKey.shardNo;
+            this.partitionFromTime = indexShardKey.partitionFromTime;
+            this.partitionToTime = indexShardKey.partitionToTime;
+        }
+
+        public Builder indexUuid(final String indexUuid) {
+            this.indexUuid = indexUuid;
+            return this;
+        }
+
+        public Builder partition(final String partition) {
+            this.partition = partition;
+            return this;
+        }
+
+        public Builder shardNo(final int shardNo) {
+            this.shardNo = shardNo;
+            return this;
+        }
+
+        public Builder partitionFromTime(final Long partitionFromTime) {
+            this.partitionFromTime = partitionFromTime;
+            return this;
+        }
+
+        public Builder partitionToTime(final Long partitionToTime) {
+            this.partitionToTime = partitionToTime;
+            return this;
+        }
+
+        public IndexShardKey build() {
+            Objects.requireNonNull(indexUuid);
+            Objects.requireNonNull(partition);
+
+            return new IndexShardKey(indexUuid, partition, partitionFromTime, partitionToTime, shardNo);
+        }
     }
 }

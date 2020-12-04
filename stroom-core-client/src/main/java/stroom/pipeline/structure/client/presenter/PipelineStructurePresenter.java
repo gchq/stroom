@@ -84,7 +84,7 @@ import java.util.stream.Collectors;
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
         implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler, PipelineStructureUiHandlers {
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final EntityDropDownPresenter pipelinePresenter;
     private final MenuListPresenter menuListPresenter;

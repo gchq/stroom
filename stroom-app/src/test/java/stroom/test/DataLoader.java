@@ -119,7 +119,7 @@ public class DataLoader {
 
             final String streamTypeName = feedProperties.getStreamTypeName(feedName);
 
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(streamTypeName)
                     .effectiveMs(effectiveMs)

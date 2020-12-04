@@ -236,29 +236,29 @@ class TestSearchResponseCreator {
 
     private SearchRequest getSearchRequest(final boolean isIncremental, final Long timeout) {
         String key = UUID.randomUUID().toString();
-        return new SearchRequest.Builder()
+        return SearchRequest.builder()
                 .key(key)
-                .addResultRequests(new ResultRequest.Builder()
+                .addResultRequests(ResultRequest.builder()
                         .componentId(UUID.randomUUID().toString())
                         .resultStyle(ResultRequest.ResultStyle.TABLE)
-                        .requestedRange(new OffsetRange.Builder()
+                        .requestedRange(OffsetRange.builder()
                                 .offset(0L)
                                 .length(100L)
                                 .build())
-                        .addMappings(new TableSettings.Builder()
+                        .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
                                 .addFields(
-                                        new Field.Builder()
+                                        Field.builder()
                                                 .id("field1")
                                                 .name("field1")
                                                 .expression("expression1")
                                                 .build(),
-                                        new Field.Builder()
+                                        Field.builder()
                                                 .id("field2")
                                                 .name("field2")
                                                 .expression("expression1")
                                                 .build(),
-                                        new Field.Builder()
+                                        Field.builder()
                                                 .id("field3")
                                                 .name("field3")
                                                 .expression("expression2")

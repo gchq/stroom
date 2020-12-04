@@ -78,7 +78,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
         assertThat(index).as("Index is null").isNotNull();
 
         // Create text field.
-        final Field fldText = new Field.Builder()
+        final Field fldText = Field.builder()
                 .name("Text")
                 .expression(ParamUtil.makeParam("Text"))
                 .group(0)
@@ -86,14 +86,14 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .build();
 
         // Create count field.
-        final Field fldCount = new Field.Builder()
+        final Field fldCount = Field.builder()
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultTextPipeline();
-        final TableSettings tableSettings = new TableSettings.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
                 .addFields(fldText)
                 .addFields(fldCount)
                 .extractValues(true)
@@ -101,7 +101,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .build();
 
         final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final Query query = new Query.Builder().dataSource(indexRef).expression(expression.build()).build();
+        final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
         final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
 
@@ -152,7 +152,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
     private ExpressionOperator.Builder buildExpression(final String user, final String from,
                                                        final String to) {
-        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm("UserId", Condition.EQUALS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
 

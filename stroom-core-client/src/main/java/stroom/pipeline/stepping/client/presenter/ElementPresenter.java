@@ -96,7 +96,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                 getView().setCodeView(getCodePresenter().getView());
 
                 try {
-                    final FindElementDocRequest findElementDocRequest = new FindElementDocRequest.Builder()
+                    final FindElementDocRequest findElementDocRequest = FindElementDocRequest.builder()
                             .pipelineElement(element)
                             .properties(properties)
                             .feedName(feedName)

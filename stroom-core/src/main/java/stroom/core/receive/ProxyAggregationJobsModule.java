@@ -16,9 +16,9 @@ public class ProxyAggregationJobsModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProxyAggregation.class, builder -> builder
-                        .withName("Proxy Aggregation")
-                        .withDescription("Job to pick up the data written by the proxy and store it in Stroom")
-                        .withSchedule(CRON, "0,10,20,30,40,50 * *"));
+                        .name("Proxy Aggregation")
+                        .description("Job to pick up the data written by the proxy and store it in Stroom")
+                        .schedule(CRON, "0,10,20,30,40,50 * *"));
     }
 
     private static class ProxyAggregation extends RunnableWrapper {

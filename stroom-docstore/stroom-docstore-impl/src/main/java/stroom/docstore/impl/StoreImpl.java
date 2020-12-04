@@ -199,8 +199,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public DocRefInfo info(final String uuid) {
         Objects.requireNonNull(uuid);
         final D document = read(uuid);
-        return new DocRefInfo.Builder()
-                .docRef(new DocRef.Builder()
+        return DocRefInfo
+                .builder()
+                .docRef(DocRef.builder()
                         .type(document.getType())
                         .uuid(document.getUuid())
                         .name(document.getName())
@@ -341,7 +342,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         importState.setState(State.NEW);
 
                     } else {
-                        docRef = new DocRef.Builder(docRef).name(existingDocument.getName()).build();
+                        docRef = docRef.copy().name(existingDocument.getName()).build();
                         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                             throw new PermissionException(
                                     securityContext.getUserId(),
@@ -361,7 +362,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
                 } else if (importState.ok(importMode)) {
                     if (existingDocument != null) {
-                        docRef = new DocRef.Builder(docRef).name(existingDocument.getName()).build();
+                        docRef = docRef.copy().name(existingDocument.getName()).build();
                         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                             throw new PermissionException(
                                     securityContext.getUserId(),

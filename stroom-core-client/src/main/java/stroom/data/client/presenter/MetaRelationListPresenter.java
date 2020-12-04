@@ -78,7 +78,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             refresh();
 
         } else {
-            final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder();
             if (!showSystemFiles) {
                 builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
             }

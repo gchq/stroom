@@ -111,7 +111,7 @@ class SolrClusterSearchTaskHandler {
             final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
 
             // Search all index shards.
-            final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());

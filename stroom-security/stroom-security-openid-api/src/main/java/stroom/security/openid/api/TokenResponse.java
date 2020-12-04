@@ -51,12 +51,31 @@ public class TokenResponse {
         return tokenType;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String idToken;
         private String accessToken;
         private String refreshToken;
         private int expiresIn;
         private String tokenType;
+
+        private Builder() {
+        }
+
+        private Builder(final TokenResponse tokenResponse) {
+            this.idToken = tokenResponse.idToken;
+            this.accessToken = tokenResponse.accessToken;
+            this.refreshToken = tokenResponse.refreshToken;
+            this.expiresIn = tokenResponse.expiresIn;
+            this.tokenType = tokenResponse.tokenType;
+        }
 
         public Builder idToken(final String idToken) {
             this.idToken = idToken;

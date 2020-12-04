@@ -16,21 +16,20 @@
 
 package stroom.query.api.v2;
 
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.DocRef;
-import stroom.docref.HasDisplayValue;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"field", "condition", "value", "docRef"})
@@ -42,44 +41,34 @@ import java.util.Objects;
         description = "A predicate term in a query expression tree",
         parent = ExpressionItem.class)
 public final class ExpressionTerm extends ExpressionItem {
-    private static final long serialVersionUID = 9035311895540457146L;
-
     @XmlElement
     @ApiModelProperty(
             value = "The name of the field that is being evaluated in this predicate term",
             required = true)
     @JsonProperty
-    private String field;
+    private String field; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     @XmlElement
     @ApiModelProperty(
             value = "The condition of the predicate term",
             required = true)
     @JsonProperty
-    private Condition condition;
+    private Condition condition; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     @XmlElement
     @ApiModelProperty(
             value = "The value that the field value is being evaluated against. Not required if a dictionary is supplied")
     @JsonProperty
-    private String value;
+    private String value; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     @XmlElement
     @ApiModelProperty(
             value = "The DocRef that the field value is being evaluated against if the condition is IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
-    private DocRef docRef;
+    private DocRef docRef; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     public ExpressionTerm() {
-        // Required for GWT JSON serialisation.
-    }
-
-    public ExpressionTerm(final String field, final Condition condition, final String value) {
-        this(true, field, condition, value, null);
-    }
-
-    public ExpressionTerm(final String field, final Condition condition, final DocRef docRef) {
-        this(true, field, condition, null, docRef);
+        // TODO : XML serilisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator
@@ -99,32 +88,16 @@ public final class ExpressionTerm extends ExpressionItem {
         return field;
     }
 
-    public void setField(final String field) {
-        this.field = field;
-    }
-
     public Condition getCondition() {
         return condition;
-    }
-
-    public void setCondition(final Condition condition) {
-        this.condition = condition;
     }
 
     public String getValue() {
         return value;
     }
 
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
     public DocRef getDocRef() {
         return docRef;
-    }
-
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
     }
 
     @Override
@@ -199,13 +172,13 @@ public final class ExpressionTerm extends ExpressionItem {
         IS_NULL("is null"),
         IS_NOT_NULL("is not null");
 
-        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
-                EQUALS,
-                GREATER_THAN,
-                GREATER_THAN_OR_EQUAL_TO,
-                LESS_THAN,
-                LESS_THAN_OR_EQUAL_TO,
-                BETWEEN);
+//        public static final List<Condition> SIMPLE_CONDITIONS = Arrays.asList(
+//                EQUALS,
+//                GREATER_THAN,
+//                GREATER_THAN_OR_EQUAL_TO,
+//                LESS_THAN,
+//                LESS_THAN_OR_EQUAL_TO,
+//                BETWEEN);
 
         public static final String IN_CONDITION_DELIMITER = ",";
 
@@ -221,24 +194,32 @@ public final class ExpressionTerm extends ExpressionItem {
         }
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link ExpressionTerm}
      */
-    public static class Builder
-            extends ExpressionItem.Builder<ExpressionTerm, Builder> {
+    public static final class Builder extends ExpressionItem.Builder<ExpressionTerm, Builder> {
         private String field;
-
         private Condition condition;
-
         private String value;
-
         private DocRef docRef;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Boolean enabled) {
-            super(enabled);
+        private Builder(final ExpressionTerm expressionTerm) {
+            super(expressionTerm);
+            this.field = expressionTerm.field;
+            this.condition = expressionTerm.condition;
+            this.value = expressionTerm.value;
+            this.docRef = expressionTerm.docRef;
         }
 
         /**
@@ -291,7 +272,7 @@ public final class ExpressionTerm extends ExpressionItem {
          */
         public Builder docRef(final String type, final String uuid, final String name) {
             return this.docRef(
-                    new DocRef.Builder()
+                    DocRef.builder()
                             .type(type)
                             .uuid(uuid)
                             .name(name)
@@ -300,7 +281,12 @@ public final class ExpressionTerm extends ExpressionItem {
 
         @Override
         public ExpressionTerm build() {
-            return new ExpressionTerm(getEnabled(), field, condition, value, docRef);
+            Boolean enabled = this.enabled;
+            if (Boolean.TRUE.equals(enabled)) {
+                enabled = null;
+            }
+
+            return new ExpressionTerm(enabled, field, condition, value, docRef);
         }
 
         @Override

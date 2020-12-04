@@ -36,7 +36,7 @@ class TestRollingStreamDestination {
     @Test
     void testFrequency() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
-        final MetaProperties dataProperties = new MetaProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
+        final MetaProperties dataProperties = MetaProperties.builder().typeName(StreamTypeNames.EVENTS).build();
         final Target streamTarget = streamStore.openTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
@@ -56,7 +56,7 @@ class TestRollingStreamDestination {
     @Test
     void testSchedule() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
-        final MetaProperties dataProperties = new MetaProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
+        final MetaProperties dataProperties = MetaProperties.builder().typeName(StreamTypeNames.EVENTS).build();
         final Target streamTarget = streamStore.openTarget(dataProperties);
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,

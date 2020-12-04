@@ -32,11 +32,11 @@ public class FsVolumeConfig extends AbstractConfig {
         WeightedFreePercentRandomVolumeSelector.NAME + "|" +
         WeightedFreeRandomVolumeSelector.NAME + ")$";
 
-    private CacheConfig feedPathCache = new CacheConfig.Builder()
+    private CacheConfig feedPathCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig typePathCache = new CacheConfig.Builder()
+    private CacheConfig typePathCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

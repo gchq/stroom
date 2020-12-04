@@ -98,7 +98,7 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        metaDao.updateStatus(new FindMetaCriteria(new ExpressionOperator.Builder().build()), Status.LOCKED, Status.UNLOCKED, System.currentTimeMillis());
+        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()), Status.LOCKED, Status.UNLOCKED, System.currentTimeMillis());
     }
 
     @Test
@@ -117,7 +117,7 @@ class TestMetaDaoImpl {
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(resultPage.size()).isEqualTo(0);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
@@ -141,8 +141,8 @@ class TestMetaDaoImpl {
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(resultPage.size()).isEqualTo(0);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
@@ -172,8 +172,8 @@ class TestMetaDaoImpl {
         resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(resultPage.size()).isEqualTo(0);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
@@ -199,7 +199,7 @@ class TestMetaDaoImpl {
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(selectionSummary.getItemCount()).isEqualTo(0);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
@@ -223,7 +223,7 @@ class TestMetaDaoImpl {
         selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
         assertThat(selectionSummary.getItemCount()).isEqualTo(0);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
@@ -232,7 +232,7 @@ class TestMetaDaoImpl {
     }
 
     private MetaProperties createRawProperties(final String feedName) {
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .typeName(RAW_STREAM_TYPE_NAME)
@@ -240,7 +240,7 @@ class TestMetaDaoImpl {
     }
 
     private MetaProperties createProcessedProperties(final Meta parent, final String feedName) {
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .parent(parent)
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)

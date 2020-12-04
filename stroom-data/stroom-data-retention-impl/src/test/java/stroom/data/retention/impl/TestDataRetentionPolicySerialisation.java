@@ -18,7 +18,6 @@
 package stroom.data.retention.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
@@ -28,13 +27,15 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.json.JsonUtil;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 
 class TestDataRetentionPolicySerialisation {
     @Test
     void test() throws Exception {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, "Raw Events");
         builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();

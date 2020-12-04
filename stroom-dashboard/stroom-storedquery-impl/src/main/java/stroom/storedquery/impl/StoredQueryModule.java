@@ -21,10 +21,10 @@ public class StoredQueryModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(QueryHistoryClean.class, builder -> builder
-                        .withName("Query History Clean")
-                        .withDescription("Job to clean up old query history items")
-                        .withSchedule(CRON, "0 0 *")
-                        .withAdvancedState(false));
+                        .name("Query History Clean")
+                        .description("Job to clean up old query history items")
+                        .schedule(CRON, "0 0 *")
+                        .advanced(false));
     }
 
     @Override

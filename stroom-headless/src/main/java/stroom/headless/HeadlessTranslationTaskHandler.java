@@ -170,7 +170,7 @@ class HeadlessTranslationTaskHandler {
                     }
 
                     // Create the stream.
-                    final Meta meta = new Meta.Builder()
+                    final Meta meta = Meta.builder()
                             .effectiveMs(effectiveMs)
                             .feedName(feedName)
                             .build();

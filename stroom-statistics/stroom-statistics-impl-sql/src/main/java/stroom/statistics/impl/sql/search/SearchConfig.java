@@ -14,7 +14,7 @@ public class SearchConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private int maxResults = 100000;
     private int fetchSize = 5000;
-    private CacheConfig searchResultCache = new CacheConfig.Builder()
+    private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

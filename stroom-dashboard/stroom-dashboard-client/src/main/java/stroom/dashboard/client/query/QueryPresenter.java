@@ -323,7 +323,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         builder.append(getQuerySettings().getDataSource(), dataSourceRef);
 
         if (!builder.isEquals()) {
-            setSettings(new QueryComponentSettings.Builder(getQuerySettings())
+            setSettings(getQuerySettings()
+                    .copy()
                     .dataSource(dataSourceRef)
                     .build());
             setDirty(true);
@@ -501,13 +502,14 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         final ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof QueryComponentSettings)) {
-            setSettings(new QueryComponentSettings.Builder()
+            setSettings(QueryComponentSettings.builder()
                     .build());
         }
 
         if (getQuerySettings().getAutomate() == null) {
-            final Automate automate = new Automate.Builder().build();
-            setSettings(new QueryComponentSettings.Builder(getQuerySettings())
+            final Automate automate = Automate.builder().build();
+            setSettings(getQuerySettings()
+                    .copy()
                     .automate(automate)
                     .build());
         }
@@ -523,7 +525,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Read expression.
         ExpressionOperator root = getQuerySettings().getExpression();
         if (root == null) {
-            root = new ExpressionOperator.Builder(Op.AND).build();
+            root = ExpressionOperator.builder().build();
         }
         setExpression(root);
     }
@@ -531,7 +533,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(new QueryComponentSettings.Builder(getQuerySettings())
+        setSettings(getQuerySettings()
+                .copy()
                 .expression(expressionPresenter.write())
                 .build());
         return super.write();

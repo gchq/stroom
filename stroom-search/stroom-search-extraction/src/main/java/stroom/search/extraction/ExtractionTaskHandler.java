@@ -60,7 +60,7 @@ import java.util.List;
 class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
-    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final Store streamStore;
     private final FeedHolder feedHolder;

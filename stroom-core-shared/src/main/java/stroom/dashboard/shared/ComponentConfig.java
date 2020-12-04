@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.Automate.Builder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -89,16 +91,24 @@ public class ComponentConfig {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String type;
         private String id;
         private String name;
         private ComponentSettings settings;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final ComponentConfig componentConfig) {
+        private Builder(final ComponentConfig componentConfig) {
             this.type = componentConfig.type;
             this.id = componentConfig.id;
             this.name = componentConfig.name;

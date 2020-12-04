@@ -40,9 +40,9 @@ public final class AccountModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(AccountMaintenance.class, jobBuilder -> jobBuilder
-                        .withName("Account Maintenance")
-                        .withDescription("Maintain user accounts such as disabling unused ones.")
-                        .withSchedule(PERIODIC, "1d"));
+                        .name("Account Maintenance")
+                        .description("Maintain user accounts such as disabling unused ones.")
+                        .schedule(PERIODIC, "1d"));
     }
 
     private static class AccountMaintenance extends RunnableWrapper {

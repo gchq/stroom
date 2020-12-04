@@ -135,10 +135,6 @@ public class DataRange {
                 null);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     /**
      * @return The start of the data range, inclusive
      */
@@ -280,6 +276,14 @@ public class DataRange {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public static final class Builder {
         private Location locationFrom;
         private Long charOffsetFrom;
@@ -290,6 +294,16 @@ public class DataRange {
         private Long length;
 
         private Builder() {
+        }
+
+        private Builder(final DataRange dataRange) {
+            locationFrom = dataRange.locationFrom;
+            charOffsetFrom = dataRange.charOffsetFrom;
+            byteOffsetFrom = dataRange.byteOffsetFrom;
+            locationTo = dataRange.locationTo;
+            charOffsetTo = dataRange.charOffsetTo;
+            byteOffsetTo = dataRange.byteOffsetTo;
+            length = dataRange.length;
         }
 
         public Builder fromLocation(final Location locationFrom) {

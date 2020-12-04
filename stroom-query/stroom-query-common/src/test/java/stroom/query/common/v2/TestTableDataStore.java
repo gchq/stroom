@@ -47,8 +47,8 @@ class TestTableDataStore {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
@@ -68,7 +68,7 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         // Make sure we only get 50 results.
-        final ResultRequest tableResultRequest = new ResultRequest.Builder()
+        final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 3000))
@@ -86,8 +86,8 @@ class TestTableDataStore {
     void sortedTextTest() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
@@ -106,7 +106,7 @@ class TestTableDataStore {
 
         final Data data = tableDataStore.getData();
 
-        final ResultRequest tableResultRequest = new ResultRequest.Builder()
+        final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 3000))
@@ -118,8 +118,8 @@ class TestTableDataStore {
     void sortedNumberTest() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Number")
                         .name("Number")
                         .expression(ParamUtil.makeParam("Number"))
@@ -139,7 +139,7 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest.Builder()
+                ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
@@ -153,7 +153,7 @@ class TestTableDataStore {
 
 //        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap();
 
-        final Field count = new Field.Builder()
+        final Field count = Field.builder()
                 .id("Count")
                 .name("Count")
                 .expression("count()")
@@ -165,8 +165,8 @@ class TestTableDataStore {
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
@@ -186,7 +186,7 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest.Builder()
+                ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
@@ -206,13 +206,13 @@ class TestTableDataStore {
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Count")
                         .name("Count")
                         .expression("count()")
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
@@ -233,7 +233,7 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest.Builder()
+                ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
@@ -252,13 +252,13 @@ class TestTableDataStore {
 //        indexField.setFieldType(IndexFieldType.FIELD);
 //        dataSourceFieldsMap.put(indexField);
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
                         .id("Count")
                         .name("Count")
                         .expression("count()")
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
@@ -279,7 +279,7 @@ class TestTableDataStore {
         final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
-                new ResultRequest.Builder()
+                ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))

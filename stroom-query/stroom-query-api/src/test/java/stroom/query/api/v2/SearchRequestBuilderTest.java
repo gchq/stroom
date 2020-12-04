@@ -19,19 +19,24 @@ class SearchRequestBuilderTest {
         final String dataSourceUuid = UUID.randomUUID().toString();
 
         // When
-        final SearchRequest searchRequest = new SearchRequest.Builder()
-                .query(new Query.Builder()
-                        .dataSource(new DocRef.Builder()
+        final SearchRequest searchRequest = SearchRequest
+                .builder()
+                .query(Query
+                        .builder()
+                        .dataSource(DocRef
+                                .builder()
                                 .uuid(dataSourceUuid)
                                 .build())
                         .build())
                 .dateTimeLocale(dateTimeLocale)
                 .incremental(incremental)
                 .key(queryKeyUUID)
-                .addResultRequests(new ResultRequest.Builder()
+                .addResultRequests(ResultRequest
+                        .builder()
                         .componentId(resultRequestComponentId0)
                         .build())
-                .addResultRequests(new ResultRequest.Builder()
+                .addResultRequests(ResultRequest
+                        .builder()
                         .componentId(resultRequestComponentId1)
                         .build())
                 .build();

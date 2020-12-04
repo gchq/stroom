@@ -32,7 +32,7 @@ public final class DataSource implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;
 
     @JsonProperty
-    private List<AbstractField> fields;
+    private final List<AbstractField> fields;
 
     @JsonCreator
     public DataSource(@JsonProperty("fields") final List<AbstractField> fields) {
@@ -63,14 +63,33 @@ public final class DataSource implements Serializable {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        private final List<AbstractField> fields = new ArrayList<>();
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-        public Builder addFields(final AbstractField... values) {
-            this.fields.addAll(Arrays.asList(values));
+    public static final class Builder {
+        private List<AbstractField> fields = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        private Builder(final DataSource dataSource) {
+            fields = dataSource.fields;
+        }
+
+        public Builder fields(final List<AbstractField> fields) {
+            this.fields = fields;
             return this;
         }
+
+//        public Builder addFields(final AbstractField... values) {
+//            this.fields.addAll(Arrays.asList(values));
+//            return this;
+//        }
 
         public DataSource build() {
             return new DataSource(fields);

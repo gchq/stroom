@@ -53,6 +53,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermissionNames;
@@ -580,10 +581,10 @@ public abstract class AbstractMetaListPresenter
         validateSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             if (expression != null) {
-                final Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
+                final Builder not = ExpressionOperator.builder().op(Op.NOT);
                 not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
-                final Builder builder = new ExpressionOperator.Builder();
+                final Builder builder = ExpressionOperator.builder();
                 builder.addOperator(expression);
                 builder.addOperator(not.build());
 
@@ -603,7 +604,7 @@ public abstract class AbstractMetaListPresenter
         validateSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             if (expression != null) {
-                final Builder builder = new ExpressionOperator.Builder();
+                final Builder builder = ExpressionOperator.builder();
                 builder.addOperator(expression);
                 builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
@@ -785,7 +786,7 @@ public abstract class AbstractMetaListPresenter
 
     private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
                                                      final Selection<Long> selection) {
-//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
+//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.

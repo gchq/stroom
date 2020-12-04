@@ -27,67 +27,67 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator equals(final String field, final String value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final BooleanField field, final boolean value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final DateField field, final String value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final DocRefField field, final DocRef value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final IdField field, final long value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final IntegerField field, final int value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final LongField field, final long value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final FloatField field, final float value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final DoubleField field, final double value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final TextField field, final String value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
     public static ExpressionOperator equals(final String field, final DocRef value) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
                 .build();
     }
@@ -162,7 +162,10 @@ public class ExpressionUtil {
             return null;
         }
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.getEnabled(), operator.getOp());
+        final ExpressionOperator.Builder builder = ExpressionOperator
+                .builder()
+                .enabled(operator.getEnabled())
+                .op(operator.getOp());
         if (operator.getChildren() != null) {
             operator.getChildren().forEach(item -> {
                 if (item instanceof ExpressionOperator) {
@@ -181,19 +184,21 @@ public class ExpressionUtil {
             return null;
         }
 
-        final ExpressionTerm.Builder builder = new ExpressionTerm.Builder(term.getEnabled());
-        builder.field(term.getField());
-        builder.condition(term.getCondition());
-        builder.value(term.getValue());
-        builder.docRef(term.getDocRef());
-        return builder.build();
+        return ExpressionTerm
+                .builder()
+                .enabled(term.getEnabled())
+                .field(term.getField())
+                .condition(term.getCondition())
+                .value(term.getValue())
+                .docRef(term.getDocRef())
+                .build();
     }
 
     public static SearchRequest replaceExpressionParameters(final SearchRequest searchRequest) {
         SearchRequest result = searchRequest;
         if (searchRequest != null && searchRequest.getQuery() != null) {
             final Query query = replaceExpressionParameters(searchRequest.getQuery());
-            result = new SearchRequest.Builder(searchRequest).query(query).build();
+            result = searchRequest.copy().query(query).build();
         }
         return result;
     }
@@ -206,14 +211,17 @@ public class ExpressionUtil {
                 final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
                 expression = replaceExpressionParameters(expression, paramMap);
             }
-            result = new Query.Builder(query).expression(expression).build();
+            result = query.copy().expression(expression).build();
         }
         return result;
     }
 
     private static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
                                                                   final Map<String, String> paramMap) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.getEnabled(), operator.getOp());
+        final ExpressionOperator.Builder builder = ExpressionOperator
+                .builder()
+                .enabled(operator.getEnabled())
+                .op(operator.getOp());
         if (operator.getChildren() != null) {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
@@ -224,7 +232,7 @@ public class ExpressionUtil {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
                     final String replaced = ExpressionParamUtil.replaceParameters(value, paramMap);
-                    builder.addTerm(new ExpressionTerm.Builder()
+                    builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())
                             .condition(term.getCondition())

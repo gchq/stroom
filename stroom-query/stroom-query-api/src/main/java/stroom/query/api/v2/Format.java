@@ -114,18 +114,26 @@ public class Format {
         }
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Format}
      */
-    public static class Builder {
+    public static final class Builder {
         private Type type;
         private FormatSettings settings;
         private Boolean wrap;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Format format) {
+        private Builder(final Format format) {
             this.type = format.type;
             this.settings = format.settings;
             this.wrap = format.wrap;

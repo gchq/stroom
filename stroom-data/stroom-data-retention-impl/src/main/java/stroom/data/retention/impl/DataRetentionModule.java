@@ -38,10 +38,10 @@ public class DataRetentionModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
-                        .withName("Policy Based Data Retention")
-                        .withDescription("Delete data that exceeds the retention period " +
+                        .name("Policy Based Data Retention")
+                        .description("Delete data that exceeds the retention period " +
                                 "specified by data retention policy")
-                        .withSchedule(CRON, "0 0 *"));
+                        .schedule(CRON, "0 0 *"));
     }
 
     @SuppressWarnings("unused") // called by guice

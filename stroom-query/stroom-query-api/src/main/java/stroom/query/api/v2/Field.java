@@ -206,10 +206,18 @@ public final class Field implements HasDisplayValue {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Field}
      */
-    public static class Builder {
+    public static final class Builder {
         private String id;
         private String name;
         private String expression;
@@ -221,23 +229,23 @@ public final class Field implements HasDisplayValue {
         private Boolean visible;
         private Boolean special;
 
-        /**
-         * @param name       The name of the field for display purposes
-         * @param expression The expression to use to generate the value for this field
-         */
-        public Builder(final String name,
-                       final String expression) {
-            this.name = name;
-            this.expression = expression;
-        }
+//        /**
+//         * @param name       The name of the field for display purposes
+//         * @param expression The expression to use to generate the value for this field
+//         */
+//        private Builder(final String name,
+//                       final String expression) {
+//            this.name = name;
+//            this.expression = expression;
+//        }
 
         /**
          * No args constructor, allow all building using chained methods
          */
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Field field) {
+        private Builder(final Field field) {
             this.id = field.id;
             this.name = field.name;
             this.expression = field.expression;
