@@ -71,17 +71,15 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: true
-  data:
-    filesystemVolume:
-      defaultStreamVolumePaths: ["volumes/defaultStreamVolume"]
   job:
     enabled: true
     executionInterval: "10s"
   node:
     name: node1a
   path:
+    # Versioned dirs for dev to allow running multiple stroom instances
     home: "~/.stroom/v7"
-    temp: "/tmp"
+    temp: "/tmp/stroom/v7"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:
@@ -116,6 +114,4 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
-  volumes:
-    defaultIndexVolumeGroupPaths: ["volumes/defaultIndexVolume"]
 

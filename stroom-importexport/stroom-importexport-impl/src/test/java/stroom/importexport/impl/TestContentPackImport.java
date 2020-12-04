@@ -43,13 +43,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// TODO Ideally we should be calling startup() with no args and setting the dir via config but at the mo
-//   it is looking in other hard coded dirs which we can't be sure will be empty at test runtime.
-//   See gh-1728
 @ExtendWith(MockitoExtension.class)
 class TestContentPackImport {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestContentPackImport.class);
@@ -75,8 +71,7 @@ class TestContentPackImport {
         this.tempDir = tempDir;
 
         contentPackDir = tempDir.resolve(CONTENT_PACK_IMPORT_DIR);
-//        Mockito.when(contentPackImportConfig.getImportDirectory())
-//                .thenReturn(contentPackDir.toAbsolutePath().toString());
+
         Files.createDirectories(contentPackDir);
 
         testPack1 = contentPackDir.resolve("testPack1.zip");
@@ -105,6 +100,10 @@ class TestContentPackImport {
     }
 
     private void setStandardMockAnswers() {
+        Mockito.when(contentPackImportConfig.getImportDirectory())
+                .thenReturn(contentPackDir.toAbsolutePath().toString());
+        Mockito.when(contentPackImportConfig.isEnabled())
+                .thenReturn(true);
         Mockito
                 .doAnswer(invocation -> {
                     Runnable runnable = invocation.getArgument(1);
@@ -150,7 +149,7 @@ class TestContentPackImport {
 
         FileUtil.touch(testPack1);
 
-        contentPackImport.startup(Collections.singletonList(contentPackDir));
+        contentPackImport.startup();
 
         Mockito.verifyZeroInteractions(importExportService);
         assertThat(Files.exists(testPack1)).isTrue();
@@ -161,7 +160,32 @@ class TestContentPackImport {
         setStandardMockAnswers();
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
-        contentPackImport.startup(Collections.singletonList(contentPackDir));
+        contentPackImport.startup();
+        Mockito.verifyZeroInteractions(importExportService);
+    }
+
+    @Test
+    void testStartup_enabledNullDir() {
+        Mockito.when(contentPackImportConfig.isEnabled())
+                .thenReturn(true);
+        Mockito.when(contentPackImportConfig.getImportDirectory())
+                .thenReturn(null);
+
+        ContentPackImport contentPackImport = getContentPackImport();
+        contentPackImport.startup();
+        Mockito.verifyZeroInteractions(importExportService);
+    }
+
+    @Test
+    void testStartup_invalidDir() {
+        setStandardMockAnswers();
+        Mockito.when(contentPackImportConfig.isEnabled())
+                .thenReturn(true);
+        Mockito.when(contentPackImportConfig.getImportDirectory())
+                .thenReturn("/xxxxxxxxxxxxxxxx");
+
+        ContentPackImport contentPackImport = getContentPackImport();
+        contentPackImport.startup();
         Mockito.verifyZeroInteractions(importExportService);
     }
 
@@ -175,7 +199,7 @@ class TestContentPackImport {
         FileUtil.touch(testPack2);
         FileUtil.touch(testPack3);
 
-        contentPackImport.startup(Collections.singletonList(contentPackDir));
+        contentPackImport.startup();
         Mockito.verify(importExportService, Mockito.times(1))
                 .performImportWithoutConfirmation(testPack1);
         Mockito.verify(importExportService, Mockito.times(1))
@@ -207,7 +231,7 @@ class TestContentPackImport {
         Path packFile = tempDir.resolve("testFile1.zip");
         FileUtil.touch(packFile);
 
-        contentPackImport.startup(Collections.singletonList(contentPackDir));
+        contentPackImport.startup();
         Mockito.verify(importExportService, Mockito.times(1))
                 .performImportWithoutConfirmation(packFile);
 
@@ -231,7 +255,7 @@ class TestContentPackImport {
 
         FileUtil.touch(testPack1);
 
-        contentPackImport.startup(Collections.singletonList(contentPackDir));
+        contentPackImport.startup();
 
         //File should have moved into the failed dir
         assertThat(Files.exists(testPack1)).isFalse();

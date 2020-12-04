@@ -1,5 +1,6 @@
 package stroom.config.app;
 
+import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
@@ -7,17 +8,45 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.logging.LogUtil;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
-    private static final String CURRENT_LOG_FILENAME = "currentLogFilename:";
-    private static final String ARCHIVED_LOG_FILENAME_PATTERN = "archivedLogFilenamePattern:";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomConfigurationSourceProvider.class);
+
+    private static final String SOURCE_DEFAULTS = "defaults";
+    private static final String SOURCE_YAML = "YAML";
+    private static final List<String> JSON_POINTERS_TO_INSPECT = List.of(
+            "/server",
+            "/logging");
+
+    private static final List<String> KEYS_TO_MUTATE = List.of(
+            "currentLogFilename",
+            "archivedLogFilenamePattern");
+
+    private static final String PATH_CONFIG_JSON_POINTER = "/appConfig/path";
+    private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
+    private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
 
@@ -27,96 +56,144 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
 
     @Override
     public InputStream open(final String path) throws IOException {
+        log("Applying path substitutions to Drop Wizard configuration in file {}",
+                Paths.get(path).toAbsolutePath().normalize().toString());
+
         try (final InputStream in = delegate.open(path)) {
-            String string = StreamUtil.streamToString(in);
+            // This is the yaml tree after passing though the delegate
+            // substitutions
+            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            final JsonNode rootNode = mapper.readTree(in);
 
-            final int index = string.indexOf("  path:");
-            if (index != -1) {
-                final String home = getValue(string, "    home:", index);
-                final String temp = getValue(string, "    temp:", index);
+            // Parse the yaml to find out if the home/temp props have been set so
+            // we can construct a PathCreator to do the path substitution on the drop wiz
+            // section of the yaml
+            final PathCreator pathCreator = getPathCreator(rootNode);
+            final Function<String, String> logDirMutator = currLogDir ->
+                    pathCreator.replaceSystemProperties(currLogDir.trim());
 
-                PathConfig pathConfig = new PathConfig();
-                if (home != null) {
-                    pathConfig.setHome(home);
-                }
-                if (temp != null) {
-                    pathConfig.setTemp(temp);
-                }
+            JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
+                    mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));
 
-                final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
-                final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
-                final PathCreator pathCreator = new PathCreator(homeDirProvider, tempDirProvider);
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            mapper.writeValue(byteArrayOutputStream, rootNode);
 
-                string = replacePath(string, CURRENT_LOG_FILENAME, pathCreator);
-                string = replacePath(string, ARCHIVED_LOG_FILENAME_PATTERN, pathCreator);
+//            dumpYamlDiff(path, in, mapper, rootNode);
 
-            }
-
-            return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
+            return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
         }
     }
 
-    private String replacePath(final String string, final String fieldName, final PathCreator pathCreator) {
-        final StringBuilder sb = new StringBuilder();
-        int start = 0;
-        int end = 0;
+    private void dumpYamlDiff(final String path,
+                              final InputStream in,
+                              final ObjectMapper mapper,
+                              final JsonNode rootNode) throws IOException {
+        in.reset();
+        try {
+            final String originalYaml = StreamUtil.streamToString(in);
+            final String newYaml = mapper.writeValueAsString(rootNode);
+            DiffUtil.unifiedDiff(
+                    originalYaml,
+                    newYaml,
+                    true,
+                    3,
+                    diffLines ->
+                            log("Comparing original and modified yaml:\n{}",
+                                    String.join("\n", diffLines)));
+        } catch (IOException e) {
+            log("Unable to read file " + path, e);
+        }
+    }
 
-        while (end != -1) {
-            end = string.indexOf(fieldName, start);
-            if (end != -1) {
-                end += fieldName.length();
-                sb.append(string, start, end);
-                start = end;
 
-                String value;
-                end = string.indexOf("\n", start);
-                if (end != -1) {
-                    value = string.substring(start, end);
+    private void mutateNodes(final JsonNode rootNode,
+                             final String jsonPointerExpr,
+                             final List<String> names,
+                             final Function<String, String> valueMutator) {
+        final JsonNode parentNode = rootNode.at(jsonPointerExpr);
+        if (parentNode.isMissingNode()) {
+            throw new RuntimeException(LogUtil.message("jsonPointerExpr {}, not found in yaml",
+                    jsonPointerExpr));
+        } else {
+            mutateNodes(parentNode, names, valueMutator, jsonPointerExpr);
+        }
+    }
+
+    private void mutateNodes(final JsonNode parent,
+                             final List<String> names,
+                             final Function<String, String> valueMutator,
+                             final String path) {
+
+        if (parent instanceof ArrayNode) {
+            for (int i = 0; i < parent.size(); i++) {
+                mutateNodes(parent.get(i), names, valueMutator, path + "/" + i);
+            }
+        } else if (parent instanceof ObjectNode) {
+            parent.fields().forEachRemaining(entry -> {
+                final String valueNodePath = path + "/" + entry.getKey();
+                if (names.contains(entry.getKey())) {
+                    // found our node so mutate it
+                    final String value = entry.getValue().textValue();
+                    final String newValue = valueMutator.apply(value);
+                    log("Replacing value for \"{}\": [{}] => [{}]",
+                            valueNodePath, value, newValue);
+                    ((ObjectNode) parent).put(entry.getKey(), newValue);
                 } else {
-                    value = string.substring(start);
+                    // not our node so recurse into it
+                    mutateNodes(entry.getValue(), names, valueMutator, path + "/" + entry.getKey());
                 }
-
-                value = trim(value);
-                value = pathCreator.replaceSystemProperties(value);
-
-                sb.append(" \"");
-                sb.append(value);
-                sb.append("\"");
-
-                start = end;
-
-            } else {
-                final String value = string.substring(start);
-                sb.append(value);
-            }
+            });
         }
-        return sb.toString();
     }
 
-    private String getValue(final String string, final String field, final int index) {
-        String value = null;
-        int fieldIndex = string.indexOf(field, index);
-        if (fieldIndex != -1) {
-            fieldIndex += field.length();
-            final int endIndex = string.indexOf("\n", fieldIndex);
-            if (endIndex != -1) {
-                value = string.substring(fieldIndex, endIndex);
-            } else {
-                value = string.substring(fieldIndex);
-            }
-            value = trim(value);
-        }
-        return value;
+    @NotNull
+    private PathCreator getPathCreator(final JsonNode rootNode) {
+        Objects.requireNonNull(rootNode);
+
+        final Optional<String> optHome = getNodeValue(rootNode, STROOM_HOME_JSON_POINTER);
+        final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
+
+        // A vanilla PathConfig with the hard coded defaults
+        final PathConfig pathConfig = new PathConfig();
+
+        final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
+                ? SOURCE_DEFAULTS
+                : SOURCE_YAML;
+        final String tempSource = Objects.equals(pathConfig.getTemp(), optTemp.orElse(null))
+                ? SOURCE_DEFAULTS
+                : SOURCE_YAML;
+
+        // Set the values from the YAML if we have them
+        optHome.ifPresent(pathConfig::setHome);
+        optTemp.ifPresent(pathConfig::setTemp);
+
+        final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
+        final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
+        final PathCreator pathCreator = new PathCreator(homeDirProvider, tempDirProvider);
+
+        log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
+                homeDirProvider.get().toAbsolutePath(),
+                homeSource);
+        log("Using stroom temp [{}] from {} for Drop Wizard config path substitutions",
+                tempDirProvider.get().toAbsolutePath(),
+                tempSource);
+        return pathCreator;
     }
 
-    private String trim(String value) {
-        value = value.trim();
-        if (value.startsWith("\"")) {
-            value = value.substring(1);
+    private Optional<String> getNodeValue(final JsonNode rootNode, final String jsonPointerExpr) {
+        Objects.requireNonNull(rootNode);
+        Objects.requireNonNull(jsonPointerExpr);
+
+        final JsonNode node = rootNode.at(jsonPointerExpr);
+        if (node.isMissingNode()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(node.textValue());
         }
-        if (value.endsWith("\"")) {
-            value = value.substring(0, value.length() - 1);
-        }
-        return value.trim();
+    }
+
+    private void log(final String msg, Object... args) {
+        // Use system.out as we have no logger at this point
+        System.out.println(LogUtil.message(msg, args));
     }
 }

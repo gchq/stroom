@@ -23,5 +23,4 @@ public interface StatisticStoreCache {
     StatisticStoreDoc getStatisticsDataSource(String statisticName);
 
     StatisticStoreDoc getStatisticsDataSource(DocRef docRef);
-
 }

@@ -23,7 +23,7 @@ import java.io.InputStream;
  * @see BlockGZIPConstants
  */
 class BlockGZIPInputStream extends BlockGZIPInput {
-    private InputStream inputStream;
+    private final InputStream inputStream;
 
     /**
      * Read a BGZIP IO stream.
@@ -45,5 +45,10 @@ class BlockGZIPInputStream extends BlockGZIPInput {
     @Override
     protected InputStream getRawStream() {
         return inputStream;
+    }
+
+    @Override
+    void invalid(final String message) throws IOException {
+        throw new IOException(message);
     }
 }

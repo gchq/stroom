@@ -20,6 +20,7 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamCloser;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,10 +61,10 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     /**
      * Used a a buffer to read longs into
      */
-    private byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
-    private LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
-    private byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
-    private byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
+    private final byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
+    private final LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
+    private final byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
+    private final byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
     protected long position = 0;
     long lastMarkPosition = 0;
     /**
@@ -104,18 +105,20 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     void init() throws IOException {
         // Create a buffer for the reading
         currentRawStreamBuffer = createBufferedInputStream(true);
+        try {
+            // Check Header Marker
+            readHeaderMarker();
 
-        // Check Header Marker
-        readHeaderMarker();
+            // Read Header
+            blockSize = (int) readLong();
+            dataLength = readLong();
+            idxStart = readLong();
+            eof = readLong();
 
-        // Read Header
-        blockSize = (int) readLong();
-        dataLength = readLong();
-        idxStart = readLong();
-        eof = readLong();
-
-        // Make sure the stream is closed.
-        streamCloser.add(currentRawStreamBuffer);
+        } finally {
+            // Make sure the stream is closed.
+            streamCloser.add(currentRawStreamBuffer);
+        }
     }
 
     abstract InputStream getRawStream();
@@ -190,7 +193,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     void readMagicMarker() throws IOException {
         fillFromRawStreamBuffer(magicMarkerRawBufffer);
         if (!checkEqualBuffer(BlockGZIPConstants.MAGIC_MARKER, magicMarkerRawBufffer)) {
-            throw new IOException("Failed to find block sync point " + blockCount);
+            invalid("Failed to find block sync point " + blockCount);
         }
     }
 
@@ -200,9 +203,11 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     private void readHeaderMarker() throws IOException {
         fillFromRawStreamBuffer(headerMarkerRawBuffer);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream");
+            invalid("Does not look like a Block GZIP V1 Stream");
         }
     }
+
+    abstract void invalid(String message) throws IOException;
 
     /**
      * Read 1 byte of uncompressed data.
@@ -263,18 +268,16 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     /**
      * Read X bytes of uncompressed data
      */
-    @SuppressWarnings("NullableProblems")
     @Override
-    public int read(final byte[] bytes) throws IOException {
+    public int read(@Nonnull final byte[] bytes) throws IOException {
         return read(bytes, 0, bytes.length);
     }
 
     /**
      * Read some uncompressed data from our stream.
      */
-    @SuppressWarnings("NullableProblems")
     @Override
-    public int read(final byte[] bytes, final int off, final int tryLen) throws IOException {
+    public int read(@Nonnull final byte[] bytes, final int off, final int tryLen) throws IOException {
         int realLen = tryLen;
 
         // Are we going to read past the length of the file?
@@ -397,9 +400,8 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
             return -1;
         }
 
-        @SuppressWarnings("NullableProblems")
         @Override
-        public int read(final byte[] b, final int off, final int tryLen) throws IOException {
+        public int read(@Nonnull final byte[] b, final int off, final int tryLen) throws IOException {
             // Make sure we don't max
             final long maxSize = getCurrentBlockRawGzipSize();
             int realLen = tryLen;

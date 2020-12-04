@@ -7,7 +7,8 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile project(':stroom-docref')
-    
+
+    compile libs.assertj_core // needed for DiffUtil
     compile libs.commons_codec
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava

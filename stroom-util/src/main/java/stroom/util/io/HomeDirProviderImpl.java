@@ -36,11 +36,15 @@ public class HomeDirProviderImpl implements HomeDirProvider {
             }
 
             if (path == null) {
-                path = getApplicationJarDir().orElse(null);
+                path = getApplicationJarDir()
+                        .orElse(null);
+                LOGGER.info("Using application JAR directory for stroom home: {}", path);
             }
 
             if (path == null) {
-                path = getDefaultStroomHomeDir().orElse(null);
+                path = getDefaultStroomHomeDir()
+                        .orElse(null);
+                LOGGER.info("Using default directory for stroom home: {}", path);
             }
 
             if (path == null) {
