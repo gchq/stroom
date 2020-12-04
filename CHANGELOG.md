@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change reference data lookup request object to support string or epoch millis date.
+
+* Add byte count to Info tab, make date values consistent.
+
+* Fix problem of wrong charset being used.
+
+* Fix syntax highlighting for Meta streams in Source view.
+
+* Fix bug in PreviewInputStream read() method.
+
 * Improve the way the YAML logger paths are modified on boot.
 
 * Issue **#1964** : BGZIP files are now closed on exception.
@@ -14,9 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Changed default dashboard time zone to use UTC.
 
 * Fixed SQL statistics upsert statements for MySQL 5.7.
-
-
-## [v6.1.28] - 2020-11-25
 
 * Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
 

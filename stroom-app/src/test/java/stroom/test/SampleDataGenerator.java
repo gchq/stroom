@@ -8,19 +8,44 @@ import stroom.testdata.XmlAttributesDataWriterBuilder;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
+import io.vavr.Tuple;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class SampleDataGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleDataGenerator.class);
+
+    private static final String multipleLanguagesFileName = "multiple_languages.json";
+
+//    private final StoreCreationTool storeCreationTool;
+
+    private final Path templatesDir;
+
+    @Inject
+    public SampleDataGenerator() {
+        templatesDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+                .resolve(SetupSampleDataBean.ROOT_DIR_NAME)
+                .resolve("templates");
+    }
 
     /**
      * To aid testing the generation without running {@link SetupSampleData}
@@ -31,13 +56,22 @@ public class SampleDataGenerator {
                 .resolve("generated")
                 .resolve("input");
 
-        new SampleDataGenerator().generateData(dir);
+        new SampleDataGenerator()
+                .generateData(dir);
     }
 
     public void generateData(final Path dir) {
 
         ensureAndCleanDir(dir);
 
+        generateDataViewingData(dir);
+
+        generateRefDataForEffectiveDateTesting(dir);
+
+        generateCharsetData(dir);
+    }
+
+    private void generateDataViewingData(final Path dir) {
         final int shortLoremText = 4;
         final int longLoremText = 200;
         // Increment the random seed each time so each data set has different but predictable data
@@ -121,8 +155,6 @@ public class SampleDataGenerator {
                 longLoremText,
                 LocalDateTime.of(2020,11,1,0,0),
                 randomSeed++);
-
-        generateRefDataForEffectiveDateTesting(dir);
     }
 
     private void generateDataViewRawData(final Path dir,
@@ -237,6 +269,92 @@ public class SampleDataGenerator {
                 .consumedBy(DataGenerator.getFileOutputConsumer(eventsFile))
                 .rowCount(userCount)
                 .generate();
+    }
+
+    private void generateCharsetData(final Path dir) {
+
+        final Path multipleLanguagesFile = templatesDir.resolve(multipleLanguagesFileName);
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        try {
+            final String sourceContent = Files.readString(
+                    multipleLanguagesFile, StandardCharsets.UTF_8);
+
+            Stream.of(
+                    Tuple.of("UTF8_BOM", StandardCharsets.UTF_8, ByteOrderMark.UTF_8),
+                    Tuple.of("UTF8_NO_BOM", StandardCharsets.UTF_8, (ByteOrderMark) null),
+
+                    // Stroom doesn't support straight UTF16
+                    Tuple.of("UTF16LE_BOM", StandardCharsets.UTF_16LE, ByteOrderMark.UTF_16LE),
+                    Tuple.of("UTF16LE_NO_BOM", StandardCharsets.UTF_16LE, (ByteOrderMark) null),
+                    Tuple.of("UTF16BE_BOM", StandardCharsets.UTF_16BE, ByteOrderMark.UTF_16BE),
+                    Tuple.of("UTF16BE_NO_BOM", StandardCharsets.UTF_16BE, (ByteOrderMark) null),
+
+                    // Stroom doesn't support straight UTF32
+                    Tuple.of("UTF32LE_BOM", Charset.forName("UTF-32LE"), ByteOrderMark.UTF_32LE),
+                    Tuple.of("UTF32LE_NO_BOM", Charset.forName("UTF-32LE"), (ByteOrderMark) null),
+                    Tuple.of("UTF32BE_BOM", Charset.forName("UTF-32BE"), ByteOrderMark.UTF_32BE),
+                    Tuple.of("UTF32BE_NO_BOM", Charset.forName("UTF-32BE"), (ByteOrderMark) null)
+            )
+                    .forEach(tuple3 -> {
+                        final String feedName = "TEST_CHARSETS_" + tuple3._1() + "-REFERENCE";
+                        generateDataForCharset(
+                                feedName,
+                                dir,
+                                tuple3._2(),
+                                tuple3._3(),
+                                sourceContent,
+                                counter.getAndIncrement());
+                    });
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error reading file {}",
+                    multipleLanguagesFile.toAbsolutePath()), e);
+        }
+    }
+
+    private void generateDataForCharset(final String feedName,
+                                        final Path dir,
+                                        final Charset charset,
+                                        final ByteOrderMark byteOrderMark,
+                                        final String sourceContent,
+                                        final int iteration) {
+        LOGGER.info("Creating feed {} in {} for charset {} and BOM {}",
+                feedName, dir, charset, byteOrderMark);
+
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // Get the bytes of the desired charset
+        byte[] sourceBytes = sourceContent.getBytes(charset);
+
+        final Path file = makeInputFilePath(
+                dir,
+                1,
+                LocalDateTime.of(2020, 1 ,1, 0, 0, 0)
+                        .plusMonths(iteration),
+                feedName);
+
+        LOGGER.info("Generating file {}, with charset {}, BOM {}",
+                file, charset, byteOrderMark);
+
+        try (OutputStream outputStream = new FileOutputStream(file.toFile())) {
+
+            // Write the BOM to the stream if we have one. We control the
+            // presence of the BOM, not the java.
+            if (byteOrderMark != null) {
+                byteArrayOutputStream.writeBytes(byteOrderMark.getBytes());
+            }
+
+            final BOMInputStream bomFreeInputStream = new BOMInputStream(
+                    new ByteArrayInputStream(sourceBytes),
+                    false);
+
+            // now write the encoded bytes without the BOM
+            bomFreeInputStream.transferTo(byteArrayOutputStream);
+
+            byteArrayOutputStream.writeTo(outputStream);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Path makeInputFilePath(final Path dir,

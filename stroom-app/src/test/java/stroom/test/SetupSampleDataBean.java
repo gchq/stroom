@@ -441,7 +441,8 @@ public final class SetupSampleDataBean {
                         // Then load event data.
                         dataLoader.read(dir, false, startTime);
                     } else {
-                        LOGGER.info("Directory {} doesn't exist so skipping", dir.toAbsolutePath().normalize());
+                        LOGGER.info("Directory {} doesn't exist so skipping",
+                                dir.toAbsolutePath().normalize());
                     }
                 });
 
