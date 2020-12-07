@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
+
 * Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
 
 * Change reference data lookup request object to support string or epoch millis date.

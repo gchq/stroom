@@ -70,6 +70,7 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
+import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Provider;
@@ -425,34 +426,33 @@ public class DataFetcher {
             rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
 
+        // We are viewing the data with the BOM removed, so remove the size of the BOM from the
+        // total bytes else the progress bar is messed up
+        rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        if (rawResult.getTotalCharacterCount() == null) {
+            rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
+        }
+
         return buildFetchDataResult(
                 feedName,
                 streamTypeName,
-                segmentInputStream,
                 availableChildStreamTypes,
                 streamSource,
                 inputStreamProvider,
                 fetchDataRequest,
                 dataType,
-                charset,
                 rawResult);
     }
 
     @NotNull
     private FetchDataResult buildFetchDataResult(final String feedName,
                                                  final String streamTypeName,
-                                                 final SegmentInputStream segmentInputStream,
                                                  final Set<String> availableChildStreamTypes,
                                                  final Source streamSource,
                                                  final InputStreamProvider inputStreamProvider,
                                                  final FetchDataRequest fetchDataRequest,
                                                  final DataType dataType,
-                                                 final Charset charset,
                                                  final RawResult rawResult) {
-        rawResult.setTotalBytes(segmentInputStream.size());
-        if (rawResult.getTotalCharacterCount() == null) {
-            rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
-        }
 
         String output;
         final DocRef pipeline = fetchDataRequest.getPipeline();
@@ -605,7 +605,7 @@ public class DataFetcher {
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
-        int currByteOffset = 0; // zero based
+        long currByteOffset = 0; // zero based
         int currLineNo = 1; // one based
         int currColNo = 1; // one based
         long currCharOffset = 0; //zero based
@@ -787,6 +787,10 @@ public class DataFetcher {
         final DataRange actualDataRange;
         final String charData;
         final TextRange highlight;
+        // At this point currByteOffset is the offset of the first byte of the char outside our range
+        // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
+        // in our range
+        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset -1 : currByteOffset;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
@@ -795,8 +799,9 @@ public class DataFetcher {
                     .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                     .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
                     .toCharOffset(currCharOffset)
-                    .toByteOffset(charReader.getLastByteOffsetRead()
-                            .orElseThrow())
+                    .toByteOffset(byteOffsetToInc)
+//                    .toByteOffset(charReader.getLastByteOffsetRead()
+//                            .orElseThrow())
                     .withLength((long) charData.length())
                     .build();
             highlight = sourceLocation.getHighlight();
@@ -829,7 +834,11 @@ public class DataFetcher {
                 resultLocation,
                 charData.substring(0, Math.min(charData.length(), 100))));
 
-        final RawResult rawResult = new RawResult(resultLocation, charData);
+        final int byteOrderMarkLength = charReader.getByteOrderMark()
+                .map(ByteOrderMark::length)
+                .orElse(0);
+
+        final RawResult rawResult = new RawResult(resultLocation, charData, byteOrderMarkLength);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
@@ -1051,6 +1060,7 @@ public class DataFetcher {
     private static class RawResult {
         private final SourceLocation sourceLocation;
         private final String rawData;
+        private final int byteOrderMarkLength;
 
         private OffsetRange<Long> itemRange; // part/segment/marker
         private Count<Long> totalItemCount; // part/segment/marker
@@ -1058,9 +1068,11 @@ public class DataFetcher {
         private long totalBytes;
 
         public RawResult(final SourceLocation sourceLocation,
-                         final String rawData) {
+                         final String rawData,
+                         final int byteOrderMarkLength) {
             this.sourceLocation = sourceLocation;
             this.rawData = rawData;
+            this.byteOrderMarkLength = byteOrderMarkLength;
         }
 
         public SourceLocation getSourceLocation() {
@@ -1069,6 +1081,13 @@ public class DataFetcher {
 
         public String getRawData() {
             return rawData;
+        }
+
+        /**
+         * @return Length in bytes of the byte order mark or 0 if there isn't one
+         */
+        public int getByteOrderMarkLength() {
+            return byteOrderMarkLength;
         }
 
         public OffsetRange<Long> getItemRange() {
