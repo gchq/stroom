@@ -8,7 +8,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -58,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
     // Make sure the search request is the same as the one we expected to make.
-    private final Path resourcesDir = SearchDebugUtil.getDir();
+    private final Path resourcesDir = SearchDebugUtil.initialise();
 
     @Test
     void test() throws Exception {
