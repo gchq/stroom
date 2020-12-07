@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix inability to select text on Info tab in Data viewer.
+
 * Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
 
 * Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
