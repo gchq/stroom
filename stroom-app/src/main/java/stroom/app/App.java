@@ -36,6 +36,8 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
+import stroom.security.impl.StroomServerLoggingFilter;
+import stroom.security.impl.StroomServerLoggingFilterImpl;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
 import stroom.config.app.StroomConfigurationSourceProvider;
@@ -55,7 +57,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
-import java.util.logging.Level;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -95,6 +95,8 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private BuildInfo buildInfo;
+    @Inject
+    private StroomServerLoggingFilter serverLoggingFilterProvider;
 
     private final Path configFile;
 
@@ -177,17 +179,18 @@ public class App extends Application<Config> {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
         validateAppConfig(configuration, configFile);
-
-        // Turn on Jersey logging of request/response payloads
-        // I can't seem to get this to work unless Level is SEVERE
-        // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
-        //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
-        environment.jersey().register(
-                new LoggingFeature(
-                        java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                        Level.INFO,
-                        LoggingFeature.Verbosity.PAYLOAD_ANY,
-                        LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+//
+//        // Turn on Jersey logging of request/response payloads
+//        // I can't seem to get this to work unless Level is SEVERE
+//        // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
+//        //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
+//        environment.jersey().register(
+//                new LoggingFeature(
+//                        java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+//                        Level.INFO,
+//                        LoggingFeature.Verbosity.PAYLOAD_ANY,
+//                        LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+//
 
         // Check if we are running GWT Super Dev Mode
         checkForSuperDev(configuration.getAppConfig());
@@ -212,6 +215,9 @@ public class App extends Application<Config> {
         final AppModule appModule = new AppModule(configuration, environment, configFile);
 
         Guice.createInjector(appModule).injectMembers(this);
+
+        StroomServerLoggingFilter loggingFilter = serverLoggingFilterProvider;
+        environment.jersey().register(loggingFilter);
 
         // Add health checks
         healthChecks.register();

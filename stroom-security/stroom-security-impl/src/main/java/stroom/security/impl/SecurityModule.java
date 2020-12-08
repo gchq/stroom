@@ -47,6 +47,7 @@ public class SecurityModule extends AbstractModule {
         bind(TokenVerifier.class).to(TokenVerifierImpl.class);
         bind(JwtContextFactory.class).to(JwtContextFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
+        bind(StroomServerLoggingFilter.class).to(StroomServerLoggingFilterImpl.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
