@@ -34,6 +34,7 @@ public class CharReader {
     private final ByteStreamDecoder byteStreamDecoder;
     private final Charset charset;
     private final Supplier<Byte> byteSupplier;
+    private final BOMInputStream bomInputStream;
 
     // Track the byte and char offsets as we read through the stream.
     private long currCharOffset = -1; // zero based
@@ -51,7 +52,7 @@ public class CharReader {
         Objects.requireNonNull(inputStream);
         Objects.requireNonNull(encoding);
 
-        final BOMInputStream bomInputStream = buildBomInputStream(
+        bomInputStream = buildBomInputStream(
                 inputStream,
                 includeByteOrderMark,
                 encoding);
@@ -180,5 +181,13 @@ public class CharReader {
      */
     public Charset getCharset() {
         return charset;
+    }
+
+    public Optional<ByteOrderMark> getByteOrderMark() {
+        try {
+            return Optional.ofNullable(bomInputStream.getBOM());
+        } catch (IOException e) {
+            throw new RuntimeException("Error determining if input stream has a BOM: " + e.getMessage(), e);
+        }
     }
 }
