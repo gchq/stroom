@@ -439,7 +439,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         if (responseContext.hasEntity() ) {
             System.out.println ("" + id + " Returning a " + responseContext.getEntity().getClass());
 
-            final OutputStream stream = new LoggingStream(b, requestContext.getEntityStream(),
+            final OutputStream stream = new LoggingStream(b, responseContext.getEntityStream(),
                     loggingInfo, responseContext.getEntity());
             responseContext.setEntityStream(stream);
             requestContext.setProperty(ENTITY_LOGGER_PROPERTY, stream);
