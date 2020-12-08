@@ -1,16 +1,14 @@
 package stroom.job.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.Objects;
 
 public class ScheduledJob {
-    private String description;
-    private boolean enabled;
-    private boolean advanced;
-    private boolean managed;
-    private Schedule schedule;
-    private String name;
+    private final String description;
+    private final boolean enabled;
+    private final boolean advanced;
+    private final boolean managed;
+    private final Schedule schedule;
+    private final String name;
 
     private ScheduledJob(final Schedule schedule,
                          final String name,
@@ -58,11 +56,13 @@ public class ScheduledJob {
         return new Builder(this);
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     public static final class Builder {
         private String description;
-        private boolean enabled;
-        private boolean advanced;
-        private boolean managed;
+        private boolean enabled = true;
+        private boolean advanced = true;
+        private boolean managed = true;
         private Schedule schedule;
         private String name;
 

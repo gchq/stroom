@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1974** : Fix job screen only showing one job.
+
 * Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
 
 * Change reference data lookup request object to support string or epoch millis date.
