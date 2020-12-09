@@ -222,11 +222,16 @@ class DataServiceImpl implements DataService {
 
     private String convertSize(final String value) {
         try {
-            long valLong = Long.parseLong(value);
-            return ModelStringUtil.formatIECByteSizeString(valLong)
-                    + " ("
-                    + NumberFormat.getIntegerInstance().format(valLong)
-                    + ")";
+            final long valLong = Long.parseLong(value);
+            final String iecByteSizeStr = ModelStringUtil.formatIECByteSizeString(valLong);
+            if (valLong >= 1024) {
+                return iecByteSizeStr
+                        + " ("
+                        + NumberFormat.getIntegerInstance().format(valLong)
+                        + ")";
+            } else {
+                return iecByteSizeStr;
+            }
         } catch (RuntimeException e) {
             // Ignore.
         }
