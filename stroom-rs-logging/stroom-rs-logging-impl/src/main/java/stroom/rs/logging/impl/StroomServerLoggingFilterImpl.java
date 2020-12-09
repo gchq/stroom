@@ -32,8 +32,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -55,8 +53,9 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomServerLoggingFilterImpl.class);
 
     private static final String LOGGING_ID_PROPERTY = "StroomLogging.id";
-    private static final String RESPONSE_ENTITY_LOGGER_PROPERTY = "stroom.stream.output";
-    private static final String REQUEST_ENTITY_LOGGER_PROPERTY = "stroom.stream.input";
+//    private static final String RESPONSE_ENTITY_LOGGER_PROPERTY = "stroom.stream.output";
+//    private static final String REQUEST_ENTITY_LOGGER_PROPERTY = "stroom.rs.logging.stream";
+    private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
     private final int maxEntitySize = 10000000;
     private final AtomicLong _id = new AtomicLong(0);
     private Map<String, List<LoggingInfo>> loggingInfoMap;
@@ -81,15 +80,34 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 //    }
 
 
+    private static class RequestInfo {
+        private final LoggingInfo loggingInfo;
+        private final Object requestEntity;
+        public RequestInfo(final LoggingInfo loggingInfo, final Object requestEntity){
+            this.loggingInfo = loggingInfo;
+            this.requestEntity = requestEntity;
+        }
+
+        public LoggingInfo getLoggingInfo() {
+            return loggingInfo;
+        }
+
+        public Object getRequestEntity() {
+            return requestEntity;
+        }
+    }
 
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
             throws IOException, WebApplicationException {
-
-        final LoggingOutputStream stream = (LoggingOutputStream) writerInterceptorContext.getProperty(RESPONSE_ENTITY_LOGGER_PROPERTY);
         writerInterceptorContext.proceed();
-        if (stream != null) {
-            writeToDocumentLog (stream.getLoggingInfo(), stream.getRequestEntity(), stream.getResponseEntity());
+        final Object entity = writerInterceptorContext.getProperty(REQUEST_LOG_INFO_PROPERTY);
+
+        if (entity != null) {
+            RequestInfo requestInfo = (RequestInfo) entity;
+            writeToDocumentLog (requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
+                    writerInterceptorContext.getEntity());
+                    //stream.getResponseEntity());
         }
     }
 
@@ -371,10 +389,11 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         LoggingInfo loggingInfo = findLoggingInfo(context);
 
         if (context.hasEntity()) {
-            final InputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
+            final LoggingInputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
                     MessageUtils.getCharset(context.getMediaType()));
             context.setEntityStream(stream);
-            context.setProperty(REQUEST_ENTITY_LOGGER_PROPERTY, stream);
+//            context.setProperty(REQUEST_ENTITY_LOGGER_PROPERTY, stream);
+            context.setProperty(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(stream.getLoggingInfo(), stream.getRequestEntity()));
         }
 
     }
@@ -384,30 +403,32 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
             throws IOException {
 
-//        String user = getAuthenticatedUser();
-
-        final Object requestId = requestContext.getProperty(LOGGING_ID_PROPERTY);
-        final long id = requestId != null ? (Long) requestId : _id.incrementAndGet();
-
-        final StringBuilder b = new StringBuilder();
-
-        LoggingInputStream inputStream = (LoggingInputStream) requestContext.getProperty(REQUEST_ENTITY_LOGGER_PROPERTY);
-        final LoggingInfo loggingInfo;
-        if (inputStream != null) {
-            loggingInfo = inputStream.getLoggingInfo();
-        } else {
-            loggingInfo = findLoggingInfo(requestContext);
-        }
-        if (responseContext.hasEntity()) {
-            final OutputStream stream = new LoggingOutputStream(b, responseContext.getEntityStream(),
-                    loggingInfo,
-                    ((inputStream != null)? inputStream.getEntity() : null),
-                    responseContext.getEntity());
-            responseContext.setEntityStream(stream);
-            requestContext.setProperty(RESPONSE_ENTITY_LOGGER_PROPERTY, stream);
-        } else if (inputStream != null){
-            writeToDocumentLog(loggingInfo, inputStream.getEntity(), null);
-        }
+//        final Object requestId = requestContext.getProperty(LOGGING_ID_PROPERTY);
+//        final long id = requestId != null ? (Long) requestId : _id.incrementAndGet();
+//
+//        final StringBuilder b = new StringBuilder();
+//
+////        LoggingInputStream inputStream = (LoggingInputStream) requestContext.getProperty(REQUEST_ENTITY_LOGGER_PROPERTY);
+//        RequestInfo requestInfo = (RequestInfo) requestContext.getProperty(REQUEST_LOG_INFO_PROPERTY);
+//
+//        final LoggingInfo loggingInfo;
+//        if (requestInfo != null) {
+//            loggingInfo = requestInfo.getLoggingInfo();
+//        } else {
+//            //todo check whether this branch ever executes
+//            System.err.println("*** Check and remove ***");
+//            loggingInfo = findLoggingInfo(requestContext);
+//        }
+////        if (responseContext.hasEntity()) {
+////            final OutputStream stream = new LoggingOutputStream(b, responseContext.getEntityStream(),
+////                    loggingInfo,
+////                    ((inputStream != null)? inputStream.getRequestEntity() : null),
+////                    responseContext.getEntity());
+////            responseContext.setEntityStream(stream);
+////            requestContext.setProperty(RESPONSE_ENTITY_LOGGER_PROPERTY, stream);
+////        } else if (inputStream != null){
+////            writeToDocumentLog(loggingInfo, inputStream.getRequestEntity(), null);
+////        }
 
     }
 
@@ -517,7 +538,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     }
 
     class LoggingInputStream extends BufferedInputStream {
-        private Object entity;
+        private Object requestEntity;
         private final LoggingInfo loggingInfo;
         private boolean constructed;
 
@@ -535,7 +556,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
                 if (requestClass != null){
                     Object obj = objectMapper.readValue(new InputStreamReader(this, charset), requestClass.get());
-                    entity = obj;
+                    requestEntity = obj;
                 } else {
                     LOGGER.warn("Unable to determine type of object for automatic logging. HTTP request path is" + loggingInfo.getPath());
                 }
@@ -543,8 +564,8 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             }
         }
 
-        public Object getEntity() {
-            return entity;
+        public Object getRequestEntity() {
+            return requestEntity;
         }
 
         public LoggingInfo getLoggingInfo() {
@@ -562,60 +583,60 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     /**
      * Helper class used to log an entity to the output stream up to the specified maximum number of bytes.
      */
-    class LoggingOutputStream extends FilterOutputStream {
-
-        private final StringBuilder b;
-        private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        private final LoggingInfo loggingInfo;
-        private final Object requestEntity;
-        private final Object responseEntity;
-        /**
-         * Creates {@code LoggingStream} with the entity and the underlying output stream as parameters.
-         *
-         * @param b     contains the entity to log.
-         * @param inner the underlying output stream.
-         */
-        LoggingOutputStream(final StringBuilder b, final OutputStream inner, final LoggingInfo loggingInfo,
-                            final Object requestEntity, final Object responseEntity) {
-            super(inner);
-
-            this.b = b;
-            this.requestEntity = requestEntity;
-            this.responseEntity = responseEntity;
-            this.loggingInfo = loggingInfo;
-        }
-
-        public StringBuilder getStringBuilder(final Charset charset) {
-            // write entity to the builder
-            final byte[] entity = baos.toByteArray();
-
-            b.append(new String(entity, 0, Math.min(entity.length, maxEntitySize), charset));
-            if (entity.length > maxEntitySize) {
-                b.append("...more...");
-            }
-            b.append('\n');
-
-            return b;
-        }
-
-        public Object getRequestEntity() {
-            return requestEntity;
-        }
-
-        public Object getResponseEntity() {
-            return responseEntity;
-        }
-
-        public LoggingInfo getLoggingInfo() {
-            return loggingInfo;
-        }
-
-        @Override
-        public void write(final int i) throws IOException {
-            if (baos.size() <= maxEntitySize) {
-                baos.write(i);
-            }
-            out.write(i);
-        }
-    }
+//    static class LoggingOutputStream extends FilterOutputStream {
+//
+//        private final StringBuilder b;
+//        private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        private final LoggingInfo loggingInfo;
+//        private final Object requestEntity;
+//        private final Object responseEntity;
+//        /**
+//         * Creates {@code LoggingStream} with the entity and the underlying output stream as parameters.
+//         *
+//         * @param b     contains the entity to log.
+//         * @param inner the underlying output stream.
+//         */
+//        LoggingOutputStream(final StringBuilder b, final OutputStream inner, final LoggingInfo loggingInfo,
+//                            final Object requestEntity, final Object responseEntity) {
+//            super(inner);
+//
+//            this.b = b;
+//            this.requestEntity = requestEntity;
+//            this.responseEntity = responseEntity;
+//            this.loggingInfo = loggingInfo;
+//        }
+//
+//        public StringBuilder getStringBuilder(final Charset charset) {
+//            // write entity to the builder
+//            final byte[] entity = baos.toByteArray();
+//
+//            b.append(new String(entity, 0, Math.min(entity.length, maxEntitySize), charset));
+//            if (entity.length > maxEntitySize) {
+//                b.append("...more...");
+//            }
+//            b.append('\n');
+//
+//            return b;
+//        }
+//
+//        public Object getRequestEntity() {
+//            return requestEntity;
+//        }
+//
+//        public Object getResponseEntity() {
+//            return responseEntity;
+//        }
+//
+//        public LoggingInfo getLoggingInfo() {
+//            return loggingInfo;
+//        }
+//
+//        @Override
+//        public void write(final int i) throws IOException {
+//            if (baos.size() <= maxEntitySize) {
+//                baos.write(i);
+//            }
+//            out.write(i);
+//        }
+//    }
 }
