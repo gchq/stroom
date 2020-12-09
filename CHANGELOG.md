@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix path for user event logs.
+
+* Uplift send_to_stroom script to v3.0.
+
 * Issue **#1978** : Fix Meta tab losing syntax highlighting when switching streams.
 
 * Remove byte count in brackets on Info tab when size is below 1024 bytes.
