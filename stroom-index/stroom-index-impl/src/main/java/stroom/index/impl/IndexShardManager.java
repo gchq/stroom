@@ -28,7 +28,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -118,22 +117,22 @@ public class IndexShardManager {
                         try {
                             taskContext.info(() -> "Deleting Logically Deleted Shards...");
 
-                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                            final Iterator<IndexShard> iter = shards.getValues().iterator();
-                            while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
-                                final IndexShard shard = iter.next();
-                                final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
-                                try {
-                                    if (writer != null) {
-                                        LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
-                                    } else {
-                                        deleteFromDisk(shard);
+                            LOGGER.logDurationIfDebugEnabled(() -> {
+                                final Iterator<IndexShard> iter = shards.getValues().iterator();
+                                while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
+                                    final IndexShard shard = iter.next();
+                                    final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
+                                    try {
+                                        if (writer != null) {
+                                            LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
+                                        } else {
+                                            deleteFromDisk(shard);
+                                        }
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.error(e::getMessage, e);
                                     }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e::getMessage, e);
                                 }
-                            }
-                            LOGGER.debug(() -> "deleteLogicallyDeleted() - Completed in " + logExecutionTime);
+                            }, "deleteLogicallyDeleted()");
                         } finally {
                             deletingShards.set(false);
                         }
@@ -251,10 +250,15 @@ public class IndexShardManager {
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
                 final Long partitionToTime = shard.getPartitionToTime();
-                if (retentionDayAge != null && partitionToTime != null && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
+                if (retentionDayAge != null
+                        && partitionToTime != null
+                        && !IndexShardStatus.DELETED.equals(shard.getStatus())) {
                     // See if this index shard is older than the index retention
                     // period.
-                    final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionDayAge).toInstant().toEpochMilli();
+                    final long retentionTime = ZonedDateTime.now(ZoneOffset.UTC)
+                            .minusDays(retentionDayAge)
+                            .toInstant()
+                            .toEpochMilli();
 
                     if (partitionToTime < retentionTime) {
                         setStatus(shard.getId(), IndexShardStatus.DELETED);

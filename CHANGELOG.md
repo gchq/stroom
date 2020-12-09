@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift send_to_stroom script to v3.0.
 
+* Fix hjelp links on Jobs screen.
+
 * Fix inability to select text on Info tab in Data viewer.
 
 * Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
