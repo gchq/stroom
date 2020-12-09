@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix hjelp links on Jobs screen.
 
 * Fix inability to select text on Info tab in Data viewer.
 
