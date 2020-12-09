@@ -7,15 +7,11 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.StroomLoggingOperation;
 import stroom.util.shared.StroomLoggingOperationType;
-import stroom.util.string.EncodingUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.web.bindery.requestfactory.server.Logging;
-import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.message.MessageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,28 +29,20 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
-import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,111 +54,105 @@ import java.util.stream.Stream;
 public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomServerLoggingFilterImpl.class);
 
-    private static final String NOTIFICATION_PREFIX = "NOTE";
-    private static final String RESPONSE_PREFIX = "RESP";
-    private static final String REQUEST_PREFIX = "REQ";
     private static final String LOGGING_ID_PROPERTY = "StroomLogging.id";
-    private static final String ENTITY_LOGGER_PROPERTY = "StroomLogging.entity";
-    private final int maxEntitySize = 10000;
+    private static final String RESPONSE_ENTITY_LOGGER_PROPERTY = "stroom.stream.output";
+    private static final String REQUEST_ENTITY_LOGGER_PROPERTY = "stroom.stream.input";
+    private final int maxEntitySize = 10000000;
     private final AtomicLong _id = new AtomicLong(0);
     private Map<String, List<LoggingInfo>> loggingInfoMap;
 
-    private final Environment environment;
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
     private final DocumentEventLog documentEventLog;
+    private final ObjectMapper objectMapper;
 
     @Inject
-    StroomServerLoggingFilterImpl(final Environment environment, final Map<RestResourcesBinder.ResourceType,
+    StroomServerLoggingFilterImpl(final Map<RestResourcesBinder.ResourceType,
             Provider<RestResource>> providerMap, DocumentEventLog documentEventLog) {
-        this.environment = environment;
         this.providerMap = providerMap;
         this.documentEventLog = documentEventLog;
+        this.objectMapper = createMapper(false);
     }
-    public String getAuthenticatedUser (){
-        final UserIdentity userIdentity = CurrentUserState.current();
-        if (userIdentity != null) {
-            return userIdentity.getId();
-        }
-        return "None-or-unknown";
-    }
+//    public String getAuthenticatedUser (){
+//        final UserIdentity userIdentity = CurrentUserState.current();
+//        if (userIdentity != null) {
+//            return userIdentity.getId();
+//        }
+//        return "None-or-unknown";
+//    }
 
-    void log(final StringBuilder b) {
-        System.out.println(b);
-    }
 
-    private StringBuilder prefixId(final StringBuilder b, final long id) {
-        b.append(Long.toString(id)).append(" ");
-        return b;
-    }
 
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
             throws IOException, WebApplicationException {
-        final LoggingStream stream = (LoggingStream) writerInterceptorContext.getProperty(ENTITY_LOGGER_PROPERTY);
-        writerInterceptorContext.proceed();
-        if (true) {
-            if (stream != null) {
 
-                writeToDocumentLog (stream.getLoggingInfo(), stream.getEntity());
-                log(stream.getStringBuilder(MessageUtils.getCharset(writerInterceptorContext.getMediaType())));
-            }
+        final LoggingOutputStream stream = (LoggingOutputStream) writerInterceptorContext.getProperty(RESPONSE_ENTITY_LOGGER_PROPERTY);
+        writerInterceptorContext.proceed();
+        if (stream != null) {
+            writeToDocumentLog (stream.getLoggingInfo(), stream.getRequestEntity(), stream.getResponseEntity());
         }
     }
 
-    private void writeToDocumentLog (LoggingInfo info, Object entity){
+    private void writeToDocumentLog (LoggingInfo info, Object requestEntity, Object responseEntity){
         if (info == null){
             return;
         }
 
         switch (info.getOperationType()){
             case DELETE:
-                documentEventLog.delete(entity,null);
+                documentEventLog.delete(requestEntity,null);
+                break;
+            case VIEW:
+                documentEventLog.view(responseEntity,null);
+                break;
+            case CREATE:
+                documentEventLog.create(requestEntity,null);
                 break;
         }
     }
 
-    void printRequestLine(final StringBuilder b, final String note, final long id, final String method, final URI uri) {
-        prefixId(b, id).append(NOTIFICATION_PREFIX)
-                .append(note)
-                .append(" on thread ").append(Thread.currentThread().getName())
-                .append("\n");
-        prefixId(b, id).append(REQUEST_PREFIX).append(method).append(" ")
-                .append(uri.toASCIIString()).append("\n");
-    }
-
-    void printResponseLine(final StringBuilder b, final String note, final long id, final int status) {
-        prefixId(b, id).append(NOTIFICATION_PREFIX)
-                .append(note)
-                .append(" on thread ").append(Thread.currentThread().getName()).append("\n");
-        prefixId(b, id).append(RESPONSE_PREFIX)
-                .append(Integer.toString(status))
-                .append("\n");
-    }
-
-    void printPrefixedHeaders(final StringBuilder b,
-                              final long id,
-                              final String prefix,
-                              final MultivaluedMap<String, String> headers) {
-        for (final Map.Entry<String, List<String>> headerEntry : headers.entrySet()) {
-            final List<?> val = headerEntry.getValue();
-            final String header = headerEntry.getKey();
-
-            if (val.size() == 1) {
-                prefixId(b, id).append(prefix).append(header).append(": ").append(val.get(0)).append("\n");
-            } else {
-                final StringBuilder sb = new StringBuilder();
-                boolean add = false;
-                for (final Object s : val) {
-                    if (add) {
-                        sb.append(',');
-                    }
-                    add = true;
-                    sb.append(s);
-                }
-                prefixId(b, id).append(prefix).append(header).append(": ").append(sb.toString()).append("\n");
-            }
-        }
-    }
+//    void printRequestLine(final StringBuilder b, final String note, final long id, final String method, final URI uri) {
+//        prefixId(b, id).append(NOTIFICATION_PREFIX)
+//                .append(note)
+//                .append(" on thread ").append(Thread.currentThread().getName())
+//                .append("\n");
+//        prefixId(b, id).append(REQUEST_PREFIX).append(method).append(" ")
+//                .append(uri.toASCIIString()).append("\n");
+//    }
+//
+//    void printResponseLine(final StringBuilder b, final String note, final long id, final int status) {
+//        prefixId(b, id).append(NOTIFICATION_PREFIX)
+//                .append(note)
+//                .append(" on thread ").append(Thread.currentThread().getName()).append("\n");
+//        prefixId(b, id).append(RESPONSE_PREFIX)
+//                .append(status)
+//                .append("\n");
+//    }
+//
+//    void printPrefixedHeaders(final StringBuilder b,
+//                              final long id,
+//                              final String prefix,
+//                              final MultivaluedMap<String, String> headers) {
+//        for (final Map.Entry<String, List<String>> headerEntry : headers.entrySet()) {
+//            final List<?> val = headerEntry.getValue();
+//            final String header = headerEntry.getKey();
+//
+//            if (val.size() == 1) {
+//                prefixId(b, id).append(prefix).append(header).append(": ").append(val.get(0)).append("\n");
+//            } else {
+//                final StringBuilder sb = new StringBuilder();
+//                boolean add = false;
+//                for (final Object s : val) {
+//                    if (add) {
+//                        sb.append(',');
+//                    }
+//                    add = true;
+//                    sb.append(s);
+//                }
+//                prefixId(b, id).append(prefix).append(header).append(": ").append(sb.toString()).append("\n");
+//            }
+//        }
+//    }
 
 //        Set<Entry<String, List<String>>> getSortedHeaders(final Set<Map.Entry<String, List<String>>> headers) {
 //            final TreeSet<Entry<String, List<String>>> sortedHeaders = new TreeSet<Map.Entry<String, List<String>>>(COMPARATOR);
@@ -178,23 +160,15 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 //            return sortedHeaders;
 //        }
 
-    InputStream logInboundEntity(final StringBuilder b, InputStream stream, final Charset charset) throws IOException {
-        if (!stream.markSupported()) {
-            stream = new BufferedInputStream(stream);
-        }
-        stream.mark(maxEntitySize + 1);
-        final byte[] entity = new byte[maxEntitySize + 1];
-        final int entitySize = stream.read(entity);
-        b.append(new String(entity, 0, Math.min(entitySize, maxEntitySize), charset));
-        if (entitySize > maxEntitySize) {
-            b.append("...more...");
-        }
-        b.append('\n');
-        stream.reset();
+//    InputStream recordInboundEntity(LoggingInfo loggingInfo, InputStream stream, final Charset charset) throws IOException {
+//        LoggingInputStream inputStream = new LoggingInputStream(loggingInfo, stream, charset);
+//
+//        return inputStream;
+//    }
 
-//        ObjectMapper mapper = new ObjectMapper();
-//        Object marsalled = mapper.readValue(new StringReader(EncodingUtil.asString(entity))), Something.class);
-        return stream;
+    LoggingInfo findLoggingInfo (ContainerRequestContext context){
+        return findLoggingInfo (context.getMethod(),
+                ResourcePaths.buildAuthenticatedApiPath(context.getUriInfo().getPath()));
     }
 
     LoggingInfo findLoggingInfo (String method, String path){
@@ -240,7 +214,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             }
 
             Optional<String> httpMethod = getHttpMethod (m, resourceClass);
-            if (methodPath.isEmpty()) {
+            if (httpMethod.isEmpty()) {
                 LOGGER.warn("Unable to determine HTTP method for api call " + methodPath.get());
                 return Stream.empty();
             }
@@ -252,7 +226,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         });
     }
 
-    private Optional<String> getHttpMethod(Method method, Class resourceClass){
+    private Optional<String> getHttpMethod(Method method, Class<?> resourceClass){
         Optional<String> httpMethod = getHttpMethod(method);
         if (httpMethod.isPresent()){
             return httpMethod;
@@ -392,20 +366,17 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         final long id = _id.incrementAndGet();
         context.setProperty(LOGGING_ID_PROPERTY, id);
 
-        final StringBuilder b = new StringBuilder();
+//        String user = getAuthenticatedUser();
 
-        String user = getAuthenticatedUser();
-
-        printRequestLine(b,  "User:" + user + " " +"Server has received a request", id, context.getMethod(), context.getUriInfo().getRequestUri());
-
-        printPrefixedHeaders(b, id, REQUEST_PREFIX, context.getHeaders());
+        LoggingInfo loggingInfo = findLoggingInfo(context);
 
         if (context.hasEntity()) {
-            context.setEntityStream(
-                    logInboundEntity(b, context.getEntityStream(), MessageUtils.getCharset(context.getMediaType())));
+            final InputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
+                    MessageUtils.getCharset(context.getMediaType()));
+            context.setEntityStream(stream);
+            context.setProperty(REQUEST_ENTITY_LOGGER_PROPERTY, stream);
         }
 
-        log(b);
     }
 
 
@@ -413,43 +384,31 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
             throws IOException {
 
-        String user = getAuthenticatedUser();
+//        String user = getAuthenticatedUser();
 
         final Object requestId = requestContext.getProperty(LOGGING_ID_PROPERTY);
         final long id = requestId != null ? (Long) requestId : _id.incrementAndGet();
 
         final StringBuilder b = new StringBuilder();
 
-        printResponseLine(b, id + " User:" + user + " " + "Server responded with a response", id, responseContext.getStatus());
-        printPrefixedHeaders(b, id, RESPONSE_PREFIX, responseContext.getStringHeaders());
-
-        LoggingInfo loggingInfo = findLoggingInfo (requestContext.getMethod(),
-                ResourcePaths.buildAuthenticatedApiPath(requestContext.getUriInfo().getPath()));
-
-        if (loggingInfo != null){
-            System.out.println("" + id + " Found a " + loggingInfo.getClass().getName()  + " on " + loggingInfo.getPath());
-
-
-
-            if (!loggingInfo.getOperationType().equals(StroomLoggingOperationType.UNKNOWN)){
-                System.out.println("" + id + " Logging operation type " + loggingInfo.getOperationType());
-            }
-
-        }
-        if (responseContext.hasEntity() ) {
-            System.out.println ("" + id + " Returning a " + responseContext.getEntity().getClass());
-
-            final OutputStream stream = new LoggingStream(b, responseContext.getEntityStream(),
-                    loggingInfo, responseContext.getEntity());
-            responseContext.setEntityStream(stream);
-            requestContext.setProperty(ENTITY_LOGGER_PROPERTY, stream);
-
-
-
-            // not calling log(b) here - it will be called by the interceptor
+        LoggingInputStream inputStream = (LoggingInputStream) requestContext.getProperty(REQUEST_ENTITY_LOGGER_PROPERTY);
+        final LoggingInfo loggingInfo;
+        if (inputStream != null) {
+            loggingInfo = inputStream.getLoggingInfo();
         } else {
-            log(b);
+            loggingInfo = findLoggingInfo(requestContext);
         }
+        if (responseContext.hasEntity()) {
+            final OutputStream stream = new LoggingOutputStream(b, responseContext.getEntityStream(),
+                    loggingInfo,
+                    ((inputStream != null)? inputStream.getEntity() : null),
+                    responseContext.getEntity());
+            responseContext.setEntityStream(stream);
+            requestContext.setProperty(RESPONSE_ENTITY_LOGGER_PROPERTY, stream);
+        } else if (inputStream != null){
+            writeToDocumentLog(loggingInfo, inputStream.getEntity(), null);
+        }
+
     }
 
     private static ObjectMapper createMapper(final boolean indent) {
@@ -545,28 +504,84 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         public String createCallKey (){
             return StroomServerLoggingFilterImpl.createCallKey(httpMethod, path);
         }
+
+        public Optional<Class> getRequestParamClass (){
+            if (method.getParameterCount() == 0){
+                return Optional.empty();
+            } else if (method.getParameterCount() == 1){
+                return Optional.of(method.getParameters()[0].getType());
+            }
+            //Can't work with multiple parameters.
+            return null;
+        }
+    }
+
+    class LoggingInputStream extends BufferedInputStream {
+        private Object entity;
+        private final LoggingInfo loggingInfo;
+        private boolean constructed;
+
+        LoggingInputStream (final LoggingInfo loggingInfo, final InputStream original, final Charset charset) throws IOException {
+            super(original);
+            this.loggingInfo = loggingInfo;
+            readEntity(charset);
+            constructed = true;
+        }
+
+        private void readEntity(final Charset charset) throws IOException {
+            if (loggingInfo != null){
+                mark(maxEntitySize + 1);
+                Optional<Class> requestClass = loggingInfo.getRequestParamClass();
+
+                if (requestClass != null){
+                    Object obj = objectMapper.readValue(new InputStreamReader(this, charset), requestClass.get());
+                    entity = obj;
+                } else {
+                    LOGGER.warn("Unable to determine type of object for automatic logging. HTTP request path is" + loggingInfo.getPath());
+                }
+                reset();
+            }
+        }
+
+        public Object getEntity() {
+            return entity;
+        }
+
+        public LoggingInfo getLoggingInfo() {
+            return loggingInfo;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (constructed) {
+                super.close();
+            }
+        }
     }
 
     /**
      * Helper class used to log an entity to the output stream up to the specified maximum number of bytes.
      */
-    class LoggingStream extends FilterOutputStream {
+    class LoggingOutputStream extends FilterOutputStream {
 
         private final StringBuilder b;
         private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         private final LoggingInfo loggingInfo;
-        private final Object entity;
+        private final Object requestEntity;
+        private final Object responseEntity;
         /**
          * Creates {@code LoggingStream} with the entity and the underlying output stream as parameters.
          *
          * @param b     contains the entity to log.
          * @param inner the underlying output stream.
          */
-        LoggingStream(final StringBuilder b, final OutputStream inner, final LoggingInfo loggingInfo, final Object entity) {
+        LoggingOutputStream(final StringBuilder b, final OutputStream inner, final LoggingInfo loggingInfo,
+                            final Object requestEntity, final Object responseEntity) {
             super(inner);
 
             this.b = b;
-            this.entity = entity;
+            this.requestEntity = requestEntity;
+            this.responseEntity = responseEntity;
             this.loggingInfo = loggingInfo;
         }
 
@@ -583,8 +598,12 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             return b;
         }
 
-        public Object getEntity () throws IOException{
-            return entity;
+        public Object getRequestEntity() {
+            return requestEntity;
+        }
+
+        public Object getResponseEntity() {
+            return responseEntity;
         }
 
         public LoggingInfo getLoggingInfo() {
