@@ -8,5 +8,6 @@ public class RSLoggingModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StroomServerLoggingFilter.class).to(StroomServerLoggingFilterImpl.class);
+        bind(RequestEventLog.class).to(RequestEventLogImpl.class);
     }
 }
