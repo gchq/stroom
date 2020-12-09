@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix path for user event logs.
+
 * Uplift send_to_stroom script to v3.0.
 
 * Fix inability to select text on Info tab in Data viewer.
