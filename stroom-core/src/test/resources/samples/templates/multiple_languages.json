@@ -1,0 +1,517 @@
+[
+  {
+    "language": "English",
+    "symbol": "en",
+    "text": "All work and no play makes jack a dull boy."
+  },
+  {
+    "language": "Arabic",
+    "symbol": "ar",
+    "text": "العمل دائما دون لعب يجعل من جاك صبيا مملا."
+  },
+  {
+    "language": "Dutch",
+    "symbol": "nl",
+    "text": "Al het werk en geen spel maakt Jack een saaie jongen."
+  },
+  {
+    "language": "French",
+    "symbol": "fr",
+    "text": "Tout travail et aucun jeu font de Jack un garçon ennuyeux."
+  },
+  {
+    "language": "German",
+    "symbol": "de",
+    "text": "Alle Arbeit und kein Spiel machen Jack zu einem langweiligen Jungen."
+  },
+  {
+    "language": "Italian",
+    "symbol": "it",
+    "text": "Tutto il lavoro e nessun gioco rende Jack un ragazzo noioso."
+  },
+  {
+    "language": "Japanese",
+    "symbol": "ja",
+    "text": "すべての仕事と遊びがないので、ジャックは退屈な少年になります。"
+  },
+  {
+    "language": "Russian",
+    "symbol": "ru",
+    "text": "Работа без передышки отупляет Джека."
+  },
+  {
+    "language": "Spanish",
+    "symbol": "es",
+    "text": "Todo el trabajo y nada de juego hacen de Jack un chico aburrido."
+  },
+  {
+    "language": "Chinese Simplified",
+    "symbol": "zh-cn",
+    "text": "所有的工作，没有玩耍，使杰克成为一个沉闷的男孩。"
+  },
+  {
+    "language": "Catalan",
+    "symbol": "ca",
+    "text": "Tot el treball i res de joc fan de Jack un noi avorrit."
+  },
+  {
+    "language": "Czech",
+    "symbol": "cs",
+    "text": "Samá práce a žádná zábava dělá z Jacka nudného chlapce."
+  },
+  {
+    "language": "Estonian",
+    "symbol": "et",
+    "text": "Kogu töö ja ükski mäng ei tee Jackist igavat poissi."
+  },
+  {
+    "language": "Lithuanian",
+    "symbol": "lt",
+    "text": "Visi darbai ir jokie žaidimai daro Džeką nuobodu berniuku."
+  },
+  {
+    "language": "Norwegian",
+    "symbol": "no",
+    "text": "Alt arbeid og ikke noe spill gjør Jack til en kjedelig gutt."
+  },
+  {
+    "language": "Telugu",
+    "symbol": "te",
+    "text": "అన్ని పని మరియు ఆట ఆడటం జాక్ ని నీరసమైన బాలుడిని చేస్తుంది."
+  },
+  {
+    "language": "Urdu",
+    "symbol": "ur",
+    "text": "سارا کام اور کوئی کھیل جیک کو ایک مدھم لڑکا بنا دیتا ہے۔"
+  },
+  {
+    "language": "Danish",
+    "symbol": "da",
+    "text": "Alt arbejde og intet spil gør jack til en kedelig dreng."
+  },
+  {
+    "language": "Filipino",
+    "symbol": "tl",
+    "text": "Lahat ng trabaho at walang paglalaro ay ginagawang isang mapurol na lalaki."
+  },
+  {
+    "language": "Greek",
+    "symbol": "el",
+    "text": "Όλη η δουλειά και κανένα παιχνίδι κάνει τον Τζακ ένα θαμπό αγόρι"
+  },
+  {
+    "language": "Malay",
+    "symbol": "ms",
+    "text": "Semua kerja dan tanpa permainan menjadikan jack sebagai budak lelaki yang membosankan."
+  },
+  {
+    "language": "Polish",
+    "symbol": "pl",
+    "text": "Cała praca i brak zabawy sprawia, że ​​Jack jest nudnym chłopcem."
+  },
+  {
+    "language": "Serbian",
+    "symbol": "sr",
+    "text": "Сав посао и никаква игра чине Јацка досадним дечком."
+  },
+  {
+    "language": "Swedish",
+    "symbol": "sv",
+    "text": "Allt arbete och inget spel gör jack till en tråkig pojke."
+  },
+  {
+    "language": "Thai",
+    "symbol": "th",
+    "text": "การทำงานทั้งหมดและไม่มีการเล่นใด ๆ ทำให้แจ็คเป็นเด็กขี้เบื่อ"
+  },
+  {
+    "language": "Vietnamese",
+    "symbol": "vi",
+    "text": "Tất cả làm việc và không vui chơi khiến Jack trở thành một cậu bé buồn tẻ."
+  },
+  {
+    "language": "Turkish",
+    "symbol": "tr",
+    "text": "Tüm çalışmak ve oynamak Jack'i sıkıcı bir çocuk yapar."
+  },
+  {
+    "language": "Tajik",
+    "symbol": "tg",
+    "text": "Ҳама кор ва ягон бозӣ Jackро бачаи кундзеҳн месозад."
+  },
+  {
+    "language": "Slovak",
+    "symbol": "sk",
+    "text": "Celá práca a žiadna hra robí z Jacka nudného chlapca."
+  },
+  {
+    "language": "Portuguese",
+    "symbol": "pt",
+    "text": "Todo trabalho e nenhuma diversão fazem de Jack um menino chato."
+  },
+  {
+    "language": "Malayalam",
+    "symbol": "ml",
+    "text": "കളിക്കാൻ പോലും പോകാതെ പണിയെടുക്കേണ്ടിവരുന്നത് ജാക്കിനെ ഒരു നിരാശനായ പയ്യനാക്കുന്നു."
+  },
+  {
+    "language": "Korean",
+    "symbol": "ko",
+    "text": "모든 일과 놀이는 잭을 지루한 소년으로 만듭니다."
+  },
+  {
+    "language": "Hebrew",
+    "symbol": "iw",
+    "text": "כל עבודה וללא משחק הופכת את ג'ק לילד משעמם."
+  },
+  {
+    "language": "Finnish",
+    "symbol": "fi",
+    "text": "Kaikki työ ja ei leikkiä tekevät Jackista tylsän pojan."
+  },
+  {
+    "language": "Chinese Traditional",
+    "symbol": "zh-tw",
+    "text": "所有的工作，沒有玩耍，使傑克成為一個沉悶的男孩。"
+  },
+  {
+    "language": "Bengali",
+    "symbol": "bn",
+    "text": "সমস্ত কাজ এবং কোনও খেলা জ্যাককে একটি নিস্তেজ ছেলে করে তোলে।"
+  },
+  {
+    "language": "Bulgarian",
+    "symbol": "bg",
+    "text": "Цялата работа и никаква игра правят Джак скучно момче."
+  },
+  {
+    "language": "Croatian",
+    "symbol": "hr",
+    "text": "Sav posao i nikakva igra čine Jacka dosadnim dječakom."
+  },
+  {
+    "language": "Esperanto",
+    "symbol": "eo",
+    "text": "Ĉiu laboro kaj neniu ludado igas Jack enuiga knabo."
+  },
+  {
+    "language": "Indonesian",
+    "symbol": "id",
+    "text": "Semua pekerjaan dan tidak ada permainan membuat jack menjadi anak yang membosankan."
+  },
+  {
+    "language": "Latvian",
+    "symbol": "lv",
+    "text": "Viss darbs un neviena spēle padara džeku par blāvu zēnu."
+  },
+  {
+    "language": "Marathi",
+    "symbol": "mr",
+    "text": "सर्व काम आणि कोणतेही नाटक जॅकला कंटाळवाणा मुलगा बनवते."
+  },
+  {
+    "language": "Romanian",
+    "symbol": "ro",
+    "text": "Toată munca și lipsa jocului îl fac pe Jack un băiat plictisitor."
+  },
+  {
+    "language": "Slovenian",
+    "symbol": "sl",
+    "text": "Vsako delo brez zabave je dolgočasno."
+  },
+  {
+    "language": "Tamil",
+    "symbol": "ta",
+    "text": "அனைத்து வேலைகளும் மற்றும் அவன் விளையாடாமல் இருப்பதும் சேர்ந்து ஜக்கை ஒரு மந்தமான சிறுவனாக ஆக்குகிறது."
+  },
+  {
+    "language": "Ukrainian",
+    "symbol": "uk",
+    "text": "Робота без ігор робить Джека нудним хлопцем."
+  },
+  {
+    "language": "Afrikaans",
+    "symbol": "af",
+    "text": "Alle werk en geen spel maak Jack 'n vaal seun nie."
+  },
+  {
+    "language": "Azerbaijani",
+    "symbol": "az",
+    "text": "Bütün işlər və heç bir oyun jackı sönük bir oğlan halına gətirir."
+  },
+  {
+    "language": "Cebuano",
+    "symbol": "ceb",
+    "text": "Tanan nga pagtrabaho ug wala’y pagdula naghimo sa jack nga usa ka dull boy."
+  },
+  {
+    "language": "Galician",
+    "symbol": "gl",
+    "text": "Todo o traballo e sen xogo fai de Jack un rapaz aburrido."
+  },
+  {
+    "language": "Hausa",
+    "symbol": "ha",
+    "text": "Duk aiki kuma babu wasa yana sa jack a dull boy."
+  },
+  {
+    "language": "Hungarian",
+    "symbol": "hu",
+    "text": "Minden munka és játék nélkül Jack unalmas fiúvá válik."
+  },
+  {
+    "language": "Javanese",
+    "symbol": "jw",
+    "text": "Kabeh kerja lan ora main nggawe jack dadi bocah lanang sing ora kuwat."
+  },
+  {
+    "language": "Kurdish",
+    "symbol": "ku",
+    "text": "Hemî kar û lîstik tune jack dike kurek law."
+  },
+  {
+    "language": "Luxembourgish",
+    "symbol": "lb",
+    "text": "All Aarbecht a kee Spill mécht den Jack zu engem déif Jong."
+  },
+  {
+    "language": "Maori",
+    "symbol": "mi",
+    "text": "Katoa nga mahi me te kore taakaro he tama puhoi te haki."
+  },
+  {
+    "language": "Pashto",
+    "symbol": "ps",
+    "text": "تل کار کول او لوبي نه کول له جیک نه یو آرامه هلک جوړ کړلو."
+  },
+  {
+    "language": "Sesotho",
+    "symbol": "st",
+    "text": "Mosebetsi oohle ebile ha ho papali e etsang hore jack e be moshanyana ea lerootho."
+  },
+  {
+    "language": "Somali",
+    "symbol": "so",
+    "text": "Shaqada oo dhan iyo ciyaar la'aan waxay Jack ka dhigeysaa wiil caajis ah."
+  },
+  {
+    "language": "Welsh",
+    "symbol": "cy",
+    "text": "Mae'r holl waith a dim chwarae yn gwneud jack yn fachgen diflas."
+  },
+  {
+    "language": "Zulu",
+    "symbol": "zu",
+    "text": "Wonke umsebenzi futhi akukho ukudlala okwenza uJack abe umfana omncane."
+  },
+  {
+    "language": "Xhosa",
+    "symbol": "xh",
+    "text": "Wonke umsebenzi ukngadlali kwenza ujack abeyinkwenkwe edakumbile."
+  },
+  {
+    "language": "Sundanese",
+    "symbol": "su",
+    "text": "Sadaya padamelan sareng henteu maén ngajantenkeun jack budak lalaki kusam."
+  },
+  {
+    "language": "Shona",
+    "symbol": "sn",
+    "text": "Zvese basa uye hapana yekutamba inoita kuti jack ave mukomana asina kujeka."
+  },
+  {
+    "language": "Persian",
+    "symbol": "fa",
+    "text": "همه کارها و هیچ بازی باعث می شود جک پسری کسل کننده باشد."
+  },
+  {
+    "language": "Mongolian",
+    "symbol": "mn",
+    "text": "Бүх ажил, ямар ч тоглох нь Жакыг уйтгартай хүү болгодог."
+  },
+  {
+    "language": "Macedonian",
+    "symbol": "mk",
+    "text": "Целата работа и без никаква игра го прави jackек досадно момче."
+  },
+  {
+    "language": "Kyrgyz",
+    "symbol": "ky",
+    "text": "Бардык жумуш жана эч кандай оюн Джекти тажатма балага айлантат."
+  },
+  {
+    "language": "Kannada",
+    "symbol": "kn",
+    "text": "ಎಲ್ಲಾ ಕೆಲಸ ಮತ್ತು ಯಾವುದೇ ಆಟವು ಜ್ಯಾಕ್ ಅನ್ನು ಮಂದ ಹುಡುಗನನ್ನಾಗಿ ಮಾಡುತ್ತದೆ."
+  },
+  {
+    "language": "Icelandic",
+    "symbol": "is",
+    "text": "Öll vinna og enginn leikur gerir Jack að daufum strák."
+  },
+  {
+    "language": "Hawaiian",
+    "symbol": "haw",
+    "text": "Hana nā hana āpau a ʻaʻohe pāʻani i ke keiki kāne puʻupuʻu."
+  },
+  {
+    "language": "Georgian",
+    "symbol": "ka",
+    "text": "ყველა სამუშაო და არანაირი თამაში ჯეკს ყრუ ბიჭად აქცევს."
+  },
+  {
+    "language": "Chichewa",
+    "symbol": "ny",
+    "text": "Ntchito yonse ndipo palibe seweroli imamupangitsa jack kukhala wosamva."
+  },
+  {
+    "language": "Basque",
+    "symbol": "eu",
+    "text": "Lan guztiak eta jolasik gabe mutil bihurtzen da Jack."
+  },
+  {
+    "language": "Albanian",
+    "symbol": "sq",
+    "text": "E gjithë puna dhe asnjë lojë e bën Jack-un një djalë të shurdhër."
+  },
+  {
+    "language": "Amharic",
+    "symbol": "am",
+    "text": "ሁሉም ሥራ እና ጨዋታ የለም ጃክን አሰልቺ ልጅ ያደርገዋል ፡፡"
+  },
+  {
+    "language": "Belarusian",
+    "symbol": "be",
+    "text": "Уся праца і без гульняў робяць Джэка сумным хлопчыкам."
+  },
+  {
+    "language": "Corsican",
+    "symbol": "co",
+    "text": "Tuttu u travagliu è nisun ghjocu face à Jack un zitellu sordu."
+  },
+  {
+    "language": "Gujarati",
+    "symbol": "gu",
+    "text": "બધા કામ નથી અને નાટક નીરસ છોકરો જેક બનાવે."
+  },
+  {
+    "language": "Hindi",
+    "symbol": "hi",
+    "text": "काम ही काम, न कोई मोद न आराम, फिर कैसे चमके चिपटू राम।"
+  },
+  {
+    "language": "Igbo",
+    "symbol": "ig",
+    "text": "Ọrụ niile na enweghị igwu egwu na-eme ka Jack bụrụ nwata."
+  },
+  {
+    "language": "Kazakh",
+    "symbol": "kk",
+    "text": "Барлық жұмыс және ешқандай ойын ешкімді ақымақ балаға айналдырады."
+  },
+  {
+    "language": "Lao",
+    "symbol": "lo",
+    "text": "ການເຮັດວຽກທັງ ໝົດ ແລະການຫຼີ້ນຫຼີ້ນບໍ່ໄດ້ເຮັດໃຫ້ jack ເປັນເດັກຊາຍຈືດໆ"
+  },
+  {
+    "language": "Malagasy",
+    "symbol": "mg",
+    "text": "Ny asa rehetra ary tsy misy lalao dia mahatonga an'i jack ho zazalahy malaindaina."
+  },
+  {
+    "language": "Myanmar",
+    "symbol": "my",
+    "text": "အားလုံးအလုပ်နှင့်မျှမကစားဂျက်တစ် ဦး မှိုင်းကောင်လေးတစ်ယောက်စေသည်။"
+  },
+  {
+    "language": "Samoan",
+    "symbol": "sm",
+    "text": "Uma galuega ma leai se taʻaloga faia jack se tamaititi valea."
+  },
+  {
+    "language": "Sindhi",
+    "symbol": "sd",
+    "text": "سڀ ڪم ۽ ڪوبه راند جیک کي هڪ ٻ dل ڇوڪرو بڻائي ٿو."
+  },
+  {
+    "language": "Swahili",
+    "symbol": "sw",
+    "text": "Kazi zote na hakuna kucheza hufanya jack kijana mdogo."
+  },
+  {
+    "language": "Yiddish",
+    "symbol": "yi",
+    "text": "אַלע אַרבעט און קיין שפּיל מאַכן דזשאַק אַ נודנע יינגל."
+  },
+  {
+    "language": "Yoruba",
+    "symbol": "yo",
+    "text": "Gbogbo iṣẹ ati pe ko si ere jẹ ki Jack jẹ ọmọ alaigbọran."
+  },
+  {
+    "language": "Uzbek",
+    "symbol": "uz",
+    "text": "Hamma ish va hech qanday o'yin Jekni zerikarli bolaga aylantiradi."
+  },
+  {
+    "language": "Sinhala",
+    "symbol": "si",
+    "text": "සියලු වැඩ සහ කිසිදු සෙල්ලමක් ජැක් අඳුරු පිරිමි ළමයෙකු බවට පත් කරයි."
+  },
+  {
+    "language": "Scots Gaelic",
+    "symbol": "gd",
+    "text": "Tha a h-uile obair agus gun chluich sam bith a ’dèanamh jack na bhalach beag."
+  },
+  {
+    "language": "Nepali",
+    "symbol": "ne",
+    "text": "सबै काम र कुनै खेल जेक एक सुस्त केटा बनाउँछ।"
+  },
+  {
+    "language": "Maltese",
+    "symbol": "mt",
+    "text": "Ix-xogħol kollu u l-ebda logħob ma jagħmel lil Jack tifel matt."
+  },
+  {
+    "language": "Latin",
+    "symbol": "la",
+    "text": "Omnia jack tione opus et facit fabula pueri."
+  },
+  {
+    "language": "Khmer",
+    "symbol": "km",
+    "text": "រាល់ការងារនិងគ្មានការលេងធ្វើឱ្យជេកជាក្មេងប្រុសរិល។"
+  },
+  {
+    "language": "Irish",
+    "symbol": "ga",
+    "text": "Déanann gach obair agus nach imirt Jack buachaill dull."
+  },
+  {
+    "language": "Hmong",
+    "symbol": "hmn",
+    "text": "Txhua yam haujlwm thiab tsis ua si ua rau jack tus tub npub."
+  },
+  {
+    "language": "Haitian Creole",
+    "symbol": "ht",
+    "text": "Tout travay e pa jwe pa fè Jack yon ti gason mat."
+  },
+  {
+    "language": "Frisian",
+    "symbol": "fy",
+    "text": "Ferdivedaasje heart der by."
+  },
+  {
+    "language": "Bosnian",
+    "symbol": "bs",
+    "text": "Sav posao i nikakva igra čine Jacka dosadnim dječakom."
+  },
+  {
+    "language": "Armenian",
+    "symbol": "hy",
+    "text": "Բոլոր աշխատանքները և ոչ մի խաղ jackեքին դարձնում են ձանձրալի տղա:"
+  }
+]

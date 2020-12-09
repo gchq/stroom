@@ -57,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
     // Make sure the search request is the same as the one we expected to make.
-    private final Path resourcesDir = SearchDebugUtil.getDir();
+    private final Path resourcesDir = SearchDebugUtil.initialise();
 
     @Test
     void test() throws Exception {

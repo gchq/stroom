@@ -24,19 +24,20 @@ import java.util.List;
 
 public class SearchDebugUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
-    private static final Path dir;
+
+    private static Path dir;
+    private static boolean enabled;
+
     private static final boolean writeActual = true;
     private static final boolean writeExpected = false;
     private static Writer writer;
 
-    static {
-        dir = resolveDir().resolve("src/test/resources/TestSearchResultCreation");
-    }
-
     private SearchDebugUtil() {
     }
 
-    public static Path getDir() {
+    public static Path initialise() {
+        dir = resolveDir().resolve("src/test/resources/TestSearchResultCreation");
+        enabled = true;
         return dir;
     }
 
@@ -91,7 +92,7 @@ public class SearchDebugUtil {
     }
 
     public static void writeRequest(final SearchRequest searchRequest, final boolean actual) {
-        if ((writeExpected && !actual) || (writeActual && actual)) {
+        if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -106,7 +107,7 @@ public class SearchDebugUtil {
     }
 
     public static void writeResponse(final SearchResponse searchResponse, final boolean actual) {
-        if ((writeExpected && !actual) || (writeActual && actual)) {
+        if (enabled && ((writeExpected && !actual) || (writeActual && actual))) {
             final String suffix = getSuffix(actual);
             try {
                 final ObjectMapper mapper = new ObjectMapper();
@@ -182,7 +183,7 @@ public class SearchDebugUtil {
     }
 
     public static synchronized void writeExtractionData(final Val[] values) {
-        if (writeExpected) {
+        if (enabled && writeExpected) {
             try {
                 if (writer == null) {
                     writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("data.txt")));

@@ -68,9 +68,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Summary;
 import stroom.util.shared.TextRange;
 
+import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Provider;
@@ -217,9 +217,7 @@ public class DataFetcher {
                 // If we have no stream then let the client know it has been
                 // deleted.
                 if (source == null) {
-                    final String msg = "Stream has been deleted";
-                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(
-                            sourceLocation.getPartNo(), partsToReturn);
+                    final String msg = "## Stream has been deleted ## ";
                     final Count<Long> totalItemCount = new Count<>(0L, true);
                     final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
                     final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
@@ -228,6 +226,7 @@ public class DataFetcher {
                             eventId,
                             feedName,
                             streamTypeName,
+                            fetchDataRequest.getSourceLocation().getOptChildType().orElse(null),
                             fetchDataRequest.getPipeline(),
                             new IOException(msg));
 
@@ -250,27 +249,9 @@ public class DataFetcher {
                 feedName = meta.getFeedName();
                 streamTypeName = meta.getTypeName();
                 // See if a specific child stream type was requested
-                streamTypeName = sourceLocation.getOptChildType()
-                        .orElse(meta.getTypeName());
+//                String childStreamTypeName = sourceLocation.getOptChildType()
+//                        .orElse(null);
 
-//                // Are we getting and are we able to get the child stream?
-//                if (fetchDataRequest.getDataRange().getChildStreamType(). != null) {
-////                    final Source childStreamSource = streamSource.getChildStream(childStreamTypeName);
-////
-////                    // If we got something then change the stream.
-////                    if (childStreamSource != null) {
-////                        streamSource = childStreamSource;
-//                    streamTypeName = fetchDataRequest.getChildStreamType();
-////                    }
-////                    streamCloser.add(streamSource);
-//                }
-
-
-//                // Get the boundary and segment input streams.
-//                final CompoundInputStream compoundInputStream = streamSource.getCompoundInputStream();
-//                streamCloser.add(compoundInputStream);
-
-//                index = fetchDataRequest.getStreamRange().getOffset();
                 long partNo = fetchDataRequest.getSourceLocation().getPartNo();
                 partCount = source.count();
 
@@ -299,12 +280,17 @@ public class DataFetcher {
 //                            eventId += ":" + (pageRange.getOffset() + 1);
 //                        }
 
-                        writeEventLog(eventId, feedName, streamTypeName, fetchDataRequest.getPipeline(), null);
+                        writeEventLog(eventId,
+                                feedName,
+                                streamTypeName,
+                                requestedChildStreamType,
+                                fetchDataRequest.getPipeline(),
+                                null);
 
                         // If this is an error stream and the UI is requesting markers then
                         // create a list of markers.
                         if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
-                            return createMarkerResult(
+                            return createErrorMarkerResult(
                                     feedName,
                                     streamTypeName,
                                     segmentInputStream,
@@ -328,7 +314,13 @@ public class DataFetcher {
                 }
 
             } catch (final IOException | RuntimeException e) {
-                writeEventLog(eventId, feedName, streamTypeName, fetchDataRequest.getPipeline(), e);
+                writeEventLog(
+                        eventId,
+                        feedName,
+                        streamTypeName,
+                        fetchDataRequest.getSourceLocation().getChildType(),
+                        fetchDataRequest.getPipeline(),
+                        e);
 
                 if (meta != null) {
                     if (Status.LOCKED.equals(meta.getStatus())) {
@@ -346,16 +338,16 @@ public class DataFetcher {
         });
     }
 
-    private FetchMarkerResult createMarkerResult(final String feedName,
-                                                 final String streamTypeName,
-                                                 final SegmentInputStream segmentInputStream,
-                                                 final SourceLocation sourceLocation,
-                                                 final Set<String> availableChildStreamTypes,
-                                                 final Severity... expandedSeverities) throws IOException {
+    private FetchMarkerResult createErrorMarkerResult(final String feedName,
+                                                      final String streamTypeName,
+                                                      final SegmentInputStream segmentInputStream,
+                                                      final SourceLocation sourceLocation,
+                                                      final Set<String> availableChildStreamTypes,
+                                                      final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
 
-        // Get the appropriate encoding for the stream type.
-        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+        // Get the appropriate encoding for the stream type. No child type as this is error strm
+        final String encoding = feedProperties.getEncoding(feedName, streamTypeName, null);
 
         // Include all segments.
         segmentInputStream.includeAll();
@@ -367,16 +359,12 @@ public class DataFetcher {
         markersList = new MarkerListCreator().createFullList(reader, expandedSeverities);
 
         // Create a list just for the request.
-//        int pageOffset = pageRange.getOffset().intValue();
         long pageOffset = sourceLocation.getOptSegmentNo().orElse(0);
         if (pageOffset >= markersList.size()) {
             pageOffset = markersList.size() - 1;
         }
         final long max = pageOffset + SourceLocation.MAX_ERRORS_PER_PAGE;
         final long totalResults = markersList.size();
-        final long nonSummaryResults = markersList.stream()
-                .filter(marker -> !(marker instanceof Summary))
-                .count();
         final List<Marker> resultList = new ArrayList<>();
 
         for (long i = pageOffset; i < max && i < totalResults; i++) {
@@ -387,10 +375,7 @@ public class DataFetcher {
         final OffsetRange<Long> itemRange = new OffsetRange<>(
                 sourceLocation.getSegmentNo(),
                 (long) resultList.size());
-//        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
         final Count<Long> totalItemCount = new Count<>((long) totalResults, true);
-//        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
-//                (long) resultList.size());
         final Count<Long> totalCharCount = new Count<>(0L, true);
 
         return new FetchMarkerResult(
@@ -422,7 +407,8 @@ public class DataFetcher {
                 : DataType.NON_SEGMENTED;
 
         // Get the appropriate encoding for the stream type.
-        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+        final String encoding = feedProperties.getEncoding(
+                feedName, streamTypeName, fetchDataRequest.getSourceLocation().getChildType());
 
         final Charset charset = Charset.forName(encoding);
 
@@ -440,34 +426,33 @@ public class DataFetcher {
             rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
 
+        // We are viewing the data with the BOM removed, so remove the size of the BOM from the
+        // total bytes else the progress bar is messed up
+        rawResult.setTotalBytes(segmentInputStream.size() - rawResult.byteOrderMarkLength);
+        if (rawResult.getTotalCharacterCount() == null) {
+            rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
+        }
+
         return buildFetchDataResult(
                 feedName,
                 streamTypeName,
-                segmentInputStream,
                 availableChildStreamTypes,
                 streamSource,
                 inputStreamProvider,
                 fetchDataRequest,
                 dataType,
-                charset,
                 rawResult);
     }
 
     @NotNull
     private FetchDataResult buildFetchDataResult(final String feedName,
                                                  final String streamTypeName,
-                                                 final SegmentInputStream segmentInputStream,
                                                  final Set<String> availableChildStreamTypes,
                                                  final Source streamSource,
                                                  final InputStreamProvider inputStreamProvider,
                                                  final FetchDataRequest fetchDataRequest,
                                                  final DataType dataType,
-                                                 final Charset charset,
                                                  final RawResult rawResult) {
-        rawResult.setTotalBytes(segmentInputStream.size());
-        if (rawResult.getTotalCharacterCount() == null) {
-            rawResult.setTotalCharacterCount(estimateCharCount(segmentInputStream.size(), charset));
-        }
 
         String output;
         final DocRef pipeline = fetchDataRequest.getPipeline();
@@ -535,10 +520,11 @@ public class DataFetcher {
     private void writeEventLog(final String eventId,
                                final String feedName,
                                final String streamTypeName,
+                               final String childStreamType,
                                final DocRef pipelineRef,
                                final Exception e) {
         try {
-            streamEventLog.viewStream(eventId, feedName, streamTypeName, pipelineRef, e);
+            streamEventLog.viewStream(eventId, feedName, streamTypeName, childStreamType, pipelineRef, e);
         } catch (final Exception ex) {
             LOGGER.debug(ex.getMessage(), ex);
         }
@@ -619,7 +605,7 @@ public class DataFetcher {
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
-        int currByteOffset = 0; // zero based
+        long currByteOffset = 0; // zero based
         int currLineNo = 1; // one based
         int currColNo = 1; // one based
         long currCharOffset = 0; //zero based
@@ -634,7 +620,6 @@ public class DataFetcher {
         long startOfCurrLineCharOffset = 0;
         long startByteOffset = -1;
 
-        int currBufferLen = 0;
         Optional<DecodedChar> optDecodeChar = Optional.empty();
         boolean isFirstChar = true;
         int extraCharCount = 0;
@@ -802,6 +787,10 @@ public class DataFetcher {
         final DataRange actualDataRange;
         final String charData;
         final TextRange highlight;
+        // At this point currByteOffset is the offset of the first byte of the char outside our range
+        // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
+        // in our range
+        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset -1 : currByteOffset;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
@@ -810,8 +799,9 @@ public class DataFetcher {
                     .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                     .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
                     .toCharOffset(currCharOffset)
-                    .toByteOffset(charReader.getLastByteOffsetRead()
-                            .orElseThrow())
+                    .toByteOffset(byteOffsetToInc)
+//                    .toByteOffset(charReader.getLastByteOffsetRead()
+//                            .orElseThrow())
                     .withLength((long) charData.length())
                     .build();
             highlight = sourceLocation.getHighlight();
@@ -844,7 +834,11 @@ public class DataFetcher {
                 resultLocation,
                 charData.substring(0, Math.min(charData.length(), 100))));
 
-        final RawResult rawResult = new RawResult(resultLocation, charData);
+        final int byteOrderMarkLength = charReader.getByteOrderMark()
+                .map(ByteOrderMark::length)
+                .orElse(0);
+
+        final RawResult rawResult = new RawResult(resultLocation, charData, byteOrderMarkLength);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
@@ -1066,6 +1060,7 @@ public class DataFetcher {
     private static class RawResult {
         private final SourceLocation sourceLocation;
         private final String rawData;
+        private final int byteOrderMarkLength;
 
         private OffsetRange<Long> itemRange; // part/segment/marker
         private Count<Long> totalItemCount; // part/segment/marker
@@ -1073,9 +1068,11 @@ public class DataFetcher {
         private long totalBytes;
 
         public RawResult(final SourceLocation sourceLocation,
-                         final String rawData) {
+                         final String rawData,
+                         final int byteOrderMarkLength) {
             this.sourceLocation = sourceLocation;
             this.rawData = rawData;
+            this.byteOrderMarkLength = byteOrderMarkLength;
         }
 
         public SourceLocation getSourceLocation() {
@@ -1084,6 +1081,13 @@ public class DataFetcher {
 
         public String getRawData() {
             return rawData;
+        }
+
+        /**
+         * @return Length in bytes of the byte order mark or 0 if there isn't one
+         */
+        public int getByteOrderMarkLength() {
+            return byteOrderMarkLength;
         }
 
         public OffsetRange<Long> getItemRange() {
