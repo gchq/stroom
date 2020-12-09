@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
@@ -35,9 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,10 +74,7 @@ public class TableResultCreator implements ResultCreator {
             //maxResults defines the max number of records to come back and the paging can happen up to
             //that maxResults threshold
 
-            Set<String> openGroups = Collections.emptySet();
-            if (resultRequest.getOpenGroups() != null) {
-                openGroups = new HashSet<>(resultRequest.getOpenGroups());
-            }
+            Set<RawKey> openGroups = RawKey.convertSet(resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings.getFields();
@@ -128,9 +122,9 @@ public class TableResultCreator implements ResultCreator {
                                 final Sizes maxResults,
                                 final int offset,
                                 final int length,
-                                final Set<String> openGroups,
+                                final Set<RawKey> openGroups,
                                 final List<Row> resultList,
-                                final GroupKey parentKey,
+                                final RawKey parentKey,
                                 final int depth,
                                 final int position,
                                 final RowCreator rowCreator) {
@@ -145,19 +139,18 @@ public class TableResultCreator implements ResultCreator {
                     break;
                 }
 
-                final GroupKey groupKey = item.getKey();
                 boolean hide = false;
 
                 // If the result is within the requested window (offset + length) then add it.
                 if (pos >= offset) {
-                    final Row row = rowCreator.create(fields, item);
+                    final Row row = rowCreator.create(fields, item, depth);
                     if (row != null) {
                         resultList.add(row);
                     } else {
                         hide = true;
                     }
                 } else if (rowCreator.hidesRows()) {
-                    final Row row = rowCreator.create(fields, item);
+                    final Row row = rowCreator.create(fields, item, depth);
                     if (row == null) {
                         hide = true;
                     }
@@ -168,7 +161,7 @@ public class TableResultCreator implements ResultCreator {
                     pos++;
 
                     // Add child results if a node is open.
-                    if (groupKey != null && openGroups != null && openGroups.contains(item.getKey().toString())) {
+                    if (openGroups != null && openGroups.contains(item.getGroupKey())) {
                         pos = addTableResults(
                                 data,
                                 fields,
@@ -177,7 +170,7 @@ public class TableResultCreator implements ResultCreator {
                                 length,
                                 openGroups,
                                 resultList,
-                                item.getKey(),
+                                item.getGroupKey(),
                                 depth + 1,
                                 pos,
                                 rowCreator);
@@ -196,7 +189,7 @@ public class TableResultCreator implements ResultCreator {
     }
 
     private interface RowCreator {
-        Row create(Field[] fields, DataItem item);
+        Row create(Field[] fields, DataItem item, int depth);
 
         boolean hidesRows();
     }
@@ -213,7 +206,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final DataItem item) {
+        public Row create(final Field[] fields, final DataItem item, final int depth) {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
@@ -223,9 +216,9 @@ public class TableResultCreator implements ResultCreator {
             }
 
             return Row.builder()
-                    .groupKey(item.getKey().toString())
+                    .groupKey(item.getGroupKey().encode())
                     .values(stringValues)
-                    .depth(item.getKey().getDepth())
+                    .depth(depth)
                     .build();
         }
 
@@ -268,7 +261,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final DataItem item) {
+        public Row create(final Field[] fields, final DataItem item, final int depth) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -304,9 +297,9 @@ public class TableResultCreator implements ResultCreator {
             if (matchingRule != null) {
                 if (!matchingRule.isHide()) {
                     final Row.Builder builder = Row.builder()
-                            .groupKey(item.getKey().toString())
+                            .groupKey(item.getGroupKey().encode())
                             .values(stringValues)
-                            .depth(item.getKey().getDepth());
+                            .depth(depth);
 
                     if (matchingRule.getBackgroundColor() != null
                             && !matchingRule.getBackgroundColor().isEmpty()) {
@@ -321,9 +314,9 @@ public class TableResultCreator implements ResultCreator {
                 }
             } else {
                 final Row.Builder builder = Row.builder()
-                        .groupKey(item.getKey().toString())
+                        .groupKey(item.getGroupKey().encode())
                         .values(stringValues)
-                        .depth(item.getKey().getDepth());
+                        .depth(depth);
 
                 row = builder.build();
             }

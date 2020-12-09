@@ -25,14 +25,13 @@ import java.util.List;
 public class SearchDebugUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
     private static final Path dir;
+    private static final boolean writeActual = true;
+    private static final boolean writeExpected = false;
+    private static Writer writer;
 
     static {
         dir = resolveDir().resolve("src/test/resources/TestSearchResultCreation");
     }
-
-    private static final boolean writeActual = true;
-    private static final boolean writeExpected = false;
-    private static Writer writer;
 
     private SearchDebugUtil() {
     }

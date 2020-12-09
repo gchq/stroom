@@ -85,6 +85,10 @@ public final class ResultRequest {
         this.fetch = fetch;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public String getComponentId() {
         return componentId;
     }
@@ -143,10 +147,6 @@ public final class ResultRequest {
                 ", resultStyle=" + resultStyle +
                 ", fetch=" + fetch +
                 '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public Builder copy() {
@@ -219,15 +219,15 @@ public final class ResultRequest {
         }
 
         /**
-         * @param values TODO
+         * @param groups TODO
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOpenGroups(final String... values) {
-            if (values.length > 0 && openGroups == null) {
+        public Builder addOpenGroups(final String... groups) {
+            if (groups.length > 0 && openGroups == null) {
                 openGroups = new HashSet<>();
             }
 
-            this.openGroups.addAll(Arrays.asList(values));
+            this.openGroups.addAll(Arrays.asList(groups));
             return this;
         }
 

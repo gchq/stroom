@@ -17,7 +17,6 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
@@ -37,9 +36,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator {
@@ -81,32 +80,35 @@ public class FlatResultCreator implements ResultCreator {
         fields = child.getFields();
     }
 
-    private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final GroupKey key) {
-        if (key == null ||
-                key.getValues() == null ||
-                key.getValues().length == 0) {
+    private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final Key key) {
+        if (key == null || key.size() == 0) {
             return null;
         }
 
-        final LinkedList<Object> result = new LinkedList<>();
-        GroupKey k = key;
-        while (k != null && k.getValues() != null) {
-            final List<Field> fields = groupFields.get(k.getDepth());
-            final Val[] values = k.getValues();
+        if (!key.getLast().isGrouped()) {
+            return null;
+        }
+
+        int depth = 0;
+        final List<Object> result = new ArrayList<>(key.size());
+        for (final KeyPart keyPart : key) {
+            final Val[] values = ((GroupKeyPart) keyPart).getGroupValues();
 
             if (values.length == 0) {
-                result.addFirst(null);
+                result.add(null);
             } else if (values.length == 1) {
                 final Val val = values[0];
                 if (val == null) {
-                    result.addFirst(null);
+                    result.add(null);
                 } else {
                     Field field = null;
+
+                    final List<Field> fields = groupFields.get(depth);
                     if (fields != null) {
                         field = fields.get(0);
                     }
 
-                    result.addFirst(convert(field, val));
+                    result.add(convert(field, val));
                 }
 
             } else {
@@ -118,10 +120,10 @@ public class FlatResultCreator implements ResultCreator {
                     sb.append("|");
                 }
                 sb.setLength(sb.length() - 1);
-                result.addFirst(sb.toString());
+                result.add(sb.toString());
             }
 
-            k = k.getParent();
+            depth++;
         }
 
         return result;
@@ -144,7 +146,7 @@ public class FlatResultCreator implements ResultCreator {
                 final List<List<Object>> results = new ArrayList<>(items.size());
                 if (items.size() > 0) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
-                    final OpenGroups openGroups = OpenGroupsFactory.create(resultRequest.getOpenGroups());
+                    final OpenGroups openGroups = OpenGroupsFactory.create(RawKey.convertSet(resultRequest.getOpenGroups()));
 
                     // Extract the maxResults settings from the last TableSettings object in the chain.
                     // Do not constrain the max results with the default max results as the result size will have
@@ -217,9 +219,10 @@ public class FlatResultCreator implements ResultCreator {
             if (rangeChecker.check(count)) {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
-                if (item.getKey() != null) {
-                    resultList.add(toNodeKey(groupFields, item.getKey().getParent()));
-                    resultList.add(toNodeKey(groupFields, item.getKey()));
+                if (item.getGroupKey() != null) {
+                    final Key key = item.getGroupKey().toKey();
+                    resultList.add(toNodeKey(groupFields, key.getParent()));
+                    resultList.add(toNodeKey(groupFields, key));
                 } else {
                     resultList.add(null);
                     resultList.add(null);
@@ -251,8 +254,8 @@ public class FlatResultCreator implements ResultCreator {
                 resultCountAtThisLevel++;
 
                 // Add child results if a node is open.
-                if (item.getKey() != null && openGroups.isOpen(item.getKey())) {
-                    final DataItems childItems = data.get(item.getKey());
+                if (item.getGroupKey() != null && openGroups.isOpen(item.getGroupKey())) {
+                    final DataItems childItems = data.get(item.getGroupKey());
                     if (childItems.size() > 0) {
                         count = addResults(
                                 data,
@@ -298,7 +301,7 @@ public class FlatResultCreator implements ResultCreator {
 
     @FunctionalInterface
     private interface OpenGroups {
-        boolean isOpen(GroupKey group);
+        boolean isOpen(RawKey groupKey);
     }
 
     private static class Mapper {
@@ -328,11 +331,7 @@ public class FlatResultCreator implements ResultCreator {
             for (int i = 0; i < childFieldIndex.size(); i++) {
                 final String childField = childFieldIndex.getField(i);
                 final Integer parentIndex = parentFieldIndex.getPos(childField);
-                if (parentIndex == null) {
-                    parentFieldIndices[i] = -1;
-                } else {
-                    parentFieldIndices[i] = parentIndex;
-                }
+                parentFieldIndices[i] = Objects.requireNonNullElse(parentIndex, -1);
             }
 
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
@@ -390,13 +389,13 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class OpenGroupsFactory {
-        public static OpenGroups create(final Set<String> openGroups) {
+        public static OpenGroups create(final Set<RawKey> openGroups) {
             if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;
             }
 
-            final Set<String> set = new HashSet<>(openGroups);
-            return key -> key != null && set.contains(key.toString());
+            final Set<RawKey> set = new HashSet<>(openGroups);
+            return key -> key != null && set.contains(key);
         }
     }
 }

@@ -27,30 +27,36 @@ class CompiledDepths {
 
     CompiledDepths(final CompiledField[] compiledFields, final boolean showDetail) {
         int maxGroupDepth = -1;
-        int maxDepth = 0;
+        int maxDepth = -1;
+        int length = 0;
 
         if (compiledFields == null) {
-            groupSizeByDepth = new int[0];
-            groupIndicesByDepth = new boolean[0][];
-            valueIndicesByDepth = new boolean[0][];
+            groupSizeByDepth = new int[length];
+            groupIndicesByDepth = new boolean[length][];
+            valueIndicesByDepth = new boolean[length][];
         } else {
             // Get the max group depth.
             for (final CompiledField field : compiledFields) {
                 maxGroupDepth = Math.max(maxGroupDepth, field.getGroupDepth());
             }
 
-            if (maxGroupDepth >= 0) {
+            // If we are showing details below grouped levels then add one to the max depth,
+            // i.e. the max depth will be 1 greater then the maxGroupDepth.
+            //
+            // Likewise if there are no groups, i.e. the maxGroupDepth == -1,
+            // then act as if show detail were true and ensure the maxDepth is 0.
+            if (showDetail || maxGroupDepth < 0) {
                 maxDepth = maxGroupDepth + 1;
-            }
-            if (showDetail || maxDepth == 0) {
-                maxDepth++;
+            } else {
+                maxDepth = maxGroupDepth;
             }
 
-            groupSizeByDepth = new int[maxDepth];
-            groupIndicesByDepth = new boolean[maxDepth][];
-            valueIndicesByDepth = new boolean[maxDepth][];
+            length = maxDepth + 1;
+            groupSizeByDepth = new int[length];
+            groupIndicesByDepth = new boolean[length][];
+            valueIndicesByDepth = new boolean[length][];
 
-            for (int depth = 0; depth < maxDepth; depth++) {
+            for (int depth = 0; depth <= maxDepth; depth++) {
                 final boolean[] valueIndices = new boolean[compiledFields.length];
                 final boolean[] groupIndices = new boolean[compiledFields.length];
 
@@ -98,6 +104,10 @@ class CompiledDepths {
 
     public boolean[][] getValueIndicesByDepth() {
         return valueIndicesByDepth;
+    }
+
+    public int getMaxGroupDepth() {
+        return maxGroupDepth;
     }
 
     public int getMaxDepth() {
