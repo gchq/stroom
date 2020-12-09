@@ -232,17 +232,17 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     public void refresh() {
         final ICache<Key, IndexShardSearcher> cache = getCache();
         if (cache != null) {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            cache.asMap().values().forEach(v -> {
-                if (v != null) {
-                    try {
-                        v.getSearcherManager().maybeRefresh();
-                    } catch (final IOException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                }
-            });
-            LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
+            LOGGER.logDurationIfDebugEnabled(() ->
+                            cache.asMap().values().forEach(v -> {
+                                if (v != null) {
+                                    try {
+                                        v.getSearcherManager().maybeRefresh();
+                                    } catch (final IOException e) {
+                                        LOGGER.error(e::getMessage, e);
+                                    }
+                                }
+                            }),
+                    "refresh()");
         } else {
             LOGGER.debug(() -> "Cache is null");
         }

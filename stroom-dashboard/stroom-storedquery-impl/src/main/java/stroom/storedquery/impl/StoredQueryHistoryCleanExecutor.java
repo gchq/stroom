@@ -48,7 +48,11 @@ public class StoredQueryHistoryCleanExecutor {
     }
 
     public void exec() {
-        taskContextFactory.context("Clean Stored History", taskContext -> clean(taskContext, false)).run();
+        taskContextFactory.context(
+                "Clean Stored History",
+                taskContext ->
+                        clean(taskContext, false))
+                .run();
     }
 
     private void clean(final TaskContext taskContext, final boolean favourite) {
@@ -57,7 +61,9 @@ public class StoredQueryHistoryCleanExecutor {
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
         final int historyDaysRetention = storedQueryConfig.getDaysRetention();
 
-        final long oldestCrtMs = Instant.now().minus(historyDaysRetention, ChronoUnit.DAYS).toEpochMilli();
+        final long oldestCrtMs = Instant.now()
+                .minus(historyDaysRetention, ChronoUnit.DAYS)
+                .toEpochMilli();
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(user -> {
