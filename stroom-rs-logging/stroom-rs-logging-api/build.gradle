@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.rs.logging.api'
+
+dependencies {
+    compile libs.ws_rs_api
+}

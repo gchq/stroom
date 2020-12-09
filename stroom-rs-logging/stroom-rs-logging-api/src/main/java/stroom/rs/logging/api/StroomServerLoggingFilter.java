@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.rs.logging.api;
 
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseFilter;

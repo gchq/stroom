@@ -1,7 +1,7 @@
-package stroom.security.impl;
+package stroom.rs.logging.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.security.api.UserIdentity;
+import stroom.rs.logging.api.StroomServerLoggingFilter;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -280,12 +280,12 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     }
 
     private Optional<String> getMethodPath(final Method method) {
-       Path annotation = getInheritedAnnotation(Path.class, method);
-       if (annotation != null){
-           return Optional.of(annotation.value());
-       } else {
-           return Optional.empty();
-       }
+        Path annotation = getInheritedAnnotation(Path.class, method);
+        if (annotation != null){
+            return Optional.of(annotation.value());
+        } else {
+            return Optional.empty();
+        }
     }
 
     private static <A extends Annotation> A getInheritedAnnotation(
@@ -448,44 +448,44 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         }
 
         private final StroomLoggingOperationType findOperation(){
-             Optional<StroomLoggingOperationType> type = getOperationType(resourceClass);
-             if (type.isPresent()){
-                 return type.get();
-             } else if (HttpMethod.DELETE.equals(httpMethod)){
+            Optional<StroomLoggingOperationType> type = getOperationType(resourceClass);
+            if (type.isPresent()){
+                return type.get();
+            } else if (HttpMethod.DELETE.equals(httpMethod)){
                 return StroomLoggingOperationType.DELETE;
             } else if (method.getName().startsWith("get")){
-                 return StroomLoggingOperationType.VIEW;
-             } else if (method.getName().startsWith("fetch")) {
-                 return StroomLoggingOperationType.VIEW;
-             } else if (method.getName().startsWith("read")){
-                     return StroomLoggingOperationType.VIEW;
-             } else if (method.getName().startsWith("create")){
-                 return StroomLoggingOperationType.CREATE;
-             } else if (method.getName().startsWith("delete")){
-                 return StroomLoggingOperationType.DELETE;
-             } else if (method.getName().startsWith("update")){
-                 return StroomLoggingOperationType.UPDATE;
-             }  else if (method.getName().startsWith("save")){
-                 return StroomLoggingOperationType.UPDATE;
-             } else if (method.getName().startsWith("find")){
-                 return StroomLoggingOperationType.SEARCH;
-             } else if (method.getName().startsWith("search")){
-                 return StroomLoggingOperationType.SEARCH;
-             }  else if (method.getName().startsWith("list")){
-                 return StroomLoggingOperationType.SEARCH;
-             } else if (method.getName().startsWith("import")){
-                 return StroomLoggingOperationType.IMPORT;
-             } else if (method.getName().startsWith("export")){
-                 return StroomLoggingOperationType.EXPORT;
-             } else if (method.getName().startsWith("upload")){
-                 return StroomLoggingOperationType.IMPORT;
-             } else if (method.getName().startsWith("download")){
-                 return StroomLoggingOperationType.EXPORT;
-             } else if (method.getName().startsWith("set")){
-                 return StroomLoggingOperationType.UPDATE;
-             } else if (method.getName().startsWith("copy")){
-                 return StroomLoggingOperationType.COPY;
-             }
+                return StroomLoggingOperationType.VIEW;
+            } else if (method.getName().startsWith("fetch")) {
+                return StroomLoggingOperationType.VIEW;
+            } else if (method.getName().startsWith("read")){
+                return StroomLoggingOperationType.VIEW;
+            } else if (method.getName().startsWith("create")){
+                return StroomLoggingOperationType.CREATE;
+            } else if (method.getName().startsWith("delete")){
+                return StroomLoggingOperationType.DELETE;
+            } else if (method.getName().startsWith("update")){
+                return StroomLoggingOperationType.UPDATE;
+            }  else if (method.getName().startsWith("save")){
+                return StroomLoggingOperationType.UPDATE;
+            } else if (method.getName().startsWith("find")){
+                return StroomLoggingOperationType.SEARCH;
+            } else if (method.getName().startsWith("search")){
+                return StroomLoggingOperationType.SEARCH;
+            }  else if (method.getName().startsWith("list")){
+                return StroomLoggingOperationType.SEARCH;
+            } else if (method.getName().startsWith("import")){
+                return StroomLoggingOperationType.IMPORT;
+            } else if (method.getName().startsWith("export")){
+                return StroomLoggingOperationType.EXPORT;
+            } else if (method.getName().startsWith("upload")){
+                return StroomLoggingOperationType.IMPORT;
+            } else if (method.getName().startsWith("download")){
+                return StroomLoggingOperationType.EXPORT;
+            } else if (method.getName().startsWith("set")){
+                return StroomLoggingOperationType.UPDATE;
+            } else if (method.getName().startsWith("copy")){
+                return StroomLoggingOperationType.COPY;
+            }
             return StroomLoggingOperationType.UNKNOWN;
         }
 

@@ -89,6 +89,8 @@ dependencies {
     compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
+    compile project(':stroom-rs-logging:stroom-rs-logging-api')
+    compile project(':stroom-rs-logging:stroom-rs-logging-impl')
     compile project(':stroom-resource:stroom-resource-impl')
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-search:stroom-search-solr')

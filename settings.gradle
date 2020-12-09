@@ -262,3 +262,5 @@ include 'stroom-util-shared'
 
 
 include 'stroom-ssl-test'
+include 'stroom-rs-logging:stroom-rs-logging-api'
+include 'stroom-rs-logging:stroom-rs-logging-impl'

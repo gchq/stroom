@@ -80,6 +80,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.db.ProcessorDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
+        install(new stroom.rs.logging.impl.RSLoggingModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
