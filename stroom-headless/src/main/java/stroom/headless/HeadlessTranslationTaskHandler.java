@@ -190,9 +190,7 @@ class HeadlessTranslationTaskHandler {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
 
                     try {
-                        // Processing the data stream so use null child type
-                        pipeline.process(dataStream, feedProperties.getEncoding(
-                                feedName, feedProperties.getStreamTypeName(feedName), null));
+                        pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
                     } catch (final RuntimeException e) {
                         outputError(e);
                     }

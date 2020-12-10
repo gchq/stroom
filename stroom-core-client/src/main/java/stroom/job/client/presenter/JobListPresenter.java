@@ -16,6 +16,13 @@
 
 package stroom.job.client.presenter;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.InfoHelpLinkColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -33,14 +40,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
-
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,30 +70,19 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                         .onSuccess(result -> {
                             final String helpUrl = result.getHelpUrl();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                final String url = helpUrl
-                                        + "/user-guide/tasks.html"
-                                        + formatAnchor(row.getName());
+                                String url = helpUrl + "/user-guide/tasks.html" + formatAnchor(row.getName());
                                 Window.open(url, "_blank", "");
                             } else {
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        "Help is not configured!",
-                                        null);
+                                AlertEvent.fireError(JobListPresenter.this, "Help is not configured!", null);
                             }
                         })
-                        .onFailure(caught ->
-                                AlertEvent.fireError(
-                                        JobListPresenter.this,
-                                        caught.getMessage(),
-                                        null));
+                        .onFailure(caught -> AlertEvent.fireError(JobListPresenter.this, caught.getMessage(), null));
             }
 
         }, "<br/>", 20);
 
         // Enabled.
-        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-
+        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final Job row) {
                 if (row != null) {
@@ -133,30 +121,23 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(
-                eventBus) {
-
+        final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<Job>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<Job>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<Job>> rest = restFactory.create();
-                rest
-                        .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(JOB_RESOURCE).list();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_RESOURCE).list();
             }
 
             @Override
             protected void changeData(final ResultPage<Job> data) {
                 final List<Job> rtnList = new ArrayList<>();
 
-                boolean addedGap = false;
+                boolean done = false;
                 for (int i = 0; i < data.size(); i++) {
                     rtnList.add(data.getValues().get(i));
-                    if (data.getValues().get(i).isAdvanced() && !addedGap) {
-                        // Add a gap between the non-advanced and advanced jobs
+                    if (data.getValues().get(i).isAdvanced() && !done) {
                         rtnList.add(i, null);
-                        addedGap = true;
+                        done = true;
                     }
                 }
 

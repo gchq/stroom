@@ -16,6 +16,8 @@
 
 package stroom.processor.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
@@ -31,18 +33,13 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.task.api.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@DistributedTaskFactoryDescription(
-        jobName = JobNames.DATA_PROCESSOR,
-        description = "Job to process data matching processor filters with their associated pipelines")
+@DistributedTaskFactoryDescription(jobName = JobNames.DATA_PROCESSOR, description = "Job to process data matching processor filters with their associated pipelines")
 public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Data Processor#", 1);

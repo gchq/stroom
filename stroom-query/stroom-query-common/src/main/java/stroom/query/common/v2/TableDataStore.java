@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.query.api.v2.TableSettings;
@@ -29,7 +30,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -40,8 +41,7 @@ import java.util.function.Function;
 public class TableDataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableDataStore.class);
 
-    private final Map<RawKey, Items> childMap = new ConcurrentHashMap<>();
-    private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
+    private final Map<GroupKey, Items> childMap = new ConcurrentHashMap<>();
 
     private final CompiledField[] compiledFields;
     private final CompiledSorter[] compiledSorters;
@@ -52,7 +52,7 @@ public class TableDataStore {
     private final AtomicLong resultCount = new AtomicLong();
     private final ItemSerialiser itemSerialiser;
 
-    private final GroupingFunction[] groupingFunctions;
+    private final Function<List<Item>, List<Item>> groupingFunction;
     private final boolean hasSort;
 
     private volatile boolean hasEnoughData;
@@ -70,10 +70,7 @@ public class TableDataStore {
         this.storeSize = storeSize;
         itemSerialiser = new ItemSerialiser(compiledFields);
 
-        groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
-        for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
-            groupingFunctions[depth] = new GroupingFunction(depth, compiledDepths.getMaxGroupDepth(), compiledFields);
-        }
+        groupingFunction = createGroupingFunction();
 
         // Find out if we have any sorting.
         boolean hasSort = false;
@@ -92,27 +89,9 @@ public class TableDataStore {
     }
 
     boolean readPayload(final Input input) {
-        final int count = input.readInt();
-        for (int i = 0; i < count; i++) {
-            final int length = input.readInt();
-            final byte[] bytes = input.readBytes(length);
-
-            final RawItem rawItem = ItemSerialiser.readRawItem(bytes);
-            final Key key = rawItem.getGroupKey().toKey();
-
-            KeyPart lastPart = key.getLast();
-            if (lastPart != null && !lastPart.isGrouped()) {
-                // Ensure sequence numbers are unique for this data store.
-                ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
-            }
-
-            final Key parent = key.getParent();
-            final RawKey parentKey = parent.toRawKey();
-            final RawKey groupKey = key.toRawKey();
-
-            final byte[] generators = rawItem.getGenerators();
-
-            addToChildMap(key.getDepth(), parentKey, groupKey, generators);
+        final Item[] itemsArray = itemSerialiser.readArray(input);
+        for (final Item item : itemsArray) {
+            addToChildMap(item);
         }
 
         // Return success if we have not been asked to terminate and we are still willing to accept data.
@@ -120,19 +99,20 @@ public class TableDataStore {
     }
 
     void writePayload(final Output output) {
-        final List<byte[]> list = new ArrayList<>();
+        final List<Item> itemList = new ArrayList<>();
         childMap.keySet().forEach(groupKey -> {
             final Items items = childMap.remove(groupKey);
             if (items != null) {
-                list.addAll(items.getList());
+                items.forEach(itemList::add);
             }
         });
 
-        output.writeInt(list.size());
-        for (final byte[] item : list) {
-            output.writeInt(item.length);
-            output.writeBytes(item);
+        Item[] itemsArray = new Item[0];
+        if (itemList.size() > 0) {
+            itemsArray = itemList.toArray(new Item[0]);
         }
+
+        itemSerialiser.writeArray(output, itemsArray);
     }
 
     void add(final Val[] values) {
@@ -140,7 +120,7 @@ public class TableDataStore {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        final List<KeyPart> groupKeys = new ArrayList<>(groupIndicesByDepth.length);
+        GroupKey parentKey = null;
 
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
@@ -148,8 +128,8 @@ public class TableDataStore {
             final int groupSize = groupSizeByDepth[depth];
             final boolean[] groupIndices = groupIndicesByDepth[depth];
             final boolean[] valueIndices = valueIndicesByDepth[depth];
-
             Val[] groupValues = ValSerialiser.EMPTY_VALUES;
+
             if (groupSize > 0) {
                 groupValues = new Val[groupSize];
             }
@@ -175,28 +155,11 @@ public class TableDataStore {
                 }
             }
 
-            // Trim group values.
-            if (groupIndex < groupSize) {
-                groupValues = Arrays.copyOf(groupValues, groupIndex);
-            }
+            final GroupKey key = new GroupKey(depth, parentKey, groupValues);
+            parentKey = key;
 
-            KeyPart keyPart;
-            if (groupSize > 0) {
-                // This is a grouped item.
-                keyPart = new GroupKeyPart(groupValues);
-
-            } else {
-                // This item will not be grouped.
-                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
-            }
-
-            final RawKey parentKey = new Key(groupKeys).toRawKey();
-            groupKeys.add(keyPart);
-            final RawKey childKey = new Key(groupKeys).toRawKey();
-
-            final byte[] generatorBytes = itemSerialiser.toBytes(generators);
-
-            addToChildMap(depth, parentKey, childKey, generatorBytes);
+            final Item item = new Item(key, generators);
+            addToChildMap(item);
         }
     }
 
@@ -227,10 +190,7 @@ public class TableDataStore {
         return generators;
     }
 
-    private void addToChildMap(final int depth,
-                               final RawKey parentKey,
-                               final RawKey groupKey,
-                               final byte[] generators) {
+    private void addToChildMap(final Item item) {
         LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
             return;
@@ -239,24 +199,27 @@ public class TableDataStore {
         // Update the total number of results that we have received.
         totalResultCount.getAndIncrement();
 
-        final GroupingFunction groupingFunction = groupingFunctions[depth];
-        final Function<List<Item>, List<Item>> sortingFunction = compiledSorters[depth];
+        GroupKey parentKey;
+        if (item.getKey().getParent() != null) {
+            parentKey = item.getKey().getParent();
+        } else {
+            parentKey = Data.ROOT_KEY;
+        }
+
+        final Function<List<Item>, List<Item>> groupingFunction = getGroupingFunction(item.getKey());
+        final Function<List<Item>, List<Item>> sortingFunction = compiledSorters[item.getKey().getDepth()];
 
         childMap.compute(parentKey, (k, v) -> {
             Items result = v;
 
             if (result == null) {
-                result = new Items(
-                        storeSize.size(depth),
-                        itemSerialiser,
-                        groupingFunction,
-                        sortingFunction,
-                        this::remove);
-                result.add(groupKey, generators);
+                result = new Items(storeSize.size(item.getKey().getDepth()), groupingFunction, sortingFunction, removed ->
+                        remove(removed.getKey()));
+                result.add(item);
                 resultCount.incrementAndGet();
 
             } else {
-                result.add(groupKey, generators);
+                result.add(item);
             }
 
             return result;
@@ -274,14 +237,82 @@ public class TableDataStore {
         LOGGER.trace(() -> "Finished adding items to the queue");
     }
 
-    private void remove(final RawKey parentKey) {
-        if (parentKey != null) {
+    private Function<List<Item>, List<Item>> getGroupingFunction(final GroupKey groupKey) {
+        if (groupKey.getValues() != null && groupKey.getValues().length > 0) {
+            return groupingFunction;
+        }
+        return null;
+    }
+
+    private Function<List<Item>, List<Item>> createGroupingFunction() {
+        return this::groupItems;
+    }
+
+    private List<Item> groupItems(final List<Item> list) {
+        // Group items in the list.
+        final Map<GroupKey, Item> groupingMap = new HashMap<>();
+        for (final Item item : list) {
+            final GroupKey key = item.getKey();
+            groupingMap.compute(key, (k, v) -> {
+                Item result = v;
+
+                if (result == null) {
+                    result = item;
+                } else {
+                    // Combine the new item into the original item.
+                    final Generator[] existingGenerators = result.getGenerators();
+                    final Generator[] newGenerators = item.getGenerators();
+                    final Generator[] combinedGenerators = new Generator[existingGenerators.length];
+                    for (int i = 0; i < compiledFields.length; i++) {
+                        final CompiledField compiledField = compiledFields[i];
+                        combinedGenerators[i] = combine(
+                                compiledField.getGroupDepth(),
+                                compiledDepths.getMaxDepth(),
+                                existingGenerators[i],
+                                newGenerators[i],
+                                key.getDepth());
+                    }
+                    result = new Item(k, combinedGenerators);
+                }
+
+                return result;
+            });
+        }
+        return new ArrayList<>(groupingMap.values());
+    }
+
+    private Generator combine(final int groupDepth,
+                              final int maxDepth,
+                              final Generator existingValue,
+                              final Generator addedValue,
+                              final int depth) {
+        Generator output = null;
+
+        if (maxDepth >= depth) {
+            if (existingValue != null && addedValue != null) {
+                existingValue.merge(addedValue);
+                output = existingValue;
+            } else if (groupDepth >= 0 && groupDepth <= depth) {
+                // This field is grouped so output existing as it must match the
+                // added value.
+                output = existingValue;
+            }
+        } else {
+            // This field is not grouped so output existing.
+            output = existingValue;
+        }
+
+        return output;
+    }
+
+    private void remove(final GroupKey groupKey) {
+        if (groupKey != null) {
             // Execute removal asynchronously to prevent blocking.
             CompletableFuture.runAsync(() -> {
-                final Items items = childMap.remove(parentKey);
+                final Items items = childMap.remove(groupKey);
                 if (items != null) {
                     resultCount.addAndGet(-items.size());
-                    items.forEach(item -> remove(item.getGroupKey()));
+                    items.forEach(item -> remove(item.getKey()));
                 }
             });
         }

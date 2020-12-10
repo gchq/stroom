@@ -17,8 +17,10 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValSerialiser;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -28,13 +30,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Data {
-    public static final RawKey ROOT_KEY = new Key(Collections.emptyList()).toRawKey();
+    public static final GroupKey ROOT_KEY = new GroupKey(-1, null, ValSerialiser.EMPTY_VALUES);
 
-    private final Map<RawKey, Items> childMap;
+    private final Map<GroupKey, Items> childMap;
     private final long size;
     private final long totalSize;
 
-    public Data(final Map<RawKey, Items> childMap, final long size, final long totalSize) {
+    public Data(final Map<GroupKey, Items> childMap, final long size, final long totalSize) {
         this.childMap = childMap;
         this.size = size;
         this.totalSize = totalSize;
@@ -44,7 +46,7 @@ public class Data {
         return get(ROOT_KEY);
     }
 
-    public DataItems get(final RawKey groupKey) {
+    public DataItems get(final GroupKey groupKey) {
         final Items items = childMap.get(groupKey);
         return new DataItemsImpl(childMap, items);
     }
@@ -58,7 +60,7 @@ public class Data {
     }
 
     public interface DataItem {
-        RawKey getGroupKey();
+        GroupKey getKey();
 
         Val getValue(int index);
     }
@@ -68,10 +70,10 @@ public class Data {
     }
 
     private static class DataItemsImpl implements DataItems {
-        private final Map<RawKey, Items> childMap;
+        private final Map<GroupKey, Items> childMap;
         private final Items items;
 
-        public DataItemsImpl(final Map<RawKey, Items> childMap,
+        public DataItemsImpl(final Map<GroupKey, Items> childMap,
                              final Items items) {
             this.childMap = childMap;
             this.items = items;
@@ -103,18 +105,18 @@ public class Data {
     }
 
     public static class DataItemImpl implements DataItem {
-        private final Map<RawKey, Items> childMap;
+        private final Map<GroupKey, Items> childMap;
         private final Item item;
 
-        public DataItemImpl(final Map<RawKey, Items> childMap,
+        public DataItemImpl(final Map<GroupKey, Items> childMap,
                             final Item item) {
             this.childMap = childMap;
             this.item = item;
         }
 
         @Override
-        public RawKey getGroupKey() {
-            return item.getGroupKey();
+        public GroupKey getKey() {
+            return item.getKey();
         }
 
         @Override
@@ -125,35 +127,25 @@ public class Data {
             if (index >= 0 && index < generators.length) {
                 final Generator generator = generators[index];
                 if (generator != null) {
-                    if (generator instanceof Selector) {
-                        final Key key = item.getGroupKey().toKey();
-                        final Key parentKey = key.getParent();
+                    final GroupKey groupKey = item.getKey();
+                    if (groupKey != null && generator instanceof Selector) {
+                        // If the generator is a selector then select a child row.
+                        final Items childItems = childMap.get(groupKey);
+                        if (childItems != null) {
+                            // Create a list of child generators.
+                            final List<Generator> childGenerators = new ArrayList<>(childItems.size());
+                            childItems.forEach(childItem -> {
+                                final Generator childGenerator = childItem.getGenerators()[index];
+                                childGenerators.add(childGenerator);
+                            });
 
-                        if (parentKey != null) {
-                            final RawKey rawParentKey = parentKey.toRawKey();
+                            // Make the selector select from the list of child generators.
+                            final Selector selector = (Selector) generator;
+                            val = selector.select(childGenerators.toArray(new Generator[0]));
 
-                            // If the generator is a selector then select a child row.
-                            final Items childItems = childMap.get(rawParentKey);
-                            if (childItems != null) {
-                                // Create a list of child generators.
-                                final List<Generator> childGenerators = new ArrayList<>(childItems.size());
-                                childItems.forEach(childItem -> {
-                                    final Generator childGenerator = childItem.getGenerators()[index];
-                                    childGenerators.add(childGenerator);
-                                });
-
-                                // Make the selector select from the list of child generators.
-                                final Selector selector = (Selector) generator;
-                                val = selector.select(childGenerators.toArray(new Generator[0]));
-
-                            } else {
-                                // If there are are no child items then just evaluate the inner expression
-                                // provided to the selector function.
-                                val = generator.eval();
-                            }
                         } else {
-                            // Convert all list into fully resolved objects evaluating functions where
-                            // necessary.
+                            // If there are are no child items then just evaluate the inner expression
+                            // provided to the selector function.
                             val = generator.eval();
                         }
                     } else {

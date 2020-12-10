@@ -321,9 +321,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                // Not a text editor
            } else if (!isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
                editorMode = AceEditorMode.TEXT;
-           } else if (META_TAB_NAME.equals(tabName)) {
+           } else if (StreamTypeNames.META.equals(streamType)) {
                editorMode = AceEditorMode.PROPERTIES;
-           } else if (CONTEXT_TAB_NAME.equals(tabName)) {
+           } else if (StreamTypeNames.CONTEXT.equals(streamType)) {
                editorMode = AceEditorMode.XML;
            } else {
                // Default to xml mode

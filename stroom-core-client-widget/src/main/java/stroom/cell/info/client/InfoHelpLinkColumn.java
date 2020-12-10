@@ -16,13 +16,12 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
-
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 
 public abstract class InfoHelpLinkColumn<T> extends Column<T, SvgPreset> {
     public InfoHelpLinkColumn() {
@@ -34,13 +33,8 @@ public abstract class InfoHelpLinkColumn<T> extends Column<T, SvgPreset> {
         return SvgPresets.HELP;
     }
 
-    /**
-     * @param name The name of the job
-     * @return The name formatted as a markdown anchor, i.e. "My Job" => "#my-job"
-     */
     protected String formatAnchor(String name) {
-        return "#" + name.replace(" ", "-")
-                .toLowerCase();
+        return "#" + name.replace(" ", "_");
     }
 
     @Override

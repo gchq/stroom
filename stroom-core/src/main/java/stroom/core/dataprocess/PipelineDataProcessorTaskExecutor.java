@@ -401,8 +401,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(
-                            meta.getFeedName(), meta.getTypeName(), null);
+                    final String encoding = feedProperties.getEncoding(meta.getFeedName(), meta.getTypeName());
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.

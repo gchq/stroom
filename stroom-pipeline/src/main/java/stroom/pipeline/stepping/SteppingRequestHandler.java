@@ -252,10 +252,8 @@ class SteppingRequestHandler {
 
                     // [Optimisation] If we are moving backward and are at the
                     // beginning of a stream then move to the previous stream.
-                    if (StepType.BACKWARD.equals(stepType)
-                            && currentStreamIndex != -1
-                            && currentLocation.getPartNo() <= 1
-                            && currentLocation.getRecordNo() <= 1) {
+                    if (StepType.BACKWARD.equals(stepType) && currentStreamIndex != -1
+                            && currentLocation.getPartNo() <= 1 && currentLocation.getRecordNo() <= 1) {
                         currentStreamIndex--;
 
                         // If there are no more streams then we are at the
@@ -315,10 +313,10 @@ class SteppingRequestHandler {
                         final String feedName = source.getMeta().getFeedName();
 
                         // Get the stream type.
-                        final String childStreamTypeName = request.getChildStreamType();
+                        final String streamTypeName = request.getChildStreamType();
 
                         // Now process the data.
-                        processStream(controller, feedName, childStreamTypeName, source);
+                        processStream(controller, feedName, streamTypeName, source);
 
                         if (controller.isFound()) {
                             // Set the offset in the task list where we will be able to find this task. This will enable us to show the right stream list page.
@@ -484,9 +482,7 @@ class SteppingRequestHandler {
         }
     }
 
-    private void process(final SteppingController controller,
-                         final String feedName,
-                         final String childDataType,
+    private void process(final SteppingController controller, final String feedName, final String childDataType,
                          final Source source) {
         final Meta meta = source.getMeta();
         final PipelineStepRequest request = controller.getRequest();
@@ -511,29 +507,23 @@ class SteppingRequestHandler {
                     // Start at the last stream number.
                     partNo = count;
                     // Update the current processing location.
-                    currentLocation = new StepLocation(
-                            meta.getId(), partNo, currentLocation.getRecordNo());
+                    currentLocation = new StepLocation(meta.getId(), partNo, currentLocation.getRecordNo());
                 } else {
                     // Else start at the current location.
                     partNo = currentLocation.getPartNo();
                     // Update the current processing location.
-                    currentLocation = new StepLocation(
-                            meta.getId(), partNo, currentLocation.getRecordNo());
+                    currentLocation = new StepLocation(meta.getId(), partNo, currentLocation.getRecordNo());
                 }
             }
 
             // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(
-                    feedName, meta.getTypeName(), childDataType);
+            final String encoding = feedProperties.getEncoding(feedName, childDataType);
 
             // Loop over the stream boundaries and process each
             // sequentially. Loop over the stream boundaries and process
             // each sequentially until we find a record.
             boolean done = controller.isFound();
-            while (!done
-                    && partNo > 0
-                    && partNo <= count
-                    && !Thread.currentThread().isInterrupted()) {
+            while (!done && partNo > 0 && partNo <= count && !Thread.currentThread().isInterrupted()) {
                 // Set the stream number.
                 metaHolder.setStreamNo(partNo);
                 streamLocationFactory.setStreamNo(partNo);
@@ -615,9 +605,7 @@ class SteppingRequestHandler {
             pipeline = pipelineFactory.create(pipelineData, controller);
 
             // Don't return a pipeline if we cannot step with it.
-            if (pipeline == null
-                    || controller.getRecordDetector() == null
-                    || controller.getMonitors() == null
+            if (pipeline == null || controller.getRecordDetector() == null || controller.getMonitors() == null
                     || controller.getMonitors().size() == 0) {
                 throw new ProcessException(
                         "You cannot step with this pipeline as it does not contain required elements.");

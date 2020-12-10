@@ -16,18 +16,6 @@
 
 package stroom.index.impl;
 
-import stroom.index.impl.analyzer.AnalyzerFactory;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
-import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LoggerPrintStream;
-import stroom.util.shared.ModelStringUtil;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
@@ -39,6 +27,17 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.index.impl.analyzer.AnalyzerFactory;
+import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexException;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LoggerPrintStream;
+import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -262,9 +261,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 updateShardInfo(startTime);
             }
 
-            LAMBDA_LOGGER.debug(() ->
-                    "Finished flush in "
-                            + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime) + ") " + toString());
+            LAMBDA_LOGGER.debug(() -> "Finished flush in " + ModelStringUtil.formatDurationString((System.currentTimeMillis() - startTime)) + ") " + toString());
         }
     }
 

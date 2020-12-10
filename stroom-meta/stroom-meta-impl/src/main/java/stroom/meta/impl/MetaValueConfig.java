@@ -8,14 +8,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig {
 
-    @NotNull
     @JsonProperty
     @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
             "In ISO-8601 duration format, e.g. 'P1DT12H'")

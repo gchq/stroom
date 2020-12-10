@@ -8,6 +8,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -57,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
     // Make sure the search request is the same as the one we expected to make.
-    private final Path resourcesDir = SearchDebugUtil.initialise();
+    private final Path resourcesDir = SearchDebugUtil.getDir();
 
     @Test
     void test() throws Exception {
@@ -104,59 +105,6 @@ class TestSearchResultCreation {
         // Validate the search response.
         validateSearchResponse(searchResponse);
     }
-//
-//    @Test
-//    void testSinglePayloadTransfer() throws Exception {
-//        final SearchRequest searchRequest = createSingleSearchRequest();
-//
-//        // Validate the search request.
-//        validateSearchRequest(searchRequest);
-//
-//        // Get sizes.
-//        final SizesProvider sizesProvider = createSizesProvider();
-//
-//        // Create coprocessors.
-//        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
-//        final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-//        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
-//
-//        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
-//
-//        // Reorder values if field mappings have changed.
-//        final int[] mappings = createMappings(consumer);
-//
-//        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
-//
-//        // Add data to the consumer.
-//        final String[] lines = getLines();
-//        for (int i = 0; i < lines.length; i++) {
-//            final String line = lines[i];
-//            final String[] values = line.split(",");
-//            supplyValues(values, mappings, consumer);
-//        }
-//        consumer.getCompletionConsumer().accept((long) lines.length);
-//
-//
-//        transferPayloads(coprocessors, coprocessors2);
-//
-//
-//        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                coprocessors2);
-//
-//        collector.complete();
-//
-//        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
-//        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
-//
-//        // Validate the search response.
-//        validateSearchResponse(searchResponse);
-//    }
 
     @Test
     void testPayloadTransfer() throws Exception {
@@ -484,28 +432,6 @@ class TestSearchResultCreation {
     private void validateSearchResponse(final SearchResponse searchResponse) {
         SearchDebugUtil.writeResponse(searchResponse, true);
         SearchDebugUtil.validateResponse();
-    }
-
-    private SearchRequest createSingleSearchRequest() {
-        final QueryKey key = new QueryKey("e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
-        final DocRef dataSource = new DocRef("Index", "57a35b9a-083c-4a93-a813-fc3ddfe1ff44", "Example index");
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm("EventTime", Condition.BETWEEN, "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
-                .build();
-        final Query query = Query.builder()
-                .dataSource(dataSource)
-                .expression(expression)
-                .addParam("currentUser()", "admin")
-                .build();
-
-        final String dateTimeLocale = "Europe/London";
-        return SearchRequest.builder()
-                .key(key)
-                .query(query)
-                .addResultRequests(createGroupedUserTableResultRequest())
-                .dateTimeLocale(dateTimeLocale)
-                .incremental(true)
-                .build();
     }
 
     private SearchRequest createSearchRequest() {

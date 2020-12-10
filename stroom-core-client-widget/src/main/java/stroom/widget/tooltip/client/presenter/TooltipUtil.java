@@ -17,6 +17,9 @@
 package stroom.widget.tooltip.client.presenter;
 
 
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.Builder;
+
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -93,8 +96,6 @@ public final class TooltipUtil {
     public static Builder builder() {
         return new Builder();
     }
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static final class Builder {
         private final SafeHtmlBuilder buffer;
@@ -194,8 +195,6 @@ public final class TooltipUtil {
         }
     }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     public static class TableBuilder {
         private final SafeHtmlBuilder buffer;
 
@@ -290,11 +289,7 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
-            // Make the text selectable, e.g. for copy/pasting
-            return new SafeHtmlBuilder()
-                    .appendHtmlConstant("<div style=\"user-select: text;\">")
-                    .append(buffer.toSafeHtml())
-                    .appendHtmlConstant("</div>")
+            return buffer.appendHtmlConstant("<table>")
                     .toSafeHtml();
         }
 

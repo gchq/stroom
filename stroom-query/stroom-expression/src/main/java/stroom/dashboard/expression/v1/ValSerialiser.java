@@ -3,8 +3,6 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -43,14 +41,14 @@ public final class ValSerialiser {
         return serialiser.reader.apply(input);
     }
 
-    public static void write(final Output output, final Val val) {
+    static void write(final Output output, final Val val) {
         final byte id = val.type().getId();
         output.writeByte(id);
         final Serialiser serialiser = SERIALISERS[id];
         serialiser.writer.accept(output, val);
     }
 
-    public static Val[] readArray(final Input input) {
+    static Val[] readArray(final Input input) {
         Val[] values = EMPTY_VALUES;
 
         final int valueCount = input.readByteUnsigned();
@@ -64,33 +62,13 @@ public final class ValSerialiser {
         return values;
     }
 
-    public static void writeArray(final Output output, final Val[] values) {
+    static void writeArray(final Output output, final Val[] values) {
         if (values.length > 255) {
             throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
         output.writeByte(values.length);
         for (final Val val : values) {
             write(output, val);
-        }
-    }
-
-    public static byte[] toBytes(final Val[] values) {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final Output output = new Output(byteArrayOutputStream)) {
-            if (values.length > 255) {
-                throw new RuntimeException("You can only write a maximum of " + 255 + " values");
-            }
-            output.writeByte(values.length);
-            for (final Val val : values) {
-                write(output, val);
-            }
-        }
-        return byteArrayOutputStream.toByteArray();
-    }
-
-    public static Val[] toVals(final byte[] bytes) {
-        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
-            return readArray(input);
         }
     }
 

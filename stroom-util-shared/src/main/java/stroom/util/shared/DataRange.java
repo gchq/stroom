@@ -19,7 +19,7 @@ public class DataRange {
     @JsonProperty
     private final Long charOffsetFrom;
     @JsonProperty
-    private final Long byteOffsetFrom; // zero based, inclusive (for multi-byte, the first byte of the 'char')
+    private final Long byteOffsetFrom; // zero based
 
     // The extent of the data range, absolute or relative
     // Need one of these
@@ -28,7 +28,7 @@ public class DataRange {
     @JsonProperty
     private final Long charOffsetTo;
     @JsonProperty
-    private final Long byteOffsetTo; // zero based, inclusive (for multi-byte, the last byte of the 'char')
+    private final Long byteOffsetTo; // zero based
 
     @JsonProperty
     private final Long length; // number of chars from the start position

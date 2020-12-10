@@ -510,8 +510,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void setEditorMode(final FetchDataResult fetchDataResult) {
         final AceEditorMode mode;
 
-        if (fetchDataResult.getSourceLocation() != null
-                && StreamTypeNames.META.equals(fetchDataResult.getSourceLocation().getChildType())) {
+        if (StreamTypeNames.META.equals(fetchDataResult.getStreamTypeName())) {
             mode = AceEditorMode.PROPERTIES;
         } else {// We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
             mode = AceEditorMode.XML;

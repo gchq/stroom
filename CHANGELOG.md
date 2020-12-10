@@ -7,30 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1978** : Fix Meta tab losing syntax highlighting when switching streams.
-
-* Remove byte count in brackets on Info tab when size is below 1024 bytes.
-
-* Fix hjelp links on Jobs screen.
-
-* Fix inability to select text on Info tab in Data viewer.
-
-* Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
-
-* Issue **#1974** : Fix job screen only showing one job.
-
-* Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
-
-* Change reference data lookup request object to support string or epoch millis date.
-
-* Add byte count to Info tab, make date values consistent.
-
-* Fix problem of wrong charset being used.
-
-* Fix syntax highlighting for Meta streams in Source view.
-
-* Fix bug in PreviewInputStream read() method.
-
 * Improve the way the YAML logger paths are modified on boot.
 
 * Issue **#1964** : BGZIP files are now closed on exception.
@@ -38,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Changed default dashboard time zone to use UTC.
 
 * Fixed SQL statistics upsert statements for MySQL 5.7.
+
+
+## [v6.1.28] - 2020-11-25
 
 * Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
 

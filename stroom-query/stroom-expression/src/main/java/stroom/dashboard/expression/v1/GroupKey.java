@@ -21,18 +21,26 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 
-final class GroupKey implements Serializable {
-    private final byte[] parent;
-    private final byte[] values;
+public final class GroupKey implements Serializable {
+    private final int depth;
+    private final GroupKey parent;
+    private final Val[] values;
 
-    GroupKey(final byte[] parent,
-             final byte[] values) {
+    public GroupKey(final int depth,
+                    final GroupKey parent,
+                    final Val[] values) {
+        this.depth = depth;
         this.parent = parent;
         this.values = values;
     }
 
-    public byte[] getParent() {
+    public int getDepth() {
+        return depth;
+    }
+
+    public GroupKey getParent() {
         return parent;
     }
 
@@ -46,7 +54,7 @@ final class GroupKey implements Serializable {
             @XmlElement(name = "err", type = ValErr.class),
             @XmlElement(name = "null", type = ValNull.class)
     })
-    public byte[] getValues() {
+    public Val[] getValues() {
         return values;
     }
 
@@ -55,54 +63,39 @@ final class GroupKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final GroupKey groupKey = (GroupKey) o;
-        return Arrays.equals(parent, groupKey.parent) && Arrays.equals(values, groupKey.values);
+        return depth == groupKey.depth &&
+                Objects.equals(parent, groupKey.parent) &&
+                Arrays.equals(values, groupKey.values);
     }
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(parent);
+        int result = Objects.hash(depth, parent);
         result = 31 * result + Arrays.hashCode(values);
         return result;
     }
 
-//    @Override
-//    public boolean equals(final Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        final GroupKey groupKey = (GroupKey) o;
-//        return depth == groupKey.depth &&
-//                Objects.equals(parent, groupKey.parent) &&
-//                Arrays.equals(values, groupKey.values);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        int result = Objects.hash(depth, parent);
-//        result = 31 * result + Arrays.hashCode(values);
-//        return result;
-//    }
-//
-//    private void append(final StringBuilder sb) {
-//        if (parent != null) {
-//            parent.append(sb);
-//            sb.append("/");
-//        }
-//
-//        if (values != null && values.length > 0) {
-//            for (final Val val : values) {
-//                if (val != null) {
-//                    sb.append(val.toString());
-//                }
-//                sb.append("|");
-//            }
-//            sb.setLength(sb.length() - 1);
-//        }
-//    }
-//
-//    @Override
-//    public String toString() {
-//        final StringBuilder sb = new StringBuilder();
-//        append(sb);
-//        return sb.toString();
-//    }
+    private void append(final StringBuilder sb) {
+        if (parent != null) {
+            parent.append(sb);
+            sb.append("/");
+        }
+
+        if (values != null && values.length > 0) {
+            for (final Val val : values) {
+                if (val != null) {
+                    sb.append(val.toString());
+                }
+                sb.append("|");
+            }
+            sb.setLength(sb.length() - 1);
+        }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        append(sb);
+        return sb.toString();
+    }
 }

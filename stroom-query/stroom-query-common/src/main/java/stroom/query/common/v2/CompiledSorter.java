@@ -37,10 +37,11 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
     }
 
     public static CompiledSorter[] create(final int maxDepth, final CompiledField[] compiledFields) {
-        final CompiledSorter[] sorters = new CompiledSorter[maxDepth + 1];
+        final CompiledSorter[] sorters = new CompiledSorter[maxDepth];
 
         if (compiledFields != null) {
-            for (int depth = 0; depth <= maxDepth; depth++) {
+            for (int depth = 0; depth < maxDepth; depth++) {
+
                 for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                     final CompiledField compiledField = compiledFields[fieldIndex];
                     final Field field = compiledField.getField();

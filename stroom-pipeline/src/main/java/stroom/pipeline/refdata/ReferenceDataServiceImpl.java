@@ -255,8 +255,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
                     refDataLookupRequest.getMapName(),
                     refDataLookupRequest.getKey(),
-                    refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
-                            .orElse(Instant.now().toEpochMilli()));
+                    refDataLookupRequest.getEffectiveTimeEpochMs());
 
             final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
                     refDataLookupRequest.getReferenceLoaders());
@@ -289,10 +288,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new NotFoundException(LogUtil.message("No value for map: {}, key: {}, time {}",
                         refDataLookupRequest.getMapName(),
                         refDataLookupRequest.getKey(),
-                        refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
-                        .map(Instant::ofEpochMilli)
-                        .map(Objects::toString)
-                        .orElse("null")));
+                        Instant.ofEpochMilli(refDataLookupRequest.getEffectiveTimeEpochMs()).toString()));
             }
 
             return stringWriter.toString();

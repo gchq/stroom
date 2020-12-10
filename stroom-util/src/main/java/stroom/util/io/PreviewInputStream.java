@@ -35,14 +35,13 @@ public class PreviewInputStream extends InputStream {
             b = inputStream.read();
         } else {
             if (bufOffset < bufLength) {
-                // the byte is a signed int so convert to unsigned to meet the contract for read()
-                b = buffer[bufOffset++] & 0xff;
+                b = buffer[bufOffset++];
             } else {
                 buffer = null;
                 b = inputStream.read();
             }
         }
-        return b;
+        return b & 0xff;
     }
 
     public int read(final byte[] b, final int off, final int len) throws IOException {

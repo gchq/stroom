@@ -22,6 +22,7 @@ import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
@@ -251,7 +252,7 @@ class TestSerialisation {
         if (!unifiedDiff.isEmpty()) {
             System.out.println("\n  Differences exist!");
 
-            System.out.println();
+            System.out.println("");
             unifiedDiff.forEach(diffLine -> {
 
                 final ConsoleColour lineColour;

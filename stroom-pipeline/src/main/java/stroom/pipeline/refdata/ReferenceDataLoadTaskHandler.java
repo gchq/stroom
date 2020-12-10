@@ -152,6 +152,7 @@ class ReferenceDataLoadTaskHandler {
                                 meta,
                                 source,
                                 feedName,
+                                meta.getTypeName(),
                                 refStreamDefinition);
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
@@ -169,6 +170,7 @@ class ReferenceDataLoadTaskHandler {
                               final Meta meta,
                               final Source source,
                               final String feedName,
+                              final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
         // Set the source meta.
         metaHolder.setMeta(meta);
@@ -183,8 +185,7 @@ class ReferenceDataLoadTaskHandler {
 
         try {
             // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(
-                    feedName, meta.getTypeName(), null);
+            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
             locationFactory.setLocationFactory(streamLocationFactory);

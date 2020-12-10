@@ -17,23 +17,24 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.GroupKey;
 
 import java.io.Serializable;
 
 public class Item implements Serializable {
     private static final long serialVersionUID = 4371018450667741005L;
 
-    private final RawKey groupKey;
+    private final GroupKey key;
     private final Generator[] generators;
 
-    public Item(final RawKey groupKey,
+    public Item(final GroupKey key,
                 final Generator[] generators) {
-        this.groupKey = groupKey;
+        this.key = key;
         this.generators = generators;
     }
 
-    public RawKey getGroupKey() {
-        return groupKey;
+    public GroupKey getKey() {
+        return key;
     }
 
     public Generator[] getGenerators() {

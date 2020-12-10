@@ -28,6 +28,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ResultPage;
 
 import org.apache.lucene.store.LockObtainFailedException;
@@ -240,27 +241,28 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      */
     @Override
     public void flushAll() {
-        LOGGER.logDurationIfDebugEnabled(() -> {
-            try {
-                final Set<IndexShardWriter> openWriters = new HashSet<>(openWritersByShardKey.values());
-                if (openWriters.size() > 0) {
-                    // Flush all writers.
-                    final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
-                    openWriters.forEach(indexShardWriter -> {
-                        try {
-                            flush(indexShardWriter, executorProvider.getAsyncExecutor())
-                                    .thenRun(countDownLatch::countDown);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
-                            countDownLatch.countDown();
-                        }
-                    });
-                    countDownLatch.await();
-                }
-            } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+        try {
+            final Set<IndexShardWriter> openWriters = new HashSet<>(openWritersByShardKey.values());
+            if (openWriters.size() > 0) {
+                // Flush all writers.
+                final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
+                openWriters.forEach(indexShardWriter -> {
+                    try {
+                        flush(indexShardWriter, executorProvider.getAsyncExecutor()).thenRun(countDownLatch::countDown);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        countDownLatch.countDown();
+                    }
+                });
+                countDownLatch.await();
             }
-        }, "flushAll()");
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        LOGGER.debug(() -> "flushAll() - Completed in " + logExecutionTime);
     }
 
     /**
@@ -276,11 +278,12 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      */
     @Override
     public void sweep() {
-        LOGGER.logDurationIfDebugEnabled(() -> {
-                    removeElementsExceedingTTLandTTI();
-                    removeElementsExceedingCore();
-                },
-                "sweep()");
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+        removeElementsExceedingTTLandTTI();
+        removeElementsExceedingCore();
+
+        LOGGER.debug(() -> "sweep() - Completed in " + logExecutionTime);
     }
 
     private void removeElementsExceedingTTLandTTI() {
@@ -388,33 +391,30 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                 try {
                     // Close the shard.
-                    final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult(
-                            "Closing writer", taskContext -> {
-                                try {
-                                    try {
-                                        LOGGER.debug(() -> "Closing " + indexShardId);
-                                        LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
+                    final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult("Closing writer", taskContext -> {
+                        try {
+                            try {
+                                LOGGER.debug(() -> "Closing " + indexShardId);
+                                LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
 
-                                        taskContext.info(() -> "Closing writer for index shard " + indexShardId);
+                                taskContext.info(() -> "Closing writer for index shard " + indexShardId);
 
-                                        // Close the shard.
-                                        indexShardWriter.close();
-                                    } finally {
-                                        // Remove the writer from ones that can be used by readers.
-                                        openWritersByShardId.remove(indexShardId);
+                                // Close the shard.
+                                indexShardWriter.close();
+                            } finally {
+                                // Remove the writer from ones that can be used by readers.
+                                openWritersByShardId.remove(indexShardId);
 
-                                        // Update the shard status.
-                                        indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e::getMessage, e);
-                                }
+                                // Update the shard status.
+                                indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                        }
 
                         return null;
                     });
-                    final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(
-                            supplier,
-                            executor);
+                    final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
                     completableFuture.thenRun(closing::decrementAndGet);
                     completableFuture.exceptionally(t -> {
                         LOGGER.error(t::getMessage, t);
@@ -438,18 +438,20 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     synchronized void startup() {
         securityContext.asProcessingUser(() -> {
             LOGGER.info(() -> "Index shard writer cache startup");
-            LOGGER.logDurationIfDebugEnabled(() -> {
-                // Make sure all open shards are marked as closed.
-                final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
-                criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-                criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
-                criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
-                criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
-                final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
-                for (final IndexShard indexShard : indexShardResultPage.getValues()) {
-                    clean(indexShard);
-                }
-            }, "Index shard writer cache startup");
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+            // Make sure all open shards are marked as closed.
+            final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
+            criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
+            criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
+            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+            for (final IndexShard indexShard : indexShardResultPage.getValues()) {
+                clean(indexShard);
+            }
+
+            LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
         });
     }
 
@@ -457,42 +459,38 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     public synchronized void shutdown() {
         securityContext.asProcessingUser(() -> {
             LOGGER.info(() -> "Index shard writer cache shutdown");
-            LOGGER.logDurationIfDebugEnabled(() -> {
-                ScheduledExecutorService executor = null;
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                try {
-                    // Close any remaining writers.
-                    openWritersByShardKey.values()
-                            .forEach(indexShardWriter ->
-                                    close(indexShardWriter, executorProvider.getAsyncExecutor()));
+            ScheduledExecutorService executor = null;
 
-                    // Report on closing progress.
-                    if (closing.get() > 0) {
-                        // Create a scheduled executor for us to continually log index shard writer action progress.
-                        executor = Executors.newSingleThreadScheduledExecutor();
-                        // Start logging action progress.
-                        executor.scheduleAtFixedRate(() ->
-                                LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"),
-                                10,
-                                10,
-                                TimeUnit.SECONDS);
+            try {
+                // Close any remaining writers.
+                openWritersByShardKey.values().forEach(indexShardWriter -> close(indexShardWriter, executorProvider.getAsyncExecutor()));
 
-                        while (closing.get() > 0) {
-                            Thread.sleep(500);
-                        }
-                    }
-                } catch (final InterruptedException e) {
-                    LOGGER.error(e::getMessage, e);
+                // Report on closing progress.
+                if (closing.get() > 0) {
+                    // Create a scheduled executor for us to continually log index shard writer action progress.
+                    executor = Executors.newSingleThreadScheduledExecutor();
+                    // Start logging action progress.
+                    executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"), 10, 10, TimeUnit.SECONDS);
 
-                    // Continue to interrupt this thread.
-                    Thread.currentThread().interrupt();
-                } finally {
-                    if (executor != null) {
-                        // Shut down the progress logging executor.
-                        executor.shutdown();
+                    while (closing.get() > 0) {
+                        Thread.sleep(500);
                     }
                 }
-            }, "Index shard writer cache shutdown");
+            } catch (final InterruptedException e) {
+                LOGGER.error(e::getMessage, e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            } finally {
+                if (executor != null) {
+                    // Shut down the progress logging executor.
+                    executor.shutdown();
+                }
+            }
+
+            LOGGER.info(() -> "Index shard writer cache shutdown completed in " + logExecutionTime);
         });
     }
 
@@ -527,32 +525,21 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             final long coreItems = Math.max(minItems, indexCacheConfig.getCoreItems());
             final long maxItems = Math.max(coreItems, indexCacheConfig.getMaxItems());
 
-            settings = new Settings(
-                    System.currentTimeMillis(),
-                    timeToLive,
-                    timeToIdle,
-                    minItems,
-                    coreItems,
-                    maxItems);
+            settings = new Settings(System.currentTimeMillis(), timeToLive, timeToIdle, minItems, coreItems, maxItems);
         }
 
         return settings;
     }
 
     private static class Settings {
-        private final long creationTime;
-        private final long timeToLive;
-        private final long timeToIdle;
-        private final long minItems;
-        private final long coreItems;
-        private final long maxItems;
+        private long creationTime;
+        private long timeToLive;
+        private long timeToIdle;
+        private long minItems;
+        private long coreItems;
+        private long maxItems;
 
-        Settings(final long creationTime,
-                 final long timeToLive,
-                 final long timeToIdle,
-                 final long minItems,
-                 final long coreItems,
-                 final long maxItems) {
+        Settings(final long creationTime, final long timeToLive, final long timeToIdle, final long minItems, final long coreItems, final long maxItems) {
             this.creationTime = creationTime;
             this.timeToLive = timeToLive;
             this.timeToIdle = timeToIdle;

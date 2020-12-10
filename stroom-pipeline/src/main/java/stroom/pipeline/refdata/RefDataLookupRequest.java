@@ -2,7 +2,6 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.date.DateUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,10 +12,10 @@ import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @JsonInclude(Include.NON_NULL)
 public class RefDataLookupRequest {
@@ -31,11 +30,9 @@ public class RefDataLookupRequest {
     @JsonProperty
     private final String key;
 
+    @Min(0)
     @JsonProperty
-    private final String effectiveTime; // could be date str or epoch ms
-
-    @JsonIgnore
-    private final Long effectiveTimeEpochMs;
+    private final long effectiveTimeEpochMs;
 
     @Valid
     @NotNull
@@ -46,28 +43,13 @@ public class RefDataLookupRequest {
     @JsonCreator
     public RefDataLookupRequest(@JsonProperty("mapName") final String mapName,
                                 @JsonProperty("key") final String key,
-                                @JsonProperty("effectiveTime") final String effectiveTime,
+                                @JsonProperty("effectiveTimeEpochMs") final Long effectiveTimeEpochMs,
                                 @JsonProperty("referenceLoaders") final List<ReferenceLoader> referenceLoaders) {
         this.mapName = mapName;
         this.key = key;
-
-        this.effectiveTime = effectiveTime;
-        if (effectiveTime != null) {
-            long epochMs;
-
-            try {
-                epochMs = Long.parseLong(effectiveTime);
-            } catch (NumberFormatException e) {
-                try {
-                    epochMs = DateUtil.parseNormalDateTimeString(effectiveTime);
-                } catch (Exception exception) {
-                    throw new IllegalArgumentException("Invalid date " + effectiveTime);
-                }
-            }
-            this.effectiveTimeEpochMs = epochMs;
-        } else {
-            this.effectiveTimeEpochMs = null;
-        }
+        this.effectiveTimeEpochMs = effectiveTimeEpochMs != null
+                ? effectiveTimeEpochMs
+                : Instant.now().toEpochMilli();
         this.referenceLoaders = referenceLoaders;
     }
 
@@ -79,16 +61,8 @@ public class RefDataLookupRequest {
         return key;
     }
 
-    /**
-     * @return data string or epoch ms
-     */
-    public String getEffectiveTime() {
-        return effectiveTime;
-    }
-
-    @JsonIgnore
-    public Optional<Long> getOptEffectiveTimeAsEpochMs() {
-        return Optional.ofNullable(effectiveTimeEpochMs);
+    public long getEffectiveTimeEpochMs() {
+        return effectiveTimeEpochMs;
     }
 
     public List<ReferenceLoader> getReferenceLoaders() {

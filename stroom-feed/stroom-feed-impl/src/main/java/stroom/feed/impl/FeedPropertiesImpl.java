@@ -1,13 +1,12 @@
 package stroom.feed.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.util.io.StreamUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.charset.Charset;
@@ -36,47 +35,35 @@ public class FeedPropertiesImpl implements FeedProperties {
         return classification.trim().toUpperCase();
     }
 
-    /**
-     * @param feedName
-     * @param streamTypeName The name of the stream type, e.g. Raw Reference
-     * @param childStreamTypeName The name of the child stream type, e.g. Context, or null for the data child stream
-     *                            or if not applicable
-     * @return The applicable encoding
-     */
-    public String getEncoding(final String feedName,
-                              final String streamTypeName,
-                              final String childStreamTypeName) {
+    public String getEncoding(final String feedName, final String streamTypeName) {
+        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
+        String encoding = null;
+        if (optional.isPresent() && streamTypeName != null) {
+            if ("Context".equals(streamTypeName)) {
+                encoding = optional.get().getContextEncoding();
+            } else if (RawStreamTypes.isRawType(streamTypeName)) {
+                encoding = optional.get().getEncoding();
+            }
+        }
 
-        return feedDocCache.get(feedName)
-                .flatMap(feedDoc -> {
-                    if (StreamTypeNames.CONTEXT.equals(childStreamTypeName)) {
-                        return Optional.ofNullable(feedDoc.getContextEncoding());
-                    } else if (RawStreamTypes.isRawType(streamTypeName)
-                            && childStreamTypeName == null) {
-                        // Child stream type is null for the data child streams
-                        // Only raw streams have a custom encoding, everything internal is the default charset,
-                        // i.e. UTF8
-                        return Optional.ofNullable(feedDoc.getEncoding());
-                    } else {
-                        return Optional.empty();
-                    }
-                })
-                .filter(this::isEncodingSupported)
-                .orElse(StreamUtil.DEFAULT_CHARSET_NAME);
-    }
+        if (encoding == null || encoding.trim().length() == 0) {
+            encoding = StreamUtil.DEFAULT_CHARSET_NAME;
+        }
 
-    private boolean isEncodingSupported(final String encoding) {
-        boolean isSupported = false;
+        // Make sure the requested charset is supported.
+        boolean supported = false;
         try {
-            isSupported = Charset.isSupported(encoding);
+            supported = Charset.isSupported(encoding);
         } catch (final RuntimeException e) {
             // Ignore.
         }
-        if (!isSupported) {
-            LOGGER.error("Unsupported charset '" + encoding
-                    + "'. Using default '" + StreamUtil.DEFAULT_CHARSET_NAME + "'.");
+        if (!supported) {
+            LOGGER.error(
+                    "Unsupported charset '" + encoding + "'. Using default '" + StreamUtil.DEFAULT_CHARSET_NAME + "'.");
+            encoding = StreamUtil.DEFAULT_CHARSET_NAME;
         }
-        return  isSupported;
+
+        return encoding;
     }
 
     @Override
