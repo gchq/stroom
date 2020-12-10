@@ -181,7 +181,7 @@ public class TableDataStore {
             }
 
             KeyPart keyPart;
-            if (groupSize > 0) {
+            if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
                 keyPart = new GroupKeyPart(groupValues);
 

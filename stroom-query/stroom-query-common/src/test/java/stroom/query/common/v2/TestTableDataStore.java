@@ -31,10 +31,14 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,102 +86,83 @@ class TestTableDataStore {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-//    @Test
-//    void testBigBigResult() {
-//        for (int i = 0; i < 20; i++) {
-//            testBigResult();
-//        }
-//    }
-//
-////    @Test
-//    void testBigResult() {
-//        final FormatterFactory formatterFactory = new FormatterFactory(null);
-//        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
-//
-//        final TableSettings tableSettings = TableSettings.builder()
-//                .addFields(Field.builder()
-//                        .id("Text")
-//                        .name("Text")
-//                        .expression(ParamUtil.makeParam("Text"))
-//                        .format(Format.TEXT)
-//                        .group(1)
-//                        .build())
-//                .addFields(Field.builder()
-//                        .id("Text2")
-//                        .name("Text2")
-//                        .expression(ParamUtil.makeParam("Text2"))
-//                        .format(Format.TEXT)
-//                        .build())
-//                .showDetail(true)
-//                .build();
-//
-//        final FieldIndex fieldIndex = new FieldIndex();
-//
-//        final TableDataStore tableDataStore = new TableDataStore(
-//                tableSettings,
-//                fieldIndex,
-//                Collections.emptyMap(),
-//                Sizes.create(Integer.MAX_VALUE),
-//                Sizes.create(Integer.MAX_VALUE));
-//
-//        for (int i = 0; i < 100; i++) {
-//            final String key = UUID.randomUUID().toString();
-//            for (int j = 0; j < 100000; j++) { // TODO : Original value 100000
-//                final String value = UUID.randomUUID().toString();
-//
-//                final Val[] values = new Val[2];
-//                values[0] = ValString.create(key);
-//                values[1] = ValString.create(value);
-//                tableDataStore.add(values);
-//            }
-//        }
-//
-//        try {
-//            for (int i = 0; i < 6000; i++) {
-//                System.out.println("waiting");
-//                Thread.sleep(1000);
-//            }
-//        } catch (final InterruptedException e) {
-//
-//        }
-//
-//        final Data data = tableDataStore.getData();
-//
-//        //Getting the runtime reference from system
-//        Runtime runtime = Runtime.getRuntime();
-//
-//        runtime.gc();
-//
-//        //Print used memory
-//        System.out.println("Used Memory: "
-//                + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory() - runtime.freeMemory()));
-//
-//        // Make sure we only get 50 results.
-//        final ResultRequest tableResultRequest = ResultRequest.builder()
-//                .componentId("componentX")
-//                .addMappings(tableSettings)
-//                .requestedRange(new OffsetRange(0, 3000))
-//                .build();
-//        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-//                fieldFormatter,
-//                defaultMaxResultsSizes);
-//        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-//                data,
-//                tableResultRequest);
-//        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
-//
-//
-//
-////        //Print free memory
-////        System.out.println("Free Memory: "
-////                + ModelStringUtil.formatIECByteSizeString(runtime.freeMemory()));
-////
-////        //Print total available memory
-////        System.out.println("Total Memory: " + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory()));
-////
-////        //Print Maximum available memory
-////        System.out.println("Max Memory: " + ModelStringUtil.formatIECByteSizeString(runtime.maxMemory()));
-//    }
+    @Test
+    void testBigBigResult() {
+        for (int i = 0; i < 20; i++) {
+            final long start = System.currentTimeMillis();
+            testBigResult();
+            System.out.println("Took " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - start));
+        }
+    }
+
+    //    @Test
+    void testBigResult() {
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("Text")
+                        .name("Text")
+                        .expression(ParamUtil.makeParam("Text"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addFields(Field.builder()
+                        .id("Text2")
+                        .name("Text2")
+                        .expression(ParamUtil.makeParam("Text2"))
+                        .format(Format.TEXT)
+                        .build())
+                .showDetail(true)
+                .build();
+
+        final FieldIndex fieldIndex = new FieldIndex();
+
+        final TableDataStore tableDataStore = new TableDataStore(
+                tableSettings,
+                fieldIndex,
+                Collections.emptyMap(),
+                Sizes.create(Integer.MAX_VALUE),
+                Sizes.create(Integer.MAX_VALUE));
+
+        for (int i = 0; i < 100; i++) {
+            final String key = UUID.randomUUID().toString();
+            for (int j = 0; j < 100000; j++) {
+                final String value = UUID.randomUUID().toString();
+
+                final Val[] values = new Val[2];
+                values[0] = ValString.create(key);
+                values[1] = ValString.create(value);
+                tableDataStore.add(values);
+            }
+        }
+
+        final Data data = tableDataStore.getData();
+
+        //Getting the runtime reference from system
+        Runtime runtime = Runtime.getRuntime();
+
+        runtime.gc();
+
+        //Print used memory
+        System.out.println("Used Memory: "
+                + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory() - runtime.freeMemory()));
+
+        // Make sure we only get 50 results.
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 3000))
+                .build();
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                fieldFormatter,
+                defaultMaxResultsSizes);
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                data,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+    }
 
     @Test
     void sortedTextTest() {
