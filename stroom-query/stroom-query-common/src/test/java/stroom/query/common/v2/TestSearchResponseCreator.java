@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -274,7 +276,14 @@ class TestSearchResponseCreator {
     }
 
     private Data createSingleItemDataObject() {
-        final Items items = new Items(100, null, null, remove -> LOGGER.info(remove.toString()));
+        final List<Field> fields = List.of(
+                Field.builder().name("f1").expression("'A'").build(),
+                Field.builder().name("f2").expression("'B'").build(),
+                Field.builder().name("f3").expression("'C'").build());
+        final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+
+        final Items items = new Items(100, itemSerialiser, null, null, remove -> LOGGER.info(remove.toString()));
         final Generator[] generators = new Generator[3];
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();

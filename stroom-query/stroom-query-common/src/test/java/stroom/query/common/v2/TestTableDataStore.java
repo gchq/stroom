@@ -124,7 +124,6 @@ class TestTableDataStore {
 
         for (int i = 0; i < 100; i++) {
             final String key = UUID.randomUUID().toString();
-//            System.out.println("Group " + i + " " + key);
             for (int j = 0; j < 100000; j++) {
                 final String value = UUID.randomUUID().toString();
 

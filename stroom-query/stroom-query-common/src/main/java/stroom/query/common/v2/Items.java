@@ -16,7 +16,12 @@
 
 package stroom.query.common.v2;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,9 +29,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 class Items implements Iterable<Item> {
-    private volatile List<Item> list;
+    private volatile List<byte[]> list;
     private final int trimmedSize;
     private final int maxSize;
+    private final ItemSerialiser itemSerialiser;
     private final Function<List<Item>, List<Item>> groupingFunction;
     private final Function<List<Item>, List<Item>> sortingFunction;
     private final Consumer<Item> removeHandler;
@@ -35,6 +41,7 @@ class Items implements Iterable<Item> {
     private volatile boolean full;
 
     Items(final int trimmedSize,
+          final ItemSerialiser itemSerialiser,
           final Function<List<Item>, List<Item>> groupingFunction,
           final Function<List<Item>, List<Item>> sortingFunction,
           final Consumer<Item> removeHandler) {
@@ -44,6 +51,7 @@ class Items implements Iterable<Item> {
         } else {
             this.maxSize = Integer.MAX_VALUE;
         }
+        this.itemSerialiser = itemSerialiser;
         this.groupingFunction = groupingFunction;
         this.sortingFunction = sortingFunction;
         this.removeHandler = removeHandler;
@@ -52,17 +60,47 @@ class Items implements Iterable<Item> {
 
     synchronized void add(final Item item) {
         if (groupingFunction != null || sortingFunction != null) {
-            list.add(item);
+            list.add(toBytes(item));
             trimmed = false;
             if (list.size() > maxSize) {
                 sortAndTrim();
             }
         } else if (list.size() < trimmedSize) {
-            list.add(item);
+            list.add(toBytes(item));
         } else {
             full = true;
             removeHandler.accept(item);
         }
+    }
+
+    private byte[] toBytes(final Item item) {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final Output output = new Output(byteArrayOutputStream)) {
+            itemSerialiser.write(output, item);
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private Item toItem(final byte[] bytes) {
+        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
+            return itemSerialiser.read(input);
+        }
+    }
+
+    private List<Item> toItemList(final List<byte[]> bytesList) {
+        final List<Item> items = new ArrayList<>(bytesList.size());
+        for (final byte[] bytes : bytesList) {
+            items.add(toItem(bytes));
+        }
+        return items;
+    }
+
+    private List<byte[]> toBytesList(final List<Item> itemList) {
+        final List<byte[]> items = new ArrayList<>(itemList.size());
+        for (final Item item : itemList) {
+            items.add(toBytes(item));
+        }
+        return items;
     }
 
     int size() {
@@ -73,21 +111,27 @@ class Items implements Iterable<Item> {
         if (!trimmed) {
             // We won't group, sort or trim lists with only a single item obviously.
             if (list.size() > 1) {
-                // Group items.
-                if (groupingFunction != null) {
-                    list = groupingFunction.apply(list);
-                }
+                if (groupingFunction != null || sortingFunction != null) {
+                    List<Item> items = toItemList(list);
 
-                // Sort the list before trimming if we have a comparator.
-                if (sortingFunction != null) {
-                    list = sortingFunction.apply(list);
+                    // Group items.
+                    if (groupingFunction != null) {
+                        items = groupingFunction.apply(items);
+                    }
+
+                    // Sort the list before trimming if we have a comparator.
+                    if (sortingFunction != null) {
+                        items = sortingFunction.apply(items);
+                    }
+
+                    list = toBytesList(items);
                 }
 
                 while (list.size() > trimmedSize) {
-                    final Item lastItem = list.remove(list.size() - 1);
+                    final byte[] lastItem = list.remove(list.size() - 1);
 
                     // Tell the remove handler that we have removed an item.
-                    removeHandler.accept(lastItem);
+                    removeHandler.accept(toItem(lastItem));
                 }
             }
             trimmed = true;
@@ -96,17 +140,17 @@ class Items implements Iterable<Item> {
 
     private synchronized List<Item> copy() {
         sortAndTrim();
-        return new ArrayList<>(list);
+        return toItemList(list);
     }
 
     @Override
     @Nonnull
     public Iterator<Item> iterator() {
-        if (full) {
-            return list.iterator();
-        } else {
-            final List<Item> copy = copy();
-            return copy.iterator();
-        }
+//        if (full) {
+//            return list.iterator();
+//        } else {
+        final List<Item> copy = copy();
+        return copy.iterator();
+//        }
     }
 }

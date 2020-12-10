@@ -213,8 +213,13 @@ public class TableDataStore {
             Items result = v;
 
             if (result == null) {
-                result = new Items(storeSize.size(item.getKey().getDepth()), groupingFunction, sortingFunction, removed ->
-                        remove(removed.getKey()));
+                result = new Items(
+                        storeSize.size(item.getKey().getDepth()),
+                        itemSerialiser,
+                        groupingFunction,
+                        sortingFunction,
+                        removed ->
+                                remove(removed.getKey()));
                 result.add(item);
                 resultCount.incrementAndGet();
 
