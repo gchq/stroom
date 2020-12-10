@@ -146,7 +146,8 @@ public class FlatResultCreator implements ResultCreator {
                 final List<List<Object>> results = new ArrayList<>(items.size());
                 if (items.size() > 0) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
-                    final OpenGroups openGroups = OpenGroupsFactory.create(RawKey.convertSet(resultRequest.getOpenGroups()));
+                    final OpenGroups openGroups =
+                            OpenGroupsFactory.create(OpenGroupsConverter.convertSet(resultRequest.getOpenGroups()));
 
                     // Extract the maxResults settings from the last TableSettings object in the chain.
                     // Do not constrain the max results with the default max results as the result size will have
@@ -220,7 +221,7 @@ public class FlatResultCreator implements ResultCreator {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
                 if (item.getGroupKey() != null) {
-                    final Key key = item.getGroupKey().toKey();
+                    final Key key = KeySerialiser.toKey(item.getGroupKey());
                     resultList.add(toNodeKey(groupFields, key.getParent()));
                     resultList.add(toNodeKey(groupFields, key));
                 } else {

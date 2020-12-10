@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Data {
-    public static final RawKey ROOT_KEY = new Key(Collections.emptyList()).toRawKey();
+    public static final RawKey ROOT_KEY = KeySerialiser.toRawKey(new Key(Collections.emptyList()));
 
     private final Map<RawKey, Items> childMap;
     private final long size;
@@ -126,11 +126,11 @@ public class Data {
                 final Generator generator = generators[index];
                 if (generator != null) {
                     if (generator instanceof Selector) {
-                        final Key key = item.getGroupKey().toKey();
+                        final Key key = KeySerialiser.toKey(item.getGroupKey());
                         final Key parentKey = key.getParent();
 
                         if (parentKey != null) {
-                            final RawKey rawParentKey = parentKey.toRawKey();
+                            final RawKey rawParentKey = KeySerialiser.toRawKey(parentKey);
 
                             // If the generator is a selector then select a child row.
                             final Items childItems = childMap.get(rawParentKey);

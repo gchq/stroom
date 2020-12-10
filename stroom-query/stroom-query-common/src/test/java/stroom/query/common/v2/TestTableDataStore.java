@@ -34,8 +34,6 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -86,9 +84,10 @@ class TestTableDataStore {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-    @Test
+//    @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
+            System.out.println("\n------ RUN " + (i + 1) + " -------");
             final long start = System.currentTimeMillis();
             testBigResult();
             System.out.println("Took " + ModelStringUtil.formatDurationString(System.currentTimeMillis() - start));
@@ -126,19 +125,29 @@ class TestTableDataStore {
                 Sizes.create(Integer.MAX_VALUE),
                 Sizes.create(Integer.MAX_VALUE));
 
-        for (int i = 0; i < 100; i++) {
-            final String key = UUID.randomUUID().toString();
-            for (int j = 0; j < 100000; j++) {
-                final String value = UUID.randomUUID().toString();
 
-                final Val[] values = new Val[2];
-                values[0] = ValString.create(key);
-                values[1] = ValString.create(value);
-                tableDataStore.add(values);
+        Metrics.measure("Loaded data", () -> {
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < 100; i++) {
+                final String key = UUID.randomUUID().toString();
+                for (int j = 0; j < 100000; j++) {
+                    final String value = UUID.randomUUID().toString();
+
+                    final Val[] values = new Val[2];
+                    values[0] = ValString.create(key);
+                    values[1] = ValString.create(value);
+                    tableDataStore.add(values);
+                }
             }
-        }
+        });
 
-        final Data data = tableDataStore.getData();
+        System.out.println("\nLoading data");
+        Metrics.report();
+
+        final Data data = Metrics.measure("Get data", tableDataStore::getData);
+
+        System.out.println("\nGetting data");
+        Metrics.report();
 
         //Getting the runtime reference from system
         Runtime runtime = Runtime.getRuntime();
@@ -149,19 +158,26 @@ class TestTableDataStore {
         System.out.println("Used Memory: "
                 + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory() - runtime.freeMemory()));
 
-        // Make sure we only get 50 results.
-        final ResultRequest tableResultRequest = ResultRequest.builder()
-                .componentId("componentX")
-                .addMappings(tableSettings)
-                .requestedRange(new OffsetRange(0, 3000))
-                .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                fieldFormatter,
-                defaultMaxResultsSizes);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-                data,
-                tableResultRequest);
-        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        Metrics.measure("Result", () -> {
+            // Make sure we only get 50 results.
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId("componentX")
+                    .addMappings(tableSettings)
+                    .requestedRange(new OffsetRange(0, 3000))
+                    .build();
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                    fieldFormatter,
+                    defaultMaxResultsSizes);
+            final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                    data,
+                    tableResultRequest);
+
+            assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+        });
+
+        System.out.println("\nGetting results");
+        Metrics.report();
+
     }
 
     @Test

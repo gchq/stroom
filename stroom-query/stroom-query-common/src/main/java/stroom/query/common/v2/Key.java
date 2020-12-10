@@ -1,13 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ValSerialiser;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import javax.annotation.Nonnull;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,37 +11,11 @@ public class Key implements Iterable<KeyPart> {
         this.keyParts = keyParts;
     }
 
-    static Key read(final Input input) {
-        final int size = input.readInt();
-        final List<KeyPart> list = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            final boolean grouped = input.readBoolean();
-            if (grouped) {
-                list.add(new GroupKeyPart(ValSerialiser.readArray(input)));
-            } else {
-                list.add(new UngroupedKeyPart(input.readLong()));
-            }
-        }
-        return new Key(list);
-    }
-
     KeyPart getLast() {
         if (keyParts.size() > 0) {
             return keyParts.get(keyParts.size() - 1);
         }
         return null;
-    }
-
-    private byte[] toBytes() {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final Output output = new Output(byteArrayOutputStream)) {
-            write(output);
-        }
-        return byteArrayOutputStream.toByteArray();
-    }
-
-    RawKey toRawKey() {
-        return new RawKey(toBytes());
     }
 
     Key getParent() {
@@ -64,14 +31,6 @@ public class Key implements Iterable<KeyPart> {
 
     int size() {
         return keyParts.size();
-    }
-
-    private void write(final Output output) {
-        output.writeInt(keyParts.size());
-        for (final KeyPart keyPart : keyParts) {
-            output.writeBoolean(keyPart.isGrouped());
-            keyPart.write(output);
-        }
     }
 
     @Override

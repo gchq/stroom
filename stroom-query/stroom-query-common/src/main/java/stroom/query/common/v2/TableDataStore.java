@@ -92,47 +92,51 @@ public class TableDataStore {
     }
 
     boolean readPayload(final Input input) {
-        final int count = input.readInt();
-        for (int i = 0; i < count; i++) {
-            final int length = input.readInt();
-            final byte[] bytes = input.readBytes(length);
+        return Metrics.measure("readPayload", () -> {
+            final int count = input.readInt();
+            for (int i = 0; i < count; i++) {
+                final int length = input.readInt();
+                final byte[] bytes = input.readBytes(length);
 
-            final RawItem rawItem = ItemSerialiser.readRawItem(bytes);
-            final Key key = rawItem.getGroupKey().toKey();
+                final RawItem rawItem = ItemSerialiser.readRawItem(bytes);
+                final RawKey rawKey = rawItem.getGroupKey();
+                final Key key = KeySerialiser.toKey(rawKey);
 
-            KeyPart lastPart = key.getLast();
-            if (lastPart != null && !lastPart.isGrouped()) {
-                // Ensure sequence numbers are unique for this data store.
-                ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                KeyPart lastPart = key.getLast();
+                if (lastPart != null && !lastPart.isGrouped()) {
+                    // Ensure sequence numbers are unique for this data store.
+                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                }
+
+                final Key parent = key.getParent();
+                final RawKey parentKey = KeySerialiser.toRawKey(parent);
+
+                final byte[] generators = rawItem.getGenerators();
+
+                addToChildMap(key.getDepth(), parentKey, rawKey, generators);
             }
 
-            final Key parent = key.getParent();
-            final RawKey parentKey = parent.toRawKey();
-            final RawKey groupKey = key.toRawKey();
-
-            final byte[] generators = rawItem.getGenerators();
-
-            addToChildMap(key.getDepth(), parentKey, groupKey, generators);
-        }
-
-        // Return success if we have not been asked to terminate and we are still willing to accept data.
-        return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+            // Return success if we have not been asked to terminate and we are still willing to accept data.
+            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+        });
     }
 
     void writePayload(final Output output) {
-        final List<byte[]> list = new ArrayList<>();
-        childMap.keySet().forEach(groupKey -> {
-            final Items items = childMap.remove(groupKey);
-            if (items != null) {
-                list.addAll(items.getList());
+        Metrics.measure("writePayload", () -> {
+            final List<byte[]> list = new ArrayList<>();
+            childMap.keySet().forEach(groupKey -> {
+                final Items items = childMap.remove(groupKey);
+                if (items != null) {
+                    list.addAll(items.getList());
+                }
+            });
+
+            output.writeInt(list.size());
+            for (final byte[] item : list) {
+                output.writeInt(item.length);
+                output.writeBytes(item);
             }
         });
-
-        output.writeInt(list.size());
-        for (final byte[] item : list) {
-            output.writeInt(item.length);
-            output.writeBytes(item);
-        }
     }
 
     void add(final Val[] values) {
@@ -142,6 +146,7 @@ public class TableDataStore {
 
         final List<KeyPart> groupKeys = new ArrayList<>(groupIndicesByDepth.length);
 
+        RawKey parentKey = Data.ROOT_KEY;
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
 
@@ -190,13 +195,14 @@ public class TableDataStore {
                 keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
             }
 
-            final RawKey parentKey = new Key(groupKeys).toRawKey();
             groupKeys.add(keyPart);
-            final RawKey childKey = new Key(groupKeys).toRawKey();
+            final RawKey childKey = KeySerialiser.toRawKey(new Key(groupKeys));
 
             final byte[] generatorBytes = itemSerialiser.toBytes(generators);
 
             addToChildMap(depth, parentKey, childKey, generatorBytes);
+
+            parentKey = childKey;
         }
     }
 

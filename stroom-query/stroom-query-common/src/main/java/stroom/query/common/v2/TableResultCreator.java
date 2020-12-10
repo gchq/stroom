@@ -74,7 +74,7 @@ public class TableResultCreator implements ResultCreator {
             //maxResults defines the max number of records to come back and the paging can happen up to
             //that maxResults threshold
 
-            Set<RawKey> openGroups = RawKey.convertSet(resultRequest.getOpenGroups());
+            Set<RawKey> openGroups = OpenGroupsConverter.convertSet(resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings.getFields();
@@ -216,7 +216,7 @@ public class TableResultCreator implements ResultCreator {
             }
 
             return Row.builder()
-                    .groupKey(item.getGroupKey().encode())
+                    .groupKey(OpenGroupsConverter.encode(item.getGroupKey()))
                     .values(stringValues)
                     .depth(depth)
                     .build();
@@ -297,7 +297,7 @@ public class TableResultCreator implements ResultCreator {
             if (matchingRule != null) {
                 if (!matchingRule.isHide()) {
                     final Row.Builder builder = Row.builder()
-                            .groupKey(item.getGroupKey().encode())
+                            .groupKey(OpenGroupsConverter.encode(item.getGroupKey()))
                             .values(stringValues)
                             .depth(depth);
 
@@ -314,7 +314,7 @@ public class TableResultCreator implements ResultCreator {
                 }
             } else {
                 final Row.Builder builder = Row.builder()
-                        .groupKey(item.getGroupKey().encode())
+                        .groupKey(OpenGroupsConverter.encode(item.getGroupKey()))
                         .values(stringValues)
                         .depth(depth);
 

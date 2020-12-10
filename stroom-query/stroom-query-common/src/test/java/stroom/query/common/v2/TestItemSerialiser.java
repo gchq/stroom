@@ -47,7 +47,7 @@ class TestItemSerialiser {
         }
 
         final Key key = new Key(List.of(new GroupKeyPart(new Val[]{ValLong.create(1262304240000L), ValString.create("user5")})));
-        final RawKey rawKey = key.toRawKey();
+        final RawKey rawKey = KeySerialiser.toRawKey(key);
         final Item item = new Item(rawKey, generators);
         final String expected = item.toString();
 
@@ -100,7 +100,7 @@ class TestItemSerialiser {
         }
 
         final Key key = new Key(Collections.emptyList());
-        final RawKey rawKey = key.toRawKey();
+        final RawKey rawKey = KeySerialiser.toRawKey(key);
         final Item item = new Item(rawKey, generators);
         final String expected = item.toString();
 
@@ -138,7 +138,7 @@ class TestItemSerialiser {
         final Generator[] generators = new Generator[fields.size()];
 
         final Key key = new Key(Collections.emptyList());
-        final RawKey rawKey = key.toRawKey();
+        final RawKey rawKey = KeySerialiser.toRawKey(key);
         final Item item = new Item(rawKey, generators);
         final String expected = item.toString();
 
