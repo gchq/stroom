@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
 @JsonInclude(Include.NON_NULL)
@@ -65,6 +66,12 @@ public class DataRetentionRules extends Doc {
 
     public List<DataRetentionRule> getRules() {
         return rules;
+    }
+
+    public List<DataRetentionRule> getActiveRules() {
+        return rules.stream()
+                .filter(DataRetentionRule::isEnabled)
+                .collect(Collectors.toList());
     }
 
     public void setRules(final List<DataRetentionRule> rules) {
