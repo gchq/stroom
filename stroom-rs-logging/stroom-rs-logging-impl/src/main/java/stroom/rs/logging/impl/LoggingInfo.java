@@ -1,13 +1,25 @@
 package stroom.rs.logging.impl;
 
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.util.shared.StroomLoggingOperation;
 import stroom.util.shared.StroomLoggingOperationType;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.Path;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static stroom.rs.logging.impl.StroomServerLoggingFilterImpl.LOGGER;
 
 class LoggingInfo {
     private final String httpMethod;
@@ -15,6 +27,7 @@ class LoggingInfo {
     private final StroomLoggingOperationType operation;
     private final Method method;
     private final Class <?> resourceClass;
+    private final Optional<Class<?>> parameterType;
 
     public LoggingInfo(String httpMethod, String path, Method javaMethod, Class<?> resourceClass){
         this.httpMethod = httpMethod;
@@ -22,9 +35,10 @@ class LoggingInfo {
         this.method = javaMethod;
         this.resourceClass = resourceClass;
         operation = findOperation();
+        parameterType = findParameterType(path, javaMethod);
     }
 
-    private Optional<StroomLoggingOperationType> getOperationType(final Class<?> restResourceClass) {
+    private static Optional<StroomLoggingOperationType> getOperationType(final Class<?> restResourceClass) {
         final StroomLoggingOperation opAnnotation = restResourceClass.getAnnotation(StroomLoggingOperation.class);
         return Optional.ofNullable(opAnnotation)
                 .or(() ->
@@ -33,10 +47,31 @@ class LoggingInfo {
                                 .map(clazz -> clazz.getAnnotation(StroomLoggingOperation.class))
                                 .filter(Objects::nonNull)
                                 .findFirst())
-                .map(op -> op.value());
+                .map(StroomLoggingOperation::value);
     }
 
-    private final StroomLoggingOperationType findOperation(){
+    private static Optional<Class<?>> findParameterType (String path, Method method){
+        if (method.getParameterCount() == 0){
+            return Optional.empty();
+        }
+
+        List<Parameter> paramsWithoutPathAnnotation = Arrays.stream(method.getParameters()).
+                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(Path.class, method, p) == null).
+                collect(Collectors.toList());
+
+        if (paramsWithoutPathAnnotation.size() > 1) {
+            LOGGER.warn("Unable to provide logging for api call "  + path + " because implementation " + method.getName()
+                    + " has multiple parameters");
+        }
+
+        if (paramsWithoutPathAnnotation.size() == 1){
+            return Optional.of(paramsWithoutPathAnnotation.get(0).getType());
+        }
+
+        return Optional.empty();
+    }
+
+    private StroomLoggingOperationType findOperation(){
         Optional<StroomLoggingOperationType> type = getOperationType(resourceClass);
         if (type.isPresent()){
             return type.get();
@@ -90,17 +125,7 @@ class LoggingInfo {
         return operation;
     }
 
-    public String createCallKey (){
-        return StroomServerLoggingFilterImpl.createCallKey(httpMethod, path);
-    }
-
-    public Optional<Class> getRequestParamClass (){
-        if (method.getParameterCount() == 0){
-            return Optional.empty();
-        } else if (method.getParameterCount() == 1){
-            return Optional.of(method.getParameters()[0].getType());
-        }
-        //Can't work with multiple parameters.
-        return null;
+    public Optional<Class<?>> getRequestParamClass (){
+      return parameterType;
     }
 }

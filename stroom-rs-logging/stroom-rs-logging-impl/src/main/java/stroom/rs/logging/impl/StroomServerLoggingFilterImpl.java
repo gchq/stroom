@@ -1,9 +1,7 @@
 package stroom.rs.logging.impl;
 
 import stroom.rs.logging.api.StroomServerLoggingFilter;
-import stroom.util.guice.RestResourcesBinder;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
+
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -19,30 +17,22 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter {
     static final Logger LOGGER = LoggerFactory.getLogger(StroomServerLoggingFilterImpl.class);
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
-    private Map<String, List<LoggingInfo>> loggingInfoMap;
-
-    private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
+    private final Provider<ResourcePathMap> resourcePathMapProvider;
 
     @Inject
-    StroomServerLoggingFilterImpl(final Map<RestResourcesBinder.ResourceType,
-            Provider<RestResource>> providerMap, RequestEventLog requestEventLog) {
-        this.providerMap = providerMap;
+    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog, Provider<ResourcePathMap> resourcePathMapProvider) {
         this.requestEventLog = requestEventLog;
-        this.objectMapper = createMapper(false);
+        this.resourcePathMapProvider = resourcePathMapProvider;
+        this.objectMapper = createObjectMapper();
     }
 
     private static class RequestInfo {
@@ -75,82 +65,9 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         }
     }
 
-
-    LoggingInfo findLoggingInfo (ContainerRequestContext context){
-        return findLoggingInfo (context.getMethod(),
-                ResourcePaths.buildAuthenticatedApiPath(context.getUriInfo().getPath()));
-    }
-
-    LoggingInfo findLoggingInfo (String method, String path){
-        String key = createCallKey(method, path);
-        List<LoggingInfo> possibleMatches = getLoggingImfoMap().get(key);
-
-        if (possibleMatches == null){
-            return null;
-        }
-
-        if (possibleMatches.size() == 1){
-            return possibleMatches.get(0);
-        }
-
-        //todo find the exact match using regex
-        LOGGER.warn("Need to dedupe for method " + method  + " at " + path);
-        return null;
-    }
-
-    synchronized Map<String, List<LoggingInfo>> getLoggingImfoMap(){
-        if (loggingInfoMap == null){
-            loggingInfoMap =  providerMap.keySet().stream().flatMap(this::findCallsForResource).
-                    collect(Collectors.groupingBy(LoggingInfo::createCallKey));
-
-        }
-
-        return loggingInfoMap;
-    }
-
-    private Stream<LoggingInfo> findCallsForResource (RestResourcesBinder.ResourceType resourceType){
-        Class<?> resourceClass = resourceType.getResourceClass();
-
-        Optional<String> resourcePath = AnnotationUtil.getResourcePath(resourceClass);
-        if (resourcePath.isEmpty()){
-            LOGGER.warn("Unable to determine HTTP method for class " + resourceClass.getName());
-            return Stream.empty();
-        }
-
-        return Arrays.stream(resourceClass.getMethods()).sequential().flatMap(m -> {
-            Optional<String> methodPath = AnnotationUtil.getMethodPath (m);
-            if (methodPath.isEmpty()) {
-                return Stream.empty();
-            }
-
-            Optional<String> httpMethod = AnnotationUtil.getHttpMethod (m, resourceClass);
-            if (httpMethod.isEmpty()) {
-                LOGGER.warn("Unable to determine HTTP method for api call " + methodPath.get());
-                return Stream.empty();
-            }
-
-            return Stream.of(new LoggingInfo(
-                    httpMethod.get(),
-                    stripVariableFromPath(resourcePath.get() + methodPath.get()),
-                    m, resourceClass));
-        });
-    }
-
-    private static String stripVariableFromPath (String originalPath){
-        if (originalPath.contains("{")){
-            originalPath = originalPath.substring(0, originalPath.indexOf('{'));
-        }
-        return originalPath;
-    }
-
-    static String createCallKey (String method, String originalPath){
-        originalPath = stripVariableFromPath(originalPath);
-        return method + ":" + originalPath;
-    }
-
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        LoggingInfo loggingInfo = findLoggingInfo(context);
+        LoggingInfo loggingInfo = resourcePathMapProvider.get().lookup(context);
 
         if (context.hasEntity()) {
             final LoggingInputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
@@ -162,10 +79,10 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
     }
 
-    private static ObjectMapper createMapper(final boolean indent) {
+    private static ObjectMapper createObjectMapper() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
         mapper.setSerializationInclusion(Include.NON_NULL);
 
         return mapper;

@@ -15,7 +15,7 @@ class LoggingInputStream extends BufferedInputStream {
     private final static int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
     private final LoggingInfo loggingInfo;
-    private boolean constructed;
+    private final boolean constructed;
 
     public LoggingInputStream (final LoggingInfo loggingInfo, final InputStream original, final ObjectMapper objectMapper, final Charset charset) throws IOException {
         super(original);
@@ -27,14 +27,17 @@ class LoggingInputStream extends BufferedInputStream {
     private void readEntity(final ObjectMapper objectMapper, final Charset charset) throws IOException {
         if (loggingInfo != null){
             mark(MAX_ENTITY_SIZE + 1);
-            Optional<Class> requestClass = loggingInfo.getRequestParamClass();
+            Optional<Class<?>> requestClass = loggingInfo.getRequestParamClass();
 
-            if (requestClass != null){
-                Object obj = objectMapper.readValue(new InputStreamReader(this, charset), requestClass.get());
-                requestEntity = obj;
-            } else {
-                LOGGER.warn("Unable to determine type of object for automatic logging. HTTP request path is" + loggingInfo.getPath());
+            if (requestClass.isPresent()) {
+                try {
+                    requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestClass.get());
+                } catch (Exception ex){
+                    //Indicates that this request type cannot be constructed in this way.
+                    requestEntity = null;
+                }
             }
+
             reset();
         }
     }
