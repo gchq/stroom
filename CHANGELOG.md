@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1965** : Ignore gzipped data that has no uncompressed content.
+
 * Fix path for user event logs.
 
 * Uplift send_to_stroom script to v3.0.
