@@ -19,6 +19,7 @@ package stroom.data.retention.shared;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,8 +29,10 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
 @JsonInclude(Include.NON_NULL)
@@ -65,6 +68,17 @@ public class DataRetentionRules extends Doc {
 
     public List<DataRetentionRule> getRules() {
         return rules;
+    }
+
+    @JsonIgnore
+    public List<DataRetentionRule> getActiveRules() {
+        if (rules == null) {
+            return Collections.emptyList();
+        } else {
+            return rules.stream()
+                    .filter(DataRetentionRule::isEnabled)
+                    .collect(Collectors.toList());
+        }
     }
 
     public void setRules(final List<DataRetentionRule> rules) {

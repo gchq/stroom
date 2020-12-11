@@ -22,6 +22,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -538,6 +539,12 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     @Override
     public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.addButton(preset);
+    }
+
+    @Override
+    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
+                                            final SvgPreset secondaryPreset) {
+        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
     }
 
     @Override
