@@ -45,6 +45,9 @@ class ResourcePathMap {
     }
 
     public LoggingInfo lookup (String method, String path){
+        if (path.contains("?")){
+            path = path.substring(0, path.indexOf('?'));
+        }
         String key = createCallKey(method, path);
         List<LoggingInfo> possibleMatches = loggingInfoMap.get(key);
 
@@ -52,18 +55,15 @@ class ResourcePathMap {
             return possibleMatches.get(0);
         }
 
-        if (path.contains("?")){
-            path = path.substring(0, path.indexOf('?'));
-        }
 
-        return searchForVariableMatch(path);
+        return searchForVariableMatch(key);
 
     }
 
-    private LoggingInfo searchForVariableMatch(String path){
+    private LoggingInfo searchForVariableMatch(String key){
         List<LoggingInfo> matches = variablePathsMap.keySet().stream().flatMap(
                 pattern -> {
-                    Matcher matcher = pattern.matcher(path);
+                    Matcher matcher = pattern.matcher(key);
                     if (matcher.matches()){
                         return Stream.of(variablePathsMap.get(pattern));
                     }
@@ -72,7 +72,7 @@ class ResourcePathMap {
         ).collect(Collectors.toList());
 
         if (matches.size() > 1){
-            LOGGER.warn("Multiple (" + matches.size() + ") resources found by rs logger at path" );
+            LOGGER.warn("Multiple (" + matches.size() + ") resources found by rs logger at HTTPMethod:path " + key );
         }
         if (matches.size() > 0){
             return matches.get(0);
@@ -87,7 +87,8 @@ class ResourcePathMap {
     }
 
     private static Pattern createPathPattern(LoggingInfo loggingInfo){
-        String regex = loggingInfo.getPath().replaceAll("\\{[^/]+}","[\\\\S]+");
+        String regex = createCallKey(loggingInfo.getHttpMethod(),
+                loggingInfo.getPath().replaceAll("\\{[^/]+}","[\\\\S]+"));
         return Pattern.compile(regex);
     }
 
@@ -204,6 +205,9 @@ class ResourcePathMap {
     }
 
     private static String createCallKey (String method, String originalPath){
+        if (originalPath.endsWith("/")){
+            originalPath = originalPath.substring(0, originalPath.length() - 1);
+        }
         if (originalPath.contains("{")) {
             return ALL_VARIABLE_RS_PATHS;
         }

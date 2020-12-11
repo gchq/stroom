@@ -1,23 +1,17 @@
 package stroom.rs.logging.impl;
 
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.util.shared.StroomLoggingOperation;
 import stroom.util.shared.StroomLoggingOperationType;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.Path;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static stroom.rs.logging.impl.StroomServerLoggingFilterImpl.LOGGER;
 
