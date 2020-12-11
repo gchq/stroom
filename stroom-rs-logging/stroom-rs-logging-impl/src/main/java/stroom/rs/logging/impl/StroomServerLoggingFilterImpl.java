@@ -1,22 +1,30 @@
 package stroom.rs.logging.impl;
 
 import stroom.rs.logging.api.StroomServerLoggingFilter;
+import stroom.util.shared.PermissionException;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.gwt.thirdparty.json.JSONException;
+import com.google.gwt.thirdparty.json.JSONObject;
+import com.google.gwt.user.client.rpc.RpcTokenException;
 import org.glassfish.jersey.message.MessageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.naming.AuthenticationException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.IOException;
+import java.net.http.HttpResponse;
 
 
 public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter {
@@ -33,6 +41,46 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         this.requestEventLog = requestEventLog;
         this.resourcePathMapProvider = resourcePathMapProvider;
         this.objectMapper = createObjectMapper();
+    }
+
+    @Override
+    public Response toResponse(final Exception exception) {
+        //todo create separate providers for
+        //todo TokenException
+        //todo AuthenticationException
+
+        //Could register these Exception types separately, but this seems easier to maintain at present
+
+        if (exception instanceof WebApplicationException){
+            WebApplicationException wae = (WebApplicationException) exception;
+            return wae.getResponse();
+        } else if (exception instanceof PermissionException) {
+            return createExceptionResponse(Status.FORBIDDEN, exception);
+        } else {
+            return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
+        }
+    }
+
+    private Response createExceptionResponse (Response.Status status, Exception ex) {
+        try {
+            String json = createExceptionJSON(status, ex);
+            return Response.status(status).
+                    entity(json).
+                    type("application/json").
+                    build();
+        } catch (Exception internal) {
+            LOGGER.error("Unable to create response for exception " + ex.getMessage(), internal);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private static String createExceptionJSON(Response.Status status, Exception ex) throws JSONException {
+        JSONObject json = new JSONObject();
+        json.put("code", status.ordinal());
+        json.put("message", ex.getMessage());
+        json.put("details", status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
+                + ((ex.getCause() != null ) ? " cause: " + ex.getCause().getMessage() : ""));
+        return json.toString();
     }
 
     private static class RequestInfo {
