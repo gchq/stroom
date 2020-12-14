@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1965** : Ignore gzipped data that has no uncompressed content.
 
+* Issue **#1976** : Add an enabled check box and insert above button to retention rules list.
+
+* Fix bug with retention rules impact summary when rows are identical.
+
+* Replace two buttons with toggle button on retetion impact summary.
+
 * Fix path for user event logs.
 
 * Uplift send_to_stroom script to v3.0.
@@ -17,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove byte count in brackets on Info tab when size is below 1024 bytes.
 
-* Fix hjelp links on Jobs screen.
+* Fix help links on Jobs screen.
 
 * Fix inability to select text on Info tab in Data viewer.
 
