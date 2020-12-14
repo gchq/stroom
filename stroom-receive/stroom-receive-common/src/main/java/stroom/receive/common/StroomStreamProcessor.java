@@ -245,7 +245,18 @@ public class StroomStreamProcessor {
             }
 
             final String entryName = prefix + zipEntry.getName();
+            final long uncompressedSize = zipEntry.getSize();
             final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(entryName);
+
+            if (uncompressedSize == 0) {
+                // Ideally we would want to ignore empty entries but because there may be multiple child
+                // streams for the same base name (dat/meta/ctx) we don't really want to ignore the dat if
+                // there are non-empty meta/ctx entries as that will probably cause problems elsewhere in
+                // stroom as we expect to always have a data  child stream. As the entries may be in any order
+                // we can check the dat size first, and as we are streaming we can't inspect the dictionary
+                // to find out. Thus the best we can do is warn.
+                LOGGER.warn("processZipStream() - zip entry {} is empty. {}", entryName, globalAttributeMap);
+            }
 
             if (StroomZipFileType.Meta.equals(stroomZipEntry.getStroomZipFileType())) {
                 final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
@@ -255,7 +266,9 @@ public class StroomStreamProcessor {
                 try {
                     AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
                 } catch (final IOException ioEx) {
-                    throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                    throw new StroomStreamException(
+                            StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                            ioEx.getMessage());
                 }
 
                 if (appendReceivedPath) {
@@ -306,7 +319,9 @@ public class StroomStreamProcessor {
                     try {
                         read = StreamUtil.eagerRead(zipArchiveInputStream, buffer);
                     } catch (final IOException ioEx) {
-                        throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                        throw new StroomStreamException(
+                                StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                                ioEx.getMessage());
                     }
                     if (read == -1) {
                         break;
@@ -328,21 +343,24 @@ public class StroomStreamProcessor {
                     final AttributeMap entryAttributeMap = bufferedAttributeMap.remove(stroomZipEntry.getBaseName());
                     if (entryAttributeMap != null) {
                         entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                        handleEntryStart(new StroomZipEntry(null, stroomZipEntry.getBaseName(), StroomZipFileType.Meta));
+                        handleEntryStart(new StroomZipEntry(
+                                null,
+                                stroomZipEntry.getBaseName(),
+                                StroomZipFileType.Meta));
                         final byte[] headerBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                         handleEntryData(headerBytes, 0, headerBytes.length);
                         handleEntryEnd();
                     }
                 }
             }
-
         }
 
         if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+            // A zip stream with no entries is always 22 bytes in size.
             if (byteCountInputStream.getCount() > 22) {
                 throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, "No Zip Entries");
             } else {
-                LOGGER.warn("processZipStream() - Zip stream with no entries ! {}", globalAttributeMap);
+                LOGGER.warn("processZipStream() - Zip stream with no entries! {}", globalAttributeMap);
             }
         }
 
