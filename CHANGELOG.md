@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1983** : Fix line number inconsistency in View Source when last char is a line break.
+
 * Issue **#1971** : Fix 'no appender' errors when editing a Data volume.
 
 * Issue **#1965** : Ignore gzipped data that has no uncompressed content.

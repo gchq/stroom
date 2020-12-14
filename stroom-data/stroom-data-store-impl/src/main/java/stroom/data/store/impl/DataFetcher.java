@@ -65,6 +65,7 @@ import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
@@ -621,6 +622,7 @@ public class DataFetcher {
         long startByteOffset = -1;
 
         Optional<DecodedChar> optDecodeChar = Optional.empty();
+        Optional<DecodedChar> optLastDecodeChar = Optional.empty();
         boolean isFirstChar = true;
         int extraCharCount = 0;
 
@@ -645,6 +647,7 @@ public class DataFetcher {
         // to advance through char by char
 
         while (true) {
+            optLastDecodeChar = optDecodeChar;
             optDecodeChar = charReader.read();
             if (optDecodeChar.isEmpty()) {
                 // Reached the end of the stream
@@ -774,6 +777,11 @@ public class DataFetcher {
             currCharOffset = currCharOffset - 1; // undo the last ++ op
         }
 
+        // If last char in range was a line break then we need to use currLineNo which includes the new line
+        final Location locationTo = optLastDecodeChar.filter(DecodedChar::isLineBreak).isPresent()
+                ? DefaultLocation.of(currLineNo, currColNo)
+                : DefaultLocation.of(lastLineNo, lastColNo);
+
         if (!totalCharCount.isExact() && charReader.getLastCharOffsetRead().isPresent()) {
             // Estimate the total char count based on the ratio of chars to bytes seen so far.
             // The estimate will improve as we fetch further into the stream.
@@ -797,7 +805,7 @@ public class DataFetcher {
                     .fromCharOffset(startCharOffset)
                     .fromByteOffset(startByteOffset)
                     .fromLocation(DefaultLocation.of(startLineNo, startColNo))
-                    .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
+                    .toLocation(locationTo)
                     .toCharOffset(currCharOffset)
                     .toByteOffset(byteOffsetToInc)
 //                    .toByteOffset(charReader.getLastByteOffsetRead()
