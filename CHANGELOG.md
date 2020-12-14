@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1965** : Ignore gzipped data that has no uncompressed content.
+
 * Issue **#1976** : Add an enabled check box and insert above button to retention rules list.
 
 * Fix bug with retention rules impact summary when rows are identical.

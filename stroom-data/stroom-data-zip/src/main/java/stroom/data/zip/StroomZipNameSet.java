@@ -55,6 +55,7 @@ public class StroomZipNameSet {
     private final List<String> baseNameCheckOrderList;
     private final Map<StroomZipFileType, Integer> baseNameCheckOrderListIndex;
 
+
     public StroomZipNameSet(boolean checkOrder) {
         entryMap = new HashMap<>();
         baseNameCheckOrderListIndex = new HashMap<>();

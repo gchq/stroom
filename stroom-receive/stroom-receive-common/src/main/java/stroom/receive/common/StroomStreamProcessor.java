@@ -158,43 +158,54 @@ public class StroomStreamProcessor {
                     }
                 }
 
-                handleEntryStart(StroomZipFile.SINGLE_DATA_ENTRY);
                 int read = 0;
-                long totalRead = 0;
+                // Read an initial buffer full so we can see if there is any un-compressed data
+                // Some apps that roll log files may create a gziped rolled log from an empty live log
+                read = readToBuffer(inputStream, compressed);
 
-                while (true) {
-                    // We have to wrap our stream reading code in a individual
-                    // try/catch so we can return to the client an error in the
-                    // case of a corrupt stream.
-                    try {
-                        read = StreamUtil.eagerRead(inputStream, buffer);
-                    } catch (final IOException ioEx) {
-                        if (compressed == true) {
-                            throw new StroomStreamException(
-                                    StroomStatusCode.COMPRESSED_STREAM_INVALID,
-                                    ioEx.getMessage());
-                        } else {
-                            throw ioEx;
-                        }
+                if (read == -1) {
+                    LOGGER.warn("process() - Skipping Zero Content in GZIP stream" + globalAttributeMap);
+                } else {
+                    long totalRead = 0;
+                    handleEntryStart(StroomZipFile.SINGLE_DATA_ENTRY);
+
+                    while (read != -1) {
+                        streamProgressMonitor.progress(read);
+                        handleEntryData(buffer, 0, read);
+                        totalRead += read;
+
+                        read = readToBuffer(inputStream, compressed);
                     }
-                    if (read == -1) {
-                        break;
-                    }
-                    streamProgressMonitor.progress(read);
-                    handleEntryData(buffer, 0, read);
-                    totalRead += read;
+                    handleEntryEnd();
+                    final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
+                    entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
+                    sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryAttributeMap);
                 }
-                handleEntryEnd();
-                final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
-                entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryAttributeMap);
             }
         } catch (final IOException zex) {
             StroomStreamException.create(zex);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(inputStream);
         }
+    }
 
+    private int readToBuffer(final InputStream inputStream, final boolean isCompressed) throws IOException {
+        // We have to wrap our stream reading code in a individual
+        // try/catch so we can return to the client an error in the
+        // case of a corrupt stream.
+        int read;
+        try {
+            read = StreamUtil.eagerRead(inputStream, buffer);
+        } catch (final IOException ioEx) {
+            if (isCompressed) {
+                throw new StroomStreamException(
+                        StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                        ioEx.getMessage());
+            } else {
+                throw ioEx;
+            }
+        }
+        return read;
     }
 
     private void processZipStream(final InputStream inputStream, final String prefix) throws IOException {
@@ -234,7 +245,18 @@ public class StroomStreamProcessor {
             }
 
             final String entryName = prefix + zipEntry.getName();
+            final long uncompressedSize = zipEntry.getSize();
             final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(entryName);
+
+            if (uncompressedSize == 0) {
+                // Ideally we would want to ignore empty entries but because there may be multiple child
+                // streams for the same base name (dat/meta/ctx) we don't really want to ignore the dat if
+                // there are non-empty meta/ctx entries as that will probably cause problems elsewhere in
+                // stroom as we expect to always have a data  child stream. As the entries may be in any order
+                // we can check the dat size first, and as we are streaming we can't inspect the dictionary
+                // to find out. Thus the best we can do is warn.
+                LOGGER.warn("processZipStream() - zip entry {} is empty. {}", entryName, globalAttributeMap);
+            }
 
             if (StroomZipFileType.Meta.equals(stroomZipEntry.getStroomZipFileType())) {
                 final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
@@ -244,7 +266,9 @@ public class StroomStreamProcessor {
                 try {
                     AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
                 } catch (final IOException ioEx) {
-                    throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                    throw new StroomStreamException(
+                            StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                            ioEx.getMessage());
                 }
 
                 if (appendReceivedPath) {
@@ -295,7 +319,9 @@ public class StroomStreamProcessor {
                     try {
                         read = StreamUtil.eagerRead(zipArchiveInputStream, buffer);
                     } catch (final IOException ioEx) {
-                        throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                        throw new StroomStreamException(
+                                StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                                ioEx.getMessage());
                     }
                     if (read == -1) {
                         break;
@@ -317,21 +343,24 @@ public class StroomStreamProcessor {
                     final AttributeMap entryAttributeMap = bufferedAttributeMap.remove(stroomZipEntry.getBaseName());
                     if (entryAttributeMap != null) {
                         entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                        handleEntryStart(new StroomZipEntry(null, stroomZipEntry.getBaseName(), StroomZipFileType.Meta));
+                        handleEntryStart(new StroomZipEntry(
+                                null,
+                                stroomZipEntry.getBaseName(),
+                                StroomZipFileType.Meta));
                         final byte[] headerBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                         handleEntryData(headerBytes, 0, headerBytes.length);
                         handleEntryEnd();
                     }
                 }
             }
-
         }
 
         if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+            // A zip stream with no entries is always 22 bytes in size.
             if (byteCountInputStream.getCount() > 22) {
                 throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, "No Zip Entries");
             } else {
-                LOGGER.warn("processZipStream() - Zip stream with no entries ! {}", globalAttributeMap);
+                LOGGER.warn("processZipStream() - Zip stream with no entries! {}", globalAttributeMap);
             }
         }
 
