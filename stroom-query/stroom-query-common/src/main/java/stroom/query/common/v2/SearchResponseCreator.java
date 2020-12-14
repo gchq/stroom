@@ -44,6 +44,7 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
+    private final TableDataStoreFactory tableDataStoreFactory;
     private final SizesProvider sizesProvider;
     private final Store store;
     private final Duration defaultTimeout;
@@ -56,7 +57,10 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final SizesProvider sizesProvider, final Store store) {
+    public SearchResponseCreator(final TableDataStoreFactory tableDataStoreFactory,
+                                 final SizesProvider sizesProvider,
+                                 final Store store) {
+        this.tableDataStoreFactory = tableDataStoreFactory;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
@@ -67,9 +71,11 @@ public class SearchResponseCreator {
      * @param defaultTimeout The service's default timeout period to use for waiting for the store to complete. This
      *                       will be used when the search request hasn't specified a timeout period.
      */
-    SearchResponseCreator(final SizesProvider sizesProvider,
+    SearchResponseCreator(final TableDataStoreFactory tableDataStoreFactory,
+                          final SizesProvider sizesProvider,
                           final Store store,
                           final Duration defaultTimeout) {
+        this.tableDataStoreFactory = tableDataStoreFactory;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = Objects.requireNonNull(defaultTimeout);
@@ -217,7 +223,7 @@ public class SearchResponseCreator {
             if (!Fetch.NONE.equals(fetch)) {
                 Result result = null;
 
-                final Data data = store.getData(componentId);
+                final DataStore data = store.getData(componentId);
                 if (data != null) {
                     try {
                         final ResultCreator resultCreator = getResultCreator(componentId,
@@ -288,6 +294,7 @@ public class SearchResponseCreator {
                     resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
+                            tableDataStoreFactory,
                             resultRequest,
                             null,
                             null,

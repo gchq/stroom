@@ -23,13 +23,14 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Data.DataItem;
-import stroom.query.common.v2.Data.DataItems;
+import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.Item;
+import stroom.query.common.v2.Items;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
+import stroom.query.common.v2.TableDataStoreFactory;
 import stroom.search.extraction.ExtractionReceiver;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -70,7 +71,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
@@ -98,7 +99,10 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                new TableDataStoreFactory(),
+                sizesProvider,
+                collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -169,7 +173,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -204,7 +208,7 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(new TableDataStoreFactory(), sizesProvider, collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -222,7 +226,9 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                sizesProvider,
+                new TableDataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -256,7 +262,10 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                new TableDataStoreFactory(),
+                sizesProvider,
+                collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -282,7 +291,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -344,9 +353,9 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final Data data = collector.getData("table-78LF4");
-        final DataItems dataItems = data.get();
-        final DataItem dataItem = dataItems.iterator().next();
+        final DataStore data = collector.getData("table-78LF4");
+        final Items dataItems = data.get();
+        final Item dataItem = dataItems.iterator().next();
         final Val val = dataItem.getValue(2);
         assertThat(val.toLong()).isEqualTo(count);
 

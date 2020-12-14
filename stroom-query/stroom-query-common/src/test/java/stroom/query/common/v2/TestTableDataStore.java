@@ -19,6 +19,10 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -67,8 +71,6 @@ class TestTableDataStore {
             tableDataStore.add(values);
         }
 
-        final Data data = tableDataStore.getData();
-
         // Make sure we only get 50 results.
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
@@ -79,12 +81,12 @@ class TestTableDataStore {
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-                data,
+                tableDataStore,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-//    @Test
+        @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
             System.out.println("\n------ RUN " + (i + 1) + " -------");
@@ -94,7 +96,7 @@ class TestTableDataStore {
         }
     }
 
-    //    @Test
+        @Test
     void testBigResult() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
@@ -118,7 +120,10 @@ class TestTableDataStore {
 
         final FieldIndex fieldIndex = new FieldIndex();
 
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+
         final TableDataStore tableDataStore = new TableDataStore(
+                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
@@ -144,8 +149,6 @@ class TestTableDataStore {
         System.out.println("\nLoading data");
         Metrics.report();
 
-        final Data data = Metrics.measure("Get data", tableDataStore::getData);
-
         System.out.println("\nGetting data");
         Metrics.report();
 
@@ -169,7 +172,7 @@ class TestTableDataStore {
                     fieldFormatter,
                     defaultMaxResultsSizes);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
-                    data,
+                    tableDataStore,
                     tableResultRequest);
 
             assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
@@ -202,14 +205,12 @@ class TestTableDataStore {
             tableDataStore.add(values);
         }
 
-        final Data data = tableDataStore.getData();
-
         final ResultRequest tableResultRequest = ResultRequest.builder()
                 .componentId("componentX")
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
-        checkResults(data, tableResultRequest, 0, false);
+        checkResults(tableDataStore, tableResultRequest, 0, false);
     }
 
     @Test
@@ -234,15 +235,13 @@ class TestTableDataStore {
             tableDataStore.add(values);
         }
 
-        final Data data = tableDataStore.getData();
-
         final ResultRequest tableResultRequest =
                 ResultRequest.builder()
                         .componentId("componentX")
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
                         .build();
-        checkResults(data, tableResultRequest, 0, true);
+        checkResults(tableDataStore, tableResultRequest, 0, true);
     }
 
     @Test
@@ -250,13 +249,13 @@ class TestTableDataStore {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
 //        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap();
-
-        final Field count = Field.builder()
-                .id("Count")
-                .name("Count")
-                .expression("count()")
-                .sort(sort)
-                .build();
+//
+//        final Field count = Field.builder()
+//                .id("Count")
+//                .name("Count")
+//                .expression("count()")
+//                .sort(sort)
+//                .build();
 
 //        final IndexField indexField = new IndexField();
 //        indexField.setFieldName("Text");
@@ -264,6 +263,12 @@ class TestTableDataStore {
 //        dataSourceFieldsMap.put(indexField);
 
         final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("Count")
+                        .name("Count")
+                        .expression("count()")
+                        .sort(sort)
+                        .build())
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
@@ -276,12 +281,10 @@ class TestTableDataStore {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            final Val[] values = new Val[2];
-            values[1] = ValString.create(text);
+            final Val[] values = new Val[1];
+            values[0] = ValString.create(text);
             tableDataStore.add(values);
         }
-
-        final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
                 ResultRequest.builder()
@@ -289,7 +292,7 @@ class TestTableDataStore {
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
                         .build();
-        checkResults(data, tableResultRequest, 0, false);
+        checkResults(tableDataStore, tableResultRequest, 0, false);
     }
 
     @Test
@@ -323,12 +326,10 @@ class TestTableDataStore {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            final Val[] values = new Val[2];
-            values[1] = ValString.create(text);
+            final Val[] values = new Val[1];
+            values[0] = ValString.create(text);
             tableDataStore.add(values);
         }
-
-        final Data data = tableDataStore.getData();
 
         final ResultRequest tableResultRequest =
                 ResultRequest.builder()
@@ -336,7 +337,7 @@ class TestTableDataStore {
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
                         .build();
-        checkResults(data, tableResultRequest, 1, false);
+        checkResults(tableDataStore, tableResultRequest, 1, false);
     }
 
     @Test
@@ -361,7 +362,7 @@ class TestTableDataStore {
                         .name("Text")
                         .expression(ParamUtil.makeParam("Text"))
                         .sort(sort)
-                        .group(1)
+                        .group(0)
                         .build())
                 .build();
 
@@ -369,12 +370,12 @@ class TestTableDataStore {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            final Val[] values = new Val[2];
-            values[1] = ValString.create(text);
+            final Val[] values = new Val[1];
+            values[0] = ValString.create(text);
             tableDataStore.add(values);
         }
 
-        final Data data = tableDataStore.getData();
+        final DataStore data = tableDataStore;
 
         final ResultRequest tableResultRequest =
                 ResultRequest.builder()
@@ -385,7 +386,7 @@ class TestTableDataStore {
         checkResults(data, tableResultRequest, 1, false);
     }
 
-    private void checkResults(final Data data,
+    private void checkResults(final DataStore data,
                               final ResultRequest tableResultRequest,
                               final int sortCol,
                               final boolean numeric) {
@@ -428,7 +429,10 @@ class TestTableDataStore {
 
         final FieldIndex fieldIndex = new FieldIndex();
 
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+
         return new TableDataStore(
+                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),

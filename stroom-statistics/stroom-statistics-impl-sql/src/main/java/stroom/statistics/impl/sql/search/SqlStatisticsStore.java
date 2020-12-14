@@ -6,7 +6,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Receiver;
 import stroom.query.common.v2.ReceiverImpl;
 import stroom.query.common.v2.Store;
@@ -92,7 +92,7 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public Data getData(String componentId) {
+    public DataStore getData(String componentId) {
         return coprocessors.getData(componentId);
     }
 

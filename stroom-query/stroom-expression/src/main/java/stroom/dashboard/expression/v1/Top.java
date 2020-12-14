@@ -58,10 +58,10 @@ class Top extends AbstractSelectorFunction implements Serializable {
             this.limit = limit;
         }
 
-        public Val select(final Generator[] subGenerators) {
+        public Val select(final Selection<Val> selection) {
             final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < limit && i < subGenerators.length; i++) {
-                final Val val = subGenerators[i].eval();
+            for (int i = 0; i < limit && i < selection.size(); i++) {
+                final Val val = selection.get(i);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append(delimiter);

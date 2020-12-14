@@ -2369,9 +2369,23 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toDouble()).isEqualTo(300, Offset.offset(0D));
         });
+    }
+
+    private Selection<Val> createSelection(final Generator[] generators) {
+        return new Selection<Val>() {
+            @Override
+            public int size() {
+                return generators.length;
+            }
+
+            @Override
+            public Val get(final int pos) {
+                return generators[pos].eval();
+            }
+        };
     }
 
     @Test
@@ -2391,7 +2405,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toDouble()).isEqualTo(1, Offset.offset(0D));
         });
     }
@@ -2413,7 +2427,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toDouble()).isEqualTo(10, Offset.offset(0D));
         });
     }
@@ -2435,7 +2449,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toDouble()).isEqualTo(7, Offset.offset(0D));
         });
     }
@@ -2457,7 +2471,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toString()).isEqualTo("1,2,3");
         });
     }
@@ -2479,7 +2493,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toString()).isEqualTo("1,2");
         });
     }
@@ -2501,7 +2515,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toString()).isEqualTo("8,9,10");
         });
     }
@@ -2523,7 +2537,7 @@ class TestExpressionParser {
             }
 
             final Selector selector = (Selector) gen;
-            final Val selected = selector.select(children);
+            final Val selected = selector.select(createSelection(children));
             assertThat(selected.toString()).isEqualTo("1,2");
         });
     }

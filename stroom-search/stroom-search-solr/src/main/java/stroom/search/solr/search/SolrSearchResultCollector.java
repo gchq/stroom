@@ -18,7 +18,7 @@ package stroom.search.solr.search;
 
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -155,7 +155,7 @@ public class SolrSearchResultCollector implements Store {
     }
 
     @Override
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         return coprocessors.getData(componentId);
     }
 

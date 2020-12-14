@@ -21,10 +21,13 @@ import java.util.function.Consumer;
 
 public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
+    private final TableDataStoreFactory tableDataStoreFactory;
 
     @Inject
-    public CoprocessorsFactory(final SizesProvider sizesProvider) {
+    public CoprocessorsFactory(final SizesProvider sizesProvider,
+                               final TableDataStoreFactory tableDataStoreFactory) {
         this.sizesProvider = sizesProvider;
+        this.tableDataStoreFactory = tableDataStoreFactory;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -140,7 +143,7 @@ public class CoprocessorsFactory {
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
-        return new TableDataStore(
+        return tableDataStoreFactory.create(
                 tableSettings,
                 fieldIndex,
                 paramMap,

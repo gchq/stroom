@@ -38,9 +38,9 @@ class Last extends AbstractSelectorFunction implements Serializable {
             super(childGenerator);
         }
 
-        public Val select(Generator[] subGenerators) {
-            if (subGenerators.length > 0) {
-                return subGenerators[subGenerators.length - 1].eval();
+        public Val select(final Selection<Val> selection) {
+            if (selection.size() > 0) {
+                return selection.get(selection.size() - 1);
             }
             return eval();
         }

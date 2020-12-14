@@ -39,11 +39,11 @@ class Any extends AbstractSelectorFunction implements Serializable {
             super(childGenerator);
         }
 
-        public Val select(Generator[] subGenerators) {
+        public Val select(final Selection<Val> selection) {
             if (this.val == null) {
-                if (subGenerators.length > 0) {
-                    for (final Generator generator : subGenerators) {
-                        final Val val = generator.eval();
+                if (selection.size() > 0) {
+                    for (int i = 0; i < selection.size(); i++) {
+                        final Val val = selection.get(i);
                         if (val.type().isValue()) {
                             this.val = val;
                             return this.val;

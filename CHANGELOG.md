@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove byte count in brackets on Info tab when size is below 1024 bytes.
 
-* Fix hjelp links on Jobs screen.
+* Fix help links on Jobs screen.
 
 * Fix inability to select text on Info tab in Data viewer.
 

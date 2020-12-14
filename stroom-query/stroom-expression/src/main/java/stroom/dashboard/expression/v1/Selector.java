@@ -17,5 +17,5 @@ public abstract class Selector extends AbstractSingleChildGenerator {
         return childGenerator.eval();
     }
 
-    public abstract Val select(Generator[] subGenerators);
+    public abstract Val select(Selection<Val> selection);
 }

@@ -54,9 +54,9 @@ class Nth extends AbstractSelectorFunction implements Serializable {
             this.pos = pos;
         }
 
-        public Val select(final Generator[] subGenerators) {
-            if (subGenerators.length > pos) {
-                return subGenerators[pos].eval();
+        public Val select(final Selection<Val> selection) {
+            if (selection.size() > pos) {
+                return selection.get(pos);
             }
             return ValNull.INSTANCE;
         }

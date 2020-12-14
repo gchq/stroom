@@ -86,7 +86,7 @@ public class Coprocessors implements Iterable<Coprocessor> {
         return coprocessorMap.get(coprocessorId);
     }
 
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         LOGGER.debug(() -> LogUtil.message("getData called for componentId {}", componentId));
         final TableCoprocessor tableCoprocessor = componentIdCoprocessorMap.get(componentId);
         if (tableCoprocessor != null) {

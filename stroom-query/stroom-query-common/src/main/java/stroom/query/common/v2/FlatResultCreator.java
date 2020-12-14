@@ -25,8 +25,6 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.Data.DataItem;
-import stroom.query.common.v2.Data.DataItems;
 import stroom.query.common.v2.format.FieldFormatter;
 
 import org.slf4j.Logger;
@@ -43,17 +41,18 @@ import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlatResultCreator.class);
+
     private final FieldFormatter fieldFormatter;
     private final List<Mapper> mappers;
     private final List<Field> fields;
 
     private String error;
 
-    public FlatResultCreator(final ResultRequest resultRequest,
+    public FlatResultCreator(final TableDataStoreFactory tableDataStoreFactory,
+                             final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
                              final Sizes defaultMaxResultsSizes) {
-
         this.fieldFormatter = fieldFormatter;
 
         final List<TableSettings> tableSettings = resultRequest.getMappings();
@@ -69,7 +68,7 @@ public class FlatResultCreator implements ResultCreator {
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
 
-                mappers.add(new Mapper(parent, child, paramMap, maxItems));
+                mappers.add(new Mapper(tableDataStoreFactory, parent, child, paramMap, maxItems));
             }
         } else {
             mappers = Collections.emptyList();
@@ -130,11 +129,11 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final Data data, final ResultRequest resultRequest) {
+    public Result create(final DataStore data, final ResultRequest resultRequest) {
         if (error == null) {
             try {
                 // Map data.
-                Data mappedData = data;
+                DataStore mappedData = data;
                 for (final Mapper mapper : mappers) {
                     mappedData = mapper.map(mappedData);
                 }
@@ -142,7 +141,7 @@ public class FlatResultCreator implements ResultCreator {
                 long totalResults = 0;
 
                 // Get top level items.
-                final DataItems items = mappedData.get();
+                final Items items = mappedData.get();
                 final List<List<Object>> results = new ArrayList<>(items.size());
                 if (items.size() > 0) {
                     final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
@@ -203,10 +202,10 @@ public class FlatResultCreator implements ResultCreator {
         return new FlatResult(resultRequest.getComponentId(), null, null, 0L, error);
     }
 
-    private int addResults(final Data data,
+    private int addResults(final DataStore data,
                            final RangeChecker rangeChecker,
                            final OpenGroups openGroups,
-                           final DataItems items,
+                           final Items items,
                            final List<List<Object>> results,
                            final int depth,
                            final int parentCount,
@@ -216,12 +215,12 @@ public class FlatResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final DataItem item : items) {
+        for (final Item item : items) {
             if (rangeChecker.check(count)) {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
-                if (item.getGroupKey() != null) {
-                    final Key key = KeySerialiser.toKey(item.getGroupKey());
+                if (item.getKey() != null) {
+                    final Key key = item.getKey();
                     resultList.add(toNodeKey(groupFields, key.getParent()));
                     resultList.add(toNodeKey(groupFields, key));
                 } else {
@@ -255,8 +254,8 @@ public class FlatResultCreator implements ResultCreator {
                 resultCountAtThisLevel++;
 
                 // Add child results if a node is open.
-                if (item.getGroupKey() != null && openGroups.isOpen(item.getGroupKey())) {
-                    final DataItems childItems = data.get(item.getGroupKey());
+                if (item.getRawKey() != null && openGroups.isOpen(item.getRawKey())) {
+                    final Items childItems = data.get(item.getRawKey());
                     if (childItems.size() > 0) {
                         count = addResults(
                                 data,
@@ -302,7 +301,7 @@ public class FlatResultCreator implements ResultCreator {
 
     @FunctionalInterface
     private interface OpenGroups {
-        boolean isOpen(RawKey groupKey);
+        boolean isOpen(RawKey key);
     }
 
     private static class Mapper {
@@ -310,7 +309,8 @@ public class FlatResultCreator implements ResultCreator {
         private final TableDataStore tableDataStore;
         private final int maxItems;
 
-        Mapper(final TableSettings parent,
+        Mapper(final TableDataStoreFactory tableDataStoreFactory,
+               final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
                final int maxItems) {
@@ -338,7 +338,7 @@ public class FlatResultCreator implements ResultCreator {
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
-            tableDataStore = new TableDataStore(
+            tableDataStore = tableDataStoreFactory.create(
                     child,
                     childFieldIndex,
                     paramMap,
@@ -346,15 +346,15 @@ public class FlatResultCreator implements ResultCreator {
                     Sizes.create(Integer.MAX_VALUE));
         }
 
-        public Data map(final Data data) {
+        public DataStore map(final DataStore data) {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
-            final DataItems items = data.get();
+            final Items items = data.get();
 
             tableDataStore.clear();
             if (items.size() > 0) {
                 int itemCount = 0;
-                for (final DataItem item : items) {
+                for (final Item item : items) {
                     final Val[] values = new Val[parentFieldIndices.length];
                     for (int i = 0; i < parentFieldIndices.length; i++) {
                         final int index = parentFieldIndices[i];
@@ -373,7 +373,7 @@ public class FlatResultCreator implements ResultCreator {
                 }
             }
 
-            return tableDataStore.getData();
+            return tableDataStore;
         }
     }
 

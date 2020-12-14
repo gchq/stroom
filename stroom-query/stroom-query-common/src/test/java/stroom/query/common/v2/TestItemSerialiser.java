@@ -6,6 +6,10 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.query.api.v2.Field;
 
 import org.junit.jupiter.api.Test;
@@ -29,6 +33,11 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(
+                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
+                compiledFields);
+
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
             generators[i] = compiledFields[i].getExpression().createGenerator();
@@ -41,34 +50,61 @@ class TestItemSerialiser {
         values[3] = ValNull.INSTANCE;
 
         for (int count = 0; count < 295; count++) {
-            for (int i = 0; i < generators.length; i++) {
-                generators[i].set(values);
+            for (final Generator generator : generators) {
+                generator.set(values);
             }
         }
 
         final Key key = new Key(List.of(new GroupKeyPart(new Val[]{ValLong.create(1262304240000L), ValString.create("user5")})));
-        final RawKey rawKey = KeySerialiser.toRawKey(key);
-        final Item item = new Item(rawKey, generators);
-        final String expected = item.toString();
+        byte[] keyBytes = itemSerialiser.toBytes(key);
+        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item = new RawItem(keyBytes, generatorBytes);
+        final String expected = toString(generators);
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+
         final byte[] bytes = itemSerialiser.toBytes(item);
-        final Item result = itemSerialiser.readItem(bytes);
-        final String actual = result.toString();
+        final RawItem result = itemSerialiser.readRawItem(bytes);
+        final Generator[] generators1 = itemSerialiser.readGenerators(result.getGenerators());
+        final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
 
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        final Item item2 = new Item(rawKey, generators);
-        final String expected2 = item2.toString();
+        keyBytes = itemSerialiser.toBytes(key);
+        generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item2 = new RawItem(keyBytes, generatorBytes);
+        final String expected2 = toString(generators);
 
         final byte[] bytes2 = itemSerialiser.toBytes(item2);
-        final Item result2 = itemSerialiser.readItem(bytes2);
-        final String actual2 = result2.toString();
+        final RawItem result2 = itemSerialiser.readRawItem(bytes2);
+        final Generator[] generators2 = itemSerialiser.readGenerators(result2.getGenerators());
+        final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);
+    }
+
+        public String toString(Generator[] generators) {
+        final StringBuilder sb = new StringBuilder();
+        for (final Generator value : generators) {
+            if (value != null) {
+                try {
+                    sb.append(value.eval().toString());
+                } catch (final RuntimeException e) {
+                    // if the evaluation of the generator fails record the class of the exception
+                    // so we can see which one has a problem
+                    sb.append(e.getClass().getCanonicalName());
+                }
+            } else {
+                sb.append("null");
+            }
+            sb.append("\t");
+        }
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1);
+        }
+        return sb.toString();
     }
 
     @Test
@@ -82,6 +118,11 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(
+                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
+                compiledFields);
+
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
             generators[i] = compiledFields[i].getExpression().createGenerator();
@@ -94,32 +135,36 @@ class TestItemSerialiser {
         values[3] = ValNull.INSTANCE;
 
         for (int count = 0; count < 295; count++) {
-            for (int i = 0; i < generators.length; i++) {
-                generators[i].set(values);
+            for (final Generator generator : generators) {
+                generator.set(values);
             }
         }
 
         final Key key = new Key(Collections.emptyList());
-        final RawKey rawKey = KeySerialiser.toRawKey(key);
-        final Item item = new Item(rawKey, generators);
-        final String expected = item.toString();
+        byte[] keyBytes = itemSerialiser.toBytes(key);
+        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item = new RawItem(keyBytes, generatorBytes);
+        final String expected = toString(generators);
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
         final byte[] bytes = itemSerialiser.toBytes(item);
-        final Item result = itemSerialiser.readItem(bytes);
-        final String actual = result.toString();
+        final RawItem result = itemSerialiser.readRawItem(bytes);
+        final Generator[] generators1 = itemSerialiser.readGenerators(result.getGenerators());
+        final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
 
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        final Item item2 = new Item(rawKey, generators);
-        final String expected2 = item2.toString();
+        keyBytes = itemSerialiser.toBytes(key);
+        generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item2 = new RawItem(keyBytes, generatorBytes);
+        final String expected2 = toString(generators);
 
         final byte[] bytes2 = itemSerialiser.toBytes(item2);
-        final Item result2 = itemSerialiser.readItem(bytes2);
-        final String actual2 = result2.toString();
+        final RawItem result2 = itemSerialiser.readRawItem(bytes2);
+        final Generator[] generators2 = itemSerialiser.readGenerators(result2.getGenerators());
+        final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);
     }
@@ -135,29 +180,38 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(
+                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
+                compiledFields);
+
         final Generator[] generators = new Generator[fields.size()];
 
         final Key key = new Key(Collections.emptyList());
-        final RawKey rawKey = KeySerialiser.toRawKey(key);
-        final Item item = new Item(rawKey, generators);
-        final String expected = item.toString();
+        byte[] keyBytes = itemSerialiser.toBytes(key);
+        byte[] generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item = new RawItem(keyBytes, generatorBytes);
+        final String expected = toString(generators);
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
         final byte[] bytes = itemSerialiser.toBytes(item);
-        final Item result = itemSerialiser.readItem(bytes);
-        final String actual = result.toString();
+        final RawItem result = itemSerialiser.readRawItem(bytes);
+        final Generator[] generators1 = itemSerialiser.readGenerators(result.getGenerators());
+        final String actual = toString(generators1);
 
         assertThat(actual).isEqualTo(expected);
 
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        final Item item2 = new Item(rawKey, generators);
-        final String expected2 = item2.toString();
+        keyBytes = itemSerialiser.toBytes(key);
+        generatorBytes = itemSerialiser.toBytes(generators);
+        final RawItem item2 = new RawItem(keyBytes, generatorBytes);
+        final String expected2 = toString(generators);
 
         final byte[] bytes2 = itemSerialiser.toBytes(item2);
-        final Item result2 = itemSerialiser.readItem(bytes2);
-        final String actual2 = result2.toString();
+        final RawItem result2 = itemSerialiser.readRawItem(bytes2);
+        final Generator[] generators2 = itemSerialiser.readGenerators(result2.getGenerators());
+        final String actual2 = toString(generators2);
 
         assertThat(actual2).isEqualTo(expected2);
     }

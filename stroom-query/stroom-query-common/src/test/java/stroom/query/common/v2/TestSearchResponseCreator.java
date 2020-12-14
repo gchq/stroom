@@ -4,6 +4,10 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
+import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -25,9 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,7 @@ class TestSearchResponseCreator {
     @Test
     void create_nonIncremental_timesOut() {
         Duration serverTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is never complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -82,9 +84,16 @@ class TestSearchResponseCreator {
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
     }
 
+    private SearchResponseCreator createSearchResponseCreator() {
+        return new SearchResponseCreator(
+                new TableDataStoreFactory(),
+                sizesProvider,
+                mockStore);
+    }
+
     @Test
     void create_nonIncremental_completesImmediately() {
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(true);
@@ -111,7 +120,7 @@ class TestSearchResponseCreator {
     void create_nonIncremental_completesBeforeTimeout() {
         Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -138,7 +147,7 @@ class TestSearchResponseCreator {
     void create_incremental_noTimeout() {
         Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(0);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -172,7 +181,7 @@ class TestSearchResponseCreator {
         //long timeout because we should return almost immediately
         Duration serverTimeout = Duration.ofMillis(500);
         Duration clientTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -273,26 +282,52 @@ class TestSearchResponseCreator {
                 .build();
     }
 
-    private Data createSingleItemDataObject() {
+    private DataStore createSingleItemDataObject() {
         final List<Field> fields = List.of(
                 Field.builder().name("f1").expression("'A'").build(),
                 Field.builder().name("f2").expression("'B'").build(),
                 Field.builder().name("f3").expression("'C'").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(() ->
+                new PooledByteBufferOutputStream(byteBufferPool, 10),
+                compiledFields);
 
-        final Items items = new Items(100, itemSerialiser, null, null, remove ->
-                LOGGER.info(remove.toString()));
+        final Items items = new Items(
+                100,
+                itemSerialiser,
+                null,
+                null,
+                null,
+                remove ->
+                        LOGGER.info(remove.toString()));
         final Generator[] generators = new Generator[3];
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        items.add(Data.ROOT_KEY, itemSerialiser.toBytes(generators));
+        items.add(new byte[4], itemSerialiser.toBytes(generators));
 
-        final Map<RawKey, Items> map = new HashMap<>();
-        map.put(Data.ROOT_KEY, items);
+        return new DataStore() {
+            @Override
+            public Items get() {
+                return items;
+            }
 
-        return new Data(map, items.size(), items.size());
+            @Override
+            public Items get(final RawKey key) {
+                return null;
+            }
+
+            @Override
+            public long getSize() {
+                return items.size();
+            }
+
+            @Override
+            public long getTotalSize() {
+                return items.size();
+            }
+        };
     }
 
     private void assertResponseWithData(final SearchResponse searchResponse) {

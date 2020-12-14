@@ -1,17 +1,17 @@
 package stroom.query.common.v2;
 
 public class RawItem {
-    private final RawKey groupKey;
+    private final byte[] key;
     private final byte[] generators;
 
-    public RawItem(final RawKey groupKey,
+    public RawItem(final byte[] key,
                    final byte[] generators) {
-        this.groupKey = groupKey;
+        this.key = key;
         this.generators = generators;
     }
 
-    public RawKey getGroupKey() {
-        return groupKey;
+    public byte[] getKey() {
+        return key;
     }
 
     public byte[] getGenerators() {

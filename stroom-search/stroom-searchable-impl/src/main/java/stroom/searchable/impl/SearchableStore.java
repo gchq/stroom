@@ -7,7 +7,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskContext;
@@ -136,7 +136,7 @@ class SearchableStore implements Store {
     }
 
     @Override
-    public Data getData(String componentId) {
+    public DataStore getData(String componentId) {
         return coprocessors.getData(componentId);
     }
 

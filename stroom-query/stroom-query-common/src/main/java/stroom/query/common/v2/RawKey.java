@@ -27,9 +27,4 @@ public class RawKey {
     public int hashCode() {
         return hashCode;
     }
-
-    @Override
-    public String toString() {
-        return KeySerialiser.toKey(bytes).toString();
-    }
 }

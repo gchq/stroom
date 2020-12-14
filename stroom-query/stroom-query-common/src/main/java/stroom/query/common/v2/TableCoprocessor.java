@@ -87,8 +87,8 @@ public class TableCoprocessor implements Coprocessor {
         return completionState.await(timeout, unit);
     }
 
-    public Data getData() {
-        return tableDataStore.getData();
+    public DataStore getData() {
+        return tableDataStore;
     }
 
     @Override

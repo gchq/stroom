@@ -38,9 +38,9 @@ class First extends AbstractSelectorFunction implements Serializable {
             super(childGenerator);
         }
 
-        public Val select(Generator[] subGenerators) {
-            if (subGenerators.length > 0) {
-                return subGenerators[0].eval();
+        public Val select(final Selection<Val> selection) {
+            if (selection.size() > 0) {
+                return selection.get(0);
             }
             return eval();
         }

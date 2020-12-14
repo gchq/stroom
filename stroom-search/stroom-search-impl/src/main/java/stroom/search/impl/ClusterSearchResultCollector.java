@@ -18,7 +18,7 @@ package stroom.search.impl;
 
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
@@ -223,7 +223,7 @@ public class ClusterSearchResultCollector implements Store {
     }
 
     @Override
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         return coprocessors.getData(componentId);
     }
 

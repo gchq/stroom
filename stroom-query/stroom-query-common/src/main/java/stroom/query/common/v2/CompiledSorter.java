@@ -27,8 +27,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-public class CompiledSorter implements Comparator<Item>, Function<List<Item>, List<Item>> {
+public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream<UnpackedItem>, Stream<UnpackedItem>> {
     private static final ValComparator COMPARATOR = new ValComparator();
 
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
@@ -82,13 +83,12 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
     }
 
     @Override
-    public List<Item> apply(final List<Item> items) {
-        items.sort(this);
-        return items;
+    public Stream<UnpackedItem> apply(final Stream<UnpackedItem> stream) {
+        return stream.sorted(this);
     }
 
     @Override
-    public int compare(final Item o1, final Item o2) {
+    public int compare(final UnpackedItem o1, final UnpackedItem o2) {
         final Generator[] generators1 = o1.getGenerators();
         final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {
@@ -119,10 +119,6 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
         }
         return 0;
     }
-
-//    boolean hasSort() {
-//        return hasSort;
-//    }
 
     @Override
     public String toString() {
