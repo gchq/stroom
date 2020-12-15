@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v7.0-beta.73] - 2020-12-15
+
+* Change github tokens in travis build.
+
 
 ## [v7.0-beta.72] - 2020-12-15
 
@@ -2925,7 +2929,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.72...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.73...HEAD
+[v7.0-beta.73]: https://github.com/gchq/stroom/compare/v7.0-beta.72...v7.0-beta.73
 [v7.0-beta.72]: https://github.com/gchq/stroom/compare/v7.0-beta.71...v7.0-beta.72
 [v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
 [v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
