@@ -26,7 +26,7 @@ import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;

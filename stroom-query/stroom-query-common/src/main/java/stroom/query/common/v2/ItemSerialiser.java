@@ -3,29 +3,20 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import javax.inject.Provider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class ItemSerialiser {
-    private final Provider<PooledByteBufferOutputStream> outputStreamProvider;
     private final CompiledField[] fields;
 
-//    private static final LinkedBlockingQueue<byte[]> bytesPool = new LinkedBlockingQueue<>(1000);
-
-    public ItemSerialiser(final Provider<PooledByteBufferOutputStream> outputStreamProvider,
-                          final CompiledField[] fields) {
-        this.outputStreamProvider = outputStreamProvider;
+    public ItemSerialiser(final CompiledField[] fields) {
         this.fields = fields;
     }
 
@@ -55,6 +46,16 @@ public class ItemSerialiser {
         });
     }
 
+    void writeChildKey(final Key key, final Output output) {
+        Metrics.measure("Key write", () -> {
+            output.writeInt(key.size() + 1);
+            for (final KeyPart keyPart : key) {
+                output.writeBoolean(keyPart.isGrouped());
+                keyPart.write(output);
+            }
+        });
+    }
+
     byte[] toBytes(final Key key) {
         return Metrics.measure("Key toBytes", () ->
                 toBytes(output ->
@@ -71,7 +72,6 @@ public class ItemSerialiser {
         try (final Output output = new Output(100, 4096)) {
             outputConsumer.accept(output);
             output.flush();
-
 
 
             result = output.toBytes();
@@ -171,7 +171,7 @@ public class ItemSerialiser {
     byte[] toBytes(final Generator[] generators) {
         return Metrics.measure("Item toBytes", () ->
                 toBytes(output ->
-            writeGenerators(generators, output)));
+                        writeGenerators(generators, output)));
     }
 
     Generator[] readGenerators(final byte[] bytes) {
@@ -182,8 +182,8 @@ public class ItemSerialiser {
         });
     }
 
-    private Generator[] readGenerators(final Input input) {
-        return Metrics.measure("Item readGenerators input", () -> {
+    Generator[] readGenerators(final Input input) {
+        return Metrics.measure("Item readGenerators", () -> {
             final Generator[] generators = new Generator[fields.length];
             int pos = 0;
             for (final CompiledField compiledField : fields) {
@@ -200,7 +200,7 @@ public class ItemSerialiser {
         });
     }
 
-    private void writeGenerators(final Generator[] generators, final Output output) {
+    void writeGenerators(final Generator[] generators, final Output output) {
         Metrics.measure("Item writeGenerators", () -> {
             if (generators.length > Byte.MAX_VALUE) {
                 throw new RuntimeException("You can only write a maximum of " + 255 + " values");

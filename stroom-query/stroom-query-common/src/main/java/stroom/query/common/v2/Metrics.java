@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -26,7 +27,12 @@ public class Metrics {
     }
 
     public static void report() {
-        map.forEach((k, v) -> System.out.println(k + " in: " + v.toString()));
+        map
+                .entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .forEach(e ->
+                        System.out.println(e.getKey() + " in: " + e.getValue().toString()));
         map.clear();
     }
 

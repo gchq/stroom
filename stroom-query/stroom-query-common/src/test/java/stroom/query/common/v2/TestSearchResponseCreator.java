@@ -3,11 +3,8 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
-import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -15,9 +12,12 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,7 +86,7 @@ class TestSearchResponseCreator {
 
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
-                new TableDataStoreFactory(),
+                new DataStoreFactory(),
                 sizesProvider,
                 mockStore);
     }
@@ -118,7 +118,6 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
-        Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(5_000);
         SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
@@ -145,7 +144,6 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_noTimeout() {
-        Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(0);
         SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
@@ -178,8 +176,6 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
-        //long timeout because we should return almost immediately
-        Duration serverTimeout = Duration.ofMillis(500);
         Duration clientTimeout = Duration.ofMillis(500);
         SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
@@ -228,7 +224,7 @@ class TestSearchResponseCreator {
 
     private void makeSearchStateAfter(final long sleepTime, final boolean state) {
         try {
-            final Answer answer = invocation -> {
+            final Answer<Boolean> answer = invocation -> {
                 TimingUtils.sleep(sleepTime);
                 //change the store to be complete
                 Mockito.when(mockStore.isComplete()).thenReturn(state);
@@ -288,12 +284,9 @@ class TestSearchResponseCreator {
                 Field.builder().name("f2").expression("'B'").build(),
                 Field.builder().name("f3").expression("'C'").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(() ->
-                new PooledByteBufferOutputStream(byteBufferPool, 10),
-                compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
 
-        final Items items = new Items(
+        final ItemsImpl items = new ItemsImpl(
                 100,
                 itemSerialiser,
                 null,
@@ -326,6 +319,31 @@ class TestSearchResponseCreator {
             @Override
             public long getTotalSize() {
                 return items.size();
+            }
+
+            @Override
+            public void add(final Val[] values) {
+            }
+
+            @Override
+            public boolean readPayload(final Input input) {
+                return false;
+            }
+
+            @Override
+            public void writePayload(final Output output) {
+            }
+
+            @Override
+            public void clear() {
+            }
+
+            @Override
+            public void complete() {
+            }
+
+            @Override
+            public void awaitCompletion() {
             }
         };
     }

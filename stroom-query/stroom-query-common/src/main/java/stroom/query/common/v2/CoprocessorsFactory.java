@@ -21,13 +21,13 @@ import java.util.function.Consumer;
 
 public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
-    private final TableDataStoreFactory tableDataStoreFactory;
+    private final DataStoreFactory dataStoreFactory;
 
     @Inject
     public CoprocessorsFactory(final SizesProvider sizesProvider,
-                               final TableDataStoreFactory tableDataStoreFactory) {
+                               final DataStoreFactory dataStoreFactory) {
         this.sizesProvider = sizesProvider;
-        this.tableDataStoreFactory = tableDataStoreFactory;
+        this.dataStoreFactory = dataStoreFactory;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -123,8 +123,8 @@ public class CoprocessorsFactory {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-            final TableDataStore tableDataStore = create(tableSettings, fieldIndex, paramMap);
-            return new TableCoprocessor(tableSettings, tableDataStore, errorConsumer);
+            final DataStore dataStore = create(tableSettings, fieldIndex, paramMap);
+            return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
             return new EventCoprocessor(eventCoprocessorSettings, fieldIndex, errorConsumer);
@@ -133,9 +133,9 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private TableDataStore create(final TableSettings tableSettings,
-                                  final FieldIndex fieldIndex,
-                                  final Map<String, String> paramMap) {
+    private DataStore create(final TableSettings tableSettings,
+                             final FieldIndex fieldIndex,
+                             final Map<String, String> paramMap) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
@@ -143,7 +143,7 @@ public class CoprocessorsFactory {
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
-        return tableDataStoreFactory.create(
+        return dataStoreFactory.create(
                 tableSettings,
                 fieldIndex,
                 paramMap,

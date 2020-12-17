@@ -27,7 +27,7 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;

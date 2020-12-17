@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
     private final TableSettings tableSettings;
-    private final TableDataStore tableDataStore;
+    private final DataStore dataStore;
 
     private final Consumer<Throwable> errorConsumer;
     private final CountDownLatch completionState = new CountDownLatch(1);
@@ -37,10 +37,10 @@ public class TableCoprocessor implements Coprocessor {
     private final AtomicLong completionCount = new AtomicLong();
 
     public TableCoprocessor(final TableSettings tableSettings,
-                            final TableDataStore tableDataStore,
+                            final DataStore dataStore,
                             final Consumer<Throwable> errorConsumer) {
         this.tableSettings = tableSettings;
-        this.tableDataStore = tableDataStore;
+        this.dataStore = dataStore;
         this.errorConsumer = errorConsumer;
     }
 
@@ -52,7 +52,7 @@ public class TableCoprocessor implements Coprocessor {
     public Consumer<Val[]> getValuesConsumer() {
         return values -> {
             valuesCount.incrementAndGet();
-            tableDataStore.add(values);
+            dataStore.add(values);
         };
     }
 
@@ -71,12 +71,12 @@ public class TableCoprocessor implements Coprocessor {
 
     @Override
     public boolean readPayload(final Input input) {
-        return tableDataStore.readPayload(input);
+        return dataStore.readPayload(input);
     }
 
     @Override
     public void writePayload(final Output output) {
-        tableDataStore.writePayload(output);
+        dataStore.writePayload(output);
     }
 
     public AtomicLong getValuesCount() {
@@ -88,7 +88,7 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     public DataStore getData() {
-        return tableDataStore;
+        return dataStore;
     }
 
     @Override

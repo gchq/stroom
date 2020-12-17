@@ -5,6 +5,8 @@ import stroom.dashboard.expression.v1.ValSerialiser;
 
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.Arrays;
+
 class GroupKeyPart implements KeyPart {
     private final Val[] groupValues;
 
@@ -24,6 +26,19 @@ class GroupKeyPart implements KeyPart {
 
     public Val[] getGroupValues() {
         return groupValues;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final GroupKeyPart that = (GroupKeyPart) o;
+        return Arrays.equals(groupValues, that.groupValues);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(groupValues);
     }
 
     @Override

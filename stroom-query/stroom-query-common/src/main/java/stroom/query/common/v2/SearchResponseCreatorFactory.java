@@ -4,13 +4,13 @@ import javax.inject.Inject;
 import java.time.Duration;
 
 public class SearchResponseCreatorFactory {
-    private final TableDataStoreFactory tableDataStoreFactory;
+    private final DataStoreFactory dataStoreFactory;
     private final SizesProvider sizesProvider;
 
     @Inject
-    public SearchResponseCreatorFactory(final TableDataStoreFactory tableDataStoreFactory,
+    public SearchResponseCreatorFactory(final DataStoreFactory dataStoreFactory,
                                         final SizesProvider sizesProvider) {
-        this.tableDataStoreFactory = tableDataStoreFactory;
+        this.dataStoreFactory = dataStoreFactory;
         this.sizesProvider = sizesProvider;
     }
 
@@ -18,7 +18,7 @@ public class SearchResponseCreatorFactory {
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator create(final Store store) {
-        return new SearchResponseCreator(tableDataStoreFactory, sizesProvider, store);
+        return new SearchResponseCreator(dataStoreFactory, sizesProvider, store);
     }
 
     /**
@@ -28,6 +28,6 @@ public class SearchResponseCreatorFactory {
      */
     public SearchResponseCreator create(final Store store,
                                         final Duration defaultTimeout) {
-        return new SearchResponseCreator(tableDataStoreFactory, sizesProvider, store, defaultTimeout);
+        return new SearchResponseCreator(dataStoreFactory, sizesProvider, store, defaultTimeout);
     }
 }

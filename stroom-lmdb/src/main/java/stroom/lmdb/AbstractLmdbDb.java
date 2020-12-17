@@ -15,10 +15,8 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb;
+package stroom.lmdb;
 
-import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
@@ -145,11 +143,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return dbName;
     }
 
-    protected Dbi<ByteBuffer> getLmdbDbi() {
+    public Dbi<ByteBuffer> getLmdbDbi() {
         return lmdbDbi;
     }
 
-    protected ByteBufferPool getByteBufferPool() {
+    public ByteBufferPool getByteBufferPool() {
         return byteBufferPool;
     }
 

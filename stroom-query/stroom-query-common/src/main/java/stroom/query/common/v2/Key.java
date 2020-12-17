@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import javax.annotation.Nonnull;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class Key implements Iterable<KeyPart> {
     private final List<KeyPart> keyParts;
@@ -31,6 +32,24 @@ public class Key implements Iterable<KeyPart> {
 
     int size() {
         return keyParts.size();
+    }
+
+    boolean isGrouped() {
+        final KeyPart last = getLast();
+        return last == null || last.isGrouped();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final Key key = (Key) o;
+        return keyParts.equals(key.keyParts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keyParts);
     }
 
     @Override

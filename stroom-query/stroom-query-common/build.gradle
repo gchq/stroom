@@ -23,10 +23,12 @@ dependencies {
     compile project(':stroom-query:stroom-query-api')
 
     //--------3rd party--------
+    compile libs.agrona
     compile libs.guava
     compile libs.jackson_databind
     compile libs.jackson_annotations
     compile libs.jackson_core
+    compile libs.kryo
     compile libs.slf4j_api
     compile libs.jaxb_api
 

@@ -29,7 +29,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
+import stroom.lmdb.PutOutcome;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;

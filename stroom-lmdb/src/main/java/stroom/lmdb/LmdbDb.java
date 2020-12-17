@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb;
+package stroom.lmdb;
 
 import org.lmdbjava.Txn;
 

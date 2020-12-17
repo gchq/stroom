@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;

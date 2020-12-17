@@ -6,10 +6,6 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
-import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
-import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.query.api.v2.Field;
 
 import org.junit.jupiter.api.Test;
@@ -33,10 +29,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(
-                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
-                compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -85,7 +78,7 @@ class TestItemSerialiser {
         assertThat(actual2).isEqualTo(expected2);
     }
 
-        public String toString(Generator[] generators) {
+    public String toString(Generator[] generators) {
         final StringBuilder sb = new StringBuilder();
         for (final Generator value : generators) {
             if (value != null) {
@@ -118,10 +111,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(
-                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
-                compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -180,10 +170,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(
-                () -> new PooledByteBufferOutputStream(byteBufferPool, 10),
-                compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
 
         final Generator[] generators = new Generator[fields.size()];
 

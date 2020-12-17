@@ -48,7 +48,7 @@ public class FlatResultCreator implements ResultCreator {
 
     private String error;
 
-    public FlatResultCreator(final TableDataStoreFactory tableDataStoreFactory,
+    public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
@@ -68,7 +68,7 @@ public class FlatResultCreator implements ResultCreator {
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
 
-                mappers.add(new Mapper(tableDataStoreFactory, parent, child, paramMap, maxItems));
+                mappers.add(new Mapper(dataStoreFactory, parent, child, paramMap, maxItems));
             }
         } else {
             mappers = Collections.emptyList();
@@ -306,10 +306,10 @@ public class FlatResultCreator implements ResultCreator {
 
     private static class Mapper {
         private final int[] parentFieldIndices;
-        private final TableDataStore tableDataStore;
+        private final DataStore dataStore;
         private final int maxItems;
 
-        Mapper(final TableDataStoreFactory tableDataStoreFactory,
+        Mapper(final DataStoreFactory dataStoreFactory,
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
@@ -338,7 +338,7 @@ public class FlatResultCreator implements ResultCreator {
             // Create a set of max result sizes that are determined by the supplied max results or default to integer
             // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
-            tableDataStore = tableDataStoreFactory.create(
+            dataStore = dataStoreFactory.create(
                     child,
                     childFieldIndex,
                     paramMap,
@@ -351,7 +351,7 @@ public class FlatResultCreator implements ResultCreator {
             // TODO : Add an option to get detail level items rather than root level items.
             final Items items = data.get();
 
-            tableDataStore.clear();
+            dataStore.clear();
             if (items.size() > 0) {
                 int itemCount = 0;
                 for (final Item item : items) {
@@ -363,7 +363,7 @@ public class FlatResultCreator implements ResultCreator {
                             values[i] = val;
                         }
                     }
-                    tableDataStore.add(values);
+                    dataStore.add(values);
 
                     // Trim the data to the parent first level result size.
                     itemCount++;
@@ -373,7 +373,7 @@ public class FlatResultCreator implements ResultCreator {
                 }
             }
 
-            return tableDataStore;
+            return dataStore;
         }
     }
 

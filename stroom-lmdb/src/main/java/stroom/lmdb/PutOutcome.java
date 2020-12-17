@@ -1,4 +1,4 @@
-package stroom.pipeline.refdata.store.offheapstore;
+package stroom.lmdb;
 
 import java.util.Objects;
 import java.util.Optional;

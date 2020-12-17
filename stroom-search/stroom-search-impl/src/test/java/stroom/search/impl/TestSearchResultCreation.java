@@ -30,7 +30,7 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
-import stroom.query.common.v2.TableDataStoreFactory;
+import stroom.query.common.v2.DataStoreFactory;
 import stroom.search.extraction.ExtractionReceiver;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -71,7 +71,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
@@ -100,7 +100,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new TableDataStoreFactory(),
+                new DataStoreFactory(),
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -173,7 +173,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -208,7 +208,7 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(new TableDataStoreFactory(), sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(new DataStoreFactory(), sizesProvider, collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -228,7 +228,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 sizesProvider,
-                new TableDataStoreFactory());
+                new DataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -263,7 +263,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new TableDataStoreFactory(),
+                new DataStoreFactory(),
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -291,7 +291,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new TableDataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 

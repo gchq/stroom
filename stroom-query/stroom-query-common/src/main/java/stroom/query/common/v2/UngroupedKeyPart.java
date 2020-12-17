@@ -2,6 +2,8 @@ package stroom.query.common.v2;
 
 import com.esotericsoftware.kryo.io.Output;
 
+import java.util.Objects;
+
 class UngroupedKeyPart implements KeyPart {
     private long sequenceNumber;
 
@@ -21,6 +23,19 @@ class UngroupedKeyPart implements KeyPart {
     @Override
     public boolean isGrouped() {
         return false;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final UngroupedKeyPart that = (UngroupedKeyPart) o;
+        return sequenceNumber == that.sequenceNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sequenceNumber);
     }
 
     @Override

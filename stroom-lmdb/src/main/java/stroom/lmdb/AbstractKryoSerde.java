@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb.serde;
+package stroom.lmdb;
 
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.logging.LambdaLogger;

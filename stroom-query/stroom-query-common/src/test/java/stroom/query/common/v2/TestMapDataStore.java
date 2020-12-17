@@ -16,6 +16,21 @@
 
 package stroom.query.common.v2;
 
-public interface Items extends Iterable<Item> {
-    int size();
+import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.query.api.v2.TableSettings;
+
+import java.util.Collections;
+
+class TestMapDataStore extends AbstractDataStoreTest {
+    @Override
+    DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
+        final FieldIndex fieldIndex = new FieldIndex();
+
+        return new MapDataStore(
+                tableSettings,
+                fieldIndex,
+                Collections.emptyMap(),
+                maxResults,
+                storeSize);
+    }
 }
