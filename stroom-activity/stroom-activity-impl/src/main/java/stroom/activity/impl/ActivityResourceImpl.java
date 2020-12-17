@@ -13,15 +13,12 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
+import event.logging.And;
 import event.logging.Banner;
-import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Event;
-import event.logging.Event.EventDetail.Update;
 import event.logging.MultiObject;
-import event.logging.Object;
-import event.logging.ObjectOutcome;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.UpdateEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,14 +185,15 @@ class ActivityResourceImpl implements ActivityResource {
             currentActivity.setActivity(afterActivity);
 
             if (beforeActivity != null && afterActivity != null) {
-                final Event event = eventLoggingService.createAction("Set Activity", "User has changed activity");
 
-                final Update update = new Update();
-                update.setBefore(convertActivity(beforeActivity));
-                update.setAfter(convertActivity(afterActivity));
-
-                event.getEventDetail().setUpdate(update);
-                eventLoggingService.log(event);
+                eventLoggingService.log(
+                        "Set Activity",
+                        "User has changed activity",
+                        eventDetailBuilder -> eventDetailBuilder
+                                .withUpdate(UpdateEventAction.builder()
+                                        .withBefore(convertActivity(beforeActivity))
+                                        .withAfter(convertActivity(afterActivity))
+                                        .build()));
             }
 
         } catch (final Exception e) {

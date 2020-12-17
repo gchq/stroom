@@ -17,8 +17,21 @@
 package stroom.event.logging.api;
 
 import event.logging.Event;
+import event.logging.EventDetail.Builder;
 import event.logging.EventLoggingService;
 
+import java.util.function.Consumer;
+
 public interface StroomEventLoggingService extends EventLoggingService {
-    Event createAction(String typeId, String description);
+
+    Event createAction(final String typeId,
+                       final String description);
+
+    Event createAction(final String typeId,
+                       final String description,
+                       final Consumer<Builder<Void>> eventDetailBuilderConsumer);
+
+    void log(final String typeId,
+             final String description,
+             final Consumer<Builder<Void>> eventDetailBuilderConsumer);
 }
