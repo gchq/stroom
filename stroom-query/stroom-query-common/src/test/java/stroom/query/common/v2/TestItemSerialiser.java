@@ -11,7 +11,6 @@ import stroom.query.api.v2.Field;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +47,9 @@ class TestItemSerialiser {
             }
         }
 
-        final Key key = new Key(List.of(new GroupKeyPart(new Val[]{ValLong.create(1262304240000L), ValString.create("user5")})));
+        final Key key = Key
+                .root()
+                .resolve(new GroupKeyPart(new Val[]{ValLong.create(1262304240000L), ValString.create("user5")}));
         byte[] keyBytes = itemSerialiser.toBytes(key);
         byte[] generatorBytes = itemSerialiser.toBytes(generators);
         final RawItem item = new RawItem(keyBytes, generatorBytes);
@@ -130,7 +131,7 @@ class TestItemSerialiser {
             }
         }
 
-        final Key key = new Key(Collections.emptyList());
+        final Key key = Key.root();
         byte[] keyBytes = itemSerialiser.toBytes(key);
         byte[] generatorBytes = itemSerialiser.toBytes(generators);
         final RawItem item = new RawItem(keyBytes, generatorBytes);
@@ -174,7 +175,7 @@ class TestItemSerialiser {
 
         final Generator[] generators = new Generator[fields.size()];
 
-        final Key key = new Key(Collections.emptyList());
+        final Key key = Key.root();
         byte[] keyBytes = itemSerialiser.toBytes(key);
         byte[] generatorBytes = itemSerialiser.toBytes(generators);
         final RawItem item = new RawItem(keyBytes, generatorBytes);

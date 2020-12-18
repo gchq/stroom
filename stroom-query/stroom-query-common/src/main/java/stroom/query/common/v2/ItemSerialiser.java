@@ -32,7 +32,7 @@ public class ItemSerialiser {
                     list.add(new UngroupedKeyPart(input.readLong()));
                 }
             }
-            return new Key(list);
+            return Key.fromParts(list);
         });
     }
 

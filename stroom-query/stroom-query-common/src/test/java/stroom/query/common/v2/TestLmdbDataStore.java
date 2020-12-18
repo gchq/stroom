@@ -48,10 +48,10 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
 
         return new LmdbDataStore(
+                byteBufferPool,
                 tempDirProvider,
                 lmdbConfig,
                 pathCreator,
-                byteBufferPool,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),

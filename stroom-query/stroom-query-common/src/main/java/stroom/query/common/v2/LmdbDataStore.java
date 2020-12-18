@@ -1,12 +1,34 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Selection;
+import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.query.api.v2.TableSettings;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
@@ -14,13 +36,20 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Dbi;
+import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
 
-import javax.inject.Inject;
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,21 +58,36 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
+    private static RawKey ROOT_RAW_KEY;
+    private static final long COMMIT_FREQUENCY_MS = 1000;
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "searchResults";
 
     // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
     private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
+    public static final String DB_NAME = "search_results";
+
+    private final Dbi<ByteBuffer> lmdbDbi;
+    private final Env<ByteBuffer> lmdbEnvironment;
+    private final ByteBufferPool byteBufferPool;
 
     private final TempDirProvider tempDirProvider;
     private final LmdbConfig lmdbConfig;
@@ -52,28 +96,42 @@ public class LmdbDataStore implements DataStore {
     private final ByteSize maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
-
-
-    private final KeyValueStoreDb keyValueStoreDb;
-
-
-    private static RawKey ROOT_KEY;
-
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
-
     private final CompiledField[] compiledFields;
+    private final LmdbCompiledSorter[] compiledSorters;
     private final CompiledDepths compiledDepths;
+    private final Sizes maxResults;
+    //    private final Sizes storeSize;
+    private final AtomicLong totalResultCount = new AtomicLong();
+    private final AtomicLong resultCount = new AtomicLong();
+    private final ItemSerialiser itemSerialiser;
+    private final boolean hasSort;
 
-    @Inject
-    public LmdbDataStore(final TempDirProvider tempDirProvider,
-                         final LmdbConfig lmdbConfig,
-                         final PathCreator pathCreator,
-                         final ByteBufferPool byteBufferPool,
-                         final TableSettings tableSettings,
-                         final FieldIndex fieldIndex,
-                         final Map<String, String> paramMap,
-                         final Sizes maxResults,
-                         final Sizes storeSize) {
+    private final KeySerde keySerde;
+    private final ValueSerde valueSerde;
+    private final StripedLock stripedLock;
+    private volatile boolean hasEnoughData;
+
+//    private Txn<ByteBuffer> writeTxn;
+//    private Txn<ByteBuffer> readTxn;
+//    private int writeCount;
+
+    private final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(4096);
+    private final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(4096);
+    private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
+    private final Executor executor;
+
+    private final CountDownLatch addingData;
+
+    LmdbDataStore(final ByteBufferPool byteBufferPool,
+                  final TempDirProvider tempDirProvider,
+                  final LmdbConfig lmdbConfig,
+                  final PathCreator pathCreator,
+                  final TableSettings tableSettings,
+                  final FieldIndex fieldIndex,
+                  final Map<String, String> paramMap,
+                  final Sizes maxResults,
+                  final Sizes storeSize) {
         this.tempDirProvider = tempDirProvider;
         this.lmdbConfig = lmdbConfig;
         this.pathCreator = pathCreator;
@@ -81,131 +139,108 @@ public class LmdbDataStore implements DataStore {
         this.maxSize = lmdbConfig.getMaxStoreSize();
         this.maxReaders = lmdbConfig.getMaxReaders();
         this.maxPutsBeforeCommit = lmdbConfig.getMaxPutsBeforeCommit();
-
-        final Env<ByteBuffer> lmdbEnvironment = createEnvironment(lmdbConfig);
+        this.stripedLock = new StripedLock();
+        this.maxResults = maxResults;
+//        this.storeSize = storeSize;
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
-        final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
-        final LmdbCompiledSorter[] compiledSorters = LmdbCompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
-        this.compiledDepths = compiledDepths;
+        compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
+        compiledSorters = LmdbCompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
-        if (ROOT_KEY == null) {
-            ROOT_KEY = itemSerialiser.toRawKey(new Key(Collections.emptyList()));
+        itemSerialiser = new ItemSerialiser(compiledFields);
+        if (ROOT_RAW_KEY == null) {
+            ROOT_RAW_KEY = itemSerialiser.toRawKey(Key.root());
         }
 
-        final KeySerde keySerde = new KeySerde(itemSerialiser);
-        final ValueSerde valueSerde = new ValueSerde(itemSerialiser);
-        keyValueStoreDb = new KeyValueStoreDb(
-                lmdbEnvironment,
-                byteBufferPool,
-                keySerde,
-                valueSerde,
-                itemSerialiser,
-                compiledFields,
-                compiledSorters,
-                compiledDepths,
-                maxResults,
-                storeSize);
-    }
+        keySerde = new KeySerde(itemSerialiser);
+        valueSerde = new ValueSerde(itemSerialiser);
 
-    @Override
-    public void clear() {
-        keyValueStoreDb.clear();
-    }
+        this.lmdbEnvironment = createEnvironment(lmdbConfig);
+        this.lmdbDbi = openDbi(lmdbEnvironment, DB_NAME);
+        this.byteBufferPool = byteBufferPool;
 
-    @Override
-    public boolean readPayload(final Input input) {
-        return keyValueStoreDb.readPayload(input);
-    }
+        int keySerdeCapacity = keySerde.getBufferCapacity();
+        int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
+        if (keySerdeCapacity > envMaxKeySize) {
+            LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
+                            "key size for the environment {}. " +
+                            "The max environment key size {} will be used instead.",
+                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
+        }
 
-    @Override
-    public void writePayload(final Output output) {
-        keyValueStoreDb.writePayload(output);
-    }
 
-    @Override
-    public void add(final Val[] values) {
-        final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
-        final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
-        final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
-
-        final List<KeyPart> groupKeys = new ArrayList<>(groupIndicesByDepth.length);
-
-//        byte[] parentKey = ROOT_KEY.getBytes();
-        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
-            final Generator[] generators = new Generator[compiledFields.length];
-
-            final int groupSize = groupSizeByDepth[depth];
-            final boolean[] groupIndices = groupIndicesByDepth[depth];
-            final boolean[] valueIndices = valueIndicesByDepth[depth];
-
-            Val[] groupValues = ValSerialiser.EMPTY_VALUES;
-            if (groupSize > 0) {
-                groupValues = new Val[groupSize];
+        // Find out if we have any sorting.
+        boolean hasSort = false;
+        for (final LmdbCompiledSorter sorter : compiledSorters) {
+            if (sorter != null) {
+                hasSort = true;
+                break;
             }
+        }
+        this.hasSort = hasSort;
 
-            int groupIndex = 0;
-            for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
-                final CompiledField compiledField = compiledFields[fieldIndex];
+        // Start consume loop.
+        addingData = new CountDownLatch(1);
+        executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
+        final Runnable runnable = () -> {
+            Metrics.measure("Transfer", () -> {
+                try {
+                    Txn<ByteBuffer> writeTxn = null;
+                    boolean run = true;
+                    boolean needsCommit = false;
+                    long lastCommitMs = System.currentTimeMillis();
 
-                final Expression expression = compiledField.getExpression();
-                if (expression != null) {
-                    if (groupIndices[fieldIndex] || valueIndices[fieldIndex]) {
-                        final Generator generator = expression.createGenerator();
-                        generator.set(values);
+                    while (run) {
+                        final Optional<QueueItem> optional = queue.poll(1, TimeUnit.SECONDS);
+                        if (optional != null) {
+                            if (optional.isPresent()) {
+                                if (writeTxn == null) {
+                                    writeTxn = lmdbEnvironment.txnWrite();
+                                }
 
-                        if (groupIndices[fieldIndex]) {
-                            groupValues[groupIndex++] = generator.eval();
+                                final QueueItem item = optional.get();
+                                consume(writeTxn, item.key, item.generators);
+
+                            } else {
+                                // Stop looping.
+                                run = false;
+                                // Ensure final commit.
+                                lastCommitMs = 0;
+                            }
+
+                            // We have either added something or need a final commit.
+                            needsCommit = true;
                         }
 
-                        if (valueIndices[fieldIndex]) {
-                            generators[fieldIndex] = generator;
+                        if (needsCommit) {
+                            final long now = System.currentTimeMillis();
+                            if (lastCommitMs < now - COMMIT_FREQUENCY_MS) {
+                                lastCommitMs = now;
+                                needsCommit = false;
+
+                                if (writeTxn != null) {
+                                    final Txn<ByteBuffer> txn = writeTxn;
+                                    writeTxn = null;
+                                    Metrics.measure("Commit", () -> {
+                                        txn.commit();
+                                        txn.close();
+                                    });
+                                }
+                            }
                         }
                     }
+
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Continue to interrupt.
+                    Thread.currentThread().interrupt();
+                } finally {
+                    addingData.countDown();
                 }
-            }
-
-            // Trim group values.
-            if (groupIndex < groupSize) {
-                groupValues = Arrays.copyOf(groupValues, groupIndex);
-            }
-
-            KeyPart keyPart;
-            if (depth <= compiledDepths.getMaxGroupDepth()) {
-                // This is a grouped item.
-                keyPart = new GroupKeyPart(groupValues);
-
-            } else {
-                // This item will not be grouped.
-                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
-            }
-
-            groupKeys.add(keyPart);
-            keyValueStoreDb.put(new Key(new ArrayList<>(groupKeys)), generators);
-        }
+            });
+        };
+        executor.execute(runnable);
     }
-
-    @Override
-    public Items get() {
-        return get(ROOT_KEY);
-    }
-
-    @Override
-    public long getSize() {
-        return keyValueStoreDb.getSize();
-    }
-
-    @Override
-    public long getTotalSize() {
-        return keyValueStoreDb.getTotalSize();
-    }
-
-    @Override
-    public Items get(final RawKey rawKey) {
-        return keyValueStoreDb.get(rawKey);
-    }
-
 
     private Env<ByteBuffer> createEnvironment(final LmdbConfig lmdbConfig) {
         LOGGER.info(
@@ -284,13 +319,434 @@ public class LmdbDataStore implements DataStore {
         return storeDir;
     }
 
+    private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env,
+                                           final String name) {
+        LOGGER.debug("Opening LMDB database with name: {}", name);
+        try {
+            return env.openDbi(name, DbiFlags.MDB_CREATE);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error opening LMDB database {}", name), e);
+        }
+    }
+
     @Override
     public void complete() throws InterruptedException {
-        keyValueStoreDb.complete();
+        queue.put(Optional.empty());
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        keyValueStoreDb.awaitCompletion();
+        addingData.await();
+    }
+
+    @Override
+    public void add(final Val[] values) {
+        final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
+        final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
+        final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
+
+        Key key = Key.root();
+
+        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
+            final Generator[] generators = new Generator[compiledFields.length];
+
+            final int groupSize = groupSizeByDepth[depth];
+            final boolean[] groupIndices = groupIndicesByDepth[depth];
+            final boolean[] valueIndices = valueIndicesByDepth[depth];
+
+            Val[] groupValues = ValSerialiser.EMPTY_VALUES;
+            if (groupSize > 0) {
+                groupValues = new Val[groupSize];
+            }
+
+            int groupIndex = 0;
+            for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
+                final CompiledField compiledField = compiledFields[fieldIndex];
+
+                final Expression expression = compiledField.getExpression();
+                if (expression != null) {
+                    if (groupIndices[fieldIndex] || valueIndices[fieldIndex]) {
+                        final Generator generator = expression.createGenerator();
+                        generator.set(values);
+
+                        if (groupIndices[fieldIndex]) {
+                            groupValues[groupIndex++] = generator.eval();
+                        }
+
+                        if (valueIndices[fieldIndex]) {
+                            generators[fieldIndex] = generator;
+                        }
+                    }
+                }
+            }
+
+            // Trim group values.
+            if (groupIndex < groupSize) {
+                groupValues = Arrays.copyOf(groupValues, groupIndex);
+            }
+
+            KeyPart keyPart;
+            if (depth <= compiledDepths.getMaxGroupDepth()) {
+                // This is a grouped item.
+                keyPart = new GroupKeyPart(groupValues);
+
+            } else {
+                // This item will not be grouped.
+                keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
+            }
+
+            key = key.resolve(keyPart);
+            put(key, generators);
+        }
+    }
+
+    private void put(final Key key, final Generator[] value) {
+        LOGGER.trace(() -> "put");
+        if (Thread.currentThread().isInterrupted() || hasEnoughData) {
+            return;
+        }
+
+        totalResultCount.incrementAndGet();
+
+        // Some searches can be terminated early if the user is not sorting or grouping.
+        if (!hasEnoughData && !hasSort && !compiledDepths.hasGroup()) {
+            // No sorting or grouping so we can stop the search as soon as we have the number of results requested by
+            // the client
+            if (maxResults != null && totalResultCount.get() >= maxResults.size(0)) {
+                hasEnoughData = true;
+            }
+        }
+
+        try {
+            queue.put(Optional.of(new QueueItem(key, value)));
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void consume(final Txn<ByteBuffer> txn, final Key key, final Generator[] value) {
+        Metrics.measure("Consume", () -> {
+            try {
+                LOGGER.trace(() -> "consume");
+
+                // Reset the buffers ready for use.
+                keyBuffer.clear();
+                valueBuffer.clear();
+
+                keySerde.serialize(keyBuffer, key);
+                keyBuffer.flip();
+
+                if (key.isGrouped()) {
+                    Metrics.measure("Grouped insert", () -> {
+                        final Lock lock = stripedLock.getLockForKey(key);
+                        lock.lock();
+                        try {
+                            // See if we can find an existing item.
+                            final ByteBuffer existing = Metrics.measure("Grouped get", () -> lmdbDbi.get(txn, keyBuffer));
+                            if (existing != null) {
+                                final Generator[] existingValue = valueSerde.deserialize(existing);
+                                final Generator[] combined = combine(existingValue, value);
+
+                                valueSerde.serialize(valueBuffer, combined);
+                                valueBuffer.flip();
+                            } else {
+                                resultCount.incrementAndGet();
+                                valueSerde.serialize(valueBuffer, value);
+                                valueBuffer.flip();
+                            }
+
+                            Metrics.measure("Grouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
+                        } finally {
+                            lock.unlock();
+                        }
+                    });
+
+                } else {
+                    Metrics.measure("Ungrouped insert", () -> {
+                        resultCount.incrementAndGet();
+                        valueSerde.serialize(valueBuffer, value);
+                        valueBuffer.flip();
+
+                        Metrics.measure("Ungrouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
+                    });
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
+            }
+        });
+    }
+
+    private Generator[] combine(final Generator[] existing, final Generator[] value) {
+        return Metrics.measure("Combine", () -> {
+            Generator[] result = existing;
+
+            // Combine the new item into the original item.
+            for (int i = 0; i < result.length; i++) {
+                Generator existingGenerator = result[i];
+                Generator newGenerator = value[i];
+                if (newGenerator != null) {
+                    if (existingGenerator == null) {
+                        result[i] = newGenerator;
+                    } else {
+                        existingGenerator.merge(newGenerator);
+                    }
+                }
+            }
+
+            return result;
+        });
+    }
+
+    @Override
+    public void clear() {
+        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+            lmdbDbi.drop(writeTxn, true);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LogUtil.message("Error clearing db", e));
+        }
+        resultCount.set(0);
+        totalResultCount.set(0);
+    }
+
+    @Override
+    public void writePayload(final Output output) {
+        Metrics.measure("writePayload", () -> {
+            try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
+                lmdbDbi.iterate(readTxn).forEach(kv -> {
+                    final ByteBuffer keyBuffer = kv.key();
+                    final ByteBuffer valBuffer = kv.val();
+                    final Key key = keySerde.deserialize(keyBuffer);
+                    Generator[] value;
+
+                    if (key.isGrouped()) {
+                        final Lock lock = stripedLock.getLockForKey(key);
+                        lock.lock();
+                        try {
+                            final ByteBuffer currentValueBuffer = lmdbDbi.get(readTxn, keyBuffer);
+                            value = valueSerde.deserialize(currentValueBuffer);
+                            lmdbDbi.delete(keyBuffer);
+
+                        } finally {
+                            lock.unlock();
+                        }
+                    } else {
+                        value = valueSerde.deserialize(valBuffer);
+                        lmdbDbi.delete(keyBuffer);
+                    }
+
+                    itemSerialiser.writeKey(key, output);
+                    itemSerialiser.writeGenerators(value, output);
+                });
+            } catch (RuntimeException e) {
+                throw new RuntimeException(LogUtil.message("Error clearing db", e));
+            }
+        });
+    }
+
+    @Override
+    public boolean readPayload(final Input input) {
+        return Metrics.measure("readPayload", () -> {
+            while (!input.end()) {
+                final Key key = itemSerialiser.readKey(input);
+                final Generator[] value = itemSerialiser.readGenerators(input);
+
+                KeyPart lastPart = key.getLast();
+                if (lastPart != null && !lastPart.isGrouped()) {
+                    // Ensure sequence numbers are unique for this data store.
+                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                }
+
+                put(key, value);
+            }
+
+            // Return success if we have not been asked to terminate and we are still willing to accept data.
+            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+        });
+    }
+
+    @Override
+    public Items get() {
+        return get(null);
+    }
+
+    @Override
+    public Items get(final RawKey rawParentKey) {
+        return Metrics.measure("get", () -> {
+            Key parentKey = Key.root();
+            if (rawParentKey != null) {
+                parentKey = itemSerialiser.toKey(rawParentKey);
+            }
+
+            final List<ItemImpl> list = new ArrayList<>();
+            try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(4096)) {
+                final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+                try (final Output output = new ByteBufferOutput(byteBuffer)) {
+                    itemSerialiser.writeChildKey(parentKey, output);
+                }
+                byteBuffer.flip();
+
+                final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(byteBuffer);
+
+                final int depth = parentKey.getDepth() + 1;
+                final int trimmedSize = maxResults.size(depth);
+                final int maxSize;
+                if (trimmedSize < Integer.MAX_VALUE / 2) {
+                    maxSize = trimmedSize * 2;
+                } else {
+                    maxSize = Integer.MAX_VALUE;
+                }
+                final LmdbCompiledSorter sorter = compiledSorters[depth];
+                boolean sorted = true;
+
+                boolean inRange = true;
+                try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
+                    try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+
+                        while (iterator.hasNext() && inRange) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+
+                            final Key key = keySerde.deserialize(keyVal.key());
+
+                            if (!key.getParent().equals(parentKey)) {
+                                inRange = false;
+
+                            } else {
+                                final byte[] keyBytes = ByteBufferUtils.toBytes(keyVal.key().flip());
+                                final Generator[] generators = valueSerde.deserialize(keyVal.val());
+
+                                final Supplier<Selection<Val>> selectionSupplier = () -> {
+                                    // TODO : Implement child selection. Note that if no sorting is present we could simplify this.
+                                    return null;
+                                };
+
+                                list.add(new ItemImpl(new RawKey(keyBytes), key, generators, selectionSupplier));
+                                sorted = false;
+
+                                if (list.size() > maxSize) {
+                                    sortAndTrim(list, sorter, trimmedSize);
+                                    sorted = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!sorted) {
+                    sortAndTrim(list, sorter, trimmedSize);
+                }
+            }
+
+            return new Items() {
+                @Override
+                @Nonnull
+                public Iterator<Item> iterator() {
+                    final Iterator<ItemImpl> iterator = list.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Item next() {
+                            return iterator.next();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return list.size();
+                }
+            };
+        });
+    }
+
+    @Override
+    public long getSize() {
+        return resultCount.get();
+    }
+
+    @Override
+    public long getTotalSize() {
+        return totalResultCount.get();
+    }
+
+    private void sortAndTrim(final List<ItemImpl> list, final LmdbCompiledSorter sorter, final int trimmedSize) {
+        if (sorter != null) {
+            list.sort(sorter);
+        }
+        while (list.size() > trimmedSize) {
+            list.remove(list.size() - 1);
+        }
+    }
+
+    public static class ItemImpl implements Item {
+        private final RawKey rawKey;
+        private final Key key;
+        private final Generator[] generators;
+        private final Supplier<Selection<Val>> childSelection;
+
+        public ItemImpl(final RawKey rawKey,
+                        final Key key,
+                        final Generator[] generators,
+                        final Supplier<Selection<Val>> childSelection) {
+            this.rawKey = rawKey;
+            this.key = key;
+            this.generators = generators;
+            this.childSelection = childSelection;
+        }
+
+        @Override
+        public RawKey getRawKey() {
+            return rawKey;
+        }
+
+        @Override
+        public Key getKey() {
+            return key;
+        }
+
+        @Override
+        public Val getValue(final int index) {
+            Val val = null;
+
+            final Generator generator = generators[index];
+            if (generator instanceof Selector) {
+                final Selector selector = (Selector) generator;
+                val = selector.select(childSelection.get());
+            } else if (generator != null) {
+                val = generator.eval();
+            }
+
+            return val;
+        }
+
+        public Generator[] getGenerators() {
+            return generators;
+        }
+    }
+
+    private static class QueueItem {
+        private final Key key;
+        private final Generator[] generators;
+
+        public QueueItem(final Key key,
+                         final Generator[] generators) {
+            this.key = key;
+            this.generators = generators;
+        }
+
+        public Key getKey() {
+            return key;
+        }
+
+        public Generator[] getGenerators() {
+            return generators;
+        }
     }
 }

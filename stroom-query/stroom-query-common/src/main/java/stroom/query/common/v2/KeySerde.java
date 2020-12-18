@@ -4,6 +4,9 @@ import stroom.lmdb.Serde;
 
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
+import org.agrona.ExpandableArrayBuffer;
+import org.agrona.ExpandableDirectByteBuffer;
+import org.agrona.MutableDirectBuffer;
 
 import java.nio.ByteBuffer;
 

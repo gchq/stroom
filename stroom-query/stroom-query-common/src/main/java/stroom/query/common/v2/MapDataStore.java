@@ -82,7 +82,7 @@ public class MapDataStore implements DataStore {
 
         itemSerialiser = new ItemSerialiser(compiledFields);
         if (ROOT_KEY == null) {
-            ROOT_KEY = itemSerialiser.toRawKey(new Key(Collections.emptyList()));
+            ROOT_KEY = itemSerialiser.toRawKey(Key.root());
         }
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
@@ -163,7 +163,7 @@ public class MapDataStore implements DataStore {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        final List<KeyPart> groupKeys = new ArrayList<>(groupIndicesByDepth.length);
+        Key key = Key.root();
 
         byte[] parentKey = ROOT_KEY.getBytes();
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
@@ -214,8 +214,8 @@ public class MapDataStore implements DataStore {
                 keyPart = new UngroupedKeyPart(ungroupedItemSequenceNumber.incrementAndGet());
             }
 
-            groupKeys.add(keyPart);
-            final byte[] childKey = itemSerialiser.toBytes(new Key(groupKeys));
+            key = key.resolve(keyPart);
+            final byte[] childKey = itemSerialiser.toBytes(key);
             final byte[] generatorBytes = itemSerialiser.toBytes(generators);
 
             addToChildMap(depth, parentKey, childKey, generatorBytes);

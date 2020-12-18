@@ -22,7 +22,7 @@ import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.common.v2.KeyValueStoreDb.ItemImpl;
+import stroom.query.common.v2.LmdbDataStore.ItemImpl;
 
 import java.util.ArrayList;
 import java.util.Comparator;

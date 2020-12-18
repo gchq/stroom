@@ -1,15 +1,34 @@
 package stroom.query.common.v2;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
 public class Key implements Iterable<KeyPart> {
+    private static final Key ROOT_KEY = new Key(Collections.emptyList());
+
     private final List<KeyPart> keyParts;
 
-    public Key(final List<KeyPart> keyParts) {
+    private Key(final List<KeyPart> keyParts) {
         this.keyParts = keyParts;
+    }
+
+    public static Key root() {
+        return ROOT_KEY;
+    }
+
+    public static Key fromParts(final List<KeyPart> keyParts) {
+        return new Key(keyParts);
+    }
+
+    Key resolve(final KeyPart keyPart) {
+        final List<KeyPart> parts = new ArrayList<>(keyParts.size() + 1);
+        parts.addAll(keyParts);
+        parts.add(keyPart);
+        return new Key(parts);
     }
 
     KeyPart getLast() {
