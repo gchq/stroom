@@ -17,13 +17,14 @@
 
 package stroom.security.identity.account;
 
-import event.logging.BaseAdvancedQueryOperator;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.BaseObject;
 import event.logging.Event;
-import event.logging.Object;
-import event.logging.ObjectOutcome;
+import event.logging.Outcome;
 import event.logging.Query;
-import event.logging.Search;
+import event.logging.SearchEventAction;
+import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.util.Map;
 
 @Singleton
@@ -56,46 +58,47 @@ public class AccountEventLogImpl implements AccountEventLog {
         this.securityContext = securityContext;
     }
 
-    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
-        ObjectInfoProvider appender = null;
-
-        // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
-        Class<?> currentType = type;
-        Provider<ObjectInfoProvider> provider = null;
-        while (currentType != null && provider == null) {
-            provider = objectInfoProviderMap.get(new ObjectType(currentType));
-            currentType = currentType.getSuperclass();
-        }
-
-        if (provider != null) {
-            appender = provider.get();
-        }
-
-        if (appender == null) {
-            LOGGER.error("No appender found for " + type.getName());
-        }
-
-        return appender;
-    }
+//    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
+//        ObjectInfoProvider appender = null;
+//
+//        // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+//        Class<?> currentType = type;
+//        Provider<ObjectInfoProvider> provider = null;
+//        while (currentType != null && provider == null) {
+//            provider = objectInfoProviderMap.get(new ObjectType(currentType));
+//            currentType = currentType.getSuperclass();
+//        }
+//
+//        if (provider != null) {
+//            appender = provider.get();
+//        }
+//
+//        if (appender == null) {
+//            LOGGER.error("No appender found for " + type.getName());
+//        }
+//
+//        return appender;
+//    }
 
     @Override
     public void list(final ResultPage<Account> result, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final BaseAdvancedQueryOperator operator = new BaseAdvancedQueryOperator.And();
-//                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, email));
 
-                final Query.Advanced advanced = new Query.Advanced();
-                advanced.getAdvancedQueryItems().add(operator);
 
-                final Query query = new Query();
-                query.setAdvanced(advanced);
+                final Event event = eventLoggingService.createAction(
+                        "ListAccounts",
+                        "List all accounts",
+                        eventDetailBuilder -> {
+                            eventDetailBuilder.withSearch(SearchEventAction.builder()
+                                    .withQuery(Query.builder()
+                                            .withAdvanced(AdvancedQuery.builder()
+                                                    .addAnd(new And())
+                                                    .build())
+                                            .build())
+                                    .build());
 
-                final Search search = new Search();
-                search.setQuery(query);
-
-                final Event event = eventLoggingService.createAction("ListAccounts", "List all accounts");
-                event.getEventDetail().setSearch(search);
+                        });
 
 //                if (pageResponse != null) {
 //                    final ResultPage resultPage = getResultPage(pageResponse);
@@ -117,20 +120,30 @@ public class AccountEventLogImpl implements AccountEventLog {
     public void search(final SearchAccountRequest request, final ResultPage<Account> result, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final BaseAdvancedQueryOperator operator = new BaseAdvancedQueryOperator.And();
-                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, request.getQuickFilter()));
 
-                final Query.Advanced advanced = new Query.Advanced();
-                advanced.getAdvancedQueryItems().add(operator);
-
-                final Query query = new Query();
-                query.setAdvanced(advanced);
-
-                final Search search = new Search();
-                search.setQuery(query);
-
-                final Event event = eventLoggingService.createAction("SearchAccounts", "Search for accounts by email");
-                event.getEventDetail().setSearch(search);
+                final Event event = eventLoggingService.createAction(
+                        "SearchAccounts",
+                        "Search for accounts by email",
+                        eventDetailBuilder -> eventDetailBuilder
+                        .withSearch(SearchEventAction.builder()
+                                .withQuery(Query.builder()
+                                        .withAdvanced(AdvancedQuery.builder()
+                                                .addAnd(And.builder()
+                                                        .addTerm(Term.builder()
+                                                                .withName("Email")
+                                                                .withCondition(TermCondition.EQUALS)
+                                                                .withValue(request.getQuickFilter())
+                                                                .build())
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .withResultPage(eventLoggingService.createResultPage(result))
+                                .withTotalResults(BigInteger.valueOf(result.size()))
+                                .withOutcome(Outcome.builder()
+                                        .withSuccess(true)
+                                        .build())
+                                .build())
+                        );
 
 //                if (pageResponse != null) {
 //                    final ResultPage resultPage = getResultPage(pageResponse);

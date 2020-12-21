@@ -16,11 +16,18 @@
 
 package stroom.event.logging.api;
 
+import stroom.util.shared.PageResponse;
+
 import event.logging.Event;
+import event.logging.EventAction;
 import event.logging.EventDetail.Builder;
 import event.logging.EventLoggingService;
+import event.logging.ResultPage;
 
+import java.math.BigInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -34,4 +41,35 @@ public interface StroomEventLoggingService extends EventLoggingService {
     void log(final String typeId,
              final String description,
              final Consumer<Builder<Void>> eventDetailBuilderConsumer);
+
+    <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction,
+            final Function<T_EVENT_ACTION, T_RESULT> loggedWork);
+
+    <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction,
+            final Function<T_EVENT_ACTION, T_RESULT> loggedWork,
+            final BiConsumer<Throwable, T_EVENT_ACTION> exceptionHandler);
+
+    default ResultPage createResultPage(final stroom.util.shared.ResultPage<?> resultPage) {
+        final ResultPage result;
+        if (resultPage == null) {
+            result = null;
+        } else {
+            final PageResponse pageResponse = resultPage.getPageResponse();
+            if (resultPage.getPageResponse() != null) {
+                result = ResultPage.builder()
+                        .withFrom(BigInteger.valueOf(pageResponse.getOffset()))
+                        .withPerPage(BigInteger.valueOf(pageResponse.getLength()))
+                        .build();
+            } else {
+                result = null;
+            }
+        }
+        return result;
+    }
 }

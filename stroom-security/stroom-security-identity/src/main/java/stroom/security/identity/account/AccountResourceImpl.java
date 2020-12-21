@@ -18,48 +18,91 @@
 
 package stroom.security.identity.account;
 
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.util.shared.ResultPage;
+
+import event.logging.AdvancedQuery;
+import event.logging.And;
+import event.logging.Outcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
+import event.logging.Term;
+import event.logging.TermCondition;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
+import java.math.BigInteger;
 import java.util.Optional;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
     private final Provider<AccountService> serviceProvider;
     private final AccountEventLog eventLog;
+    private final StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
     public AccountResourceImpl(final Provider<AccountService> serviceProvider,
-                               final AccountEventLog eventLog) {
+                               final AccountEventLog eventLog,
+                               final StroomEventLoggingService stroomEventLoggingService) {
         this.serviceProvider = serviceProvider;
         this.eventLog = eventLog;
+        this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
     @Override
     public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
-        try {
-            final ResultPage<Account> result = serviceProvider.get().list();
-            eventLog.list(result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            eventLog.list(null, e);
-            throw e;
-        }
+
+        return stroomEventLoggingService.loggedResult(
+                "ListAccounts",
+                "List all accounts",
+                SearchEventAction.builder()
+                        .withQuery(Query.builder()
+                                .withAdvanced(AdvancedQuery.builder()
+                                        .addAnd(new And())
+                                        .build())
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .build())
+                        .build(),
+                searchEventAction -> {
+                    final ResultPage<Account> result = serviceProvider.get().list();
+                    searchEventAction.setResultPage(stroomEventLoggingService.createResultPage(result));
+                    searchEventAction.setTotalResults(BigInteger.valueOf(result.size()));
+                    return result;
+                }
+        );
     }
 
     @Override
     public ResultPage<Account> search(final SearchAccountRequest request) {
-        try {
-            final ResultPage<Account> result = serviceProvider.get().search(request);
-            eventLog.search(request, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            eventLog.search(request, null, e);
-            throw e;
-        }
+        return stroomEventLoggingService.loggedResult(
+                "SearchAccounts",
+                "Search for accounts by email",
+                SearchEventAction.builder()
+                        .withQuery(Query.builder()
+                                .withAdvanced(AdvancedQuery.builder()
+                                        .addAnd(And.builder()
+                                                .addTerm(Term.builder()
+                                                        .withName("Email")
+                                                        .withCondition(TermCondition.EQUALS)
+                                                        .withValue(request.getQuickFilter())
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .build())
+                        .build(),
+                searchEventAction -> {
+                    final ResultPage<Account> result = serviceProvider.get().search(request);
+                    searchEventAction.setResultPage(stroomEventLoggingService.createResultPage(result));
+                    searchEventAction.setTotalResults(BigInteger.valueOf(result.size()));
+                    return result;
+                });
     }
 
     @Override
