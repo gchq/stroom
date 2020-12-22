@@ -17,6 +17,7 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.event.logging.api.LoggedResult;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
@@ -49,6 +50,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -108,14 +110,14 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         .build());
     }
 
-    public Event createAction(final String typeId, final String description) {
-        return createAction(typeId, description, null);
+    public Event createSkeletonEvent(final String typeId, final String description) {
+        return createSkeletonEvent(typeId, description, null);
     }
 
     @Override
-    public Event createAction(final String typeId,
-                              final String description,
-                              final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+    public Event createSkeletonEvent(final String typeId,
+                                     final String description,
+                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
         final EventDetail.Builder<Void> eventDetailBuilder = EventDetail.builder()
                 .withTypeId(typeId)
                 .withDescription(description)
@@ -135,7 +137,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     final String description,
                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
 
-        super.log(createAction(typeId, description, eventDetailBuilderConsumer));
+        super.log(createSkeletonEvent(typeId, description, eventDetailBuilderConsumer));
     }
 
 
@@ -260,36 +262,31 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             final String eventTypeId,
             final String description,
             final T_EVENT_ACTION eventAction,
-            final Function<T_EVENT_ACTION, T_RESULT> loggedWork) {
-        return loggedResult(eventTypeId, description, eventAction, loggedWork, null);
-    }
-
-    @Override
-    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-            final String eventTypeId,
-            final String description,
-            final T_EVENT_ACTION eventAction,
-            final Function<T_EVENT_ACTION, T_RESULT> loggedWork,
-            final BiConsumer<Throwable, T_EVENT_ACTION> exceptionHandler) {
+            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
+            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
 
         return securityContext.insecureResult(() -> {
             final T_RESULT result;
             if (loggedWork != null) {
-                final Event event = createAction(
+                final Event event = createSkeletonEvent(
                         eventTypeId,
                         description,
                         eventDetailBuilder -> eventDetailBuilder
                                 .withEventAction(eventAction));
 
                 try {
-                    // Allow the caller to mutate the eventAction based on the work that they do,
+                    // Allow the caller to provide a new EventAction bases on the result of the work
                     // e.g. if they are updating a record, they can capture the before state
-                    result = loggedWork.apply(eventAction);
+                    final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
+                    // Set the new EventAction onto the existing event
+                    event.getEventDetail().setEventAction(loggedResult.getEventAction());
                     log(event);
-                } catch (Exception e) {
+                    result = loggedResult.getResult();
+                } catch (Throwable e) {
                     if (exceptionHandler != null) {
-                        // Allow caller to mutate the action based on the exception
-                        exceptionHandler.accept(e, eventAction);
+                        // Allow caller to provide a new EventAction bases on the exception
+                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
+                        event.getEventDetail().setEventAction(newEventAction);
                     } else {
                         // No handler so see if we can add an outcome
                         if (eventAction instanceof HasOutcome) {
@@ -298,7 +295,9 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                             final BaseOutcome baseOutcome = hasOutcome.getOutcome();
                             if (baseOutcome != null) {
                                 baseOutcome.setSuccess(false);
-                                baseOutcome.setDescription(e.getMessage());
+                                baseOutcome.setDescription(e.getMessage() != null
+                                        ? e.getMessage()
+                                        : e.getClass().getName());
                             } else {
                                 // TODO @AT Need to find a way of initialising the outcome when we don't know what
                                 // type it is.
@@ -315,6 +314,69 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return result;
         });
     }
+
+//    @Override
+//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+//            final String eventTypeId,
+//            final String description,
+//            final T_EVENT_ACTION eventAction,
+//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork) {
+//        return loggedResult(eventTypeId, description, eventAction, loggedWork, null);
+//    }
+//
+//    @Override
+//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+//            final String eventTypeId,
+//            final String description,
+//            final T_EVENT_ACTION eventAction,
+//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork,
+//            final BiConsumer<Throwable, T_EVENT_ACTION> exceptionHandler) {
+//
+//        return securityContext.insecureResult(() -> {
+//            final T_RESULT result;
+//            if (loggedWork != null) {
+//                final Event event = createSkeletonEvent(
+//                        eventTypeId,
+//                        description,
+//                        eventDetailBuilder -> eventDetailBuilder
+//                                .withEventAction(eventAction));
+//
+//                try {
+//                    // Allow the caller to mutate the eventAction based on the work that they do,
+//                    // e.g. if they are updating a record, they can capture the before state
+//                    result = loggedWork.apply(eventAction);
+//                    log(event);
+//                } catch (Throwable e) {
+//                    if (exceptionHandler != null) {
+//                        // Allow caller to mutate the action based on the exception
+//                        exceptionHandler.accept(e, eventAction);
+//                    } else {
+//                        // No handler so see if we can add an outcome
+//                        if (eventAction instanceof HasOutcome) {
+//
+//                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
+//                            final BaseOutcome baseOutcome = hasOutcome.getOutcome();
+//                            if (baseOutcome != null) {
+//                                baseOutcome.setSuccess(false);
+//                                baseOutcome.setDescription(e.getMessage() != null
+//                                        ? e.getMessage()
+//                                        : e.getClass().getName());
+//                            } else {
+//                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
+//                                // type it is.
+//                                LOGGER.warn("Unable set outcome as baseOutcome is null");
+//                            }
+//                        }
+//                    }
+//                    log(event);
+//                    throw e;
+//                }
+//            } else {
+//                result = null;
+//            }
+//            return result;
+//        });
+//    }
 
     private void loggedResultTest() {
 
@@ -367,29 +429,11 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     .build());
         };
 
-        final int result = loggedResult(
-                "moveFile",
-                "move file " + id + " to " + newFilePath,
-                skeletonAction,
-                loggedWork,
-                exceptionHandler);
-    }
-
-    public static class LoggedResult<T> {
-        private final T result;
-        private final EventDetail eventDetail;
-
-        public LoggedResult(final T result, final EventDetail eventDetail) {
-            this.result = result;
-            this.eventDetail = eventDetail;
-        }
-
-        public EventDetail getEventDetail() {
-            return eventDetail;
-        }
-
-        public T getResult() {
-            return result;
-        }
+//        final int result = loggedResult(
+//                "moveFile",
+//                "move file " + id + " to " + newFilePath,
+//                skeletonAction,
+//                loggedWork,
+//                exceptionHandler);
     }
 }

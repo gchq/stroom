@@ -95,7 +95,7 @@ public class AuthorisationEventLog {
                     .withSuccess(success)
                     .withDescription(outcomeDescription)
                     .build();
-            final Event event = eventLoggingService.createAction(typeId, description, eventDetailBuilder ->
+            final Event event = eventLoggingService.createSkeletonEvent(typeId, description, eventDetailBuilder ->
                     eventDetailBuilder
                             .withAuthorise(AuthoriseEventAction.builder()
                                     .addUser(User.builder()

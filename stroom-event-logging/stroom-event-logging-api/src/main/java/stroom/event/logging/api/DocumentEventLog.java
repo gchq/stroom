@@ -17,11 +17,18 @@
 
 package stroom.event.logging.api;
 
-import event.logging.Query;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.Selection;
+
+import event.logging.AdvancedQuery;
+import event.logging.And;
+import event.logging.Not;
+import event.logging.Query;
+import event.logging.SimpleQuery;
 
 public interface DocumentEventLog {
+
     void create(Object entity, Throwable ex);
 
     void create(String entityType, String entityName, Throwable ex);
@@ -47,4 +54,26 @@ public interface DocumentEventLog {
     void search(String typeId, Query query, String resultType, PageResponse pageResponse, Throwable ex);
 
 //    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+
+    static void appendSelection(final Query.Builder<Void> queryBuilder, final Selection<?> selection) {
+        if (selection != null) {
+            if (selection.isMatchAll()) {
+                queryBuilder
+                        .withAdvanced(AdvancedQuery.builder()
+                                .addAnd(And.builder()
+                                        .build())
+                                .build());
+            } else if (selection.isMatchNothing()) {
+                queryBuilder
+                        .withAdvanced(AdvancedQuery.builder()
+                                .addNot(Not.builder()
+                                        .build())
+                                .build());
+            } else {
+                queryBuilder.withSimple(SimpleQuery.builder()
+                        .withInclude(selection.toString())
+                        .build());
+            }
+        }
+    }
 }

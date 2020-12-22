@@ -117,7 +117,7 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     private void logEvent(final String username,
                           final boolean wasSuccessful,
                           final String description) {
-        final Event event = stroomEventLoggingService.createAction(
+        final Event event = stroomEventLoggingService.createSkeletonEvent(
                 "CliChangePassword",
                 LogUtil.message("The password for user {} was changed from the command line", username));
 

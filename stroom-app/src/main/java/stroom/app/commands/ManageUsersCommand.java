@@ -520,7 +520,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private Event buildBasicEvent(final String typeId, final String description) {
-        final Event event = stroomEventLoggingService.createAction(typeId, description);
+        final Event event = stroomEventLoggingService.createSkeletonEvent(typeId, description);
 
         // We are running as proc user so try and get the OS user, though that may just be a shared account
         event.getEventSource().getUser().setId(System.getProperty("user.name"));

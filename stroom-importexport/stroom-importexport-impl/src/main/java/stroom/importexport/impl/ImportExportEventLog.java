@@ -54,7 +54,7 @@ public class ImportExportEventLog {
     public void export(final DocRefs docRefs) {
         securityContext.insecure(() -> {
             try {
-                final Event event = eventLoggingService.createAction("ExportConfig", "Exporting Configuration");
+                final Event event = eventLoggingService.createSkeletonEvent("ExportConfig", "Exporting Configuration");
 
                 final Criteria criteria = new Criteria();
                 criteria.setType("Configuration");
@@ -82,7 +82,7 @@ public class ImportExportEventLog {
                 if (confirmList != null && confirmList.size() > 0) {
                     for (final ImportState confirmation : confirmList) {
                         try {
-                            final Event event = eventLoggingService.createAction("ImportConfig", "Importing Configuration");
+                            final Event event = eventLoggingService.createSkeletonEvent("ImportConfig", "Importing Configuration");
 
                             String state = "Error";
                             if (confirmation.getState() != null) {

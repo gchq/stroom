@@ -63,7 +63,7 @@ public class StreamEventLog {
     public void importStream(final String feedName, final String path, final Throwable th) {
         securityContext.insecure(() -> {
             try {
-                final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
+                final Event event = eventLoggingService.createSkeletonEvent("Data Upload", "Data uploaded to \"" + feedName + "\"");
 
                 final event.logging.Object object = new event.logging.Object();
                 object.setType("Stream");
@@ -90,7 +90,7 @@ public class StreamEventLog {
         securityContext.insecure(() -> {
             try {
                 if (findMetaCriteria != null) {
-                    final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
+                    final Event event = eventLoggingService.createSkeletonEvent("ExportData", "Exporting Data");
 
                     final Criteria criteria = new Criteria();
                     criteria.setType("Data");
@@ -122,7 +122,7 @@ public class StreamEventLog {
         securityContext.insecure(() -> {
             try {
                 if (eventId != null) {
-                    final Event event = eventLoggingService.createAction("View", "Viewing Stream");
+                    final Event event = eventLoggingService.createSkeletonEvent("View", "Viewing Stream");
                     final ObjectOutcome objectOutcome = new ObjectOutcome();
                     event.getEventDetail().setView(objectOutcome);
                     objectOutcome.getObjects()

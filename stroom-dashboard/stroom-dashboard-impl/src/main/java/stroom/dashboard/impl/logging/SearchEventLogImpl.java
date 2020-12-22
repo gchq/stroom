@@ -19,7 +19,6 @@ package stroom.dashboard.impl.logging;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -131,7 +130,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                 exp.setSource(multiObject);
                 exp.setOutcome(EventLoggingUtil.createOutcome(e));
 
-                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
+                final Event event = eventLoggingService.createSkeletonEvent(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
                 event.getEventDetail().setExport(exp);
                 event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
@@ -164,7 +163,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                 search.setQuery(getQuery(expression));
                 search.setOutcome(EventLoggingUtil.createOutcome(e));
 
-                final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
+                final Event event = eventLoggingService.createSkeletonEvent(type, type + "ing data source \"" + dataSourceRef.toInfoString());
                 event.getEventDetail().setSearch(search);
                 event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
 

@@ -198,7 +198,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                     + docRef.getUuid();
         }
         desc += getPermissionString(permissionInheritance);
-        return eventLoggingService.createAction(typeId, desc);
+        return eventLoggingService.createSkeletonEvent(typeId, desc);
     }
 
     private Event createAction(final String typeId,
@@ -208,7 +208,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                                final PermissionInheritance permissionInheritance) {
         String desc = description + " " + objectType + " \"" + objectName + "\"";
         desc += getPermissionString(permissionInheritance);
-        return eventLoggingService.createAction(typeId, desc);
+        return eventLoggingService.createSkeletonEvent(typeId, desc);
     }
 
     private String getPermissionString(final PermissionInheritance permissionInheritance) {

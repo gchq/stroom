@@ -88,7 +88,7 @@ public class AuthenticationEventLog {
                                      final String outcomeDescription,
                                      final AuthenticateOutcomeReason reason) {
         try {
-            final Event event = eventLoggingService.createAction(typeId, description);
+            final Event event = eventLoggingService.createSkeletonEvent(typeId, description);
 
             final Builder<Void> builder = AuthenticateEventAction.builder()
                     .withAction(action)

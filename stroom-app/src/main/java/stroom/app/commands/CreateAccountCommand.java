@@ -168,10 +168,6 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                           final boolean wasSuccessful,
                           final String description) {
 
-//        final Event event = stroomEventLoggingService.createAction(
-//                "CliCreateInternalIdentityProviderUser",
-//                LogUtil.message("An account for user {} was created in the internal identity provider", username));
-
         stroomEventLoggingService.log(
                 "CliCreateInternalIdentityProviderUser",
                 LogUtil.message("An account for user {} was created in the internal identity provider", username),
@@ -185,24 +181,5 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                                         .withDescription(description)
                                         .build())
                                 .build()));
-
-//        final ObjectFactory objectFactory = new ObjectFactory();
-//        final ObjectOutcome createAction = objectFactory.createObjectOutcome();
-//        event.getEventDetail().setCreate(createAction);
-//
-//        final User user = objectFactory.createUser();
-//        createAction.getObjects().add(user);
-//        user.setName(username);
-//
-//        // TODO @AT UserDetails appears to be empty for some reason so can't set the user's name on it
-//        final UserDetails userDetails = objectFactory.createUserDetails();
-//        user.setUserDetails(userDetails);
-//
-//        final Outcome outcome = objectFactory.createOutcome();
-//        createAction.setOutcome(outcome);
-//        outcome.setSuccess(wasSuccessful);
-//        outcome.setDescription(description);
-//
-//        stroomEventLoggingService.log(event);
     }
 }

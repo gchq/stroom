@@ -95,6 +95,6 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
     private Event createAction(final String typeId, final String description, final String entityType,
                                final String entityName) {
         final String desc = description + " " + entityType + " \"" + entityName;
-        return eventLoggingService.createAction(typeId, desc);
+        return eventLoggingService.createSkeletonEvent(typeId, desc);
     }
 }

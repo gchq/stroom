@@ -45,7 +45,7 @@ public class PipelineEventLog {
                            final Throwable th) {
         try {
             if (eventId != null) {
-                final Event event = eventLoggingService.createAction("Stepping", "Stepping Stream");
+                final Event event = eventLoggingService.createSkeletonEvent("Stepping", "Stepping Stream");
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setView(objectOutcome);
                 objectOutcome.getObjects().add(createStreamObject(eventId, feedName, streamTypeName, pipelineRef));
