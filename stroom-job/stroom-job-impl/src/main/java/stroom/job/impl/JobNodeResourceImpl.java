@@ -27,9 +27,11 @@ import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.Term;
+import event.logging.TermCondition;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -61,25 +63,48 @@ class JobNodeResourceImpl implements JobNodeResource {
     public JobNodeListResponse list(final String jobName, final String nodeName) {
         JobNodeListResponse response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        And.Builder<Void> andBuilder = And.builder();
 
+        final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
+        if (jobName != null && !jobName.isEmpty()) {
+            findJobNodeCriteria.getJobName().setString(jobName);
+            andBuilder.addTerm(Term.builder()
+                    .withName("Job")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(jobName)
+                    .build());
+        }
+        if (nodeName != null && !nodeName.isEmpty()) {
+            findJobNodeCriteria.getNodeName().setString(nodeName);
+            andBuilder.addTerm(Term.builder()
+                    .withName("NodeName")
+                    .withCondition(TermCondition.EQUALS)
+                    .withValue(nodeName)
+                    .build());
+        }
+
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
         try {
-            final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-            if (jobName != null && !jobName.isEmpty()) {
-                findJobNodeCriteria.getJobName().setString(jobName);
-            }
-            if (nodeName != null && !nodeName.isEmpty()) {
-                findJobNodeCriteria.getNodeName().setString(nodeName);
-            }
 
             response = jobNodeService.find(findJobNodeCriteria);
-            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), response.getPageResponse(), null);
+            documentEventLog.search(
+                    "ListJobNodes",
+                    query,
+                    JobNode.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    "ListJobNodes",
+                    query,
+                    JobNode.class.getSimpleName(),
+                    null,
+                    e);
+            throw e;
         }
         return response;
     }

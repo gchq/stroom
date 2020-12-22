@@ -17,18 +17,19 @@
 
 package stroom.pipeline;
 
-import event.logging.BaseObject;
-import event.logging.Object;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.pipeline.shared.PipelineDoc;
+
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDocObjectInfoProvider.class);
 
     @Override
-    public BaseObject createBaseObject(final java.lang.Object obj) {
+    public BaseObject createBaseObject(final Object obj) {
         final PipelineDoc pipelineDoc = (PipelineDoc) obj;
 
         String description = null;
@@ -40,13 +41,12 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get pipeline description!", e);
         }
 
-        final Object object = new Object();
-        object.setType(pipelineDoc.getType());
-        object.setId(pipelineDoc.getUuid());
-        object.setName(pipelineDoc.getName());
-        object.setDescription(description);
-
-        return object;
+        return OtherObject.builder()
+                .withType(pipelineDoc.getType())
+                .withName(pipelineDoc.getName())
+                .withId(pipelineDoc.getUuid())
+                .withDescription(description)
+                .build();
     }
 
     @Override

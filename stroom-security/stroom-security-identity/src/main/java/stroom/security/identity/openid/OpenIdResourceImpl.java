@@ -1,6 +1,7 @@
 package stroom.security.identity.openid;
 
 import stroom.config.common.UriFactory;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.token.JwkCache;
 import stroom.security.identity.token.JwkEventLog;
@@ -13,7 +14,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import event.logging.ObjectOutcome;
+import event.logging.OtherObject;
+import event.logging.Outcome;
+import event.logging.ViewEventAction;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 
@@ -35,18 +38,21 @@ class OpenIdResourceImpl implements OpenIdResource {
     private final JwkEventLog jwkEventLog;
     private final UriFactory uriFactory;
     private final TokenConfig tokenConfig;
+    private final StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
     OpenIdResourceImpl(final OpenIdService service,
                        final JwkCache jwkCache,
                        final JwkEventLog jwkEventLog,
                        final UriFactory uriFactory,
-                       final TokenConfig tokenConfig) {
+                       final TokenConfig tokenConfig,
+                       final StroomEventLoggingService stroomEventLoggingService) {
         this.service = service;
         this.jwkCache = jwkCache;
         this.jwkEventLog = jwkEventLog;
         this.uriFactory = uriFactory;
         this.tokenConfig = tokenConfig;
+        this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
     @Override
@@ -58,7 +64,15 @@ class OpenIdResourceImpl implements OpenIdResource {
                      @Nullable final String nonce,
                      @Nullable final String state,
                      @Nullable final String prompt) {
-        final URI result = service.auth(request, scope, responseType, clientId, redirectUri, nonce, state, prompt);
+        final URI result = service.auth(
+                request,
+                scope,
+                responseType,
+                clientId,
+                redirectUri,
+                nonce,
+                state,
+                prompt);
         throw new RedirectionException(Status.SEE_OTHER, result);
     }
 
@@ -69,26 +83,32 @@ class OpenIdResourceImpl implements OpenIdResource {
 
     @Override
     public Map<String, List<Map<String, Object>>> certs(final HttpServletRequest httpServletRequest) {
-        final List<PublicJsonWebKey> list = jwkCache.get();
-        final List<Map<String, Object>> maps = list.stream()
-                .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
-                .collect(Collectors.toList());
 
-        Map<String, List<Map<String, Object>>> keys = new HashMap<>();
-        keys.put("keys", maps);
+        return stroomEventLoggingService.loggedResult(
+                "getCerts",
+                "Read a token by the token ID.",
+                ViewEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("PublicKey")
+                                .withName("Public Key")
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .build())
+                        .build(),
+                () -> {
+                    // Do the work
+                    final List<PublicJsonWebKey> list = jwkCache.get();
+                    final List<Map<String, Object>> maps = list.stream()
+                            .map(jwk ->
+                                    jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
+                            .collect(Collectors.toList());
 
-        event.logging.Object object = new event.logging.Object();
-        object.setName("PublicKey");
-        ObjectOutcome objectOutcome = new ObjectOutcome();
-        objectOutcome.getObjects().add(object);
-//        jwkEventLog.view(
-//                "getCerts",
-//                httpServletRequest,
-//                "anonymous",
-//                objectOutcome,
-//                "Read a token by the token ID.");
+                    Map<String, List<Map<String, Object>>> keys = new HashMap<>();
+                    keys.put("keys", maps);
 
-        return keys;
+                    return keys;
+                });
     }
 
     @Override
