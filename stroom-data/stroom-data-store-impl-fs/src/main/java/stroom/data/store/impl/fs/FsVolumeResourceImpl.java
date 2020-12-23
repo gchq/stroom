@@ -20,6 +20,7 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,7 +52,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         final Query.Builder<Void> builder = Query.builder();
 
-        DocumentEventLog.appendSelection(builder, criteria.getSelection());
+        StroomEventLoggingUtil.appendSelection(builder, criteria.getSelection());
 
         final Query query = builder.build();
 

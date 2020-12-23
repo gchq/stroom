@@ -16,15 +16,11 @@
 
 package stroom.event.logging.api;
 
-import stroom.util.shared.PageResponse;
-
 import event.logging.Event;
 import event.logging.EventAction;
 import event.logging.EventDetail.Builder;
 import event.logging.EventLoggingService;
-import event.logging.ResultPage;
 
-import java.math.BigInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -95,22 +91,5 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //            final Function<Event, LoggedResult<T>> loggedWork,
 //            final BiConsumer<Event, Throwable> exceptionHandler);
 
-    default ResultPage createResultPage(final stroom.util.shared.ResultPage<?> resultPage) {
-        final ResultPage result;
-        if (resultPage == null) {
-            result = null;
-        } else {
-            final PageResponse pageResponse = resultPage.getPageResponse();
-            if (resultPage.getPageResponse() != null) {
-                result = ResultPage.builder()
-                        .withFrom(BigInteger.valueOf(pageResponse.getOffset()))
-                        .withPerPage(BigInteger.valueOf(pageResponse.getLength()))
-                        .build();
-            } else {
-                result = null;
-            }
-        }
-        return result;
-    }
 
 }

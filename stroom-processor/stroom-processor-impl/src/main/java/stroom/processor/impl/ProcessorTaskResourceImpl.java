@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -67,7 +68,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         ResultPage<ProcessorTask> result;
 
         final Query.Builder<Void> queryBuilder = Query.builder();
-        DocumentEventLog.appendExpression(queryBuilder, criteria.getExpression());
+        StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());
         final Query query = queryBuilder.build();
 
         try {
@@ -96,7 +97,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         ResultPage<ProcessorTaskSummary> result;
 
         final Query.Builder<Void> queryBuilder = Query.builder();
-        DocumentEventLog.appendExpression(queryBuilder, criteria.getExpression());
+        StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());
         final Query query = queryBuilder.build();
 
         try {

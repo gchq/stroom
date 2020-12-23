@@ -25,20 +25,18 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Not;
-import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.AdvancedQuery;
+import event.logging.AdvancedQueryItem;
+import event.logging.And;
 import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Event;
-import event.logging.Export;
-import event.logging.Import;
+import event.logging.ExportEventAction;
+import event.logging.ImportEventAction;
 import event.logging.MultiObject;
-import event.logging.ObjectOutcome;
+import event.logging.Or;
+import event.logging.OtherObject;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
@@ -63,23 +61,21 @@ public class StreamEventLog {
     public void importStream(final String feedName, final String path, final Throwable th) {
         securityContext.insecure(() -> {
             try {
-                final Event event = eventLoggingService.createSkeletonEvent("Data Upload", "Data uploaded to \"" + feedName + "\"");
-
-                final event.logging.Object object = new event.logging.Object();
-                object.setType("Stream");
-                object.getData().add(EventLoggingUtil.createData("Path", path));
-                object.getData().add(EventLoggingUtil.createData("Feed", feedName));
-
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(object);
-
-                final Import imp = new Import();
-                imp.setSource(multiObject);
-                imp.setOutcome(EventLoggingUtil.createOutcome(th));
-
-                event.getEventDetail().setImport(imp);
-
-                eventLoggingService.log(event);
+                eventLoggingService.log(
+                        "Data Upload",
+                        "Data uploaded to \"" + feedName + "\"",
+                        eventDetailBuilder -> eventDetailBuilder
+                                .withImport(ImportEventAction.builder()
+                                        .withSource(MultiObject.builder()
+                                                .addObject(OtherObject.builder()
+                                                        .withType("Stream")
+                                                        .addData(EventLoggingUtil.createData("Path", path))
+                                                        .addData(EventLoggingUtil.createData("Feed", feedName))
+                                                        .build())
+                                                .build())
+                                        .withOutcome(EventLoggingUtil.createOutcome(th))
+                                        .build())
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to import stream!", e);
             }
@@ -90,6 +86,21 @@ public class StreamEventLog {
         securityContext.insecure(() -> {
             try {
                 if (findMetaCriteria != null) {
+                    eventLoggingService.log(
+                            "ExportData",
+                            "Exporting Data",
+                            eventDetailBuilder -> eventDetailBuilder
+                                    .withExport(ExportEventAction.builder()
+                                            .withSource(MultiObject.builder()
+                                                    .addCriteria()
+                                                            .withType("Data")
+                                                            .addData(EventLoggingUtil.createData("Path", path))
+                                                            .addData(EventLoggingUtil.createData("Feed", feedName))
+                                                            .build())
+                                                    .build())
+                                            .withOutcome(EventLoggingUtil.createOutcome(th))
+                                            .build())
+                                    .build());
                     final Event event = eventLoggingService.createSkeletonEvent("ExportData", "Exporting Data");
 
                     final Criteria criteria = new Criteria();
@@ -138,7 +149,9 @@ public class StreamEventLog {
 
     private Query createQuery(final FindMetaCriteria findMetaCriteria) {
         if (findMetaCriteria != null) {
-            final Advanced advanced = new Advanced();
+            final AdvancedQuery advanced = AdvancedQuery.builder()
+                    .
+                    .build()
             appendCriteria(advanced.getAdvancedQueryItems(), findMetaCriteria);
 
             final Query query = new Query();
@@ -259,7 +272,7 @@ public class StreamEventLog {
         }
     }
 
-    private void appendTerm(final List<BaseAdvancedQueryItem> items, final ExpressionTerm expressionTerm) {
+    private void appendTerm(final List<AdvancedQueryItem> items, final ExpressionTerm expressionTerm) {
         switch (expressionTerm.getCondition()) {
             case CONTAINS:
                 items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
