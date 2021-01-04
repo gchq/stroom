@@ -294,7 +294,7 @@ public class SearchResponseCreator {
                     resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
-                            dataStoreFactory,
+                            new MapDataStoreFactory(),
                             resultRequest,
                             null,
                             null,

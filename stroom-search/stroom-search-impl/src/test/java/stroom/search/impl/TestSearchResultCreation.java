@@ -4,6 +4,8 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -26,17 +28,22 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
+import stroom.query.common.v2.LmdbConfig;
+import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.util.io.PathCreator;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
@@ -60,6 +67,17 @@ class TestSearchResultCreation {
     // Make sure the search request is the same as the one we expected to make.
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
+    private DataStoreFactory dataStoreFactory;
+
+    @BeforeEach
+    void setup(@TempDir final Path tempDir) {
+        dataStoreFactory = new LmdbDataStoreFactory(
+                new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
+                () -> tempDir,
+                new LmdbConfig(),
+                new PathCreator(() -> tempDir, () -> tempDir));
+    }
+
     @Test
     void test() throws Exception {
         final SearchRequest searchRequest = createSearchRequest();
@@ -71,7 +89,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
@@ -81,8 +99,7 @@ class TestSearchResultCreation {
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
@@ -100,7 +117,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new DataStoreFactory(),
+                dataStoreFactory,
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -173,7 +190,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -186,8 +203,7 @@ class TestSearchResultCreation {
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
@@ -208,7 +224,7 @@ class TestSearchResultCreation {
 
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(new DataStoreFactory(), sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(dataStoreFactory, sizesProvider, collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -228,7 +244,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 sizesProvider,
-                new DataStoreFactory());
+                dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -241,8 +257,7 @@ class TestSearchResultCreation {
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
 
@@ -263,7 +278,7 @@ class TestSearchResultCreation {
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new DataStoreFactory(),
+                dataStoreFactory,
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -291,7 +306,7 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, new DataStoreFactory());
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -312,7 +327,7 @@ class TestSearchResultCreation {
         final int perThread = count / threads;
 
         // Create value supply futures.
-        final CompletableFuture[] futures = new CompletableFuture[threads];
+        final CompletableFuture<?>[] futures = new CompletableFuture[threads];
         int thread = 0;
         for (; thread < threads; thread++) {
             futures[thread] = CompletableFuture.runAsync(() -> {
@@ -324,7 +339,7 @@ class TestSearchResultCreation {
         CompletableFuture.allOf(futures).thenRunAsync(countDownLatch::countDown);
 
         // Create payload transfer future.
-        final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
+        final CompletableFuture<?> completableFuture = CompletableFuture.runAsync(() -> {
             boolean complete = false;
             while (!complete) {
                 try {

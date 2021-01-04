@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -65,6 +67,7 @@ public class MapDataStore implements DataStore {
 
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
+    private final CountDownLatch completionState = new CountDownLatch(1);
 
     private volatile boolean hasEnoughData;
 
@@ -329,10 +332,29 @@ public class MapDataStore implements DataStore {
 
     @Override
     public Items get(final RawKey rawKey) {
+        Items result;
+
         if (rawKey == null) {
-            return childMap.get(ROOT_KEY);
+            result = childMap.get(ROOT_KEY);
+        } else {
+            result = childMap.get(rawKey);
         }
-        return childMap.get(rawKey);
+
+        if (result == null) {
+            result = new Items() {
+                @Override
+                public int size() {
+                    return 0;
+                }
+
+                @Override
+                public Iterator<Item> iterator() {
+                    return Collections.emptyIterator();
+                }
+            };
+        }
+
+        return result;
     }
 
     public static class ItemsImpl implements Items {
@@ -645,10 +667,17 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public void complete() throws InterruptedException {
+    public void complete() {
+        completionState.countDown();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
+        completionState.await();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.await(timeout, unit);
     }
 }

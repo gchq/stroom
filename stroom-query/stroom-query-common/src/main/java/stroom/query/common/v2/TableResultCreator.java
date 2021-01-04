@@ -130,55 +130,53 @@ public class TableResultCreator implements ResultCreator {
         int pos = position;
         int resultCountAtThisLevel = 0;
 
-        if (items != null) {
-            for (final Item item : items) {
-                if (resultList.size() >= length) {
+        for (final Item item : items) {
+            if (resultList.size() >= length) {
+                break;
+            }
+
+            boolean hide = false;
+
+            // If the result is within the requested window (offset + length) then add it.
+            if (pos >= offset) {
+                final Row row = rowCreator.create(fields, item, depth);
+                if (row != null) {
+                    resultList.add(row);
+                } else {
+                    hide = true;
+                }
+            } else if (rowCreator.hidesRows()) {
+                final Row row = rowCreator.create(fields, item, depth);
+                if (row == null) {
+                    hide = true;
+                }
+            }
+
+            if (!hide) {
+                // Increment the overall position.
+                pos++;
+
+                // Add child results if a node is open.
+                if (openGroups != null && openGroups.contains(item.getRawKey())) {
+                    pos = addTableResults(
+                            data,
+                            fields,
+                            maxResults,
+                            offset,
+                            length,
+                            openGroups,
+                            resultList,
+                            data.get(item.getRawKey()),
+                            depth + 1,
+                            pos,
+                            rowCreator);
+                }
+
+                // Increment the total results at this depth.
+                resultCountAtThisLevel++;
+                // Stop adding results if we have reached the maximum for this level.
+                if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
                     break;
-                }
-
-                boolean hide = false;
-
-                // If the result is within the requested window (offset + length) then add it.
-                if (pos >= offset) {
-                    final Row row = rowCreator.create(fields, item, depth);
-                    if (row != null) {
-                        resultList.add(row);
-                    } else {
-                        hide = true;
-                    }
-                } else if (rowCreator.hidesRows()) {
-                    final Row row = rowCreator.create(fields, item, depth);
-                    if (row == null) {
-                        hide = true;
-                    }
-                }
-
-                if (!hide) {
-                    // Increment the overall position.
-                    pos++;
-
-                    // Add child results if a node is open.
-                    if (openGroups != null && openGroups.contains(item.getRawKey())) {
-                        pos = addTableResults(
-                                data,
-                                fields,
-                                maxResults,
-                                offset,
-                                length,
-                                openGroups,
-                                resultList,
-                                data.get(item.getRawKey()),
-                                depth + 1,
-                                pos,
-                                rowCreator);
-                    }
-
-                    // Increment the total results at this depth.
-                    resultCountAtThisLevel++;
-                    // Stop adding results if we have reached the maximum for this level.
-                    if (resultCountAtThisLevel >= maxResultsAtThisDepth) {
-                        break;
-                    }
                 }
             }
         }

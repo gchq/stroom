@@ -254,7 +254,9 @@ public class FlatResultCreator implements ResultCreator {
                 resultCountAtThisLevel++;
 
                 // Add child results if a node is open.
-                if (item.getRawKey() != null && openGroups.isOpen(item.getRawKey())) {
+                if (item.getRawKey() != null &&
+                        item.getKey().isGrouped() &&
+                        openGroups.isOpen(item.getRawKey())) {
                     final Items childItems = data.get(item.getRawKey());
                     if (childItems.size() > 0) {
                         count = addResults(

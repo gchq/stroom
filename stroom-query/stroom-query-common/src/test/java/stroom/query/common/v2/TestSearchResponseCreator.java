@@ -5,6 +5,8 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -15,18 +17,21 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
+import stroom.util.io.PathCreator;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +50,12 @@ class TestSearchResponseCreator {
     @Mock
     private SizesProvider sizesProvider;
 
+    private Path tempDir;
+
     @BeforeEach
-    void setup() {
+    void setup(@TempDir final Path tempDir) {
+        this.tempDir = tempDir;
+
         // Default mock behaviour
         Mockito.when(mockStore.getErrors()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
@@ -86,7 +95,10 @@ class TestSearchResponseCreator {
 
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
-                new DataStoreFactory(),
+                new LmdbDataStoreFactory(new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
+                        () -> tempDir,
+                        new LmdbConfig(),
+                        new PathCreator(() -> tempDir, () -> tempDir)),
                 sizesProvider,
                 mockStore);
     }
@@ -344,6 +356,11 @@ class TestSearchResponseCreator {
 
             @Override
             public void awaitCompletion() {
+            }
+
+            @Override
+            public boolean awaitCompletion(final long timeout, final TimeUnit unit) {
+                return true;
             }
         };
     }

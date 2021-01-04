@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -83,10 +84,10 @@ public class LmdbDataStore implements DataStore {
     // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
     private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
-    public static final String DB_NAME = "search_results";
 
-    private final Dbi<ByteBuffer> lmdbDbi;
     private final Env<ByteBuffer> lmdbEnvironment;
+    private final String dbName;
+    private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
     private final TempDirProvider tempDirProvider;
@@ -156,7 +157,8 @@ public class LmdbDataStore implements DataStore {
         valueSerde = new ValueSerde(itemSerialiser);
 
         this.lmdbEnvironment = createEnvironment(lmdbConfig);
-        this.lmdbDbi = openDbi(lmdbEnvironment, DB_NAME);
+        this.dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
+        this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
         this.byteBufferPool = byteBufferPool;
 
         int keySerdeCapacity = keySerde.getBufferCapacity();
@@ -330,13 +332,24 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public void complete() throws InterruptedException {
-        queue.put(Optional.empty());
+    public void complete() {
+        try {
+            queue.put(Optional.empty());
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
+            Thread.currentThread().interrupt();
+            addingData.countDown();
+        }
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
         addingData.await();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return addingData.await(timeout, unit);
     }
 
     @Override
