@@ -22,8 +22,11 @@ import event.logging.ResultPage;
 import event.logging.SimpleQuery;
 import event.logging.Term;
 import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
@@ -109,53 +112,134 @@ public class StroomEventLoggingUtil {
         }
     }
 
-    public static void appendExpression(final Query.Builder<Void> queryBuilder, final ExpressionItem expressionItem) {
-        queryBuilder.withAdvanced(AdvancedQuery.builder()
-                .withQueryItems(convertItem(expressionItem))
-                .build());
+    public static void appendExpression(final Query.Builder<Void> queryBuilder,
+                                        final ExpressionItem expressionItem) {
+        final AdvancedQueryItem advancedQueryItem = convertItem(expressionItem);
+
+        if (advancedQueryItem != null) {
+            queryBuilder.withAdvanced(AdvancedQuery.builder()
+                    .withQueryItems()
+                    .build());
+        }
     }
 
     private static AdvancedQueryItem convertItem(final ExpressionItem expressionItem) {
-        if (expressionItem instanceof ExpressionTerm && expressionItem.enabled()) {
-            final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+        if (expressionItem != null && expressionItem.enabled()) {
+            if (expressionItem instanceof ExpressionTerm) {
+                final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
 
-            return Term.builder()
-                    .withName(expressionTerm.getField())
-                    .withCondition(convertCondition(expressionTerm.getCondition()))
-                    .withValue(expressionTerm.getValue())
-                    .build();
-        } else if (expressionItem instanceof ExpressionOperator && expressionItem.enabled()) {
-            final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
-            final AdvancedQueryItem operator;
-            if (expressionOperator.op().equals(Op.AND)) {
-                operator = And.builder()
-                        .withQueryItems(expressionOperator.getChildren()
-                                .stream()
-                                .map(StroomEventLoggingUtil::convertItem)
-                                .collect(Collectors.toList()))
-                        .build();
-            } else if (expressionOperator.op().equals(Op.OR)) {
-                operator = Or.builder()
-                        .withQueryItems(expressionOperator.getChildren()
-                                .stream()
-                                .map(StroomEventLoggingUtil::convertItem)
-                                .collect(Collectors.toList()))
-                        .build();
-            } else if (expressionOperator.op().equals(Op.NOT)) {
-                operator = Not.builder()
-                        .withQueryItems(expressionOperator.getChildren()
-                                .stream()
-                                .map(StroomEventLoggingUtil::convertItem)
+                return convertTerm(expressionTerm);
+
+            } else if (expressionItem instanceof ExpressionOperator) {
+                final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+                final AdvancedQueryItem operator;
+                if (expressionOperator.op().equals(Op.AND)) {
+                    operator = And.builder()
+                            .withQueryItems(expressionOperator.getChildren()
+                                    .stream()
+                                    .map(StroomEventLoggingUtil::convertItem)
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toList()))
+                            .build();
+                } else if (expressionOperator.op().equals(Op.OR)) {
+                    operator = Or.builder()
+                            .withQueryItems(expressionOperator.getChildren()
+                                    .stream()
+                                    .map(StroomEventLoggingUtil::convertItem)
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toList()))
+                            .build();
+                } else if (expressionOperator.op().equals(Op.NOT)) {
+                    operator = Not.builder()
+                            .withQueryItems(expressionOperator.getChildren()
+                                    .stream()
+                                    .map(StroomEventLoggingUtil::convertItem)
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toList()))
+                            .build();
+                } else {
+                    throw new RuntimeException("Unknown op " + expressionOperator.op());
+                }
+                return operator;
+            } else {
+                throw new RuntimeException("Unknown type " + expressionItem.getClass().getName());
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private static AdvancedQueryItem convertTerm(final ExpressionTerm expressionTerm) {
+
+        final Condition condition = expressionTerm.getCondition();
+        final AdvancedQueryItem result;
+
+        if (condition.equals(Condition.IN)) {
+            final String[] parts = expressionTerm.getValue().split(",");
+            if (parts.length >= 2) {
+                result = Or.builder()
+                        .addTerm(Arrays.stream(parts)
+                                .map(part -> Term.builder()
+                                        .withName(expressionTerm.getField())
+                                        .withCondition(TermCondition.EQUALS)
+                                        .withValue(part)
+                                        .build())
                                 .collect(Collectors.toList()))
                         .build();
             } else {
-                throw new RuntimeException("Unknown op " + expressionOperator.op());
+                result = EventLoggingUtil.createTerm(
+                        expressionTerm.getField(),
+                        TermCondition.EQUALS,
+                        expressionTerm.getValue());
             }
-            return operator;
+        } else if (condition.equals(Condition.BETWEEN)) {
+            final String[] parts = expressionTerm.getValue().split(",");
+            if (parts.length >= 2) {
+                result = And.builder()
+                        .addTerm(Term.builder()
+                                .withName(expressionTerm.getField())
+                                .withCondition(TermCondition.GREATER_THAN_EQUAL_TO)
+                                .withValue(parts[0])
+                                .build())
+                        .addTerm(Term.builder()
+                                .withName(expressionTerm.getField())
+                                .withCondition(TermCondition.LESS_THAN)
+                                .withValue(parts[1])
+                                .build())
+                        .build();
+            } else {
+                result = EventLoggingUtil.createTerm(
+                        expressionTerm.getField(),
+                        TermCondition.EQUALS,
+                        expressionTerm.getValue());
+            }
         } else {
-            throw new RuntimeException("Unknown type " + expressionItem.getClass().getName());
+            final TermCondition termCondition = convertCondition(expressionTerm.getCondition());
+            final String value;
+
+            switch (expressionTerm.getCondition()) {
+                case IN_DICTIONARY:
+                    value = "dictionary: " + expressionTerm.getDocRef();
+                    break;
+                case IN_FOLDER:
+                    value = "folder: " + expressionTerm.getDocRef();
+                    break;
+                case IS_DOC_REF:
+                    value = "docRef: " + expressionTerm.getDocRef();
+                    break;
+                default:
+                    value = expressionTerm.getValue();
+            }
+            result = Term.builder()
+                    .withName(expressionTerm.getField())
+                    .withCondition(termCondition)
+                    .withValue(value)
+                    .build();
         }
+
+        return result;
     }
+
 
     private static TermCondition convertCondition(final Condition condition) {
         final TermCondition termCondition;
@@ -164,6 +248,9 @@ public class StroomEventLoggingUtil {
                 termCondition = TermCondition.CONTAINS;
                 break;
             case EQUALS:
+            case IN_DICTIONARY:
+            case IN_FOLDER:
+            case IS_DOC_REF:
                 termCondition = TermCondition.EQUALS;
                 break;
             case GREATER_THAN:
