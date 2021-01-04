@@ -189,7 +189,20 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
-            final String userId = securityContext.getUserId();
+            final String userId;
+            if (securityContext.isProcessingUser()) {
+                // We are running as proc user so try and get the OS user,
+                // though that may just be a shared account.
+                // This is useful where a CLI command is being used
+                final String osUser = System.getProperty("user.name");
+
+                userId = osUser != null
+                        ? osUser
+                        : securityContext.getUserId();
+            } else {
+                userId = securityContext.getUserId();
+            }
+
             if (userId != null) {
                 return User.builder()
                         .withId(userId)

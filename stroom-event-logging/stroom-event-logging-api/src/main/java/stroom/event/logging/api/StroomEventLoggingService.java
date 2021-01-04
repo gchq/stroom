@@ -58,15 +58,10 @@ public interface StroomEventLoggingService extends EventLoggingService {
                 loggedResultFunction,
                 null);
     }
-//    <T> T loggedResult(
-//            final String eventTypeId,
-//            final String description,
-//            final EventAction eventAction,
-//            final Supplier<T> loggedWork);
 
     /**
-     * Use this form when you want to modify the event based on the result of the work or any
-     * exception thrown performing the work.
+     * Use this form when you want to modify the event based on the result of the work, e.g. recording the
+     * before and after of an update, or any exception thrown performing the work.
      * @param eventAction The skeleton {@link EventAction} that will be used to create the event unless
      * {@code loggedWork} of {@code exceptionHandler} provide an alternative.
      * @param loggedWork A function to perform the work that is being logged and to return the {@link EventAction}
@@ -78,18 +73,11 @@ public interface StroomEventLoggingService extends EventLoggingService {
      *                         description and the outcome success will be set to false. The skeleton
      *                         {@link EventAction} is passed in to allow it to be copied. Can be null.
      */
-    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+    <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
             final String eventTypeId,
             final String description,
             final T_EVENT_ACTION eventAction,
             final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
             final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler);
-//    <T> T loggedResult(
-//            final String eventTypeId,
-//            final String description,
-//            final EventAction eventAction,
-//            final Function<Event, LoggedResult<T>> loggedWork,
-//            final BiConsumer<Event, Throwable> exceptionHandler);
-
 
 }

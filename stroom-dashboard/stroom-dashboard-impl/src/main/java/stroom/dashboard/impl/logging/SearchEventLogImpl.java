@@ -24,15 +24,15 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.api.SecurityContext;
 
+import event.logging.AdvancedQuery;
 import event.logging.Criteria;
-import event.logging.Criteria.DataSources;
+import event.logging.DataSources;
 import event.logging.Event;
-import event.logging.Export;
+import event.logging.ExportEventAction;
 import event.logging.MultiObject;
 import event.logging.Purpose;
 import event.logging.Query;
-import event.logging.Query.Advanced;
-import event.logging.Search;
+import event.logging.SearchEventAction;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,13 +126,13 @@ public class SearchEventLogImpl implements SearchEventLog {
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(criteria);
 
-                final Export exp = new Export();
+                final ExportEventAction exp = new ExportEventAction();
                 exp.setSource(multiObject);
                 exp.setOutcome(EventLoggingUtil.createOutcome(e));
 
                 final Event event = eventLoggingService.createSkeletonEvent(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
-                event.getEventDetail().setExport(exp);
+                event.getEventDetail().setEventAction(exp);
                 event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
 
                 eventLoggingService.log(event);
@@ -158,13 +158,13 @@ public class SearchEventLogImpl implements SearchEventLog {
                 final DataSources dataSources = new DataSources();
                 dataSources.getDataSource().add(dataSourceName);
 
-                final Search search = new Search();
+                final SearchEventAction search = new SearchEventAction();
                 search.setDataSources(dataSources);
                 search.setQuery(getQuery(expression));
                 search.setOutcome(EventLoggingUtil.createOutcome(e));
 
                 final Event event = eventLoggingService.createSkeletonEvent(type, type + "ing data source \"" + dataSourceRef.toInfoString());
-                event.getEventDetail().setSearch(search);
+                event.getEventDetail().setEventAction(search);
                 event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
 
                 eventLoggingService.log(event);
@@ -204,9 +204,13 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private Query getQuery(final ExpressionOperator expression) {
         final Query query = new Query();
-        final Advanced advanced = new Advanced();
+        final AdvancedQuery advanced = new AdvancedQuery();
         query.setAdvanced(advanced);
-        QueryDataLogUtil.appendExpressionItem(advanced.getAdvancedQueryItems(), wordListProvider, collectionService, expression);
+        QueryDataLogUtil.appendExpressionItem(
+                advanced.getQueryItems(),
+                wordListProvider,
+                collectionService,
+                expression);
         return query;
     }
 }
