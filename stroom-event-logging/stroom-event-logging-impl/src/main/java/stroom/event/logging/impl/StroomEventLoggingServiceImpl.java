@@ -305,53 +305,14 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     result = loggedResult.getResult();
                 } catch (Throwable e) {
                     if (exceptionHandler != null) {
-                        // Allow caller to provide a new EventAction bases on the exception
+                        // Allow caller to provide a new EventAction based on the exception
                         T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
-                        event.getEventDetail().setEventAction(newEventAction);
+                        event.getEventDetail()
+                                .setEventAction(newEventAction);
                     } else {
                         // No handler so see if we can add an outcome
                         if (eventAction instanceof HasOutcome) {
-
                             addFailureOutcome(e, eventAction);
-
-//                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
-//                            BaseOutcome baseOutcome = hasOutcome.getOutcome();
-//
-//                            if (baseOutcome == null) {
-//                                // Have a stab at creating the appropriate outcome
-//                            }
-//
-//                            if (baseOutcome != null) {
-//                                baseOutcome.setSuccess(false);
-//                                baseOutcome.setDescription(e.getMessage() != null
-//                                        ? e.getMessage()
-//                                        : e.getClass().getName());
-//                            } else {
-//                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
-//                                // type it is.
-//                                Arrays.stream(eventAction.getClass().getMethods())
-//                                        .filter(method -> method.getName().equals("setOutcome"))
-//                                        .findAny()
-//                                        .ifPresentOrElse(
-//                                                method -> {
-//                                                    Class<?> outcomeClass = method.getParameterTypes()[0];
-//
-//                                                    try {
-//                                                        final BaseOutcome outcome = (BaseOutcome) outcomeClass.getDeclaredConstructor(new Class[0]).newInstance();
-//                                                        outcome.setSuccess(false);
-//                                                        outcome.setDescription("xxx");
-//                                                        method.invoke(eventAction, outcomeClass.cast(outcome));
-//                                                    } catch (NoSuchMethodException e2) {
-//                                                        LOGGER.warn("No setOutcome method found");
-//                                                    } catch (IllegalAccessException | InstantiationException | InvocationTargetException e3) {
-//                                                        LOGGER.warn("Error constructing outcome " + outcomeClass.getName(), e3);
-//                                                    }
-//                                                },
-//                                                () -> {
-//                                                    LOGGER.warn("Unable set outcome as baseOutcome is null");
-//                                                });
-//
-//                            }
                         }
                     }
                     log(event);

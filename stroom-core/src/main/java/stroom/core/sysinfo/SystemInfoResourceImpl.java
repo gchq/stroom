@@ -35,7 +35,8 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
                 "getAllSystemInfo",
                 "Getting all system info results",
                 buildViewEventAction(""),
-                () -> SystemInfoResultList.of(systemInfoService.getAll())
+                () ->
+                        SystemInfoResultList.of(systemInfoService.getAll())
         );
     }
 
