@@ -49,6 +49,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
@@ -87,6 +88,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
+    public void log(final Event event) {
+        try {
+            super.log(event);
+        } catch (Exception e) {
+            // Swallow the exception so failure to log does not prevent the action being logged
+            // from succeeding
+            LOGGER.error("Error logging event", e);
+        }
+    }
+
+    @Override
     public Event createEvent() {
         return buildEvent().build();
     }
@@ -121,7 +133,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     public Event createSkeletonEvent(final String typeId,
                                      final String description,
                                      final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-        final EventDetail.Builder<Void> eventDetailBuilder = EventDetail.builder()
+        final Builder<Void> eventDetailBuilder = EventDetail.builder()
                 .withTypeId(typeId)
                 .withDescription(description)
                 .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
@@ -281,29 +293,43 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
             final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
 
+        Objects.requireNonNull(eventAction);
+        Objects.requireNonNull(loggedWork);
+
         final T_RESULT result;
-        if (loggedWork != null) {
-            final Event event = createSkeletonEvent(
+        Event event = null;
+        try {
+            event = createSkeletonEvent(
                     eventTypeId,
                     description,
                     eventDetailBuilder -> eventDetailBuilder
                             .withEventAction(eventAction));
+        } catch (Exception e) {
+            // Swallow the exception so failure to log does not prevent the action being logged
+            // from succeeding
+            LOGGER.error("Error creating skeleton event", e);
+        }
 
+        if (event != null) {
             try {
-                // Allow the caller to provide a new EventAction based on the result of the work
-                // e.g. if they are updating a record, they can capture the before state
+                // Performe the callers work, allowing them to provide a new EventAction based on the
+                // result of the work e.g. if they are updating a record, they can capture the before state
                 final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
+
                 // Set the new EventAction onto the existing event
-                event.getEventDetail()
-                        .setEventAction(loggedResult.getEventAction());
+                setActionOnEvent(event, loggedResult.getEventAction());
                 log(event);
                 result = loggedResult.getResult();
             } catch (Throwable e) {
                 if (exceptionHandler != null) {
-                    // Allow caller to provide a new EventAction based on the exception
-                    T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
-                    event.getEventDetail()
-                            .setEventAction(newEventAction);
+                    try {
+                        // Allow caller to provide a new EventAction based on the exception
+                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
+                        setActionOnEvent(event, newEventAction);
+                    } catch (Exception exception) {
+                        LOGGER.error( "Error running exception handler. " +
+                                        "Swallowing exception and rethrowing original exception", e);
+                    }
                 } else {
                     // No handler so see if we can add an outcome
                     if (eventAction instanceof HasOutcome) {
@@ -314,28 +340,43 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 throw e;
             }
         } else {
-            result = null;
+            // We failed to create an event so just do the work with no logging.
+            result = loggedWork.apply(eventAction).getResult();
         }
+
         return result;
     }
 
-    private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
-        final HasOutcome hasOutcome = (HasOutcome) eventAction;
-        BaseOutcome baseOutcome = hasOutcome.getOutcome();
-
-        if (baseOutcome == null) {
-            // eventAction has no outcome so we need to create one on it
-            baseOutcome = createBaseOutcome(eventAction)
-                    .orElse(null);
-        }
-
-        if (baseOutcome == null) {
-            LOGGER.warn("Unable to set outcome on {}", eventAction.getClass().getName());
+    private <T_EVENT_ACTION extends EventAction> void setActionOnEvent(final Event event, final T_EVENT_ACTION newEventAction) {
+        if (event.getEventDetail() != null) {
+            event.getEventDetail()
+                    .setEventAction(newEventAction);
         } else {
-            baseOutcome.setSuccess(false);
-            baseOutcome.setDescription(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.getClass().getName());
+            LOGGER.error("Unable to set event action as event detail is null");
+        }
+    }
+
+    private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
+        try {
+            final HasOutcome hasOutcome = (HasOutcome) eventAction;
+            BaseOutcome baseOutcome = hasOutcome.getOutcome();
+
+            if (baseOutcome == null) {
+                // eventAction has no outcome so we need to create one on it
+                baseOutcome = createBaseOutcome(eventAction)
+                        .orElse(null);
+            }
+
+            if (baseOutcome == null) {
+                LOGGER.error("Unable to set outcome on {}", eventAction.getClass().getName());
+            } else {
+                baseOutcome.setSuccess(false);
+                baseOutcome.setDescription(e.getMessage() != null
+                        ? e.getMessage()
+                        : e.getClass().getName());
+            }
+        } catch (Exception exception) {
+            LOGGER.error("Unable to add failure outcome to {}", eventAction.getClass().getName(), e);
         }
     }
 
@@ -369,7 +410,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                 throw new RuntimeException(e);
                             }
                         };
-                        LOGGER.info("Caching function for {}", eventAction.getClass().getName());
+                        LOGGER.debug("Caching function for {}", eventAction.getClass().getName());
                         return Optional.of(func);
                     });
         })

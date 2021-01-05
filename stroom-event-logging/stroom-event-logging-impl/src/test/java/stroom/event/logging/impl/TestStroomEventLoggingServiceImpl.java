@@ -8,6 +8,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
 import event.logging.AuthenticateEventAction;
+import event.logging.Outcome;
 import event.logging.Resource;
 import event.logging.User;
 import event.logging.ViewEventAction;
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -84,8 +87,39 @@ class TestStroomEventLoggingServiceImpl {
         final String xml = LocalLogReceiver.getEvents().get(0);
         assertTagValue(xml, "Description", exceptionMsg);
         assertTagValue(xml, "Success", "false");
+    }
 
-        System.out.println(LocalLogReceiver.getEvents().get(0));
+    @Test
+    void testLoggedAction_failure_overwriteOutcome() {
+
+        final String exceptionMsg = "Bad stuff happened";
+        Assertions
+                .assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> {
+                    stroomEventLoggingService.loggedAction(
+                            TYPE_ID,
+                            DESCRIPTION,
+                            ViewEventAction.builder()
+                                    .addResource(Resource.builder()
+                                            .withURL("localhost")
+                                            .build())
+                                    .withOutcome(Outcome.builder()
+                                            .withSuccess(true) // will be overwritten
+                                            .withDescription("It worked") // will be overwritten
+                                            .build())
+                                    .build(),
+                            () -> {
+                                // Do some work
+                                throw new RuntimeException(exceptionMsg);
+                            });
+                })
+                .withMessage(exceptionMsg);
+
+        assertThat(LocalLogReceiver.getEvents())
+                .hasSize(1);
+        final String xml = LocalLogReceiver.getEvents().get(0);
+        assertTagValue(xml, "Description", exceptionMsg);
+        assertTagValue(xml, "Success", "false");
     }
 
     @Test
@@ -115,8 +149,6 @@ class TestStroomEventLoggingServiceImpl {
         final String xml = LocalLogReceiver.getEvents().get(0);
         assertThat(xml)
                 .doesNotContainPattern("<Success>.*</Success>");
-
-        System.out.println(LocalLogReceiver.getEvents().get(0));
     }
 
     @Test
@@ -146,8 +178,6 @@ class TestStroomEventLoggingServiceImpl {
         final String xml = LocalLogReceiver.getEvents().get(0);
         assertTagValue(xml, "Description", exceptionMsg);
         assertTagValue(xml, "Success", "false");
-
-        System.out.println(LocalLogReceiver.getEvents().get(0));
     }
 
     @Test
@@ -175,8 +205,6 @@ class TestStroomEventLoggingServiceImpl {
         final String xml = LocalLogReceiver.getEvents().get(0);
         assertThat(xml)
                 .doesNotContainPattern("<Success>.*</Success>");
-
-        System.out.println(LocalLogReceiver.getEvents().get(0));
     }
 
     private void assertTagValue(final String xml, final String tag, final String value) {
@@ -186,10 +214,14 @@ class TestStroomEventLoggingServiceImpl {
 
     public static class LocalLogReceiver implements LogReceiver {
 
+        private static final Logger LOGGER = LoggerFactory.getLogger(LocalLogReceiver.class);
+
         private static final List<String> EVENTS = new ArrayList<>();
 
         @Override
         public void log(final String data) {
+
+            LOGGER.info("Received event\n{}", data);
             EVENTS.add(data);
         }
 
