@@ -33,7 +33,6 @@ import event.logging.Data;
 import event.logging.DeleteEventAction;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
-import event.logging.Outcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.Term;
@@ -72,9 +71,6 @@ class AccountResourceImpl implements AccountResource {
                                         .addAnd(new And())
                                         .build())
                                 .build())
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
-                                .build())
                         .build(),
                 searchEventAction -> {
                     // Do the work
@@ -108,9 +104,6 @@ class AccountResourceImpl implements AccountResource {
                                                 .build())
                                         .build())
                                 .build())
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
-                                .build())
                         .build(),
                 searchEventAction -> {
                     // Do the work
@@ -138,9 +131,6 @@ class AccountResourceImpl implements AccountResource {
                         .addObject(OtherObject.builder()
                                 .withType("Account")
                                 .withName(request.getUserId())
-                                .build())
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
                                 .build())
                         .build(),
                 createEventAction -> {
@@ -174,9 +164,6 @@ class AccountResourceImpl implements AccountResource {
                 ViewEventAction.builder()
                         .addUser(User.builder()
                                 .withId(String.valueOf(userId))
-                                .build())
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
                                 .build())
                         .build(),
                 viewEventAction -> {
@@ -217,9 +204,6 @@ class AccountResourceImpl implements AccountResource {
                     UpdateEventAction.builder()
                             .withAfter(MultiObject.builder()
                                     .addUser(user)
-                                    .build())
-                            .withOutcome(Outcome.builder()
-                                    .withSuccess(true)
                                     .build())
                             .build(),
                     () -> {

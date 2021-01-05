@@ -17,7 +17,6 @@ import event.logging.Data;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.OtherObject.Builder;
-import event.logging.Outcome;
 import event.logging.Query;
 import event.logging.UpdateEventAction;
 import event.logging.ViewEventAction;
@@ -185,9 +184,6 @@ class ActivityResourceImpl implements ActivityResource {
                 UpdateEventAction.builder()
                         .withBefore(convertActivity(beforeActivity))
                         .withAfter(convertActivity(activity))
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
-                                .build())
                         .build(),
                 () -> {
                     currentActivity.setActivity(activity);

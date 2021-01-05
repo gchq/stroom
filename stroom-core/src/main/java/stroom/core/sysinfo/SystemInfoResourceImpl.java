@@ -6,7 +6,6 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import event.logging.Outcome;
 import event.logging.Resource;
 import event.logging.ViewEventAction;
 
@@ -74,9 +73,6 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
         return ViewEventAction.builder()
                 .addResource(Resource.builder()
                         .withURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath))
-                        .build())
-                .withOutcome(Outcome.builder()
-                        .withSuccess(true)
                         .build())
                 .build();
     }

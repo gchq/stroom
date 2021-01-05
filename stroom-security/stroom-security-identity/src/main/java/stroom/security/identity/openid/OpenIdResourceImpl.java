@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import event.logging.OtherObject;
-import event.logging.Outcome;
 import event.logging.ViewEventAction;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
@@ -91,9 +90,6 @@ class OpenIdResourceImpl implements OpenIdResource {
                         .addObject(OtherObject.builder()
                                 .withType("PublicKey")
                                 .withName("Public Key")
-                                .build())
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(true)
                                 .build())
                         .build(),
                 () -> {
