@@ -50,6 +50,8 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -69,7 +71,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -86,7 +90,6 @@ public class LmdbDataStore implements DataStore {
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final Env<ByteBuffer> lmdbEnvironment;
-    private final String dbName;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
@@ -111,16 +114,15 @@ public class LmdbDataStore implements DataStore {
     private final KeySerde keySerde;
     private final ValueSerde valueSerde;
     private final StripedLock stripedLock;
-    private volatile boolean hasEnoughData;
+    private final AtomicBoolean hasEnoughData = new AtomicBoolean();
 
-//    private Txn<ByteBuffer> writeTxn;
-//    private Txn<ByteBuffer> readTxn;
-//    private int writeCount;
+    private final AtomicBoolean createPayload = new AtomicBoolean();
+    private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
+
 
     private final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(4096);
     private final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(4096);
     private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
-    private final Executor executor;
 
     private final CountDownLatch addingData;
 
@@ -157,7 +159,7 @@ public class LmdbDataStore implements DataStore {
         valueSerde = new ValueSerde(itemSerialiser);
 
         this.lmdbEnvironment = createEnvironment(lmdbConfig);
-        this.dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
+        final String dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
         this.byteBufferPool = byteBufferPool;
 
@@ -183,7 +185,7 @@ public class LmdbDataStore implements DataStore {
 
         // Start consume loop.
         addingData = new CountDownLatch(1);
-        executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
+        final Executor executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
         final Runnable runnable = () -> {
             Metrics.measure("Transfer", () -> {
                 try {
@@ -214,20 +216,27 @@ public class LmdbDataStore implements DataStore {
                             needsCommit = true;
                         }
 
-                        if (needsCommit) {
+                        if (createPayload.get() && currentPayload.get() == null) {
+                            // Commit
+                            if (writeTxn != null) {
+                                // Commit
+                                lastCommitMs = System.currentTimeMillis();
+                                needsCommit = false;
+                                commit(writeTxn);
+                                writeTxn = null;
+                            }
+
+                            // Create payload and clear the DB.
+                            currentPayload.set(createPayload());
+
+                        } else if (needsCommit && writeTxn != null) {
                             final long now = System.currentTimeMillis();
                             if (lastCommitMs < now - COMMIT_FREQUENCY_MS) {
+                                // Commit
                                 lastCommitMs = now;
                                 needsCommit = false;
-
-                                if (writeTxn != null) {
-                                    final Txn<ByteBuffer> txn = writeTxn;
-                                    writeTxn = null;
-                                    Metrics.measure("Commit", () -> {
-                                        txn.commit();
-                                        txn.close();
-                                    });
-                                }
+                                commit(writeTxn);
+                                writeTxn = null;
                             }
                         }
                     }
@@ -242,6 +251,13 @@ public class LmdbDataStore implements DataStore {
             });
         };
         executor.execute(runnable);
+    }
+
+    private void commit(final Txn<ByteBuffer> writeTxn) {
+        Metrics.measure("Commit", () -> {
+            writeTxn.commit();
+            writeTxn.close();
+        });
     }
 
     private Env<ByteBuffer> createEnvironment(final LmdbConfig lmdbConfig) {
@@ -415,18 +431,18 @@ public class LmdbDataStore implements DataStore {
 
     private void put(final Key key, final Generator[] value) {
         LOGGER.trace(() -> "put");
-        if (Thread.currentThread().isInterrupted() || hasEnoughData) {
+        if (Thread.currentThread().isInterrupted() || hasEnoughData.get()) {
             return;
         }
 
         totalResultCount.incrementAndGet();
 
         // Some searches can be terminated early if the user is not sorting or grouping.
-        if (!hasEnoughData && !hasSort && !compiledDepths.hasGroup()) {
+        if (!hasSort && !compiledDepths.hasGroup()) {
             // No sorting or grouping so we can stop the search as soon as we have the number of results requested by
             // the client
             if (maxResults != null && totalResultCount.get() >= maxResults.size(0)) {
-                hasEnoughData = true;
+                hasEnoughData.set(true);
             }
         }
 
@@ -494,22 +510,20 @@ public class LmdbDataStore implements DataStore {
 
     private Generator[] combine(final Generator[] existing, final Generator[] value) {
         return Metrics.measure("Combine", () -> {
-            Generator[] result = existing;
-
             // Combine the new item into the original item.
-            for (int i = 0; i < result.length; i++) {
-                Generator existingGenerator = result[i];
+            for (int i = 0; i < existing.length; i++) {
+                Generator existingGenerator = existing[i];
                 Generator newGenerator = value[i];
                 if (newGenerator != null) {
                     if (existingGenerator == null) {
-                        result[i] = newGenerator;
+                        existing[i] = newGenerator;
                     } else {
                         existingGenerator.merge(newGenerator);
                     }
                 }
             }
 
-            return result;
+            return existing;
         });
     }
 
@@ -524,59 +538,110 @@ public class LmdbDataStore implements DataStore {
         totalResultCount.set(0);
     }
 
+    private byte[] createPayload() {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        Metrics.measure("createPayload", () -> {
+            try (final Output output = new Output(baos)) {
+                try (Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+                    lmdbDbi.iterate(writeTxn).forEach(kv -> {
+                        final ByteBuffer keyBuffer = kv.key();
+                        final ByteBuffer valBuffer = kv.val();
+                        final Key key = keySerde.deserialize(keyBuffer);
+                        final Generator[] value = valueSerde.deserialize(valBuffer);
+
+                        itemSerialiser.writeKey(key, output);
+                        itemSerialiser.writeGenerators(value, output);
+                    });
+
+                    lmdbDbi.drop(writeTxn);
+
+                } catch (RuntimeException e) {
+                    throw new RuntimeException(LogUtil.message("Error clearing db", e));
+                }
+            }
+        });
+
+        return baos.toByteArray();
+    }
+
     @Override
     public void writePayload(final Output output) {
         Metrics.measure("writePayload", () -> {
-            try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
-                lmdbDbi.iterate(readTxn).forEach(kv -> {
-                    final ByteBuffer keyBuffer = kv.key();
-                    final ByteBuffer valBuffer = kv.val();
-                    final Key key = keySerde.deserialize(keyBuffer);
-                    Generator[] value;
+            try {
+                final boolean complete = addingData.await(0, TimeUnit.MILLISECONDS);
+                createPayload.set(true);
 
-                    if (key.isGrouped()) {
-                        final Lock lock = stripedLock.getLockForKey(key);
-                        lock.lock();
-                        try {
-                            final ByteBuffer currentValueBuffer = lmdbDbi.get(readTxn, keyBuffer);
-                            value = valueSerde.deserialize(currentValueBuffer);
-                            lmdbDbi.delete(keyBuffer);
+                final List<byte[]> payloads = new ArrayList<>(2);
 
-                        } finally {
-                            lock.unlock();
-                        }
-                    } else {
-                        value = valueSerde.deserialize(valBuffer);
-                        lmdbDbi.delete(keyBuffer);
-                    }
+                final byte[] payload = currentPayload.getAndSet(null);
+                if (payload != null) {
+                    payloads.add(payload);
+                }
 
-                    itemSerialiser.writeKey(key, output);
-                    itemSerialiser.writeGenerators(value, output);
+                if (complete) {
+                    final byte[] finalPayload = createPayload();
+                    payloads.add(finalPayload);
+                }
+
+                output.writeInt(payloads.size());
+                payloads.forEach(bytes -> {
+                    output.writeInt(bytes.length);
+                    output.writeBytes(bytes);
                 });
-            } catch (RuntimeException e) {
-                throw new RuntimeException(LogUtil.message("Error clearing db", e));
+
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         });
     }
 
+//    private static class PayloadState {
+//        private volatile byte[] payload;
+//        private volatile boolean create;
+//
+//        public synchronized boolean isCreate() {
+//            return this.create;
+//        }
+//
+//        public synchronized void setPayload(final byte[] payload) {
+//            this.payload = payload;
+//            this.create = false;
+//        }
+//
+//
+//
+//    }
+
     @Override
     public boolean readPayload(final Input input) {
         return Metrics.measure("readPayload", () -> {
-            while (!input.end()) {
-                final Key key = itemSerialiser.readKey(input);
-                final Generator[] value = itemSerialiser.readGenerators(input);
+            final int count = input.readInt(); // There may be more than one payload if it was the final transfer.
+            for (int i = 0; i < count; i++) {
+                final int length = input.readInt();
+                if (length > 0) {
+                    final byte[] bytes = input.readBytes(length);
+                    try (final Input in = new Input(new ByteArrayInputStream(bytes))) {
+                        while (!in.end()) {
+                            final Key key = itemSerialiser.readKey(in);
+                            final Generator[] value = itemSerialiser.readGenerators(in);
 
-                KeyPart lastPart = key.getLast();
-                if (lastPart != null && !lastPart.isGrouped()) {
-                    // Ensure sequence numbers are unique for this data store.
-                    ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                            KeyPart lastPart = key.getLast();
+                            if (lastPart != null && !lastPart.isGrouped()) {
+                                // Ensure sequence numbers are unique for this data store.
+                                ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                            }
+
+                            put(key, value);
+                        }
+                    }
                 }
-
-                put(key, value);
             }
 
             // Return success if we have not been asked to terminate and we are still willing to accept data.
-            return !Thread.currentThread().isInterrupted() && !hasEnoughData;
+            return !Thread.currentThread().isInterrupted() && !hasEnoughData.get();
         });
     }
 

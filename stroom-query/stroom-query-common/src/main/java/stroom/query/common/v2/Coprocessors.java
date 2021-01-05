@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -115,5 +116,16 @@ public class Coprocessors implements Iterable<Coprocessor> {
 
     public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
         extractionPipelineCoprocessorMap.forEach(consumer);
+    }
+
+    public boolean awaitCompletion(final long timeout,
+                                   final TimeUnit unit) throws InterruptedException {
+        for (final Coprocessor coprocessor : coprocessorMap.values()) {
+            if (!coprocessor.awaitCompletion(timeout, unit)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
