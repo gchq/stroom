@@ -281,44 +281,42 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
             final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
 
-        return securityContext.insecureResult(() -> {
-            final T_RESULT result;
-            if (loggedWork != null) {
-                final Event event = createSkeletonEvent(
-                        eventTypeId,
-                        description,
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withEventAction(eventAction));
+        final T_RESULT result;
+        if (loggedWork != null) {
+            final Event event = createSkeletonEvent(
+                    eventTypeId,
+                    description,
+                    eventDetailBuilder -> eventDetailBuilder
+                            .withEventAction(eventAction));
 
-                try {
-                    // Allow the caller to provide a new EventAction based on the result of the work
-                    // e.g. if they are updating a record, they can capture the before state
-                    final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
-                    // Set the new EventAction onto the existing event
+            try {
+                // Allow the caller to provide a new EventAction based on the result of the work
+                // e.g. if they are updating a record, they can capture the before state
+                final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
+                // Set the new EventAction onto the existing event
+                event.getEventDetail()
+                        .setEventAction(loggedResult.getEventAction());
+                log(event);
+                result = loggedResult.getResult();
+            } catch (Throwable e) {
+                if (exceptionHandler != null) {
+                    // Allow caller to provide a new EventAction based on the exception
+                    T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
                     event.getEventDetail()
-                            .setEventAction(loggedResult.getEventAction());
-                    log(event);
-                    result = loggedResult.getResult();
-                } catch (Throwable e) {
-                    if (exceptionHandler != null) {
-                        // Allow caller to provide a new EventAction based on the exception
-                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
-                        event.getEventDetail()
-                                .setEventAction(newEventAction);
-                    } else {
-                        // No handler so see if we can add an outcome
-                        if (eventAction instanceof HasOutcome) {
-                            addFailureOutcome(e, eventAction);
-                        }
+                            .setEventAction(newEventAction);
+                } else {
+                    // No handler so see if we can add an outcome
+                    if (eventAction instanceof HasOutcome) {
+                        addFailureOutcome(e, eventAction);
                     }
-                    log(event);
-                    throw e;
                 }
-            } else {
-                result = null;
+                log(event);
+                throw e;
             }
-            return result;
-        });
+        } else {
+            result = null;
+        }
+        return result;
     }
 
     private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
