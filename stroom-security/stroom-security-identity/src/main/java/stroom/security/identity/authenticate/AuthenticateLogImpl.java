@@ -88,14 +88,14 @@ public class AuthenticateLogImpl implements AuthenticateLog {
 
 
     public void logout(final Throwable ex) {
-        eventLoggingService.createAction("Logout", "The user has logged out.");
+        eventLoggingService.createSkeletonEvent("Logout", "The user has logged out.");
     }
 
     public void resetEmail(final String emailAddress, final Throwable ex) {
-        eventLoggingService.createAction("ResetPassword", "User reset their password");
+        eventLoggingService.createSkeletonEvent("ResetPassword", "User reset their password");
     }
 
     public void changePassword(final Throwable ex) {
-        eventLoggingService.createAction("ChangePassword", "User reset their password");
+        eventLoggingService.createSkeletonEvent("ChangePassword", "User reset their password");
     }
 }

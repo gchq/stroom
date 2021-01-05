@@ -17,11 +17,13 @@
 
 package stroom.event.logging.api;
 
-import event.logging.Query;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageResponse;
 
+import event.logging.Query;
+
 public interface DocumentEventLog {
+
     void create(Object entity, Throwable ex);
 
     void create(String entityType, String entityName, Throwable ex);
@@ -47,4 +49,5 @@ public interface DocumentEventLog {
     void search(String typeId, Query query, String resultType, PageResponse pageResponse, Throwable ex);
 
 //    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+
 }

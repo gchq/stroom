@@ -16,31 +16,51 @@
 
 package stroom.event.logging.impl;
 
-import event.logging.Device;
-import event.logging.Event;
-import event.logging.Event.EventDetail;
-import event.logging.Event.EventSource;
-import event.logging.Event.EventTime;
-import event.logging.System;
-import event.logging.User;
-import event.logging.impl.DefaultEventLoggingService;
-import event.logging.util.DeviceUtil;
-import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.activity.api.CurrentActivity;
+import stroom.event.logging.api.LoggedResult;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 
+import event.logging.BaseOutcome;
+import event.logging.CopyMoveOutcome;
+import event.logging.Device;
+import event.logging.Event;
+import event.logging.EventAction;
+import event.logging.EventDetail;
+import event.logging.EventDetail.Builder;
+import event.logging.EventSource;
+import event.logging.EventTime;
+import event.logging.File;
+import event.logging.HasOutcome;
+import event.logging.MoveEventAction;
+import event.logging.MultiObject;
+import event.logging.SystemDetail;
+import event.logging.User;
+import event.logging.impl.DefaultEventLoggingService;
+import event.logging.util.DeviceUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
+@Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
     /**
      * Logger - should not be used for event logs
@@ -58,6 +78,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
+    private final Map<Class<? extends EventAction>, Optional<Function<EventAction, BaseOutcome>>> outcomeFactoryMap = new ConcurrentHashMap<>();
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext securityContext,
@@ -72,52 +93,61 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public Event createEvent() {
+        return buildEvent().build();
+    }
+
+    @Override
+    public Event.Builder<Void> buildEvent() {
         // Get the current request.
         final HttpServletRequest request = getRequest();
-        // Create event time.
-        final EventTime eventTime = new EventTime();
-        eventTime.setTimeCreated(new Date());
 
-        // Get device.
-        final Device device = getDevice(request);
-
-        // Get client.
-        final Device client = getClient(request);
-
-        // Get user.
-        final User user = getUser();
-
-        // Create system.
-        final System system = new System();
-        system.setName(SYSTEM);
-        system.setEnvironment(ENVIRONMENT);
-        system.setVersion(buildInfoProvider.get().getBuildVersion());
-
-        // Create event source.
-        final EventSource eventSource = new EventSource();
-        eventSource.setSystem(system);
-        eventSource.setGenerator(GENERATOR);
-        eventSource.setDevice(device);
-        eventSource.setClient(client);
-        eventSource.setUser(user);
-
-        // Create event.
-        final Event event = super.createEvent();
-        event.setEventTime(eventTime);
-        event.setEventSource(eventSource);
-
-        return event;
+        return super.buildEvent()
+                .withEventTime(EventTime.builder()
+                        .withTimeCreated(new Date())
+                        .build())
+                .withEventSource(EventSource.builder()
+                        .withSystem(SystemDetail.builder()
+                                .withName(SYSTEM)
+                                .withEnvironment(ENVIRONMENT)
+                                .withVersion(buildInfoProvider.get().getBuildVersion())
+                                .build())
+                        .withGenerator(GENERATOR)
+                        .withDevice(getClient(request))
+                        .withClient(getClient(request))
+                        .withUser(getUser())
+                        .build());
     }
 
-    public Event createAction(final String typeId, final String description) {
-        final Event event = createEvent();
-
-        final EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
-        eventDetail.setPurpose(PurposeUtil.create(currentActivity.getActivity()));
-        event.setEventDetail(eventDetail);
-
-        return event;
+    public Event createSkeletonEvent(final String typeId, final String description) {
+        return createSkeletonEvent(typeId, description, null);
     }
+
+    @Override
+    public Event createSkeletonEvent(final String typeId,
+                                     final String description,
+                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+        final EventDetail.Builder<Void> eventDetailBuilder = EventDetail.builder()
+                .withTypeId(typeId)
+                .withDescription(description)
+                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
+
+        if (eventDetailBuilderConsumer != null) {
+            eventDetailBuilderConsumer.accept(eventDetailBuilder);
+        }
+
+        return buildEvent()
+                .withEventDetail(eventDetailBuilder.build())
+                .build();
+    }
+
+    @Override
+    public void log(final String typeId,
+                    final String description,
+                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+
+        super.log(createSkeletonEvent(typeId, description, eventDetailBuilderConsumer));
+    }
+
 
     private Device getDevice(final HttpServletRequest request) {
         // Get stored device info.
@@ -167,11 +197,24 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
-            final String userId = securityContext.getUserId();
+            final String userId;
+            if (securityContext.isProcessingUser()) {
+                // We are running as proc user so try and get the OS user,
+                // though that may just be a shared account.
+                // This is useful where a CLI command is being used
+                final String osUser = System.getProperty("user.name");
+
+                userId = osUser != null
+                        ? osUser
+                        : securityContext.getUserId();
+            } else {
+                userId = securityContext.getUserId();
+            }
+
             if (userId != null) {
-                final User user = new User();
-                user.setId(userId);
-                return user;
+                return User.builder()
+                        .withId(userId)
+                        .build();
             }
         } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);
@@ -233,5 +276,233 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return httpServletRequestProvider.get();
         }
         return null;
+    }
+
+    @Override
+    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction,
+            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
+            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
+
+        return securityContext.insecureResult(() -> {
+            final T_RESULT result;
+            if (loggedWork != null) {
+                final Event event = createSkeletonEvent(
+                        eventTypeId,
+                        description,
+                        eventDetailBuilder -> eventDetailBuilder
+                                .withEventAction(eventAction));
+
+                try {
+                    // Allow the caller to provide a new EventAction based on the result of the work
+                    // e.g. if they are updating a record, they can capture the before state
+                    final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
+                    // Set the new EventAction onto the existing event
+                    event.getEventDetail()
+                            .setEventAction(loggedResult.getEventAction());
+                    log(event);
+                    result = loggedResult.getResult();
+                } catch (Throwable e) {
+                    if (exceptionHandler != null) {
+                        // Allow caller to provide a new EventAction based on the exception
+                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
+                        event.getEventDetail()
+                                .setEventAction(newEventAction);
+                    } else {
+                        // No handler so see if we can add an outcome
+                        if (eventAction instanceof HasOutcome) {
+                            addFailureOutcome(e, eventAction);
+                        }
+                    }
+                    log(event);
+                    throw e;
+                }
+            } else {
+                result = null;
+            }
+            return result;
+        });
+    }
+
+    private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
+        final HasOutcome hasOutcome = (HasOutcome) eventAction;
+        BaseOutcome baseOutcome = hasOutcome.getOutcome();
+
+        if (baseOutcome == null) {
+            // eventAction has no outcome so we need to create one on it
+            baseOutcome = createBaseOutcome(eventAction)
+                    .orElse(null);
+        }
+
+        if (baseOutcome == null) {
+            LOGGER.warn("Unable to set outcome on {}", eventAction.getClass().getName());
+        } else {
+            baseOutcome.setSuccess(false);
+            baseOutcome.setDescription(e.getMessage() != null
+                    ? e.getMessage()
+                    : e.getClass().getName());
+        }
+    }
+
+    private Optional<BaseOutcome> createBaseOutcome(final EventAction eventAction) {
+        // We need to call setOutcome on eventAction but we don't know what sub class of
+        // BaseOutcome it is so need to use reflection to find out.
+        // Scanning the methods on each call is expensive so figure out what the ctor
+        // and setOutcome methods are on first use then cache them.
+        return outcomeFactoryMap.computeIfAbsent(eventAction.getClass(), clazz -> {
+
+            return Arrays.stream(eventAction.getClass().getMethods())
+                    .filter(method -> method.getName().equals("setOutcome"))
+                    .findAny()
+                    .flatMap(method -> {
+                        Class<?> outcomeClass = method.getParameterTypes()[0];
+
+                        Constructor<?> constructor;
+                        try {
+                            constructor = outcomeClass.getDeclaredConstructor();
+                        } catch (NoSuchMethodException e) {
+                            LOGGER.warn("No noargs constructor found for " + outcomeClass.getName(), e);
+                            return Optional.empty();
+                        }
+
+                        final Function<EventAction, BaseOutcome> func = eventAction2 -> {
+                            try {
+                                final BaseOutcome outcome = (BaseOutcome) constructor.newInstance();
+                                method.invoke(eventAction, outcomeClass.cast(outcome));
+                                return outcome;
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        };
+                        LOGGER.info("Caching function for {}", eventAction.getClass().getName());
+                        return Optional.of(func);
+                    });
+        })
+        .flatMap(func ->
+                Optional.of(func.apply(eventAction)));
+    }
+
+//    @Override
+//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+//            final String eventTypeId,
+//            final String description,
+//            final T_EVENT_ACTION eventAction,
+//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork) {
+//        return loggedResult(eventTypeId, description, eventAction, loggedWork, null);
+//    }
+//
+//    @Override
+//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+//            final String eventTypeId,
+//            final String description,
+//            final T_EVENT_ACTION eventAction,
+//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork,
+//            final BiConsumer<Throwable, T_EVENT_ACTION> exceptionHandler) {
+//
+//        return securityContext.insecureResult(() -> {
+//            final T_RESULT result;
+//            if (loggedWork != null) {
+//                final Event event = createSkeletonEvent(
+//                        eventTypeId,
+//                        description,
+//                        eventDetailBuilder -> eventDetailBuilder
+//                                .withEventAction(eventAction));
+//
+//                try {
+//                    // Allow the caller to mutate the eventAction based on the work that they do,
+//                    // e.g. if they are updating a record, they can capture the before state
+//                    result = loggedWork.apply(eventAction);
+//                    log(event);
+//                } catch (Throwable e) {
+//                    if (exceptionHandler != null) {
+//                        // Allow caller to mutate the action based on the exception
+//                        exceptionHandler.accept(e, eventAction);
+//                    } else {
+//                        // No handler so see if we can add an outcome
+//                        if (eventAction instanceof HasOutcome) {
+//
+//                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
+//                            final BaseOutcome baseOutcome = hasOutcome.getOutcome();
+//                            if (baseOutcome != null) {
+//                                baseOutcome.setSuccess(false);
+//                                baseOutcome.setDescription(e.getMessage() != null
+//                                        ? e.getMessage()
+//                                        : e.getClass().getName());
+//                            } else {
+//                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
+//                                // type it is.
+//                                LOGGER.warn("Unable set outcome as baseOutcome is null");
+//                            }
+//                        }
+//                    }
+//                    log(event);
+//                    throw e;
+//                }
+//            } else {
+//                result = null;
+//            }
+//            return result;
+//        });
+//    }
+
+    private void loggedResultTest() {
+
+        final long id = 123;
+        final String newFilePath = "/tmp/xxx.txt";
+
+        final MoveEventAction skeletonAction = MoveEventAction.builder()
+                .withDestination(MultiObject.builder()
+                        .addFile(File.builder()
+                                .withId(Long.toString(id))
+                                .withPath(newFilePath)
+                                .build())
+                        .build())
+                .withOutcome(CopyMoveOutcome.builder()
+                        .withSuccess(true)
+                        .build())
+                .build();
+
+        final Function<MoveEventAction, Integer> loggedWork = moveEventAction -> {
+            // Find out where the old file was
+            final String oldPath = "/tmp/yyy.txt";
+
+            // Add in details of from path
+            moveEventAction.setSource(MultiObject.builder()
+                    .addFile(File.builder()
+                            .withId(Long.toString(id))
+                            .withPath(oldPath)
+                            .build())
+                    .build());
+
+            // Now do the actual work and return its result
+            return 0;
+        };
+
+        final BiConsumer<Throwable, MoveEventAction> exceptionHandler = (e, moveEventAction) -> {
+            // Find out where the old file was
+            final String oldPath = "/tmp/yyy.txt";
+
+            // Add in details of from path
+            moveEventAction.setSource(MultiObject.builder()
+                    .addFile(File.builder()
+                            .withId(Long.toString(id))
+                            .withPath(oldPath)
+                            .build())
+                    .build());
+
+            moveEventAction.setOutcome(CopyMoveOutcome.builder()
+                    .withSuccess(false)
+                    .withDescription("Bad things happened: " + e.getMessage())
+                    .build());
+        };
+
+//        final int result = loggedResult(
+//                "moveFile",
+//                "move file " + id + " to " + newFilePath,
+//                skeletonAction,
+//                loggedWork,
+//                exceptionHandler);
     }
 }

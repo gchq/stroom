@@ -21,7 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
-import event.logging.Object;
+import event.logging.OtherObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,16 +30,15 @@ class FsVolumeObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsVolumeObjectInfoProvider.class);
 
     @Override
-    public BaseObject createBaseObject(final java.lang.Object obj) {
+    public BaseObject createBaseObject(final Object obj) {
         final FsVolume fsVolume = (FsVolume) obj;
 
-        final Object object = new Object();
-        object.setType("Data Volume");
-        object.setId(String.valueOf(fsVolume.getId()));
-        object.setName(fsVolume.getPath());
-        object.setState(fsVolume.getStatus().getDisplayValue());
-
-        return object;
+        return OtherObject.builder()
+                .withType("Data Volume")
+                .withId(String.valueOf(fsVolume.getId()))
+                .withName(fsVolume.getPath())
+                .withState(fsVolume.getStatus().getDisplayValue())
+                .build();
     }
 
     @Override

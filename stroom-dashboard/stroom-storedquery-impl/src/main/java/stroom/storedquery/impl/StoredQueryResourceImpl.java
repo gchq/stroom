@@ -23,11 +23,14 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.Term;
+import event.logging.TermCondition;
 
 import javax.inject.Inject;
+import java.util.function.Supplier;
 
 class StoredQueryResourceImpl implements StoredQueryResource {
     private final StoredQueryServiceImpl storedQueryService;
@@ -46,22 +49,54 @@ class StoredQueryResourceImpl implements StoredQueryResource {
     @Override
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
         ResultPage<StoredQuery> result;
+        final And.Builder<Void> andBuilder = And.builder();
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        addCriteria(andBuilder, "Favorite", criteria::getFavourite);
+        addCriteria(andBuilder, "ComponentId", criteria::getComponentId);
+        addCriteria(andBuilder, "UserId", criteria::getUserId);
+        addCriteria(andBuilder, "DashboardUuid", criteria::getDashboardUuid);
+
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(andBuilder.build())
+                        .build())
+                .build();
 
         try {
             result = storedQueryService.find(criteria);
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), result.getPageResponse(), null);
+
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    StoredQuery.class.getSimpleName(),
+                    result.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    StoredQuery.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
 
         return result;
+    }
+
+    private <T> void addCriteria(final And.Builder<Void> andBuilder,
+                                 final String name,
+                                 final Supplier<T> valueSupplier) {
+        if (valueSupplier != null) {
+            final T value = valueSupplier.get();
+            if (value != null) {
+                andBuilder.addTerm(Term.builder()
+                        .withName(name)
+                        .withCondition(TermCondition.EQUALS)
+                        .withValue(value.toString())
+                        .build());
+            }
+        }
     }
 
     @Override

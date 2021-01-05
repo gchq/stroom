@@ -16,15 +16,17 @@
 
 package stroom.security.impl;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+
 import event.logging.AuthenticateAction;
+import event.logging.AuthenticateEventAction;
+import event.logging.AuthenticateEventAction.Builder;
 import event.logging.AuthenticateOutcome;
 import event.logging.AuthenticateOutcomeReason;
 import event.logging.Event;
-import event.logging.Event.EventDetail.Authenticate;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.event.logging.api.StroomEventLoggingService;
 
 import javax.inject.Inject;
 
@@ -78,28 +80,31 @@ public class AuthenticationEventLog {
                 AuthenticateAction.RESET_PASSWORD, userName, success, outcomeDescription, reason);
     }
 
-    private void authenticationEvent(final String typeId, final String description, final AuthenticateAction action,
-                                     final String userName, final boolean success, final String outcomeDescription,
+    private void authenticationEvent(final String typeId,
+                                     final String description,
+                                     final AuthenticateAction action,
+                                     final String userName,
+                                     final boolean success,
+                                     final String outcomeDescription,
                                      final AuthenticateOutcomeReason reason) {
         try {
-            final Event event = eventLoggingService.createAction(typeId, description);
+            final Event event = eventLoggingService.createSkeletonEvent(typeId, description);
 
-            final Authenticate authenticate = new Authenticate();
-            authenticate.setAction(action);
-            event.getEventDetail().setAuthenticate(authenticate);
-
-            final User user = new User();
-            user.setId(userName);
-            authenticate.setUser(user);
+            final Builder<Void> builder = AuthenticateEventAction.builder()
+                    .withAction(action)
+                    .withUser(User.builder()
+                            .withId(userName)
+                            .build());
 
             if (!success) {
-                final AuthenticateOutcome outcome = new AuthenticateOutcome();
-                outcome.setSuccess(success);
-                outcome.setDescription(outcomeDescription);
-                outcome.setReason(reason);
-
-                authenticate.setOutcome(outcome);
+                builder.withOutcome(AuthenticateOutcome.builder()
+                        .withSuccess(success)
+                        .withDescription(outcomeDescription)
+                        .withReason(reason)
+                        .build());
             }
+
+            event.getEventDetail().setEventAction(builder.build());
 
             eventLoggingService.log(event);
         } catch (final RuntimeException e) {

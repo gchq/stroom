@@ -32,7 +32,6 @@ public final class AccountModule extends AbstractModule {
     protected void configure() {
 
         bind(AccountService.class).to(AccountServiceImpl.class);
-        bind(AccountEventLog.class).to(AccountEventLogImpl.class);
         bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
 
         RestResourcesBinder.create(binder())

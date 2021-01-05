@@ -6,10 +6,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import event.logging.Event;
-import event.logging.ObjectOutcome;
+import event.logging.Outcome;
 import event.logging.Resource;
-import event.logging.util.EventLoggingUtil;
+import event.logging.ViewEventAction;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -32,24 +31,25 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
     @Override
     public SystemInfoResultList getAll() {
 
-        logViewResourceEvent(
+        return stroomEventLoggingService.loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info results",
-                "");
-
-        return SystemInfoResultList.of(systemInfoService.getAll());
+                buildViewEventAction(""),
+                () ->
+                        SystemInfoResultList.of(systemInfoService.getAll())
+        );
     }
 
     @Override
     public List<String> getNames() {
-        logViewResourceEvent(
+        return stroomEventLoggingService.loggedResult(
                 "getAllSystemInfo",
                 "Getting all system info result names",
-                NAMES_PATH_PART);
-
-        return systemInfoService.getNames().stream()
-                .sorted()
-                .collect(Collectors.toList());
+                buildViewEventAction(NAMES_PATH_PART),
+                () -> systemInfoService.getNames().stream()
+                        .sorted()
+                        .collect(Collectors.toList())
+        );
     }
 
     @Override
@@ -59,28 +59,25 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
             throw new BadRequestException("name not supplied");
         }
 
-        logViewResourceEvent(
+        return stroomEventLoggingService.loggedResult(
                 "getSystemInfo",
                 "Getting system info results for " + name,
-                "/" + name);
-
-        return systemInfoService.get(name)
-                .orElseThrow(() ->
-                        new NotFoundException(LogUtil.message("Name {} not found", name)));
+                buildViewEventAction("/"),
+                () -> systemInfoService.get(name)
+                        .orElseThrow(() ->
+                                new NotFoundException(LogUtil.message("Name {} not found", name)))
+        );
     }
 
-    private void logViewResourceEvent(final String typeId,
-                                      final String description,
-                                      final String subPath) {
+    private ViewEventAction buildViewEventAction(final String subPath) {
 
-        final Event event = stroomEventLoggingService.createEvent();
-        final Event.EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
-        final Resource resource = new Resource();
-        resource.setURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath));
-        final ObjectOutcome objectOutcome = new ObjectOutcome();
-        objectOutcome.getObjects().add(resource);
-        eventDetail.setView(objectOutcome);
-        event.setEventDetail(eventDetail);
-        stroomEventLoggingService.log(event);
+        return ViewEventAction.builder()
+                .addResource(Resource.builder()
+                        .withURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath))
+                        .build())
+                .withOutcome(Outcome.builder()
+                        .withSuccess(true)
+                        .build())
+                .build();
     }
 }

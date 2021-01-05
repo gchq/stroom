@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change event logging to use new fluent API.
+
+
 ## [v7.0-beta.74] - 2020-12-15
 
 * No changes.
+
 
 ## [v7.0-beta.73] - 2020-12-15
 

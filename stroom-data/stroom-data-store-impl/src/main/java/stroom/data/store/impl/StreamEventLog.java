@@ -19,33 +19,24 @@ package stroom.data.store.impl;
 
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Not;
-import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Criteria;
 import event.logging.Data;
-import event.logging.Event;
-import event.logging.Export;
-import event.logging.Import;
+import event.logging.ExportEventAction;
+import event.logging.ImportEventAction;
 import event.logging.MultiObject;
-import event.logging.ObjectOutcome;
+import event.logging.OtherObject;
 import event.logging.Query;
-import event.logging.Query.Advanced;
-import event.logging.TermCondition;
+import event.logging.Query.Builder;
+import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.List;
 
 public class StreamEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
@@ -63,23 +54,21 @@ public class StreamEventLog {
     public void importStream(final String feedName, final String path, final Throwable th) {
         securityContext.insecure(() -> {
             try {
-                final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
-
-                final event.logging.Object object = new event.logging.Object();
-                object.setType("Stream");
-                object.getData().add(EventLoggingUtil.createData("Path", path));
-                object.getData().add(EventLoggingUtil.createData("Feed", feedName));
-
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(object);
-
-                final Import imp = new Import();
-                imp.setSource(multiObject);
-                imp.setOutcome(EventLoggingUtil.createOutcome(th));
-
-                event.getEventDetail().setImport(imp);
-
-                eventLoggingService.log(event);
+                eventLoggingService.log(
+                        "Data Upload",
+                        "Data uploaded to \"" + feedName + "\"",
+                        eventDetailBuilder -> eventDetailBuilder
+                                .withImport(ImportEventAction.builder()
+                                        .withSource(MultiObject.builder()
+                                                .addObject(OtherObject.builder()
+                                                        .withType("Stream")
+                                                        .addData(EventLoggingUtil.createData("Path", path))
+                                                        .addData(EventLoggingUtil.createData("Feed", feedName))
+                                                        .build())
+                                                .build())
+                                        .withOutcome(EventLoggingUtil.createOutcome(th))
+                                        .build())
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to import stream!", e);
             }
@@ -90,22 +79,20 @@ public class StreamEventLog {
         securityContext.insecure(() -> {
             try {
                 if (findMetaCriteria != null) {
-                    final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
-
-                    final Criteria criteria = new Criteria();
-                    criteria.setType("Data");
-                    criteria.setQuery(createQuery(findMetaCriteria));
-
-                    final MultiObject multiObject = new MultiObject();
-                    multiObject.getObjects().add(criteria);
-
-                    final Export exp = new Export();
-                    exp.setSource(multiObject);
-                    exp.setOutcome(EventLoggingUtil.createOutcome(th));
-
-                    event.getEventDetail().setExport(exp);
-
-                    eventLoggingService.log(event);
+                    eventLoggingService.log(
+                            "ExportData",
+                            "Exporting Data",
+                            eventDetailBuilder -> eventDetailBuilder
+                                    .withExport(ExportEventAction.builder()
+                                            .withSource(MultiObject.builder()
+                                                    .addCriteria(Criteria.builder()
+                                                            .withType("Data")
+                                                            .withQuery(createQuery(findMetaCriteria))
+                                                            .build())
+                                                    .build())
+                                            .withOutcome(EventLoggingUtil.createOutcome(th))
+                                            .build())
+                                    .build());
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to export stream!", e);
@@ -122,13 +109,20 @@ public class StreamEventLog {
         securityContext.insecure(() -> {
             try {
                 if (eventId != null) {
-                    final Event event = eventLoggingService.createAction("View", "Viewing Stream");
-                    final ObjectOutcome objectOutcome = new ObjectOutcome();
-                    event.getEventDetail().setView(objectOutcome);
-                    objectOutcome.getObjects()
-                            .add(createStreamObject(eventId, feedName, streamTypeName, childStreamType, pipelineRef));
-                    objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
-                    eventLoggingService.log(event);
+                    eventLoggingService.log(
+                            "ViewStream",
+                            "Viewing Stream",
+                            eventDetailBuilder -> eventDetailBuilder
+                                    .withView(ViewEventAction.builder()
+                                            .addObject(createStreamObject(
+                                                    eventId,
+                                                    feedName,
+                                                    streamTypeName,
+                                                    childStreamType,
+                                                    pipelineRef))
+                                            .withOutcome(EventLoggingUtil.createOutcome(th))
+                                            .build())
+                                    .build());
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to view stream!", e);
@@ -138,24 +132,22 @@ public class StreamEventLog {
 
     private Query createQuery(final FindMetaCriteria findMetaCriteria) {
         if (findMetaCriteria != null) {
-            final Advanced advanced = new Advanced();
-            appendCriteria(advanced.getAdvancedQueryItems(), findMetaCriteria);
+            final Builder<Void> queryBuilder = Query.builder();
 
-            final Query query = new Query();
-            query.setAdvanced(advanced);
+            StroomEventLoggingUtil.appendExpression(queryBuilder, findMetaCriteria.getExpression());
 
-            return query;
+            return queryBuilder.build();
         }
 
         return null;
     }
 
-    private event.logging.Object createStreamObject(final String eventId,
-                                                    final String feedName,
-                                                    final String streamTypeName,
-                                                    final String childStreamType,
-                                                    final DocRef pipelineRef) {
-        final event.logging.Object object = new event.logging.Object();
+    private OtherObject createStreamObject(final String eventId,
+                                           final String feedName,
+                                           final String streamTypeName,
+                                           final String childStreamType,
+                                           final DocRef pipelineRef) {
+        final OtherObject object = new OtherObject();
         object.setType("Stream");
         object.setId(eventId);
         if (feedName != null) {
@@ -185,7 +177,7 @@ public class StreamEventLog {
         return data;
     }
 
-    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindMetaCriteria findMetaCriteria) {
+//    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindMetaCriteria findMetaCriteria) {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
 //                findMetaCriteria.getStreamProcessorIdSet());
 //        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findMetaCriteria.getFeeds());
@@ -223,94 +215,10 @@ public class StreamEventLog {
 //            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
 //
 //        } else {
-            appendOperator(items, findMetaCriteria.getExpression());
+//            appendOperator(items, findMetaCriteria.getExpression());
 //        }
-    }
+//    }
 
-    private void appendOperator(final List<BaseAdvancedQueryItem> items, final ExpressionOperator expressionOperator) {
-        if (expressionOperator != null && expressionOperator.enabled()) {
-            BaseAdvancedQueryOperator operator = null;
-            switch (expressionOperator.op()) {
-                case AND:
-                    operator = new And();
-                    break;
-                case OR:
-                    operator = new Or();
-                    break;
-                case NOT:
-                    operator = new Not();
-                    break;
-            }
 
-            items.add(operator);
 
-            if (expressionOperator.getChildren() != null) {
-                for (final ExpressionItem item : expressionOperator.getChildren()) {
-                    if (item.enabled()) {
-                        if (item instanceof ExpressionOperator) {
-                            appendOperator(operator.getAdvancedQueryItems(), (ExpressionOperator) item);
-                        } else if (item instanceof ExpressionTerm) {
-                            appendTerm(operator.getAdvancedQueryItems(), (ExpressionTerm) item);
-                        }
-                    }
-
-                }
-            }
-        }
-    }
-
-    private void appendTerm(final List<BaseAdvancedQueryItem> items, final ExpressionTerm expressionTerm) {
-        switch (expressionTerm.getCondition()) {
-            case CONTAINS:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
-                break;
-            case EQUALS:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
-                break;
-            case GREATER_THAN:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN, expressionTerm.getValue()));
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN_EQUAL_TO, expressionTerm.getValue()));
-                break;
-            case LESS_THAN:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN, expressionTerm.getValue()));
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN_EQUAL_TO, expressionTerm.getValue()));
-                break;
-            case BETWEEN: {
-                final String[] parts = expressionTerm.getValue().split(",");
-                if (parts.length >= 2) {
-                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.GREATER_THAN_EQUAL_TO, parts[0]));
-                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.LESS_THAN, parts[1]));
-                } else {
-                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
-                }
-                break;
-            }
-            case IN: {
-                final String[] parts = expressionTerm.getValue().split(",");
-                if (parts.length >= 2) {
-                    final Or or = new Or();
-                    for (final String part : parts) {
-                        or.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, part));
-                    }
-                    items.add(or);
-                } else {
-                    items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, expressionTerm.getValue()));
-                }
-                break;
-            }
-            case IN_DICTIONARY: {
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "dictionary: " + expressionTerm.getDocRef()));
-            }
-            case IN_FOLDER: {
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "folder: " + expressionTerm.getDocRef()));
-            }
-            case IS_DOC_REF: {
-                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "docRef: " + expressionTerm.getDocRef()));
-            }
-        }
-    }
 }

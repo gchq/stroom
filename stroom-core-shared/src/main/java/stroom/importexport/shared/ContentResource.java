@@ -28,6 +28,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -46,7 +47,7 @@ public interface ContentResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Import content",
             response = ResourceGeneration.class)
-    ResourceKey importContent(@ApiParam("request") ImportConfigRequest request);
+    ResourceKey importContent(@NotNull @ApiParam("request") ImportConfigRequest request);
 
     @POST
     @Path("confirmImport")
@@ -60,7 +61,7 @@ public interface ContentResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Export content",
             response = ResourceGeneration.class)
-    ResourceGeneration exportContent(@ApiParam("docRefs") DocRefs docRefs);
+    ResourceGeneration exportContent(@NotNull @ApiParam("docRefs") DocRefs docRefs);
 
     @POST
     @Path("fetchDependencies")
