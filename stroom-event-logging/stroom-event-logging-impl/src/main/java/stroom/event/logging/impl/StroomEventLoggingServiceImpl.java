@@ -24,7 +24,6 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 
 import event.logging.BaseOutcome;
-import event.logging.CopyMoveOutcome;
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.EventAction;
@@ -32,10 +31,7 @@ import event.logging.EventDetail;
 import event.logging.EventDetail.Builder;
 import event.logging.EventSource;
 import event.logging.EventTime;
-import event.logging.File;
 import event.logging.HasOutcome;
-import event.logging.MoveEventAction;
-import event.logging.MultiObject;
 import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
@@ -55,7 +51,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -382,127 +377,5 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         })
         .flatMap(func ->
                 Optional.of(func.apply(eventAction)));
-    }
-
-//    @Override
-//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-//            final String eventTypeId,
-//            final String description,
-//            final T_EVENT_ACTION eventAction,
-//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork) {
-//        return loggedResult(eventTypeId, description, eventAction, loggedWork, null);
-//    }
-//
-//    @Override
-//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-//            final String eventTypeId,
-//            final String description,
-//            final T_EVENT_ACTION eventAction,
-//            final Function<T_EVENT_ACTION, T_RESULT> loggedWork,
-//            final BiConsumer<Throwable, T_EVENT_ACTION> exceptionHandler) {
-//
-//        return securityContext.insecureResult(() -> {
-//            final T_RESULT result;
-//            if (loggedWork != null) {
-//                final Event event = createSkeletonEvent(
-//                        eventTypeId,
-//                        description,
-//                        eventDetailBuilder -> eventDetailBuilder
-//                                .withEventAction(eventAction));
-//
-//                try {
-//                    // Allow the caller to mutate the eventAction based on the work that they do,
-//                    // e.g. if they are updating a record, they can capture the before state
-//                    result = loggedWork.apply(eventAction);
-//                    log(event);
-//                } catch (Throwable e) {
-//                    if (exceptionHandler != null) {
-//                        // Allow caller to mutate the action based on the exception
-//                        exceptionHandler.accept(e, eventAction);
-//                    } else {
-//                        // No handler so see if we can add an outcome
-//                        if (eventAction instanceof HasOutcome) {
-//
-//                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
-//                            final BaseOutcome baseOutcome = hasOutcome.getOutcome();
-//                            if (baseOutcome != null) {
-//                                baseOutcome.setSuccess(false);
-//                                baseOutcome.setDescription(e.getMessage() != null
-//                                        ? e.getMessage()
-//                                        : e.getClass().getName());
-//                            } else {
-//                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
-//                                // type it is.
-//                                LOGGER.warn("Unable set outcome as baseOutcome is null");
-//                            }
-//                        }
-//                    }
-//                    log(event);
-//                    throw e;
-//                }
-//            } else {
-//                result = null;
-//            }
-//            return result;
-//        });
-//    }
-
-    private void loggedResultTest() {
-
-        final long id = 123;
-        final String newFilePath = "/tmp/xxx.txt";
-
-        final MoveEventAction skeletonAction = MoveEventAction.builder()
-                .withDestination(MultiObject.builder()
-                        .addFile(File.builder()
-                                .withId(Long.toString(id))
-                                .withPath(newFilePath)
-                                .build())
-                        .build())
-                .withOutcome(CopyMoveOutcome.builder()
-                        .withSuccess(true)
-                        .build())
-                .build();
-
-        final Function<MoveEventAction, Integer> loggedWork = moveEventAction -> {
-            // Find out where the old file was
-            final String oldPath = "/tmp/yyy.txt";
-
-            // Add in details of from path
-            moveEventAction.setSource(MultiObject.builder()
-                    .addFile(File.builder()
-                            .withId(Long.toString(id))
-                            .withPath(oldPath)
-                            .build())
-                    .build());
-
-            // Now do the actual work and return its result
-            return 0;
-        };
-
-        final BiConsumer<Throwable, MoveEventAction> exceptionHandler = (e, moveEventAction) -> {
-            // Find out where the old file was
-            final String oldPath = "/tmp/yyy.txt";
-
-            // Add in details of from path
-            moveEventAction.setSource(MultiObject.builder()
-                    .addFile(File.builder()
-                            .withId(Long.toString(id))
-                            .withPath(oldPath)
-                            .build())
-                    .build());
-
-            moveEventAction.setOutcome(CopyMoveOutcome.builder()
-                    .withSuccess(false)
-                    .withDescription("Bad things happened: " + e.getMessage())
-                    .build());
-        };
-
-//        final int result = loggedResult(
-//                "moveFile",
-//                "move file " + id + " to " + newFilePath,
-//                skeletonAction,
-//                loggedWork,
-//                exceptionHandler);
     }
 }
