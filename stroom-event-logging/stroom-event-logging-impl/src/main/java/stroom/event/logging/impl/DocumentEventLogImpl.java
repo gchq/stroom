@@ -41,6 +41,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
 
@@ -48,6 +49,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Map;
 
 @Singleton
@@ -91,9 +93,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {
+        create(objectType, objectName, "Create", ex);
+    }
+    @Override
+    public void create(final String objectType, final String objectName, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Create", "Creating", objectType, objectName);
+                final Event event = createAction(eventTypeId, "Creating", objectType, objectName);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setCreate(objectOutcome);
 
@@ -117,9 +123,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final java.lang.Object object, final Throwable ex) {
+        create(object, "Create", ex);
+    }
+        @Override
+        public void create(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Create", "Creating", object);
+                final Event event = createAction(eventTypeId, "Creating", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setCreate(objectOutcome);
                 final BaseObject baseObject = createBaseObject(object);
@@ -139,9 +149,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        update(before, after, "Update", ex);
+    }
+
+    @Override
+    public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Update", "Updating", before);
+                final Event event = createAction(eventTypeId, "Updating", before);
                 final Update update = new Update();
                 event.getEventDetail().setUpdate(update);
 
@@ -171,12 +186,16 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //        move(before, after, null);
 //    }
 
-
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        copy(before, after, "Copy", ex);
+    }
+
+    @Override
+    public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Copy", "Copying", before);
+                final Event event = createAction(eventTypeId, "Copying", before);
                 final CopyMove copy = new CopyMove();
                 event.getEventDetail().setCopy(copy);
 
@@ -208,9 +227,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        move(before, after, "Move", ex);
+    }
+
+    @Override
+    public void move(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Move", "Moving", before);
+                final Event event = createAction(eventTypeId, "Moving", before);
                 final CopyMove move = new CopyMove();
                 event.getEventDetail().setMove(move);
 
@@ -242,9 +266,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        rename(before, after, "Rename", ex);
+    }
+
+    @Override
+    public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Rename", "Renaming", before);
+                final Event event = createAction(eventTypeId, "Renaming", before);
                 final CopyMove move = new CopyMove();
                 event.getEventDetail().setMove(move);
 
@@ -276,9 +305,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final java.lang.Object object, final Throwable ex) {
+       delete(object, "Delete", ex);
+    }
+
+    @Override
+    public void delete(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Delete", "Deleting", object);
+                final Event event = createAction(eventTypeId, "Deleting", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setDelete(objectOutcome);
                 final BaseObject baseObject = createBaseObject(object);
@@ -293,9 +327,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void view(final java.lang.Object object, final Throwable ex) {
+        view(object, "View", ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("View", "Viewing", object);
+                final Event event = createAction(eventTypeId, "Viewing", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setView(objectOutcome);
                 final BaseObject baseObject = createBaseObject(object);
@@ -310,9 +349,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
+        delete(criteria, query, size, criteria.getClass().getSimpleName(), ex);
+    }
+
+    @Override
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
+                final Event event = createAction(eventTypeId, "Delete by criteria " + getObjectType(criteria),
                         null);
 
                 final Criteria crit = new Criteria();
@@ -329,16 +373,21 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to doDelete!", e);
+                LOGGER.error("Unable to log delete!", e);
             }
         });
     }
 
     @Override
     public void download(final java.lang.Object object, final Throwable ex) {
+        download(object, "Download", ex);
+    }
+
+    @Override
+    public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction("Download", "Downloading", object);
+                final Event event = createAction(eventTypeId, "Downloading", object);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(createBaseObject(object));
@@ -456,7 +505,19 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
-            return null;
+            if (object instanceof Collection){
+                Collection collection = (Collection) object;
+                if (collection.isEmpty()) {
+                    return "Empty collection";
+                } else {
+                    return "Collection containing " + collection.stream().count()
+                            + collection.stream().findFirst().get().getClass().getSimpleName() +
+                            " and possibly other objects";
+                }
+            }
+            return object.getClass().getSimpleName();
+
+
         }
         return objectInfoAppender.getObjectType(object);
     }
@@ -477,11 +538,15 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             return String.valueOf(((HasId) object).getId());
         }
 
+        if (object instanceof HasIntegerId) {
+            return String.valueOf(((HasIntegerId) object).getId());
+        }
+
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getUuid());
         }
 
-        return "";
+        return null;
     }
 
     private BaseObject createBaseObject(final java.lang.Object object) {

@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StroomLoggingOperation;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,6 +35,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import static stroom.util.shared.StroomLoggingOperationType.DELETE;
+import static stroom.util.shared.StroomLoggingOperationType.SEARCH;
+import static stroom.util.shared.StroomLoggingOperationType.UPDATE;
+import static stroom.util.shared.StroomLoggingOperationType.VIEW;
+
 @Api(value = "index - /v2")
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -45,6 +51,7 @@ public interface IndexResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
+    @StroomLoggingOperation(VIEW)
     @ApiOperation(
             value = "Get an index doc",
             response = IndexDoc.class)
@@ -52,6 +59,7 @@ public interface IndexResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
+    @StroomLoggingOperation(UPDATE)
     @ApiOperation(
             value = "Update an index doc",
             response = IndexDoc.class)
@@ -59,12 +67,14 @@ public interface IndexResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/shard/find")
+    @StroomLoggingOperation(SEARCH)
     @ApiOperation(
             value = "Find matching index shards",
             response = ResultPage.class)
     ResultPage<IndexShard> findIndexShards(@ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
+    @StroomLoggingOperation(DELETE)
     @Path(SHARD_DELETE_SUB_PATH)
     @ApiOperation(
             value = "Delete matching index shards",

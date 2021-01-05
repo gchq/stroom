@@ -6,11 +6,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo {
+public class User implements HasAuditInfo, HasIntegerId {
     public static final String ADMIN_USER_NAME = "admin";
 
     @JsonProperty
@@ -65,6 +66,7 @@ public class User implements HasAuditInfo {
         this.enabled = enabled;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

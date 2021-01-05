@@ -14,21 +14,28 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     @Override
-    public void log (LoggingInfo info, Object requestEntity, Object responseEntity){
+    public void log (LoggingInfo info, Object requestEntity, Object responseEntity, Throwable error){
         if (info == null){
             return;
         }
 
+        String typeId = info.getResourceClass().getSimpleName() + "." + info.getMethod().getName();
+
         switch (info.getOperationType()){
             case DELETE:
-                documentEventLog.delete(requestEntity,null);
+                documentEventLog.delete(requestEntity,typeId,error);
                 break;
             case VIEW:
-                documentEventLog.view(responseEntity,null);
+                documentEventLog.view(responseEntity,typeId,error);
                 break;
             case CREATE:
-                documentEventLog.create(requestEntity,null);
+                documentEventLog.create(requestEntity,typeId,error);
                 break;
         }
+    }
+
+    @Override
+    public void log (LoggingInfo info, Object requestEntity, Object responseEntity){
+      log (info, requestEntity, responseEntity, null);
     }
 }

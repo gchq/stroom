@@ -17,6 +17,7 @@
 package stroom.activity.shared;
 
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
-public class Activity implements HasAuditInfo {
+public class Activity implements HasAuditInfo, HasIntegerId {
     public static final String ENTITY_TYPE = "Activity";
 
     @JsonProperty
@@ -103,6 +104,7 @@ public class Activity implements HasAuditInfo {
                 new ActivityDetails(new ArrayList<>()));
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

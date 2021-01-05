@@ -119,6 +119,14 @@ class LoggingInfo {
         return operation;
     }
 
+    public Class<?> getResourceClass() {
+        return resourceClass;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
     public Optional<Class<?>> getRequestParamClass (){
       return parameterType;
     }

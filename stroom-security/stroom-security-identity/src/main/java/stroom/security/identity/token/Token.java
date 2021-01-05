@@ -18,6 +18,8 @@
 
 package stroom.security.identity.token;
 
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 //   possible
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class Token {
+public class Token implements HasIntegerId {
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -89,6 +91,7 @@ public class Token {
         this.enabled = enabled;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

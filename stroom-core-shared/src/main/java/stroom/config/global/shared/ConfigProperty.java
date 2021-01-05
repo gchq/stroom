@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
 
 import java.util.Objects;
@@ -50,7 +51,7 @@ import java.util.Optional;
  */
 @JsonIgnoreProperties(value = {"source"}, allowGetters = true)
 @JsonInclude(Include.NON_NULL)
-public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<ConfigProperty> {
 
     @JsonProperty
     private Integer id;
@@ -161,6 +162,7 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.dataTypeName = dataTypeName;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

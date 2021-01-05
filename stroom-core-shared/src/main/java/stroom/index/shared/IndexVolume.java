@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
@@ -48,7 +49,7 @@ import stroom.util.shared.PrimitiveValueConverter;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasAuditInfo {
+public class IndexVolume implements HasAuditInfo, HasIntegerId {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;
@@ -120,7 +121,8 @@ public class IndexVolume implements HasAuditInfo {
         this.indexVolumeGroupId = indexVolumeGroupId;
     }
 
-    public Integer getId() {
+    @Override
+    public Integer getId(){
         return id;
     }
 

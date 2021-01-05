@@ -17,10 +17,11 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
-public class ExplorerTreeNode {
+public class ExplorerTreeNode implements HasIntegerId {
     private Integer id;
     private String type;
     private String uuid;
@@ -50,6 +51,7 @@ public class ExplorerTreeNode {
         return explorerTreeNode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
