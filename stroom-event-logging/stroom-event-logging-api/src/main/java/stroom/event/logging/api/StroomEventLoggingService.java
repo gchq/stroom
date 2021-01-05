@@ -39,6 +39,25 @@ public interface StroomEventLoggingService extends EventLoggingService {
              final String description,
              final Consumer<Builder<Void>> eventDetailBuilderConsumer);
 
+    default <T_EVENT_ACTION extends EventAction> void loggedAction(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction,
+            final Runnable loggedAction) {
+
+        final Function<T_EVENT_ACTION, LoggedResult<Void, T_EVENT_ACTION>> loggedResultFunction = event -> {
+            loggedAction.run();
+            return LoggedResult.of(null, event);
+        };
+
+        loggedResult(
+                eventTypeId,
+                description,
+                eventAction,
+                loggedResultFunction,
+                null);
+    }
+
     /**
      * Use this form when you do not need to modify the event based on the result of the work.
      */

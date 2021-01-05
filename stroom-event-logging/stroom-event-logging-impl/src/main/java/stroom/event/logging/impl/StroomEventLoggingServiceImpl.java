@@ -45,15 +45,22 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
     /**
      * Logger - should not be used for event logs
@@ -71,6 +78,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
+    private final Map<Class<? extends EventAction>, Optional<Function<EventAction, BaseOutcome>>> outcomeFactoryMap = new ConcurrentHashMap<>();
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext securityContext,
@@ -288,7 +296,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                                 .withEventAction(eventAction));
 
                 try {
-                    // Allow the caller to provide a new EventAction bases on the result of the work
+                    // Allow the caller to provide a new EventAction based on the result of the work
                     // e.g. if they are updating a record, they can capture the before state
                     final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
                     // Set the new EventAction onto the existing event
@@ -304,18 +312,46 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         // No handler so see if we can add an outcome
                         if (eventAction instanceof HasOutcome) {
 
-                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
-                            final BaseOutcome baseOutcome = hasOutcome.getOutcome();
-                            if (baseOutcome != null) {
-                                baseOutcome.setSuccess(false);
-                                baseOutcome.setDescription(e.getMessage() != null
-                                        ? e.getMessage()
-                                        : e.getClass().getName());
-                            } else {
-                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
-                                // type it is.
-                                LOGGER.warn("Unable set outcome as baseOutcome is null");
-                            }
+                            addFailureOutcome(e, eventAction);
+
+//                            final HasOutcome hasOutcome = (HasOutcome) eventAction;
+//                            BaseOutcome baseOutcome = hasOutcome.getOutcome();
+//
+//                            if (baseOutcome == null) {
+//                                // Have a stab at creating the appropriate outcome
+//                            }
+//
+//                            if (baseOutcome != null) {
+//                                baseOutcome.setSuccess(false);
+//                                baseOutcome.setDescription(e.getMessage() != null
+//                                        ? e.getMessage()
+//                                        : e.getClass().getName());
+//                            } else {
+//                                // TODO @AT Need to find a way of initialising the outcome when we don't know what
+//                                // type it is.
+//                                Arrays.stream(eventAction.getClass().getMethods())
+//                                        .filter(method -> method.getName().equals("setOutcome"))
+//                                        .findAny()
+//                                        .ifPresentOrElse(
+//                                                method -> {
+//                                                    Class<?> outcomeClass = method.getParameterTypes()[0];
+//
+//                                                    try {
+//                                                        final BaseOutcome outcome = (BaseOutcome) outcomeClass.getDeclaredConstructor(new Class[0]).newInstance();
+//                                                        outcome.setSuccess(false);
+//                                                        outcome.setDescription("xxx");
+//                                                        method.invoke(eventAction, outcomeClass.cast(outcome));
+//                                                    } catch (NoSuchMethodException e2) {
+//                                                        LOGGER.warn("No setOutcome method found");
+//                                                    } catch (IllegalAccessException | InstantiationException | InvocationTargetException e3) {
+//                                                        LOGGER.warn("Error constructing outcome " + outcomeClass.getName(), e3);
+//                                                    }
+//                                                },
+//                                                () -> {
+//                                                    LOGGER.warn("Unable set outcome as baseOutcome is null");
+//                                                });
+//
+//                            }
                         }
                     }
                     log(event);
@@ -326,6 +362,64 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             }
             return result;
         });
+    }
+
+    private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
+        final HasOutcome hasOutcome = (HasOutcome) eventAction;
+        BaseOutcome baseOutcome = hasOutcome.getOutcome();
+
+        if (baseOutcome == null) {
+            // eventAction has no outcome so we need to create one on it
+            baseOutcome = createBaseOutcome(eventAction)
+                    .orElse(null);
+        }
+
+        if (baseOutcome == null) {
+            LOGGER.warn("Unable to set outcome on {}", eventAction.getClass().getName());
+        } else {
+            baseOutcome.setSuccess(false);
+            baseOutcome.setDescription(e.getMessage() != null
+                    ? e.getMessage()
+                    : e.getClass().getName());
+        }
+    }
+
+    private Optional<BaseOutcome> createBaseOutcome(final EventAction eventAction) {
+        // We need to call setOutcome on eventAction but we don't know what sub class of
+        // BaseOutcome it is so need to use reflection to find out.
+        // Scanning the methods on each call is expensive so figure out what the ctor
+        // and setOutcome methods are on first use then cache them.
+        return outcomeFactoryMap.computeIfAbsent(eventAction.getClass(), clazz -> {
+
+            return Arrays.stream(eventAction.getClass().getMethods())
+                    .filter(method -> method.getName().equals("setOutcome"))
+                    .findAny()
+                    .flatMap(method -> {
+                        Class<?> outcomeClass = method.getParameterTypes()[0];
+
+                        Constructor<?> constructor;
+                        try {
+                            constructor = outcomeClass.getDeclaredConstructor();
+                        } catch (NoSuchMethodException e) {
+                            LOGGER.warn("No noargs constructor found for " + outcomeClass.getName(), e);
+                            return Optional.empty();
+                        }
+
+                        final Function<EventAction, BaseOutcome> func = eventAction2 -> {
+                            try {
+                                final BaseOutcome outcome = (BaseOutcome) constructor.newInstance();
+                                method.invoke(eventAction, outcomeClass.cast(outcome));
+                                return outcome;
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        };
+                        LOGGER.info("Caching function for {}", eventAction.getClass().getName());
+                        return Optional.of(func);
+                    });
+        })
+        .flatMap(func ->
+                Optional.of(func.apply(eventAction)));
     }
 
 //    @Override
