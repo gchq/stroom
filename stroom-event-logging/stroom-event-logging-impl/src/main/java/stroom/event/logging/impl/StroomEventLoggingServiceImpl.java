@@ -300,7 +300,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     // e.g. if they are updating a record, they can capture the before state
                     final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
                     // Set the new EventAction onto the existing event
-                    event.getEventDetail().setEventAction(loggedResult.getEventAction());
+                    event.getEventDetail()
+                            .setEventAction(loggedResult.getEventAction());
                     log(event);
                     result = loggedResult.getResult();
                 } catch (Throwable e) {
