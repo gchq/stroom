@@ -22,7 +22,7 @@ public class LmdbConfig extends AbstractConfig {
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
-    private boolean offHeapResults = false;
+    private boolean offHeapResults = true;
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
