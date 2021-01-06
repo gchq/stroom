@@ -25,6 +25,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -56,6 +57,24 @@ public interface StroomEventLoggingService extends EventLoggingService {
                 eventAction,
                 loggedResultFunction,
                 null);
+    }
+
+    default <T_EVENT_ACTION extends EventAction> void loggedAction(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction,
+            final UnaryOperator<T_EVENT_ACTION> loggedAction,
+            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
+
+        final Function<T_EVENT_ACTION, LoggedResult<Void, T_EVENT_ACTION>> loggedResultFunction = eventAction2 ->
+                LoggedResult.of(null, loggedAction.apply(eventAction2));
+
+        loggedResult(
+                eventTypeId,
+                description,
+                eventAction,
+                loggedResultFunction,
+                exceptionHandler);
     }
 
     /**
