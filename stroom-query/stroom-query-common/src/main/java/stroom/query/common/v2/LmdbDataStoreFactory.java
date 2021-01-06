@@ -31,6 +31,15 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
                             final Sizes storeSize) {
+        if (!lmdbConfig.isOffHeapResults()) {
+            return new MapDataStore(
+                    tableSettings,
+                    fieldIndex,
+                    paramMap,
+                    maxResults,
+                    storeSize);
+        }
+
         return new LmdbDataStore(
                 byteBufferPool,
                 tempDirProvider,

@@ -484,6 +484,15 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
+    lmdb:
+      localDir: "search_results"
+      lmdbSystemLibraryPath: null
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      purgeAge: "P30D"
+      readAheadEnabled: true
+      offHeapResults: true
     remoteSearchResultCache:
       maximumSize: 100
       expireAfterAccess: "PT1M"

@@ -23,8 +23,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -40,8 +38,7 @@ public class EventCoprocessor implements Coprocessor {
     private final long maxEventsPerStream;
     private final ReentrantLock eventRefsLock = new ReentrantLock();
     private final AtomicLong valuesCount = new AtomicLong();
-    private final AtomicLong completionCount = new AtomicLong();
-    private final CountDownLatch completionState = new CountDownLatch(1);
+    private final CompletionState completionState = new CompletionStateImpl();
     private final Integer streamIdIndex;
     private final Integer eventIdIndex;
     private volatile EventRef maxEvent;
@@ -80,10 +77,7 @@ public class EventCoprocessor implements Coprocessor {
 
     @Override
     public Consumer<Long> getCompletionConsumer() {
-        return count -> {
-            completionCount.set(count);
-            completionState.countDown();
-        };
+        return completionState;
     }
 
     @Override
@@ -92,8 +86,8 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.await(timeout, unit);
+    public CompletionState getCompletionState() {
+        return completionState;
     }
 
     private void receive(final Val[] values) {

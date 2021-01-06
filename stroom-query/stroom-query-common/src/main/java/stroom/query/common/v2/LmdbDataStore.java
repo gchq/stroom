@@ -90,6 +90,7 @@ public class LmdbDataStore implements DataStore {
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final Env<ByteBuffer> lmdbEnvironment;
+    private final String dbName;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
@@ -124,7 +125,7 @@ public class LmdbDataStore implements DataStore {
     private final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(4096);
     private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
 
-    private final CountDownLatch addingData;
+    private final CountDownLatch addedData;
 
     LmdbDataStore(final ByteBufferPool byteBufferPool,
                   final TempDirProvider tempDirProvider,
@@ -159,7 +160,7 @@ public class LmdbDataStore implements DataStore {
         valueSerde = new ValueSerde(itemSerialiser);
 
         this.lmdbEnvironment = createEnvironment(lmdbConfig);
-        final String dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
+        this.dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
         this.byteBufferPool = byteBufferPool;
 
@@ -172,7 +173,6 @@ public class LmdbDataStore implements DataStore {
                     keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
         }
 
-
         // Find out if we have any sorting.
         boolean hasSort = false;
         for (final LmdbCompiledSorter sorter : compiledSorters) {
@@ -183,74 +183,10 @@ public class LmdbDataStore implements DataStore {
         }
         this.hasSort = hasSort;
 
-        // Start consume loop.
-        addingData = new CountDownLatch(1);
+        // Start transfer loop.
+        addedData = new CountDownLatch(1);
         final Executor executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
-        final Runnable runnable = () -> {
-            Metrics.measure("Transfer", () -> {
-                try {
-                    Txn<ByteBuffer> writeTxn = null;
-                    boolean run = true;
-                    boolean needsCommit = false;
-                    long lastCommitMs = System.currentTimeMillis();
-
-                    while (run) {
-                        final Optional<QueueItem> optional = queue.poll(1, TimeUnit.SECONDS);
-                        if (optional != null) {
-                            if (optional.isPresent()) {
-                                if (writeTxn == null) {
-                                    writeTxn = lmdbEnvironment.txnWrite();
-                                }
-
-                                final QueueItem item = optional.get();
-                                consume(writeTxn, item.key, item.generators);
-
-                            } else {
-                                // Stop looping.
-                                run = false;
-                                // Ensure final commit.
-                                lastCommitMs = 0;
-                            }
-
-                            // We have either added something or need a final commit.
-                            needsCommit = true;
-                        }
-
-                        if (createPayload.get() && currentPayload.get() == null) {
-                            // Commit
-                            if (writeTxn != null) {
-                                // Commit
-                                lastCommitMs = System.currentTimeMillis();
-                                needsCommit = false;
-                                commit(writeTxn);
-                                writeTxn = null;
-                            }
-
-                            // Create payload and clear the DB.
-                            currentPayload.set(createPayload());
-
-                        } else if (needsCommit && writeTxn != null) {
-                            final long now = System.currentTimeMillis();
-                            if (lastCommitMs < now - COMMIT_FREQUENCY_MS) {
-                                // Commit
-                                lastCommitMs = now;
-                                needsCommit = false;
-                                commit(writeTxn);
-                                writeTxn = null;
-                            }
-                        }
-                    }
-
-                } catch (final InterruptedException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Continue to interrupt.
-                    Thread.currentThread().interrupt();
-                } finally {
-                    addingData.countDown();
-                }
-            });
-        };
-        executor.execute(runnable);
+        executor.execute(this::transfer);
     }
 
     private void commit(final Txn<ByteBuffer> writeTxn) {
@@ -306,11 +242,11 @@ public class LmdbDataStore implements DataStore {
                 .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
                 .open(dbDir.toFile(), envFlags);
 
-        LOGGER.info("Existing databases: [{}]",
+        LOGGER.info("Existing databases: \n\t{}",
                 env.getDbiNames()
                         .stream()
                         .map(Bytes::toString)
-                        .collect(Collectors.joining(",")));
+                        .collect(Collectors.joining("\n\t")));
         return env;
     }
 
@@ -348,24 +284,47 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public void complete() {
-        try {
-            queue.put(Optional.empty());
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e.getMessage(), e);
-            Thread.currentThread().interrupt();
-            addingData.countDown();
-        }
-    }
+    public CompletionState getCompletionState() {
+        return new CompletionState() {
+            @Override
+            public void complete() {
+                try {
+                    queue.put(Optional.empty());
+                } catch (final InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
+                    addedData.countDown();
+                }
+            }
 
-    @Override
-    public void awaitCompletion() throws InterruptedException {
-        addingData.await();
-    }
+            @Override
+            public boolean isComplete() {
+                boolean complete = true;
 
-    @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return addingData.await(timeout, unit);
+                try {
+                    complete = addedData.await(0, TimeUnit.MILLISECONDS);
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
+                }
+                return complete;
+            }
+
+            @Override
+            public void awaitCompletion() throws InterruptedException {
+                addedData.await();
+            }
+
+            @Override
+            public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+                return addedData.await(timeout, unit);
+            }
+
+            @Override
+            public void accept(final Long value) {
+                complete();
+            }
+        };
     }
 
     @Override
@@ -455,10 +414,75 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    private void consume(final Txn<ByteBuffer> txn, final Key key, final Generator[] value) {
-        Metrics.measure("Consume", () -> {
+    private void transfer() {
+        Metrics.measure("Transfer", () -> {
             try {
-                LOGGER.trace(() -> "consume");
+                Txn<ByteBuffer> writeTxn = null;
+                boolean run = true;
+                boolean needsCommit = false;
+                long lastCommitMs = System.currentTimeMillis();
+
+                while (run) {
+                    final Optional<QueueItem> optional = queue.poll(1, TimeUnit.SECONDS);
+                    if (optional != null) {
+                        if (optional.isPresent()) {
+                            if (writeTxn == null) {
+                                writeTxn = lmdbEnvironment.txnWrite();
+                            }
+
+                            final QueueItem item = optional.get();
+                            insert(writeTxn, item.key, item.generators);
+
+                        } else {
+                            // Stop looping.
+                            run = false;
+                            // Ensure final commit.
+                            lastCommitMs = 0;
+                        }
+
+                        // We have either added something or need a final commit.
+                        needsCommit = true;
+                    }
+
+                    if (createPayload.get() && currentPayload.get() == null) {
+                        // Commit
+                        if (writeTxn != null) {
+                            // Commit
+                            lastCommitMs = System.currentTimeMillis();
+                            needsCommit = false;
+                            commit(writeTxn);
+                            writeTxn = null;
+                        }
+
+                        // Create payload and clear the DB.
+                        currentPayload.set(createPayload());
+
+                    } else if (needsCommit && writeTxn != null) {
+                        final long now = System.currentTimeMillis();
+                        if (lastCommitMs < now - COMMIT_FREQUENCY_MS) {
+                            // Commit
+                            lastCommitMs = now;
+                            needsCommit = false;
+                            commit(writeTxn);
+                            writeTxn = null;
+                        }
+                    }
+                }
+
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
+                // Continue to interrupt.
+                Thread.currentThread().interrupt();
+            } finally {
+                addedData.countDown();
+            }
+        });
+    }
+
+    private void insert(final Txn<ByteBuffer> txn, final Key key, final Generator[] value) {
+        Metrics.measure("Insert", () -> {
+            try {
+                LOGGER.trace(() -> "insert");
 
                 // Reset the buffers ready for use.
                 keyBuffer.clear();
@@ -555,6 +579,7 @@ public class LmdbDataStore implements DataStore {
                     });
 
                     lmdbDbi.drop(writeTxn);
+                    writeTxn.commit();
 
                 } catch (RuntimeException e) {
                     throw new RuntimeException(LogUtil.message("Error clearing db", e));
@@ -569,7 +594,7 @@ public class LmdbDataStore implements DataStore {
     public void writePayload(final Output output) {
         Metrics.measure("writePayload", () -> {
             try {
-                final boolean complete = addingData.await(0, TimeUnit.MILLISECONDS);
+                final boolean complete = addedData.await(0, TimeUnit.MILLISECONDS);
                 createPayload.set(true);
 
                 final List<byte[]> payloads = new ArrayList<>(2);
@@ -597,23 +622,6 @@ public class LmdbDataStore implements DataStore {
             }
         });
     }
-
-//    private static class PayloadState {
-//        private volatile byte[] payload;
-//        private volatile boolean create;
-//
-//        public synchronized boolean isCreate() {
-//            return this.create;
-//        }
-//
-//        public synchronized void setPayload(final byte[] payload) {
-//            this.payload = payload;
-//            this.create = false;
-//        }
-//
-//
-//
-//    }
 
     @Override
     public boolean readPayload(final Input input) {

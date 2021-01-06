@@ -66,8 +66,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -87,7 +87,7 @@ abstract class AbstractDataStoreTest {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-    @Test
+    //    @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
             System.out.println("\n------ RUN " + (i + 1) + " -------");
@@ -97,7 +97,7 @@ abstract class AbstractDataStoreTest {
         }
     }
 
-    @Test
+    //    @Test
     void testBigResult() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
@@ -139,8 +139,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -206,8 +206,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -244,8 +244,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -289,8 +289,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -334,8 +334,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -379,8 +379,8 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.complete();
-            dataStore.awaitCompletion();
+            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

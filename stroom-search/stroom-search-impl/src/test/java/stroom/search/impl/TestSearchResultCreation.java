@@ -26,6 +26,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
 import stroom.query.common.v2.LmdbConfig;
@@ -34,7 +35,6 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
-import stroom.query.common.v2.DataStoreFactory;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
 
@@ -103,7 +103,9 @@ class TestSearchResultCreation {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
+
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -113,11 +115,10 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                dataStoreFactory,
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
@@ -207,11 +208,15 @@ class TestSearchResultCreation {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
 
+        // Perform final payload transfer.
         transferPayloads(coprocessors, coprocessors2);
 
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -221,10 +226,10 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(dataStoreFactory, sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -248,10 +253,10 @@ class TestSearchResultCreation {
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(consumer1);
 
         final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
 
@@ -259,12 +264,19 @@ class TestSearchResultCreation {
         final String[] lines = getLines();
         for (final String line : lines) {
             final String[] values = line.split(",");
-            supplyValues(values, mappings, consumer);
+            supplyValues(values, mappings, consumer1);
 
             transferPayloads(coprocessors, coprocessors2);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
+
+        // Perform final payload transfer.
+        transferPayloads(coprocessors, coprocessors2);
+
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -274,17 +286,24 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                dataStoreFactory,
                 sizesProvider,
                 collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
+    }
+
+    private void complete(final Coprocessors coprocessors, final int size) throws InterruptedException {
+        // Tell the consumer we are finished receiving data.
+        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        consumer.getCompletionConsumer().accept((long) size);
+        // Wait for the coprocessors to finish processing data.
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     //    @Test
@@ -353,9 +372,14 @@ class TestSearchResultCreation {
         });
         completableFuture.join();
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, count);
 
-        consumer.getCompletionConsumer().accept((long) count);
+        // Perform final payload transfer.
+        transferPayloads(coprocessors, coprocessors2);
 
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, count);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -365,7 +389,7 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
         final DataStore data = collector.getData("table-78LF4");

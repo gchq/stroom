@@ -6,7 +6,6 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Receiver;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
@@ -110,8 +109,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                        final StatisticStoreDoc statisticStoreEntity,
                        final FindEventCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final Receiver receiver,
-                       final CompletionState completionState) {
+                       final Receiver receiver) {
         try {
             List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
             SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndex);
@@ -121,7 +119,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
             // the query will not be executed until somebody subscribes to the flowable
-            getFlowableQueryResults(taskContext, sql, resultSetMapper, receiver, completionState);
+            getFlowableQueryResults(taskContext, sql, resultSetMapper, receiver);
         } catch (final RuntimeException e) {
             receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
         }
@@ -390,8 +388,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private void getFlowableQueryResults(final TaskContext taskContext,
                                          final SqlBuilder sql,
                                          final Function<ResultSet, Val[]> resultSetMapper,
-                                         final Receiver receiver,
-                                         final CompletionState completionState) {
+                                         final Receiver receiver) {
         long count = 0;
 
         try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
@@ -419,8 +416,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                     // TODO prob needs to change in 6.1
                     while (resultSet.next() &&
-                            !Thread.currentThread().isInterrupted() &&
-                            !completionState.isComplete()) {
+                            !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding resultt");
                         final Val[] values = resultSetMapper.apply(resultSet);
                         receiver.getValuesConsumer().accept(values);

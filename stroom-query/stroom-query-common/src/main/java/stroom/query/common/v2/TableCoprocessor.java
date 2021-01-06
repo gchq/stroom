@@ -22,7 +22,6 @@ import stroom.query.api.v2.TableSettings;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -32,7 +31,6 @@ public class TableCoprocessor implements Coprocessor {
 
     private final Consumer<Throwable> errorConsumer;
     private final AtomicLong valuesCount = new AtomicLong();
-    private final AtomicLong completionCount = new AtomicLong();
 
     public TableCoprocessor(final TableSettings tableSettings,
                             final DataStore dataStore,
@@ -61,10 +59,7 @@ public class TableCoprocessor implements Coprocessor {
 
     @Override
     public Consumer<Long> getCompletionConsumer() {
-        return count -> {
-            completionCount.set(count);
-            dataStore.complete();
-        };
+        return dataStore.getCompletionState();
     }
 
     @Override
@@ -81,8 +76,9 @@ public class TableCoprocessor implements Coprocessor {
         return valuesCount;
     }
 
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return dataStore.awaitCompletion(timeout, unit);
+    @Override
+    public CompletionState getCompletionState() {
+        return dataStore.getCompletionState();
     }
 
     public DataStore getData() {

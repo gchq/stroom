@@ -6,11 +6,14 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
+@Singleton
 public class LmdbConfig extends AbstractConfig {
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;
@@ -19,6 +22,7 @@ public class LmdbConfig extends AbstractConfig {
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
+    private boolean offHeapResults = false;
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -114,6 +118,16 @@ public class LmdbConfig extends AbstractConfig {
 
     public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
         this.isReadAheadEnabled = isReadAheadEnabled;
+    }
+
+    @JsonPropertyDescription("Should search results be stored off heap (experimental feature).")
+    @JsonProperty("offHeapResults")
+    public boolean isOffHeapResults() {
+        return offHeapResults;
+    }
+
+    public void setOffHeapResults(final boolean offHeapResults) {
+        this.offHeapResults = offHeapResults;
     }
 
     @Override

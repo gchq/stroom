@@ -3,7 +3,6 @@ package stroom.statistics.impl.sql.search;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
@@ -32,7 +31,6 @@ public class SqlStatisticsStore implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
     private final Coprocessors coprocessors;
-    private final CompletionState completionState = new CompletionState();
     private final String searchKey;
 
     SqlStatisticsStore(final SearchRequest searchRequest,
@@ -57,7 +55,7 @@ public class SqlStatisticsStore implements Store {
             // Execute the search asynchronously.
             // We have to create a wrapped runnable so that the task context references a managed task.
             statisticsSearchService.search(
-                    taskContext, statisticStoreDoc, criteria, coprocessors.getFieldIndex(), receiver, completionState);
+                    taskContext, statisticStoreDoc, criteria, coprocessors.getFieldIndex(), receiver);
         });
         executor.execute(runnable);
 
@@ -70,25 +68,25 @@ public class SqlStatisticsStore implements Store {
         complete();
     }
 
-    public void complete() {
+    private void complete() {
         LOGGER.debug("complete called");
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
         // Results are currently assembled synchronously in getMeta so the store is always complete.
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -109,7 +107,7 @@ public class SqlStatisticsStore implements Store {
     @Override
     public String toString() {
         return "SqlStatisticsStore{" +
-                ", completionState=" + completionState +
+                ", completionState=" + coprocessors.getCompletionState() +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
     }
@@ -131,7 +129,7 @@ public class SqlStatisticsStore implements Store {
 
         final Consumer<Long> completionConsumer = count -> {
             taskContext.info(() -> searchKey + " - complete");
-            complete();
+            coprocessors.getCompletionConsumer().accept(count);
 
             LAMBDA_LOGGER.debug(() ->
                     LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));

@@ -44,7 +44,6 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
-    private final DataStoreFactory dataStoreFactory;
     private final SizesProvider sizesProvider;
     private final Store store;
     private final Duration defaultTimeout;
@@ -57,10 +56,8 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final DataStoreFactory dataStoreFactory,
-                                 final SizesProvider sizesProvider,
+    public SearchResponseCreator(final SizesProvider sizesProvider,
                                  final Store store) {
-        this.dataStoreFactory = dataStoreFactory;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
@@ -71,11 +68,9 @@ public class SearchResponseCreator {
      * @param defaultTimeout The service's default timeout period to use for waiting for the store to complete. This
      *                       will be used when the search request hasn't specified a timeout period.
      */
-    SearchResponseCreator(final DataStoreFactory dataStoreFactory,
-                          final SizesProvider sizesProvider,
+    SearchResponseCreator(final SizesProvider sizesProvider,
                           final Store store,
                           final Duration defaultTimeout) {
-        this.dataStoreFactory = dataStoreFactory;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.defaultTimeout = Objects.requireNonNull(defaultTimeout);

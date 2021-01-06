@@ -5,7 +5,6 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
@@ -36,7 +35,6 @@ class SearchableStore implements Store {
 
     private final String searchKey;
 
-    private final CompletionState completionState = new CompletionState();
     private final Coprocessors coprocessors;
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final AtomicBoolean terminate = new AtomicBoolean();
@@ -116,23 +114,23 @@ class SearchableStore implements Store {
     }
 
     public void complete() {
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
         // Results are currently assembled synchronously in getMeta so the store is always complete.
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -153,7 +151,7 @@ class SearchableStore implements Store {
     @Override
     public String toString() {
         return "DbStore{" +
-                ", completionState=" + completionState +
+                ", completionState=" + coprocessors.getCompletionState() +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
     }

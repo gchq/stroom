@@ -5,8 +5,6 @@ import stroom.dashboard.expression.v1.Val;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
-
 public interface DataStore {
     Items get();
 
@@ -25,9 +23,5 @@ public interface DataStore {
 
     void clear();
 
-    void complete();
-
-    void awaitCompletion() throws InterruptedException;
-
-    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException;
+    CompletionState getCompletionState();
 }

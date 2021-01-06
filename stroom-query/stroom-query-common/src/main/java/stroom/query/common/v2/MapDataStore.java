@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -67,7 +65,7 @@ public class MapDataStore implements DataStore {
 
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
-    private final CountDownLatch completionState = new CountDownLatch(1);
+    private final CompletionState completionState = new CompletionStateImpl();
 
     private volatile boolean hasEnoughData;
 
@@ -667,17 +665,7 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public void complete() {
-        completionState.countDown();
-    }
-
-    @Override
-    public void awaitCompletion() throws InterruptedException {
-        completionState.await();
-    }
-
-    @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.await(timeout, unit);
+    public CompletionState getCompletionState() {
+        return completionState;
     }
 }

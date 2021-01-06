@@ -5,8 +5,6 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
-import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -17,7 +15,6 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
-import stroom.util.io.PathCreator;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -95,10 +92,6 @@ class TestSearchResponseCreator {
 
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
-                new LmdbDataStoreFactory(new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
-                        () -> tempDir,
-                        new LmdbConfig(),
-                        new PathCreator(() -> tempDir, () -> tempDir)),
                 sizesProvider,
                 mockStore);
     }
@@ -312,6 +305,8 @@ class TestSearchResponseCreator {
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
         items.add(new byte[4], itemSerialiser.toBytes(generators));
 
+        final CompletionState completionState = new CompletionStateImpl();
+
         return new DataStore() {
             @Override
             public Items get() {
@@ -351,16 +346,8 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public void complete() {
-            }
-
-            @Override
-            public void awaitCompletion() {
-            }
-
-            @Override
-            public boolean awaitCompletion(final long timeout, final TimeUnit unit) {
-                return true;
+            public CompletionState getCompletionState() {
+                return completionState;
             }
         };
     }
