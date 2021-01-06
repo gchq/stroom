@@ -155,11 +155,21 @@ class SteppingResourceImpl implements SteppingResource {
             }
 
             if (stepLocation != null) {
-                pipelineEventLog.stepStream(stepLocation.getEventId(), null, request.getChildStreamType(), request.getPipeline(), null);
+                pipelineEventLog.stepStream(
+                        stepLocation.getEventId(),
+                        null,
+                        request.getChildStreamType(),
+                        request.getPipeline(),
+                        null);
             }
         } catch (final RuntimeException e) {
             if (stepLocation != null) {
-                pipelineEventLog.stepStream(stepLocation.getEventId(), null, request.getChildStreamType(), request.getPipeline(), e);
+                pipelineEventLog.stepStream(
+                        stepLocation.getEventId(),
+                        null,
+                        request.getChildStreamType(),
+                        request.getPipeline(),
+                        e);
             }
         }
 

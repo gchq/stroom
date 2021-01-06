@@ -53,6 +53,8 @@ public final class SvgPresets {
     public static final SvgPreset INFO = new SvgPreset("images/info.svg", "Info", true);
     public static final SvgPreset INFO_DELETED = new SvgPreset("images/info-deleted.svg", "Info (Deleted)", true);
     public static final SvgPreset INFO_WARNING = new SvgPreset("images/info-warning.svg", "Info (Warning)", true);
+    public static final SvgPreset INSERT_ABOVE = new SvgPreset("images/insert-above.svg", "Insert above", true);
+    public static final SvgPreset INSERT_BELOW = new SvgPreset("images/insert-below.svg", "Insert below", true);
     public static final SvgPreset JOBS = new SvgPreset("images/jobs.svg", "Jobs", true);
     public static final SvgPreset KEY = new SvgPreset("images/key.svg", "API Keys", true);
     public static final SvgPreset LINK = new SvgPreset("images/dependencies.svg", "Dependencies", true);

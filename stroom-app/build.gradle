@@ -30,7 +30,7 @@ def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.0'
 def releaseBuildDir = "${projectDir}/build/release"
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
@@ -162,6 +162,7 @@ dependencies {
 //    testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-explorer:stroom-explorer-api')
     testCompile project(':stroom-explorer:stroom-explorer-impl')

@@ -18,102 +18,253 @@
 
 package stroom.security.identity.account;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.util.shared.ResultPage;
+
+import event.logging.AdvancedQuery;
+import event.logging.And;
+import event.logging.AuthenticateAction;
+import event.logging.AuthenticateEventAction;
+import event.logging.AuthenticateOutcome;
+import event.logging.CreateEventAction;
+import event.logging.Data;
+import event.logging.DeleteEventAction;
+import event.logging.LoggedResult;
+import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.Query;
+import event.logging.SearchEventAction;
+import event.logging.Term;
+import event.logging.TermCondition;
+import event.logging.UpdateEventAction;
+import event.logging.User;
+import event.logging.ViewEventAction;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
-import java.util.Optional;
+import java.math.BigInteger;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
     private final Provider<AccountService> serviceProvider;
-    private final AccountEventLog eventLog;
+    private final StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
     public AccountResourceImpl(final Provider<AccountService> serviceProvider,
-                               final AccountEventLog eventLog) {
+                               final StroomEventLoggingService stroomEventLoggingService) {
         this.serviceProvider = serviceProvider;
-        this.eventLog = eventLog;
+        this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
     @Override
     public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
-        try {
-            final ResultPage<Account> result = serviceProvider.get().list();
-            eventLog.list(result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            eventLog.list(null, e);
-            throw e;
-        }
+
+        return stroomEventLoggingService.loggedResult(
+                "ListAccounts",
+                "List all accounts",
+                SearchEventAction.builder()
+                        .withQuery(Query.builder()
+                                .withAdvanced(AdvancedQuery.builder()
+                                        .addAnd(new And())
+                                        .build())
+                                .build())
+                        .build(),
+                searchEventAction -> {
+                    // Do the work
+                    final ResultPage<Account> result = serviceProvider.get().list();
+
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                            .withTotalResults(BigInteger.valueOf(result.size()))
+                            .build();
+
+                    return LoggedResult.of(result, newSearchEventAction);
+                },
+                null
+        );
     }
 
     @Override
     public ResultPage<Account> search(final SearchAccountRequest request) {
-        try {
-            final ResultPage<Account> result = serviceProvider.get().search(request);
-            eventLog.search(request, result, null);
-            return result;
-        } catch (final RuntimeException e) {
-            eventLog.search(request, null, e);
-            throw e;
-        }
+        return stroomEventLoggingService.loggedResult(
+                "SearchAccounts",
+                "Search for accounts by email",
+                SearchEventAction.builder()
+                        .withQuery(Query.builder()
+                                .withAdvanced(AdvancedQuery.builder()
+                                        .addAnd(And.builder()
+                                                .addTerm(Term.builder()
+                                                        .withName("Email")
+                                                        .withCondition(TermCondition.EQUALS)
+                                                        .withValue(request.getQuickFilter())
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build(),
+                searchEventAction -> {
+                    // Do the work
+                    final ResultPage<Account> result = serviceProvider.get()
+                            .search(request);
+
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                            .withTotalResults(BigInteger.valueOf(result.size()))
+                            .build();
+
+                    return LoggedResult.of(result, newSearchEventAction);
+                },
+                null);
     }
 
     @Override
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
-        try {
-            final Account account = serviceProvider.get().create(request);
-            eventLog.create(request, account, null);
-            return account.getId();
-        } catch (final RuntimeException e) {
-            eventLog.create(request, null, e);
-            throw e;
-        }
+
+        return stroomEventLoggingService.loggedResult(
+                "CreateAccount",
+                "Create an account",
+                CreateEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("Account")
+                                .withName(request.getUserId())
+                                .build())
+                        .build(),
+                createEventAction -> {
+                    // Do the work
+                    final Account account = serviceProvider.get()
+                            .create(request);
+
+                    final OtherObject otherObject = (OtherObject) createEventAction.getObjects()
+                            .get(0);
+                    final CreateEventAction newCreateEventAction = createEventAction.newCopyBuilder()
+                            .withObjects(otherObject.newCopyBuilder()
+                                    .withData(Data.builder()
+                                            .withName("Enabled")
+                                            .withValue(String.valueOf(account.isEnabled()))
+                                            .build())
+                                    .build())
+                            .build();
+
+                    return LoggedResult.of(account.getId(), newCreateEventAction);
+                },
+                null);
     }
 
     @Override
     public Account read(final HttpServletRequest httpServletRequest,
                         final int userId) {
-        try {
-            final Optional<Account> optionalAccount = serviceProvider.get().read(userId);
-            final Account account = optionalAccount.orElseThrow(NotFoundException::new);
-            eventLog.read(userId, account, null);
-            return account;
-        } catch (final RuntimeException e) {
-            eventLog.read(userId, null, e);
-            throw e;
-        }
+
+        return stroomEventLoggingService.loggedResult(
+                "GetAccountById",
+                "Get a user by ID",
+                ViewEventAction.builder()
+                        .addUser(User.builder()
+                                .withId(String.valueOf(userId))
+                                .build())
+                        .build(),
+                viewEventAction -> {
+                    // Do the work
+                    final Account account = serviceProvider.get()
+                            .read(userId)
+                            .orElseThrow(NotFoundException::new);
+
+                    final ViewEventAction newViewEventAction = viewEventAction.newCopyBuilder()
+                            .withObjects(viewEventAction.getObjects().get(0).newCopyBuilder()
+                                    .withName(account.getFirstName() + " " + account.getLastName())
+                                    .build())
+                            .build();
+
+                    return LoggedResult.of(account, newViewEventAction);
+                },
+                null);
     }
 
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
                           final UpdateAccountRequest request,
                           final int accountId) {
+
+        final User user = User.builder()
+                .withId(String.valueOf(accountId))
+                .withName(request.getAccount().getFirstName() + " "
+                        + request.getAccount().getLastName())
+                .withEmailAddress(request.getAccount().getEmail())
+                .build();
+
+
+        final Boolean result;
         try {
-            serviceProvider.get().update(request, accountId);
-            eventLog.update(request, accountId, null);
-            return true;
-        } catch (final RuntimeException e) {
-            eventLog.update(null, accountId, e);
+            result = stroomEventLoggingService.loggedResult(
+                    "UpdateAccount",
+                    "Update account for user " + accountId,
+                    UpdateEventAction.builder()
+                            .withAfter(MultiObject.builder()
+                                    .addUser(user)
+                                    .build())
+                            .build(),
+                    () -> {
+                        serviceProvider.get()
+                                .update(request, accountId);
+                        return true;
+                    });
+
+            if (request.getPassword() != null) {
+                // Password change so log that separately
+                logChangePassword(accountId, user, null);
+            }
+        } catch (Exception e) {
+            // Password change so log that separately
+            logChangePassword(accountId, user, e);
             throw e;
         }
+
+        return result;
+    }
+
+    private void logChangePassword(final int accountId,
+                                   final User user,
+                                   final Throwable e) {
+        stroomEventLoggingService.log(
+                "ChangePassword",
+                "Change password for user " + accountId,
+                eventDetailBuilder -> {
+                    AuthenticateEventAction.Builder<Void> authBuilder = AuthenticateEventAction.builder()
+                            .withUser(user)
+                            .withAction(AuthenticateAction.CHANGE_PASSWORD);
+                    if (e != null) {
+                        authBuilder.withOutcome(AuthenticateOutcome.builder()
+                                .withSuccess(false)
+                                .withDescription(e.getMessage() != null
+                                        ? e.getMessage()
+                                        : e.getClass().getName())
+                                .build());
+                    }
+
+                    eventDetailBuilder.withAuthenticate(authBuilder.build());
+                });
     }
 
     @Override
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {
-        try {
-            serviceProvider.get().delete(userId);
-            eventLog.delete(userId, null);
-            return true;
-        } catch (final RuntimeException e) {
-            eventLog.delete(userId, e);
-            throw e;
-        }
+
+        return stroomEventLoggingService.loggedResult(
+                "DeleteAccount",
+                "Deleting user account " + userId,
+                DeleteEventAction.builder()
+                        .addUser(User.builder()
+                                .withId(String.valueOf(userId))
+                                .build())
+                        .build(),
+                () -> {
+                    serviceProvider.get()
+                            .delete(userId);
+                    return true;
+                });
     }
 }
 

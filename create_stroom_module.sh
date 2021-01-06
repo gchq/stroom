@@ -119,7 +119,7 @@ main() {
     local sub_module_dir="${module_dir}/${sub_module_name}"
 
     if [ -d "${sub_module_dir}" ]; then
-      error_exit "Sub-module ${sub_module_name} already exists"
+      echo -e "Sub-module ${sub_module_name} already exists"
     fi
 
     echo
@@ -145,15 +145,19 @@ main() {
     local gradle_module_name="${sub_module_name//-/.}"
     local gradle_build_file="${sub_module_dir}/build.gradle"
 
-    echo -e "  Creating gradle build file ${gradle_build_file} for module ${gradle_module_name}"
+    if [ ! -f "${gradle_build_file}" ]; then
+      echo -e "  Creating gradle build file ${gradle_build_file} for module ${gradle_module_name}"
 
-    {
-      echo -e "ext.moduleName = '${gradle_module_name}'" 
-      echo -e ""
-      echo -e "dependencies {"
-      echo -e ""
-      echo -e "}"
-    } > "${gradle_build_file}"
+      {
+        echo -e "ext.moduleName = '${gradle_module_name}'" 
+        echo -e ""
+        echo -e "dependencies {"
+        echo -e ""
+        echo -e "}"
+      } > "${gradle_build_file}"
+    else
+      echo "  Gradle build file ${gradle_build_file} already exists"
+    fi
 
     add_gradle_settings_entry
 

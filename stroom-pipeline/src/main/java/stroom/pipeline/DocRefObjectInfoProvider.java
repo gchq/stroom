@@ -21,19 +21,19 @@ import stroom.docref.DocRef;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
-import event.logging.Object;
+import event.logging.OtherObject;
 
 class DocRefObjectInfoProvider implements ObjectInfoProvider {
+
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final DocRef docRef = (DocRef) obj;
 
-        final Object object = new Object();
-        object.setType(docRef.getType());
-        object.setId(docRef.getUuid());
-        object.setName(docRef.getName());
-
-        return object;
+        return OtherObject.builder()
+                .withType(docRef.getType())
+                .withName(docRef.getName())
+                .withId(docRef.getUuid())
+                .build();
     }
 
     @Override

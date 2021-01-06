@@ -113,6 +113,7 @@ include 'stroom-dropwizard-common'
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'
 include 'stroom-event-logging:stroom-event-logging-impl'
+include 'stroom-event-logging:stroom-event-logging-mock'
 
 // Explorer
 include 'stroom-explorer:stroom-collection-api'

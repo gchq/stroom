@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change event logging to use new fluent API.
+
+
+## [v7.0-beta.74] - 2020-12-15
+
+* No changes.
+
+
+## [v7.0-beta.73] - 2020-12-15
+
+* Change github tokens in travis build.
+
+
+## [v7.0-beta.72] - 2020-12-15
+
+* Issue **#1983** : Fix line number inconsistency in View Source when last char is a line break.
+
+* Issue **#1971** : Fix 'no appender' errors when editing a Data volume.
+
+* Issue **#1965** : Ignore gzipped data that has no uncompressed content.
+
+* Issue **#1976** : Add an enabled check box and insert above button to retention rules list.
+
+* Fix bug with retention rules impact summary when rows are identical.
+
+* Replace two buttons with toggle button on retetion impact summary.
+
+* Fix path for user event logs.
+
+* Uplift send_to_stroom script to v3.0.
+
 * Issue **#1978** : Fix Meta tab losing syntax highlighting when switching streams.
 
 * Remove byte count in brackets on Info tab when size is below 1024 bytes.
@@ -2906,7 +2937,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.71...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.74...HEAD
+[v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74
+[v7.0-beta.73]: https://github.com/gchq/stroom/compare/v7.0-beta.72...v7.0-beta.73
+[v7.0-beta.72]: https://github.com/gchq/stroom/compare/v7.0-beta.71...v7.0-beta.72
 [v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
 [v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
 [v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
