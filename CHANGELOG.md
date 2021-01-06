@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1989** : Fix for dashboard tables that were only showing a total of 100 rows.
+
 * Change event logging to use new fluent API.
 
 
