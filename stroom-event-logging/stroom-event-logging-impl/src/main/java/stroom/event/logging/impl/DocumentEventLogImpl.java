@@ -22,6 +22,7 @@ import event.logging.CopyMove;
 import event.logging.CopyMoveOutcome;
 import event.logging.Criteria;
 import event.logging.Criteria.ResultPage;
+import event.logging.Data;
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
 import event.logging.Export;
@@ -31,6 +32,7 @@ import event.logging.ObjectOutcome;
 import event.logging.Query;
 import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -42,6 +44,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
 
@@ -50,7 +53,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {
@@ -503,8 +508,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             return String.valueOf(((DocRef) object).getType());
         }
 
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender == null) {
+        final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
+        if (objectInfoProvider == null){
             if (object instanceof Collection){
                 Collection collection = (Collection) object;
                 if (collection.isEmpty()) {
@@ -516,16 +521,17 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
             }
             return object.getClass().getSimpleName();
-
-
         }
-        return objectInfoAppender.getObjectType(object);
+        return objectInfoProvider.getObjectType(object);
     }
 
     private String getObjectName(final java.lang.Object object) {
         if (object instanceof DocRef) {
             return ((DocRef) object).getName();
+        } else if  (object instanceof HasName){
+            return ((HasName) object).getName();
         }
+
         return null;
     }
 
@@ -555,8 +561,40 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         }
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
-            return null;
+            return createDefaultBaseObject(object);
         }
         return objectInfoAppender.createBaseObject(object);
     }
+
+    private BaseObject createDefaultBaseObject(final java.lang.Object object) {
+        final event.logging.Object baseObj = new event.logging.Object();
+        baseObj.setType(getObjectType(object));
+        baseObj.setId(getObjectId(object));
+        baseObj.setName(getObjectName(object));
+
+        baseObj.getData().addAll(getDataItems(object));
+        return baseObj;
+    }
+
+    private List<Data> getDataItems(java.lang.Object obj){
+
+        try{
+            final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
+            return allProps.keySet().stream().map(propName -> {
+                java.lang.Object val = allProps.get(propName);
+
+                if (val == null){
+                    return null;
+                }
+
+                Data d = new Data();
+                d.setName(propName);
+                d.setValue(val.toString());
+                return d;
+            }).collect(Collectors.toList());
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
 }

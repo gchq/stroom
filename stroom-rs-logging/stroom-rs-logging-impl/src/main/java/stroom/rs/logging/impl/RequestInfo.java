@@ -1,5 +1,6 @@
 package stroom.rs.logging.impl;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.HasId;
 
 import static stroom.rs.logging.impl.StroomServerLoggingFilterImpl.LOGGER;
@@ -50,16 +51,16 @@ class RequestInfo {
         String paramValue = path.substring(tokens[0].length(),stopIndex);
 
         if ("id".equals(paramName)){
-            return new IdParm (paramValue);
+            return new ObjectId (paramValue);
         }
 
         return null;
     }
 
-    private static class IdParm implements HasId {
+    private static class ObjectId implements HasId {
         private final long id;
 
-        public IdParm(String val){
+        public ObjectId(String val){
             long id = 0;
             try {
                 id = Long.parseLong(val);
@@ -75,4 +76,5 @@ class RequestInfo {
             return id;
         }
     }
+
 }

@@ -140,6 +140,7 @@ ext.libs = [
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
         caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
+        commons_beanutils              : "commons-beanutils:commons-beanutils:1.9.4",
         commons_codec                  : "commons-codec:commons-codec:1.11",
         commons_compress               : "org.apache.commons:commons-compress:1.18",
         commons_csv                    : "org.apache.commons:commons-csv:1.7",
