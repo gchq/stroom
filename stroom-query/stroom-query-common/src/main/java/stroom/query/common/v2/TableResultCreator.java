@@ -131,14 +131,10 @@ public class TableResultCreator implements ResultCreator {
         int resultCountAtThisLevel = 0;
 
         for (final Item item : items) {
-            if (resultList.size() >= length) {
-                break;
-            }
-
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.
-            if (pos >= offset) {
+            if (pos >= offset && resultList.size() < length) {
                 final Row row = rowCreator.create(fields, item, depth);
                 if (row != null) {
                     resultList.add(row);
