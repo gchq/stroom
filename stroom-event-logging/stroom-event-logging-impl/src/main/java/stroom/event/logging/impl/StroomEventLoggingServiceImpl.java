@@ -17,7 +17,6 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
-import stroom.event.logging.api.LoggedResult;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
@@ -49,10 +48,8 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -285,67 +282,67 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    @Override
-    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-            final String eventTypeId,
-            final String description,
-            final T_EVENT_ACTION eventAction,
-            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
-            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
-
-        Objects.requireNonNull(eventAction);
-        Objects.requireNonNull(loggedWork);
-
-        final T_RESULT result;
-        Event event = null;
-        try {
-            event = createSkeletonEvent(
-                    eventTypeId,
-                    description,
-                    eventDetailBuilder -> eventDetailBuilder
-                            .withEventAction(eventAction));
-        } catch (Exception e) {
-            // Swallow the exception so failure to log does not prevent the action being logged
-            // from succeeding
-            LOGGER.error("Error creating skeleton event", e);
-        }
-
-        if (event != null) {
-            try {
-                // Performe the callers work, allowing them to provide a new EventAction based on the
-                // result of the work e.g. if they are updating a record, they can capture the before state
-                final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
-
-                // Set the new EventAction onto the existing event
-                setActionOnEvent(event, loggedResult.getEventAction());
-                log(event);
-                result = loggedResult.getResult();
-            } catch (Throwable e) {
-                if (exceptionHandler != null) {
-                    try {
-                        // Allow caller to provide a new EventAction based on the exception
-                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
-                        setActionOnEvent(event, newEventAction);
-                    } catch (Exception exception) {
-                        LOGGER.error( "Error running exception handler. " +
-                                        "Swallowing exception and rethrowing original exception", e);
-                    }
-                } else {
-                    // No handler so see if we can add an outcome
-                    if (eventAction instanceof HasOutcome) {
-                        addFailureOutcome(e, eventAction);
-                    }
-                }
-                log(event);
-                throw e;
-            }
-        } else {
-            // We failed to create an event so just do the work with no logging.
-            result = loggedWork.apply(eventAction).getResult();
-        }
-
-        return result;
-    }
+//    @Override
+//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
+//            final String eventTypeId,
+//            final String description,
+//            final T_EVENT_ACTION eventAction,
+//            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
+//            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
+//
+//        Objects.requireNonNull(eventAction);
+//        Objects.requireNonNull(loggedWork);
+//
+//        final T_RESULT result;
+//        Event event = null;
+//        try {
+//            event = createSkeletonEvent(
+//                    eventTypeId,
+//                    description,
+//                    eventDetailBuilder -> eventDetailBuilder
+//                            .withEventAction(eventAction));
+//        } catch (Exception e) {
+//            // Swallow the exception so failure to log does not prevent the action being logged
+//            // from succeeding
+//            LOGGER.error("Error creating skeleton event", e);
+//        }
+//
+//        if (event != null) {
+//            try {
+//                // Performe the callers work, allowing them to provide a new EventAction based on the
+//                // result of the work e.g. if they are updating a record, they can capture the before state
+//                final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
+//
+//                // Set the new EventAction onto the existing event
+//                setActionOnEvent(event, loggedResult.getEventAction());
+//                log(event);
+//                result = loggedResult.getResult();
+//            } catch (Throwable e) {
+//                if (exceptionHandler != null) {
+//                    try {
+//                        // Allow caller to provide a new EventAction based on the exception
+//                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
+//                        setActionOnEvent(event, newEventAction);
+//                    } catch (Exception exception) {
+//                        LOGGER.error( "Error running exception handler. " +
+//                                        "Swallowing exception and rethrowing original exception", e);
+//                    }
+//                } else {
+//                    // No handler so see if we can add an outcome
+//                    if (eventAction instanceof HasOutcome) {
+//                        addFailureOutcome(e, eventAction);
+//                    }
+//                }
+//                log(event);
+//                throw e;
+//            }
+//        } else {
+//            // We failed to create an event so just do the work with no logging.
+//            result = loggedWork.apply(eventAction).getResult();
+//        }
+//
+//        return result;
+//    }
 
     private <T_EVENT_ACTION extends EventAction> void setActionOnEvent(final Event event, final T_EVENT_ACTION newEventAction) {
         if (event.getEventDetail() != null) {

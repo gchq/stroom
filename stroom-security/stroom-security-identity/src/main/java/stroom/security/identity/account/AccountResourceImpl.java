@@ -18,7 +18,6 @@
 
 package stroom.security.identity.account;
 
-import stroom.event.logging.api.LoggedResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.util.shared.ResultPage;
@@ -31,6 +30,7 @@ import event.logging.AuthenticateOutcome;
 import event.logging.CreateEventAction;
 import event.logging.Data;
 import event.logging.DeleteEventAction;
+import event.logging.LoggedResult;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Query;

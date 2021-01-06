@@ -1,6 +1,5 @@
 package stroom.event.logging.mock;
 
-import stroom.event.logging.api.LoggedResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 
 import event.logging.Event;
@@ -8,6 +7,7 @@ import event.logging.EventAction;
 import event.logging.EventDetail;
 import event.logging.EventDetail.Builder;
 import event.logging.EventLoggingService;
+import event.logging.LoggedResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
