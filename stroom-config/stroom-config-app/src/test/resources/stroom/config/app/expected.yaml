@@ -492,7 +492,7 @@ appConfig:
       maxStoreSize: "50G"
       purgeAge: "P30D"
       readAheadEnabled: true
-      offHeapResults: true
+      offHeapResults: false
     remoteSearchResultCache:
       maximumSize: 100
       expireAfterAccess: "PT1M"
