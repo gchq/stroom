@@ -65,7 +65,7 @@ public class SqlStatisticsStore implements Store {
     @Override
     public void destroy() {
         LOGGER.debug("destroy called");
-        complete();
+        coprocessors.clear();
     }
 
     private void complete() {

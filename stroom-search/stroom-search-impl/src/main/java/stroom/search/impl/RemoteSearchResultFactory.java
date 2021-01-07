@@ -69,6 +69,10 @@ class RemoteSearchResultFactory {
     }
 
     public synchronized void destroy() {
+        if (coprocessors != null) {
+            coprocessors.clear();
+        }
+
         destroy = true;
         if (taskId != null) {
             taskManager.terminate(taskId);
@@ -83,6 +87,9 @@ class RemoteSearchResultFactory {
         this.taskId = taskId;
         if (destroy) {
             taskManager.terminate(taskId);
+            if (coprocessors != null) {
+                coprocessors.clear();
+            }
         }
     }
 

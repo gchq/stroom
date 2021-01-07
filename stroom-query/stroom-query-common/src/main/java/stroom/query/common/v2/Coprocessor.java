@@ -29,4 +29,6 @@ public interface Coprocessor extends Receiver {
     void writePayload(Output output);
 
     CompletionState getCompletionState();
+
+    void clear();
 }

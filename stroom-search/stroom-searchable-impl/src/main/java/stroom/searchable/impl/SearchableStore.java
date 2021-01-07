@@ -109,7 +109,8 @@ class SearchableStore implements Store {
             if (thread != null) {
                 thread.interrupt();
             }
-            complete();
+
+            coprocessors.clear();
         }
     }
 

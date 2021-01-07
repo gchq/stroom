@@ -106,7 +106,7 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
-        coprocessors.getCompletionState().complete();
+        coprocessors.clear();
     }
 
     public void complete() {

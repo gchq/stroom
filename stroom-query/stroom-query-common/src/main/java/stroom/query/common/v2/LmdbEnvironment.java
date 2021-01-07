@@ -7,7 +7,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -19,6 +18,7 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,6 +55,11 @@ public class LmdbEnvironment {
         this.maxReaders = lmdbConfig.getMaxReaders();
         this.maxPutsBeforeCommit = lmdbConfig.getMaxPutsBeforeCommit();
         this.lmdbEnvironment = createEnvironment(lmdbConfig);
+
+        // Destroy all pre existing DBs for this environment.
+        list();
+        destroyAll();
+        list();
     }
 
     private Env<ByteBuffer> createEnvironment(final LmdbConfig lmdbConfig) {
@@ -98,18 +103,19 @@ public class LmdbEnvironment {
             LOGGER.info("Extracting bundled LMDB binary to " + dbDir);
         }
 
-        final Env<ByteBuffer> env = Env.create()
+        return Env.create()
                 .setMaxReaders(maxReaders)
                 .setMapSize(maxSize.getBytes())
                 .setMaxDbs(lmdbConfig.getMaxDbs())
                 .open(dbDir.toFile(), envFlags);
+    }
 
+    void list() {
         LOGGER.info("Existing databases: \n\t{}",
-                env.getDbiNames()
+                lmdbEnvironment.getDbiNames()
                         .stream()
-                        .map(Bytes::toString)
+                        .map(this::toString)
                         .collect(Collectors.joining("\n\t")));
-        return env;
     }
 
     private Path getStoreDir() {
@@ -135,11 +141,12 @@ public class LmdbEnvironment {
         return storeDir;
     }
 
-    Dbi<ByteBuffer> openDbi(final String name) {
+    Dbi<ByteBuffer> openDbi(final String queryKey, final String instanceId) {
+        final String name = queryKey + "_" + instanceId;
         LOGGER.debug("Opening LMDB database with name: {}", name);
         try {
-            return lmdbEnvironment.openDbi(name, DbiFlags.MDB_CREATE);
-        } catch (Exception e) {
+            return lmdbEnvironment.openDbi(toBytes(name), DbiFlags.MDB_CREATE);
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error opening LMDB database {}", name), e);
         }
     }
@@ -154,5 +161,28 @@ public class LmdbEnvironment {
 
     Txn<ByteBuffer> txnRead() {
         return lmdbEnvironment.txnRead();
+    }
+
+    private void destroyAll() {
+        lmdbEnvironment
+                .getDbiNames()
+                .stream()
+                .map(this::toString)
+                .forEach(this::destroyNamed);
+    }
+
+    private void destroyNamed(final String name) {
+        LOGGER.info("Destroying old search results for " + name);
+        final Dbi<ByteBuffer> dbi = lmdbEnvironment.openDbi(name);
+        dbi.drop(txnWrite(), true);
+        dbi.close();
+    }
+
+    private String toString(final byte[] bytes) {
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private byte[] toBytes(final String string) {
+        return string.getBytes(StandardCharsets.UTF_8);
     }
 }

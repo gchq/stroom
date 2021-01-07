@@ -168,4 +168,9 @@ public class EventCoprocessor implements Coprocessor {
 
         return null;
     }
+
+    @Override
+    public void clear() {
+        eventRefs = null;
+    }
 }

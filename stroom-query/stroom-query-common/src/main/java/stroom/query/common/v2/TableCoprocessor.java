@@ -86,6 +86,11 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
+    public void clear() {
+        dataStore.clear();
+    }
+
+    @Override
     public String toString() {
         return tableSettings.toString();
     }

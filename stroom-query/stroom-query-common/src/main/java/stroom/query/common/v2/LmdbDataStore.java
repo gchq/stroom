@@ -46,12 +46,14 @@ import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -70,7 +72,6 @@ public class LmdbDataStore implements DataStore {
     private static final long COMMIT_FREQUENCY_MS = 1000;
 
     private final LmdbEnvironment lmdbEnvironment;
-    private final String dbName;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
@@ -88,6 +89,8 @@ public class LmdbDataStore implements DataStore {
     private final ValueSerde valueSerde;
     private final StripedLock stripedLock;
     private final AtomicBoolean hasEnoughData = new AtomicBoolean();
+    private final AtomicBoolean drop = new AtomicBoolean();
+    private final AtomicBoolean dropped = new AtomicBoolean();
 
     private final AtomicBoolean createPayload = new AtomicBoolean();
     private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
@@ -124,8 +127,7 @@ public class LmdbDataStore implements DataStore {
         keySerde = new KeySerde(itemSerialiser);
         valueSerde = new ValueSerde(itemSerialiser);
 
-        this.dbName = queryKey + "_" + componentId;
-        this.lmdbDbi = lmdbEnvironment.openDbi(dbName);
+        this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
         this.byteBufferPool = byteBufferPool;
 
         int keySerdeCapacity = keySerde.getBufferCapacity();
@@ -352,6 +354,11 @@ public class LmdbDataStore implements DataStore {
                 Thread.currentThread().interrupt();
             } finally {
                 addedData.countDown();
+
+                // Drop the DB if we have been instructed to do so.
+                if (drop.get()) {
+                    drop();
+                }
             }
         });
     }
@@ -430,13 +437,41 @@ public class LmdbDataStore implements DataStore {
 
     @Override
     public void clear() {
-        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
-            lmdbDbi.drop(writeTxn, true);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error clearing db", e));
+        // If the queue is still being transferred then set the drop flag and tell the transfer process to complete.
+        drop.set(true);
+        queue.clear();
+        getCompletionState().complete();
+
+        try {
+            // If we are already complete then drop the DB directly.
+            final boolean complete = addedData.await(0, TimeUnit.MILLISECONDS);
+            if (complete) {
+                drop();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
+            drop();
+            Thread.currentThread().interrupt();
         }
-        resultCount.set(0);
-        totalResultCount.set(0);
+    }
+
+    private synchronized void drop() {
+        if (!dropped.get()) {
+            try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+                LOGGER.info("Dropping: " + new String(lmdbDbi.getName(), StandardCharsets.UTF_8));
+                lmdbDbi.drop(writeTxn, true);
+                writeTxn.commit();
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                lmdbEnvironment.list();
+//                throw new RuntimeException(LogUtil.message("Error dropping db", e));
+            } finally {
+                resultCount.set(0);
+                totalResultCount.set(0);
+                dropped.set(true);
+                lmdbEnvironment.list();
+            }
+        }
     }
 
     private byte[] createPayload() {

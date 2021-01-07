@@ -135,6 +135,13 @@ public class Coprocessors implements Iterable<Coprocessor> {
         };
     }
 
+    public void clear() {
+        for (final Coprocessor coprocessor : coprocessorMap.values()) {
+            coprocessor.getCompletionState().complete();
+            coprocessor.clear();
+        }
+    }
+
     public Coprocessor get(final int coprocessorId) {
         return coprocessorMap.get(coprocessorId);
     }
