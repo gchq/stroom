@@ -51,6 +51,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         return new LmdbDataStore(
                 lmdbEnvironment,
+                lmdbConfig,
                 byteBufferPool,
                 UUID.randomUUID().toString(),
                 "0",

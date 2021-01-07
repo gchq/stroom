@@ -24,6 +24,7 @@ public class LmdbConfig extends AbstractConfig {
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private boolean offHeapResults = true;
+    private ByteSize payloadLimit = ByteSize.ofMebibytes(0);
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -138,6 +139,16 @@ public class LmdbConfig extends AbstractConfig {
 
     public void setOffHeapResults(final boolean offHeapResults) {
         this.offHeapResults = offHeapResults;
+    }
+
+    @JsonPropertyDescription("Do we want to limit the size of payloads (0 by default means no limit).")
+    @JsonProperty("payloadLimit")
+    public ByteSize getPayloadLimit() {
+        return payloadLimit;
+    }
+
+    public void setPayloadLimit(final ByteSize payloadLimit) {
+        this.payloadLimit = payloadLimit;
     }
 
     @Override

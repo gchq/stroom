@@ -494,6 +494,7 @@ appConfig:
       purgeAge: "P30D"
       readAheadEnabled: true
       offHeapResults: true
+      payloadLimit: "0B"
     remoteSearchResultCache:
       maximumSize: 100
       expireAfterAccess: "PT1M"

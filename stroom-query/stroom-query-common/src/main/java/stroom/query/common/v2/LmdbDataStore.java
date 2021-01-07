@@ -72,6 +72,7 @@ public class LmdbDataStore implements DataStore {
     private static final long COMMIT_FREQUENCY_MS = 1000;
 
     private final LmdbEnvironment lmdbEnvironment;
+    private final LmdbConfig lmdbConfig;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
@@ -103,6 +104,7 @@ public class LmdbDataStore implements DataStore {
     private final CountDownLatch addedData;
 
     LmdbDataStore(final LmdbEnvironment lmdbEnvironment,
+                  final LmdbConfig lmdbConfig,
                   final ByteBufferPool byteBufferPool,
                   final String queryKey,
                   final String componentId,
@@ -112,6 +114,7 @@ public class LmdbDataStore implements DataStore {
                   final Sizes maxResults,
                   final Sizes storeSize) {
         this.lmdbEnvironment = lmdbEnvironment;
+        this.lmdbConfig = lmdbConfig;
         this.stripedLock = new StripedLock();
         this.maxResults = maxResults;
 
@@ -480,18 +483,47 @@ public class LmdbDataStore implements DataStore {
         Metrics.measure("createPayload", () -> {
             try (final Output output = new Output(baos)) {
                 try (Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
-                    lmdbDbi.iterate(writeTxn).forEach(kv -> {
-                        final ByteBuffer keyBuffer = kv.key();
-                        final ByteBuffer valBuffer = kv.val();
-                        final Key key = keySerde.deserialize(keyBuffer);
-                        final Generator[] value = valueSerde.deserialize(valBuffer);
+                    final long limit = lmdbConfig.getPayloadLimit().getBytes();
+                    if (limit > 0) {
+                        final AtomicLong count = new AtomicLong();
 
-                        itemSerialiser.writeKey(key, output);
-                        itemSerialiser.writeGenerators(value, output);
-                    });
+                        try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(writeTxn)) {
+                            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                            while (count.get() < limit && iterator.hasNext()) {
+                                final KeyVal<ByteBuffer> kv = iterator.next();
+                                final ByteBuffer keyBuffer = kv.key();
+                                final ByteBuffer valBuffer = kv.val();
 
-                    lmdbDbi.drop(writeTxn);
-                    writeTxn.commit();
+                                // Add to the size of the current payload.
+                                count.addAndGet(keyBuffer.limit());
+                                count.addAndGet(valBuffer.limit());
+
+                                final Key key = keySerde.deserialize(keyBuffer);
+                                final Generator[] value = valueSerde.deserialize(valBuffer);
+
+                                itemSerialiser.writeKey(key, output);
+                                itemSerialiser.writeGenerators(value, output);
+
+                                lmdbDbi.delete(writeTxn, keyBuffer.flip());
+                            }
+                        }
+
+                        writeTxn.commit();
+
+                    } else {
+                        lmdbDbi.iterate(writeTxn).forEach(kv -> {
+                            final ByteBuffer keyBuffer = kv.key();
+                            final ByteBuffer valBuffer = kv.val();
+                            final Key key = keySerde.deserialize(keyBuffer);
+                            final Generator[] value = valueSerde.deserialize(valBuffer);
+
+                            itemSerialiser.writeKey(key, output);
+                            itemSerialiser.writeGenerators(value, output);
+                        });
+
+                        lmdbDbi.drop(writeTxn);
+                        writeTxn.commit();
+                    }
 
                 } catch (RuntimeException e) {
                     throw new RuntimeException(LogUtil.message("Error clearing db", e));

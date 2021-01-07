@@ -39,6 +39,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
         return new LmdbDataStore(
                 lmdbEnvironment,
+                lmdbConfig,
                 byteBufferPool,
                 queryKey,
                 componentId,
