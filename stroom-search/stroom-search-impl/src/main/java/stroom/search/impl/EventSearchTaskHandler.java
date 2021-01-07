@@ -84,7 +84,10 @@ public class EventSearchTaskHandler {
                     null,
                     nowEpochMilli);
 
-            final Coprocessors coprocessors = coprocessorsFactory.create(Collections.singletonList(settings), query.getParams());
+            final Coprocessors coprocessors = coprocessorsFactory.create(
+                    task.getKey().getUuid(),
+                    Collections.singletonList(settings),
+                    query.getParams());
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create a collector to store search results.

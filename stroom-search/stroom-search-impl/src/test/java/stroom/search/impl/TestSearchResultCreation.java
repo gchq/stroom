@@ -31,12 +31,14 @@ import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.LmdbEnvironment;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -55,6 +57,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,11 +74,14 @@ class TestSearchResultCreation {
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
+        final LmdbConfig lmdbConfig = new LmdbConfig();
+        final TempDirProvider tempDirProvider = () -> tempDir;
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(tempDirProvider, lmdbConfig, pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
+                lmdbEnvironment,
                 new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
-                () -> tempDir,
-                new LmdbConfig(),
-                new PathCreator(() -> tempDir, () -> tempDir));
+                lmdbConfig);
     }
 
     @Test
@@ -89,9 +95,13 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
+        final String queryKey = UUID.randomUUID().toString();
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -191,16 +201,24 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
+        final String queryKey = UUID.randomUUID().toString();
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -247,18 +265,26 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
+        final String queryKey = UUID.randomUUID().toString();
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer1);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -325,16 +351,24 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
+        final String queryKey = UUID.randomUUID().toString();
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);

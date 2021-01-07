@@ -221,8 +221,11 @@ public class SearchResponseCreator {
                 final DataStore data = store.getData(componentId);
                 if (data != null) {
                     try {
-                        final ResultCreator resultCreator = getResultCreator(componentId,
-                                resultRequest, searchRequest.getDateTimeLocale());
+                        final ResultCreator resultCreator = getResultCreator(
+                                searchRequest.getKey().getUuid(),
+                                componentId,
+                                resultRequest,
+                                searchRequest.getDateTimeLocale());
                         if (resultCreator != null) {
                             result = resultCreator.create(data, resultRequest);
                         }
@@ -278,7 +281,8 @@ public class SearchResponseCreator {
         return results;
     }
 
-    private ResultCreator getResultCreator(final String componentId,
+    private ResultCreator getResultCreator(final String queryKey,
+                                           final String componentId,
                                            final ResultRequest resultRequest,
                                            final String dateTimeLocale) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
@@ -290,6 +294,8 @@ public class SearchResponseCreator {
                 } else {
                     resultCreator = new FlatResultCreator(
                             new MapDataStoreFactory(),
+                            queryKey,
+                            componentId,
                             resultRequest,
                             null,
                             null,

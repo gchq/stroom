@@ -584,7 +584,7 @@
       "offset" : 0,
       "length" : 100
     },
-    "totalResults" : 100
+    "totalResults" : 110
   }, {
     "type" : "flat",
     "componentId" : "vis-L1AL1",

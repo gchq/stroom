@@ -105,13 +105,20 @@ class SolrSearchStoreFactory implements StoreFactory {
         final CachedSolrIndex index = securityContext.useAsReadResult(() -> solrIndexCache.get(query.getDataSource()));
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
+        final Set<String> highlights = getHighlights(
+                index,
+                query.getExpression(),
+                searchRequest.getDateTimeLocale(),
+                nowEpochMilli);
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory.createSettings(searchRequest);
 
         // Create a handler for search results.
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettingsList, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                searchRequest.getKey().getUuid(),
+                coprocessorSettingsList,
+                searchRequest.getQuery().getParams());
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";

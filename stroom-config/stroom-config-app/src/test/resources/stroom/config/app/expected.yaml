@@ -490,6 +490,7 @@ appConfig:
       maxPutsBeforeCommit: 0
       maxReaders: 100
       maxStoreSize: "50G"
+      maxDbs: 1000
       purgeAge: "P30D"
       readAheadEnabled: true
       offHeapResults: true

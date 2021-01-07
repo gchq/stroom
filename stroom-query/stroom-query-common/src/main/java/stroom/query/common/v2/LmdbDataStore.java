@@ -29,9 +29,6 @@ import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.concurrent.StripedLock;
-import stroom.util.io.ByteSize;
-import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -39,33 +36,22 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
-import org.lmdbjava.Env;
-import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -76,37 +62,23 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static RawKey ROOT_RAW_KEY;
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private static final String DEFAULT_STORE_SUB_DIR_NAME = "searchResults";
 
-    // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
-    private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
-    private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
-
-    private final Env<ByteBuffer> lmdbEnvironment;
+    private final LmdbEnvironment lmdbEnvironment;
     private final String dbName;
     private final Dbi<ByteBuffer> lmdbDbi;
     private final ByteBufferPool byteBufferPool;
 
-    private final TempDirProvider tempDirProvider;
-    private final LmdbConfig lmdbConfig;
-    private final PathCreator pathCreator;
-    private final Path dbDir;
-    private final ByteSize maxSize;
-    private final int maxReaders;
-    private final int maxPutsBeforeCommit;
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
     private final CompiledField[] compiledFields;
     private final LmdbCompiledSorter[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
-    //    private final Sizes storeSize;
     private final AtomicLong totalResultCount = new AtomicLong();
     private final AtomicLong resultCount = new AtomicLong();
     private final ItemSerialiser itemSerialiser;
@@ -127,25 +99,18 @@ public class LmdbDataStore implements DataStore {
 
     private final CountDownLatch addedData;
 
-    LmdbDataStore(final ByteBufferPool byteBufferPool,
-                  final TempDirProvider tempDirProvider,
-                  final LmdbConfig lmdbConfig,
-                  final PathCreator pathCreator,
+    LmdbDataStore(final LmdbEnvironment lmdbEnvironment,
+                  final ByteBufferPool byteBufferPool,
+                  final String queryKey,
+                  final String componentId,
                   final TableSettings tableSettings,
                   final FieldIndex fieldIndex,
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
                   final Sizes storeSize) {
-        this.tempDirProvider = tempDirProvider;
-        this.lmdbConfig = lmdbConfig;
-        this.pathCreator = pathCreator;
-        this.dbDir = getStoreDir();
-        this.maxSize = lmdbConfig.getMaxStoreSize();
-        this.maxReaders = lmdbConfig.getMaxReaders();
-        this.maxPutsBeforeCommit = lmdbConfig.getMaxPutsBeforeCommit();
+        this.lmdbEnvironment = lmdbEnvironment;
         this.stripedLock = new StripedLock();
         this.maxResults = maxResults;
-//        this.storeSize = storeSize;
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -159,9 +124,8 @@ public class LmdbDataStore implements DataStore {
         keySerde = new KeySerde(itemSerialiser);
         valueSerde = new ValueSerde(itemSerialiser);
 
-        this.lmdbEnvironment = createEnvironment(lmdbConfig);
-        this.dbName = tableSettings.getQueryId() + "_" + UUID.randomUUID().toString();
-        this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
+        this.dbName = queryKey + "_" + componentId;
+        this.lmdbDbi = lmdbEnvironment.openDbi(dbName);
         this.byteBufferPool = byteBufferPool;
 
         int keySerdeCapacity = keySerde.getBufferCapacity();
@@ -194,93 +158,6 @@ public class LmdbDataStore implements DataStore {
             writeTxn.commit();
             writeTxn.close();
         });
-    }
-
-    private Env<ByteBuffer> createEnvironment(final LmdbConfig lmdbConfig) {
-        LOGGER.info(
-                "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
-                        "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
-                maxSize,
-                dbDir.toAbsolutePath().toString() + File.separatorChar,
-                maxReaders,
-                maxPutsBeforeCommit,
-                lmdbConfig.isReadAheadEnabled());
-
-        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
-        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
-        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
-        // comes with greater risk of corruption.
-
-        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
-        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
-        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
-        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
-        // set it larger than the amount of free space on the filesystem.
-
-        final EnvFlags[] envFlags;
-        if (lmdbConfig.isReadAheadEnabled()) {
-            envFlags = new EnvFlags[0];
-        } else {
-            envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
-        }
-
-        final String lmdbSystemLibraryPath = lmdbConfig.getLmdbSystemLibraryPath();
-
-        if (lmdbSystemLibraryPath != null) {
-            // javax.validation should ensure the path is valid if set
-            System.setProperty(LMDB_NATIVE_LIB_PROP, lmdbSystemLibraryPath);
-            LOGGER.info("Using provided LMDB system library file " + lmdbSystemLibraryPath);
-        } else {
-            // Set the location to extract the bundled LMDB binary to
-            System.setProperty(LMDB_EXTRACT_DIR_PROP, dbDir.toAbsolutePath().toString());
-            LOGGER.info("Extracting bundled LMDB binary to " + dbDir);
-        }
-
-        final Env<ByteBuffer> env = Env.create()
-                .setMaxReaders(maxReaders)
-                .setMapSize(maxSize.getBytes())
-                .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
-                .open(dbDir.toFile(), envFlags);
-
-        LOGGER.info("Existing databases: \n\t{}",
-                env.getDbiNames()
-                        .stream()
-                        .map(Bytes::toString)
-                        .collect(Collectors.joining("\n\t")));
-        return env;
-    }
-
-    private Path getStoreDir() {
-        String storeDirStr = pathCreator.replaceSystemProperties(lmdbConfig.getLocalDir());
-        Path storeDir;
-        if (storeDirStr == null) {
-            LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
-            storeDir = tempDirProvider.get();
-            Objects.requireNonNull(storeDir, "Temp dir is not set");
-            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
-        } else {
-            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-            storeDir = Paths.get(storeDirStr);
-        }
-
-        try {
-            LOGGER.debug("Ensuring directory {}", storeDir);
-            Files.createDirectories(storeDir);
-        } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error ensuring store directory {} exists", storeDirStr), e);
-        }
-
-        return storeDir;
-    }
-
-    private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env,
-                                           final String name) {
-        LOGGER.debug("Opening LMDB database with name: {}", name);
-        try {
-            return env.openDbi(name, DbiFlags.MDB_CREATE);
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error opening LMDB database {}", name), e);
-        }
     }
 
     @Override

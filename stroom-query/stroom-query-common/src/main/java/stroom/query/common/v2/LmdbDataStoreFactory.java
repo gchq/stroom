@@ -3,30 +3,27 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.query.api.v2.TableSettings;
-import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 
 import javax.inject.Inject;
 import java.util.Map;
 
 public class LmdbDataStoreFactory implements DataStoreFactory {
+    private final LmdbEnvironment lmdbEnvironment;
     private final ByteBufferPool byteBufferPool;
-    private final TempDirProvider tempDirProvider;
     private final LmdbConfig lmdbConfig;
-    private final PathCreator pathCreator;
 
     @Inject
-    public LmdbDataStoreFactory(final ByteBufferPool byteBufferPool,
-                                final TempDirProvider tempDirProvider,
-                                final LmdbConfig lmdbConfig,
-                                final PathCreator pathCreator) {
+    public LmdbDataStoreFactory(final LmdbEnvironment lmdbEnvironment,
+                                final ByteBufferPool byteBufferPool,
+                                final LmdbConfig lmdbConfig) {
+        this.lmdbEnvironment = lmdbEnvironment;
         this.byteBufferPool = byteBufferPool;
-        this.tempDirProvider = tempDirProvider;
         this.lmdbConfig = lmdbConfig;
-        this.pathCreator = pathCreator;
     }
 
-    public DataStore create(final TableSettings tableSettings,
+    public DataStore create(final String queryKey,
+                            final String componentId,
+                            final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
@@ -41,10 +38,10 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         }
 
         return new LmdbDataStore(
+                lmdbEnvironment,
                 byteBufferPool,
-                tempDirProvider,
-                lmdbConfig,
-                pathCreator,
+                queryKey,
+                componentId,
                 tableSettings,
                 fieldIndex,
                 paramMap,

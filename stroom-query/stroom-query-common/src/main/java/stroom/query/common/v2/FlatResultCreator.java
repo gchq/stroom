@@ -49,6 +49,8 @@ public class FlatResultCreator implements ResultCreator {
     private String error;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
+                             final String queryKey,
+                             final String componentId,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
                              final FieldFormatter fieldFormatter,
@@ -68,7 +70,14 @@ public class FlatResultCreator implements ResultCreator {
                 final Sizes sizes = Sizes.min(Sizes.create(parent.getMaxResults()), defaultMaxResultsSizes);
                 final int maxItems = sizes.size(0);
 
-                mappers.add(new Mapper(dataStoreFactory, parent, child, paramMap, maxItems));
+                mappers.add(new Mapper(
+                        dataStoreFactory,
+                        queryKey,
+                        componentId,
+                        parent,
+                        child,
+                        paramMap,
+                        maxItems));
             }
         } else {
             mappers = Collections.emptyList();
@@ -312,6 +321,8 @@ public class FlatResultCreator implements ResultCreator {
         private final int maxItems;
 
         Mapper(final DataStoreFactory dataStoreFactory,
+               final String queryKey,
+               final String componentId,
                final TableSettings parent,
                final TableSettings child,
                final Map<String, String> paramMap,
@@ -341,6 +352,8 @@ public class FlatResultCreator implements ResultCreator {
             // max value.
             final Sizes maxResults = Sizes.create(child.getMaxResults(), Integer.MAX_VALUE);
             dataStore = dataStoreFactory.create(
+                    queryKey,
+                    componentId,
                     child,
                     childFieldIndex,
                     paramMap,

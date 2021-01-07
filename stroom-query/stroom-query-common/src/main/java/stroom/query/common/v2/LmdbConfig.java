@@ -20,6 +20,7 @@ public class LmdbConfig extends AbstractConfig {
     private int maxPutsBeforeCommit = 0;
     private int maxReaders = 100;
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
+    private int maxDbs = 1000;
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private boolean offHeapResults = true;
@@ -92,6 +93,15 @@ public class LmdbConfig extends AbstractConfig {
 
     public void setMaxStoreSize(final ByteSize maxStoreSize) {
         this.maxStoreSize = maxStoreSize;
+    }
+
+    @JsonPropertyDescription("The maximum number of databases that can be created for this environment.")
+    public int getMaxDbs() {
+        return maxDbs;
+    }
+
+    public void setMaxDbs(final int maxDbs) {
+        this.maxDbs = maxDbs;
     }
 
     @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +

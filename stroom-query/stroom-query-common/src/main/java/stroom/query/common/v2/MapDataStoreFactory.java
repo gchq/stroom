@@ -6,7 +6,9 @@ import stroom.query.api.v2.TableSettings;
 import java.util.Map;
 
 public class MapDataStoreFactory implements DataStoreFactory {
-    public DataStore create(final TableSettings tableSettings,
+    public DataStore create(final String queryKey,
+                            final String componentId,
+                            final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
