@@ -19,11 +19,13 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 
 public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter {
@@ -38,6 +40,8 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     @Context
     private HttpServletRequest request;
 
+    @Context
+    private ResourceInfo resourceInfo;
 
 
     @Inject
@@ -59,8 +63,8 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             final Object entity = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (entity != null) {
                 RequestInfo requestInfo = (RequestInfo) entity;
-                requestEventLog.log(requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
-                        requestInfo.getRequestEntity(), exception);
+//                requestEventLog.log(requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
+//                        requestInfo.getRequestEntity(), exception);
             } else {
                 LOGGER.warn("Unable to create audit log for exception, request info is null", exception);
             }
@@ -111,29 +115,39 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
         if (entity != null) {
             RequestInfo requestInfo = (RequestInfo) entity;
-            requestEventLog.log (requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
-                    writerInterceptorContext.getEntity());
+//            requestEventLog.log (requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
+//                    writerInterceptorContext.getEntity());
         }
     }
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        LoggingInfo loggingInfo = resourcePathMapProvider.get().lookup(context);
+//        LoggingInfo loggingInfo = resourcePathMapProvider.get().lookup(context);
 
-        if (loggingInfo == null){
-            LOGGER.warn("Unable to locate LoggingInfo relating to " + request.getRequestURI());
+        String pt = request.getPathTranslated();
+        String m = request.getMethod();
+        String sp = request.getServletPath();
+        String pm = request.getParameterMap().keySet().stream().collect(Collectors.joining(", "));
+        String cp = request.getContextPath();
+        String qs = request.getQueryString();
+
+        String mr = context.getUriInfo().getMatchedResources().stream().map(Object::toString).collect(Collectors.joining(", "));
+        String p = context.getUriInfo().getPath(false);
+        String pp= context.getUriInfo().getPathParameters(true).keySet().stream().map(k -> { return k + ":" +
+                context.getUriInfo().getPathParameters(true).get(k);}).collect(Collectors.joining(", "));
+        String qp = context.getUriInfo().getQueryParameters(true).keySet().stream().map(k -> { return k + ":" +
+                context.getUriInfo().getQueryParameters(true).get(k);}).collect(Collectors.joining(", "));
+
+
+        if (context.hasEntity()) {
+            final LoggingInputStream stream = new LoggingInputStream(resourceInfo, context.getEntityStream(),
+                    objectMapper, MessageUtils.getCharset(context.getMediaType()));
+            context.setEntityStream(stream);
+
+            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(context, stream.getRequestEntity()));
         } else {
-            if (context.hasEntity()) {
-                final LoggingInputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
-                        objectMapper, MessageUtils.getCharset(context.getMediaType()));
-                context.setEntityStream(stream);
-
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(stream.getLoggingInfo(), stream.getRequestEntity()));
-            } else {
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(request.getRequestURI(), loggingInfo));
-            }
+            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(context));
         }
-
     }
 
     private static ObjectMapper createObjectMapper() {

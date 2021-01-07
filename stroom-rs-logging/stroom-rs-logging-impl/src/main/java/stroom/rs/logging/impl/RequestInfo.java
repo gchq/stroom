@@ -2,56 +2,51 @@ package stroom.rs.logging.impl;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasUuid;
+
+import javax.ws.rs.container.ContainerRequestContext;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static stroom.rs.logging.impl.StroomServerLoggingFilterImpl.LOGGER;
 
 class RequestInfo {
+    private final ContainerRequestContext requestContext;
 
-    private final LoggingInfo loggingInfo;
-    private final Object requestEntity;
+    private final Object requestObj;
 
-    public RequestInfo(final LoggingInfo loggingInfo, final Object requestEntity) {
-        this.loggingInfo = loggingInfo;
-        this.requestEntity = requestEntity;
+    public RequestInfo(final ContainerRequestContext requestContext) {
+        this.requestContext = requestContext;
+        this.requestObj = findRequestObj();
     }
 
-    public RequestInfo(final String requestPath, final LoggingInfo loggingInfo){
-        //Determine param objects from path
-        this.loggingInfo = loggingInfo;
-        this.requestEntity = parseParamsFromPath (requestPath);
+    public RequestInfo(final ContainerRequestContext requestContext, Object requestObj) {
+        this.requestContext = requestContext;
+        this.requestObj = requestObj;
     }
 
-    public LoggingInfo getLoggingInfo() {
-        return loggingInfo;
+    public ContainerRequestContext getRequestContext() {
+        return requestContext;
     }
 
-    public Object getRequestEntity() {
-        return requestEntity;
-    }
-
-    private Object parseParamsFromPath(final String path){
-        if (path == null || loggingInfo.getRequestParamClass().isEmpty()){
+    private Object findRequestObj(){
+        Optional<String> paramNameOpt = requestContext.getUriInfo().getPathParameters(true).keySet().stream().findFirst();
+        if (paramNameOpt.isEmpty()){
             return null;
         }
 
-        String[] tokens = loggingInfo.getPath().split("[{}]");
-        if (tokens.length < 2){
-            return null;
-        }
-        if (tokens.length > 3){
-            LOGGER.warn("The request " + loggingInfo.getPath() + " contains multiple parameters");
+        String paramName = paramNameOpt.get();
+
+        if (requestContext.getUriInfo().getPathParameters(true).keySet().size() > 1){
+            LOGGER.warn("The request " + requestContext.getUriInfo().getPath(false) + " contains multiple parameters");
         }
 
-        int stopIndex = path.substring(tokens[0].length()).indexOf('/');
-        if (stopIndex < 0) {
-            stopIndex = path.length();
-        }
-
-        String paramName = tokens[1];
-        String paramValue = path.substring(tokens[0].length(),stopIndex);
-
+        String paramValue = requestContext.getUriInfo().getPathParameters(true).get(paramName).stream().collect(Collectors.joining(", "));
         if ("id".equals(paramName)){
             return new ObjectId (paramValue);
+        } else if ("uuid".equals(paramName)){
+            return new ObjectUuid (paramValue);
         }
 
         return null;
@@ -76,5 +71,19 @@ class RequestInfo {
             return id;
         }
     }
+
+    private static class ObjectUuid implements HasUuid {
+        private final String uuid;
+
+        public ObjectUuid(String uuid){
+            this.uuid = uuid;
+        }
+
+        @Override
+        public String getUuid() {
+            return uuid;
+        }
+    }
+
 
 }
