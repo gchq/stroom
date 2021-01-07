@@ -24,8 +24,11 @@ import event.logging.Criteria;
 import event.logging.Criteria.ResultPage;
 import event.logging.Data;
 import event.logging.Event;
+import event.logging.Event.EventDetail.Process;
+import event.logging.Event.EventDetail.Unknown;
 import event.logging.Event.EventDetail.Update;
 import event.logging.Export;
+import event.logging.Import;
 import event.logging.MultiObject;
 import event.logging.Object;
 import event.logging.ObjectOutcome;
@@ -392,7 +395,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Downloading", object);
+                final Event event = createAction(eventTypeId, "Exporting", object);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(createBaseObject(object));
@@ -402,6 +405,82 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 exp.setOutcome(EventLoggingUtil.createOutcome(ex));
 
                 event.getEventDetail().setExport(exp);
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final Throwable ex) {
+        download(object, "Upload", ex);
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId, "Importing", object);
+
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(createBaseObject(object));
+
+                final Import imp = new Import();
+                imp.setSource(multiObject);
+                imp.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+                event.getEventDetail().setImport(imp);
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void process(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId, "Processing", object);
+
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(createBaseObject(object));
+
+                final Process process = new Process();
+                process.setInput(multiObject);
+                process.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+                event.getEventDetail().setProcess(process);
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void unknownOperation(final java.lang.Object object, final String eventTypeId, final String description,
+                                 final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId, description, object);
+
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(createBaseObject(object));
+
+                final Unknown unknown = new Unknown();
+                unknown.getData().addAll(getDataItems(object));
+
+                Data error = new Data();
+                error.setName("Error");
+                error.setValue(ex != null? ex.getMessage() : "None");
+                unknown.getData().add(error);
+
+                event.getEventDetail().setUnknown(unknown);
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
@@ -577,7 +656,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private List<Data> getDataItems(java.lang.Object obj){
-
+        if (obj == null){
+            return List.of();
+        }
         try{
             final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
             return allProps.keySet().stream().map(propName -> {

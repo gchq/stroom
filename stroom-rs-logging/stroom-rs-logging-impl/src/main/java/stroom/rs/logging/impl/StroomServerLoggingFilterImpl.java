@@ -120,15 +120,18 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
     public void filter(final ContainerRequestContext context) throws IOException {
         LoggingInfo loggingInfo = resourcePathMapProvider.get().lookup(context);
 
-        if (context.hasEntity()) {
-            final LoggingInputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
-                    objectMapper, MessageUtils.getCharset(context.getMediaType()));
-            context.setEntityStream(stream);
-
-//            context.setProperty(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(stream.getLoggingInfo(), stream.getRequestEntity()));
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(stream.getLoggingInfo(), stream.getRequestEntity()));
+        if (loggingInfo == null){
+            LOGGER.warn("Unable to locate LoggingInfo relating to " + request.getRequestURI());
         } else {
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(request.getRequestURI(), loggingInfo));
+            if (context.hasEntity()) {
+                final LoggingInputStream stream = new LoggingInputStream(loggingInfo, context.getEntityStream(),
+                        objectMapper, MessageUtils.getCharset(context.getMediaType()));
+                context.setEntityStream(stream);
+
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(stream.getLoggingInfo(), stream.getRequestEntity()));
+            } else {
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(request.getRequestURI(), loggingInfo));
+            }
         }
 
     }

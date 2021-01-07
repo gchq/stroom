@@ -22,57 +22,41 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageResponse;
 
 public interface DocumentEventLog {
-
-    void create(Object entity, String eventTypeId, Throwable ex);
-
-    void create(String entityType, String entityName, String eventTypeId, Throwable ex);
-
-
     void copy(Object before, Object after, String eventTypeId, Throwable ex);
-
-    void move(Object before, Object after, String eventTypeId, Throwable ex);
-
-    void rename(Object before, Object after, String eventTypeId, Throwable ex);
-
-    void delete(Object entity, String eventTypeId, Throwable ex);
-
-    void update(Object before, Object after, String eventTypeId, Throwable ex);
-
-    void view(Object entity, String eventTypeId, Throwable ex);
-
-    void delete(BaseCriteria criteria, Query query, Long size, String eventTypeId, Throwable ex);
-
-    void download(Object entity, String eventTypeId, Throwable ex);
-
-//    void search(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
-
-//    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
-
-
-    void create(Object entity, Throwable ex);
-
-    void create(String entityType, String entityName, Throwable ex);
-
-
     void copy(Object before, Object after, Throwable ex);
 
-    void move(Object before, Object after, Throwable ex);
+    void create(String entityType, String entityName, String eventTypeId, Throwable ex);
+    void create(Object entity, String eventTypeId, Throwable ex);
+    void create(String entityType, String entityName, Throwable ex);
+    void create(Object entity, Throwable ex);
 
-    void rename(Object before, Object after, Throwable ex);
 
+    void delete(BaseCriteria criteria, Query query, Long size, String eventTypeId, Throwable ex);
+    void delete(Object entity, String eventTypeId, Throwable ex);
+    void delete(BaseCriteria criteria, Query query, Long size, Throwable ex);
     void delete(Object entity, Throwable ex);
 
-    void update(Object before, Object after, Throwable ex);
-
-    void view(Object entity, Throwable ex);
-
-    void delete(BaseCriteria criteria, Query query, Long size, Throwable ex);
-
+    void download(Object entity, String eventTypeId, Throwable ex);
     void download(Object entity, Throwable ex);
 
-//    void search(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+    void move(Object before, Object after, String eventTypeId, Throwable ex);
+    void move(Object before, Object after, Throwable ex);
+
+    void process(Object entity, String eventTypeId, Throwable ex);
+
+    void rename(Object before, Object after, String eventTypeId, Throwable ex);
+    void rename(Object before, Object after, Throwable ex);
 
     void search(String typeId, Query query, String resultType, PageResponse pageResponse, Throwable ex);
 
-//    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+    void unknownOperation(Object entity, String eventTypeId, String description, Throwable ex);
+
+    void update(Object before, Object after, Throwable ex);
+    void update(Object before, Object after, String eventTypeId, Throwable ex);
+
+    void upload(final java.lang.Object object, final String eventTypeId, final Throwable ex);
+    void upload(Object object, Throwable ex);
+
+    void view(Object entity, String eventTypeId, Throwable ex);
+    void view(Object entity, Throwable ex);
 }
