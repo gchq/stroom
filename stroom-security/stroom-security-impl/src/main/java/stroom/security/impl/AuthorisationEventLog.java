@@ -95,17 +95,18 @@ public class AuthorisationEventLog {
                     .withSuccess(success)
                     .withDescription(outcomeDescription)
                     .build();
-            final Event event = eventLoggingService.createSkeletonEvent(typeId, description, eventDetailBuilder ->
-                    eventDetailBuilder
-                            .withAuthorise(AuthoriseEventAction.builder()
-                                    .addUser(User.builder()
-                                            .withName(userName)
-                                            .build())
-                                    .withAction(AuthorisationActionType.MODIFY)
-                                    .withAddGroups(addGroups)
-                                    .withRemoveGroups(removeGroups)
-                                    .withOutcome(outcome)
+
+            final Event event = eventLoggingService.createEvent(
+                    typeId,
+                    description,
+                    AuthoriseEventAction.builder()
+                            .addUser(User.builder()
+                                    .withName(userName)
                                     .build())
+                            .withAction(AuthorisationActionType.MODIFY)
+                            .withAddGroups(addGroups)
+                            .withRemoveGroups(removeGroups)
+                            .withOutcome(outcome)
                             .build());
 
             eventLoggingService.log(event);

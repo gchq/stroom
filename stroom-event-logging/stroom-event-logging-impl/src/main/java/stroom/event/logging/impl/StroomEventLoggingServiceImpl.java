@@ -27,10 +27,9 @@ import event.logging.Device;
 import event.logging.Event;
 import event.logging.EventAction;
 import event.logging.EventDetail;
-import event.logging.EventDetail.Builder;
 import event.logging.EventSource;
 import event.logging.EventTime;
-import event.logging.HasOutcome;
+import event.logging.Purpose;
 import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
@@ -42,16 +41,15 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
@@ -96,16 +94,14 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
-    public Event createEvent() {
-        return buildEvent().build();
-    }
-
-    @Override
-    public Event.Builder<Void> buildEvent() {
+    public Event createEvent(final String typeId,
+                             final String description,
+                             final Purpose purpose,
+                             final EventAction eventAction) {
         // Get the current request.
         final HttpServletRequest request = getRequest();
 
-        return super.buildEvent()
+        return Event.builder()
                 .withEventTime(EventTime.builder()
                         .withTimeCreated(new Date())
                         .build())
@@ -119,38 +115,80 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         .withDevice(getClient(request))
                         .withClient(getClient(request))
                         .withUser(getUser())
-                        .build());
-    }
-
-    public Event createSkeletonEvent(final String typeId, final String description) {
-        return createSkeletonEvent(typeId, description, null);
-    }
-
-    @Override
-    public Event createSkeletonEvent(final String typeId,
-                                     final String description,
-                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-        final Builder<Void> eventDetailBuilder = EventDetail.builder()
-                .withTypeId(typeId)
-                .withDescription(description)
-                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
-
-        if (eventDetailBuilderConsumer != null) {
-            eventDetailBuilderConsumer.accept(eventDetailBuilder);
-        }
-
-        return buildEvent()
-                .withEventDetail(eventDetailBuilder.build())
+                        .build())
+                .withEventDetail(EventDetail.builder()
+                        .withTypeId(typeId)
+                        .withDescription(description)
+                        .withPurpose(mergePurposes(PurposeUtil.create(currentActivity.getActivity()), purpose))
+                        .withEventAction(eventAction)
+                        .build())
                 .build();
     }
 
-    @Override
-    public void log(final String typeId,
-                    final String description,
-                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+    /**
+     * Shallow merge of the two Purpose objects
+     */
+    private Purpose mergePurposes(final Purpose base, final Purpose override) {
+        if (base == null && override == null) {
+            return null;
+        } else if (base != null && override == null) {
+            return base;
+        } else if (override != null && base == null) {
+            return override;
+        } else {
+            final Purpose purpose = base.newCopyBuilder().build();
+            mergeValue(override::getAuthorisations, purpose::setAuthorisations);
+            mergeValue(override::getClassification, purpose::setClassification);
+            mergeValue(override::getJustification, purpose::setJustification);
+            mergeValue(override::getStakeholders, purpose::setStakeholders);
+            mergeValue(override::getExpectedOutcome, purpose::setExpectedOutcome);
+            mergeValue(override::getSubject, purpose::setSubject);
 
-        super.log(createSkeletonEvent(typeId, description, eventDetailBuilderConsumer));
+            // Combine the list of Data items from each
+            purpose.getData().clear();
+            purpose.getData().addAll(base.getData());
+            purpose.getData().addAll(override.getData());
+            return purpose;
+        }
     }
+
+    private <T> void mergeValue(final Supplier<T> getter, final Consumer<T> setter) {
+        T value = getter.get();
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+
+//    public Event createSkeletonEvent(final String typeId, final String description) {
+//        return createSkeletonEvent(typeId, description, null);
+//    }
+//
+//    @Override
+//    public Event createSkeletonEvent(final String typeId,
+//                                     final String description,
+//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
+//                .withTypeId(typeId)
+//                .withDescription(description)
+//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
+//
+//        if (eventDetailBuilderConsumer != null) {
+//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
+//        }
+//
+//        return buildEvent()
+//                .withEventDetail(eventDetailBuilder.build())
+//                .build();
+//    }
+
+//    @Override
+//    public void log(final String typeId,
+//                    final String description,
+//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+//
+//        super.log(typeId, description, eventDetailBuilderConsumer);
+//    }
 
 
     private Device getDevice(final HttpServletRequest request) {
@@ -282,136 +320,4 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-//    @Override
-//    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-//            final String eventTypeId,
-//            final String description,
-//            final T_EVENT_ACTION eventAction,
-//            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
-//            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler) {
-//
-//        Objects.requireNonNull(eventAction);
-//        Objects.requireNonNull(loggedWork);
-//
-//        final T_RESULT result;
-//        Event event = null;
-//        try {
-//            event = createSkeletonEvent(
-//                    eventTypeId,
-//                    description,
-//                    eventDetailBuilder -> eventDetailBuilder
-//                            .withEventAction(eventAction));
-//        } catch (Exception e) {
-//            // Swallow the exception so failure to log does not prevent the action being logged
-//            // from succeeding
-//            LOGGER.error("Error creating skeleton event", e);
-//        }
-//
-//        if (event != null) {
-//            try {
-//                // Performe the callers work, allowing them to provide a new EventAction based on the
-//                // result of the work e.g. if they are updating a record, they can capture the before state
-//                final LoggedResult<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.apply(eventAction);
-//
-//                // Set the new EventAction onto the existing event
-//                setActionOnEvent(event, loggedResult.getEventAction());
-//                log(event);
-//                result = loggedResult.getResult();
-//            } catch (Throwable e) {
-//                if (exceptionHandler != null) {
-//                    try {
-//                        // Allow caller to provide a new EventAction based on the exception
-//                        T_EVENT_ACTION newEventAction = exceptionHandler.apply(eventAction, e);
-//                        setActionOnEvent(event, newEventAction);
-//                    } catch (Exception exception) {
-//                        LOGGER.error( "Error running exception handler. " +
-//                                        "Swallowing exception and rethrowing original exception", e);
-//                    }
-//                } else {
-//                    // No handler so see if we can add an outcome
-//                    if (eventAction instanceof HasOutcome) {
-//                        addFailureOutcome(e, eventAction);
-//                    }
-//                }
-//                log(event);
-//                throw e;
-//            }
-//        } else {
-//            // We failed to create an event so just do the work with no logging.
-//            result = loggedWork.apply(eventAction).getResult();
-//        }
-//
-//        return result;
-//    }
-
-    private <T_EVENT_ACTION extends EventAction> void setActionOnEvent(final Event event, final T_EVENT_ACTION newEventAction) {
-        if (event.getEventDetail() != null) {
-            event.getEventDetail()
-                    .setEventAction(newEventAction);
-        } else {
-            LOGGER.error("Unable to set event action as event detail is null");
-        }
-    }
-
-    private void addFailureOutcome(final Throwable e, final EventAction eventAction) {
-        try {
-            final HasOutcome hasOutcome = (HasOutcome) eventAction;
-            BaseOutcome baseOutcome = hasOutcome.getOutcome();
-
-            if (baseOutcome == null) {
-                // eventAction has no outcome so we need to create one on it
-                baseOutcome = createBaseOutcome(eventAction)
-                        .orElse(null);
-            }
-
-            if (baseOutcome == null) {
-                LOGGER.error("Unable to set outcome on {}", eventAction.getClass().getName());
-            } else {
-                baseOutcome.setSuccess(false);
-                baseOutcome.setDescription(e.getMessage() != null
-                        ? e.getMessage()
-                        : e.getClass().getName());
-            }
-        } catch (Exception exception) {
-            LOGGER.error("Unable to add failure outcome to {}", eventAction.getClass().getName(), e);
-        }
-    }
-
-    private Optional<BaseOutcome> createBaseOutcome(final EventAction eventAction) {
-        // We need to call setOutcome on eventAction but we don't know what sub class of
-        // BaseOutcome it is so need to use reflection to find out.
-        // Scanning the methods on each call is expensive so figure out what the ctor
-        // and setOutcome methods are on first use then cache them.
-        return outcomeFactoryMap.computeIfAbsent(eventAction.getClass(), clazz -> {
-
-            return Arrays.stream(eventAction.getClass().getMethods())
-                    .filter(method -> method.getName().equals("setOutcome"))
-                    .findAny()
-                    .flatMap(method -> {
-                        Class<?> outcomeClass = method.getParameterTypes()[0];
-
-                        Constructor<?> constructor;
-                        try {
-                            constructor = outcomeClass.getDeclaredConstructor();
-                        } catch (NoSuchMethodException e) {
-                            LOGGER.warn("No noargs constructor found for " + outcomeClass.getName(), e);
-                            return Optional.empty();
-                        }
-
-                        final Function<EventAction, BaseOutcome> func = eventAction2 -> {
-                            try {
-                                final BaseOutcome outcome = (BaseOutcome) constructor.newInstance();
-                                method.invoke(eventAction, outcomeClass.cast(outcome));
-                                return outcome;
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        };
-                        LOGGER.debug("Caching function for {}", eventAction.getClass().getName());
-                        return Optional.of(func);
-                    });
-        })
-        .flatMap(func ->
-                Optional.of(func.apply(eventAction)));
-    }
 }

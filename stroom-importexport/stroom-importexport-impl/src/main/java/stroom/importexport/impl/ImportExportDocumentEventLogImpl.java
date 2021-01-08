@@ -53,16 +53,14 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
                 eventLoggingService.log(
                         "Import",
                         buildEventDescription("Importing", type, name),
-                        eventDetailBuilder -> eventDetailBuilder
-                            .withCreate(CreateEventAction.builder()
-                                    .addObject(OtherObject.builder()
-                                            .withId(uuid)
-                                            .withType(type)
-                                            .withName(name)
-                                            .build())
-                                    .withOutcome(EventLoggingUtil.createOutcome(e))
-                                    .build())
-                        .build());
+                        CreateEventAction.builder()
+                                .addObject(OtherObject.builder()
+                                        .withId(uuid)
+                                        .withType(type)
+                                        .withName(name)
+                                        .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
+                                .build());
 
             } catch (final RuntimeException ex) {
                 LOGGER.error("Unable to create event!", ex);
@@ -77,17 +75,15 @@ class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
             eventLoggingService.log(
                     "Export",
                     buildEventDescription("Exporting", document.getType(), document.getName()),
-                    eventDetailBuilder -> eventDetailBuilder
-                            .withExport(ExportEventAction.builder()
-                                    .withSource(MultiObject.builder()
-                                            .addObject(OtherObject.builder()
-                                                    .withId(document.getUuid())
-                                                    .withType(document.getType())
-                                                    .withName(document.getName())
-                                                    .build())
+                    ExportEventAction.builder()
+                            .withSource(MultiObject.builder()
+                                    .addObject(OtherObject.builder()
+                                            .withId(document.getUuid())
+                                            .withType(document.getType())
+                                            .withName(document.getName())
                                             .build())
-                                    .withOutcome(EventLoggingUtil.createOutcome(e))
                                     .build())
+                            .withOutcome(EventLoggingUtil.createOutcome(e))
                             .build());
 
         } catch (final RuntimeException ex) {

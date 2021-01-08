@@ -18,6 +18,7 @@ import event.logging.Not;
 import event.logging.Or;
 import event.logging.OtherObject;
 import event.logging.Query;
+import event.logging.Query.Builder;
 import event.logging.ResultPage;
 import event.logging.SimpleQuery;
 import event.logging.Term;
@@ -110,6 +111,12 @@ public class StroomEventLoggingUtil {
                         .build());
             }
         }
+    }
+
+    public static Query convertExpression(final ExpressionItem expressionItem) {
+        final Builder<Void> builder = Query.builder();
+        appendExpression(builder, expressionItem);
+        return builder.build();
     }
 
     public static void appendExpression(final Query.Builder<Void> queryBuilder,

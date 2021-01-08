@@ -57,17 +57,15 @@ public class StreamEventLog {
                 eventLoggingService.log(
                         "Data Upload",
                         "Data uploaded to \"" + feedName + "\"",
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withImport(ImportEventAction.builder()
-                                        .withSource(MultiObject.builder()
-                                                .addObject(OtherObject.builder()
-                                                        .withType("Stream")
-                                                        .addData(EventLoggingUtil.createData("Path", path))
-                                                        .addData(EventLoggingUtil.createData("Feed", feedName))
-                                                        .build())
+                        ImportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .addObject(OtherObject.builder()
+                                                .withType("Stream")
+                                                .addData(EventLoggingUtil.createData("Path", path))
+                                                .addData(EventLoggingUtil.createData("Feed", feedName))
                                                 .build())
-                                        .withOutcome(EventLoggingUtil.createOutcome(th))
                                         .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(th))
                                 .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to import stream!", e);
@@ -82,16 +80,14 @@ public class StreamEventLog {
                     eventLoggingService.log(
                             "ExportData",
                             "Exporting Data",
-                            eventDetailBuilder -> eventDetailBuilder
-                                    .withExport(ExportEventAction.builder()
-                                            .withSource(MultiObject.builder()
-                                                    .addCriteria(Criteria.builder()
-                                                            .withType("Data")
-                                                            .withQuery(createQuery(findMetaCriteria))
-                                                            .build())
+                            ExportEventAction.builder()
+                                    .withSource(MultiObject.builder()
+                                            .addCriteria(Criteria.builder()
+                                                    .withType("Data")
+                                                    .withQuery(createQuery(findMetaCriteria))
                                                     .build())
-                                            .withOutcome(EventLoggingUtil.createOutcome(th))
                                             .build())
+                                    .withOutcome(EventLoggingUtil.createOutcome(th))
                                     .build());
                 }
             } catch (final RuntimeException e) {
@@ -112,16 +108,14 @@ public class StreamEventLog {
                     eventLoggingService.log(
                             "ViewStream",
                             "Viewing Stream",
-                            eventDetailBuilder -> eventDetailBuilder
-                                    .withView(ViewEventAction.builder()
-                                            .addObject(createStreamObject(
-                                                    eventId,
-                                                    feedName,
-                                                    streamTypeName,
-                                                    childStreamType,
-                                                    pipelineRef))
-                                            .withOutcome(EventLoggingUtil.createOutcome(th))
-                                            .build())
+                            ViewEventAction.builder()
+                                    .addObject(createStreamObject(
+                                            eventId,
+                                            feedName,
+                                            streamTypeName,
+                                            childStreamType,
+                                            pipelineRef))
+                                    .withOutcome(EventLoggingUtil.createOutcome(th))
                                     .build());
                 }
             } catch (final RuntimeException e) {

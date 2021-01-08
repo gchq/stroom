@@ -171,15 +171,14 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
         stroomEventLoggingService.log(
                 "CliCreateInternalIdentityProviderUser",
                 LogUtil.message("An account for user {} was created in the internal identity provider", username),
-                eventDetailBuilder -> eventDetailBuilder
-                        .withCreate(CreateEventAction.builder()
-                                .addUser(User.builder()
-                                        .withName(username)
-                                        .build())
-                                .withOutcome(Outcome.builder()
-                                        .withSuccess(wasSuccessful)
-                                        .withDescription(description)
-                                        .build())
-                                .build()));
+                CreateEventAction.builder()
+                        .addUser(User.builder()
+                                .withName(username)
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(description)
+                                .build())
+                        .build());
     }
 }
