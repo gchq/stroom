@@ -25,8 +25,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.IOException;
-import java.util.stream.Collectors;
-
 
 public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter {
     static final Logger LOGGER = LoggerFactory.getLogger(StroomServerLoggingFilterImpl.class);
@@ -35,7 +33,6 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
-    private final Provider<ResourcePathMap> resourcePathMapProvider;
 
     @Context
     private HttpServletRequest request;
@@ -45,11 +42,8 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
 
     @Inject
-    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog,
-                                  Provider<ResourcePathMap> resourcePathMapProvider
-    ) {
+    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog) {
         this.requestEventLog = requestEventLog;
-        this.resourcePathMapProvider = resourcePathMapProvider;
         this.objectMapper = createObjectMapper();
     }
 
