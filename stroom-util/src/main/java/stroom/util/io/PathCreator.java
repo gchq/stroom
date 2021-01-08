@@ -101,7 +101,12 @@ public class PathCreator {
             path = FileUtil.replaceHome(path);
 
             path = SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
+        }
+        return path;
+    }
 
+    public String makeAbsolute(String path) {
+        if (path != null) {
             // If this isn't an absolute path then make it so.
             if (!path.startsWith("/") && !path.startsWith("\\")) {
                 path = FileUtil.getCanonicalPath(homeDirProvider.get()) + File.separator + path;

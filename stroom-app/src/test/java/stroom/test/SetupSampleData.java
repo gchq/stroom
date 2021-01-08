@@ -94,10 +94,10 @@ public final class SetupSampleData {
                                         final PathCreator pathCreator,
                                         final Config config) {
         try {
-            final String downloadDir = pathCreator.replaceSystemProperties(
-                    ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR);
-            final String importDir = pathCreator.replaceSystemProperties(
-                    config.getAppConfig().getContentPackImportConfig().getImportDirectory());
+            final String downloadDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR));
+            final String importDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    config.getAppConfig().getContentPackImportConfig().getImportDirectory()));
 
             final Path contentPackDownloadPath = Paths.get(downloadDir);
             final Path contentPackImportPath = Paths.get(importDir);

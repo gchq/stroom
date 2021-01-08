@@ -119,7 +119,9 @@ public class LmdbEnvironment {
     }
 
     private Path getStoreDir() {
-        String storeDirStr = pathCreator.replaceSystemProperties(lmdbConfig.getLocalDir());
+        String storeDirStr = lmdbConfig.getLocalDir();
+        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
         if (storeDirStr == null) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
@@ -128,6 +130,7 @@ public class LmdbEnvironment {
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
             storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
             storeDir = Paths.get(storeDirStr);
         }
 
