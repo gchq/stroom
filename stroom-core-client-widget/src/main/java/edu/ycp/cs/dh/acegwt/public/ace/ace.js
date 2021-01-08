@@ -15290,13 +15290,17 @@ var Gutter = function(parentEl) {
             if (rowInfo.text.indexOf(annoText) === -1)
                 rowInfo.text.push(annoText);
 
-            var type = annotation.type;
-            if (type == "error")
-                rowInfo.className = " ace_error";
-            else if (type == "warning" && rowInfo.className != " ace_error")
-                rowInfo.className = " ace_warning";
-            else if (type == "info" && (!rowInfo.className))
-                rowInfo.className = " ace_info";
+//            var type = annotation.type;
+//            if (type == "error")
+//                rowInfo.className = " ace_error";
+//            else if (type == "warning" && rowInfo.className != " ace_error")
+//                rowInfo.className = " ace_warning";
+//            else if (type == "info" && (!rowInfo.className))
+//                rowInfo.className = " ace_info";
+
+            // This line is stroom specific to handle AceAnnotationType values
+            // and replaces the commented chunk above.
+            rowInfo.className = " " + annotation.type;
         }
     };
 
