@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1986** : Fix missing gutter warning/error icons in the stepper code editor.
+
 
 ## [v7.0-beta.76] - 2021-01-07
 
