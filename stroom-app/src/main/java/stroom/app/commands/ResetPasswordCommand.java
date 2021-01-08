@@ -12,6 +12,7 @@ import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateOutcome;
 import event.logging.User;
+import event.logging.util.EventLoggingUtil;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -118,17 +119,15 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
         stroomEventLoggingService.log(
                 "CliChangePassword",
                 LogUtil.message("The password for user {} was changed from the command line", username),
-                eventDetailBuilder -> eventDetailBuilder
-                        .withAuthenticate(AuthenticateEventAction.builder()
-                                .withAction(AuthenticateAction.CHANGE_PASSWORD)
-                                .withUser(User.builder()
-                                        .withName(username)
-                                        .build())
-                                .withOutcome(AuthenticateOutcome.builder()
-                                        .withSuccess(wasSuccessful)
-                                        .withDescription(description)
-                                        .build())
+                AuthenticateEventAction.builder()
+                        .withAction(AuthenticateAction.CHANGE_PASSWORD)
+                        .withUser(User.builder()
+                                .withName(username)
                                 .build())
-        );
+                        .withOutcome(EventLoggingUtil.createOutcome(
+                                AuthenticateOutcome.class,
+                                wasSuccessful,
+                                description))
+                        .build());
     }
 }

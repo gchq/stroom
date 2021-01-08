@@ -27,10 +27,10 @@ import event.logging.And;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateOutcome;
+import event.logging.ComplexLoggedOutcome;
 import event.logging.CreateEventAction;
 import event.logging.Data;
 import event.logging.DeleteEventAction;
-import event.logging.LoggedResult;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Query;
@@ -40,6 +40,7 @@ import event.logging.TermCondition;
 import event.logging.UpdateEventAction;
 import event.logging.User;
 import event.logging.ViewEventAction;
+import event.logging.util.EventLoggingUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -81,7 +82,7 @@ class AccountResourceImpl implements AccountResource {
                             .withTotalResults(BigInteger.valueOf(result.size()))
                             .build();
 
-                    return LoggedResult.of(result, newSearchEventAction);
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 },
                 null
         );
@@ -115,7 +116,7 @@ class AccountResourceImpl implements AccountResource {
                             .withTotalResults(BigInteger.valueOf(result.size()))
                             .build();
 
-                    return LoggedResult.of(result, newSearchEventAction);
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 },
                 null);
     }
@@ -149,7 +150,7 @@ class AccountResourceImpl implements AccountResource {
                                     .build())
                             .build();
 
-                    return LoggedResult.of(account.getId(), newCreateEventAction);
+                    return ComplexLoggedOutcome.success(account.getId(), newCreateEventAction);
                 },
                 null);
     }
@@ -178,7 +179,7 @@ class AccountResourceImpl implements AccountResource {
                                     .build())
                             .build();
 
-                    return LoggedResult.of(account, newViewEventAction);
+                    return ComplexLoggedOutcome.success(account, newViewEventAction);
                 },
                 null);
     }
@@ -231,21 +232,11 @@ class AccountResourceImpl implements AccountResource {
         stroomEventLoggingService.log(
                 "ChangePassword",
                 "Change password for user " + accountId,
-                eventDetailBuilder -> {
-                    AuthenticateEventAction.Builder<Void> authBuilder = AuthenticateEventAction.builder()
-                            .withUser(user)
-                            .withAction(AuthenticateAction.CHANGE_PASSWORD);
-                    if (e != null) {
-                        authBuilder.withOutcome(AuthenticateOutcome.builder()
-                                .withSuccess(false)
-                                .withDescription(e.getMessage() != null
-                                        ? e.getMessage()
-                                        : e.getClass().getName())
-                                .build());
-                    }
-
-                    eventDetailBuilder.withAuthenticate(authBuilder.build());
-                });
+                AuthenticateEventAction.builder()
+                        .withUser(user)
+                        .withAction(AuthenticateAction.CHANGE_PASSWORD)
+                        .withOutcome(EventLoggingUtil.createOutcome(AuthenticateOutcome.class, e))
+                        .build());
     }
 
     @Override

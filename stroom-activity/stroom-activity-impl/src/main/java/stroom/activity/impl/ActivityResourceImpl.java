@@ -197,14 +197,12 @@ class ActivityResourceImpl implements ActivityResource {
             eventLoggingService.log(
                     "Acknowledge Splash",
                     "User has acknowledged the splash screen",
-                    eventDetailBuilder -> eventDetailBuilder
-                            .withView(
-                                    ViewEventAction.builder()
-                                            .addBanner(Banner.builder()
-                                                    .withMessage(request.getMessage())
-                                                    .withVersion(request.getVersion())
-                                                    .build())
-                                            .build()));
+                    ViewEventAction.builder()
+                            .addBanner(Banner.builder()
+                                    .withMessage(request.getMessage())
+                                    .withVersion(request.getVersion())
+                                    .build())
+                            .build());
             return true;
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);

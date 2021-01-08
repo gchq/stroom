@@ -34,7 +34,6 @@ import event.logging.CopyMoveOutcome;
 import event.logging.CreateEventAction;
 import event.logging.Criteria;
 import event.logging.DeleteEventAction;
-import event.logging.Event;
 import event.logging.ExportEventAction;
 import event.logging.MoveEventAction;
 import event.logging.MultiObject;
@@ -100,14 +99,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Create",
                         "Creating " + objectType + " \"" + objectName + "\"",
-                        eventDetailBuilder -> eventDetailBuilder
-                        .withCreate(CreateEventAction.builder()
+                        CreateEventAction.builder()
                                 .addObject(OtherObject.builder()
                                         .withType(objectType)
                                         .withName(objectName)
                                         .build())
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                .build()));
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to create event!", e);
             }
@@ -126,11 +124,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Create",
                         createEventDescription("Create", object),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withCreate(CreateEventAction.builder()
-                                        .withObjects(createBaseObject(object))
-                                        .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                        .build()));
+                        CreateEventAction.builder()
+                                .withObjects(createBaseObject(object))
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to create event!", e);
             }
@@ -165,8 +162,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Update",
                         createEventDescription("Updating", before),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withUpdate(updateBuilder.build()));
+                        updateBuilder.build());
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to update event!", e);
@@ -206,8 +202,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Copy",
                         createEventDescription("Copying", source),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withCopy(copyBuilder.build()));
+                        copyBuilder.build());
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to copy event!", e);
@@ -241,8 +236,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Move",
                         createEventDescription("Moving", source),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withMove(moveBuilder.build()));
+                        moveBuilder.build());
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to move event!", e);
@@ -276,8 +270,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Rename",
                         createEventDescription("Renaming", before),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withMove(moveBuilder.build()));
+                        moveBuilder.build());
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to move event!", e);
@@ -292,11 +285,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Delete",
                         createEventDescription("Deleting", object),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withDelete(DeleteEventAction.builder()
-                                        .withObjects(createBaseObject(object))
-                                        .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                        .build()));
+                        DeleteEventAction.builder()
+                                .withObjects(createBaseObject(object))
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to delete event!", e);
             }
@@ -310,11 +302,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "View",
                         createEventDescription("Viewing", object),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withView(ViewEventAction.builder()
-                                        .withObjects(createBaseObject(object))
-                                        .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                        .build()));
+                        ViewEventAction.builder()
+                                .withObjects(createBaseObject(object))
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to view event!", e);
             }
@@ -338,11 +329,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         criteria.getClass().getSimpleName(),
                         createEventDescription("Finding " + getObjectType(criteria), null),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withDelete(DeleteEventAction.builder()
-                                        .withObjects(createBaseObject(criteriaBuilder.build()))
-                                        .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                        .build()));
+                        DeleteEventAction.builder()
+                                .withObjects(createBaseObject(criteriaBuilder.build()))
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to doDelete!", e);
             }
@@ -356,13 +346,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         "Download",
                         createEventDescription("Downloading", object),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withExport(ExportEventAction.builder()
-                                        .withSource(MultiObject.builder()
-                                                .withObjects(createBaseObject(object))
-                                                .build())
-                                        .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                        .build()));
+                        ExportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .withObjects(createBaseObject(object))
+                                        .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -392,8 +381,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 eventLoggingService.log(
                         typeId,
                         createEventDescription("Finding " + resultType, null),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withSearch(searchBuilder.build()));
+                        searchBuilder.build());
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to doSearch!", e);
@@ -488,13 +476,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //        return eventLoggingService.createSkeletonEvent(typeId, desc.toString());
 //    }
 
-    private Event createAction(final String typeId,
-                               final String description,
-                               final String objectType,
-                               final String objectName) {
-        final String desc = description + " " + objectType + " \"" + objectName;
-        return eventLoggingService.createSkeletonEvent(typeId, desc);
-    }
+//    private Event createAction(final String typeId,
+//                               final String description,
+//                               final String objectType,
+//                               final String objectName) {
+//        final String desc = description + " " + objectType + " \"" + objectName;
+//        return eventLoggingService.createSkeletonEvent(typeId, desc);
+//    }
 
 
     private String getObjectType(final Object object) {

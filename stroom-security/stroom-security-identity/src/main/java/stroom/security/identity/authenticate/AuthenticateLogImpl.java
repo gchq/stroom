@@ -5,6 +5,13 @@ import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 
+import event.logging.AuthenticateAction;
+import event.logging.AuthenticateEventAction;
+import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.UpdateEventAction;
+import event.logging.User;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Map;
@@ -88,14 +95,40 @@ public class AuthenticateLogImpl implements AuthenticateLog {
 
 
     public void logout(final Throwable ex) {
-        eventLoggingService.createSkeletonEvent("Logout", "The user has logged out.");
+        eventLoggingService.createEvent(
+                "Logout",
+                "The user has logged out.",
+                AuthenticateEventAction.builder()
+                        .withUser(User.builder()
+                                .withId(securityContext.getUserId())
+                                .build())
+                        .withAction(AuthenticateAction.LOGOFF)
+                        .build());
     }
 
     public void resetEmail(final String emailAddress, final Throwable ex) {
-        eventLoggingService.createSkeletonEvent("ResetPassword", "User reset their password");
+        eventLoggingService.createEvent(
+                "ResetPassword",
+                "User reset their password",
+                UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("Email address")
+                                        .withName(emailAddress)
+                                        .build())
+                                .build())
+                        .build());
     }
 
     public void changePassword(final Throwable ex) {
-        eventLoggingService.createSkeletonEvent("ChangePassword", "User reset their password");
+        eventLoggingService.createEvent(
+                "ChangePassword",
+                "User reset their password",
+                AuthenticateEventAction.builder()
+                        .withUser(User.builder()
+                                .withId(securityContext.getUserId())
+                                .build())
+                        .withAction(AuthenticateAction.RESET_PASSWORD)
+                        .build());
     }
 }

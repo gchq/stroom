@@ -46,14 +46,14 @@ public class PipelineEventLog {
                            final Throwable th) {
         try {
             if (eventId != null) {
+
                 eventLoggingService.log(
                         "Stepping",
                         "Stepping Stream",
-                eventDetailBuilder -> eventDetailBuilder
-                        .withView(ViewEventAction.builder()
+                        ViewEventAction.builder()
                                 .withObjects(createStreamObject(eventId, feedName, streamTypeName, pipelineRef))
                                 .withOutcome(EventLoggingUtil.createOutcome(th))
-                                .build()));
+                                .build());
             }
         } catch (final Exception e) {
             LOGGER.error("Unable to step stream!", e);
