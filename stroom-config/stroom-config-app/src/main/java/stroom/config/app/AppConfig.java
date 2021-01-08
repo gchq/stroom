@@ -27,6 +27,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.rs.logging.impl.RequestLoggingConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -80,6 +81,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_REQUEST_LOGGING = "requestLogging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -121,6 +123,7 @@ public class AppConfig extends AbstractConfig {
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+    private RequestLoggingConfig requestLoggingConfig = new RequestLoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -447,6 +450,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
         this.receiveDataConfig = receiveDataConfig;
+    }
+
+    @JsonProperty(PROP_NAME_REQUEST_LOGGING)
+    public RequestLoggingConfig getRequestLoggingConfig() {
+        return requestLoggingConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRequestLoggingConfig(final RequestLoggingConfig requestLoggingConfig) {
+        this.requestLoggingConfig = requestLoggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)

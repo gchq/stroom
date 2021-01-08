@@ -5,6 +5,8 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StroomLog;
+import stroom.util.shared.StroomLoggingOperationType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,13 +22,15 @@ import java.util.Optional;
 
 class RequestEventLogImpl implements RequestEventLog {
 
+    private final RequestLoggingConfig config;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject
-    RequestEventLogImpl (final DocumentEventLog documentEventLog, final SecurityContext securityContext,
+    RequestEventLogImpl (final RequestLoggingConfig confg, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
                          final StroomEventLoggingService eventLoggingService){
+        this.config = confg;
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
         this.eventLoggingService = eventLoggingService;
@@ -34,7 +38,7 @@ class RequestEventLogImpl implements RequestEventLog {
 
     @Override
     public void log (final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error){
-        if (requestInfo == null){
+        if (!shouldLog(requestInfo)){
             return;
         }
 
@@ -79,6 +83,37 @@ class RequestEventLogImpl implements RequestEventLog {
     @Override
     public void log (RequestInfo info, Object responseEntity){
       log (info, responseEntity, null);
+    }
+
+    private boolean shouldLog (RequestInfo requestInfo){
+        //Global default is enabled via property
+        if (requestInfo == null){
+            return false;
+        }
+
+        StroomLoggingOperationType methodOpType = null;
+        if (requestInfo.getMethod().getAnnotation(StroomLog.class) != null){
+            methodOpType = requestInfo.getMethod().getAnnotation(StroomLog.class).value();
+        }
+        StroomLoggingOperationType classOpType = null;
+        if (requestInfo.getResourceClass().getAnnotation(StroomLog.class) != null){
+            classOpType = requestInfo.getResourceClass().getAnnotation(StroomLog.class).value();
+        }
+
+        //Method can override class and class can override global setting
+        if (StroomLoggingOperationType.UNLOGGED.equals(methodOpType)){
+            return false;
+        }
+
+        if (StroomLoggingOperationType.UNLOGGED.equals(classOpType) && methodOpType == null){
+            return false;
+        }
+
+        if (!config.isGlobalLoggingEnabled() && classOpType == null && methodOpType == null ) {
+            return false;
+        }
+
+        return true;
     }
 
     private void logSearch (String typeId, Object requestEntity, Object responseEntity, Throwable error){

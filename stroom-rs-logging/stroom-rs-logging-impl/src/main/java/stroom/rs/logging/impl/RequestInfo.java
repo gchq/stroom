@@ -1,9 +1,8 @@
 package stroom.rs.logging.impl;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasUuid;
-import stroom.util.shared.StroomLoggingOperation;
+import stroom.util.shared.StroomLog;
 import stroom.util.shared.StroomLoggingOperationType;
 
 import javax.ws.rs.HttpMethod;
@@ -82,15 +81,15 @@ class RequestInfo {
     }
 
     private static Optional<StroomLoggingOperationType> getOperationType(final Class<?> restResourceClass) {
-        final StroomLoggingOperation opAnnotation = restResourceClass.getAnnotation(StroomLoggingOperation.class);
+        final StroomLog opAnnotation = restResourceClass.getAnnotation(StroomLog.class);
         return Optional.ofNullable(opAnnotation)
                 .or(() ->
                         // No operation annotation on the RestResource so look for it in all interfaces
                         Arrays.stream(restResourceClass.getInterfaces())
-                                .map(clazz -> clazz.getAnnotation(StroomLoggingOperation.class))
+                                .map(clazz -> clazz.getAnnotation(StroomLog.class))
                                 .filter(Objects::nonNull)
                                 .findFirst())
-                .map(StroomLoggingOperation::value);
+                .map(StroomLog::value);
     }
 
     private StroomLoggingOperationType findOperationType(final Method method,
