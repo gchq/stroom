@@ -1,7 +1,9 @@
 package stroom.rs.logging.impl;
 
-public interface RequestEventLog {
-    void log (LoggingInfo info, Object requestEntity, Object responseEntity);
+import javax.annotation.Nullable;
 
-    void log (LoggingInfo info, Object requestEntity, Object responseEntity, Throwable error);
+public interface RequestEventLog {
+    void log (final RequestInfo info, @Nullable final Object responseEntity);
+
+    void log (final RequestInfo info,  @Nullable final Object responseEntity, final Throwable error);
 }

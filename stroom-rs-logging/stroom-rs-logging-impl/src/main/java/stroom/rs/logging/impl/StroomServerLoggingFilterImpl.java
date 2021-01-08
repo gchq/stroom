@@ -63,8 +63,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             final Object entity = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (entity != null) {
                 RequestInfo requestInfo = (RequestInfo) entity;
-//                requestEventLog.log(requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
-//                        requestInfo.getRequestEntity(), exception);
+                requestEventLog.log(requestInfo, null, exception);
             } else {
                 LOGGER.warn("Unable to create audit log for exception, request info is null", exception);
             }
@@ -111,42 +110,23 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         writerInterceptorContext.proceed();
 
         final Object entity = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
-//        final Object entity = writerInterceptorContext.getProperty(REQUEST_LOG_INFO_PROPERTY);
 
         if (entity != null) {
             RequestInfo requestInfo = (RequestInfo) entity;
-//            requestEventLog.log (requestInfo.getLoggingInfo(), requestInfo.getRequestEntity(),
-//                    writerInterceptorContext.getEntity());
+            requestEventLog.log (requestInfo, writerInterceptorContext.getEntity());
         }
     }
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-//        LoggingInfo loggingInfo = resourcePathMapProvider.get().lookup(context);
-
-        String pt = request.getPathTranslated();
-        String m = request.getMethod();
-        String sp = request.getServletPath();
-        String pm = request.getParameterMap().keySet().stream().collect(Collectors.joining(", "));
-        String cp = request.getContextPath();
-        String qs = request.getQueryString();
-
-        String mr = context.getUriInfo().getMatchedResources().stream().map(Object::toString).collect(Collectors.joining(", "));
-        String p = context.getUriInfo().getPath(false);
-        String pp= context.getUriInfo().getPathParameters(true).keySet().stream().map(k -> { return k + ":" +
-                context.getUriInfo().getPathParameters(true).get(k);}).collect(Collectors.joining(", "));
-        String qp = context.getUriInfo().getQueryParameters(true).keySet().stream().map(k -> { return k + ":" +
-                context.getUriInfo().getQueryParameters(true).get(k);}).collect(Collectors.joining(", "));
-
-
         if (context.hasEntity()) {
             final LoggingInputStream stream = new LoggingInputStream(resourceInfo, context.getEntityStream(),
                     objectMapper, MessageUtils.getCharset(context.getMediaType()));
             context.setEntityStream(stream);
 
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(context, stream.getRequestEntity()));
+            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(resourceInfo, context, stream.getRequestEntity()));
         } else {
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(context));
+            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(resourceInfo, context));
         }
     }
 

@@ -14,6 +14,7 @@ import event.logging.ObjectOutcome;
 import event.logging.Query;
 import event.logging.util.EventLoggingUtil;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.Optional;
 
@@ -32,14 +33,16 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     @Override
-    public void log (LoggingInfo info, Object requestEntity, Object responseEntity, Throwable error){
-        if (info == null){
+    public void log (final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error){
+        if (requestInfo == null){
             return;
         }
 
-        String typeId = info.getResourceClass().getSimpleName() + "." + info.getMethod().getName();
+        Object requestEntity = requestInfo.getRequestObj();
 
-        switch (info.getOperationType()){
+        String typeId = requestInfo.getResourceClass().getSimpleName() + "." + requestInfo.getMethod().getName();
+
+        switch (requestInfo.getOperationType()){
             case DELETE:
                 documentEventLog.delete(requestEntity,typeId,error);
                 break;
@@ -56,7 +59,7 @@ class RequestEventLogImpl implements RequestEventLog {
                 documentEventLog.update(requestEntity,responseEntity,typeId,error);
                 break;
             case SEARCH:
-                logSearch(typeId, info, requestEntity, responseEntity, error);
+                logSearch(typeId, requestEntity, responseEntity, error);
                 break;
             case EXPORT:
                 documentEventLog.download(requestEntity,typeId, error);
@@ -74,11 +77,11 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     @Override
-    public void log (LoggingInfo info, Object requestEntity, Object responseEntity){
-      log (info, requestEntity, responseEntity, null);
+    public void log (RequestInfo info, Object responseEntity){
+      log (info, responseEntity, null);
     }
 
-    private void logSearch (String typeId, LoggingInfo info, Object requestEntity, Object responseEntity, Throwable error){
+    private void logSearch (String typeId, Object requestEntity, Object responseEntity, Throwable error){
         Query query = new Query();
 
         if (requestEntity != null) {
