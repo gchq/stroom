@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1990** : Change order of items in quick filter popup help.
+
+* Change quick filter word boundary matching to handle a mix of delimited and canelCase, e.g. `stroom.prop.maxFileSize`.
+
 * Issue **#1986** : Fix missing gutter warning/error icons in the stepper code editor.
 
 
