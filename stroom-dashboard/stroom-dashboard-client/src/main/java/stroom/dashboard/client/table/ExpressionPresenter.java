@@ -24,10 +24,14 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Field;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -43,6 +47,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -57,8 +62,10 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -73,8 +80,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
+    private final UiConfigCache clientPropertyCache;
     final AceCompletionProvider functionsCompletionProvider;
-    private List<Item> menuItems;
+    private List<Item> functionsMenuItems;
+    private List<Item> fieldsMenuItems;
     private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
@@ -84,19 +93,56 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                final ExpressionView view,
                                final MenuListPresenter menuListPresenter,
                                final RestFactory restFactory,
-                               final EditorPresenter editorPresenter) {
+                               final EditorPresenter editorPresenter,
+                               final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
         this.menuListPresenter = menuListPresenter;
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
+        this.clientPropertyCache = clientPropertyCache;
         view.setUiHandlers(this);
         view.setEditor(editorPresenter.getView());
 
-        if (menuItems == null) {
+        final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION.title("Insert Function"));
+        final ButtonView addFieldButton = view.addButton(SvgPresets.FIELD.title("Insert Field"));
+        final ButtonView helpButton = view.addButton(SvgPresets.HELP);
+
+        addFunctionButton.addClickHandler(this::onAddFunction);
+        addFieldButton.addClickHandler(this::onAddField);
+        helpButton.addClickHandler(this::onShowHelp);
+
+        if (functionsMenuItems == null) {
             functionCompletions.clear();
-            menuItems = createMenuItemsAndSnippets();
+            functionsMenuItems = createFunctionsMenuItemsAndSnippets();
         }
         functionsCompletionProvider = buildCompletionProvider(functionCompletions);
+    }
+
+    private void onShowHelp(final ClickEvent clickEvent) {
+
+        if ((clickEvent.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            clientPropertyCache.get()
+                    .onSuccess(result -> {
+                        final String helpUrl = result.getHelpUrl();
+                        if (helpUrl != null && helpUrl.trim().length() > 0) {
+                            String url = helpUrl + "/user-guide/dashboards/expressions";
+                            Window.open(url, "_blank", "");
+                        } else {
+                            AlertEvent.fireError(
+                                    ExpressionPresenter.this,
+                                    "Help is not configured!",
+                                    null);
+                        }
+                    })
+                    .onFailure(caught -> AlertEvent.fireError(
+                            ExpressionPresenter.this,
+                            caught.getMessage(),
+                            null));
+        }
+    }
+
+    protected String formatAnchor(String name) {
+        return "#" + name.replace(" ", "-").toLowerCase();
     }
 
     private AceCompletionProvider buildFieldsCompletionProvider() {
@@ -149,6 +195,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         editorPresenter.registerCompletionProviders(
                 functionsCompletionProvider,
                 buildFieldsCompletionProvider());
+
+        fieldsMenuItems = createFieldsMenuItems();
     }
 
     public void show(final TablePresenter tablePresenter,
@@ -248,6 +296,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     @Override
     public void onAddFunction(final ClickEvent event) {
+        showMenu(event, functionsMenuItems);
+    }
+
+    public void showMenu(final ClickEvent event, final List<Item> menuItems) {
         if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
@@ -276,6 +328,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         }
     }
 
+    @Override
+    public void onAddField(final ClickEvent event) {
+        showMenu(event, fieldsMenuItems);
+    }
+
     private BiFunction<FunctionDef, Ancestors, Command> createLeafBuilder() {
         return (functionDef, ancestors) -> {
             final String func = functionDef.toString();
@@ -301,7 +358,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 //        };
 //    }
 
-    private List<Item> createMenuItemsAndSnippets() {
+    private List<Item> createFunctionsMenuItemsAndSnippets() {
 
         // TODO Once we have function definitions (name, desc, args) on the actual functions in
         //  stroom-expression we need to reinstate a variant of this to build the menu.
@@ -332,6 +389,32 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return children;
     }
 
+    private List<Item> createFieldsMenuItems() {
+
+        final List<Item> menuItems;
+        if (tablePresenter != null && tablePresenter.getIndexFieldsMap() != null) {
+            final AtomicInteger position = new AtomicInteger(0);
+            menuItems = tablePresenter.getIndexFieldsMap()
+                    .keySet()
+                    .stream()
+                    .sorted(Comparator.comparing(String::toLowerCase))
+                    .map(fieldName ->
+                            "${" + fieldName + "}")
+                    .map(fieldName ->
+                            new SimpleMenuItem(
+                                    position.getAndIncrement(),
+                                    fieldName,
+                                    null,
+                                    true,
+                                    () -> addFunction(fieldName)))
+                    .collect(Collectors.toList());
+        } else {
+            menuItems = Collections.emptyList();
+        }
+
+        return menuItems;
+    }
+
     private Item createAggregateFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
@@ -346,7 +429,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "sum($)", "sum("));
         children.add(createFunction(item++, "variance($)", "variance("));
 
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createCastFunctions(final int pos, final String func) {
@@ -357,7 +440,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "toInteger($)", "toInteger("));
         children.add(createFunction(item++, "toLong($)", "toLong("));
         children.add(createFunction(item++, "toString($)", "toString("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createDateFunctions(final int pos, final String func) {
@@ -365,7 +448,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         int item = 0;
         children.add(createFunction(item++, "formatDate($, pattern, timeZone)", "formatDate("));
         children.add(createFunction(item++, "parseDate($, pattern, timeZone)", "parseDate("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createLinkFunctions(final int pos, final String func) {
@@ -376,7 +459,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "data(text, id, partNo, recordNo, lineFrom, colFrom, lineTo, colTo, [displayType, viewType])", "data("));
         children.add(createFunction(item++, "link(text, url, type)", "link("));
         children.add(createFunction(item++, "stepping(text, id, partNo, recordNo)", "stepping("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createLogicFunctions(final int pos, final String func) {
@@ -389,7 +472,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "lessThan($, $)", "lessThan("));
         children.add(createFunction(item++, "lessThanOrEqualTo($, $)", "lessThanOrEqualTo("));
         children.add(createFunction(item++, "not($)", "not("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createMathematicsFunctions(final int pos, final String func) {
@@ -407,7 +490,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "random()", "random()"));
         children.add(createFunction(item++, "subtract($)", "subtract("));
         children.add(createFunction(item++, "sum($)", "sum("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createParamFunctions(final int pos, final String func) {
@@ -416,7 +499,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "currentUser()", "currentUser()"));
         children.add(createFunction(item++, "params()", "params()"));
         children.add(createFunction(item++, "param($)", "param("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createRoundingFunctions(final int pos, final String func) {
@@ -425,7 +508,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createCommonSubMenuItems(item++, "ceiling"));
         children.add(createCommonSubMenuItems(item++, "floor"));
         children.add(createCommonSubMenuItems(item++, "round"));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createCommonSubMenuItems(final int pos, final String func) {
@@ -438,7 +521,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, func + "Hour($)", func + "Hour("));
         children.add(createFunction(item++, func + "Minute($)", func + "Minute("));
         children.add(createFunction(item++, func + "Second($)", func + "Second("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createSelectionFunctions(final int pos, final String func) {
@@ -450,7 +533,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "nth($, num)", "nth("));
         children.add(createFunction(item++, "top($, delimiter, rows)", "top("));
         children.add(createFunction(item++, "bottom($, delimiter, rows)", "bottom("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createStringFunctions(final int pos, final String func) {
@@ -473,7 +556,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "substringAfter($, string)", "substringAfter("));
         children.add(createFunction(item++, "substringBefore($, string)", "substringBefore("));
         children.add(createFunction(item++, "upperCase($)", "upperCase("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createTypeCheckingFunctions(final int pos, final String func) {
@@ -489,7 +572,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "isString($)", "isString("));
         children.add(createFunction(item++, "isValue($)", "isValue("));
         children.add(createFunction(item++, "typeOf($)", "typeOf("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createUriFunctions(final int pos, final String func) {
@@ -504,7 +587,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "extractSchemeFromUri($)", "extractSchemeFromUri("));
         children.add(createFunction(item++, "extractSchemeSpecificPartFromUri($)", "extractSchemeSpecificPartFromUri("));
         children.add(createFunction(item++, "extractUserInfoFromUri($)", "extractUserInfoFromUri("));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createValueFunctions(final int pos, final String func) {
@@ -514,7 +597,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "false()", "false()"));
         children.add(createFunction(item++, "null()", "null()"));
         children.add(createFunction(item++, "true()", "true()"));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+        return new SimpleParentMenuItem(pos, func, children);
     }
 
     private Item createFunction(final int pos, final String text, final String func) {
@@ -524,7 +607,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         createAceCompletionSnippet(text, func, "")
                 .ifPresent(functionCompletions::add);
 
-        return new IconMenuItem(
+        return new SimpleMenuItem(
                 pos,
                 text,
                 null,
@@ -731,6 +814,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
 
         void setEditor(final EditorView editor);
+
+        ButtonView addButton(final SvgPreset preset);
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -866,7 +951,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                    final BiFunction<FunctionDef, Ancestors, Command> commandBuilder) {
 
             final Command command = commandBuilder.apply(functionDef, ancestors);
-            items.add(new IconMenuItem(items.size(), functionDef.toString(), null, true, command));
+            items.add(new SimpleMenuItem(items.size(), functionDef.toString(), null, true, command));
             return this;
         }
 
