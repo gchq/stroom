@@ -301,6 +301,8 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
+            buffer.appendHtmlConstant("</table>");
+
             // Make the text selectable, e.g. for copy/pasting
             return new SafeHtmlBuilder()
                     .appendHtmlConstant("<div style=\"user-select: text;\">")

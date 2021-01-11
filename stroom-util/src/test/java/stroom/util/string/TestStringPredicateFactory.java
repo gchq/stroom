@@ -183,6 +183,28 @@ class TestStringPredicateFactory {
                                 "CountPipelineSwimPipe"),
                         List.of("CountPipelineSoQueueLongPipe")),
 
+                makeTest("Word boundary match 6 (camel + delimited) ",
+                        "?JDCN",
+                        List.of("stroom.job.db.connection.jdbcDriverClassName"),
+                        List.of("stroom.job.db.connection.jdbcDriverPassword")),
+
+                makeTest("Word boundary match 7 (camel + delimited) ",
+                        "?SJDCJDCN",
+                        List.of("stroom.job.db.connection.jdbcDriverClassName"),
+                        List.of("stroom.job.db.connection.jdbcDriverPassword")),
+
+                makeTest("Word boundary match 8",
+                        "?MFN",
+                        List.of("MY_FEED NAME"),
+                        List.of("MY FEEDNAME")),
+
+                makeTest("Word boundary match 9 (one word)",
+                        "?A",
+                        List.of("alpha",
+                                "alpha bravo",
+                                "bravo alpha"),
+                        List.of("bravo")),
+
                 makeTest("Word boundary (brackets)",
                         "?Xml",
                         List.of("Events (XML)",
