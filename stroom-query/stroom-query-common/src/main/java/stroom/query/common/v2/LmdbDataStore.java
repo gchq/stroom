@@ -84,7 +84,7 @@ public class LmdbDataStore implements DataStore {
 
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
     private final CompiledField[] compiledFields;
-    private final LmdbCompiledSorter[] compiledSorters;
+    private final CompiledSorter<HasGenerators>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -126,7 +126,7 @@ public class LmdbDataStore implements DataStore {
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
-        compiledSorters = LmdbCompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
+        compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
 
         itemSerialiser = new ItemSerialiser(compiledFields);
         if (ROOT_RAW_KEY == null) {
@@ -150,7 +150,7 @@ public class LmdbDataStore implements DataStore {
 
         // Find out if we have any sorting.
         boolean hasSort = false;
-        for (final LmdbCompiledSorter sorter : compiledSorters) {
+        for (final CompiledSorter<HasGenerators> sorter : compiledSorters) {
             if (sorter != null) {
                 hasSort = true;
                 break;
@@ -668,7 +668,7 @@ public class LmdbDataStore implements DataStore {
             } else {
                 maxSize = Integer.MAX_VALUE;
             }
-            final LmdbCompiledSorter sorter = compiledSorters[depth];
+            final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
             boolean trimmed = true;
 
             boolean inRange = true;
@@ -733,7 +733,7 @@ public class LmdbDataStore implements DataStore {
             array = new ItemImpl[minArraySize];
         }
 
-        void sortAndTrim(final LmdbCompiledSorter sorter,
+        void sortAndTrim(final CompiledSorter<HasGenerators> sorter,
                          final int trimmedSize,
                          final boolean trimTop) {
             if (sorter != null && size > 0) {
@@ -770,7 +770,7 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    public static class ItemImpl implements Item {
+    public static class ItemImpl implements Item, HasGenerators {
         private final LmdbDataStore lmdbDataStore;
         private final RawKey rawKey;
         private final Key key;
@@ -854,6 +854,7 @@ public class LmdbDataStore implements DataStore {
             return val;
         }
 
+        @Override
         public Generator[] getGenerators() {
             return generators;
         }

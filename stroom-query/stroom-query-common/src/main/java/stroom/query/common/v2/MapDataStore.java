@@ -55,7 +55,7 @@ public class MapDataStore implements DataStore {
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
     private final CompiledField[] compiledFields;
-    private final CompiledSorter[] compiledSorters;
+    private final CompiledSorter<UnpackedItem>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final Sizes storeSize;
@@ -93,7 +93,7 @@ public class MapDataStore implements DataStore {
 
         // Find out if we have any sorting.
         boolean hasSort = false;
-        for (final CompiledSorter sorter : compiledSorters) {
+        for (final CompiledSorter<UnpackedItem> sorter : compiledSorters) {
             if (sorter != null) {
                 hasSort = true;
                 break;
@@ -346,6 +346,7 @@ public class MapDataStore implements DataStore {
                 }
 
                 @Override
+                @Nonnull
                 public Iterator<Item> iterator() {
                     return Collections.emptyIterator();
                 }

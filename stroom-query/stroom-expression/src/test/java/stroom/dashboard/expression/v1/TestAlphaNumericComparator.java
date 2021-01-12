@@ -47,9 +47,6 @@ class TestAlphaNumericComparator {
         List<Val> sortedList = vals.stream()
                 .sorted(comparator)
                 .collect(Collectors.toList());
-        sortedList = vals.stream()
-                .sorted()
-                .collect(Collectors.toList());
     }
 
     @Test

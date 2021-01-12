@@ -83,11 +83,6 @@ public final class ValInteger implements ValNumber {
         return Objects.hash(value);
     }
 
-    @Override
-    public int compareTo(final Val o) {
-        return Integer.compare(value, ((ValInteger) o).value);
-    }
-
     private static class ValIntegerCache {
         static final ValInteger cache[] = new ValInteger[-(-128) + 127 + 1];
 

@@ -28,14 +28,15 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream<UnpackedItem>, Stream<UnpackedItem>> {
+public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, Function<Stream<E>, Stream<E>> {
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
     private CompiledSorter() {
     }
 
-    public static CompiledSorter[] create(final int maxDepth, final CompiledField[] compiledFields) {
-        final CompiledSorter[] sorters = new CompiledSorter[maxDepth + 1];
+    @SuppressWarnings("unchecked")
+    public static <E extends HasGenerators> CompiledSorter<E>[] create(final int maxDepth, final CompiledField[] compiledFields) {
+        final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
 
         if (compiledFields != null) {
             for (int depth = 0; depth <= maxDepth; depth++) {
@@ -48,12 +49,11 @@ public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream
 
                         // Remember sorting info.
                         final Sort sort = field.getSort();
-
                         final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort, comparator);
 
-                        CompiledSorter sorter = sorters[depth];
+                        CompiledSorter<E> sorter = sorters[depth];
                         if (sorter == null) {
-                            sorter = new CompiledSorter();
+                            sorter = new CompiledSorter<>();
                             sorters[depth] = sorter;
                         }
 
@@ -84,12 +84,12 @@ public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream
     }
 
     @Override
-    public Stream<UnpackedItem> apply(final Stream<UnpackedItem> stream) {
+    public Stream<E> apply(final Stream<E> stream) {
         return stream.sorted(this);
     }
 
     @Override
-    public int compare(final UnpackedItem o1, final UnpackedItem o2) {
+    public int compare(final E o1, final E o2) {
         final Generator[] generators1 = o1.getGenerators();
         final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {

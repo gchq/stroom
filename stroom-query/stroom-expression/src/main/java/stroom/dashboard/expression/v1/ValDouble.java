@@ -89,9 +89,4 @@ public final class ValDouble implements ValNumber {
     public int hashCode() {
         return Objects.hash(value);
     }
-
-    @Override
-    public int compareTo(final Val o) {
-        return Double.compare(value, ((ValDouble) o).value);
-    }
 }

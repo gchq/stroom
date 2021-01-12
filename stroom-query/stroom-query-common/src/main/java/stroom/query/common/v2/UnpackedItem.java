@@ -2,7 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
 
-public class UnpackedItem {
+public class UnpackedItem implements HasGenerators {
     private final RawKey rawKey;
     private final Generator[] generators;
     private final byte[] bytes;
@@ -17,6 +17,7 @@ public class UnpackedItem {
         return rawKey;
     }
 
+    @Override
     public Generator[] getGenerators() {
         return generators;
     }
