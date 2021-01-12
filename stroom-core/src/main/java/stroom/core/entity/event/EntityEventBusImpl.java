@@ -20,6 +20,7 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -77,53 +78,63 @@ class EntityEventBusImpl implements EntityEventBus {
      * Fires the entity change to all nodes in the cluster.
      */
     private void fireGlobally(final EntityEvent event) {
-        try {
-            // Make sure there are some handlers that care about this event.
-            boolean handlerExists = entityEventHandler.handlerExists(event, event.getDocRef().getType());
-            if (!handlerExists) {
-                // Look for handlers that cater for all types.
-                handlerExists = entityEventHandler.handlerExists(event, "*");
-            }
-
-            // If there are registered handlers then go ahead and fire the event.
-            if (handlerExists) {
-                // Force a local update so that changes are immediately reflected
-                // for the current user.
-                entityEventHandler.fireLocally(event);
-
-                if (started) {
-                    // Dispatch the entity event to all nodes in the cluster.
-                    final Runnable runnable = taskContextFactory.context("Fire Entity Event Globally", taskContext -> fireRemote(event));
-                    CompletableFuture.runAsync(runnable, executor);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    private void fireRemote(final EntityEvent entityEvent) {
-        securityContext.secure(() -> {
+        securityContext.asProcessingUser(() -> {
             try {
-                final TargetNodeSetFactory targetNodeSetFactory = targetNodeSetFactoryProvider.get();
+                // Make sure there are some handlers that care about this event.
+                boolean handlerExists = entityEventHandler.handlerExists(event, event.getDocRef().getType());
+                if (!handlerExists) {
+                    // Look for handlers that cater for all types.
+                    handlerExists = entityEventHandler.handlerExists(event, "*");
+                }
 
-                // Get this node.
-                final String sourceNode = targetNodeSetFactory.getSourceNode();
+                // If there are registered handlers then go ahead and fire the event.
+                if (handlerExists) {
+                    // Force a local update so that changes are immediately reflected
+                    // for the current user.
+                    entityEventHandler.fireLocally(event);
 
-                // Get the nodes that we are going to send the entity event to.
-                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-
-                // Only send the event to remote nodes and not this one.
-                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
-                    // Send the entity event.
-                    entityEventResource.fireEvent(targetNode, entityEvent);
-                });
-            } catch (final NullClusterStateException | NodeNotFoundException e) {
-                LOGGER.warn(e.getMessage());
-                LOGGER.debug(e.getMessage(), e);
+                    if (started) {
+                        // Dispatch the entity event to all nodes in the cluster.
+                        final Runnable runnable = taskContextFactory.context("Fire Entity Event Globally",
+                                taskContext -> fireRemote(event, taskContext));
+                        CompletableFuture.runAsync(runnable, executor);
+                    }
+                }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
+    }
+
+    private void fireRemote(final EntityEvent entityEvent,
+                            final TaskContext parentTaskContext) {
+        try {
+            final TargetNodeSetFactory targetNodeSetFactory = targetNodeSetFactoryProvider.get();
+
+            // Get this node.
+            final String sourceNode = targetNodeSetFactory.getSourceNode();
+
+            // Get the nodes that we are going to send the entity event to.
+            final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+            // Only send the event to remote nodes and not this one.
+            targetNodes
+                    .stream()
+                    .filter(targetNode -> !targetNode.equals(sourceNode))
+                    .forEach(targetNode -> {
+                        // Send the entity event asynchronously.
+                        final Runnable runnable = taskContextFactory.context(
+                                parentTaskContext,
+                                "Fire Entity Event To " + targetNode, taskContext ->
+                                        entityEventResource.fireEvent(targetNode, entityEvent)
+                        );
+                        CompletableFuture.runAsync(runnable, executor);
+                    });
+        } catch (final NullClusterStateException | NodeNotFoundException e) {
+            LOGGER.warn(e.getMessage());
+            LOGGER.debug(e.getMessage(), e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 }
