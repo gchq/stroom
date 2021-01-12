@@ -156,7 +156,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                         final String fieldExpression = "${" + fieldName + "}";
                         final String snippet = "\\" + fieldExpression + "${0}"; // escape our $ for snippet engine
                         return new AceCompletionSnippet(
-                                fieldName,
+                                fieldExpression,
                                 snippet,
                                 DEFAULT_COMPLETION_SCORE,
                                 "Field",
