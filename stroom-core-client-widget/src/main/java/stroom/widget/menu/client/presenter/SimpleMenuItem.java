@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.widget.menu.client.presenter;
 
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import com.google.gwt.user.client.Command;
 
-import com.google.gwt.event.dom.client.ClickEvent;
+public class SimpleMenuItem extends CommandMenuItem {
 
-public interface ExpressionUiHandlers extends PopupUiHandlers {
-
-    void onAddFunction(ClickEvent event);
-
-    void onAddField(ClickEvent event);
+    public SimpleMenuItem(final int priority,
+                          final String text,
+                          final String shortcut,
+                          final boolean enabled,
+                          final Command command) {
+        super(priority, text, shortcut, enabled, command);
+    }
 }
