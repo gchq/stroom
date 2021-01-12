@@ -737,7 +737,7 @@ public class LmdbDataStore implements DataStore {
                          final int trimmedSize,
                          final boolean trimTop) {
             if (sorter != null && size > 0) {
-                Arrays.sort(array, 0, size - 1, sorter);
+                Arrays.sort(array, 0, size, sorter);
             }
             if (size > trimmedSize) {
                 final int len = Math.max(minArraySize, trimmedSize);
