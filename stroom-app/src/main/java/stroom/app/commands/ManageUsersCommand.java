@@ -470,11 +470,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
         stroomEventLoggingService.log(
                 "CliCreateStroom" + (isGroup ? "Group" : "User"),
-                LogUtil.message("A Stroom user account for {} {} was created",
-                        (isGroup ? "group" : "user"), username),
-                eventDetailBuilder -> eventDetailBuilder
-                        .withEventAction(createEventAction)
-        );
+                LogUtil.message(
+                        "A Stroom user account for {} {} was created",
+                        (isGroup ? "group" : "user"),
+                        username),
+                createEventAction);
     }
 
     private void logAddOrRemoveFromGroupEvent(final String username,
@@ -503,14 +503,12 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 "CliAddToGroup",
                 LogUtil.message("User/Group {} was {} to group {}",
                         username, (isAddingGroup ? "added to" : "removed from"), groupName),
-                eventDetailBuilder -> eventDetailBuilder
-                        .withEventAction(authoriseBuilder
-                                .withOutcome(Outcome.builder()
-                                        .withSuccess(wasSuccessful)
-                                        .withDescription(description)
-                                        .build())
+                authoriseBuilder
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(description)
                                 .build())
-        );
+                        .build());
     }
 
     private static class GroupArgs {

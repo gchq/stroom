@@ -40,6 +40,7 @@ public final class SvgPresets {
     public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
+    public static final SvgPreset FIELD = new SvgPreset("images/field.svg", "Field", true);
     public static final SvgPreset FILE = new SvgPreset("images/file.svg", "File", true);
     public static final SvgPreset FILE_RAW = new SvgPreset("images/file-raw.svg", "Raw File", true);
     public static final SvgPreset FILE_FORMATTED = new SvgPreset("images/file-formatted.svg", "Formatted File", true);
@@ -47,6 +48,7 @@ public final class SvgPresets {
     public static final SvgPreset FOLDER = new SvgPreset("images/folder.svg", "Folder", true);
     public static final SvgPreset FOLDER_TREE = new SvgPreset("images/folder-tree.svg", "Folder Tree", true);
     public static final SvgPreset FORMAT = new SvgPreset("images/format.svg", "Format & Indent", true);
+    public static final SvgPreset FUNCTION = new SvgPreset("images/function.svg", "Function", true);
     public static final SvgPreset GENERATE = new SvgPreset("images/generate.svg", "Auto-generate roll-up permutations", true);
     public static final SvgPreset HELP = new SvgPreset("images/help.svg", "Help", true);
     public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);

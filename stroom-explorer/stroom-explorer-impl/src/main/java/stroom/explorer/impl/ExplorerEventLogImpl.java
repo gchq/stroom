@@ -59,11 +59,10 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 eventLoggingService.log(
                         "Create",
                         createEventDescription("Creating", type, name, permissionInheritance),
-                        eventDetailBuilder -> eventDetailBuilder
-                        .withCreate(CreateEventAction.builder()
+                        CreateEventAction.builder()
                                 .addObject(StroomEventLoggingUtil.createOtherObject(type, uuid, name))
                                 .withOutcome(EventLoggingUtil.createOutcome(e))
-                                .build()));
+                                .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error("Unable to create event!", e2);
             }
@@ -80,12 +79,10 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 eventLoggingService.log(
                         "Copy",
                         createEventDescription("Copying", document, permissionInheritance),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withCopy(CopyEventAction.builder()
-                                        .withSource(createMultiObject(document))
-                                        .withDestination(createMultiObject(folder))
-                                        .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
-                                        .build())
+                        CopyEventAction.builder()
+                                .withSource(createMultiObject(document))
+                                .withDestination(createMultiObject(folder))
+                                .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
                                 .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error("Unable to copy event!", e2);
@@ -103,12 +100,10 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 eventLoggingService.log(
                         "Move",
                         createEventDescription("Moving", document, permissionInheritance),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withMove(MoveEventAction.builder()
-                                        .withSource(createMultiObject(document))
-                                        .withDestination(createMultiObject(folder))
-                                        .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
-                                        .build())
+                        MoveEventAction.builder()
+                                .withSource(createMultiObject(document))
+                                .withDestination(createMultiObject(folder))
+                                .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
                                 .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error("Unable to move event!", e2);
@@ -123,12 +118,10 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 eventLoggingService.log(
                         "Rename",
                         createEventDescription("Renaming", document, null),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withMove(MoveEventAction.builder()
-                                        .withSource(createMultiObject(document))
-                                        .withDestination(createMultiObject(document, name))
-                                        .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
-                                        .build())
+                        MoveEventAction.builder()
+                                .withSource(createMultiObject(document))
+                                .withDestination(createMultiObject(document, name))
+                                .withOutcome(StroomEventLoggingUtil.createCopyMoveOutcome(e))
                                 .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error("Unable to move event!", e2);
@@ -143,11 +136,9 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                 eventLoggingService.log(
                         "Delete",
                         createEventDescription("Deleting", document, null),
-                        eventDetailBuilder -> eventDetailBuilder
-                                .withDelete(DeleteEventAction.builder()
-                                        .addObject(StroomEventLoggingUtil.createOtherObject(document))
-                                        .withOutcome(EventLoggingUtil.createOutcome(e))
-                                        .build())
+                        DeleteEventAction.builder()
+                                .addObject(StroomEventLoggingUtil.createOtherObject(document))
+                                .withOutcome(EventLoggingUtil.createOutcome(e))
                                 .build());
             } catch (final RuntimeException e2) {
                 LOGGER.error("Unable to delete event!", e2);

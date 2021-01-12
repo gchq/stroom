@@ -19,7 +19,6 @@ package stroom.editor.client.view;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -307,7 +306,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     private void updateGotoLocation() {
         if (started && gotoLocationDirty) {
-            GWT.log("Goto " + gotoLocation.getLineNo() + ":" + gotoLocation.getColNo());
+//            GWT.log("Goto " + gotoLocation.getLineNo() + ":" + gotoLocation.getColNo());
             editor.gotoPosition(gotoLocation.getLineNo(), gotoLocation.getColNo());
             gotoLocationDirty = false;
         }

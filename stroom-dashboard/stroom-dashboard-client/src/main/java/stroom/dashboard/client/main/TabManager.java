@@ -26,7 +26,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -212,7 +212,7 @@ public class TabManager {
             return null;
         }
 
-        return new SimpleParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+        return new IconParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
     }
 
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {

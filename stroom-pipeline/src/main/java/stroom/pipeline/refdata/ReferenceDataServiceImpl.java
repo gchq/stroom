@@ -405,17 +405,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         try {
             entries.stream()
-                    .filter(refStoreEntry -> {
-                                final boolean result = predicate.test(refStoreEntry);
-                                return result;
-                            })
+                    .filter(predicate)
                     .forEach(refStoreEntry -> {
                         final Val[] valArr = new Val[fields.length];
 
                         for (int i = 0; i < fields.length; i++) {
-                            final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
-                                    .apply(refStoreEntry);
-                            valArr[i] = convertToVal(value, fields[i]);;
+                            AbstractField field = fields[i];
+                            // May be a custom field that we obvs can't extract
+                            if (field != null) {
+                                final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                                        .apply(refStoreEntry);
+                                valArr[i] = convertToVal(value, fields[i]);;
+                            }
                         }
                         consumer.accept(valArr);
                     });

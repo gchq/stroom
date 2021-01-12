@@ -18,39 +18,29 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
 import stroom.editor.client.presenter.EditorView;
-import stroom.widget.button.client.ImageButton;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionView {
-    private static Resources resources;
     private final Widget widget;
 
     @UiField
     ResizeSimplePanel editorContainer;
     @UiField
-    ImageButton addFunction;
+    ButtonPanel buttonPanel;
 
     @Inject
     public ExpressionViewImpl(final Binder binder) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-        }
 
         widget = binder.createAndBindUi(this);
-
-        addFunction.setEnabledImage(resources.expression());
-
     }
 
     @Override
@@ -63,17 +53,9 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
         this.editorContainer.setWidget(editor.asWidget());
     }
 
-
-    @UiHandler("addFunction")
-    public void onAddFunctionClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onAddFunction(event);
-        }
-    }
-
-
-    public interface Resources extends ClientBundle {
-        ImageResource expression();
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {

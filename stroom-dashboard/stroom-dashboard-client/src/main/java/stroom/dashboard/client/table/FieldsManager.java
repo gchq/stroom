@@ -26,7 +26,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -420,7 +420,7 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(
                 createSortOption(field, highlights, 1, resources.sortza(), "Sort Z to A", SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
-        final Item item = new SimpleParentMenuItem(2, ImageIcon.create(resources.sortaz()), null, "Sort", null, true, menuItems);
+        final Item item = new IconParentMenuItem(2, ImageIcon.create(resources.sortaz()), null, "Sort", null, true, menuItems);
         if (field.getSort() != null) {
             highlights.add(item);
         }
@@ -461,7 +461,7 @@ public class FieldsManager implements HeadingListener {
         final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, () -> setGroup(field, null));
         menuItems.add(item);
 
-        final Item parentItem = new SimpleParentMenuItem(3, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
+        final Item parentItem = new IconParentMenuItem(3, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
 
         if (field.getGroup() != null) {
             highlights.add(parentItem);
@@ -568,7 +568,7 @@ public class FieldsManager implements HeadingListener {
             return null;
         }
 
-        return new SimpleParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+        return new IconParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {

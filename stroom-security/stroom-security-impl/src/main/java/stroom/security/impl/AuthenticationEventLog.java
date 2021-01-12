@@ -88,7 +88,6 @@ public class AuthenticationEventLog {
                                      final String outcomeDescription,
                                      final AuthenticateOutcomeReason reason) {
         try {
-            final Event event = eventLoggingService.createSkeletonEvent(typeId, description);
 
             final Builder<Void> builder = AuthenticateEventAction.builder()
                     .withAction(action)
@@ -104,7 +103,10 @@ public class AuthenticationEventLog {
                         .build());
             }
 
-            event.getEventDetail().setEventAction(builder.build());
+            final Event event = eventLoggingService.createEvent(
+                    typeId,
+                    description,
+                    builder.build());
 
             eventLoggingService.log(event);
         } catch (final RuntimeException e) {
