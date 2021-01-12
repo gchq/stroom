@@ -24,6 +24,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import com.google.gwt.event.dom.client.InputEvent;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
@@ -33,7 +34,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -499,21 +499,21 @@ public class TermEditor extends Composite {
                 }
             }
         };
-        final KeyPressHandler keyPressHandler = event -> fireDirty();
 
         registerHandler(value.addKeyDownHandler(keyDownHandler));
-        registerHandler(value.addKeyPressHandler(keyPressHandler));
         registerHandler(valueFrom.addKeyDownHandler(keyDownHandler));
-        registerHandler(valueFrom.addKeyPressHandler(keyPressHandler));
         registerHandler(valueTo.addKeyDownHandler(keyDownHandler));
-        registerHandler(valueTo.addKeyPressHandler(keyPressHandler));
 
         registerHandler(date.addKeyDownHandler(keyDownHandler));
-        registerHandler(date.addKeyPressHandler(keyPressHandler));
         registerHandler(dateFrom.addKeyDownHandler(keyDownHandler));
-        registerHandler(dateFrom.addKeyPressHandler(keyPressHandler));
         registerHandler(dateTo.addKeyDownHandler(keyDownHandler));
-        registerHandler(dateTo.addKeyPressHandler(keyPressHandler));
+
+        registerHandler(value.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(valueFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(valueTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(date.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(dateFrom.addDomHandler(e -> fireDirty(), InputEvent.getType()));
+        registerHandler(dateTo.addDomHandler(e -> fireDirty(), InputEvent.getType()));
 
         registerHandler(date.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));

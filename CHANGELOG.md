@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1811** : Fixed issue where deleting or cutting/pasting text in a dashboard query editor was not marking the dashboard as dirty.
+
 * Search results are now stored off-heap to reduce the chance of out of memory errors.
 
 * Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
