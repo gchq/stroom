@@ -225,6 +225,7 @@ public class FieldsManager implements HeadingListener {
 
         if (change) {
             tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
             tablePresenter.reset();
             tablePresenter.clearAndRefresh();
         }
