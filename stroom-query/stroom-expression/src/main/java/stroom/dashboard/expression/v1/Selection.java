@@ -4,5 +4,4 @@ public interface Selection<T> {
     int size();
 
     T get(int pos);
-
 }

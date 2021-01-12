@@ -19,7 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
-class Nth extends AbstractSelectorFunction implements Serializable {
+public class Nth extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "nth";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -44,7 +44,7 @@ class Nth extends AbstractSelectorFunction implements Serializable {
         return new NthSelector(super.createGenerator(), pos);
     }
 
-    private static class NthSelector extends Selector {
+    public static class NthSelector extends Selector {
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final int pos;
@@ -59,6 +59,10 @@ class Nth extends AbstractSelectorFunction implements Serializable {
                 return selection.get(pos);
             }
             return ValNull.INSTANCE;
+        }
+
+        public int getPos() {
+            return pos;
         }
     }
 }

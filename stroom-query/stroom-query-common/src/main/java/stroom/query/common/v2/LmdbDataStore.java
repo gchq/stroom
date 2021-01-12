@@ -17,12 +17,19 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Any.AnySelector;
+import stroom.dashboard.expression.v1.Bottom.BottomSelector;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.First.FirstSelector;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Last.LastSelector;
+import stroom.dashboard.expression.v1.Nth.NthSelector;
 import stroom.dashboard.expression.v1.Selection;
 import stroom.dashboard.expression.v1.Selector;
+import stroom.dashboard.expression.v1.Top.TopSelector;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -63,7 +70,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Supplier;
 
 public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
@@ -133,8 +139,8 @@ public class LmdbDataStore implements DataStore {
         this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
         this.byteBufferPool = byteBufferPool;
 
-        int keySerdeCapacity = keySerde.getBufferCapacity();
-        int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
+        final int keySerdeCapacity = keySerde.getBufferCapacity();
+        final int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
         if (keySerdeCapacity > envMaxKeySize) {
             LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
                             "key size for the environment {}. " +
@@ -609,81 +615,26 @@ public class LmdbDataStore implements DataStore {
             if (rawParentKey != null) {
                 parentKey = itemSerialiser.toKey(rawParentKey);
             }
+            final int depth = parentKey.getDepth() + 1;
+            final int trimmedSize = maxResults.size(depth);
 
-            final List<ItemImpl> list = new ArrayList<>();
-            try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(4096)) {
-                final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
-                try (final Output output = new ByteBufferOutput(byteBuffer)) {
-                    itemSerialiser.writeChildKey(parentKey, output);
-                }
-                byteBuffer.flip();
-
-                final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(byteBuffer);
-
-                final int depth = parentKey.getDepth() + 1;
-                final int trimmedSize = maxResults.size(depth);
-                final int maxSize;
-                if (trimmedSize < Integer.MAX_VALUE / 2) {
-                    maxSize = trimmedSize * 2;
-                } else {
-                    maxSize = Integer.MAX_VALUE;
-                }
-                final LmdbCompiledSorter sorter = compiledSorters[depth];
-                boolean sorted = true;
-
-                boolean inRange = true;
-                try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
-                    try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-
-                        while (iterator.hasNext() && inRange) {
-                            final KeyVal<ByteBuffer> keyVal = iterator.next();
-
-                            final Key key = keySerde.deserialize(keyVal.key());
-
-                            if (!key.getParent().equals(parentKey)) {
-                                inRange = false;
-
-                            } else {
-                                final byte[] keyBytes = ByteBufferUtils.toBytes(keyVal.key().flip());
-                                final Generator[] generators = valueSerde.deserialize(keyVal.val());
-
-                                final Supplier<Selection<Val>> selectionSupplier = () -> {
-                                    // TODO : Implement child selection. Note that if no sorting is present we could simplify this.
-                                    return null;
-                                };
-
-                                list.add(new ItemImpl(new RawKey(keyBytes), key, generators, selectionSupplier));
-                                sorted = false;
-
-                                if (list.size() > maxSize) {
-                                    sortAndTrim(list, sorter, trimmedSize);
-                                    sorted = true;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!sorted) {
-                    sortAndTrim(list, sorter, trimmedSize);
-                }
-            }
+            final ItemArrayList list = getChildren(parentKey, depth, trimmedSize, true, false);
 
             return new Items() {
                 @Override
                 @Nonnull
                 public Iterator<Item> iterator() {
-                    final Iterator<ItemImpl> iterator = list.iterator();
                     return new Iterator<>() {
+                        private int pos = 0;
+
                         @Override
                         public boolean hasNext() {
-                            return iterator.hasNext();
+                            return list.size > pos;
                         }
 
                         @Override
                         public Item next() {
-                            return iterator.next();
+                            return list.array[pos++];
                         }
                     };
                 }
@@ -696,6 +647,72 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
+    private ItemArrayList getChildren(final Key parentKey,
+                                      final int depth,
+                                      final int trimmedSize,
+                                      final boolean allowSort,
+                                      final boolean trimTop) {
+        final ItemArrayList list = new ItemArrayList(10);
+        try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(4096)) {
+            final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+            try (final Output output = new ByteBufferOutput(byteBuffer)) {
+                itemSerialiser.writeChildKey(parentKey, output);
+            }
+            byteBuffer.flip();
+
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(byteBuffer);
+
+            final int maxSize;
+            if (trimmedSize < Integer.MAX_VALUE / 2) {
+                maxSize = Math.min(100, trimmedSize * 2);
+            } else {
+                maxSize = Integer.MAX_VALUE;
+            }
+            final LmdbCompiledSorter sorter = compiledSorters[depth];
+            boolean trimmed = true;
+
+            boolean inRange = true;
+            try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
+                try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+
+                    while (iterator.hasNext() && inRange) {
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                        final Key key = keySerde.deserialize(keyVal.key());
+
+                        if (!key.getParent().equals(parentKey)) {
+                            inRange = false;
+
+                        } else {
+                            final byte[] keyBytes = ByteBufferUtils.toBytes(keyVal.key().flip());
+                            final Generator[] generators = valueSerde.deserialize(keyVal.val());
+
+                            list.add(new ItemImpl(this, new RawKey(keyBytes), key, generators));
+                            if (!allowSort && list.size >= trimmedSize) {
+                                // Stop without sorting etc.
+                                inRange = false;
+
+                            } else {
+                                trimmed = false;
+                                if (list.size() > maxSize) {
+                                    list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                    trimmed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!trimmed) {
+                list.sortAndTrim(sorter, trimmedSize, trimTop);
+            }
+        }
+
+        return list;
+    }
+
+
     @Override
     public long getSize() {
         return resultCount.get();
@@ -706,29 +723,67 @@ public class LmdbDataStore implements DataStore {
         return totalResultCount.get();
     }
 
-    private void sortAndTrim(final List<ItemImpl> list, final LmdbCompiledSorter sorter, final int trimmedSize) {
-        if (sorter != null) {
-            list.sort(sorter);
+    private static class ItemArrayList {
+        private final int minArraySize;
+        private ItemImpl[] array;
+        private int size;
+
+        public ItemArrayList(final int minArraySize) {
+            this.minArraySize = minArraySize;
+            array = new ItemImpl[minArraySize];
         }
-        while (list.size() > trimmedSize) {
-            list.remove(list.size() - 1);
+
+        void sortAndTrim(final LmdbCompiledSorter sorter,
+                         final int trimmedSize,
+                         final boolean trimTop) {
+            if (sorter != null && size > 0) {
+                Arrays.sort(array, 0, size - 1, sorter);
+            }
+            if (size > trimmedSize) {
+                final int len = Math.max(minArraySize, trimmedSize);
+                final ItemImpl[] newArray = new ItemImpl[len];
+                if (trimTop) {
+                    System.arraycopy(array, array.length - trimmedSize, newArray, 0, trimmedSize);
+                } else {
+                    System.arraycopy(array, 0, newArray, 0, trimmedSize);
+                }
+                array = newArray;
+                size = trimmedSize;
+            }
+        }
+
+        void add(final ItemImpl item) {
+            if (array.length <= size) {
+                final ItemImpl[] newArray = new ItemImpl[size * 2];
+                System.arraycopy(array, 0, newArray, 0, array.length);
+                array = newArray;
+            }
+            array[size++] = item;
+        }
+
+        ItemImpl get(final int index) {
+            return array[index];
+        }
+
+        int size() {
+            return size;
         }
     }
 
     public static class ItemImpl implements Item {
+        private final LmdbDataStore lmdbDataStore;
         private final RawKey rawKey;
         private final Key key;
         private final Generator[] generators;
-        private final Supplier<Selection<Val>> childSelection;
 
-        public ItemImpl(final RawKey rawKey,
+        public ItemImpl(final LmdbDataStore lmdbDataStore,
+                        final RawKey rawKey,
                         final Key key,
-                        final Generator[] generators,
-                        final Supplier<Selection<Val>> childSelection) {
+                        final Generator[] generators) {
+            this.lmdbDataStore = lmdbDataStore;
             this.rawKey = rawKey;
             this.key = key;
             this.generators = generators;
-            this.childSelection = childSelection;
         }
 
         @Override
@@ -747,8 +802,51 @@ public class LmdbDataStore implements DataStore {
 
             final Generator generator = generators[index];
             if (generator instanceof Selector) {
-                final Selector selector = (Selector) generator;
-                val = selector.select(childSelection.get());
+                if (key.isGrouped()) {
+                    int maxRows = 1;
+                    boolean sort = true;
+                    boolean trimTop = false;
+
+                    if (generator instanceof AnySelector) {
+                        sort = false;
+                    } else if (generator instanceof FirstSelector) {
+                    } else if (generator instanceof LastSelector) {
+                        trimTop = true;
+                    } else if (generator instanceof TopSelector) {
+                        maxRows = ((TopSelector) generator).getLimit();
+                    } else if (generator instanceof BottomSelector) {
+                        maxRows = ((BottomSelector) generator).getLimit();
+                        trimTop = true;
+                    } else if (generator instanceof NthSelector) {
+                        maxRows = ((NthSelector) generator).getPos();
+                    }
+
+                    final ItemArrayList items = lmdbDataStore.getChildren(
+                            key,
+                            key.getDepth() + 1,
+                            maxRows,
+                            sort,
+                            trimTop);
+
+                    final Selector selector = (Selector) generator;
+                    val = selector.select(new Selection<>() {
+                        @Override
+                        public int size() {
+                            return items.size;
+                        }
+
+                        @Override
+                        public Val get(final int pos) {
+                            if (pos < items.size) {
+                                items.get(pos).generators[index].eval();
+                            }
+                            return ValNull.INSTANCE;
+                        }
+                    });
+
+                } else {
+                    val = generator.eval();
+                }
             } else if (generator != null) {
                 val = generator.eval();
             }
