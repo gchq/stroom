@@ -16,12 +16,58 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.FunctionDefinition.FunctionCategory;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+@FunctionDefinition(
+        name = ParseDate.NAME,
+        category = FunctionCategory.DATE,
+        description = "Parse a date and return a long number of milliseconds since the epoch.",
+        signatures = {
+                @FunctionSignature(
+                        returnType = ArgType.NUMBER,
+                        args = @FunctionArg(
+                                name = "dateString",
+                                argType = ArgType.STRING,
+                                description = "The date string, e.g. '2014 02 22'"),
+                        description = "Parse dateString using the default date format pattern (" +
+                                DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                @FunctionSignature(
+                        returnType = ArgType.NUMBER,
+                        args = {
+                                @FunctionArg(
+                                        name = "dateString",
+                                        argType = ArgType.STRING,
+                                        description = "The date string, e.g. '2014 02 22'"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ArgType.STRING,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'")},
+                        description = "Parse dateString using the supplied date format pattern and " +
+                                "the default timezone (UTC)."),
+                @FunctionSignature(
+                        returnType = ArgType.NUMBER,
+                        args = {
+                                @FunctionArg(
+                                        name = "dateString",
+                                        argType = ArgType.STRING,
+                                        description = "The date string, e.g. '2014 02 22'"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ArgType.STRING,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'"),
+
+                                @FunctionArg(
+                                        name = "timezone",
+                                        argType = ArgType.STRING,
+                                        description = "The timezone, e.g. '+0400'"),
+                                },
+                        description = "Parse dateString using the supplied date format pattern and timezone.")})
 class ParseDate extends AbstractFunction implements Serializable {
     static final String NAME = "parseDate";
     private static final long serialVersionUID = -305845496003936297L;

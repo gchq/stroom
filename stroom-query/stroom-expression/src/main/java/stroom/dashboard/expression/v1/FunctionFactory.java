@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FunctionFactory {
-    private final Map<String, Class<? extends Function>> map = new HashMap<>();
+    private final Map<String, Class<? extends Function>> aliasMap = new HashMap<>();
 
     public FunctionFactory() {
         // Aggregate functions.
@@ -162,12 +162,12 @@ public class FunctionFactory {
 
     private void add(final Class<? extends Function> clazz, final String... names) {
         for (final String name : names) {
-            map.put(name.toLowerCase(), clazz);
+            aliasMap.put(name.toLowerCase(), clazz);
         }
     }
 
     public Function create(final String functionName) {
-        final Class<? extends Function> clazz = map.get(functionName.toLowerCase());
+        final Class<? extends Function> clazz = aliasMap.get(functionName.toLowerCase());
         if (clazz != null) {
             try {
                 return clazz.getConstructor(String.class).newInstance(functionName);

@@ -16,9 +16,22 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.FunctionDefinition.FunctionCategory;
+
+@FunctionDefinition(
+        name = "add",
+        aliases = "+",
+        category = FunctionCategory.MATHS,
+        description = "Adds all the value of all arguments together. Minimum of two arguments",
+        signatures = @FunctionSignature(
+                returnType = ArgType.NUMBER,
+                args = {
+                        @FunctionArg(name = "value1", argType = ArgType.NUMBER),
+                        @FunctionArg(name = "value2", argType = ArgType.NUMBER),
+                        @FunctionArg(name = "value3", argType = ArgType.NUMBER, isVarargs = true)}))
 class Add extends NumericFunction {
-    static final String NAME = "+";
-    static final String ALIAS = "add";
+    static final String NAME = "add";
+    static final String ALIAS = "+";
     private static final Calc CALC = new Calc();
 
     public Add(final String name) {
