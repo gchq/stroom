@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.77] - 2021-01-12
+
 * Issue **#1867** : Cluster entity events are now sent to each node asynchronously to prevent delays caused by one or more slow/bad nodes.
 
 * Issue **#1923** : Fixed an issue affecting sorting dashboard table values that have mixed data types. In addition you can now sort columns alphanumerically if the column format is set to text. 
@@ -2963,7 +2966,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.76...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.77...HEAD
+[v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
 [v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
 [v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75
 [v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74
