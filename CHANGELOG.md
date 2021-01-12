@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
+
 * Issue **#1990** : Change order of items in quick filter popup help.
 
 * Change quick filter word boundary matching to handle a mix of delimited and canelCase, e.g. `stroom.prop.maxFileSize`.
