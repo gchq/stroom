@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -51,6 +52,11 @@ public class LmdbEnvironment {
         this.lmdbConfig = lmdbConfig;
         this.pathCreator = pathCreator;
         this.dbDir = getStoreDir();
+
+        // Delete all DB files.
+        FileUtil.deleteFile(dbDir.resolve("data.mdb"));
+        FileUtil.deleteFile(dbDir.resolve("lock.mdb"));
+
         this.maxSize = lmdbConfig.getMaxStoreSize();
         this.maxReaders = lmdbConfig.getMaxReaders();
         this.maxPutsBeforeCommit = lmdbConfig.getMaxPutsBeforeCommit();
