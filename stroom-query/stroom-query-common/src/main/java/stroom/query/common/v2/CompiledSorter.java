@@ -18,7 +18,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -30,8 +29,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream<UnpackedItem>, Stream<UnpackedItem>> {
-    private static final ValComparator COMPARATOR = new ValComparator();
-
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
     private CompiledSorter() {
@@ -46,9 +43,13 @@ public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream
                     final CompiledField compiledField = compiledFields[fieldIndex];
                     final Field field = compiledField.getField();
                     if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
+                        // Get an appropriate comparator.
+                        final Comparator<Val> comparator = ComparatorFactory.create(field);
+
                         // Remember sorting info.
                         final Sort sort = field.getSort();
-                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort);
+
+                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort, comparator);
 
                         CompiledSorter sorter = sorters[depth];
                         if (sorter == null) {
@@ -100,7 +101,7 @@ public class CompiledSorter implements Comparator<UnpackedItem>, Function<Stream
             if (g1 != null && g2 != null) {
                 final Val v1 = g1.eval();
                 final Val v2 = g2.eval();
-                res = COMPARATOR.compare(v1, v2);
+                res = compiledSort.getComparator().compare(v1, v2);
             } else if (g1 != null) {
                 res = 1;
             } else if (g2 != null) {

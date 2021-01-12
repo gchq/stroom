@@ -1,22 +1,18 @@
 package stroom.dashboard.expression.v1;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@Disabled // See https://github.com/gchq/stroom/issues/1923
-class TestValStringComparator {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestValStringComparator.class);
+class TestAutoComparator {
+    private final Comparator<Val> comparator = new AutoComparator();
 
     @Test
     void testCompareAsDouble() {
@@ -42,7 +38,7 @@ class TestValStringComparator {
         IntStream.rangeClosed(5, 30)
                 .boxed()
                 .map(i -> ValString.create("staff" + i))
-                .sorted()
+                .sorted(comparator)
                 .forEach(vals::add);
 
         vals.addAll(Arrays.asList(
@@ -56,14 +52,17 @@ class TestValStringComparator {
         doTestContract(vals);
 
         // Make sure we can sort the full list without exception
-        final List<Val> sortedList = vals.stream()
+        List<Val> sortedList = vals.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+        sortedList = vals.stream()
                 .sorted()
                 .collect(Collectors.toList());
     }
 
     @Test
     void testCompareContract() {
-        doTestContract("-", "0", "a");
+        doTestContract("0", "-", "a");
         doTestContract("0", "1", "2");
         doTestContract("1", "1.01", "1.1");
         doTestContract("1", "10", "100");
@@ -71,10 +70,8 @@ class TestValStringComparator {
         doTestContract("a", "b", "c");
         doTestContract("A", "B", "C");
         doTestContract("A", "b", "C");
-        // This one will fail with the existing compareTo method on ValString that tries
-        // to compare as a double first.
-        doTestContract("10", "10-1", "2"); // "10" < "10-1", "10-2" < "2", 10 > 2
-        doTestContract("3232235777", "3232238337-3232239362", "4");
+        doTestContract("2", "10", "10-1");
+        doTestContract("4", "3232235777", "3232238337-3232239362");
     }
 
     private void doTestContract(final List<ValString> vals) {
@@ -96,7 +93,7 @@ class TestValStringComparator {
                                 vals.get(i),
                                 vals.get(j),
                                 vals.get(k))
-                                .sorted()
+                                .sorted(comparator)
                                 .collect(Collectors.toList());
 
                         // Now see if the trio meet the transitive contract
@@ -117,17 +114,17 @@ class TestValStringComparator {
         // Verify the compareTo transitive contract, i.e
         // if x > y and y > z then x > z
 
-        final int result_1_2 = val1.compareTo(val2);
-        final int result_2_3 = val2.compareTo(val3);
-        final int result_1_3 = val1.compareTo(val3);
+        final int result_1_2 = compare(val1, val2);
+        final int result_2_3 = compare(val2, val3);
+        final int result_1_3 = compare(val1, val3);
 
         Assertions.assertThat(result_1_2).isLessThan(0);
         Assertions.assertThat(result_2_3).isLessThan(0);
         Assertions.assertThat(result_1_3).isLessThan(0);
 
-        final int result_2_1 = val2.compareTo(val1);
-        final int result_3_2 = val3.compareTo(val2);
-        final int result_3_1 = val3.compareTo(val1);
+        final int result_2_1 = compare(val2, val1);
+        final int result_3_2 = compare(val3, val2);
+        final int result_3_1 = compare(val3, val1);
 
         Assertions.assertThat(result_2_1).isGreaterThan(0);
         Assertions.assertThat(result_3_2).isGreaterThan(0);
@@ -147,5 +144,9 @@ class TestValStringComparator {
         final ValString val3 = ValString.create(str3);
 
         doTestContract(val1, val2, val3);
+    }
+
+    private int compare(final ValString v1, final ValString v2) {
+        return comparator.compare(v1, v2);
     }
 }

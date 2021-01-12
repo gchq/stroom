@@ -25,7 +25,9 @@ public class CompiledField {
     private final Expression expression;
     private final CompiledFilter compiledFilter;
 
-    public CompiledField(final Field field, final int groupDepth, final Expression expression,
+    public CompiledField(final Field field,
+                         final int groupDepth,
+                         final Expression expression,
                          final CompiledFilter compiledFilter) {
         this.field = field;
         this.groupDepth = groupDepth;

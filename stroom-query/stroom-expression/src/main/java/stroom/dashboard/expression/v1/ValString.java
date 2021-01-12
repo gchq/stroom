@@ -120,13 +120,23 @@ public final class ValString implements Val {
 
     @Override
     public int compareTo(final Val o) {
+        // Try to compare values as doubles so that numeric strings are sorted appropriately.
+        // If only one of the values can be converted to a double it will always come first.
+        // If neither value can be converted to a double then the values will be compared alphanumerically as
+        // strings.
         final Double d1 = toDouble();
+        final Double d2 = o.toDouble();
+
         if (d1 != null) {
-            final Double d2 = o.toDouble();
             if (d2 != null) {
                 return Double.compare(d1, d2);
+            } else {
+                return -1;
             }
+        } else if (d2 != null) {
+            return 1;
         }
+
         return value.compareToIgnoreCase(((ValString) o).value);
     }
 }

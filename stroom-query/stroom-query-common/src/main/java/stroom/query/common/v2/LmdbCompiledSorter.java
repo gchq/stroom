@@ -16,9 +16,9 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.AutoComparator;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class LmdbCompiledSorter implements Comparator<ItemImpl>, Function<Stream<ItemImpl>, Stream<ItemImpl>> {
-    private static final ValComparator COMPARATOR = new ValComparator();
+    private static final AutoComparator COMPARATOR = new AutoComparator();
 
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
@@ -47,9 +47,12 @@ public class LmdbCompiledSorter implements Comparator<ItemImpl>, Function<Stream
                     final CompiledField compiledField = compiledFields[fieldIndex];
                     final Field field = compiledField.getField();
                     if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
+                        // Get an appropriate comparator.
+                        final Comparator<Val> comparator = ComparatorFactory.create(field);
+
                         // Remember sorting info.
                         final Sort sort = field.getSort();
-                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort);
+                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort, comparator);
 
                         LmdbCompiledSorter sorter = sorters[depth];
                         if (sorter == null) {
