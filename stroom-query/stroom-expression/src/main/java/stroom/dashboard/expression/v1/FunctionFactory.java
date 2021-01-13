@@ -16,14 +16,28 @@
 
 package stroom.dashboard.expression.v1;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FunctionFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FunctionFactory.class);
     private final Map<String, Class<? extends Function>> aliasMap = new HashMap<>();
+    private final Map<Class<? extends Function>, FunctionDef> functionDefMap = new HashMap<>();
 
     public FunctionFactory() {
+        scanClassPathForFunctions();
+//        manuallyAddFunctions();
+    }
+
+    private void manuallyAddFunctions() {
         // Aggregate functions.
         add(Max.class, Max.NAME);
         add(Min.class, Min.NAME);
@@ -160,6 +174,34 @@ public class FunctionFactory {
         add(IsError.class, IsError.NAME);
     }
 
+    private void scanClassPathForFunctions() {
+        // Scan the class path to find all the classes with @FunctionDef
+        try (ScanResult result = new ClassGraph()
+                .whitelistPackages(Function.class.getPackageName())
+                .enableAnnotationInfo()
+                .enableClassInfo()
+                .ignoreClassVisibility()
+                .scan()) {
+
+            result.getClassesWithAnnotation(FunctionDef.class.getName())
+                    .forEach(classInfo -> {
+
+                        final Class<?> clazz = classInfo.loadClass();
+                        if (Function.class.isAssignableFrom(clazz)) {
+                            final Class<? extends Function> functionClazz = (Class<? extends Function>) clazz;
+
+                            final FunctionDef functionDef = clazz.getAnnotation(FunctionDef.class);
+
+                            // Convert to a pojo so we can pass over rest
+//                            final FunctionDefinition functionDefinition = convertFunctionDef(functionDef);
+                            functionDefMap.put(functionClazz, functionDef);
+
+                            LOGGER.debug("Adding function {}", functionClazz.getName());
+                        }
+                    });
+        }
+    }
+
     private void add(final Class<? extends Function> clazz, final String... names) {
         for (final String name : names) {
             aliasMap.put(name.toLowerCase(), clazz);
@@ -178,5 +220,22 @@ public class FunctionFactory {
         }
 
         return null;
+    }
+
+
+//    public Optional<FunctionDefinition> getFunctionDefinition(final Class<? extends Function> clazz) {
+//        return Optional.ofNullable(functionDefMap.get(clazz));
+//    }
+//
+//    public List<FunctionDefinition> getFunctionDefinitions(final FunctionCategory functionCategory) {
+//        return functionDefMap.values()
+//                .stream()
+//                .filter(functionDefinition ->
+//                        functionCategory.equals(functionDefinition.getFunctionCategory()))
+//                .collect(Collectors.toList());
+//    }
+
+    public List<FunctionDef> getFunctionDefinitions() {
+        return new ArrayList<>(functionDefMap.values());
     }
 }

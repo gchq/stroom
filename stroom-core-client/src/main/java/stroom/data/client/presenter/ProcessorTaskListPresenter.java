@@ -40,7 +40,6 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -197,7 +196,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         final Meta meta = metaRow.getMeta();
 
         final TooltipUtil.Builder builder = TooltipUtil.builder()
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                 tableBuilder.addHeaderRow("Stream Task")
                             .addRow("Stream Task Id", processorTask.getId())
                             .addRow("Status", processorTask.getStatus().getDisplayValue());

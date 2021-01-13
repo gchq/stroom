@@ -16,16 +16,17 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl.MenuResources;
+import stroom.data.table.client.ScrollableCellTableViewImpl;
+import stroom.widget.popup.client.event.HidePopupEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl.MenuResources;
-import stroom.data.table.client.ScrollableCellTableViewImpl;
-import stroom.widget.popup.client.event.HidePopupEvent;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,7 +43,12 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
 
     @Inject
     public MenuPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<>(false, MENU_RESOURCES));
+        super(eventBus, new ScrollableCellTableViewImpl<>(
+                        false,
+                        MENU_RESOURCES,
+                        50,
+                        500));
+
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
             @Override
             public Item getValue(final Item item) {

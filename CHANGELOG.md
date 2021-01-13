@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
+* Issue **#1995** : Add help info to the expression functions drop down menu.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
 * Issue **#1990** : Change order of items in quick filter popup help.
 

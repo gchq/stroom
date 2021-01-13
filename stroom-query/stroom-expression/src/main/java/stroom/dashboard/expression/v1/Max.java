@@ -16,6 +16,27 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Max.NAME,
+        category = FunctionCategory.AGGREGATE,
+        description = "Determines the maximum value given in the args.",
+        signatures = {
+                @FunctionSignature(
+                        returnType = ValDouble.class,
+                        description = "Determines the maximum value across all records",
+                        args = @FunctionArg(
+                                name = "field",
+                                description = "Field or the result of another function",
+                                argType = ValDouble.class)),
+                @FunctionSignature(
+                        returnType = ValDouble.class,
+                        description = "Determines the maximum value from all the parameters.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValDouble.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))
+        })
 class Max extends AbstractAggregateFunction {
     static final String NAME = "max";
 

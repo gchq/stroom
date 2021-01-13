@@ -105,6 +105,18 @@ public final class TooltipUtil {
         return new Builder();
     }
 
+    private static SafeHtml objectToSafeHtml(final Object value) {
+        final SafeHtml safeHtml;
+        if (value == null) {
+            safeHtml = BLANK;
+        } else if (value instanceof SafeHtml) {
+            safeHtml = (SafeHtml) value;
+        } else {
+            safeHtml = SafeHtmlUtils.fromString(String.valueOf(value));
+        }
+        return safeHtml;
+    }
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static final class Builder {
@@ -194,8 +206,14 @@ public final class TooltipUtil {
             return this;
         }
 
-        public Builder addTable(Function<TableBuilder, SafeHtml> tableBuilderFunc) {
-            TableBuilder tableBuilder = new TableBuilder();
+        public Builder addTwoColTable(Function<TableBuilder2, SafeHtml> tableBuilderFunc) {
+            TableBuilder2 tableBuilder = new TableBuilder2();
+            buffer.append(tableBuilderFunc.apply(tableBuilder));
+            return this;
+        }
+
+        public Builder addThreeColTable(Function<TableBuilder3, SafeHtml> tableBuilderFunc) {
+            TableBuilder3 tableBuilder = new TableBuilder3();
             buffer.append(tableBuilderFunc.apply(tableBuilder));
             return this;
         }
@@ -207,19 +225,19 @@ public final class TooltipUtil {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public static class TableBuilder {
+    public static class TableBuilder2 {
         private final SafeHtmlBuilder buffer;
 
-        public TableBuilder() {
+        public TableBuilder2() {
             buffer = new SafeHtmlBuilder()
                     .appendHtmlConstant("<table>");
         }
 
-        public TableBuilder addHeaderRow(final String key) {
+        public TableBuilder2 addHeaderRow(final String key) {
             return addHeaderRow(key, "");
         }
 
-        public TableBuilder addHeaderRow(final String key, final String value) {
+        public TableBuilder2 addHeaderRow(final String key, final String value) {
             buffer
                     .appendHtmlConstant("<tr><th align=\"left\">")
                     .append(boldText(key))
@@ -229,11 +247,11 @@ public final class TooltipUtil {
             return this;
         }
 
-        public TableBuilder addHeaderRow(final SafeHtml key) {
+        public TableBuilder2 addHeaderRow(final SafeHtml key) {
             return addHeaderRow(key, BLANK);
         }
 
-        public TableBuilder addHeaderRow(final SafeHtml key, final SafeHtml value) {
+        public TableBuilder2 addHeaderRow(final SafeHtml key, final SafeHtml value) {
             buffer
                     .appendHtmlConstant("<tr><th align=\"left\">")
                     .append(key)
@@ -243,27 +261,27 @@ public final class TooltipUtil {
             return this;
         }
 
-        public TableBuilder addBlankRow() {
+        public TableBuilder2 addBlankRow() {
             buffer.appendHtmlConstant("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
             return this;
         }
 
-//        public TableBuilder addRow(final Object key) {
+//        public TableBuilder2 addRow(final Object key) {
 //            return addRow(key, null, true);
 //        }
 
-        public TableBuilder addRow(final Object key,
+        public TableBuilder2 addRow(final Object key,
                                    final Object value) {
             return addRow(key, value, false, null);
         }
 
-        public TableBuilder addRow(final Object key,
+        public TableBuilder2 addRow(final Object key,
                                    final Object value,
                                    final boolean showBlank) {
             return addRow(key, value, showBlank, null);
         }
 
-        public TableBuilder addRow(final Object key,
+        public TableBuilder2 addRow(final Object key,
                                    final Object value,
                                    final boolean showBlank,
                                    final SafeStyles safeStyles) {
@@ -310,15 +328,125 @@ public final class TooltipUtil {
                     .appendHtmlConstant("</div>")
                     .toSafeHtml();
         }
+    }
 
-        private SafeHtml objectToSafeHtml(final Object value) {
-            SafeHtml safeHtml;
-            try {
-                safeHtml = (SafeHtml) value;
-            } catch (Exception e) {
-                safeHtml = SafeHtmlUtils.fromString(String.valueOf(value));
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static class TableBuilder3 {
+        private final SafeHtmlBuilder buffer;
+
+        public TableBuilder3() {
+            buffer = new SafeHtmlBuilder()
+                    .appendHtmlConstant("<table>");
+        }
+
+        public TableBuilder3 addHeaderRow(final String col1) {
+            return addHeaderRow(col1, "", "");
+        }
+
+        public TableBuilder3 addHeaderRow(final String col1,
+                                          final String col2,
+                                          final String col3) {
+            return addHeaderRow(
+                    boldText(col1),
+                    boldText(col2),
+                    boldText(col3));
+        }
+
+        public TableBuilder3 addHeaderRow(final SafeHtml col1) {
+            return addHeaderRow(col1, BLANK, BLANK);
+        }
+
+        public TableBuilder3 addHeaderRow(final SafeHtml col1,
+                                          final SafeHtml col2,
+                                          final SafeHtml col3) {
+            buffer
+                    .appendHtmlConstant("<tr><th align=\"left\" style=\"padding-right: 8px;\">")
+                    .append(col1)
+                    .appendHtmlConstant("</th><th align=\"left\" style=\"padding-right: 8px;\">")
+                    .append(col2)
+                    .appendHtmlConstant("</th><th align=\"left\">")
+                    .append(col3)
+                    .appendHtmlConstant("</th></tr>");
+            return this;
+        }
+
+        public TableBuilder3 addBlankRow() {
+            buffer.appendHtmlConstant("<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>");
+            return this;
+        }
+
+//        public TableBuilder3 addRow(final Object key) {
+//            return addRow(key, null, true);
+//        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3) {
+            return addRow(col1, col2, col3, false, null);
+        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3,
+                                    final boolean showBlank) {
+            return addRow(col1, col2, col3, showBlank, null);
+        }
+
+        public TableBuilder3 addRow(final Object col1,
+                                    final Object col2,
+                                    final Object col3,
+                                    final boolean showBlank,
+                                    final SafeStyles safeStyles) {
+            Objects.requireNonNull(col1);
+            final SafeHtml safeCol1 = objectToSafeHtml(col1);
+            final String cellStyles = safeStyles != null
+                    ? safeStyles.asString()
+                    : "padding-right: 8px;";
+
+            if (col2 != null || col3 != null) {
+                final SafeHtml safeCol2 = objectToSafeHtml(col2);
+                final SafeHtml safeCol3 = objectToSafeHtml(col3);
+
+                if (safeCol2.asString().length() > 0
+                        || safeCol3.asString().length() > 0
+                        || showBlank) {
+
+                    buffer
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
+                            .append(safeCol1)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles + "\">")
+                            .append(safeCol2)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td>")
+                            .append(safeCol3)
+                            .appendHtmlConstant("</td></tr>");
+                }
+            } else {
+                if (showBlank) {
+                    buffer
+                            .appendHtmlConstant("<tr><td style=\"" + cellStyles + "\">")
+                            .append(safeCol1)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td/>") // empty col2
+                            .appendHtmlConstant("<td/>") // empty col3
+                            .appendHtmlConstant("</tr>");
+                }
             }
-            return safeHtml;
+
+            return this;
+        }
+
+        public SafeHtml build() {
+            buffer.appendHtmlConstant("</table>");
+
+            // Make the text selectable, e.g. for copy/pasting
+            return new SafeHtmlBuilder()
+                    .appendHtmlConstant("<div style=\"user-select: text;\">")
+                    .append(buffer.toSafeHtml())
+                    .appendHtmlConstant("</div>")
+                    .toSafeHtml();
         }
     }
 }

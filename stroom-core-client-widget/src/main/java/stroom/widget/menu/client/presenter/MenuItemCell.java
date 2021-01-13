@@ -116,6 +116,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 new IconMenuItemAppearance(menuPresenter).render(this, context, (IconMenuItem) value, sb);
             } else if (value instanceof SimpleMenuItem) {
                 new SimpleMenuItemAppearance(menuPresenter).render(this, context, (SimpleMenuItem) value, sb);
+            } else if (value instanceof InfoMenuItem) {
+                new InfoMenuItemAppearance(menuPresenter).render(this, context, (InfoMenuItem) value, sb);
             } else if (value instanceof MenuItem) {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
@@ -201,7 +203,9 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         @Override
-        public void render(final MenuItemCell cell, final Context context, final IconMenuItem value,
+        public void render(final MenuItemCell cell,
+                           final Context context,
+                           final IconMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
                 SafeStyles styles = NORMAL;
@@ -318,6 +322,61 @@ public class MenuItemCell extends AbstractCell<Item> {
                 } else {
                     sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
                 }
+            }
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml inner(String className, SafeHtml icon);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml text(String className, SafeHtml text);
+        }
+    }
+
+    public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
+        private static final Template TEMPLATE = GWT.create(Template.class);
+        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+        private static final Resources RESOURCES = GWT.create(Resources.class);
+        private final MenuPresenter menuPresenter;
+
+        public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
+            this.menuPresenter = menuPresenter;
+
+            // Make sure the CSS is injected.
+            RESOURCES.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final MenuItemCell cell,
+                           final Context context,
+                           final InfoMenuItem value,
+                           final SafeHtmlBuilder sb) {
+            if (value.getSafeHtml() != null) {
+                SafeStyles styles = NORMAL;
+
+//                if (!value.isEnabled()) {
+//                    styles = DISABLED;
+//                }
+
+                final SafeHtmlBuilder inner = new SafeHtmlBuilder();
+
+                inner.append(TEMPLATE.inner(
+                                RESOURCES.style().simpleText(),
+                                value.getSafeHtml()));
+
+//                if (menuPresenter.isHighlighted(value)) {
+//                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
+//                } else {
+                sb.append(TEMPLATE.outer(
+                        RESOURCES.style().outer(),
+                        styles,
+                        inner.toSafeHtml()));
+//                }
             }
         }
 

@@ -45,7 +45,7 @@ public class MetaInfoPresenter extends MyPresenterWidget<MetaInfoView> {
     private void handleResult(final List<DataInfoSection> dataInfoSections) {
         final TooltipUtil.Builder toolTipBuilder = TooltipUtil.builder();
 
-        toolTipBuilder.addTable(tableBuilder -> {
+        toolTipBuilder.addTwoColTable(tableBuilder -> {
             for (int i = 0; i < dataInfoSections.size(); i++) {
                 final DataInfoSection section = dataInfoSections.get(i);
                 tableBuilder.addHeaderRow(section.getTitle());

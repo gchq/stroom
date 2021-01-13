@@ -16,14 +16,15 @@
 
 package stroom.dashboard.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -89,4 +90,11 @@ public interface DashboardResource extends RestResource, DirectRestService {
             value = "Fetch time zone data from the server",
             response = List.class)
     List<String> fetchTimeZones();
+
+    @GET
+    @Path("/functions")
+    @ApiOperation(
+            value = "Fetch all expression functions",
+            response = List.class)
+    List<FunctionDefinition> fetchFunctions();
 }

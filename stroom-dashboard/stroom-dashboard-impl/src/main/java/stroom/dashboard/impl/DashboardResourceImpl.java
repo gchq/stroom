@@ -19,7 +19,7 @@ package stroom.dashboard.impl;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.FunctionFactory;
+import stroom.dashboard.shared.FunctionDefinition;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.impl.datasource.DataSourceProvider;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
@@ -66,6 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -104,6 +105,7 @@ class DashboardResourceImpl implements DashboardResource {
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final Provider<FunctionService> functionServiceProvider;
 
     @Inject
     DashboardResourceImpl(final DashboardStore dashboardStore,
@@ -117,7 +119,8 @@ class DashboardResourceImpl implements DashboardResource {
                           final SecurityContext securityContext,
                           final HttpServletRequestHolder httpServletRequestHolder,
                           final ExecutorProvider executorProvider,
-                          final TaskContextFactory taskContextFactory) {
+                          final TaskContextFactory taskContextFactory,
+                          final Provider<FunctionService> functionServiceProvider) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -130,6 +133,7 @@ class DashboardResourceImpl implements DashboardResource {
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.functionServiceProvider = functionServiceProvider;
     }
 
     @Override
@@ -146,7 +150,9 @@ class DashboardResourceImpl implements DashboardResource {
     public ValidateExpressionResult validateExpression(final String expressionString) {
         try {
             final FieldIndex fieldIndex = new FieldIndex();
-            final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
+            final ExpressionParser expressionParser = new ExpressionParser(
+                    functionServiceProvider.get().getFunctionFactory(),
+                    new ParamFactory());
             final Expression expression = expressionParser.parse(fieldIndex, expressionString);
             String correctedExpression = "";
             if (expression != null) {
@@ -522,4 +528,11 @@ class DashboardResourceImpl implements DashboardResource {
         ids.sort(Comparator.naturalOrder());
         return ids;
     }
+
+    @Override
+    public List<FunctionDefinition> fetchFunctions() {
+        return functionServiceProvider.get()
+                .getFunctionDefinitions();
+    }
+
 }

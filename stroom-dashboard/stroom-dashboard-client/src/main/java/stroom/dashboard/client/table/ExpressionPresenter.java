@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.FunctionDefinition;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -75,13 +76,14 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         implements ExpressionUiHandlers {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
+    private static final String EXPRESSIONS_HELP_BASE_PATH = "/user-guide/dashboards/expressions";
 
     private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
     private final UiConfigCache clientPropertyCache;
-    final AceCompletionProvider functionsCompletionProvider;
+    private AceCompletionProvider functionsCompletionProvider;
     private List<Item> functionsMenuItems;
     private List<Item> fieldsMenuItems;
     private TablePresenter tablePresenter;
@@ -103,19 +105,34 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         view.setUiHandlers(this);
         view.setEditor(editorPresenter.getView());
 
-        final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION.title("Insert Function"));
-        final ButtonView addFieldButton = view.addButton(SvgPresets.FIELD.title("Insert Field"));
+        final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION
+                .title("Insert Function"));
+        final ButtonView addFieldButton = view.addButton(SvgPresets.FIELD
+                .title("Insert Field"));
         final ButtonView helpButton = view.addButton(SvgPresets.HELP);
+
+        buildMenusAndCompletions();
 
         addFunctionButton.addClickHandler(this::onAddFunction);
         addFieldButton.addClickHandler(this::onAddField);
         helpButton.addClickHandler(this::onShowHelp);
+    }
 
-        if (functionsMenuItems == null) {
-            functionCompletions.clear();
-            functionsMenuItems = createFunctionsMenuItemsAndSnippets();
-        }
-        functionsCompletionProvider = buildCompletionProvider(functionCompletions);
+    private void buildMenusAndCompletions() {
+        final Rest<List<FunctionDefinition>> rest = restFactory.create();
+        rest
+                .onSuccess(functions -> {
+//                    if (functionsMenuItems == null) {
+                    functionCompletions.clear();
+//                    functionsMenuItems = buildFunctionMenuItems(functions);
+                    functionsMenuItems = FunctionDefinitionUtil.buildMenuItems(functions, this::addFunction);
+//                    functionsMenuItems = createFunctionsMenuItemsAndSnippets();
+//                    }
+//                    functionsCompletionProvider = buildCompletionProvider(functionCompletions);
+                    functionsCompletionProvider = buildCompletionProvider(Collections.emptyList());
+                })
+                .call(DASHBOARD_RESOURCE)
+                .fetchFunctions();
     }
 
     private void onShowHelp(final ClickEvent clickEvent) {
@@ -125,7 +142,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     .onSuccess(result -> {
                         final String helpUrl = result.getHelpUrl();
                         if (helpUrl != null && helpUrl.trim().length() > 0) {
-                            String url = helpUrl + "/user-guide/dashboards/expressions";
+                            String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
+
                             Window.open(url, "_blank", "");
                         } else {
                             AlertEvent.fireError(
@@ -140,6 +158,28 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                             null));
         }
     }
+
+//    private void withHelpUrl(final Consumer<String> work) {
+//        clientPropertyCache.get()
+//                .onSuccess(result -> {
+//                    final String helpUrl = result.getHelpUrl();
+//                    work.accept(helpUrl);
+//                    if (helpUrl != null && helpUrl.trim().length() > 0) {
+//                        String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
+//
+//                        Window.open(url, "_blank", "");
+//                    } else {
+//                        AlertEvent.fireError(
+//                                ExpressionPresenter.this,
+//                                "Help is not configured!",
+//                                null);
+//                    }
+//                })
+//                .onFailure(caught -> AlertEvent.fireError(
+//                        ExpressionPresenter.this,
+//                        caught.getMessage(),
+//                        null));
+//    }
 
     protected String formatAnchor(String name) {
         return "#" + name.replace(" ", "-").toLowerCase();

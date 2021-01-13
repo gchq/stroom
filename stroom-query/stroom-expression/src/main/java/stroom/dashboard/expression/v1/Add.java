@@ -16,19 +16,18 @@
 
 package stroom.dashboard.expression.v1;
 
-import stroom.dashboard.expression.v1.FunctionDefinition.FunctionCategory;
-
-@FunctionDefinition(
+@FunctionDef(
         name = "add",
         aliases = "+",
-        category = FunctionCategory.MATHS,
+        category = FunctionCategory.MATHEMATICS,
         description = "Adds all the value of all arguments together. Minimum of two arguments",
         signatures = @FunctionSignature(
-                returnType = ArgType.NUMBER,
-                args = {
-                        @FunctionArg(name = "value1", argType = ArgType.NUMBER),
-                        @FunctionArg(name = "value2", argType = ArgType.NUMBER),
-                        @FunctionArg(name = "value3", argType = ArgType.NUMBER, isVarargs = true)}))
+                returnType = ValDouble.class,
+                args = @FunctionArg(
+                        name = "value",
+                        argType = ValDouble.class,
+                        isVarargs = true,
+                        minVarargsCount = 2)))
 class Add extends NumericFunction {
     static final String NAME = "add";
     static final String ALIAS = "+";

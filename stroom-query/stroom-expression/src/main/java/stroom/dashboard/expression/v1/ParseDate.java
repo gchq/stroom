@@ -16,55 +16,56 @@
 
 package stroom.dashboard.expression.v1;
 
-import stroom.dashboard.expression.v1.FunctionDefinition.FunctionCategory;
-
 import java.io.Serializable;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-@FunctionDefinition(
+@FunctionDef(
         name = ParseDate.NAME,
         category = FunctionCategory.DATE,
         description = "Parse a date and return a long number of milliseconds since the epoch.",
         signatures = {
                 @FunctionSignature(
-                        returnType = ArgType.NUMBER,
+                        returnType = ValLong.class,
+                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = @FunctionArg(
                                 name = "dateString",
-                                argType = ArgType.STRING,
+                                argType = ValString.class,
                                 description = "The date string, e.g. '2014 02 22'"),
                         description = "Parse dateString using the default date format pattern (" +
                                 DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
                 @FunctionSignature(
-                        returnType = ArgType.NUMBER,
+                        returnType = ValLong.class,
+                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = {
                                 @FunctionArg(
                                         name = "dateString",
-                                        argType = ArgType.STRING,
+                                        argType = ValString.class,
                                         description = "The date string, e.g. '2014 02 22'"),
                                 @FunctionArg(
                                         name = "pattern",
-                                        argType = ArgType.STRING,
+                                        argType = ValString.class,
                                         description = "The format pattern, e.g. 'yyyy MM dd'")},
                         description = "Parse dateString using the supplied date format pattern and " +
                                 "the default timezone (UTC)."),
                 @FunctionSignature(
-                        returnType = ArgType.NUMBER,
+                        returnType = ValLong.class,
+                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = {
                                 @FunctionArg(
                                         name = "dateString",
-                                        argType = ArgType.STRING,
+                                        argType = ValString.class,
                                         description = "The date string, e.g. '2014 02 22'"),
                                 @FunctionArg(
                                         name = "pattern",
-                                        argType = ArgType.STRING,
+                                        argType = ValString.class,
                                         description = "The format pattern, e.g. 'yyyy MM dd'"),
 
                                 @FunctionArg(
                                         name = "timezone",
-                                        argType = ArgType.STRING,
+                                        argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'"),
                                 },
                         description = "Parse dateString using the supplied date format pattern and timezone.")})

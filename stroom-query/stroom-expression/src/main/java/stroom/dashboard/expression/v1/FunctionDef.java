@@ -7,6 +7,17 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface FunctionSignatures {
-    FunctionSignature[] value();
+public @interface FunctionDef {
+
+    String name();
+//    String displayName();
+
+    String[] aliases() default {};
+
+    FunctionCategory category();
+
+    String description();
+
+    FunctionSignature[] signatures();
+
 }
