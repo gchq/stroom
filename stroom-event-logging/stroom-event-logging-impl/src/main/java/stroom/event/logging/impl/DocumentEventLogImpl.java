@@ -101,13 +101,30 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {
-        create(objectType, objectName, "Create", ex);
+        create(objectType, objectName, null, ex);
     }
     @Override
     public void create(final String objectType, final String objectName, final String eventTypeId, final Throwable ex) {
+      create(objectType, objectName,  eventTypeId, null, ex);
+    }
+
+    @Override
+    public void create(final java.lang.Object object, final Throwable ex) {
+        create(object, null, ex);
+    }
+
+
+    @Override
+    public void create(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        create(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void create(final String objectType, final String objectName, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Creating", objectType, objectName);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Create",
+                        description != null ? description : "Creating", objectType, objectName);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setCreate(objectOutcome);
 
@@ -119,25 +136,18 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to create event!", e);
+                LOGGER.error("Unable to log create event!", e);
             }
         });
     }
 
-//    @Override
-//    public void create(final java.lang.Object object) {
-//        create(object, null);
-//    }
-
     @Override
-    public void create(final java.lang.Object object, final Throwable ex) {
-        create(object, "Create", ex);
-    }
-        @Override
-        public void create(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+    public void create(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Creating", object);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Create",
+                        description != null ? description : "Creating",
+                        object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setCreate(objectOutcome);
                 final BaseObject baseObject = createBaseObject(object);
@@ -145,7 +155,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to create event!", e);
+                LOGGER.error("Unable to log create event!", e);
             }
         });
     }
@@ -157,14 +167,44 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        update(before, after, "Update", ex);
+        update(before, after, null, ex);
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Upload",
+                        description != null ? description : "Importing", object);
+
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(createBaseObject(object));
+
+                final Import imp = new Import();
+                imp.setSource(multiObject);
+                imp.setOutcome(EventLoggingUtil.createOutcome(ex));
+
+                event.getEventDetail().setImport(imp);
+
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        update(before, after, null, ex);
+    }
+
+
+    @Override
+    public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Updating", before);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Update",
+                        description != null ? description : "Updating", before);
                 final Update update = new Update();
                 event.getEventDetail().setUpdate(update);
 
@@ -184,9 +224,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to update event!", e);
+                LOGGER.error("Unable to log update event!", e);
             }
         });
+
     }
 
 //    @Override
@@ -196,14 +237,15 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        copy(before, after, "Copy", ex);
+        copy(before, after, null, ex);
     }
 
     @Override
-    public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+    public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Copying", before);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Copy",
+                        description != null ? description : "Copying", before);
                 final CopyMove copy = new CopyMove();
                 event.getEventDetail().setCopy(copy);
 
@@ -228,21 +270,32 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to copy event!", e);
+                LOGGER.error("Unable to log copy event!", e);
             }
         });
+    }
+
+    @Override
+    public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+     copy (before, after, eventTypeId, null, ex);
     }
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        move(before, after, "Move", ex);
+        move(before, after, null, ex);
     }
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        move(before,after,eventTypeId,null, ex);
+    }
+
+    @Override
+    public void move(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Moving", before);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Move",
+                        description != null ? description : "Moving", before);
                 final CopyMove move = new CopyMove();
                 event.getEventDetail().setMove(move);
 
@@ -267,21 +320,29 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to move event!", e);
+                LOGGER.error("Unable to log move event!", e);
             }
         });
     }
+
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
-        rename(before, after, "Rename", ex);
+        rename(before, after, null, ex);
     }
+
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        rename(before, after, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Renaming", before);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Rename",
+                        description != null ? description : "Renaming", before);
                 final CopyMove move = new CopyMove();
                 event.getEventDetail().setMove(move);
 
@@ -306,65 +367,17 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to rename event!", e);
+                LOGGER.error("Unable to log rename event!", e);
             }
         });
     }
 
     @Override
-    public void delete(final java.lang.Object object, final Throwable ex) {
-       delete(object, "Delete", ex);
-    }
-
-    @Override
-    public void delete(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Deleting", object);
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setDelete(objectOutcome);
-                final BaseObject baseObject = createBaseObject(object);
-                objectOutcome.getObjects().add(baseObject);
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-                eventLoggingService.log(event);
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to delete event!", e);
-            }
-        });
-    }
-
-    @Override
-    public void view(final java.lang.Object object, final Throwable ex) {
-        view(object, "View", ex);
-    }
-
-    @Override
-    public void view(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                final Event event = createAction(eventTypeId, "Viewing", object);
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setView(objectOutcome);
-                final BaseObject baseObject = createBaseObject(object);
-                objectOutcome.getObjects().add(baseObject);
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
-                eventLoggingService.log(event);
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to view event!", e);
-            }
-        });
-    }
-
-    @Override
-    public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
-        delete(criteria, query, size, criteria.getClass().getSimpleName(), ex);
-    }
-
-    @Override
-    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                final Event event = createAction(eventTypeId, "Delete by criteria " + getObjectType(criteria),
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Delete",
+                        description != null ? description : "Delete by criteria" + " " + getObjectType(criteria),
                         null);
 
                 final Criteria crit = new Criteria();
@@ -381,21 +394,83 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to log delete!", e);
+                LOGGER.error("Unable to log delete event!", e);
             }
         });
     }
 
     @Override
-    public void download(final java.lang.Object object, final Throwable ex) {
-        download(object, "Download", ex);
+    public void delete(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Delete",
+                        description != null ? description : "Deleting", object);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setDelete(objectOutcome);
+                final BaseObject baseObject = createBaseObject(object);
+                objectOutcome.getObjects().add(baseObject);
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to log delete event!", e);
+            }
+        });
     }
 
     @Override
-    public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+    public void delete(final java.lang.Object object, final Throwable ex) {
+       delete(object, null, ex);
+    }
+
+    @Override
+    public void delete(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+       delete(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final Throwable ex) {
+        view(object, null, ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        view (object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Exporting", object);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "View",
+                        description != null ? description : "Viewing", object);
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setView(objectOutcome);
+                final BaseObject baseObject = createBaseObject(object);
+                objectOutcome.getObjects().add(baseObject);
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
+                eventLoggingService.log(event);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to log view event!", e);
+            }
+        });
+    }
+
+    @Override
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
+        delete(criteria, query, size, criteria.getClass().getSimpleName(), ex);
+    }
+
+    @Override
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex) {
+      delete(criteria, query, size, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void download(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "Download",
+                        description != null ? description : "Exporting", object);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(createBaseObject(object));
@@ -414,37 +489,31 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
+    public void download(final java.lang.Object object, final Throwable ex) {
+        download(object, null, ex);
+    }
+
+
+    @Override
+    public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+      download(object, eventTypeId, null, ex);
+    }
+
+    @Override
     public void upload(final java.lang.Object object, final Throwable ex) {
-        download(object, "Upload", ex);
+        upload(object, null, ex);
     }
 
     @Override
     public void upload(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                final Event event = createAction(eventTypeId, "Importing", object);
-
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(createBaseObject(object));
-
-                final Import imp = new Import();
-                imp.setSource(multiObject);
-                imp.setOutcome(EventLoggingUtil.createOutcome(ex));
-
-                event.getEventDetail().setImport(imp);
-
-                eventLoggingService.log(event);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        });
+        upload(object, eventTypeId, null, ex);
     }
 
     @Override
-    public void process(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+    public void process(final java.lang.Object object, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, "Processing", object);
+                final Event event = createAction(eventTypeId, description != null? description : "Processing", object);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(createBaseObject(object));
@@ -463,11 +532,17 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
+    public void process(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        process(object, eventTypeId, null, ex);
+    }
+
+    @Override
     public void unknownOperation(final java.lang.Object object, final String eventTypeId, final String description,
                                  final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(eventTypeId, description, object);
+                final Event event = createAction(eventTypeId != null ? eventTypeId : "APIOperation",
+                        description != null ? description : "No further detail", object);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(createBaseObject(object));
@@ -489,11 +564,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
+
     @Override
-    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex) {
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(typeId, "Finding " + resultType,
+                final Event event = createAction(typeId != null ? typeId : "Search",
+                        description != null ? description : "Finding" + " " + resultType,
                         null);
                 final Search search = new Search();
                 event.getEventDetail().setSearch(search);
@@ -510,9 +587,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 search.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to doSearch!", e);
+                LOGGER.error("Unable to log search event!", e);
             }
         });
+    }
+
+    @Override
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex) {
+       search(typeId, query, resultType, pageResponse, null, ex);
     }
 
 //    @Override
@@ -677,5 +759,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             return List.of();
         }
     }
+
+
 
 }

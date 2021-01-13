@@ -5,16 +5,11 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StroomLog;
 import stroom.util.shared.StroomLoggingOperationType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import event.logging.BaseObject;
-import event.logging.Event;
-import event.logging.ObjectOutcome;
 import event.logging.Query;
-import event.logging.util.EventLoggingUtil;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -44,35 +39,36 @@ class RequestEventLogImpl implements RequestEventLog {
 
         Object requestEntity = requestInfo.getRequestObj();
 
-        String typeId = requestInfo.getResourceClass().getSimpleName() + "." + requestInfo.getMethod().getName();
+        final String typeId = requestInfo.getTypeId();
+        final String descriptionVerb = requestInfo.getVerbFromAnnotations();
 
         switch (requestInfo.getOperationType()){
             case DELETE:
-                documentEventLog.delete(requestEntity,typeId,error);
+                documentEventLog.delete(requestEntity,typeId, descriptionVerb, error);
                 break;
             case VIEW:
-                documentEventLog.view(responseEntity,typeId,error);
+                documentEventLog.view(responseEntity,typeId, descriptionVerb,error);
                 break;
             case CREATE:
-                documentEventLog.create(responseEntity,typeId,error);
+                documentEventLog.create(responseEntity,typeId, descriptionVerb,error);
                 break;
             case COPY:
-                documentEventLog.copy(requestEntity,typeId,error);
+                documentEventLog.copy(requestEntity,typeId, descriptionVerb,error);
                 break;
             case UPDATE:
-                documentEventLog.update(requestEntity,responseEntity,typeId,error);
+                documentEventLog.update(requestEntity,responseEntity,typeId, descriptionVerb, error);
                 break;
             case SEARCH:
-                logSearch(typeId, requestEntity, responseEntity, error);
+                logSearch(typeId, requestEntity, responseEntity,  descriptionVerb, error);
                 break;
             case EXPORT:
-                documentEventLog.download(requestEntity,typeId, error);
+                documentEventLog.download(requestEntity,typeId, descriptionVerb, error);
                 break;
             case IMPORT:
-                documentEventLog.upload(requestEntity,typeId, error);
+                documentEventLog.upload(requestEntity,typeId, descriptionVerb, error);
                 break;
             case PROCESS:
-                documentEventLog.process(requestEntity,typeId, error);
+                documentEventLog.process(requestEntity,typeId, descriptionVerb, error);
                 break;
             case UNKNOWN:
                 documentEventLog.unknownOperation(requestEntity,typeId, "Uncategorised remote API call invoked", error);
@@ -86,37 +82,19 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     private boolean shouldLog (RequestInfo requestInfo){
-        //Global default is enabled via property
         if (requestInfo == null){
             return false;
         }
 
-        StroomLoggingOperationType methodOpType = null;
-        if (requestInfo.getMethod().getAnnotation(StroomLog.class) != null){
-            methodOpType = requestInfo.getMethod().getAnnotation(StroomLog.class).value();
-        }
-        StroomLoggingOperationType classOpType = null;
-        if (requestInfo.getResourceClass().getAnnotation(StroomLog.class) != null){
-            classOpType = requestInfo.getResourceClass().getAnnotation(StroomLog.class).value();
+        Optional<StroomLoggingOperationType> specifiedOperation = requestInfo.getOperationTypeFromAnnotations();
+        if (specifiedOperation.isPresent()){
+            return !specifiedOperation.get().equals(StroomLoggingOperationType.UNLOGGED);
         }
 
-        //Method can override class and class can override global setting
-        if (StroomLoggingOperationType.UNLOGGED.equals(methodOpType)){
-            return false;
-        }
-
-        if (StroomLoggingOperationType.UNLOGGED.equals(classOpType) && methodOpType == null){
-            return false;
-        }
-
-        if (!config.isGlobalLoggingEnabled() && classOpType == null && methodOpType == null ) {
-            return false;
-        }
-
-        return true;
+        return config.isGlobalLoggingEnabled();
     }
 
-    private void logSearch (String typeId, Object requestEntity, Object responseEntity, Throwable error){
+    private void logSearch (String typeId, Object requestEntity, Object responseEntity, String descriptionVerb, Throwable error){
         Query query = new Query();
 
         if (requestEntity != null) {
@@ -148,6 +126,6 @@ class RequestEventLogImpl implements RequestEventLog {
 
             }
         }
-        documentEventLog.search(typeId, query, listContents, pageResponse, error);
+        documentEventLog.search(typeId, query, listContents, pageResponse, descriptionVerb, error);
     }
 }

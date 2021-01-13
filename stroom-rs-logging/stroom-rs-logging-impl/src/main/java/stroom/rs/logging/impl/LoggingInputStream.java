@@ -3,6 +3,8 @@ package stroom.rs.logging.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import java.io.BufferedInputStream;
@@ -51,14 +53,19 @@ class LoggingInputStream extends BufferedInputStream {
             return null;
         }
 
-        //Select the first param that isn't provided by the context itself
+        //Select the first param that isn't provided by the context itself (or parameters)
         List<Class<?>> suppliedParams = Arrays.stream(resourceInfo.getResourceMethod().getParameters()).sequential().
                 filter(p -> AnnotationUtil.getInheritedParameterAnnotation(Context.class,
-                        resourceInfo.getResourceMethod(), p) == null).map(Parameter::getType).collect(Collectors.toList());
+                        resourceInfo.getResourceMethod(), p) == null).
+                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(PathParam.class,
+                        resourceInfo.getResourceMethod(), p) == null).
+                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(QueryParam.class,
+                        resourceInfo.getResourceMethod(), p) == null).
+                map(Parameter::getType).collect(Collectors.toList());
         if (suppliedParams.isEmpty()){
             return null;
         }
-        if (suppliedParams.size() > 0){
+        if (suppliedParams.size() > 1){
             LOGGER.error("Multiple parameters to resource method " + resourceInfo.getResourceMethod().getName() + " on " + resourceInfo.getResourceClass().getSimpleName());
         }
         return suppliedParams.get(0);

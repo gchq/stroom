@@ -10,8 +10,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -80,23 +78,49 @@ class RequestInfo {
         return operationType;
     }
 
-    private static Optional<StroomLoggingOperationType> getOperationType(final Class<?> restResourceClass) {
-        final StroomLog opAnnotation = restResourceClass.getAnnotation(StroomLog.class);
-        return Optional.ofNullable(opAnnotation)
-                .or(() ->
-                        // No operation annotation on the RestResource so look for it in all interfaces
-                        Arrays.stream(restResourceClass.getInterfaces())
-                                .map(clazz -> clazz.getAnnotation(StroomLog.class))
-                                .filter(Objects::nonNull)
-                                .findFirst())
-                .map(StroomLog::value);
+    private static Optional<StroomLoggingOperationType> getOperationTypeFromAnnotations(final Method method,
+                                                                                        final Class<?> resourceClass){
+        if (method.getAnnotation(StroomLog.class) != null){
+            return Optional.of(method.getAnnotation(StroomLog.class).value());
+        } else if (resourceClass.getAnnotation(StroomLog.class) != null){
+            return Optional.of(resourceClass.getAnnotation(StroomLog.class).value());
+        }
+        return Optional.empty();
     }
+
+    public Optional<StroomLoggingOperationType> getOperationTypeFromAnnotations(){
+        return getOperationTypeFromAnnotations(getMethod(), getResourceClass());
+    }
+
+    public String getTypeId(){
+        //If method annotation provided use that on its own
+        if ((getMethod().getAnnotation(StroomLog.class) != null) &&
+                (!getMethod().getAnnotation(StroomLog.class).typeId().equals(StroomLog.ALLOCATE_AUTOMATICALLY))){
+            return getMethod().getAnnotation(StroomLog.class).typeId();
+        }
+        String resourcePrefix = getResourceClass().getSimpleName();
+        if ((getResourceClass().getAnnotation(StroomLog.class) != null) &&
+                (!getResourceClass().getAnnotation(StroomLog.class).typeId().equals(StroomLog.ALLOCATE_AUTOMATICALLY))){
+            resourcePrefix = getResourceClass().getAnnotation(StroomLog.class).typeId();
+        }
+
+        return resourcePrefix + "." + getMethod().getName();
+    }
+
+    public String getVerbFromAnnotations(){
+        if ((getMethod().getAnnotation(StroomLog.class) != null) &&
+                (!getMethod().getAnnotation(StroomLog.class).verb().equals(StroomLog.ALLOCATE_AUTOMATICALLY))){
+            return getMethod().getAnnotation(StroomLog.class).verb();
+        }
+        return null;
+    }
+
 
     private StroomLoggingOperationType findOperationType(final Method method,
                                                          final Class<?> resourceClass,
                                                          final String httpMethod) {
-        Optional<StroomLoggingOperationType> type = getOperationType(resourceClass);
-        if (type.isPresent()){
+        Optional<StroomLoggingOperationType> type = getOperationTypeFromAnnotations(method, resourceClass);
+        if (type.isPresent() && !StroomLoggingOperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())){
             return type.get();
         } else if (HttpMethod.DELETE.equals(httpMethod)){
             return StroomLoggingOperationType.DELETE;

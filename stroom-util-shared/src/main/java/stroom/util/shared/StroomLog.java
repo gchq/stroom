@@ -18,5 +18,5 @@ public @interface StroomLog {
 
     StroomLoggingOperationType value() default StroomLoggingOperationType.ALLOCATE_AUTOMATICALLY;
     String typeId () default ALLOCATE_AUTOMATICALLY;
-    String description () default ALLOCATE_AUTOMATICALLY;
+    String verb() default ALLOCATE_AUTOMATICALLY;
 }
