@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improved security for handling entity events.
+
 
 ## [v7.0-beta.77] - 2021-01-12
 
