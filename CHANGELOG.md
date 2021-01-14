@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
+
 * Improved security for handling entity events.
 
 
