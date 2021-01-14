@@ -135,6 +135,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         settingsPresenter.onReadOnly(readOnly);
         codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
+        codePresenter.getStylesOption().setUnavailable();
+        codePresenter.getFormatAction().setUnavailable();
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
         }
@@ -148,6 +150,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     private EditorPresenter getOrCreateCodePresenter() {
         if (codePresenter == null) {
             codePresenter = editorPresenterProvider.get();
+            codePresenter.setMode(AceEditorMode.TEXT);
+            // Text only, no styling or formatting
+            codePresenter.getStylesOption().setUnavailable();
+            codePresenter.getFormatAction().setUnavailable();
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
         }
