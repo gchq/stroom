@@ -2,6 +2,7 @@ package stroom.search.impl;
 
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.NodeResultSerialiser;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
@@ -18,6 +19,7 @@ class RemoteSearchResultFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteSearchResultFactory.class);
 
     private final TaskManager taskManager;
+    private final SecurityContext securityContext;
 
     private volatile Coprocessors coprocessors;
     private volatile TaskId taskId;
@@ -25,8 +27,10 @@ class RemoteSearchResultFactory {
     private volatile boolean started;
     private volatile String initialisationError;
 
-    RemoteSearchResultFactory(final TaskManager taskManager) {
+    RemoteSearchResultFactory(final TaskManager taskManager,
+                              final SecurityContext securityContext) {
         this.taskManager = taskManager;
+        this.securityContext = securityContext;
     }
 
     public void write(final OutputStream outputStream) {
@@ -69,14 +73,16 @@ class RemoteSearchResultFactory {
     }
 
     public synchronized void destroy() {
-        if (coprocessors != null) {
-            coprocessors.clear();
-        }
+        securityContext.asProcessingUser(() -> {
+            if (coprocessors != null) {
+                coprocessors.clear();
+            }
 
-        destroy = true;
-        if (taskId != null) {
-            taskManager.terminate(taskId);
-        }
+            destroy = true;
+            if (taskId != null) {
+                taskManager.terminate(taskId);
+            }
+        });
     }
 
     public void setCoprocessors(final Coprocessors coprocessors) {

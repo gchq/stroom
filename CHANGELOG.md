@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2000** : `RemoteSearchResultFactory.destroy()` is now performed as the processing user.
+
 * Issue **#2000** : Fixed NPE affecting adding/removing columns on a dashboard table and changing column options like grouping and sorting.
 
 * Issue **#2000** : Fixed dashboard table child result expansion.
