@@ -109,7 +109,11 @@ public final class Field implements HasDisplayValue {
         } else {
             this.visible = true;
         }
-        this.special = special;
+        if (special != null) {
+            this.special = special;
+        } else {
+            this.special = false;
+        }
     }
 
     public String getId() {
