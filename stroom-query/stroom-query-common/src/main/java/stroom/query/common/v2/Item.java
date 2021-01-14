@@ -16,51 +16,12 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.GroupKey;
+import stroom.dashboard.expression.v1.Val;
 
-import java.io.Serializable;
+public interface Item {
+    RawKey getRawKey();
 
-public class Item implements Serializable {
-    private static final long serialVersionUID = 4371018450667741005L;
+    Key getKey();
 
-    private final GroupKey key;
-    private final Generator[] generators;
-
-    public Item(final GroupKey key,
-                final Generator[] generators) {
-        this.key = key;
-        this.generators = generators;
-    }
-
-    public GroupKey getKey() {
-        return key;
-    }
-
-    public Generator[] getGenerators() {
-        return generators;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        for (final Generator value : generators) {
-            if (value != null) {
-                try {
-                    sb.append(value.eval().toString());
-                } catch (final RuntimeException e) {
-                    // if the evaluation of the generator fails record the class of the exception
-                    // so we can see which one has a problem
-                    sb.append(e.getClass().getCanonicalName());
-                }
-            } else {
-                sb.append("null");
-            }
-            sb.append("\t");
-        }
-        if (sb.length() > 0) {
-            sb.setLength(sb.length() - 1);
-        }
-        return sb.toString();
-    }
+    Val getValue(int index);
 }

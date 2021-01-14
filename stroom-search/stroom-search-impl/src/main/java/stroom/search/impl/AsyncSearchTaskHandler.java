@@ -183,10 +183,6 @@ class AsyncSearchTaskHandler {
                     resultCollector.onFailure(sourceNode, e);
 
                 } finally {
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    terminateTasks(task, parentContext.getTaskId());
-
                     // Ensure search is complete even if we had errors.
                     LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
@@ -194,6 +190,10 @@ class AsyncSearchTaskHandler {
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
                     parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
+
+                    // Make sure we try and terminate any child tasks on worker
+                    // nodes if we need to.
+                    terminateTasks(task, parentContext.getTaskId());
                 }
             }
         }));

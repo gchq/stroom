@@ -19,15 +19,16 @@ package stroom.query.common.v2;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface Coprocessor extends Receiver {
     AtomicLong getValuesCount();
 
-    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException;
-
     boolean readPayload(Input input);
 
     void writePayload(Output output);
+
+    CompletionState getCompletionState();
+
+    void clear();
 }

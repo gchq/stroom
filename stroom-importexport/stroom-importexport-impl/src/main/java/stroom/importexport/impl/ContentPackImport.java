@@ -64,7 +64,9 @@ public class ContentPackImport {
         if (isEnabled) {
             LOGGER.info("Configured import dir is '" + config.getImportDirectory() + "'");
             if (config.getImportDirectory() != null) {
-                final String resolvedPath = pathCreator.replaceSystemProperties(config.getImportDirectory());
+                final String resolvedPath = pathCreator.makeAbsolute(
+                        pathCreator.replaceSystemProperties(
+                                config.getImportDirectory()));
                 LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
 
                 final UserIdentity admin = securityContext.createIdentity(User.ADMIN_USER_NAME);

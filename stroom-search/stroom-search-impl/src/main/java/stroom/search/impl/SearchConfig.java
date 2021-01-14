@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.cache.CacheConfig;
@@ -26,6 +27,7 @@ public class SearchConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
     private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
+    private LmdbConfig lmdbConfig = new LmdbConfig();
 
     private CacheConfig resultStoreCache = CacheConfig.builder()
             .maximumSize(100L)
@@ -96,6 +98,15 @@ public class SearchConfig extends AbstractConfig {
 
     public void setRemoteSearchResultCache(final CacheConfig remoteSearchResultCache) {
         this.remoteSearchResultCache = remoteSearchResultCache;
+    }
+
+    @JsonProperty("lmdb")
+    public LmdbConfig getLmdbConfig() {
+        return lmdbConfig;
+    }
+
+    public void setLmdbConfig(final LmdbConfig lmdbConfig) {
+        this.lmdbConfig = lmdbConfig;
     }
 
     @Override

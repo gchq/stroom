@@ -1,49 +1,29 @@
 package stroom.dashboard.expression.v1;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@Disabled // See https://github.com/gchq/stroom/issues/1923
-class TestValStringComparator {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestValStringComparator.class);
+class TestAlphaNumericComparator {
+    private final Comparator<Val> comparator = new AlphaNumericComparator();
 
     @Test
-    void testCompareAsDouble() {
-        // The values in this test came from the keys in the ref data store
-        // when the following error happened:
-        // java.lang.IllegalArgumentException: Comparison method violates its general contract!
-        //	at java.util.TimSort.mergeHi(TimSort.java:899)
-        //
-        // The order of these values (pre-sorting) is important. The number of items in the list
-        // appears to impact how TimSort approaches the sort, so reducing the items means
-        // the sort may work with a compare method that does not meet the contract.
-
+    void testCompare() {
         final List<ValString> vals = new ArrayList<>(Arrays.asList(
                 ValString.create("1"),
                 ValString.create("2"),
                 ValString.create("3"),
-                ValString.create("4"),
-
                 ValString.create("3232235777"),
-                ValString.create("3232236805")
+                ValString.create("3232236805"),
+                ValString.create("4")
         ));
-
-        IntStream.rangeClosed(5, 30)
-                .boxed()
-                .map(i -> ValString.create("staff" + i))
-                .sorted()
-                .forEach(vals::add);
 
         vals.addAll(Arrays.asList(
                 ValString.create("3232238337-3232239362"),
@@ -51,13 +31,21 @@ class TestValStringComparator {
                 ValString.create("3232243201-3232244482")
         ));
 
+        IntStream.rangeClosed(5, 30)
+                .boxed()
+                .map(i -> ValString.create("staff" + i))
+                .sorted(comparator)
+                .forEach(vals::add);
+
+
+
         // This one will fail with the existing compareTo method on ValString that tries
         // to compare as a double first.
         doTestContract(vals);
 
         // Make sure we can sort the full list without exception
-        final List<Val> sortedList = vals.stream()
-                .sorted()
+        List<Val> sortedList = vals.stream()
+                .sorted(comparator)
                 .collect(Collectors.toList());
     }
 
@@ -71,9 +59,7 @@ class TestValStringComparator {
         doTestContract("a", "b", "c");
         doTestContract("A", "B", "C");
         doTestContract("A", "b", "C");
-        // This one will fail with the existing compareTo method on ValString that tries
-        // to compare as a double first.
-        doTestContract("10", "10-1", "2"); // "10" < "10-1", "10-2" < "2", 10 > 2
+        doTestContract("10", "10-1", "2");
         doTestContract("3232235777", "3232238337-3232239362", "4");
     }
 
@@ -96,7 +82,7 @@ class TestValStringComparator {
                                 vals.get(i),
                                 vals.get(j),
                                 vals.get(k))
-                                .sorted()
+                                .sorted(comparator)
                                 .collect(Collectors.toList());
 
                         // Now see if the trio meet the transitive contract
@@ -117,17 +103,17 @@ class TestValStringComparator {
         // Verify the compareTo transitive contract, i.e
         // if x > y and y > z then x > z
 
-        final int result_1_2 = val1.compareTo(val2);
-        final int result_2_3 = val2.compareTo(val3);
-        final int result_1_3 = val1.compareTo(val3);
+        final int result_1_2 = compare(val1, val2);
+        final int result_2_3 = compare(val2, val3);
+        final int result_1_3 = compare(val1, val3);
 
         Assertions.assertThat(result_1_2).isLessThan(0);
         Assertions.assertThat(result_2_3).isLessThan(0);
         Assertions.assertThat(result_1_3).isLessThan(0);
 
-        final int result_2_1 = val2.compareTo(val1);
-        final int result_3_2 = val3.compareTo(val2);
-        final int result_3_1 = val3.compareTo(val1);
+        final int result_2_1 = compare(val2, val1);
+        final int result_3_2 = compare(val3, val2);
+        final int result_3_1 = compare(val3, val1);
 
         Assertions.assertThat(result_2_1).isGreaterThan(0);
         Assertions.assertThat(result_3_2).isGreaterThan(0);
@@ -147,5 +133,9 @@ class TestValStringComparator {
         final ValString val3 = ValString.create(str3);
 
         doTestContract(val1, val2, val3);
+    }
+
+    private int compare(final ValString v1, final ValString v2) {
+        return comparator.compare(v1, v2);
     }
 }

@@ -132,6 +132,7 @@ ext.libs = [
         stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
+        agrona                         : "org.agrona:agrona:1.8.0",
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.10.0",
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
@@ -232,7 +233,7 @@ ext.libs = [
         junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:$versions.junit_jupiter",
         junit_jupiter_params           : "org.junit.jupiter:junit-jupiter-params:$versions.junit_jupiter",
         kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
-        kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
+        kryo                           : "com.esotericsoftware:kryo:5.0.3",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.8.1",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
         logback_classic                : "ch.qos.logback:logback-classic", // version controlled by DW BOM

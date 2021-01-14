@@ -238,4 +238,11 @@ public class ByteBufferUtils {
         return hash;
     }
 
+    public static byte[] toBytes(final ByteBuffer byteBuffer) {
+//        byteBuffer.rewind();
+        final byte[] arr = new byte[byteBuffer.remaining()];
+        byteBuffer.get(arr);
+        return arr;
+    }
+
 }

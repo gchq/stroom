@@ -39,43 +39,43 @@
       "visible" : true
     } ],
     "rows" : [ {
-      "groupKey" : "user1",
+      "groupKey" : "AQAAAAEBBXVzZXKx",
       "values" : [ "user1", "393", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user10",
+      "groupKey" : "AQAAAAEBBXVzZXIxsA==",
       "values" : [ "user10", "381", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user2",
+      "groupKey" : "AQAAAAEBBXVzZXKy",
       "values" : [ "user2", "377", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user3",
+      "groupKey" : "AQAAAAEBBXVzZXKz",
       "values" : [ "user3", "379", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user4",
+      "groupKey" : "AQAAAAEBBXVzZXK0",
       "values" : [ "user4", "395", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user5",
+      "groupKey" : "AQAAAAEBBXVzZXK1",
       "values" : [ "user5", "377", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user6",
+      "groupKey" : "AQAAAAEBBXVzZXK2",
       "values" : [ "user6", "380", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user7",
+      "groupKey" : "AQAAAAEBBXVzZXK3",
       "values" : [ "user7", "380", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user8",
+      "groupKey" : "AQAAAAEBBXVzZXK4",
       "values" : [ "user8", "402", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "user9",
+      "groupKey" : "AQAAAAEBBXVzZXK5",
       "values" : [ "user9", "383", null, null ],
       "depth" : 0
     } ],
@@ -180,403 +180,403 @@
       "visible" : true
     } ],
     "rows" : [ {
-      "groupKey" : "1262304000000|user1",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:00:00.000Z", "user1", "322", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user10",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:00:00.000Z", "user10", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user2",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:00:00.000Z", "user2", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user3",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:00:00.000Z", "user3", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user4",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:00:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user5",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:00:00.000Z", "user5", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user6",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:00:00.000Z", "user6", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user7",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:00:00.000Z", "user7", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user8",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:00:00.000Z", "user8", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304000000|user9",
+      "groupKey" : "AQAAAAECBAB4LuclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:00:00.000Z", "user9", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user1",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:01:00.000Z", "user1", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user10",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:01:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user2",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:01:00.000Z", "user2", "336", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user3",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:01:00.000Z", "user3", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user4",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:01:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user5",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:01:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user6",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:01:00.000Z", "user6", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user7",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:01:00.000Z", "user7", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user8",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:01:00.000Z", "user8", "10", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304060000|user9",
+      "groupKey" : "AQAAAAECBGBiL+clAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:01:00.000Z", "user9", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user1",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:02:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user10",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:02:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user2",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:02:00.000Z", "user2", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user3",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:02:00.000Z", "user3", "327", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user4",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:02:00.000Z", "user4", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user5",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:02:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user6",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:02:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user7",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:02:00.000Z", "user7", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user8",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:02:00.000Z", "user8", "14", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304120000|user9",
+      "groupKey" : "AQAAAAECBMBMMOclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:02:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user1",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:03:00.000Z", "user1", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user10",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:03:00.000Z", "user10", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user2",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:03:00.000Z", "user2", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user3",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:03:00.000Z", "user3", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user4",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:03:00.000Z", "user4", "338", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user5",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:03:00.000Z", "user5", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user6",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:03:00.000Z", "user6", "1", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user7",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:03:00.000Z", "user7", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user8",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:03:00.000Z", "user8", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304180000|user9",
+      "groupKey" : "AQAAAAECBCA3MeclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:03:00.000Z", "user9", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user1",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:04:00.000Z", "user1", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user10",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:04:00.000Z", "user10", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user2",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:04:00.000Z", "user2", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user3",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:04:00.000Z", "user3", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user4",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:04:00.000Z", "user4", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user5",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:04:00.000Z", "user5", "323", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user6",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:04:00.000Z", "user6", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user7",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:04:00.000Z", "user7", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user8",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:04:00.000Z", "user8", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304240000|user9",
+      "groupKey" : "AQAAAAECBIAhMuclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:04:00.000Z", "user9", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user1",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:05:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user10",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:05:00.000Z", "user10", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user2",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:05:00.000Z", "user2", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user3",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:05:00.000Z", "user3", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user4",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:05:00.000Z", "user4", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user5",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:05:00.000Z", "user5", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user6",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:05:00.000Z", "user6", "334", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user7",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:05:00.000Z", "user7", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user8",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:05:00.000Z", "user8", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304300000|user9",
+      "groupKey" : "AQAAAAECBOALM+clAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:05:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user1",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:06:00.000Z", "user1", "12", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user10",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:06:00.000Z", "user10", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user2",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:06:00.000Z", "user2", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user3",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:06:00.000Z", "user3", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user4",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:06:00.000Z", "user4", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user5",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:06:00.000Z", "user5", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user6",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:06:00.000Z", "user6", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user7",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:06:00.000Z", "user7", "330", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user8",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:06:00.000Z", "user8", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304360000|user9",
+      "groupKey" : "AQAAAAECBED2M+clAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:06:00.000Z", "user9", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user1",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:07:00.000Z", "user1", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user10",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:07:00.000Z", "user10", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user2",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:07:00.000Z", "user2", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user3",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:07:00.000Z", "user3", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user4",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:07:00.000Z", "user4", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user5",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:07:00.000Z", "user5", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user6",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:07:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user7",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:07:00.000Z", "user7", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user8",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:07:00.000Z", "user8", "335", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304420000|user9",
+      "groupKey" : "AQAAAAECBKDgNOclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:07:00.000Z", "user9", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user1",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:08:00.000Z", "user1", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user10",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:08:00.000Z", "user10", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user2",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:08:00.000Z", "user2", "6", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user3",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:08:00.000Z", "user3", "14", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user4",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:08:00.000Z", "user4", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user5",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:08:00.000Z", "user5", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user6",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:08:00.000Z", "user6", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user7",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:08:00.000Z", "user7", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user8",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:08:00.000Z", "user8", "2", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304480000|user9",
+      "groupKey" : "AQAAAAECBADLNeclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:08:00.000Z", "user9", "326", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user1",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKx",
       "values" : [ "2010-01-01T00:09:00.000Z", "user1", "12", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user10",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXIxsA==",
       "values" : [ "2010-01-01T00:09:00.000Z", "user10", "327", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user2",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKy",
       "values" : [ "2010-01-01T00:09:00.000Z", "user2", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user3",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXKz",
       "values" : [ "2010-01-01T00:09:00.000Z", "user3", "5", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user4",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK0",
       "values" : [ "2010-01-01T00:09:00.000Z", "user4", "9", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user5",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK1",
       "values" : [ "2010-01-01T00:09:00.000Z", "user5", "8", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user6",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK2",
       "values" : [ "2010-01-01T00:09:00.000Z", "user6", "4", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user7",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK3",
       "values" : [ "2010-01-01T00:09:00.000Z", "user7", "3", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user8",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK4",
       "values" : [ "2010-01-01T00:09:00.000Z", "user8", "7", null, null ],
       "depth" : 0
     }, {
-      "groupKey" : "1262304540000|user9",
+      "groupKey" : "AQAAAAECBGC1NuclAQAABXVzZXK5",
       "values" : [ "2010-01-01T00:09:00.000Z", "user9", "6", null, null ],
       "depth" : 0
     } ],

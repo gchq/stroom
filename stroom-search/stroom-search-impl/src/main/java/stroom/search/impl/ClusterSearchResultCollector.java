@@ -16,9 +16,8 @@
 
 package stroom.search.impl;
 
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
@@ -50,7 +49,6 @@ public class ClusterSearchResultCollector implements Store {
     private static final String TASK_NAME = "AsyncSearchTask";
 
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
-    private final CompletionState completionState = new CompletionState();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
@@ -79,7 +77,7 @@ public class ClusterSearchResultCollector implements Store {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Don't begin execution if we have been asked to complete already.
-            if (!completionState.isComplete()) {
+            if (!coprocessors.getCompletionState().isComplete()) {
                 final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
                 asyncSearchTaskHandler.exec(taskContext, task);
             }
@@ -97,38 +95,38 @@ public class ClusterSearchResultCollector implements Store {
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
                             onFailure(nodeName, t);
-                            completionState.complete();
+                            coprocessors.getCompletionState().complete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        completionState.complete();
+                        coprocessors.getCompletionState().complete();
                     }
                 });
     }
 
     @Override
     public void destroy() {
-        completionState.complete();
+        coprocessors.clear();
     }
 
     public void complete() {
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout,
                                    final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     public synchronized boolean onSuccess(final String nodeName,
@@ -223,7 +221,7 @@ public class ClusterSearchResultCollector implements Store {
     }
 
     @Override
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         return coprocessors.getData(componentId);
     }
 
@@ -231,7 +229,7 @@ public class ClusterSearchResultCollector implements Store {
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", complete=" + completionState.isComplete() +
+                ", complete=" + coprocessors.getCompletionState() +
                 '}';
     }
 }

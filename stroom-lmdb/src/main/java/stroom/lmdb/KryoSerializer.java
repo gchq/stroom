@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb.serde;
+package stroom.lmdb;
 
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;

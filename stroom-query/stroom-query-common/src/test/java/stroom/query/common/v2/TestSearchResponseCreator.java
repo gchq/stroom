@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.GroupKey;
 import stroom.dashboard.expression.v1.StaticValueFunction;
-import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -12,22 +12,26 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +47,12 @@ class TestSearchResponseCreator {
     @Mock
     private SizesProvider sizesProvider;
 
+    private Path tempDir;
+
     @BeforeEach
-    void setup() {
+    void setup(@TempDir final Path tempDir) {
+        this.tempDir = tempDir;
+
         // Default mock behaviour
         Mockito.when(mockStore.getErrors()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
@@ -56,7 +64,7 @@ class TestSearchResponseCreator {
     @Test
     void create_nonIncremental_timesOut() {
         Duration serverTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is never complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -82,9 +90,15 @@ class TestSearchResponseCreator {
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
     }
 
+    private SearchResponseCreator createSearchResponseCreator() {
+        return new SearchResponseCreator(
+                sizesProvider,
+                mockStore);
+    }
+
     @Test
     void create_nonIncremental_completesImmediately() {
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(true);
@@ -109,9 +123,8 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
-        Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -136,9 +149,8 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_noTimeout() {
-        Duration serverTimeout = Duration.ofMillis(5_000);
         Duration clientTimeout = Duration.ofMillis(0);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -169,10 +181,8 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
-        //long timeout because we should return almost immediately
-        Duration serverTimeout = Duration.ofMillis(500);
         Duration clientTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, mockStore);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -219,7 +229,7 @@ class TestSearchResponseCreator {
 
     private void makeSearchStateAfter(final long sleepTime, final boolean state) {
         try {
-            final Answer answer = invocation -> {
+            final Answer<Boolean> answer = invocation -> {
                 TimingUtils.sleep(sleepTime);
                 //change the store to be complete
                 Mockito.when(mockStore.isComplete()).thenReturn(state);
@@ -273,18 +283,73 @@ class TestSearchResponseCreator {
                 .build();
     }
 
-    private Data createSingleItemDataObject() {
-        final Items items = new Items(100, null, null, remove -> LOGGER.info(remove.toString()));
+    private DataStore createSingleItemDataObject() {
+        final List<Field> fields = List.of(
+                Field.builder().name("f1").expression("'A'").build(),
+                Field.builder().name("f2").expression("'B'").build(),
+                Field.builder().name("f3").expression("'C'").build());
+        final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+
+        final ItemsImpl items = new ItemsImpl(
+                100,
+                itemSerialiser,
+                null,
+                null,
+                null,
+                remove ->
+                        LOGGER.info(remove.toString()));
         final Generator[] generators = new Generator[3];
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        items.add(new Item(new GroupKey(0, null, ValSerialiser.EMPTY_VALUES), generators));
+        items.add(new byte[4], itemSerialiser.toBytes(generators));
 
-        final Map<GroupKey, Items> map = new HashMap<>();
-        map.put(Data.ROOT_KEY, items);
+        final CompletionState completionState = new CompletionStateImpl();
 
-        return new Data(map, items.size(), items.size());
+        return new DataStore() {
+            @Override
+            public Items get() {
+                return items;
+            }
+
+            @Override
+            public Items get(final RawKey key) {
+                return null;
+            }
+
+            @Override
+            public long getSize() {
+                return items.size();
+            }
+
+            @Override
+            public long getTotalSize() {
+                return items.size();
+            }
+
+            @Override
+            public void add(final Val[] values) {
+            }
+
+            @Override
+            public boolean readPayload(final Input input) {
+                return false;
+            }
+
+            @Override
+            public void writePayload(final Output output) {
+            }
+
+            @Override
+            public void clear() {
+            }
+
+            @Override
+            public CompletionState getCompletionState() {
+                return completionState;
+            }
+        };
     }
 
     private void assertResponseWithData(final SearchResponse searchResponse) {

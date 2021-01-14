@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.impl;
+package stroom.util.concurrent;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

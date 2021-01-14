@@ -19,13 +19,11 @@ package stroom.test;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.io.FileUtil;
-import stroom.util.io.HomeDirProviderImpl;
-import stroom.util.io.TempDirProviderImpl;
+import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.io.TempDir;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -40,14 +38,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ContentImportService contentImportService;
-    @Inject
     private SecurityContext securityContext;
     @Inject
-    private HomeDirProviderImpl homeDirProvider;
-    @Inject
-    private TempDirProviderImpl tempDirProvider;
-    @TempDir
+    private TempDirProvider tempDirProvider;
+
     static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
 
     private static Class<?> currentTestClass;
@@ -60,12 +54,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
         if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
             currentTestClass = testInfo.getTestClass().orElse(null);
 
+            tempDir = tempDirProvider.get();
             if (tempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
             this.testTempDir = tempDir;
-            homeDirProvider.setHomeDir(tempDir);
-            tempDirProvider.setTempDir(tempDir);
             securityContext.asProcessingUser(() -> {
                 commonTestControl.cleanup();
                 commonTestControl.setup(tempDir);

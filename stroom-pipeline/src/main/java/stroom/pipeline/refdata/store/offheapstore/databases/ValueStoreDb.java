@@ -19,11 +19,11 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
-import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
+import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.EntryConsumer;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;

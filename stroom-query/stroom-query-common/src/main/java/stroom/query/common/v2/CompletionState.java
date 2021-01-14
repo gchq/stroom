@@ -16,28 +16,15 @@
 
 package stroom.query.common.v2;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
-public class CompletionState {
-    private final AtomicBoolean complete = new AtomicBoolean();
-    private final CountDownLatch countDownLatch = new CountDownLatch(1);
+public interface CompletionState extends Consumer<Long> {
+    void complete();
 
-    public void complete() {
-        complete.set(true);
-        countDownLatch.countDown();
-    }
+    boolean isComplete();
 
-    public boolean isComplete() {
-        return complete.get();
-    }
+    void awaitCompletion() throws InterruptedException;
 
-    public void awaitCompletion() throws InterruptedException {
-        countDownLatch.await();
-    }
-
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return countDownLatch.await(timeout, unit);
-    }
+    boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException;
 }

@@ -21,10 +21,13 @@ import java.util.function.Consumer;
 
 public class CoprocessorsFactory {
     private final SizesProvider sizesProvider;
+    private final DataStoreFactory dataStoreFactory;
 
     @Inject
-    public CoprocessorsFactory(final SizesProvider sizesProvider) {
+    public CoprocessorsFactory(final SizesProvider sizesProvider,
+                               final DataStoreFactory dataStoreFactory) {
         this.sizesProvider = sizesProvider;
+        this.dataStoreFactory = dataStoreFactory;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -55,10 +58,11 @@ public class CoprocessorsFactory {
 
     public Coprocessors create(final SearchRequest searchRequest) {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
-        return create(coprocessorSettingsList, searchRequest.getQuery().getParams());
+        return create(searchRequest.getKey().getUuid(), coprocessorSettingsList, searchRequest.getQuery().getParams());
     }
 
-    public Coprocessors create(final List<CoprocessorSettings> coprocessorSettingsList,
+    public Coprocessors create(final String queryKey,
+                               final List<CoprocessorSettings> coprocessorSettingsList,
                                final List<Param> params) {
         // Create a field index map.
         final FieldIndex fieldIndex = new FieldIndex();
@@ -73,7 +77,7 @@ public class CoprocessorsFactory {
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
-                final Coprocessor coprocessor = create(coprocessorSettings, fieldIndex, paramMap, errorConsumer);
+                final Coprocessor coprocessor = create(queryKey, coprocessorSettings, fieldIndex, paramMap, errorConsumer);
 
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);
@@ -113,15 +117,21 @@ public class CoprocessorsFactory {
                 errorConsumer);
     }
 
-    private Coprocessor create(final CoprocessorSettings settings,
+    private Coprocessor create(final String queryKey,
+                               final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
                                final Map<String, String> paramMap,
                                final Consumer<Throwable> errorConsumer) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
-            final TableDataStore tableDataStore = create(tableSettings, fieldIndex, paramMap);
-            return new TableCoprocessor(tableSettings, tableDataStore, errorConsumer);
+            final DataStore dataStore = create(
+                    queryKey,
+                    String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
+                    tableSettings,
+                    fieldIndex,
+                    paramMap);
+            return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
             return new EventCoprocessor(eventCoprocessorSettings, fieldIndex, errorConsumer);
@@ -130,9 +140,11 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private TableDataStore create(final TableSettings tableSettings,
-                                  final FieldIndex fieldIndex,
-                                  final Map<String, String> paramMap) {
+    private DataStore create(final String queryKey,
+                             final String componentId,
+                             final TableSettings tableSettings,
+                             final FieldIndex fieldIndex,
+                             final Map<String, String> paramMap) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
@@ -140,7 +152,9 @@ public class CoprocessorsFactory {
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
-        return new TableDataStore(
+        return dataStoreFactory.create(
+                queryKey,
+                componentId,
                 tableSettings,
                 fieldIndex,
                 paramMap,

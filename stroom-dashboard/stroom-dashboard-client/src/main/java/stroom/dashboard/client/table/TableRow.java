@@ -1,9 +1,10 @@
 package stroom.dashboard.client.table;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.util.shared.Expander;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.ArrayList;
 import java.util.List;

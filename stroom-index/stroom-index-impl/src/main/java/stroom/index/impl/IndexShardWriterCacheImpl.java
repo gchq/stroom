@@ -26,6 +26,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;

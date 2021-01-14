@@ -70,7 +70,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             // section of the yaml
             final PathCreator pathCreator = getPathCreator(rootNode);
             final Function<String, String> logDirMutator = currLogDir ->
-                    pathCreator.replaceSystemProperties(currLogDir.trim());
+                    pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(currLogDir.trim()));
 
             JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
                     mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));

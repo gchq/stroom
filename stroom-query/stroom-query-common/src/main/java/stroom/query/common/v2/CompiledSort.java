@@ -16,10 +16,12 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
 public class CompiledSort implements Serializable {
     private static final long serialVersionUID = 719372020029496497L;
@@ -27,8 +29,11 @@ public class CompiledSort implements Serializable {
     private final int fieldIndex;
     private final int order;
     private final SortDirection direction;
+    private final Comparator<Val> comparator;
 
-    public CompiledSort(final int fieldIndex, final Sort sort) {
+    public CompiledSort(final int fieldIndex,
+                        final Sort sort,
+                        final Comparator<Val> comparator) {
         this.fieldIndex = fieldIndex;
         if (sort.getOrder() != null) {
             this.order = sort.getOrder();
@@ -36,6 +41,7 @@ public class CompiledSort implements Serializable {
             this.order = 0;
         }
         this.direction = sort.getDirection();
+        this.comparator = comparator;
     }
 
     public int getFieldIndex() {
@@ -50,12 +56,17 @@ public class CompiledSort implements Serializable {
         return direction;
     }
 
+    public Comparator<Val> getComparator() {
+        return comparator;
+    }
+
     @Override
     public String toString() {
         return "CompiledSort{" +
                 "fieldIndex=" + fieldIndex +
                 ", order=" + order +
                 ", direction=" + direction +
+                ", comparator=" + comparator +
                 '}';
     }
 }

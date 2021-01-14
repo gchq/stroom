@@ -1,5 +1,9 @@
 package stroom.search.impl;
 
+import stroom.query.api.v2.Query;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
@@ -22,18 +26,26 @@ public class RemoteSearchService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider;
+    private final CoprocessorsFactory coprocessorsFactory;
+    private final SecurityContext securityContext;
+
+    private Coprocessors coprocessors;
 
     @Inject
     public RemoteSearchService(final RemoteSearchResults remoteSearchResults,
                                final TaskManager taskManager,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
-                               final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider) {
+                               final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider,
+                               final CoprocessorsFactory coprocessorsFactory,
+                               final SecurityContext securityContext) {
         this.remoteSearchResults = remoteSearchResults;
         this.taskManager = taskManager;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.clusterSearchTaskHandlerProvider = clusterSearchTaskHandlerProvider;
+        this.coprocessorsFactory = coprocessorsFactory;
+        this.securityContext = securityContext;
     }
 
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
@@ -41,14 +53,40 @@ public class RemoteSearchService {
         final RemoteSearchResultFactory remoteSearchResultFactory = new RemoteSearchResultFactory(taskManager);
         remoteSearchResults.put(clusterSearchTask.getKey().getUuid(), remoteSearchResultFactory);
 
-        final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(), taskContext -> {
-            taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
-            final ClusterSearchTaskHandler clusterSearchTaskHandler = clusterSearchTaskHandlerProvider.get();
-            clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, remoteSearchResultFactory);
-        });
+        // Create coprocessors.
+        securityContext.useAsRead(() -> {
+            try {
+                final Query query = clusterSearchTask.getQuery();
 
-        final Executor executor = executorProvider.get();
-        CompletableFuture.runAsync(runnable, executor);
+                // Make sure we have been given a query.
+                if (query.getExpression() == null) {
+                    throw new SearchException("Search expression has not been set");
+                }
+
+                coprocessors = coprocessorsFactory.create(
+                        clusterSearchTask.getKey().getUuid(),
+                        clusterSearchTask.getSettings(),
+                        query.getParams());
+                remoteSearchResultFactory.setCoprocessors(coprocessors);
+
+                if (coprocessors != null && coprocessors.size() > 0) {
+                    final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(), taskContext -> {
+                        taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
+                        final ClusterSearchTaskHandler clusterSearchTaskHandler = clusterSearchTaskHandlerProvider.get();
+                        clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, coprocessors, remoteSearchResultFactory);
+                    });
+
+                    final Executor executor = executorProvider.get();
+                    CompletableFuture.runAsync(runnable, executor);
+
+                } else {
+                    remoteSearchResultFactory.setInitialisationError("No coprocessors were created");
+                }
+
+            } catch (final RuntimeException e) {
+                remoteSearchResultFactory.setInitialisationError(e.getMessage());
+            }
+        });
 
         return true;
     }

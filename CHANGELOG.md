@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
+* Improved security for handling entity events.
+
+
+## [v7.0-beta.77] - 2021-01-12
+
+* Issue **#1867** : Cluster entity events are now sent to each node asynchronously to prevent delays caused by one or more slow/bad nodes.
+
+* Issue **#1923** : Fixed an issue affecting sorting dashboard table values that have mixed data types. In addition you can now sort columns alphanumerically if the column format is set to text. 
+
+* Issue **#1811** : Fixed issue where deleting or cutting/pasting text in a dashboard query editor was not marking the dashboard as dirty.
+
+* Search results are now stored off-heap to reduce the chance of out of memory errors.
+
+* Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
+>>>>>>> master
+
 * Issue **#1990** : Change order of items in quick filter popup help.
 
 * Change quick filter word boundary matching to handle a mix of delimited and canelCase, e.g. `stroom.prop.maxFileSize`.
@@ -2957,7 +2973,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.76...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.77...HEAD
+[v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
 [v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
 [v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75
 [v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74

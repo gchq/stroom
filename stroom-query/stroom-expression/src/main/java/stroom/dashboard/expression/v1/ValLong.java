@@ -82,11 +82,6 @@ public final class ValLong implements ValNumber {
         return Objects.hash(value);
     }
 
-    @Override
-    public int compareTo(final Val o) {
-        return Long.compare(value, ((ValLong) o).value);
-    }
-
     private static class ValLongCache {
         static final ValLong cache[] = new ValLong[-(-128) + 127 + 1];
 

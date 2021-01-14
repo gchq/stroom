@@ -106,9 +106,4 @@ public final class ValErr implements Val {
     public int hashCode() {
         return Objects.hash(message);
     }
-
-    @Override
-    public int compareTo(final Val o) {
-        return 0;
-    }
 }

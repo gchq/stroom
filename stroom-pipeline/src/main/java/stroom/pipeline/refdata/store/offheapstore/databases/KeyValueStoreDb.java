@@ -20,7 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;

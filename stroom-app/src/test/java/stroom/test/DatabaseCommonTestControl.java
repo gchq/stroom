@@ -89,9 +89,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         Path indexVolDir;
         if (tempDir == null) {
             final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
-            fsVolDir = Paths.get(pathCreator.replaceSystemProperties(fsVolPathStr.get(0)));
+            fsVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(fsVolPathStr.get(0))));
             final List<String> volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths();
-            indexVolDir = Paths.get(pathCreator.replaceSystemProperties(volGroupPathStr.get(0)));
+            indexVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(volGroupPathStr.get(0))));
         } else {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;

@@ -18,7 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
-class Any extends AbstractSelectorFunction implements Serializable {
+public class Any extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "any";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -31,7 +31,7 @@ class Any extends AbstractSelectorFunction implements Serializable {
         return new AnySelector(super.createGenerator());
     }
 
-    private static class AnySelector extends Selector {
+    public static class AnySelector extends Selector {
         private static final long serialVersionUID = 8153777070911899616L;
         private Val val;
 
@@ -39,11 +39,11 @@ class Any extends AbstractSelectorFunction implements Serializable {
             super(childGenerator);
         }
 
-        public Val select(Generator[] subGenerators) {
+        public Val select(final Selection<Val> selection) {
             if (this.val == null) {
-                if (subGenerators.length > 0) {
-                    for (final Generator generator : subGenerators) {
-                        final Val val = generator.eval();
+                if (selection.size() > 0) {
+                    for (int i = 0; i < selection.size(); i++) {
+                        final Val val = selection.get(i);
                         if (val.type().isValue()) {
                             this.val = val;
                             return this.val;

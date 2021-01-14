@@ -22,25 +22,21 @@ import stroom.query.api.v2.TableSettings;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
     private final TableSettings tableSettings;
-    private final TableDataStore tableDataStore;
+    private final DataStore dataStore;
 
     private final Consumer<Throwable> errorConsumer;
-    private final CountDownLatch completionState = new CountDownLatch(1);
     private final AtomicLong valuesCount = new AtomicLong();
-    private final AtomicLong completionCount = new AtomicLong();
 
     public TableCoprocessor(final TableSettings tableSettings,
-                            final TableDataStore tableDataStore,
+                            final DataStore dataStore,
                             final Consumer<Throwable> errorConsumer) {
         this.tableSettings = tableSettings;
-        this.tableDataStore = tableDataStore;
+        this.dataStore = dataStore;
         this.errorConsumer = errorConsumer;
     }
 
@@ -52,7 +48,7 @@ public class TableCoprocessor implements Coprocessor {
     public Consumer<Val[]> getValuesConsumer() {
         return values -> {
             valuesCount.incrementAndGet();
-            tableDataStore.add(values);
+            dataStore.add(values);
         };
     }
 
@@ -63,32 +59,35 @@ public class TableCoprocessor implements Coprocessor {
 
     @Override
     public Consumer<Long> getCompletionConsumer() {
-        return count -> {
-            completionCount.set(count);
-            completionState.countDown();
-        };
+        return dataStore.getCompletionState();
     }
 
     @Override
     public boolean readPayload(final Input input) {
-        return tableDataStore.readPayload(input);
+        return dataStore.readPayload(input);
     }
 
     @Override
     public void writePayload(final Output output) {
-        tableDataStore.writePayload(output);
+        dataStore.writePayload(output);
     }
 
     public AtomicLong getValuesCount() {
         return valuesCount;
     }
 
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.await(timeout, unit);
+    @Override
+    public CompletionState getCompletionState() {
+        return dataStore.getCompletionState();
     }
 
-    public Data getData() {
-        return tableDataStore.getData();
+    public DataStore getData() {
+        return dataStore;
+    }
+
+    @Override
+    public void clear() {
+        dataStore.clear();
     }
 
     @Override

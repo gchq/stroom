@@ -37,8 +37,8 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbDb;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -1005,7 +1005,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = pathCreator.replaceSystemProperties(referenceDataConfig.getLocalDir());
+        String storeDirStr = referenceDataConfig.getLocalDir();
+        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
         if (storeDirStr == null) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
@@ -1014,6 +1016,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
             storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
             storeDir = Paths.get(storeDirStr);
         }
 

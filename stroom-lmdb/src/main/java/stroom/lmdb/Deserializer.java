@@ -15,15 +15,12 @@
  *
  */
 
-package stroom.pipeline.refdata.store.offheapstore.lmdb.serde;
+package stroom.lmdb;
 
-public interface Serde<T> extends Serializer<T>, Deserializer<T> {
+import java.nio.ByteBuffer;
 
-    default Serializer<T> serializer() {
-        return this;
-    }
+public interface Deserializer<T> {
 
-    default Deserializer<T> deserializer() {
-        return this;
-    }
+    T deserialize(final ByteBuffer byteBuffer);
+
 }
