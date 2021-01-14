@@ -16,8 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Search.Builder;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

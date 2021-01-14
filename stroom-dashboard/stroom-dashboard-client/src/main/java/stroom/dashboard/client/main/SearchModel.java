@@ -332,17 +332,12 @@ public class SearchModel {
      */
     SearchRequest getCurrentRequest() {
         final Search search = currentSearch;
-        if (search == null || componentMap.size() == 0) {
-            return null;
-        }
-
         final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
             requests.add(componentResultRequest);
         }
-
         return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
