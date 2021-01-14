@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2001** : Fixed intermittent test failure associated with byte buffers being used incorrectly with LMDB.
+
 * Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
 
 * Improved security for handling entity events.
