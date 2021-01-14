@@ -339,7 +339,9 @@ public class MenuItemCell extends AbstractCell<Item> {
 
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+//        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString(
+                "cursor:default;color:#212121;background-color:#E0E0E0;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
         private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
@@ -359,24 +361,16 @@ public class MenuItemCell extends AbstractCell<Item> {
             if (value.getSafeHtml() != null) {
                 SafeStyles styles = NORMAL;
 
-//                if (!value.isEnabled()) {
-//                    styles = DISABLED;
-//                }
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
                                 RESOURCES.style().simpleText(),
                                 value.getSafeHtml()));
 
-//                if (menuPresenter.isHighlighted(value)) {
-//                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
-//                } else {
                 sb.append(TEMPLATE.outer(
                         RESOURCES.style().outer(),
                         styles,
                         inner.toSafeHtml()));
-//                }
             }
         }
 

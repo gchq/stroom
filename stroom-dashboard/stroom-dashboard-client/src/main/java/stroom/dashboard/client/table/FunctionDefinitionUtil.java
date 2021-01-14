@@ -235,8 +235,8 @@ public class FunctionDefinitionUtil {
         final InfoMenuItem infoMenuItem = new InfoMenuItem(
                 buildInfoHtml(functionDefinition, signature, helpUrlBase),
                 null,
-                true,
-                command);
+                false,
+                null);
 
         return new SimpleParentMenuItem(
                 signaturePosition,

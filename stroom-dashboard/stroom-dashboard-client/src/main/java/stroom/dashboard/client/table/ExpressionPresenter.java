@@ -133,12 +133,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                 functions,
                                 helpUrl));
                         functionsCompletionProvider = buildCompletionProvider(functionCompletions);
-
-//                    if (functionsMenuItems == null) {
-//                    functionsMenuItems = buildFunctionMenuItems(functions);
-//                    functionsMenuItems = createFunctionsMenuItemsAndSnippets();
-//                    }
-//                        functionsCompletionProvider = buildCompletionProvider(Collections.emptyList());
                     })
                     .call(DASHBOARD_RESOURCE)
                     .fetchFunctions();
@@ -146,31 +140,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private void onShowHelp(final ClickEvent clickEvent) {
-
         if ((clickEvent.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
             withHelpUrl(helpUrl -> {
                 String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
 
                 Window.open(url, "_blank", "");
             });
-            clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        final String helpUrl = result.getHelpUrl();
-                        if (helpUrl != null && helpUrl.trim().length() > 0) {
-                            String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
-
-                            Window.open(url, "_blank", "");
-                        } else {
-                            AlertEvent.fireError(
-                                    ExpressionPresenter.this,
-                                    "Help is not configured!",
-                                    null);
-                        }
-                    })
-                    .onFailure(caught -> AlertEvent.fireError(
-                            ExpressionPresenter.this,
-                            caught.getMessage(),
-                            null));
         }
     }
 
