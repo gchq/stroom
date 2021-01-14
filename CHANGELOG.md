@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2000** : Fixed dashboard table child result expansion.
+
 * Improved security for handling entity events.
 
 

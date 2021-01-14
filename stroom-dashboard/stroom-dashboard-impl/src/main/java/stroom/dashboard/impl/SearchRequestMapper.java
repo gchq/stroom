@@ -140,6 +140,7 @@ public class SearchRequestMapper {
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)
                         .fetch(tableResultRequest.getFetch())
+                        .openGroups(tableResultRequest.getOpenGroups())
                         .build();
                 resultRequests.add(copy);
 
