@@ -88,7 +88,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         this.clientSecurityContext = clientSecurityContext;
         this.dataNavigatorData = new DataNavigatorData();
 
-        setEditorOptions(textPresenter);
+        setEditorOptions();
 
         view.setTextView(textPresenter.getView());
         view.setNavigatorView(characterNavigatorPresenter.getView());
@@ -107,7 +107,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     }
 
-    private void setEditorOptions(final TextPresenter textPresenter) {
+    private void setEditorOptions() {
         textPresenter.setReadOnly(true);
 
         // Default to wrapped lines

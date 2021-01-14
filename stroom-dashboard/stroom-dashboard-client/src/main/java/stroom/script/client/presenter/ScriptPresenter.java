@@ -48,8 +48,11 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private int loadCount;
 
     @Inject
-    public ScriptPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final ScriptSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider) {
+    public ScriptPresenter(final EventBus eventBus,
+                           final LinkTabPanelView view,
+                           final ScriptSettingsPresenter settingsPresenter,
+                           final ClientSecurityContext securityContext,
+                           final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
