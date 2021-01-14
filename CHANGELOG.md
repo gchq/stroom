@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Search results are now stored off-heap to reduce the chance of out of memory errors.
 
 * Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
->>>>>>> master
 
 * Issue **#1990** : Change order of items in quick filter popup help.
 

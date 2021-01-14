@@ -4,13 +4,15 @@ import stroom.dashboard.shared.FunctionDefinition;
 import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionSnippet;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,14 +23,18 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FunctionDefinitionUtil {
+
+    private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
 
     private FunctionDefinitionUtil() {
     }
 
     public static List<Item> buildMenuItems(final List<FunctionDefinition> functionDefinitions,
-                                            final Consumer<String> insertFunction) {
+                                            final Consumer<String> insertFunction,
+                                            final String helpUrlBase) {
 
         final AtomicInteger categoryPosition = new AtomicInteger(0);
         return functionDefinitions.stream()
@@ -44,10 +50,11 @@ public class FunctionDefinitionUtil {
                     final List<Item> functionMenuItems = categoryFuncDefs.stream()
                             .sorted(Comparator.comparing(FunctionDefinition::getName))
                             .map(functionDefinition ->
-                                    convertFunctionDefinition(
+                                    convertFunctionDefinitionToItem(
                                             functionDefinition,
                                             insertFunction,
-                                            functionPosition.getAndIncrement()))
+                                            functionPosition.getAndIncrement(),
+                                            helpUrlBase))
                             .collect(Collectors.toList());
 
                     return new SimpleParentMenuItem(
@@ -58,9 +65,123 @@ public class FunctionDefinitionUtil {
                 .collect(Collectors.toList());
     }
 
-    private static Item convertFunctionDefinition(final FunctionDefinition functionDefinition,
-                                                  final Consumer<String> insertFunction,
-                                                  final int functionPosition) {
+    public static List<AceCompletion> buildCompletions(final List<FunctionDefinition> functionDefinitions,
+                                                       final String helpUrlBase) {
+        return functionDefinitions.stream()
+                .flatMap(functionDefinition ->
+                        convertFunctionDefinitionToCompletion(
+                                functionDefinition,
+                                helpUrlBase))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public static SafeHtml buildInfoHtml(final FunctionDefinition functionDefinition,
+                                         final FunctionDefinition.Signature signature,
+                                         final String helpUrlBase) {
+        if (functionDefinition != null) {
+
+            final Builder builder = TooltipUtil.builder()
+                    .addHeading(getSignatureStr(functionDefinition, signature))
+                    .addSeparator();
+
+            boolean hasContent = false;
+
+            final String description = signature.getDescription() != null
+                    ? signature.getDescription()
+                    : functionDefinition.getDescription();
+
+            if (description != null && !description.isEmpty()) {
+                builder.addLine(description);
+                hasContent = true;
+            }
+
+            if (hasContent) {
+                builder.addBreak();
+            }
+
+            addArgsBlockToInfo(signature, builder);
+
+            if (hasContent) {
+                builder.addBreak();
+            }
+
+            if (helpUrlBase != null) {
+                addHelpLinkToInfo(functionDefinition, helpUrlBase, builder);
+            }
+            return builder.build();
+
+        } else {
+            return SafeHtmlUtil.getSafeHtml("");
+        }
+    }
+
+    private static Stream<AceCompletion> convertFunctionDefinitionToCompletion(
+            final FunctionDefinition functionDefinition,
+            final String helpUrlBase) {
+
+        return functionDefinition.getSignatures()
+                .stream()
+                .map(signature -> {
+                    final String name = getSignatureStr(functionDefinition, signature);
+                    // TODO the help link doesn't work as ace seems to be hijacking the click
+                    // event so leave it out for now.
+                    final String html = buildInfoHtml(functionDefinition, signature, null)
+                            .asString();
+                    final String functionTypeStr = signature.getArgs().isEmpty()
+                            ? "Value"
+                            : "Function";
+                    final String meta = functionDefinition.getFunctionCategory() + " " + functionTypeStr;
+                    final String snippetText = buildSnippetText(functionDefinition, signature);
+
+                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
+
+                    return new AceCompletionSnippet(
+                            name,
+                            snippetText,
+                            DEFAULT_COMPLETION_SCORE,
+                            meta,
+                            html);
+                });
+    }
+
+    private static String buildSnippetText(final FunctionDefinition functionDefinition,
+                                           final FunctionDefinition.Signature signature) {
+        final String argsStr;
+        if (signature.getArgs().isEmpty()) {
+            argsStr = "";
+        } else {
+            final AtomicInteger argPosition = new AtomicInteger(1);
+            argsStr = signature.getArgs()
+                    .stream()
+                    .flatMap(arg -> {
+                        final List<String> snippetArgStrs = new ArrayList<>();
+
+                        if (arg.isVarargs()) {
+                            for (int i = 1; i <= arg.getMinVarargsCount(); i++) {
+                                final String argName = arg.getName() + i;
+                                snippetArgStrs.add(argToSnippetArg(argName, argPosition.getAndIncrement()));
+                            }
+                        } else {
+                            snippetArgStrs.add(argToSnippetArg(arg.getName(), argPosition.getAndIncrement()));
+                        }
+                        return snippetArgStrs.stream();
+                    })
+                    .collect(Collectors.joining(", "));
+        }
+
+        return functionDefinition.getName() + "(" + argsStr + ")$0";
+    }
+
+    private static String argToSnippetArg(final String argName,
+                                          final int position) {
+        return "${" + position + ":" + argName + "}";
+    }
+
+    private static Item convertFunctionDefinitionToItem(final FunctionDefinition functionDefinition,
+                                                        final Consumer<String> insertFunction,
+                                                        final int functionPosition,
+                                                        final String helpUrlBase) {
         Objects.requireNonNull(functionDefinition);
         Objects.requireNonNull(insertFunction);
 
@@ -73,20 +194,22 @@ public class FunctionDefinitionUtil {
 
         final Item functionMenuItem;
         if (functionDefinition.getSignatures().size() == 1) {
-            functionMenuItem = convertSignature(functionDefinition,
+            functionMenuItem = convertSignatureToItem(functionDefinition,
                     functionDefinition.getSignatures().get(0),
                     insertFunction,
-                    functionPosition);
+                    functionPosition,
+                    helpUrlBase);
         } else {
             AtomicInteger signaturePosition = new AtomicInteger(0);
             List<Item> childItems = functionDefinition.getSignatures()
                     .stream()
                     .map(signature ->
-                            convertSignature(
+                            convertSignatureToItem(
                                     functionDefinition,
                                     signature,
                                     insertFunction,
-                                    signaturePosition.getAndIncrement()))
+                                    signaturePosition.getAndIncrement(),
+                                    helpUrlBase))
                     .collect(Collectors.toList());
 
             // Wrap all the signatures in a menu item for the function
@@ -98,10 +221,11 @@ public class FunctionDefinitionUtil {
         return functionMenuItem;
     }
 
-    private static MenuItem convertSignature(final FunctionDefinition functionDefinition,
-                                             final FunctionDefinition.Signature signature,
-                                             final Consumer<String> insertFunction,
-                                             final int signaturePosition) {
+    private static Item convertSignatureToItem(final FunctionDefinition functionDefinition,
+                                               final FunctionDefinition.Signature signature,
+                                               final Consumer<String> insertFunction,
+                                               final int signaturePosition,
+                                               final String helpUrlBase) {
         // Return something like
         // funcX (sigY) -> info
 
@@ -109,7 +233,7 @@ public class FunctionDefinitionUtil {
 
         final Command command = () -> insertFunction.accept(signatureStr);
         final InfoMenuItem infoMenuItem = new InfoMenuItem(
-                buildInfoHtml(functionDefinition, signature),
+                buildInfoHtml(functionDefinition, signature, helpUrlBase),
                 null,
                 true,
                 command);
@@ -151,81 +275,57 @@ public class FunctionDefinitionUtil {
         return functionDefinition.getName() + "(" + argsStr + ")";
     }
 
-    private static SafeHtml buildInfoHtml(final FunctionDefinition functionDefinition,
-                                          final FunctionDefinition.Signature signature) {
-        if (functionDefinition != null) {
 
-            final Builder builder = TooltipUtil.builder()
-                    .addHeading(getSignatureStr(functionDefinition, signature))
-                    .addSeparator();
+    private static void addArgsBlockToInfo(final FunctionDefinition.Signature signature,
+                                           final Builder builder) {
+        builder.addThreeColTable(tableBuilder -> {
+            tableBuilder.addHeaderRow("Parameter", "Type", "Description");
 
-            boolean hasContent = false;
-
-            final String description = signature.getDescription() != null
-                    ? signature.getDescription()
-                    : functionDefinition.getDescription();
-
-            if (description != null && !description.isEmpty()) {
-                builder.addLine(description);
-                hasContent = true;
-            }
-
-            if (hasContent) {
-                builder.addBreak();
-            }
-
-            builder.addThreeColTable(tableBuilder -> {
-                tableBuilder.addHeaderRow("Parameter", "Type", "Description");
-
-                signature.getArgs()
-                        .forEach(arg -> {
-                            if (arg.isVarargs()) {
-                                for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {
-                                    final String suffix = i <= arg.getMinVarargsCount()
-                                            ? String.valueOf(i)
-                                            : "...";
-                                    tableBuilder.addRow(
-                                            arg.getName() + suffix,
-                                            convertType(arg.getArgType()),
-                                            arg.getDescription());
-                                }
-                            } else {
+            signature.getArgs()
+                    .forEach(arg -> {
+                        if (arg.isVarargs()) {
+                            for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {
+                                final String suffix = i <= arg.getMinVarargsCount()
+                                        ? String.valueOf(i)
+                                        : "...";
                                 tableBuilder.addRow(
-                                        arg.getName(),
+                                        arg.getName() + suffix,
                                         convertType(arg.getArgType()),
                                         arg.getDescription());
                             }
-            });
-                if (signature.getReturnType() != null) {
-                    if (!signature.getArgs().isEmpty()) {
-                        tableBuilder.addBlankRow();
-                    }
-                    tableBuilder.addRow(
-                                    "Return",
-                                    convertType(signature.getReturnType()),
-                                    signature.getReturnDescription());
+                        } else {
+                            tableBuilder.addRow(
+                                    arg.getName(),
+                                    convertType(arg.getArgType()),
+                                    arg.getDescription());
+                        }
+                    });
+            if (signature.getReturnType() != null) {
+                if (!signature.getArgs().isEmpty()) {
+                    tableBuilder.addBlankRow();
                 }
-                return tableBuilder.build();
-            });
-
-            if (hasContent) {
-                builder.addBreak();
+                tableBuilder.addRow(
+                        "Return",
+                        convertType(signature.getReturnType()),
+                        signature.getReturnDescription());
             }
+            return tableBuilder.build();
+        });
+    }
 
-            builder
-                    .appendWithoutBreak("For more information see the ")
-                    .appendLinkWithoutBreak(
-                            "https://gchq.github.io/stroom-docs/user-guide/dashboards/expressions/" +
-                                    functionDefinition.getFunctionCategory().toLowerCase() +
-                                    "#" +
-                                    functionNameToAnchor(functionDefinition.getName()),
-                            "Help Documentation")
-                    .appendWithoutBreak(".");
-            return builder.build();
-
-        } else {
-            return SafeHtmlUtil.getSafeHtml("");
-        }
+    private static void addHelpLinkToInfo(final FunctionDefinition functionDefinition,
+                                          final String helpUrlBase,
+                                          final Builder builder) {
+        builder
+                .appendWithoutBreak("For more information see the ")
+                .appendLinkWithoutBreak(
+                        helpUrlBase +
+                                "/user-guide/dashboards/expressions/" +
+                                functionDefinition.getFunctionCategory().toLowerCase() +
+                                "#" +
+                                functionNameToAnchor(functionDefinition.getName()),
+                        "Help Documentation")
+                .appendWithoutBreak(".");
     }
 
     private static String functionNameToAnchor(final String name) {

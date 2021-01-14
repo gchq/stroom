@@ -35,7 +35,6 @@ import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.DbiFlags;
@@ -419,7 +418,6 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
     }
 
-    @RepeatedTest(5000)
     @Test
     void testKeyReuseAfterCursor() {
         // key 1 => key2 => value2 & value 3
