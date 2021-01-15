@@ -10,20 +10,29 @@ import java.util.function.Supplier;
 
 public class Metrics {
     private static final Map<String, Metric> map = new ConcurrentHashMap<>();
+    private static boolean enabled;
 
     public static <R> R measure(final String name, final Supplier<R> runnable) {
-        long start = System.nanoTime();
-        R result = runnable.get();
-        long elapsed = System.nanoTime() - start;
-        map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
-        return result;
+        if (enabled) {
+            long start = System.nanoTime();
+            R result = runnable.get();
+            long elapsed = System.nanoTime() - start;
+            map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
+            return result;
+        } else {
+            return runnable.get();
+        }
     }
 
     public static void measure(final String name, final Runnable runnable) {
-        long start = System.nanoTime();
-        runnable.run();
-        long elapsed = System.nanoTime() - start;
-        map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
+        if (enabled) {
+            long start = System.nanoTime();
+            runnable.run();
+            long elapsed = System.nanoTime() - start;
+            map.computeIfAbsent(name, k -> new Metric()).increment(elapsed);
+        } else {
+            runnable.run();
+        }
     }
 
     public static void report() {
@@ -34,6 +43,10 @@ public class Metrics {
                 .forEach(e ->
                         System.out.println(e.getKey() + " in: " + e.getValue().toString()));
         map.clear();
+    }
+
+    public static void setEnabled(final boolean enabled) {
+        Metrics.enabled = enabled;
     }
 
     private static class Metric {
