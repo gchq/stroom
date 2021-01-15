@@ -142,15 +142,18 @@ public class StroomEventLoggingUtil {
                 final AdvancedQueryItem operator;
                 if (expressionOperator.op().equals(Op.AND)) {
                     operator = And.builder()
-                            .withQueryItems(expressionOperator.getChildren()
-                                    .stream()
+                            .withQueryItems(expressionOperator.getChildren()== null
+                                    ? null
+                                    : expressionOperator.getChildren().stream()
                                     .map(StroomEventLoggingUtil::convertItem)
                                     .filter(Objects::nonNull)
                                     .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.OR)) {
                     operator = Or.builder()
-                            .withQueryItems(expressionOperator.getChildren()
+                            .withQueryItems(expressionOperator.getChildren() == null
+                                    ? null
+                                    : expressionOperator.getChildren()
                                     .stream()
                                     .map(StroomEventLoggingUtil::convertItem)
                                     .filter(Objects::nonNull)
@@ -158,7 +161,9 @@ public class StroomEventLoggingUtil {
                             .build();
                 } else if (expressionOperator.op().equals(Op.NOT)) {
                     operator = Not.builder()
-                            .withQueryItems(expressionOperator.getChildren()
+                            .withQueryItems(expressionOperator.getChildren() == null
+                                    ? null
+                                    : expressionOperator.getChildren()
                                     .stream()
                                     .map(StroomEventLoggingUtil::convertItem)
                                     .filter(Objects::nonNull)

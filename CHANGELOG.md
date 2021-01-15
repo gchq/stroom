@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
+* Fix NPE in StroomEventLoggingUtil.
+
 
 ## [v7.0-beta.78] - 2021-01-14
 
