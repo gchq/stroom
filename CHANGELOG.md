@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `search_results` dir to dockerfile.
+
 * Fix NPE in StroomEventLoggingUtil.
 
 

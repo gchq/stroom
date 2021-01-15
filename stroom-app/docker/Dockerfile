@@ -78,8 +78,11 @@ VOLUME /stroom/output/
 # Create Docker volume for the proxy aggregation repo location
 VOLUME /stroom/proxy_repo/
 
-# Create Docker volume for Stroom's volumes dir
+# Create Docker volume for Stroom's off-heap reference data
 VOLUME /stroom/reference_data/
+
+# Create Docker volume for Stroom's off-heap search result data
+VOLUME /stroom/search_results/
 
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
@@ -113,6 +116,7 @@ RUN \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy_repo && \
     mkdir -p /stroom/reference_data && \
+    mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
