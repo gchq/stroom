@@ -50,7 +50,8 @@ public class RemoteSearchService {
 
     public Boolean start(final ClusterSearchTask clusterSearchTask) {
         LOGGER.debug(() -> "startSearch " + clusterSearchTask);
-        final RemoteSearchResultFactory remoteSearchResultFactory = new RemoteSearchResultFactory(taskManager);
+        final RemoteSearchResultFactory remoteSearchResultFactory
+                = new RemoteSearchResultFactory(taskManager, securityContext);
         remoteSearchResults.put(clusterSearchTask.getKey().getUuid(), remoteSearchResultFactory);
 
         // Create coprocessors.

@@ -8,7 +8,8 @@
       "name" : "test",
       "expression" : "${test}",
       "width" : 200,
-      "visible" : true
+      "visible" : true,
+      "special" : false
     } ],
     "rows" : [ {
       "groupKey" : "groupKey",
@@ -32,7 +33,8 @@
         "type" : "GENERAL"
       },
       "width" : 200,
-      "visible" : true
+      "visible" : true,
+      "special" : false
     }, {
       "id" : "val2",
       "name" : "val2",
@@ -41,7 +43,8 @@
         "type" : "NUMBER"
       },
       "width" : 200,
-      "visible" : true
+      "visible" : true,
+      "special" : false
     }, {
       "id" : "val3",
       "name" : "val3",
@@ -50,7 +53,8 @@
         "type" : "NUMBER"
       },
       "width" : 200,
-      "visible" : true
+      "visible" : true,
+      "special" : false
     }, {
       "id" : "val4",
       "name" : "val4",
@@ -59,7 +63,8 @@
         "type" : "GENERAL"
       },
       "width" : 200,
-      "visible" : true
+      "visible" : true,
+      "special" : false
     } ],
     "values" : [ [ "test0", 0.4, 234, "this0" ], [ "test1", 0.5, 25634, "this1" ], [ "test2", 0.6, 27, "this2" ], [ "test3", 0.7, 344, "this3" ], [ "test4", 0.2, 8984, "this4" ], [ "test5", 0.33, 3244, "this5" ], [ "test6", 34.66, 44, "this6" ], [ "test7", 2.33, 74, "this7" ] ],
     "size" : 200,

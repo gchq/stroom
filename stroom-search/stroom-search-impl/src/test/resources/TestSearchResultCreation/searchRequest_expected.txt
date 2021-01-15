@@ -39,7 +39,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-BKJT6|89WRT",
         "name" : "Count",
@@ -48,19 +49,22 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -92,7 +96,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-BKJT6|89WRT",
         "name" : "Count",
@@ -101,19 +106,22 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -131,21 +139,24 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 20, 20 ],
       "showDetail" : true
@@ -169,7 +180,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -183,7 +195,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
@@ -192,19 +205,22 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -236,7 +252,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -250,7 +267,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
@@ -259,19 +277,22 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -291,7 +312,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -303,7 +325,8 @@
         },
         "group" : 1,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -314,14 +337,16 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 20, 10, 500 ],
       "showDetail" : true
@@ -345,7 +370,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|T5WYU",
         "name" : "UserId",
@@ -359,7 +385,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "table-78LF4|MT5IM",
         "name" : "Count",
@@ -368,19 +395,22 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -399,7 +429,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${UserId}",
         "sort" : {
@@ -411,7 +442,8 @@
         },
         "group" : 1,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${EventTime}",
         "sort" : {
@@ -422,14 +454,16 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "expression" : "${Count}",
         "format" : {
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 20, 100, 1000 ],
       "showDetail" : true

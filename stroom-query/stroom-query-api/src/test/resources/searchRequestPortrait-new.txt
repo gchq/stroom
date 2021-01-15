@@ -518,6 +518,7 @@ class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.Res
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.addOpenGroups(java.lang.String...)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.componentId(java.lang.String)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.fetch(stroom.query.api.v2.ResultRequest$Fetch)
+class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.openGroups(java.util.Set<java.lang.String>)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.requestedRange(stroom.query.api.v2.OffsetRange)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.resultStyle(stroom.query.api.v2.ResultRequest$ResultStyle)
 class stroom.query.api.v2.ResultRequest$Fetch - public final boolean java.lang.Enum.equals(java.lang.Object)

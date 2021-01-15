@@ -32,6 +32,7 @@ import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -40,6 +41,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractDataStoreTest {
     private final Sizes defaultMaxResultsSizes = Sizes.create(50);
+
+    @BeforeAll
+    static void beforeAll() {
+        Metrics.setEnabled(true);
+    }
 
     @Test
     void basicTest() {

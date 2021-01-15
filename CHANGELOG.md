@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
+
+## [v7.0-beta.78] - 2021-01-14
+
+* Issue **#2000** : `RemoteSearchResultFactory.destroy()` is now performed as the processing user.
+
+* Issue **#2000** : Fixed NPE affecting adding/removing columns on a dashboard table and changing column options like grouping and sorting.
+
+* Issue **#2000** : Fixed dashboard table child result expansion.
+
+* Issue **#2001** : Fixed intermittent test failure associated with byte buffers being used incorrectly with LMDB.
+
+* Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
+
 * Improved security for handling entity events.
 
 
@@ -24,7 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Search results are now stored off-heap to reduce the chance of out of memory errors.
 
-* Issue **#1911** : Add a dorop down menu for picking index fields in the expression editor.
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
 * Issue **#1990** : Change order of items in quick filter popup help.
 
@@ -2972,7 +2985,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.77...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.78...HEAD
+[v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
 [v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
 [v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
 [v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75

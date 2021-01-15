@@ -205,6 +205,11 @@ public final class ResultRequest {
             return this;
         }
 
+        public Builder openGroups(final Set<String> openGroups) {
+            this.openGroups = openGroups;
+            return this;
+        }
+
         /**
          * @param values Adding a set of TableSettings which are used to map the raw results to the output
          * @return The {@link Builder}, enabling method chaining
