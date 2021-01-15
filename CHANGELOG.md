@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix NPE in StroomEventLoggingUtil.
+
 
 ## [v7.0-beta.78] - 2021-01-14
 
