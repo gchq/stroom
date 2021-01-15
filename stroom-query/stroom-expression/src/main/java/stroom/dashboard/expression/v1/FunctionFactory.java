@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class FunctionFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionFactory.class);
@@ -223,9 +224,9 @@ public class FunctionFactory {
     }
 
 
-//    public Optional<FunctionDefinition> getFunctionDefinition(final Class<? extends Function> clazz) {
-//        return Optional.ofNullable(functionDefMap.get(clazz));
-//    }
+    public Optional<FunctionDef> getFunctionDefinition(final Class<? extends Function> clazz) {
+        return Optional.ofNullable(functionDefMap.get(clazz));
+    }
 //
 //    public List<FunctionDefinition> getFunctionDefinitions(final FunctionCategory functionCategory) {
 //        return functionDefMap.values()

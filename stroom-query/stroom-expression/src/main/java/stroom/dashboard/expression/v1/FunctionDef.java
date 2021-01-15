@@ -10,14 +10,37 @@ import java.lang.annotation.Target;
 public @interface FunctionDef {
 
     String name();
-//    String displayName();
 
+    /**
+     * Any alias names for the function
+     */
     String[] aliases() default {};
 
     FunctionCategory category();
 
-    String description();
+    /**
+     * A description of what the function does that is common to all signatures unless overridden
+     * at the signature level
+     */
+    String commonDescription() default "";
 
+    /**
+     * A single return type that is common to all signatures unless overridden at the signature level.
+     * You must specify either this or {@link FunctionSignature#returnType()}
+     * Defined as an array to allow us to not have one by default.
+     */
+    Class<? extends Val>[] commonReturnType() default {};
+
+    /**
+     * A return description that is common to all signatures unless overridden at the signature level
+     * You must specify either this or {@link FunctionSignature#returnDescription()}
+     */
+    String commonReturnDescription() default "";
+
+    /**
+     * All the overloaded function signatures for the method,
+     * e.g. parseDate(dateStr) & parseDate(dateStr, format).
+     * Must have at least one signature.
+     */
     FunctionSignature[] signatures();
-
 }

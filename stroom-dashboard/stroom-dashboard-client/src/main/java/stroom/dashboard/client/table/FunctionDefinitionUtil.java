@@ -1,6 +1,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.shared.FunctionDefinition;
+import stroom.dashboard.shared.FunctionDefinition.Arg;
 import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -44,7 +45,12 @@ public class FunctionDefinitionUtil {
                 .sorted(Entry.comparingByKey())
                 .map(entry -> {
                     final String category = entry.getKey();
-                    final List<FunctionDefinition> categoryFuncDefs = entry.getValue();
+                    // Create one for each alias too
+                    final List<FunctionDefinition> categoryFuncDefs = entry.getValue()
+                            .stream()
+                            .flatMap(functionDefinition -> functionDefinition.asAliases().stream())
+                            .filter(functionDefinition -> functionDefinition.getName().length() > 1)
+                            .collect(Collectors.toList());
                     final AtomicInteger functionPosition = new AtomicInteger(0);
 
                     final List<Item> functionMenuItems = categoryFuncDefs.stream()
@@ -67,7 +73,12 @@ public class FunctionDefinitionUtil {
 
     public static List<AceCompletion> buildCompletions(final List<FunctionDefinition> functionDefinitions,
                                                        final String helpUrlBase) {
+        // FlatMap to aliases so we have one func def per alias
+        // Filter on name length > 1 to ignore aliases like +, -, * etc which have a different form,
+        // e.g. 1+2 vs add(1, 2)
         return functionDefinitions.stream()
+                .flatMap(functionDefinition -> functionDefinition.asAliases().stream())
+                .filter(functionDefinition -> functionDefinition.getName().length() > 1)
                 .flatMap(functionDefinition ->
                         convertFunctionDefinitionToCompletion(
                                 functionDefinition,
@@ -87,12 +98,8 @@ public class FunctionDefinitionUtil {
 
             boolean hasContent = false;
 
-            final String description = signature.getDescription() != null
-                    ? signature.getDescription()
-                    : functionDefinition.getDescription();
-
-            if (description != null && !description.isEmpty()) {
-                builder.addLine(description);
+            if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
+                builder.addLine(signature.getDescription());
                 hasContent = true;
             }
 
@@ -259,10 +266,14 @@ public class FunctionDefinitionUtil {
 
                         if (arg.isVarargs()) {
                             for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {
-                                final String suffix = i <= arg.getMinVarargsCount()
-                                        ? String.valueOf(i)
-                                        : "...";
-                                argStrs.add(arg.getName() + suffix);
+//                                final String suffix = i <= arg.getMinVarargsCount()
+//                                        ? String.valueOf(i)
+//                                        : "N";
+//                                final String prefix = i <= arg.getMinVarargsCount()
+//                                        ? ""
+//                                        : "... , ";
+//                                argStrs.add(prefix + arg.getName() + suffix);
+                                argStrs.add(buildVarargsName(arg, i));
                             }
                         } else {
                             argStrs.add(arg.getName());
@@ -273,6 +284,18 @@ public class FunctionDefinitionUtil {
         }
 
         return functionDefinition.getName() + "(" + argsStr + ")";
+    }
+
+    private static String buildVarargsName(final Arg arg,
+                                           final int argNo) {
+
+        final String suffix = argNo <= arg.getMinVarargsCount()
+                ? String.valueOf(argNo)
+                : "N";
+        final String prefix = argNo <= arg.getMinVarargsCount()
+                ? ""
+                : "... , ";
+        return prefix + arg.getName() + suffix;
     }
 
 
@@ -287,7 +310,8 @@ public class FunctionDefinitionUtil {
                             for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {
                                 final String suffix = i <= arg.getMinVarargsCount()
                                         ? String.valueOf(i)
-                                        : "...";
+                                        : "N";
+
                                 tableBuilder.addRow(
                                         arg.getName() + suffix,
                                         convertType(arg.getArgType()),

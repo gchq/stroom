@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FunctionDefinition {
@@ -17,21 +20,39 @@ public class FunctionDefinition {
     @JsonProperty
     private final String functionCategory;
     @JsonProperty
-    private final String description;
-    @JsonProperty
     private final List<Signature> signatures;
 
     @JsonCreator
     public FunctionDefinition(@JsonProperty("name") final String name,
                               @JsonProperty("aliases") final List<String> aliases,
                               @JsonProperty("functionCategory") final String functionCategory,
-                              @JsonProperty("description") final String description,
                               @JsonProperty("signatures") final List<Signature> signatures) {
         this.name = name;
         this.aliases = aliases;
         this.functionCategory = functionCategory;
-        this.description = description;
         this.signatures = signatures;
+    }
+
+    /**
+     * @return Once {@link FunctionDefinition} for each name or alias with the name set to that name/alias
+     * and no aliases.
+     */
+    public List<FunctionDefinition> asAliases() {
+        return Stream.concat(Stream.of(name), aliases.stream())
+                .map(this::asAlias)
+                .collect(Collectors.toList());
+    }
+
+    private FunctionDefinition asAlias(final String name) {
+        if (this.name.equals(name) || aliases.contains(name)) {
+            return new FunctionDefinition(
+                    name,
+                    Collections.emptyList(),
+                    functionCategory,
+                    signatures);
+        } else {
+            throw new RuntimeException(name + " is not a valid name or alias");
+        }
     }
 
     public String getName() {
@@ -46,25 +67,8 @@ public class FunctionDefinition {
         return functionCategory;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
     public List<Signature> getSignatures() {
         return signatures;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final FunctionDefinition that = (FunctionDefinition) o;
-        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && functionCategory == that.functionCategory && Objects.equals(description, that.description) && Objects.equals(signatures, that.signatures);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, aliases, functionCategory, description, signatures);
     }
 
     @Override
@@ -72,10 +76,22 @@ public class FunctionDefinition {
         return "FunctionDefinition{" +
                 "name='" + name + '\'' +
                 ", aliases=" + aliases +
-                ", functionCategory=" + functionCategory +
-                ", description='" + description + '\'' +
+                ", functionCategory='" + functionCategory + '\'' +
                 ", signatures=" + signatures +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FunctionDefinition that = (FunctionDefinition) o;
+        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && Objects.equals(functionCategory, that.functionCategory) && Objects.equals(signatures, that.signatures);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, aliases, functionCategory, signatures);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

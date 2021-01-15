@@ -58,10 +58,9 @@ public class FunctionServiceImpl implements FunctionService {
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList()),
                         functionDef.category().getName(),
-                        convertString(functionDef.description()),
                         Arrays.stream(functionDef.signatures())
                                 .filter(Objects::nonNull)
-                                .map(FunctionServiceImpl::convertSignature)
+                                .map(functionSignature -> convertSignature(functionDef, functionSignature))
                                 .collect(Collectors.toList()));
             } catch (Exception e) {
                 throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
@@ -71,18 +70,34 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static FunctionDefinition.Signature convertSignature(final FunctionSignature functionSignature) {
+    private static FunctionDefinition.Signature convertSignature(
+            final FunctionDef functionDef,
+            final FunctionSignature functionSignature) {
 
         if (functionSignature != null) {
+
+            // The sig can override the types/descriptions set at the func def level
+
+            final Type returnType = functionSignature.returnType().length > 0
+                    ? convertType(functionSignature.returnType())
+                    : convertType(functionDef.commonReturnType());
+
+            final String returnDescription = !functionSignature.returnDescription().isEmpty()
+                    ? convertString(functionSignature.returnDescription())
+                    : convertString(functionDef.commonReturnDescription());
+
+            final String description = !functionSignature.description().isEmpty()
+                    ? convertString(functionSignature.description())
+                    : convertString(functionDef.commonDescription());
 
             return new Signature(
                     Arrays.stream(functionSignature.args())
                             .filter(Objects::nonNull)
                             .map(FunctionServiceImpl::convertArg)
                             .collect(Collectors.toList()),
-                    convertType(functionSignature.returnType()),
-                    convertString(functionSignature.returnDescription()),
-                    convertString(functionSignature.description()));
+                    returnType,
+                    returnDescription,
+                    description);
         } else {
             return null;
         }
@@ -112,11 +127,20 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
+    private static FunctionDefinition.Type convertType(final Class<? extends Val>[] types) {
+        if (types.length == 1) {
+            final Class<? extends Val> type = types[0];
+            return convertType(type);
+        } else {
+            throw new RuntimeException("Too many types");
+        }
+    }
+
     private static FunctionDefinition.Type convertType(final Class<? extends Val> type) {
         if (ValBoolean.class.equals(type)) {
             return Type.BOOLEAN;
         } else if (ValDouble.class.equals(type)) {
-                return Type.DOUBLE;
+            return Type.DOUBLE;
         } else if (ValErr.class.equals(type)) {
             return Type.ERROR;
         } else if (ValInteger.class.equals(type)) {

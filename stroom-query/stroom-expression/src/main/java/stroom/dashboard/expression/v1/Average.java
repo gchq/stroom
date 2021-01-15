@@ -19,6 +19,26 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@FunctionDef(
+        name = Average.NAME,
+        aliases = Average.ALIAS,
+        category = FunctionCategory.AGGREGATE,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The average (mean) of all the values",
+        signatures = {
+                @FunctionSignature(
+                        description = "Determines the average (mean) value across all records.",
+                        args = @FunctionArg(
+                                name = "field",
+                                description = "Field or the result of another function.",
+                                argType = ValDouble.class)),
+                @FunctionSignature(
+                        description = "Determines the average (mean) value of all arguments.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValDouble.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))})
 class Average extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "average";
     static final String ALIAS = "mean";

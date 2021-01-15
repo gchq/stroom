@@ -20,11 +20,13 @@ package stroom.dashboard.expression.v1;
         name = "add",
         aliases = "+",
         category = FunctionCategory.MATHEMATICS,
-        description = "Adds all the value of all arguments together. Minimum of two arguments",
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The sum of all values",
+        commonDescription = "Adds all the value of all arguments together. Minimum of two arguments",
         signatures = @FunctionSignature(
-                returnType = ValDouble.class,
                 args = @FunctionArg(
                         name = "value",
+                        description = "Field, the result of another function or a constant.",
                         argType = ValDouble.class,
                         isVarargs = true,
                         minVarargsCount = 2)))

@@ -25,11 +25,10 @@ import java.time.format.DateTimeFormatter;
 @FunctionDef(
         name = ParseDate.NAME,
         category = FunctionCategory.DATE,
-        description = "Parse a date and return a long number of milliseconds since the epoch.",
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "The date as number of milliseconds since the epoch.",
         signatures = {
                 @FunctionSignature(
-                        returnType = ValLong.class,
-                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = @FunctionArg(
                                 name = "dateString",
                                 argType = ValString.class,
@@ -37,8 +36,6 @@ import java.time.format.DateTimeFormatter;
                         description = "Parse dateString using the default date format pattern (" +
                                 DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
                 @FunctionSignature(
-                        returnType = ValLong.class,
-                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = {
                                 @FunctionArg(
                                         name = "dateString",
@@ -51,8 +48,6 @@ import java.time.format.DateTimeFormatter;
                         description = "Parse dateString using the supplied date format pattern and " +
                                 "the default timezone (UTC)."),
                 @FunctionSignature(
-                        returnType = ValLong.class,
-                        returnDescription = "The date as number of milliseconds since the epoch.",
                         args = {
                                 @FunctionArg(
                                         name = "dateString",

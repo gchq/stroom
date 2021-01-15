@@ -19,18 +19,17 @@ package stroom.dashboard.expression.v1;
 @FunctionDef(
         name = Max.NAME,
         category = FunctionCategory.AGGREGATE,
-        description = "Determines the maximum value given in the args.",
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The maximum value of all values.",
         signatures = {
                 @FunctionSignature(
-                        returnType = ValDouble.class,
                         description = "Determines the maximum value across all records",
                         args = @FunctionArg(
-                                name = "field",
+                                name = "expression",
                                 description = "Field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
-                        returnType = ValDouble.class,
-                        description = "Determines the maximum value from all the parameters.",
+                        description = "Determines the maximum value from all the arguments.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValDouble.class,
