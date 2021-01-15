@@ -306,23 +306,13 @@ public class FunctionDefinitionUtil {
 
             signature.getArgs()
                     .forEach(arg -> {
-                        if (arg.isVarargs()) {
-                            for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {
-                                final String suffix = i <= arg.getMinVarargsCount()
-                                        ? String.valueOf(i)
-                                        : "N";
-
-                                tableBuilder.addRow(
-                                        arg.getName() + suffix,
-                                        convertType(arg.getArgType()),
-                                        arg.getDescription());
-                            }
-                        } else {
-                            tableBuilder.addRow(
-                                    arg.getName(),
-                                    convertType(arg.getArgType()),
-                                    arg.getDescription());
-                        }
+                        final String argName = arg.isVarargs()
+                                ? arg.getName() + "1...N"
+                                : arg.getName();
+                        tableBuilder.addRow(
+                                argName,
+                                convertType(arg.getArgType()),
+                                arg.getDescription());
                     });
             if (signature.getReturnType() != null) {
                 if (!signature.getArgs().isEmpty()) {

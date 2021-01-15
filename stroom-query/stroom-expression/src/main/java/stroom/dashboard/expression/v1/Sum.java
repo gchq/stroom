@@ -26,7 +26,7 @@ package stroom.dashboard.expression.v1;
                         description = "Determines the sum of the value of expression across all grouped records",
                         args = @FunctionArg(
                                 name = "expression",
-                                description = "Field or the result of another function",
+                                description = "Grouped field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
                         description = "Determines the maximum value from all the arguments.",

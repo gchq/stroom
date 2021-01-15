@@ -22,6 +22,19 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+@FunctionDef(
+        name = FormatDate.NAME,
+        category = FunctionCategory.DATE,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class FormatDate extends AbstractFunction implements Serializable {
     static final String NAME = "formatDate";
     private static final long serialVersionUID = -305845496003936297L;

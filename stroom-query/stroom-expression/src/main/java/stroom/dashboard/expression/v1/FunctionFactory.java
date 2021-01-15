@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class FunctionFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionFactory.class);
@@ -193,9 +195,12 @@ public class FunctionFactory {
 
                             final FunctionDef functionDef = clazz.getAnnotation(FunctionDef.class);
 
-                            // Convert to a pojo so we can pass over rest
-//                            final FunctionDefinition functionDefinition = convertFunctionDef(functionDef);
                             functionDefMap.put(functionClazz, functionDef);
+
+                            // Add the class to our alias map for each name it has
+                            Stream.concat(Stream.of(functionDef.name()), Stream.of(functionDef.aliases()))
+                                    .filter(Objects::nonNull)
+                                    .forEach(name -> aliasMap.put(name, functionClazz));
 
                             LOGGER.debug("Adding function {}", functionClazz.getName());
                         }
@@ -228,14 +233,6 @@ public class FunctionFactory {
         return Optional.ofNullable(functionDefMap.get(clazz));
     }
 //
-//    public List<FunctionDefinition> getFunctionDefinitions(final FunctionCategory functionCategory) {
-//        return functionDefMap.values()
-//                .stream()
-//                .filter(functionDefinition ->
-//                        functionCategory.equals(functionDefinition.getFunctionCategory()))
-//                .collect(Collectors.toList());
-//    }
-
     public List<FunctionDef> getFunctionDefinitions() {
         return new ArrayList<>(functionDefMap.values());
     }

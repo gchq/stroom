@@ -23,15 +23,16 @@ package stroom.dashboard.expression.v1;
         commonReturnDescription = "The maximum value of all values.",
         signatures = {
                 @FunctionSignature(
-                        description = "Determines the maximum value across all records",
+                        description = "Determines the maximum value across all grouped records",
                         args = @FunctionArg(
-                                name = "expression",
-                                description = "Field or the result of another function",
+                                name = "values",
+                                description = "Grouped field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
                         description = "Determines the maximum value from all the arguments.",
                         args = @FunctionArg(
                                 name = "value",
+                                description = "Field, the result of another function or a constant.",
                                 argType = ValDouble.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))

@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = LessThan.NAME,
+        category = FunctionCategory.LOGIC,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class LessThan extends AbstractEqualityFunction {
     static final String NAME = "<";
     static final String ALIAS = "lessThan";

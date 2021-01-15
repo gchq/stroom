@@ -229,6 +229,7 @@ public class FunctionDefinition {
 
     public enum Type {
 
+        UNKNOWN("Unknown"),
         BOOLEAN("Boolean"),
         DOUBLE("Double"),
         ERROR("Error"),

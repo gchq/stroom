@@ -22,6 +22,15 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.HashSet;
 import java.util.Set;
 
+@FunctionDef(
+        name = CountGroups.NAME,
+        category = FunctionCategory.AGGREGATE,
+        commonDescription = "This is used to count the number of unique values where there are multiple " +
+                "group levels.",
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "Number of unique values",
+        signatures = @FunctionSignature(
+                args = {}))
 class CountGroups extends AbstractFunction {
     static final String NAME = "countGroups";
 

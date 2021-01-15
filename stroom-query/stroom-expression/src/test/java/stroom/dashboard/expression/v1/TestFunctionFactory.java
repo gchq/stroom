@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Modifier;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -38,7 +39,6 @@ class TestFunctionFactory {
             final List<Class<? extends Function>> allFunctionClasses = result.getAllClasses()
                     .stream()
                     .filter(classInfo ->  classInfo.implementsInterface(Function.class.getName()))
-                    .filter(classInfo -> !classInfo.isAbstract())
                     .map(classInfo -> (Class<? extends Function>) classInfo.loadClass())
                     .collect(Collectors.toList());
 
@@ -46,51 +46,69 @@ class TestFunctionFactory {
                 for (final Class<? extends Function> clazz : allFunctionClasses) {
                     final Optional<FunctionDef> optFuncDef = functionFactory.getFunctionDefinition(clazz);
                     final String className = clazz.getSimpleName();
-                    softAssertions.assertThat(optFuncDef)
-                            .withFailMessage("Function class " +
-                                    className +
-                                    " is not in FunctionFactory. " +
-                                    "Add an @FunctionDef annotation to it" )
-                            .isNotEmpty();
 
-                    optFuncDef.ifPresent(functionDef -> {
-                        softAssertions.assertThat(functionDef.name())
-                                .withFailMessage(
-                                        "Function " + className + " needs a name")
-                                .isNotEmpty();
-                        softAssertions.assertThat(functionDef.category())
-                                .withFailMessage(
-                                        "Function " + className + " needs a category")
-                                .isNotNull();
-                        softAssertions.assertThat(functionDef.signatures())
-                                .withFailMessage(
-                                        "Function " + className + " needs at least one @FunctionSignature")
-                                .isNotNull();
-                        softAssertions.assertThat(functionDef.signatures())
-                                .withFailMessage(
-                                        "Function " + className + " needs at least one @FunctionSignature")
+                    if (clazz.getModifiers() == Modifier.ABSTRACT) {
+                        softAssertions.assertThat(optFuncDef)
+                                .withFailMessage("Function class " +
+                                        className +
+                                        " should not have @FunctionDef as it is abstract")
+                                .isEmpty();
+                    } else {
+                        softAssertions.assertThat(optFuncDef)
+                                .withFailMessage("Function class " +
+                                        className +
+                                        " is not in FunctionFactory. " +
+                                        "Add an @FunctionDef annotation to it" )
                                 .isNotEmpty();
 
-                        for (final FunctionSignature signature : functionDef.signatures()) {
-                            final boolean hasDescription = !functionDef.commonDescription().isEmpty()
-                                    || !signature.description().isEmpty();
-                            softAssertions.assertThat(hasDescription)
-                                    .withFailMessage(
-                                            "Either FunctionDef.commonDescription or " +
-                                                    "FunctionSignature.description must be set")
-                                    .isTrue();
-
-                            final boolean hasReturnType = functionDef.commonReturnType().length > 0
-                                    || signature.returnType().length > 0;
-                            softAssertions.assertThat(hasReturnType)
-                                    .withFailMessage(
-                                            "Either FunctionDef.commonReturnType or " +
-                                                    "FunctionSignature.returnType must be set")
-                                    .isTrue();
-                        }
-                    });
+                        optFuncDef.ifPresent(functionDef -> {
+                            doSoftAssertions(softAssertions, functionDef, className);
+                        });
+                    }
+                }
+                if (!softAssertions.wasSuccess()) {
+                    LOGGER.error("Found {} errors", softAssertions.errorsCollected().size());
                 }
             });
+        }
+    }
+
+    private void doSoftAssertions(final SoftAssertions softAssertions,
+                                  final FunctionDef functionDef,
+                                  final String className) {
+        softAssertions.assertThat(functionDef.name())
+                .withFailMessage(
+                        "Function " + className + " needs a name")
+                .isNotEmpty();
+        softAssertions.assertThat(functionDef.category())
+                .withFailMessage(
+                        "Function " + className + " needs a category")
+                .isNotNull();
+        softAssertions.assertThat(functionDef.signatures())
+                .withFailMessage(
+                        "Function " + className + " needs at least one @FunctionSignature")
+                .isNotNull();
+        softAssertions.assertThat(functionDef.signatures())
+                .withFailMessage(
+                        "Function " + className + " needs at least one @FunctionSignature")
+                .isNotEmpty();
+
+        for (final FunctionSignature signature : functionDef.signatures()) {
+            final boolean hasDescription = !functionDef.commonDescription().isEmpty()
+                    || !signature.description().isEmpty();
+            softAssertions.assertThat(hasDescription)
+                    .withFailMessage(
+                            "Either FunctionDef.commonDescription or " +
+                                    "FunctionSignature.description must be set")
+                    .isTrue();
+
+            final boolean hasReturnType = functionDef.commonReturnType().length > 0
+                    || signature.returnType().length > 0;
+            softAssertions.assertThat(hasReturnType)
+                    .withFailMessage(
+                            "Either FunctionDef.commonReturnType or " +
+                                    "FunctionSignature.returnType must be set")
+                    .isTrue();
         }
     }
 }

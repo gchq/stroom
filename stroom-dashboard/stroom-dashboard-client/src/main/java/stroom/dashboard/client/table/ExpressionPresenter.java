@@ -134,6 +134,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                 helpUrl));
                         functionsCompletionProvider = buildCompletionProvider(functionCompletions);
                     })
+                    .onFailure(throwable -> {
+                        AlertEvent.fireError(
+                                ExpressionPresenter.this,
+                                throwable.getMessage(),
+                                null);
+                    })
                     .call(DASHBOARD_RESOURCE)
                     .fetchFunctions();
         });

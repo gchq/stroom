@@ -23,6 +23,19 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+@FunctionDef(
+        name = Variance.NAME,
+        category = FunctionCategory.AGGREGATE,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Variance extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "variance";
 

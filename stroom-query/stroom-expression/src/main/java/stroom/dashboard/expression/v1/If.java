@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = If.NAME,
+        category = FunctionCategory.LOGIC,
+        commonReturnType = Val.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class If extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "if";
     private static final long serialVersionUID = -305845496003936297L;

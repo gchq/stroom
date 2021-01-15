@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = ToDouble.NAME,
+        category = FunctionCategory.CAST,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class ToDouble extends AbstractCast implements Serializable {
     static final String NAME = "toDouble";
     private static final long serialVersionUID = -305845496003936297L;

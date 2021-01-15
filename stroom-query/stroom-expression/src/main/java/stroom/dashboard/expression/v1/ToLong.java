@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = ToLong.NAME,
+        category = FunctionCategory.CAST,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class ToLong extends AbstractCast implements Serializable {
     static final String NAME = "toLong";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a long");

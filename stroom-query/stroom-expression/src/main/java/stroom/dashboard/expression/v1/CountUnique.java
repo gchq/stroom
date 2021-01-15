@@ -23,6 +23,19 @@ import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
+@FunctionDef(
+        name = CountUnique.NAME,
+        category = FunctionCategory.AGGREGATE,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class CountUnique extends AbstractFunction {
     static final String NAME = "countUnique";
 

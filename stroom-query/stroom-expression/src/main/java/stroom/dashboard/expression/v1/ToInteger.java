@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = ToInteger.NAME,
+        category = FunctionCategory.CAST,
+        commonReturnType = ValInteger.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class ToInteger extends AbstractCast implements Serializable {
     static final String NAME = "toInteger";
     private static final ValErr ERROR = ValErr.create("Unable to cast to an integer");

@@ -151,8 +151,10 @@ public class FunctionServiceImpl implements FunctionService {
             return Type.NULL;
         } else if (ValString.class.equals(type)) {
             return Type.STRING;
+        } else if (Val.class.equals(type)) {
+            return Type.UNKNOWN;
         } else {
-            throw new RuntimeException("Unknown type " + type.getName());
+            return Type.UNKNOWN;
         }
     }
 }

@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = ToBoolean.NAME,
+        category = FunctionCategory.CAST,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class ToBoolean extends AbstractCast implements Serializable {
     static final String NAME = "toBoolean";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a boolean");
