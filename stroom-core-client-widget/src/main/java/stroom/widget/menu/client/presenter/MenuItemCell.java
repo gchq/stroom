@@ -339,10 +339,13 @@ public class MenuItemCell extends AbstractCell<Item> {
 
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
         private static final Template TEMPLATE = GWT.create(Template.class);
-//        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+
+        // Styled to look like the Ace Editor auto completion popups
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString(
-                "cursor:default;color:#212121;background-color:#E0E0E0;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+            "cursor:default;" +
+                "color:#212121;" +
+                "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
+                "border: 1px solid gray;");
         private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
 

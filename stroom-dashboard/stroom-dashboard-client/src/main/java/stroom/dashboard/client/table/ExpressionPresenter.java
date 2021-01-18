@@ -18,7 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.FunctionDefinition;
+import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -120,7 +120,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     private void buildMenusAndCompletions() {
         withHelpUrl(helpUrl -> {
-            final Rest<List<FunctionDefinition>> rest = restFactory.create();
+            final Rest<List<FunctionSignature>> rest = restFactory.create();
             rest
                     .onSuccess(functions -> {
                         functionCompletions.clear();

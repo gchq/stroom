@@ -11,45 +11,59 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FunctionDefinition {
-
+public class FunctionSignature {
     @JsonProperty
     private final String name;
     @JsonProperty
     private final List<String> aliases;
     @JsonProperty
-    private final String functionCategory;
+    private final String category;
     @JsonProperty
-    private final List<Signature> signatures;
+    private final List<Arg> args;
+    @JsonProperty
+    private final Type returnType;
+    @JsonProperty
+    private final String returnDescription;
+    @JsonProperty
+    private final String description;
 
     @JsonCreator
-    public FunctionDefinition(@JsonProperty("name") final String name,
-                              @JsonProperty("aliases") final List<String> aliases,
-                              @JsonProperty("functionCategory") final String functionCategory,
-                              @JsonProperty("signatures") final List<Signature> signatures) {
+    public FunctionSignature(@JsonProperty("name") final String name,
+                             @JsonProperty("aliases") final List<String> aliases,
+                             @JsonProperty("category") final String category,
+                             @JsonProperty("args") final List<Arg> args,
+                             @JsonProperty("returnType") final Type returnType,
+                             @JsonProperty("returnDescription") final String returnDescription,
+                             @JsonProperty("description") final String description) {
         this.name = name;
         this.aliases = aliases;
-        this.functionCategory = functionCategory;
-        this.signatures = signatures;
+        this.category = category;
+        this.args = args;
+        this.returnType = returnType;
+        this.returnDescription = returnDescription;
+        this.description = description;
     }
 
     /**
-     * @return Once {@link FunctionDefinition} for each name or alias with the name set to that name/alias
+     * @return Once {@link FunctionSignature} for each name or alias with the name set to that name/alias
      * and no aliases.
      */
-    public List<FunctionDefinition> asAliases() {
+    public List<FunctionSignature> asAliases() {
         return Stream.concat(Stream.of(name), aliases.stream())
                 .map(this::asAlias)
                 .collect(Collectors.toList());
     }
 
-    private FunctionDefinition asAlias(final String name) {
+    private FunctionSignature asAlias(final String name) {
         if (this.name.equals(name) || aliases.contains(name)) {
-            return new FunctionDefinition(
+            return new FunctionSignature(
                     name,
                     Collections.emptyList(),
-                    functionCategory,
-                    signatures);
+                    category,
+                    args,
+                    returnType,
+                    returnDescription,
+                    description);
         } else {
             throw new RuntimeException(name + " is not a valid name or alias");
         }
@@ -63,99 +77,48 @@ public class FunctionDefinition {
         return aliases;
     }
 
-    public String getFunctionCategory() {
-        return functionCategory;
+    public String getCategory() {
+        return category;
     }
 
-    public List<Signature> getSignatures() {
-        return signatures;
+    public List<Arg> getArgs() {
+        return args;
     }
 
-    @Override
-    public String toString() {
-        return "FunctionDefinition{" +
-                "name='" + name + '\'' +
-                ", aliases=" + aliases +
-                ", functionCategory='" + functionCategory + '\'' +
-                ", signatures=" + signatures +
-                '}';
+    public Type getReturnType() {
+        return returnType;
+    }
+
+    public String getReturnDescription() {
+        return returnDescription;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final FunctionDefinition that = (FunctionDefinition) o;
-        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && Objects.equals(functionCategory, that.functionCategory) && Objects.equals(signatures, that.signatures);
+        final FunctionSignature signature = (FunctionSignature) o;
+        return Objects.equals(category, signature.category) && Objects.equals(args, signature.args) && returnType == signature.returnType && Objects.equals(returnDescription, signature.returnDescription) && Objects.equals(description, signature.description);
+    }
+
+    @Override
+    public String toString() {
+        return "Signature{" +
+                "category='" + category + '\'' +
+                ", args=" + args +
+                ", returnType=" + returnType +
+                ", returnDescription='" + returnDescription + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, aliases, functionCategory, signatures);
-    }
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class Signature {
-        @JsonProperty
-        private final List<Arg> args;
-        @JsonProperty
-        private final Type returnType;
-        @JsonProperty
-        private final String returnDescription;
-        @JsonProperty
-        private final String description;
-
-        @JsonCreator
-        public Signature(@JsonProperty("args") final List<Arg> args,
-                         @JsonProperty("returnType") final Type returnType,
-                         @JsonProperty("returnDescription") final String returnDescription,
-                         @JsonProperty("description") final String description) {
-            this.args = args;
-            this.returnType = returnType;
-            this.returnDescription = returnDescription;
-            this.description = description;
-        }
-
-        public List<Arg> getArgs() {
-            return args;
-        }
-
-        public Type getReturnType() {
-            return returnType;
-        }
-
-        public String getReturnDescription() {
-            return returnDescription;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        @Override
-        public String toString() {
-            return "Signature{" +
-                    "args=" + args +
-                    ", returnType=" + returnType +
-                    ", returnDescription='" + returnDescription + '\'' +
-                    ", description='" + description + '\'' +
-                    '}';
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final Signature signature = (Signature) o;
-            return Objects.equals(args, signature.args) && returnType == signature.returnType && Objects.equals(returnDescription, signature.returnDescription) && Objects.equals(description, signature.description);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(args, returnType, returnDescription, description);
-        }
+        return Objects.hash(category, args, returnType, returnDescription, description);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,4 +212,5 @@ public class FunctionDefinition {
             return name;
         }
     }
+
 }

@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 @FunctionDef(
         name = ToDouble.NAME,
-        category = FunctionCategory.CAST,
+        commonCategory = FunctionCategory.CAST,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

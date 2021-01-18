@@ -22,17 +22,18 @@ import com.esotericsoftware.kryo.io.Output;
 @FunctionDef(
         name = Average.NAME,
         aliases = Average.ALIAS,
-        category = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The average (mean) of all the values",
         signatures = {
                 @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
                         description = "Determines the average (mean) value across all grouped records.",
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
                         description = "Determines the average (mean) value of all arguments.",
                         args = @FunctionArg(
                                 name = "value",

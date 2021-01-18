@@ -18,17 +18,18 @@ package stroom.dashboard.expression.v1;
 
 @FunctionDef(
         name = Max.NAME,
-        category = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The maximum value of all values.",
         signatures = {
                 @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
                         description = "Determines the maximum value across all grouped records",
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
                         description = "Determines the maximum value from all the arguments.",
                         args = @FunctionArg(
                                 name = "value",

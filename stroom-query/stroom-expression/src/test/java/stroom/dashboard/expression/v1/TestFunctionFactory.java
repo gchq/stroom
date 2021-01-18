@@ -80,20 +80,47 @@ class TestFunctionFactory {
                 .withFailMessage(
                         "Function " + className + " needs a name")
                 .isNotEmpty();
-        softAssertions.assertThat(functionDef.category())
-                .withFailMessage(
-                        "Function " + className + " needs a category")
-                .isNotNull();
+
+        assertMaxOneItemInArray(
+                softAssertions,
+                "FunctionDef.commonCategory",
+                functionDef.commonCategory());
+
+        assertMaxOneItemInArray(
+                softAssertions,
+                "FunctionDef.commonReturnType",
+                functionDef.commonReturnType());
+
         softAssertions.assertThat(functionDef.signatures())
                 .withFailMessage(
                         "Function " + className + " needs at least one @FunctionSignature")
                 .isNotNull();
+
         softAssertions.assertThat(functionDef.signatures())
                 .withFailMessage(
                         "Function " + className + " needs at least one @FunctionSignature")
                 .isNotEmpty();
 
         for (final FunctionSignature signature : functionDef.signatures()) {
+
+            assertMaxOneItemInArray(
+                    softAssertions,
+                    "FunctionSignature.category",
+                    signature.category());
+
+            assertMaxOneItemInArray(
+                    softAssertions,
+                    "FunctionSignature.returnType",
+                    signature.returnType());
+
+            final boolean hasCategory = functionDef.commonCategory().length > 0
+                    || signature.category().length > 0;
+            softAssertions.assertThat(hasCategory)
+                    .withFailMessage(
+                            "Either FunctionDef.commonCategory or " +
+                                    "FunctionSignature.category must be set")
+                    .isTrue();
+
             final boolean hasDescription = !functionDef.commonDescription().isEmpty()
                     || !signature.description().isEmpty();
             softAssertions.assertThat(hasDescription)
@@ -110,5 +137,13 @@ class TestFunctionFactory {
                                     "FunctionSignature.returnType must be set")
                     .isTrue();
         }
+    }
+
+    private <T> void assertMaxOneItemInArray(final SoftAssertions softAssertions,
+                                             final String name,
+                                             final T[] arr) {
+        softAssertions.assertThat(arr.length)
+                .withFailMessage(name + " is only allowed to have zero or one items.")
+                .isLessThanOrEqualTo(1);
     }
 }

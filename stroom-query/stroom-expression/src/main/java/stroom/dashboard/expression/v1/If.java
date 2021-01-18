@@ -21,7 +21,7 @@ import java.text.ParseException;
 
 @FunctionDef(
         name = If.NAME,
-        category = FunctionCategory.LOGIC,
+        commonCategory = FunctionCategory.LOGIC,
         commonReturnType = Val.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

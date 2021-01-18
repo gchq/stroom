@@ -24,7 +24,7 @@ import java.util.Set;
 
 @FunctionDef(
         name = CountGroups.NAME,
-        category = FunctionCategory.AGGREGATE,
+        commonCategory = FunctionCategory.AGGREGATE,
         commonDescription = "This is used to count the number of unique values where there are multiple " +
                 "group levels.",
         commonReturnType = ValLong.class,

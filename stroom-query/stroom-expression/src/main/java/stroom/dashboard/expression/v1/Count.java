@@ -21,7 +21,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 @FunctionDef(
         name = "count",
-        category = FunctionCategory.AGGREGATE,
+        commonCategory = FunctionCategory.AGGREGATE,
         commonDescription = "Counts the number of records that are passed through it. Doesn't take any " +
                 "notice of the values of any fields.",
         signatures = @FunctionSignature(

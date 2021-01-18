@@ -18,17 +18,19 @@ package stroom.dashboard.expression.v1;
 
 @FunctionDef(
         name = Min.NAME,
-        category = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
+        signatures = {
+                @FunctionSignature(
+                        description = "",
+                        category = FunctionCategory.AGGREGATE,
+                        args = {
 //                        @FunctionArg(
 //                                name = "",
 //                                description = "",
 //                                argType = .class)
-                }))
+                        })
+        })
 class Min extends AbstractAggregateFunction {
     static final String NAME = "min";
 

@@ -36,6 +36,9 @@ public final class TooltipUtil {
     private static final SafeHtml BOLD_CLOSE = SafeHtmlUtils.fromSafeConstant("</b>");
     private static final SafeHtml CODE_OPEN = SafeHtmlUtils.fromSafeConstant("<code>");
     private static final SafeHtml CODE_CLOSE = SafeHtmlUtils.fromSafeConstant("</code>");
+    private static final SafeHtml PARA_OPEN = SafeHtmlUtils.fromSafeConstant("<p>");
+    private static final SafeHtml PARA_CLOSE = SafeHtmlUtils.fromSafeConstant("</p>");
+    private static final SafeHtml DIV_CLOSE = SafeHtmlUtils.fromSafeConstant("</div>");
     private static final SafeHtml SPAN_CLOSE = SafeHtmlUtils.fromSafeConstant("</span>");
     private static final SafeHtml BLANK = SafeHtmlUtils.fromString("");
 
@@ -67,6 +70,38 @@ public final class TooltipUtil {
                 SPAN_CLOSE);
     }
 
+    public static SafeHtml styledParagraph(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledParagraph(value, builder.toSafeStyles());
+    }
+
+    public static SafeHtml styledParagraph(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<p style=\"" + safeStyles.asString() + "\">"),
+                PARA_CLOSE);
+    }
+
+    public static SafeHtml styledDiv(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledDiv(value, builder.toSafeStyles());
+    }
+
+    public static SafeHtml styledDiv(final Object value, final SafeStyles safeStyles) {
+        return withFormatting(
+                value,
+                SafeHtmlUtils.fromTrustedString("<div style=\"" + safeStyles.asString() + "\">"),
+                DIV_CLOSE);
+    }
+
     public static SafeHtml boldItalicText(final Object value) {
         return withFormatting(
                 value,
@@ -86,16 +121,22 @@ public final class TooltipUtil {
 
     private static SafeHtml withFormatting(final Object value, final SafeHtml openTag, final SafeHtml closeTag) {
         if (value != null) {
-            String str = String.valueOf(value);
-            if (str.length() > 0) {
-                return new SafeHtmlBuilder()
-                        .append(openTag)
-                        .appendEscaped(str)
-                        .append(closeTag)
-                        .toSafeHtml();
+            SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
+                    .append(openTag);
+
+            if (value instanceof SafeHtml) {
+                safeHtmlBuilder.append((SafeHtml) value);
             } else {
-                return BLANK;
+                String str = String.valueOf(value);
+                if (str.length() > 0) {
+                   safeHtmlBuilder.appendEscaped(str);
+                } else {
+                    safeHtmlBuilder.append(BLANK);
+                }
             }
+            return safeHtmlBuilder
+                    .append(closeTag)
+                    .toSafeHtml();
         } else {
             return BLANK;
         }
@@ -103,6 +144,10 @@ public final class TooltipUtil {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder builder(final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+        return new Builder(stylesBuilderConsumer);
     }
 
     private static SafeHtml objectToSafeHtml(final Object value) {
@@ -121,9 +166,16 @@ public final class TooltipUtil {
 
     public static final class Builder {
         private final SafeHtmlBuilder buffer;
+        private final Consumer<SafeStylesBuilder> safeStylesBuilderConsumer;
 
         private Builder() {
-            buffer = new SafeHtmlBuilder();
+            this(null);
+        }
+
+        private Builder(final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+            this.buffer = new SafeHtmlBuilder();
+            this.safeStylesBuilderConsumer = stylesBuilderConsumer;
         }
 
         public Builder addHeading(final String heading) {
@@ -168,8 +220,21 @@ public final class TooltipUtil {
             return this;
         }
 
+        public Builder addParagraph(final String value) {
+            if (value != null && !value.isEmpty()) {
+                buffer.append(PARA_OPEN);
+                buffer.appendEscaped(value);
+                buffer.append(PARA_CLOSE);
+            }
+            return this;
+        }
+
         public Builder addBreak() {
             buffer.append(BREAK);
+            return this;
+        }
+        public Builder addSafeHtml(final SafeHtml safeHtml) {
+            buffer.append(safeHtml);
             return this;
         }
 
@@ -219,7 +284,18 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
-            return buffer.toSafeHtml();
+
+            final SafeHtml innerHtml = buffer.toSafeHtml();
+
+            final SafeStylesBuilder safeStylesBuilder = new SafeStylesBuilder();
+            if (safeStylesBuilderConsumer != null) {
+                safeStylesBuilderConsumer.accept(safeStylesBuilder);
+            }
+            final SafeHtmlBuilder outerHtml = new SafeHtmlBuilder();
+
+            outerHtml.append(styledDiv(innerHtml, safeStylesBuilder.toSafeStyles()));
+
+            return outerHtml.toSafeHtml();
         }
     }
 

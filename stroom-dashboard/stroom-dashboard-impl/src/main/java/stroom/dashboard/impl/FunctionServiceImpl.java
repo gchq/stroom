@@ -1,13 +1,9 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.expression.v1.FunctionArg;
+import stroom.dashboard.expression.v1.FunctionCategory;
 import stroom.dashboard.expression.v1.FunctionDef;
-import stroom.dashboard.shared.FunctionDefinition;
-import stroom.dashboard.shared.FunctionDefinition.Arg;
-import stroom.dashboard.shared.FunctionDefinition.Signature;
-import stroom.dashboard.shared.FunctionDefinition.Type;
 import stroom.dashboard.expression.v1.FunctionFactory;
-import stroom.dashboard.expression.v1.FunctionSignature;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValBoolean;
 import stroom.dashboard.expression.v1.ValDouble;
@@ -16,6 +12,9 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.shared.FunctionSignature;
+import stroom.dashboard.shared.FunctionSignature.Arg;
+import stroom.dashboard.shared.FunctionSignature.Type;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,24 +22,26 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 public class FunctionServiceImpl implements FunctionService {
-    private final List<FunctionDefinition> functionDefinitions;
+    private final List<FunctionSignature> signatures;
     private final FunctionFactory functionFactory;
 
     @Inject
     public FunctionServiceImpl(final FunctionFactory functionFactory) {
         this.functionFactory = functionFactory;
-        this.functionDefinitions = functionFactory.getFunctionDefinitions()
+        // Flatten the nested FunctionDef objects into signatures
+        this.signatures = functionFactory.getFunctionDefinitions()
                 .stream()
-                .map(FunctionServiceImpl::convertFunctionDef)
+                .flatMap(this::convertFunctionDef)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FunctionDefinition> getFunctionDefinitions() {
-        return functionDefinitions;
+    public List<FunctionSignature> getSignatures() {
+        return signatures;
     }
 
     @Override
@@ -48,20 +49,12 @@ public class FunctionServiceImpl implements FunctionService {
         return functionFactory;
     }
 
-    private static FunctionDefinition convertFunctionDef(final FunctionDef functionDef) {
+    private Stream<FunctionSignature> convertFunctionDef(final FunctionDef functionDef) {
         if (functionDef != null) {
-
             try {
-                return new FunctionDefinition(
-                        convertString(functionDef.name()),
-                        Arrays.stream(functionDef.aliases())
-                                .filter(Objects::nonNull)
-                                .collect(Collectors.toList()),
-                        functionDef.category().getName(),
-                        Arrays.stream(functionDef.signatures())
-                                .filter(Objects::nonNull)
-                                .map(functionSignature -> convertSignature(functionDef, functionSignature))
-                                .collect(Collectors.toList()));
+                return Arrays.stream(functionDef.signatures())
+                        .map(functionSignature ->
+                                convertSignature(functionDef, functionSignature));
             } catch (Exception e) {
                 throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
             }
@@ -70,13 +63,16 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static FunctionDefinition.Signature convertSignature(
+    private static FunctionSignature convertSignature(
             final FunctionDef functionDef,
-            final FunctionSignature functionSignature) {
+            final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
 
         if (functionSignature != null) {
 
             // The sig can override the types/descriptions set at the func def level
+            final String category = functionSignature.category().length > 0
+                    ? convertCategory(functionSignature.category())
+                    : convertCategory(functionDef.commonCategory());
 
             final Type returnType = functionSignature.returnType().length > 0
                     ? convertType(functionSignature.returnType())
@@ -90,11 +86,21 @@ public class FunctionServiceImpl implements FunctionService {
                     ? convertString(functionSignature.description())
                     : convertString(functionDef.commonDescription());
 
-            return new Signature(
-                    Arrays.stream(functionSignature.args())
-                            .filter(Objects::nonNull)
-                            .map(FunctionServiceImpl::convertArg)
-                            .collect(Collectors.toList()),
+            final List<Arg> args = Arrays.stream(functionSignature.args())
+                    .filter(Objects::nonNull)
+                    .map(FunctionServiceImpl::convertArg)
+                    .collect(Collectors.toList());
+
+            final List<String> aliases = Arrays.stream(functionDef.aliases())
+                    .filter(Objects::nonNull)
+                    .filter(alias -> !alias.isEmpty())
+                    .collect(Collectors.toList());
+
+            return new FunctionSignature(
+                    functionDef.name(),
+                    aliases,
+                    category,
+                    args,
                     returnType,
                     returnDescription,
                     description);
@@ -103,7 +109,7 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static FunctionDefinition.Arg convertArg(final FunctionArg functionArg) {
+    private static Arg convertArg(final FunctionArg functionArg) {
 
         if (functionArg != null) {
             return new Arg(
@@ -127,7 +133,15 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static FunctionDefinition.Type convertType(final Class<? extends Val>[] types) {
+    private static String convertCategory(final FunctionCategory[] categories) {
+        if (categories.length == 1) {
+            return categories[0].getName();
+        } else {
+            throw new RuntimeException("Too many types");
+        }
+    }
+
+    private static Type convertType(final Class<? extends Val>[] types) {
         if (types.length == 1) {
             final Class<? extends Val> type = types[0];
             return convertType(type);
@@ -136,7 +150,7 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static FunctionDefinition.Type convertType(final Class<? extends Val> type) {
+    private static Type convertType(final Class<? extends Val> type) {
         if (ValBoolean.class.equals(type)) {
             return Type.BOOLEAN;
         } else if (ValDouble.class.equals(type)) {

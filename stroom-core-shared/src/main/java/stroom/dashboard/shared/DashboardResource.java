@@ -96,5 +96,5 @@ public interface DashboardResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Fetch all expression functions",
             response = List.class)
-    List<FunctionDefinition> fetchFunctions();
+    List<FunctionSignature> fetchFunctions();
 }

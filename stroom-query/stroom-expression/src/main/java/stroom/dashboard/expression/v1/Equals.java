@@ -18,7 +18,7 @@ package stroom.dashboard.expression.v1;
 
 @FunctionDef(
         name = Equals.NAME,
-        category = FunctionCategory.LOGIC,
+        commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

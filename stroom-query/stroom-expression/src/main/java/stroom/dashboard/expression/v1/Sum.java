@@ -18,17 +18,18 @@ package stroom.dashboard.expression.v1;
 
 @FunctionDef(
         name = Sum.NAME,
-        category = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "Sum of all values",
         signatures = {
                 @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
                         description = "Determines the sum of the value of expression across all grouped records",
                         args = @FunctionArg(
                                 name = "expression",
                                 description = "Grouped field or the result of another function",
                                 argType = ValDouble.class)),
                 @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
                         description = "Determines the maximum value from all the arguments.",
                         args = @FunctionArg(
                                 name = "value",

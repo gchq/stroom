@@ -19,7 +19,6 @@ package stroom.dashboard.impl;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.shared.FunctionDefinition;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.impl.datasource.DataSourceProvider;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
@@ -34,6 +33,7 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
+import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
 import stroom.dashboard.shared.SearchRequest;
@@ -530,9 +530,9 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
-    public List<FunctionDefinition> fetchFunctions() {
+    public List<FunctionSignature> fetchFunctions() {
         return functionServiceProvider.get()
-                .getFunctionDefinitions();
+                .getSignatures();
     }
 
 }

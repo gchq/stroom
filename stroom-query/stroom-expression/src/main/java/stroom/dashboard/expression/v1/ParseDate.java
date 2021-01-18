@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter;
 
 @FunctionDef(
         name = ParseDate.NAME,
-        category = FunctionCategory.DATE,
+        commonCategory = FunctionCategory.DATE,
         commonReturnType = ValLong.class,
         commonReturnDescription = "The date as number of milliseconds since the epoch.",
         signatures = {

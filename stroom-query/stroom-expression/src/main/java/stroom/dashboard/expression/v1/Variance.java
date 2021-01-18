@@ -25,7 +25,7 @@ import java.util.List;
 
 @FunctionDef(
         name = Variance.NAME,
-        category = FunctionCategory.AGGREGATE,
+        commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

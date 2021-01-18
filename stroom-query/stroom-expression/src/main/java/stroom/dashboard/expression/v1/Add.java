@@ -19,7 +19,7 @@ package stroom.dashboard.expression.v1;
 @FunctionDef(
         name = "add",
         aliases = "+",
-        category = FunctionCategory.MATHEMATICS,
+        commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds all the value of all arguments together. Minimum of two arguments",

@@ -10,6 +10,12 @@ import java.lang.annotation.Target;
 public @interface FunctionSignature {
 
     /**
+     * The single category of functions that this function signature belongs to.
+     * Defined as an array to allow us to not have one by default.
+     */
+    FunctionCategory[] category() default {};
+
+    /**
      * The description of what this signature of the function does.
      * You must specify either this or {@link FunctionDef#commonDescription()}
      */

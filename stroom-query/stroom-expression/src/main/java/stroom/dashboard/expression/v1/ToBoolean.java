@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 @FunctionDef(
         name = ToBoolean.NAME,
-        category = FunctionCategory.CAST,
+        commonCategory = FunctionCategory.CAST,
         commonReturnType = ValBoolean.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

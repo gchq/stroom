@@ -25,10 +25,10 @@ import java.util.List;
 
 @FunctionDef(
         name = StDev.NAME,
-        category = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(
+                category = FunctionCategory.AGGREGATE,
                 description = "",
                 args = {
 //                        @FunctionArg(

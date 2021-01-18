@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 @FunctionDef(
         name = ToLong.NAME,
-        category = FunctionCategory.CAST,
+        commonCategory = FunctionCategory.CAST,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

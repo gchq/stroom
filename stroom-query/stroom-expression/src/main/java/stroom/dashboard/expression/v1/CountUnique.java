@@ -25,7 +25,7 @@ import java.util.Set;
 
 @FunctionDef(
         name = CountUnique.NAME,
-        category = FunctionCategory.AGGREGATE,
+        commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

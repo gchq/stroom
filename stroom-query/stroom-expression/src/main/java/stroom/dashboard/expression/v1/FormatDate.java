@@ -24,11 +24,11 @@ import java.time.format.DateTimeFormatter;
 
 @FunctionDef(
         name = FormatDate.NAME,
-        category = FunctionCategory.DATE,
         commonReturnType = ValString.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(
                 description = "",
+                category = FunctionCategory.DATE,
                 args = {
 //                        @FunctionArg(
 //                                name = "",

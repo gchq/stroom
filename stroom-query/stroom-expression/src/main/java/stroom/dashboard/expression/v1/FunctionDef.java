@@ -16,11 +16,16 @@ public @interface FunctionDef {
      */
     String[] aliases() default {};
 
-    FunctionCategory category();
+    /**
+     * The single category of functions that this function signature belongs to unless overridden at the
+     * signature level.
+     * Defined as an array to allow us to not have one by default.
+     */
+    FunctionCategory[] commonCategory() default {};
 
     /**
      * A description of what the function does that is common to all signatures unless overridden
-     * at the signature level
+     * at the signature level.
      */
     String commonDescription() default "";
 
