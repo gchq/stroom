@@ -133,6 +133,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                 functions,
                                 helpUrl));
                         functionsCompletionProvider = buildCompletionProvider(functionCompletions);
+
+                        editorPresenter.registerCompletionProviders(
+                                buildCompletionProvider(functionCompletions),
+                                buildFieldsCompletionProvider());
                     })
                     .onFailure(throwable -> {
                         AlertEvent.fireError(
@@ -225,9 +229,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         editorPresenter.getBasicAutoCompletionOption().setOn();
         editorPresenter.getSnippetsOption().setOn();
 
-        editorPresenter.registerCompletionProviders(
-                functionsCompletionProvider,
-                buildFieldsCompletionProvider());
 
         fieldsMenuItems = createFieldsMenuItems();
     }
@@ -853,7 +854,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public static enum FunctionDef {
+    public enum FunctionDef {
         // TODO @AT This could do with being auto-generated from annotations on the actual
         //   functions in stroom-expression, or maybe each AbstractFunction in stroom-expression
         //   should have static getName(), getDescription(), getArgs(), etc. then we would not need
