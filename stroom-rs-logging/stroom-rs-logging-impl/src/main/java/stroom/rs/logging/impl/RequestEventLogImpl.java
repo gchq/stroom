@@ -23,9 +23,9 @@ class RequestEventLogImpl implements RequestEventLog {
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject
-    RequestEventLogImpl (final RequestLoggingConfig confg, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
+    RequestEventLogImpl (final RequestLoggingConfig config, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
                          final StroomEventLoggingService eventLoggingService){
-        this.config = confg;
+        this.config = config;
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
         this.eventLoggingService = eventLoggingService;
@@ -33,16 +33,16 @@ class RequestEventLogImpl implements RequestEventLog {
 
     @Override
     public void log (final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error){
-        if (!shouldLog(requestInfo)){
+        if (!requestInfo.shouldLog(config.isGlobalLoggingEnabled())){
             return;
         }
 
         Object requestEntity = requestInfo.getRequestObj();
 
-        final String typeId = requestInfo.getTypeId();
-        final String descriptionVerb = requestInfo.getVerbFromAnnotations();
+        final String typeId = requestInfo.getContainerResourceInfo().getTypeId();
+        final String descriptionVerb = requestInfo.getContainerResourceInfo().getVerbFromAnnotations();
 
-        switch (requestInfo.getOperationType()){
+        switch (requestInfo.getContainerResourceInfo().getOperationType()){
             case DELETE:
                 documentEventLog.delete(requestEntity,typeId, descriptionVerb, error);
                 break;
@@ -81,18 +81,6 @@ class RequestEventLogImpl implements RequestEventLog {
       log (info, responseEntity, null);
     }
 
-    private boolean shouldLog (RequestInfo requestInfo){
-        if (requestInfo == null){
-            return false;
-        }
-
-        Optional<StroomLoggingOperationType> specifiedOperation = requestInfo.getOperationTypeFromAnnotations();
-        if (specifiedOperation.isPresent()){
-            return !specifiedOperation.get().equals(StroomLoggingOperationType.UNLOGGED);
-        }
-
-        return config.isGlobalLoggingEnabled();
-    }
 
     private void logSearch (String typeId, Object requestEntity, Object responseEntity, String descriptionVerb, Throwable error){
         Query query = new Query();

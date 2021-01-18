@@ -1,6 +1,7 @@
 package stroom.rs.logging.impl;
 
 import stroom.rs.logging.api.StroomServerLoggingFilter;
+import stroom.security.api.TokenException;
 import stroom.util.shared.PermissionException;
 
 
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -33,6 +35,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
+    private final RequestLoggingConfig config;
 
     @Context
     private HttpServletRequest request;
@@ -42,8 +45,9 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
 
     @Inject
-    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog) {
+    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog, RequestLoggingConfig config) {
         this.requestEventLog = requestEventLog;
+        this.config = config;
         this.objectMapper = createObjectMapper();
     }
 
@@ -54,12 +58,10 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         //todo AuthenticationException
 
         if (request != null) {
-            final Object entity = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
-            if (entity != null) {
-                RequestInfo requestInfo = (RequestInfo) entity;
+            final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
+            if (object != null) {
+                RequestInfo requestInfo = (RequestInfo) object;
                 requestEventLog.log(requestInfo, null, exception);
-            } else {
-                LOGGER.warn("Unable to create audit log for exception, request info is null", exception);
             }
         } else {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);
@@ -71,7 +73,13 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             return wae.getResponse();
         } else if (exception instanceof PermissionException) {
             return createExceptionResponse(Status.FORBIDDEN, exception);
-        } else {
+        } else if (exception instanceof TokenException) {
+            return createExceptionResponse(Status.FORBIDDEN, exception);
+        } else if (exception instanceof AuthenticationException) {
+            return createExceptionResponse(Status.FORBIDDEN, exception);
+        } else if (exception instanceof javax.naming.AuthenticationException) {
+            return createExceptionResponse(Status.FORBIDDEN, exception);
+        }else {
             return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
         }
     }
@@ -103,24 +111,28 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
             throws IOException, WebApplicationException {
         writerInterceptorContext.proceed();
 
-        final Object entity = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
+        final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
 
-        if (entity != null) {
-            RequestInfo requestInfo = (RequestInfo) entity;
+        if (object != null) {
+            RequestInfo requestInfo = (RequestInfo) object;
             requestEventLog.log (requestInfo, writerInterceptorContext.getEntity());
         }
     }
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        if (context.hasEntity()) {
-            final LoggingInputStream stream = new LoggingInputStream(resourceInfo, context.getEntityStream(),
-                    objectMapper, MessageUtils.getCharset(context.getMediaType()));
-            context.setEntityStream(stream);
+        ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceInfo, context);
 
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(resourceInfo, context, stream.getRequestEntity()));
-        } else {
-            request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(resourceInfo, context));
+        if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())){
+            if (context.hasEntity()) {
+                final LoggingInputStream stream = new LoggingInputStream(resourceInfo, context.getEntityStream(),
+                        objectMapper, MessageUtils.getCharset(context.getMediaType()));
+                context.setEntityStream(stream);
+
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo, stream.getRequestEntity()));
+            } else {
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo, context));
+            }
         }
     }
 
