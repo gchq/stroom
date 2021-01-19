@@ -10,7 +10,6 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
@@ -68,18 +67,6 @@ public class FunctionDefinitionUtil {
                 .entrySet()
                 .stream()
                 .sorted(entryComparator)
-//                .flatMap(optCatSigEntry -> {
-//                    // All the leaves are in a list together so flatten then up to the same
-//                    // level as the branches.
-//                    if (optCatSigEntry.getKey().isEmpty()) {
-//                        return optCatSigEntry.getValue().stream()
-//                                .map(sig -> new SimpleEntry<>(
-//                                        Optional.<String>empty(),
-//                                        Collections.singletonList(sig)));
-//                    } else {
-//                        return Stream.of(optCatSigEntry);
-//                    }
-//                })
                 .flatMap(optCatSigEntry -> {
                     // Either have an empty key with a single sig in the list
                     // or a category key with one/more sigs in the list
@@ -113,7 +100,6 @@ public class FunctionDefinitionUtil {
                         return leafItems.stream();
                     }
                 })
-                .peek(item -> GWT.log(item.getClass().getName()))
                 .collect(Collectors.toList());
     }
 
@@ -128,10 +114,10 @@ public class FunctionDefinitionUtil {
                 .stream()
                 .flatMap(value ->
                         value.asAliases().stream())
-                .peek(functionSignature ->
-                        GWT.log("Func: " +
-                                buildSignatureStr(functionSignature) + " " +
-                                isBracketedForm(functionSignature)))
+//                .peek(functionSignature ->
+//                        GWT.log("Func: " +
+//                                buildSignatureStr(functionSignature) + " " +
+//                                isBracketedForm(functionSignature)))
                 .filter(FunctionDefinitionUtil::isBracketedForm)
                 .sorted(Comparator.comparing(FunctionSignature::getName))
                 .collect(Collectors.toList());
@@ -194,6 +180,13 @@ public class FunctionDefinitionUtil {
 
             if (addedArgs) {
                 builder.addBreak();
+            }
+
+            final List<String> aliases = signature.getAliases();
+            if (!aliases.isEmpty()) {
+                builder.addParagraph("Aliases: " +
+                        aliases.stream()
+                                .collect(Collectors.joining(", ")));
             }
 
             if (helpUrlBase != null) {

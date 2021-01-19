@@ -17,8 +17,8 @@
 package stroom.dashboard.expression.v1;
 
 @FunctionDef(
-        name = "add",
-        aliases = "+",
+        name = Add.NAME,
+        aliases = Add.ALIAS,
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The sum of all values",
