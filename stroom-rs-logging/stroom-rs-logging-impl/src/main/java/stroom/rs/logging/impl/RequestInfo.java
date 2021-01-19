@@ -22,6 +22,9 @@ class RequestInfo {
 
     public RequestInfo(final ContainerResourceInfo containerResourceInfo, Object requestObj) {
         this.containerResourceInfo = containerResourceInfo;
+        if (requestObj == null){
+            requestObj = findRequestObj();
+        }
         this.requestObj = requestObj;
     }
 

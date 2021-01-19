@@ -39,10 +39,15 @@ class LoggingInputStream extends BufferedInputStream {
             try {
                 mark(MAX_ENTITY_SIZE + 1);
                 requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
-                reset();
             } catch (Exception ex){
                 //Indicates that this request type cannot be constructed in this way.
                 requestEntity = null;
+            } finally {
+                try {
+                    reset();
+                } catch (IOException e) {
+                    LOGGER.error("Unable to reset stream", e);
+                }
             }
         }
 

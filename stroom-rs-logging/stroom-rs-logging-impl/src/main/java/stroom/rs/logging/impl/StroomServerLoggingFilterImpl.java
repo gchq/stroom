@@ -137,7 +137,7 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
 
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo, stream.getRequestEntity()));
             } else {
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo, context));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo));
             }
         }
     }
