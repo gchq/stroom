@@ -11,6 +11,7 @@ import stroom.dashboard.expression.v1.ValErr;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValNumber;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
@@ -185,6 +186,8 @@ public class FunctionServiceImpl implements FunctionService {
             return Type.NULL;
         } else if (ValString.class.equals(type)) {
             return Type.STRING;
+        } else if (ValNumber.class.equals(type)) {
+            return Type.NUMBER;
         } else if (Val.class.equals(type)) {
             return Type.UNKNOWN;
         } else {

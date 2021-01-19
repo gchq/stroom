@@ -32,7 +32,7 @@ import com.esotericsoftware.kryo.io.Output;
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function",
-                                argType = ValDouble.class)),
+                                argType = ValNumber.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
                         subCategories = "Statistical",
@@ -40,7 +40,7 @@ import com.esotericsoftware.kryo.io.Output;
                         args = @FunctionArg(
                                 name = "value",
                                 description = "Field, the result of another function or a constant.",
-                                argType = ValDouble.class,
+                                argType = ValNumber.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class Average extends AbstractManyChildFunction implements AggregateFunction {

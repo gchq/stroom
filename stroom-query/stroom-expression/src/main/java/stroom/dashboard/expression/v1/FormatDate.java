@@ -34,7 +34,7 @@ import java.time.format.DateTimeFormatter;
                                 argType = ValLong.class,
                                 description = "The date as milliseconds since the epoch (1 Jan 1970)"),
                         returnDescription = "A date string in the default date format pattern.",
-                        description = "Convert the date using the default date format pattern (" +
+                        description = "Convert the date to a string using the default date format pattern (" +
                                 DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
                 @FunctionSignature(
                         args = {
@@ -47,7 +47,7 @@ import java.time.format.DateTimeFormatter;
                                         argType = ValString.class,
                                         description = "The format pattern, e.g. 'yyyy MM dd'")},
                         returnDescription = "A date string in the supplied date format pattern.",
-                        description = "Convert the date using the supplied date format pattern and " +
+                        description = "Convert the date to a string using the supplied date format pattern and " +
                                 "the default timezone (UTC)."),
                 @FunctionSignature(
                         args = {
@@ -65,7 +65,7 @@ import java.time.format.DateTimeFormatter;
                                         argType = ValString.class,
                                         description = "The timezone, e.g. '+0400'")},
                         returnDescription = "A date string in the supplied date format pattern.",
-                        description = "Convert the date using the supplied date format pattern and timezone.")})
+                        description = "Convert the date to a string using the supplied date format pattern and timezone.")})
 class FormatDate extends AbstractFunction implements Serializable {
     static final String NAME = "formatDate";
     private static final long serialVersionUID = -305845496003936297L;

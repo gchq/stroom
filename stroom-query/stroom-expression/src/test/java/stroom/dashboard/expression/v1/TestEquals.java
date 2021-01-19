@@ -71,7 +71,12 @@ class TestEquals extends AbstractFunctionTest<Equals> {
                         "mixed boolean true",
                         ValBoolean.TRUE,
                         ValString.create("true"),
-                        ValBoolean.TRUE)
+                        ValBoolean.TRUE),
+                TestCase.of(
+                        "mixed boolean 2 true",
+                        ValBoolean.TRUE,
+                        ValBoolean.TRUE,
+                        ValLong.create(1))
         );
     }
 }

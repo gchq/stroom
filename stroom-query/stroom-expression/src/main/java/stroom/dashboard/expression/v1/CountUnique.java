@@ -36,14 +36,14 @@ import java.util.Set;
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function",
-                                argType = ValDouble.class)),
+                                argType = Val.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
                         description = "Determines the number of unique values in the provided arguments",
                         args = @FunctionArg(
-                                name = "value",
+                                name = "arg",
                                 description = "Field, the result of another function or a constant.",
-                                argType = ValDouble.class,
+                                argType = Val.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class CountUnique extends AbstractFunction {

@@ -28,14 +28,14 @@ package stroom.dashboard.expression.v1;
                         args = @FunctionArg(
                                 name = "expression",
                                 description = "Grouped field or the result of another function",
-                                argType = ValDouble.class)),
+                                argType = ValNumber.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
                         description = "Determines the sum of all the arguments.",
                         args = @FunctionArg(
-                                name = "value",
+                                name = "arg",
                                 description = "Field, the result of another function or a constant.",
-                                argType = ValDouble.class,
+                                argType = ValNumber.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))
         })

@@ -294,7 +294,7 @@ public class FunctionDefinitionUtil {
             // Wrap all the signatures in a menu item for the function
             functionMenuItem = new SimpleParentMenuItem(
                     functionPosition,
-                    name,
+                    name + "(",
                     childItems);
         }
         return functionMenuItem;
@@ -463,6 +463,7 @@ public class FunctionDefinitionUtil {
             case LONG:
             case DOUBLE:
             case INTEGER:
+            case NUMBER:
                 return number;
             case STRING:
                 return "Text";

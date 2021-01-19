@@ -24,14 +24,15 @@ import java.text.ParseException;
         name = Not.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The inverse of the supplied value.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Inverts boolean values making true, false etc. The value provided will be implicitly " +
+                        "cast to a boolean, e.g 'not(\"true\")' returns false",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, function or a constant that evaluates to a boolean.",
+                                argType = Val.class)
                 }))
 class Not extends AbstractFunction implements Serializable {
     static final String NAME = "not";

@@ -22,15 +22,28 @@ package stroom.dashboard.expression.v1;
         commonCategory = FunctionCategory.MATHEMATICS,
         commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        commonReturnDescription = "The rounded value.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Rounds the supplied value down to the next whole number. e.g. ceiling(1.8) " +
+                                "returns 1.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValNumber.class,
+                                description = "The number to round down to the next whole number.")),
+                @FunctionSignature(
+                        description = "Rounds the supplied value down to the next digit keeping the specified " +
+                                "number of decimal places. e.g. ceiling(1.22385, 3) returns 1.223",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = ValNumber.class,
+                                        description = "The number to round down."),
+                                @FunctionArg(
+                                        name = "decimalPlaces",
+                                        argType = ValInteger.class,
+                                        description = "The maximum number of decimal places to round to.")}
+                )})
 class Floor extends AbstractRoundingFunction {
     static final String NAME = "floor";
 

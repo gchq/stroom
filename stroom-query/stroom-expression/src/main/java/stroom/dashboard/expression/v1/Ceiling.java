@@ -22,15 +22,28 @@ package stroom.dashboard.expression.v1;
         commonCategory = FunctionCategory.MATHEMATICS,
         commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        commonReturnDescription = "The rounded value.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Rounds the supplied value up to the next whole number. e.g. ceiling(1.2) " +
+                                "returns 2.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValNumber.class,
+                                description = "The number to round up to the next whole number.")),
+                @FunctionSignature(
+                        description = "Rounds the supplied value up to the next digit keeping the specified " +
+                                "number of decimal places. e.g. ceiling(1.22345, 3) returns 1.224",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = ValNumber.class,
+                                        description = "The number to round up."),
+                                @FunctionArg(
+                                        name = "decimalPlaces",
+                                        argType = ValInteger.class,
+                                        description = "The maximum number of decimal places to round to.")}
+                                )})
 class Ceiling extends AbstractRoundingFunction {
     static final String NAME = "ceiling";
 

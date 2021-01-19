@@ -23,12 +23,13 @@ package stroom.dashboard.expression.v1;
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The sum of all values",
-        commonDescription = "Adds all the value of all arguments together. Minimum of two arguments",
+        commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
+                "'${field1}+${field2}'.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
-                        name = "value",
+                        name = "arg",
                         description = "Field, the result of another function or a constant.",
-                        argType = ValDouble.class,
+                        argType = ValNumber.class,
                         isVarargs = true,
                         minVarargsCount = 2)))
 class Add extends NumericFunction {

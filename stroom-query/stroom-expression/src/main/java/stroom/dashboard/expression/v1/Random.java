@@ -24,14 +24,12 @@ import com.esotericsoftware.kryo.io.Output;
         name = Random.NAME,
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "A random number between 0.0 (inc.) and 1.0 (excl.)",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Returns a double value with a positive sign, greater than or equal to 0.0 and " +
+                        "less than 1.0. Returned values are chosen pseudorandomly with (approximately) uniform " +
+                        "distribution from that range.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
                 }))
 class Random extends AbstractFunction {
     static final String NAME = "random";
