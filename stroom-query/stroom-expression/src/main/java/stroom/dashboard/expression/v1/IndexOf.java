@@ -22,6 +22,19 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = IndexOf.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValInteger.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class IndexOf extends AbstractFunction implements Serializable {
     static final String NAME = "indexOf";
     private static final long serialVersionUID = -305845496003936297L;

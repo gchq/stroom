@@ -22,6 +22,19 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = Substring.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Substring extends AbstractFunction implements Serializable {
     static final String NAME = "substring";
     private static final long serialVersionUID = -305845496003936297L;

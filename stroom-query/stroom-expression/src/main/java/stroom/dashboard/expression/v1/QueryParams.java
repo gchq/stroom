@@ -20,6 +20,19 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@FunctionDef(
+        name = QueryParams.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class QueryParams extends AbstractFunction {
     private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
 

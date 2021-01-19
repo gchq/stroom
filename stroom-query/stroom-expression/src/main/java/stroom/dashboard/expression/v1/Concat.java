@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Concat.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Concat extends AbstractManyChildFunction {
     static final String NAME = "concat";
 

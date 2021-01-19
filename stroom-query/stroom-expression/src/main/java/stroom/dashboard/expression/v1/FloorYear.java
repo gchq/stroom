@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.time.LocalDateTime;
 
+@FunctionDef(
+        name = FloorYear.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class FloorYear extends RoundDate {
     static final String NAME = "floorYear";
     private static final Calc CALC = new Calc();

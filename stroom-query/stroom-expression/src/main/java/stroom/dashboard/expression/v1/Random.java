@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@FunctionDef(
+        name = Random.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Random extends AbstractFunction {
     static final String NAME = "random";
 

@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Floor.NAME,
+        commonCategory = FunctionCategory.ROUNDING,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Floor extends AbstractRoundingFunction {
     static final String NAME = "floor";
 

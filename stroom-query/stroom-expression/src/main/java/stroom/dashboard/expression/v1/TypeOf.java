@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = TypeOf.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = Val.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class TypeOf extends AbstractFunction implements Serializable {
     static final String NAME = "typeOf";
     private static final long serialVersionUID = -305845496003936297L;

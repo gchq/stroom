@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Dashboard.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Dashboard extends AbstractLink {
     static final String NAME = "dashboard";
 

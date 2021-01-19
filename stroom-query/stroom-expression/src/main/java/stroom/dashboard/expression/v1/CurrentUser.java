@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 import java.util.Map;
 
+@FunctionDef(
+        name = CurrentUser.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class CurrentUser extends AbstractFunction {
     static final String KEY = "currentUser()";
     static final String NAME = "currentUser";

@@ -27,15 +27,24 @@ import java.util.List;
         name = Variance.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        commonReturnDescription = "The variance of all the values.",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the variance value across all grouped records.",
+                        args = @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = ValDouble.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        description = "Determines the variance value from all the arguments.",
+                        args = @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValDouble.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))})
 class Variance extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "variance";
 

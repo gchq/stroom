@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = False.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class False extends AbstractStaticFunction {
     static final String NAME = "false";
 

@@ -10,6 +10,7 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
@@ -48,7 +49,10 @@ public class FunctionDefinitionUtil {
                     // like +, -, /, * etc. as they have a form without brackets
                     final List<FunctionSignature> categorySignatures = catSigsEntry.getValue()
                             .stream()
-                            .flatMap(value -> value.asAliases().stream())
+                            .flatMap(value ->
+                                    value.asAliases().stream())
+                            .peek(functionSignature ->
+                                    GWT.log("Func: " + buildSignatureStr(functionSignature) + " " + isBracketedForm(functionSignature)))
                             .filter(FunctionDefinitionUtil::isBracketedForm)
                             .collect(Collectors.toList());
 

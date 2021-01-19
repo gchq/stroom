@@ -22,15 +22,14 @@ import java.io.Serializable;
         name = ToInteger.NAME,
         commonCategory = FunctionCategory.CAST,
         commonReturnType = ValInteger.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The value as the integer type.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Converts the supplied value to an integer (if it can be). For example, converting " +
+                        "the text \"12\" to the number 12",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToInteger extends AbstractCast implements Serializable {
     static final String NAME = "toInteger";
     private static final ValErr ERROR = ValErr.create("Unable to cast to an integer");

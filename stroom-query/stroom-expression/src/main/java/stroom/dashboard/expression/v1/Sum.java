@@ -30,7 +30,7 @@ package stroom.dashboard.expression.v1;
                                 argType = ValDouble.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
-                        description = "Determines the maximum value from all the arguments.",
+                        description = "Determines the sum of all the arguments.",
                         args = @FunctionArg(
                                 name = "value",
                                 description = "Field, the result of another function or a constant.",

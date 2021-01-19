@@ -20,6 +20,19 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@FunctionDef(
+        name = Decode.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Decode extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "decode";
     private static final long serialVersionUID = -305845496003936297L;

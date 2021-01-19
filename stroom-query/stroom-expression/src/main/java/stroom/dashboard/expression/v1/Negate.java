@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Negate.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Negate extends NumericFunction {
     static final String NAME = "negate";
     private static final Calc CALC = new Calc();

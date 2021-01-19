@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = Last.NAME,
+        commonCategory = FunctionCategory.SELECTION,
+        commonReturnType = Val.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 public class Last extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "last";
     private static final long serialVersionUID = -305845496003936297L;

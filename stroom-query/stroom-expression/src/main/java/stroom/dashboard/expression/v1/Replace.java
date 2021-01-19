@@ -20,6 +20,19 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@FunctionDef(
+        name = Replace.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Replace extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "replace";
     private static final long serialVersionUID = -305845496003936297L;

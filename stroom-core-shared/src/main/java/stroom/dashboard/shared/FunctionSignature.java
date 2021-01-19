@@ -1,12 +1,14 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,23 +51,40 @@ public class FunctionSignature {
      * and no aliases.
      */
     public List<FunctionSignature> asAliases() {
-        return Stream.concat(Stream.of(name), aliases.stream())
-                .map(this::asAlias)
-                .collect(Collectors.toList());
+        if (aliases.isEmpty()) {
+            return Collections.singletonList(this);
+        } else {
+            final Set<String> allNames = getAllNames();
+
+            return allNames
+                    .stream()
+                    .map(newPrimaryName -> asAlias(newPrimaryName, allNames))
+                    .collect(Collectors.toList());
+        }
     }
 
-    private FunctionSignature asAlias(final String name) {
-        if (this.name.equals(name) || aliases.contains(name)) {
+    @JsonIgnore
+    private Set<String> getAllNames() {
+        return Stream.concat(Stream.of(name), this.aliases.stream())
+                .collect(Collectors.toSet());
+    }
+
+    private FunctionSignature asAlias(final String newPrimaryName, final Set<String> allNames) {
+        if (allNames.contains(newPrimaryName)) {
+            final List<String> newAliases = allNames.stream()
+                    .filter(name2 -> !newPrimaryName.equals(name2))
+                    .collect(Collectors.toList());
+
             return new FunctionSignature(
-                    name,
-                    Collections.emptyList(),
+                    newPrimaryName,
+                    newAliases,
                     category,
                     args,
                     returnType,
                     returnDescription,
                     description);
         } else {
-            throw new RuntimeException(name + " is not a valid name or alias");
+            throw new RuntimeException(newPrimaryName + " is not a valid name or alias");
         }
     }
 

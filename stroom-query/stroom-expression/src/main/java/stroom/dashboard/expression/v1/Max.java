@@ -23,7 +23,7 @@ package stroom.dashboard.expression.v1;
         signatures = {
                 @FunctionSignature(
                         category = FunctionCategory.AGGREGATE,
-                        description = "Determines the maximum value across all grouped records",
+                        description = "Determines the maximum value across all grouped records.",
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function",

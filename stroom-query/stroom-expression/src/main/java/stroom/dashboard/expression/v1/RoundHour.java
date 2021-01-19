@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+@FunctionDef(
+        name = RoundHour.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class RoundHour extends RoundDate {
     static final String NAME = "roundHour";
     private static final Calc CALC = new Calc();

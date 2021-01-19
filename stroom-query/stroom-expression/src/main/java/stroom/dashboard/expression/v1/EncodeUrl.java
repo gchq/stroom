@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = EncodeUrl.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class EncodeUrl extends AbstractStringFunction implements Serializable {
     static final String NAME = "encodeUrl";
     private static final long serialVersionUID = -305845496003936297L;

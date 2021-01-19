@@ -23,6 +23,19 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+@FunctionDef(
+        name = Joining.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Joining extends AbstractFunction {
     static final String NAME = "joining";
 

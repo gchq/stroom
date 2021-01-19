@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Modulus.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Modulus extends NumericFunction {
     static final String NAME = "%";
     static final String ALIAS1 = "mod";

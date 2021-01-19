@@ -27,15 +27,24 @@ import java.util.Set;
         name = CountUnique.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValLong.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        commonReturnDescription = "The number of unique values",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the number of unique values across all grouped records.",
+                        args = @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = ValDouble.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        description = "Determines the number of unique values in the provided arguments",
+                        args = @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValDouble.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))})
 class CountUnique extends AbstractFunction {
     static final String NAME = "countUnique";
 

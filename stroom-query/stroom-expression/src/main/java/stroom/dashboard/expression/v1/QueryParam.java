@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 import java.util.Map;
 
+@FunctionDef(
+        name = QueryParam.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class QueryParam extends AbstractFunction {
     static final String NAME = "param";
 

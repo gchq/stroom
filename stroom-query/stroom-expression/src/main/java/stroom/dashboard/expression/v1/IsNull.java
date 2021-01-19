@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = IsNull.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class IsNull extends AbstractIsFunction implements Serializable {
     static final String NAME = "isNull";
     private static final long serialVersionUID = -305845496413936297L;

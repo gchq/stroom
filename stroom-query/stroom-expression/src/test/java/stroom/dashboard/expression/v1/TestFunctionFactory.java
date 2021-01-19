@@ -34,11 +34,13 @@ class TestFunctionFactory {
                 .whitelistPackages(Function.class.getPackageName())
                 .enableClassInfo()
                 .ignoreClassVisibility()
+                .enableAnnotationInfo()
                 .scan()) {
 
             final List<Class<? extends Function>> allFunctionClasses = result.getAllClasses()
                     .stream()
                     .filter(classInfo ->  classInfo.implementsInterface(Function.class.getName()))
+                    .filter(classInfo -> !classInfo.hasAnnotation(ArchitecturalFunction.class.getName()))
                     .map(classInfo -> (Class<? extends Function>) classInfo.loadClass())
                     .collect(Collectors.toList());
 
@@ -47,7 +49,7 @@ class TestFunctionFactory {
                     final Optional<FunctionDef> optFuncDef = functionFactory.getFunctionDefinition(clazz);
                     final String className = clazz.getSimpleName();
 
-                    if (clazz.getModifiers() == Modifier.ABSTRACT) {
+                    if (Modifier.isAbstract(clazz.getModifiers())) {
                         softAssertions.assertThat(optFuncDef)
                                 .withFailMessage("Function class " +
                                         className +
@@ -58,7 +60,7 @@ class TestFunctionFactory {
                                 .withFailMessage("Function class " +
                                         className +
                                         " is not in FunctionFactory. " +
-                                        "Add an @FunctionDef annotation to it" )
+                                        "Add an @FunctionDef annotation to it or mark is as @ArchitecturalFunction" )
                                 .isNotEmpty();
 
                         optFuncDef.ifPresent(functionDef -> {
@@ -83,11 +85,13 @@ class TestFunctionFactory {
 
         assertMaxOneItemInArray(
                 softAssertions,
+                className,
                 "FunctionDef.commonCategory",
                 functionDef.commonCategory());
 
         assertMaxOneItemInArray(
                 softAssertions,
+                className,
                 "FunctionDef.commonReturnType",
                 functionDef.commonReturnType());
 
@@ -105,11 +109,13 @@ class TestFunctionFactory {
 
             assertMaxOneItemInArray(
                     softAssertions,
+                    className,
                     "FunctionSignature.category",
                     signature.category());
 
             assertMaxOneItemInArray(
                     softAssertions,
+                    className,
                     "FunctionSignature.returnType",
                     signature.returnType());
 
@@ -117,33 +123,42 @@ class TestFunctionFactory {
                     || signature.category().length > 0;
             softAssertions.assertThat(hasCategory)
                     .withFailMessage(
-                            "Either FunctionDef.commonCategory or " +
+                            className + " - Either FunctionDef.commonCategory or " +
                                     "FunctionSignature.category must be set")
                     .isTrue();
 
             final boolean hasDescription = !functionDef.commonDescription().isEmpty()
                     || !signature.description().isEmpty();
+            // TODO @AT Un-comment when all the descriptions have been added in.
             softAssertions.assertThat(hasDescription)
                     .withFailMessage(
-                            "Either FunctionDef.commonDescription or " +
+                            className + " - Either FunctionDef.commonDescription or " +
                                     "FunctionSignature.description must be set")
                     .isTrue();
+//            if (!hasDescription) {
+//                LOGGER.warn(className + " - Either FunctionDef.commonDescription or " +
+//                        "FunctionSignature.description must be set");
+//            }
 
             final boolean hasReturnType = functionDef.commonReturnType().length > 0
                     || signature.returnType().length > 0;
             softAssertions.assertThat(hasReturnType)
                     .withFailMessage(
-                            "Either FunctionDef.commonReturnType or " +
+                            className + " - Either FunctionDef.commonReturnType or " +
                                     "FunctionSignature.returnType must be set")
                     .isTrue();
         }
     }
 
     private <T> void assertMaxOneItemInArray(final SoftAssertions softAssertions,
+                                             final String className,
                                              final String name,
                                              final T[] arr) {
         softAssertions.assertThat(arr.length)
-                .withFailMessage(name + " is only allowed to have zero or one items.")
+                .withFailMessage(className +
+                        " - " +
+                        name +
+                        " is only allowed to have zero or one items.")
                 .isLessThanOrEqualTo(1);
     }
 }

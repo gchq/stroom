@@ -22,15 +22,14 @@ import java.io.Serializable;
         name = ToString.NAME,
         commonCategory = FunctionCategory.CAST,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The value as the string type.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Converts the supplied value to a string, e.g. 1.23 becomes \"1.23\" and true() becomes " +
+                        "\"true\".",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToString extends AbstractCast implements Serializable {
     static final String NAME = "toString";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a string");

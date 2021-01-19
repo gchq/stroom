@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = Top.NAME,
+        commonCategory = FunctionCategory.SELECTION,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 public class Top extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "top";
     private static final long serialVersionUID = -305845496003936297L;

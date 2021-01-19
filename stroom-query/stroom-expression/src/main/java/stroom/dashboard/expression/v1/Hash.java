@@ -22,6 +22,19 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
+@FunctionDef(
+        name = Hash.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Hash extends AbstractFunction implements Serializable {
     static final String NAME = "hash";
     private static final long serialVersionUID = -305845496003936297L;
@@ -38,7 +51,9 @@ class Hash extends AbstractFunction implements Serializable {
         super(name, 1, 3);
     }
 
-    private static String hash(final String value, final String algorithm, final String salt) throws NoSuchAlgorithmException {
+    private static String hash(final String value,
+                               final String algorithm,
+                               final String salt) throws NoSuchAlgorithmException {
         // Create MessageDigest object.
         final MessageDigest digest = MessageDigest.getInstance(algorithm);
         if (salt != null) {

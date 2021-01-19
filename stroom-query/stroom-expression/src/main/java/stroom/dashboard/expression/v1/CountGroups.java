@@ -25,10 +25,11 @@ import java.util.Set;
 @FunctionDef(
         name = CountGroups.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
-        commonDescription = "This is used to count the number of unique values where there are multiple " +
-                "group levels.",
+        commonDescription = "This is used to count the number of unique group keys where there are multiple " +
+                "group levels. For example if records are grouped by Name then Type then for each Name, " +
+                "countGroups will give you the number of unique Type values for that Name.",
         commonReturnType = ValLong.class,
-        commonReturnDescription = "Number of unique values",
+        commonReturnDescription = "Number of unique child group keys within the current group.",
         signatures = @FunctionSignature(
                 args = {}))
 class CountGroups extends AbstractFunction {

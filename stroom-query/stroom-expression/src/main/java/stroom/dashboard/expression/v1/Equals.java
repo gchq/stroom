@@ -20,15 +20,18 @@ package stroom.dashboard.expression.v1;
         name = Equals.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "True if the two values are equal. ",
         signatures = @FunctionSignature(
                 description = "",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "value1",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "value2",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)}))
 class Equals extends AbstractEqualityFunction {
     static final String NAME = "=";
     static final String ALIAS = "equals";

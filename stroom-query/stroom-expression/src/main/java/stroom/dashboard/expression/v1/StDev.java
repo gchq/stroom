@@ -26,16 +26,25 @@ import java.util.List;
 @FunctionDef(
         name = StDev.NAME,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                category = FunctionCategory.AGGREGATE,
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        commonReturnDescription = "The standard deviation of all values.",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the standard deviation across all grouped records.",
+                        args = @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = ValDouble.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        description = "Determines the standard deviation from all the arguments.",
+                        args = @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValDouble.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))
+        })
 class StDev extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "stDev";
 

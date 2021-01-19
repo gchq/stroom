@@ -22,15 +22,16 @@ import java.io.Serializable;
         name = ToLong.NAME,
         commonCategory = FunctionCategory.CAST,
         commonReturnType = ValLong.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The value as the long type.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Converts the supplied value to an long (if it can be). For example, converting " +
+                        "the text \"12\" to the number 12. If the value looks like the default date format then " +
+                        "this function will parse the date string and return the number of milliseconds since " +
+                        "the epoch (1 Jan 1970).",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToLong extends AbstractCast implements Serializable {
     static final String NAME = "toLong";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a long");

@@ -20,6 +20,19 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@FunctionDef(
+        name = Match.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Match extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "match";
     private static final long serialVersionUID = -305845496003936297L;

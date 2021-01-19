@@ -16,6 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+@FunctionDef(
+        name = Annotation.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class Annotation extends AbstractLink {
     static final String NAME = "annotation";
 
@@ -54,7 +67,10 @@ class Annotation extends AbstractLink {
             append(sb, 7, "assignedTo");
             append(sb, 8, "comment");
 
-            return makeLink(getEscapedString(childGenerators[0].eval()), EncodingUtil.encodeUrl(sb.toString()), "annotation");
+            return makeLink(getEscapedString(
+                    childGenerators[0].eval()),
+                    EncodingUtil.encodeUrl(sb.toString()),
+                    "annotation");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {

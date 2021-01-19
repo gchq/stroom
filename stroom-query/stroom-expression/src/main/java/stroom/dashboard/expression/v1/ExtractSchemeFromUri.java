@@ -22,6 +22,19 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@FunctionDef(
+        name = ExtractSchemeFromUri.NAME,
+        commonCategory = FunctionCategory.URI,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "",
+                args = {
+//                        @FunctionArg(
+//                                name = "",
+//                                description = "",
+//                                argType = .class)
+                }))
 class ExtractSchemeFromUri extends ExtractionFunction {
     static final String NAME = "extractSchemeFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();
