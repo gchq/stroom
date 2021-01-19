@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = QueryParams.NAME,
         commonCategory = FunctionCategory.VALUE,

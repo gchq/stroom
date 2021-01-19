@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = ExtractFragmentFromUri.NAME,
         commonCategory = FunctionCategory.URI,

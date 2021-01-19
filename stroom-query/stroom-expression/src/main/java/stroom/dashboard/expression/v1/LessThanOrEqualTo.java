@@ -16,6 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = LessThanOrEqualTo.NAME,
         commonCategory = FunctionCategory.LOGIC,

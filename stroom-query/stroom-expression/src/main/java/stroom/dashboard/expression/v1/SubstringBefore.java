@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = SubstringBefore.NAME,
         commonCategory = FunctionCategory.STRING,

@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CountUnique.NAME,
         commonCategory = FunctionCategory.AGGREGATE,

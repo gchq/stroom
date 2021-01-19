@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Not.NAME,
         commonCategory = FunctionCategory.LOGIC,

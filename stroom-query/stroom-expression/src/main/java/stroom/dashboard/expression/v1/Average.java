@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Average.NAME,
         aliases = Average.ALIAS,

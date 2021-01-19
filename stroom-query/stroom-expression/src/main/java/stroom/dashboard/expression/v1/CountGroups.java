@@ -22,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CountGroups.NAME,
         commonCategory = FunctionCategory.AGGREGATE,

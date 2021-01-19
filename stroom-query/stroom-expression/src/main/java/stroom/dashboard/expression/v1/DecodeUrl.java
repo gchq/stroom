@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = DecodeUrl.NAME,
         commonCategory = FunctionCategory.STRING,

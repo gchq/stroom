@@ -22,6 +22,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FormatDate.NAME,
         commonCategory = FunctionCategory.DATE,

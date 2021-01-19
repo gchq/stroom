@@ -16,6 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Subtract.NAME,
         commonCategory = FunctionCategory.MATHEMATICS,

@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Match.NAME,
         commonCategory = FunctionCategory.STRING,

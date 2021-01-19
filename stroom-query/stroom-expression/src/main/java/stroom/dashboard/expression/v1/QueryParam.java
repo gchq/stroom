@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 import java.util.Map;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = QueryParam.NAME,
         commonCategory = FunctionCategory.VALUE,

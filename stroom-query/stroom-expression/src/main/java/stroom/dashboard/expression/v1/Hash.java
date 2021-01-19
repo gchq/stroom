@@ -22,6 +22,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Hash.NAME,
         commonCategory = FunctionCategory.STRING,

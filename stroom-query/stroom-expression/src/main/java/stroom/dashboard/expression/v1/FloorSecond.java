@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = FloorSecond.NAME,
         commonCategory = FunctionCategory.DATE,

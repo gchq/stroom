@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import java.time.LocalDateTime;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = RoundYear.NAME,
         commonCategory = FunctionCategory.DATE,

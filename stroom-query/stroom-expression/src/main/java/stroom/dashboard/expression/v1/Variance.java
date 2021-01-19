@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Variance.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
