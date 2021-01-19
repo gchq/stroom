@@ -20,6 +20,12 @@ public class MockContainerRequestContext implements ContainerRequestContext {
 
     private InputStream stream = null;
 
+    private MockURIInfo uriInfo = new MockURIInfo();
+
+    public void reset (){
+        uriInfo.setId(null);
+    }
+
     @Override
     public Object getProperty(final String name) {
         return null;
@@ -42,7 +48,7 @@ public class MockContainerRequestContext implements ContainerRequestContext {
 
     @Override
     public UriInfo getUriInfo() {
-        return null;
+        return uriInfo;
     }
 
     @Override
