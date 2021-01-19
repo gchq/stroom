@@ -21,10 +21,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FunctionDefinitionUtil {
 
@@ -36,52 +38,125 @@ public class FunctionDefinitionUtil {
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
                                             final Consumer<String> insertFunction,
                                             final String helpUrlBase) {
+        return buildMenuItems(signatures, insertFunction, helpUrlBase, 0);
+    }
 
-        final AtomicInteger categoryPosition = new AtomicInteger(0);
+    public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
+                                            final Consumer<String> insertFunction,
+                                            final String helpUrlBase,
+                                            final int depth) {
+        // This is roughly what we are aiming for
+        // Date //primary category
+        //   Rounding // sub-category
+        //     ceil(
+        //     floor(
+        //   parseDate // overload branch
+        //     parseDate($) // overload 1
+        //     parseDate($, $) // overload 2
+        // Aggregate
+        //   average(
+        //   mean( // alias for average
+
+        // leaves and overload branches come after category branches
+        final Comparator<Entry<Optional<String>, List<FunctionSignature>>> entryComparator =
+                Comparator.comparing(entry ->
+                        entry.getKey().orElse("ZZZZ"));
+
+        final AtomicInteger positionInMenu = new AtomicInteger(0);
         return signatures.stream()
-                .collect(Collectors.groupingBy(FunctionSignature::getCategory))
+                .collect(Collectors.groupingBy(sig -> sig.getCategory(depth)))
+                .entrySet()
+                .stream()
+                .sorted(entryComparator)
+//                .flatMap(optCatSigEntry -> {
+//                    // All the leaves are in a list together so flatten then up to the same
+//                    // level as the branches.
+//                    if (optCatSigEntry.getKey().isEmpty()) {
+//                        return optCatSigEntry.getValue().stream()
+//                                .map(sig -> new SimpleEntry<>(
+//                                        Optional.<String>empty(),
+//                                        Collections.singletonList(sig)));
+//                    } else {
+//                        return Stream.of(optCatSigEntry);
+//                    }
+//                })
+                .flatMap(optCatSigEntry -> {
+                    // Either have an empty key with a single sig in the list
+                    // or a category key with one/more sigs in the list
+                    final Optional<String> optCategory = optCatSigEntry.getKey();
+                    final List<FunctionSignature> categorySignatures = optCatSigEntry.getValue()
+                            .stream()
+                            .sorted(Comparator.comparing(FunctionSignature::getName))
+                            .collect(Collectors.toList());
+
+                    if (optCategory.isPresent()) {
+                        // We have a category so recurse
+                        final List<Item> childItems = buildMenuItems(
+                                categorySignatures,
+                                insertFunction,
+                                helpUrlBase,
+                                depth + 1);
+
+                        return Stream.of(new SimpleParentMenuItem(
+                                positionInMenu.getAndIncrement(),
+                                optCategory.get(),
+                                childItems));
+                    } else {
+                        // No category at this depth so this is a list of leaves
+                        // Due to aliases, each leaf may become multiple leaves
+                        // or due to overloads each leaf may become a branch
+                        final List<Item> leafItems = convertLeaves(
+                                categorySignatures,
+                                positionInMenu,
+                                insertFunction,
+                                helpUrlBase);
+                        return leafItems.stream();
+                    }
+                })
+                .peek(item -> GWT.log(item.getClass().getName()))
+                .collect(Collectors.toList());
+    }
+
+    private static List<Item> convertLeaves(final List<FunctionSignature> signatures,
+                                              final AtomicInteger positionInMenu,
+                                              final Consumer<String> insertFunction,
+                                              final String helpUrlBase) {
+
+        // Create one for each alias too, except the special one char ones
+        // like +, -, /, * etc. as they have a form without brackets
+        final List<FunctionSignature> categorySignatures = signatures
+                .stream()
+                .flatMap(value ->
+                        value.asAliases().stream())
+                .peek(functionSignature ->
+                        GWT.log("Func: " +
+                                buildSignatureStr(functionSignature) + " " +
+                                isBracketedForm(functionSignature)))
+                .filter(FunctionDefinitionUtil::isBracketedForm)
+                .sorted(Comparator.comparing(FunctionSignature::getName))
+                .collect(Collectors.toList());
+
+//        final AtomicInteger functionPosition = new AtomicInteger(0);
+
+        // These will be branches if a func has multiple overloads in the category
+        // or a leaf if it only has one
+        final List<Item> childMenuItems = categorySignatures.stream()
+                .collect(Collectors.groupingBy(FunctionSignature::getName))
                 .entrySet()
                 .stream()
                 .sorted(Entry.comparingByKey())
-                .map(catSigsEntry -> {
-                    final String category = catSigsEntry.getKey();
-                    // Create one for each alias too, except the special one char ones
-                    // like +, -, /, * etc. as they have a form without brackets
-                    final List<FunctionSignature> categorySignatures = catSigsEntry.getValue()
-                            .stream()
-                            .flatMap(value ->
-                                    value.asAliases().stream())
-                            .peek(functionSignature ->
-                                    GWT.log("Func: " + buildSignatureStr(functionSignature) + " " + isBracketedForm(functionSignature)))
-                            .filter(FunctionDefinitionUtil::isBracketedForm)
-                            .collect(Collectors.toList());
-
-                    final AtomicInteger functionPosition = new AtomicInteger(0);
-
-                    // These will be branches if a func has multiple overloads in the category
-                    // or a leaf if it only has one
-                    final List<Item> childMenuItems = categorySignatures.stream()
-                            .collect(Collectors.groupingBy(FunctionSignature::getName))
-                            .entrySet()
-                            .stream()
-                            .sorted(Entry.comparingByKey())
-                            .map(nameSigsEntry ->
-                                    convertFunctionDefinitionToItem(
-                                            nameSigsEntry.getKey(),
-                                            nameSigsEntry.getValue(),
-                                            insertFunction,
-                                            functionPosition.getAndIncrement(),
-                                            helpUrlBase))
-                            .collect(Collectors.toList());
-
-                    // Create the category menu item
-                    return new SimpleParentMenuItem(
-                            categoryPosition.getAndIncrement(),
-                            category,
-                            childMenuItems);
-                })
+                .map(nameSigsEntry ->
+                        convertFunctionDefinitionToItem(
+                                nameSigsEntry.getKey(),
+                                nameSigsEntry.getValue(),
+                                insertFunction,
+                                positionInMenu.getAndIncrement(),
+                                helpUrlBase))
                 .collect(Collectors.toList());
+
+        return childMenuItems;
     }
+
 
     public static List<AceCompletion> buildCompletions(final List<FunctionSignature> signatures,
                                                        final String helpUrlBase) {
@@ -144,7 +219,7 @@ public class FunctionDefinitionUtil {
         final String functionTypeStr = signature.getArgs().isEmpty()
                 ? "Value"
                 : "Function";
-        final String meta = signature.getCategory() + " " + functionTypeStr;
+        final String meta = signature.getCategoryPath() + " " + functionTypeStr;
         final String snippetText = buildSnippetText(signature);
 
 //                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
@@ -368,7 +443,7 @@ public class FunctionDefinitionUtil {
                 .appendLinkWithoutBreak(
                         helpUrlBase +
                                 "/user-guide/dashboards/expressions/" +
-                                signature.getCategory().toLowerCase().replace(" ", "-") +
+                                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
                                 "#" +
                                 functionNameToAnchor(signature.getName()),
                         "Help Documentation")

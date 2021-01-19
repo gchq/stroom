@@ -34,6 +34,7 @@ import com.esotericsoftware.kryo.io.Output;
                                 argType = ValDouble.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
+                        subCategories = "Statistical",
                         description = "Determines the average (mean) value of all arguments.",
                         args = @FunctionArg(
                                 name = "value",

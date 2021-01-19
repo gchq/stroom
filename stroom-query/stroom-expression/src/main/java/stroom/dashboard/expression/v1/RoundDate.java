@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 abstract class RoundDate extends AbstractFunction {
+    static final String CEILING_SUB_CATEGORY = "Ceiling";
+    static final String FLOOR_SUB_CATEGORY = "Floor";
+    static final String ROUND_SUB_CATEGORY = "Round";
     private Function function;
 
     public RoundDate(final String name) {

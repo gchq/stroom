@@ -8,11 +8,10 @@ public enum FunctionCategory {
     LOGIC("Logic"),
     MATHEMATICS("Mathematics"),
     PARAM("Param"),
-    ROUNDING("Rounding"),
     SELECTION("Selection"),
     STRING("String"),
     TYPE_CHECKING("Type Checking"),
-    URI("Uri"),
+    URI("URI"),
     VALUE("Value");
 
     private final String name;

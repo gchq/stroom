@@ -16,6 +16,13 @@ public @interface FunctionSignature {
     FunctionCategory[] category() default {};
 
     /**
+     * An array of sub-categories that this function belongs to. The sub-categories represent a path
+     * in a tree of categories from root to leaf. E.g. if the main category is String the sub categories
+     * could be [Conversion, Case], i.e. String -> Conversion -> Case.
+     */
+    String[] subCategories() default {};
+
+    /**
      * The description of what this signature of the function does.
      * You must specify either this or {@link FunctionDef#commonDescription()}
      */

@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @FunctionDef(
         name = CeilingMonth.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

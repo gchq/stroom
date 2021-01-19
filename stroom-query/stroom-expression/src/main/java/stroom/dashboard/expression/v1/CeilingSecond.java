@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 @FunctionDef(
         name = CeilingSecond.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

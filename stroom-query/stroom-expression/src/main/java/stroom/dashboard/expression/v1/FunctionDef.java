@@ -23,6 +23,15 @@ public @interface FunctionDef {
      */
     FunctionCategory[] commonCategory() default {};
 
+
+    /**
+     * An array of sub-categories that this function belongs to. The sub-categories represent a path
+     * in a tree of categories from root to leaf. E.g. if the main category is String the sub categories
+     * could be [Conversion, Case], i.e. String -> Conversion -> Case.
+     * Can be overridden at the signature level.
+     */
+    String[] commonSubCategories() default {};
+
     /**
      * A description of what the function does that is common to all signatures unless overridden
      * at the signature level.

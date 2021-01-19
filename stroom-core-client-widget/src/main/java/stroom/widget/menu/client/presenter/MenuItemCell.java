@@ -50,7 +50,10 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
     @Override
-    public void onBrowserEvent(final Context context, final Element parent, final Item value, final NativeEvent event,
+    public void onBrowserEvent(final Context context,
+                               final Element parent,
+                               final Item value,
+                               final NativeEvent event,
                                final ValueUpdater<Item> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
@@ -77,7 +80,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                         element.removeClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
                     }
 
-                } else if (BrowserEvents.CLICK.equals(eventType) && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
+                } else if (BrowserEvents.CLICK.equals(eventType)
+                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
                     if (menuItem.isEnabled()) {
                         menuPresenter.onClick(menuItem, element);
@@ -94,7 +98,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                     element.removeClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
 
-                } else if (BrowserEvents.CLICK.equals(eventType) && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
+                } else if (BrowserEvents.CLICK.equals(eventType)
+                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
                     menuPresenter.onClick(menuItem, element);
                 }
             }

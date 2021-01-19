@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,7 +20,7 @@ public class FunctionSignature {
     @JsonProperty
     private final List<String> aliases;
     @JsonProperty
-    private final String category;
+    private final List<String> categoryPath;
     @JsonProperty
     private final List<Arg> args;
     @JsonProperty
@@ -32,14 +33,14 @@ public class FunctionSignature {
     @JsonCreator
     public FunctionSignature(@JsonProperty("name") final String name,
                              @JsonProperty("aliases") final List<String> aliases,
-                             @JsonProperty("category") final String category,
+                             @JsonProperty("categoryPath") final List<String> categoryPath,
                              @JsonProperty("args") final List<Arg> args,
                              @JsonProperty("returnType") final Type returnType,
                              @JsonProperty("returnDescription") final String returnDescription,
                              @JsonProperty("description") final String description) {
         this.name = name;
         this.aliases = aliases;
-        this.category = category;
+        this.categoryPath = categoryPath;
         this.args = args;
         this.returnType = returnType;
         this.returnDescription = returnDescription;
@@ -78,7 +79,7 @@ public class FunctionSignature {
             return new FunctionSignature(
                     newPrimaryName,
                     newAliases,
-                    category,
+                    categoryPath,
                     args,
                     returnType,
                     returnDescription,
@@ -96,8 +97,22 @@ public class FunctionSignature {
         return aliases;
     }
 
-    public String getCategory() {
-        return category;
+    @JsonIgnore
+    public String getPrimaryCategory() {
+        return categoryPath.isEmpty()
+                ? null
+                : categoryPath.get(0);
+    }
+
+    public List<String> getCategoryPath() {
+        return categoryPath;
+    }
+
+    @JsonIgnore
+    public Optional<String> getCategory(final int depth) {
+        return depth < categoryPath.size()
+                ? Optional.ofNullable(categoryPath.get(depth))
+                : Optional.empty();
     }
 
     public List<Arg> getArgs() {
@@ -117,17 +132,11 @@ public class FunctionSignature {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final FunctionSignature signature = (FunctionSignature) o;
-        return Objects.equals(category, signature.category) && Objects.equals(args, signature.args) && returnType == signature.returnType && Objects.equals(returnDescription, signature.returnDescription) && Objects.equals(description, signature.description);
-    }
-
-    @Override
     public String toString() {
-        return "Signature{" +
-                "category='" + category + '\'' +
+        return "FunctionSignature{" +
+                "name='" + name + '\'' +
+                ", aliases=" + aliases +
+                ", categoryPath=" + categoryPath +
                 ", args=" + args +
                 ", returnType=" + returnType +
                 ", returnDescription='" + returnDescription + '\'' +
@@ -136,8 +145,16 @@ public class FunctionSignature {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FunctionSignature that = (FunctionSignature) o;
+        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && Objects.equals(categoryPath, that.categoryPath) && Objects.equals(args, that.args) && returnType == that.returnType && Objects.equals(returnDescription, that.returnDescription) && Objects.equals(description, that.description);
+    }
+
+    @Override
     public int hashCode() {
-        return Objects.hash(category, args, returnType, returnDescription, description);
+        return Objects.hash(name, aliases, categoryPath, args, returnType, returnDescription, description);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

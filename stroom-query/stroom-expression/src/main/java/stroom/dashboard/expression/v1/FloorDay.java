@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @FunctionDef(
         name = FloorDay.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

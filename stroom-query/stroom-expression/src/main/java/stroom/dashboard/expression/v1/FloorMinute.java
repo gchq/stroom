@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 @FunctionDef(
         name = FloorMinute.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @FunctionDef(
         name = RoundYear.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

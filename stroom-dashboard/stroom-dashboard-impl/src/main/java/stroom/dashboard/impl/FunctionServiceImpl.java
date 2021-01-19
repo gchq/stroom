@@ -18,6 +18,7 @@ import stroom.dashboard.shared.FunctionSignature.Type;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -96,10 +97,12 @@ public class FunctionServiceImpl implements FunctionService {
                     .filter(alias -> !alias.isEmpty())
                     .collect(Collectors.toList());
 
+            final List<String> categoryPath = buildCategoryPath(functionDef, functionSignature);
+
             return new FunctionSignature(
                     functionDef.name(),
                     aliases,
-                    category,
+                    categoryPath,
                     args,
                     returnType,
                     returnDescription,
@@ -107,6 +110,23 @@ public class FunctionServiceImpl implements FunctionService {
         } else {
             return null;
         }
+    }
+
+    private static List<String> buildCategoryPath(final FunctionDef functionDef,
+                                           final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
+
+        final String category = functionSignature.category().length > 0
+                ? convertCategory(functionSignature.category())
+                : convertCategory(functionDef.commonCategory());
+
+        final String[] subCategories = functionSignature.subCategories().length > 0
+                ? functionSignature.subCategories()
+                : functionDef.commonSubCategories();
+
+        final List<String> categoryPath = new ArrayList<>();
+        categoryPath.add(category);
+        categoryPath.addAll(Arrays.asList(subCategories));
+        return categoryPath;
     }
 
     private static Arg convertArg(final FunctionArg functionArg) {

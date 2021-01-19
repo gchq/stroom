@@ -38,6 +38,7 @@ import java.util.List;
                                 argType = ValDouble.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
+                        subCategories = "Statistical",
                         description = "Determines the variance value from all the arguments.",
                         args = @FunctionArg(
                                 name = "value",

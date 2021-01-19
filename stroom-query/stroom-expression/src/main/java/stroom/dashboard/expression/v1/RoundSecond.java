@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 @FunctionDef(
         name = RoundSecond.NAME,
         commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
         commonReturnType = ValLong.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(

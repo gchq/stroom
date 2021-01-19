@@ -18,7 +18,8 @@ package stroom.dashboard.expression.v1;
 
 @FunctionDef(
         name = Round.NAME,
-        commonCategory = FunctionCategory.ROUNDING,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(
