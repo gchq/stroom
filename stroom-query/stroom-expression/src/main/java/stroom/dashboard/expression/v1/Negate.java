@@ -21,14 +21,14 @@ package stroom.dashboard.expression.v1;
         name = Negate.NAME,
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The result of multiplying the supplied number by -1",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Multiplies the supplied value by -1",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "Numeric field, function or a constant.",
+                                argType = ValNumber.class)
                 }))
 class Negate extends NumericFunction {
     static final String NAME = "negate";
@@ -46,9 +46,17 @@ class Negate extends NumericFunction {
     static class Calc extends Calculator {
         private static final long serialVersionUID = 1099553839843710283L;
 
+        private static final ValInteger MINUS_ONE = ValInteger.create(-1);
+
+        @Override
+        Val calc(final Val current, final Val value) {
+            // super.calc does a null check
+            return super.calc(MINUS_ONE, value);
+        }
+
         @Override
         protected double op(final double cur, final double val) {
-            return val * -1;
+            return val * cur;
         }
     }
 }
