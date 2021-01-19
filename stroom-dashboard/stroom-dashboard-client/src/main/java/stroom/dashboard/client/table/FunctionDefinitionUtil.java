@@ -212,7 +212,7 @@ public class FunctionDefinitionUtil {
         final String functionTypeStr = signature.getArgs().isEmpty()
                 ? "Value"
                 : "Function";
-        final String meta = signature.getCategoryPath() + " " + functionTypeStr;
+        final String meta = signature.getPrimaryCategory() + " " + functionTypeStr;
         final String snippetText = buildSnippetText(signature);
 
 //                    GWT.log("Adding snippet " + name + " | " + meta + " | " + snippetText);
