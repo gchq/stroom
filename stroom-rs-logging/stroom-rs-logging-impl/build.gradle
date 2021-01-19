@@ -14,4 +14,12 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.jersey_common
     compile libs.jersey_server
+
+    //--------testing----------
+
+    testCompile libs.assertj_core
+    testCompileOnly libs.junit_jupiter_api
+    testCompile libs.mockito_core
+
+    testRuntimeOnly libs.junit_jupiter_engine
 }

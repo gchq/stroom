@@ -51,12 +51,18 @@ public class StroomServerLoggingFilterImpl implements StroomServerLoggingFilter 
         this.objectMapper = createObjectMapper();
     }
 
+    StroomServerLoggingFilterImpl(RequestEventLog requestEventLog, RequestLoggingConfig config,
+                                  ResourceInfo resourceInfo,
+                                  HttpServletRequest request) {
+        this.requestEventLog = requestEventLog;
+        this.config = config;
+        this.resourceInfo = resourceInfo;
+        this.request = request;
+        this.objectMapper = createObjectMapper();
+    }
+
     @Override
     public Response toResponse(final Exception exception) {
-        //todo create separate providers for
-        //todo TokenException
-        //todo AuthenticationException
-
         if (request != null) {
             final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (object != null) {
