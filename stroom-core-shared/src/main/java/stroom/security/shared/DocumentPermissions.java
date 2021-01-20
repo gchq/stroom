@@ -1,5 +1,7 @@
 package stroom.security.shared;
 
+import stroom.search.solr.shared.SolrIndexField;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -119,11 +121,29 @@ public class DocumentPermissions {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String docUuid;
         private List<User> users;
         private List<User> groups;
         private Map<String, Set<String>> permissions = new HashMap<>();
+
+        private Builder() {
+        }
+
+        private Builder(final DocumentPermissions documentPermissions) {
+            this.docUuid = documentPermissions.docUuid;
+            this.users = documentPermissions.users;
+            this.groups = documentPermissions.groups;
+            this.permissions = documentPermissions.permissions;
+        }
 
         public Builder docUuid(final String value) {
             docUuid = value;

@@ -337,7 +337,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
 
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(currentFeedName)
                     .typeName(typeName)
                     .effectiveMs(effectiveMs)

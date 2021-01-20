@@ -19,7 +19,7 @@ public class DataRange {
     @JsonProperty
     private final Long charOffsetFrom;
     @JsonProperty
-    private final Long byteOffsetFrom; // zero based
+    private final Long byteOffsetFrom; // zero based, inclusive (for multi-byte, the first byte of the 'char')
 
     // The extent of the data range, absolute or relative
     // Need one of these
@@ -28,7 +28,7 @@ public class DataRange {
     @JsonProperty
     private final Long charOffsetTo;
     @JsonProperty
-    private final Long byteOffsetTo; // zero based
+    private final Long byteOffsetTo; // zero based, inclusive (for multi-byte, the last byte of the 'char')
 
     @JsonProperty
     private final Long length; // number of chars from the start position
@@ -133,10 +133,6 @@ public class DataRange {
                 null,
                 null,
                 null);
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     /**
@@ -280,6 +276,14 @@ public class DataRange {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public static final class Builder {
         private Location locationFrom;
         private Long charOffsetFrom;
@@ -290,6 +294,16 @@ public class DataRange {
         private Long length;
 
         private Builder() {
+        }
+
+        private Builder(final DataRange dataRange) {
+            locationFrom = dataRange.locationFrom;
+            charOffsetFrom = dataRange.charOffsetFrom;
+            byteOffsetFrom = dataRange.byteOffsetFrom;
+            locationTo = dataRange.locationTo;
+            charOffsetTo = dataRange.charOffsetTo;
+            byteOffsetTo = dataRange.byteOffsetTo;
+            length = dataRange.length;
         }
 
         public Builder fromLocation(final Location locationFrom) {

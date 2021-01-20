@@ -16,29 +16,18 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.svg.client.Icon;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
 import java.util.List;
 
-public class SimpleParentMenuItem extends IconMenuItem implements HasChildren {
+public class SimpleParentMenuItem extends SimpleMenuItem implements HasChildren {
     private final List<Item> children;
 
     public SimpleParentMenuItem(final int priority,
                                 final String text,
                                 final List<Item> children) {
-        this(priority, null, null, text, null, true, children);
-    }
-
-    public SimpleParentMenuItem(final int priority,
-                                final Icon enabledIcon,
-                                final Icon disabledIcon,
-                                final String text,
-                                final String shortcut,
-                                final boolean enabled,
-                                final List<Item> children) {
-        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null);
+        super(priority, text, null, true, null);
         this.children = children;
     }
 

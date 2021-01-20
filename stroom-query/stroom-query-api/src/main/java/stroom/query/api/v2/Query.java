@@ -100,18 +100,26 @@ public final class Query {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Query}
      */
-    public static class Builder {
+    public static final class Builder {
         private DocRef dataSource;
         private ExpressionOperator expression;
         private List<Param> params;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Query query) {
+        private Builder(final Query query) {
             this.dataSource = query.dataSource;
             this.expression = query.expression;
             this.params = query.params;
@@ -134,7 +142,7 @@ public final class Query {
 //         * @return this builder, with the completed datasource added.
 //         */
 //        public Builder dataSource(final String type, final String uuid, final String name) {
-//            return this.dataSource(new DocRef.Builder().type(type).uuid(uuid).name(name).build());
+//            return this.dataSource(DocRef.builder().type(type).uuid(uuid).name(name).build());
 //        }
 
         /**
@@ -154,7 +162,7 @@ public final class Query {
          * @return this builder with the completed parameter added.
          */
         public Builder addParam(final String key, final String value) {
-            return addParams(new Param.Builder().key(key).value(value).build());
+            return addParams(Param.builder().key(key).value(value).build());
         }
 
         /**

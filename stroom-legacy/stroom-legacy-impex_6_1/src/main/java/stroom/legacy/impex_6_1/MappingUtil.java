@@ -250,7 +250,12 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.ExpressionOperator(value.getEnabled(), map(value.getOp()), mapList(value.getChildren(), MappingUtil::map));
+        return stroom.query.api.v2.ExpressionOperator
+                .builder()
+                .enabled(value.getEnabled())
+                .op(map(value.getOp()))
+                .children(mapList(value.getChildren(), MappingUtil::map))
+                .build();
     }
 
     public static stroom.query.api.v2.ExpressionOperator.Op map(stroom.legacy.model_6_1.ExpressionOperator.Op value) {
@@ -266,7 +271,14 @@ public final class MappingUtil {
             return null;
         }
 
-        return new stroom.query.api.v2.ExpressionTerm(value.getEnabled(), value.getField(), map(value.getCondition()), value.getValue(), map(value.getDocRef()));
+        return stroom.query.api.v2.ExpressionTerm
+                .builder()
+                .enabled(value.getEnabled())
+                .field(value.getField())
+                .condition(map(value.getCondition()))
+                .value(value.getValue())
+                .docRef(map(value.getDocRef()))
+                .build();
     }
 
     public static stroom.query.api.v2.ExpressionTerm.Condition map(stroom.legacy.model_6_1.ExpressionTerm.Condition value) {

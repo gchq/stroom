@@ -63,7 +63,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -84,7 +84,7 @@ import java.util.stream.Collectors;
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
         implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler, PipelineStructureUiHandlers {
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final EntityDropDownPresenter pipelinePresenter;
     private final MenuListPresenter menuListPresenter;
@@ -333,8 +333,8 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new SimpleParentMenuItem(0, SvgPresets.ADD, SvgPresets.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
-        menuItems.add(new SimpleParentMenuItem(1, SvgPresets.UNDO, SvgPresets.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
+        menuItems.add(new IconParentMenuItem(0, SvgPresets.ADD, SvgPresets.ADD, "Add", null, addMenuItems != null && addMenuItems.size() > 0, addMenuItems));
+        menuItems.add(new IconParentMenuItem(1, SvgPresets.UNDO, SvgPresets.UNDO, "Restore", null, restoreMenuItems != null && restoreMenuItems.size() > 0, restoreMenuItems));
         menuItems.add(new IconMenuItem(2, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, selected != null, () -> onRemove(null)));
 
         return menuItems;
@@ -369,7 +369,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
                     if (children.size() > 0) {
                         children.sort(new MenuItems.ItemComparator());
-                        final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
+                        final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
                                 category.getDisplayValue(), null, true, children);
                         menuItems.add(parentItem);
                     }
@@ -420,7 +420,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 final List<Item> children = entry.getValue();
 
                 children.sort(new MenuItems.ItemComparator());
-                final Item parentItem = new SimpleParentMenuItem(category.getOrder(), null, null,
+                final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
                         category.getDisplayValue(), null, true, children);
                 menuItems.add(parentItem);
             }

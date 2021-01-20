@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import stroom.index.shared.IndexField;
 import stroom.util.shared.HasType;
 
 import java.util.Objects;
@@ -123,7 +125,15 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         return name;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private PipelineElementType elementType;
         private String name;
         private String type;
@@ -132,6 +142,20 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         private boolean pipelineReference;
         private String[] docRefTypes;
         private int displayPriority;
+
+        private Builder() {
+        }
+
+        private Builder(final PipelinePropertyType pipelinePropertyType) {
+            this.elementType = pipelinePropertyType.elementType;
+            this.name = pipelinePropertyType.name;
+            this.type = pipelinePropertyType.type;
+            this.description = pipelinePropertyType.description;
+            this.defaultValue = pipelinePropertyType.defaultValue;
+            this.pipelineReference = pipelinePropertyType.pipelineReference;
+            this.docRefTypes = pipelinePropertyType.docRefTypes;
+            this.displayPriority = pipelinePropertyType.displayPriority;
+        }
 
         public Builder elementType(final PipelineElementType value) {
             this.elementType = value;

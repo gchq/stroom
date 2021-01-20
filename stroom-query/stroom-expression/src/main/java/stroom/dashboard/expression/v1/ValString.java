@@ -117,16 +117,4 @@ public final class ValString implements Val {
     public int hashCode() {
         return Objects.hash(value);
     }
-
-    @Override
-    public int compareTo(final Val o) {
-        final Double d1 = toDouble();
-        if (d1 != null) {
-            final Double d2 = o.toDouble();
-            if (d2 != null) {
-                return Double.compare(d1, d2);
-            }
-        }
-        return value.compareToIgnoreCase(((ValString) o).value);
-    }
 }

@@ -1,16 +1,17 @@
 package stroom.core.receive;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.data.zip.BufferSizeUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class ProxyAggregationConfig extends AbstractConfig {
-    private String proxyDir = "${stroom.temp}/proxy";
+    private String proxyDir = "proxy_repo";
     private volatile int proxyThreads = 10;
 
     private volatile int maxFileScan = 100000;
@@ -18,7 +19,8 @@ public class ProxyAggregationConfig extends AbstractConfig {
     private volatile int maxFilesPerAggregate = 10000;
     private String maxUncompressedFileSize = "1G";
 
-    @JsonPropertyDescription("Folder to look for Stroom Proxy Content to aggregate")
+    @JsonPropertyDescription("Folder to look for Stroom Proxy Content to aggregate. If the value is a " +
+            "relative path then it will be treated as being relative to stroom.path.home.")
     public String getProxyDir() {
         return proxyDir;
     }
@@ -45,7 +47,8 @@ public class ProxyAggregationConfig extends AbstractConfig {
         this.proxyThreads = proxyThreads;
     }
 
-    @JsonPropertyDescription("The limit of files to inspect before aggregation begins (should be bigger than maxAggregation)")
+    @JsonPropertyDescription("The limit of files to inspect before aggregation begins (should be bigger than " +
+            "maxAggregation)")
     public int getMaxFileScan() {
         return maxFileScan;
     }
@@ -54,7 +57,8 @@ public class ProxyAggregationConfig extends AbstractConfig {
         this.maxFileScan = maxFileScan;
     }
 
-    @JsonPropertyDescription("The maximum number of file references in aggregation file sets to hold in memory prior to aggregation")
+    @JsonPropertyDescription("The maximum number of file references in aggregation file sets to hold in memory " +
+            "prior to aggregation")
     public int getMaxConcurrentMappedFiles() {
         return maxConcurrentMappedFiles;
     }
@@ -72,7 +76,8 @@ public class ProxyAggregationConfig extends AbstractConfig {
         this.maxFilesPerAggregate = maxFilesPerAggregate;
     }
 
-    @JsonPropertyDescription("The maximum total size of the uncompressed contents that will be held in an aggregate unless the first and only aggregated file exceeds this limit")
+    @JsonPropertyDescription("The maximum total size of the uncompressed contents that will be held in an " +
+            "aggregate unless the first and only aggregated file exceeds this limit")
     public String getMaxUncompressedFileSize() {
         return maxUncompressedFileSize;
     }

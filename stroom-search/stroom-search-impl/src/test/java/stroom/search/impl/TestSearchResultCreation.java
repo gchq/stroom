@@ -4,11 +4,12 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -24,19 +25,27 @@ import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Data.DataItem;
-import stroom.query.common.v2.Data.DataItems;
+import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DataStoreFactory;
+import stroom.query.common.v2.Item;
+import stroom.query.common.v2.Items;
+import stroom.query.common.v2.LmdbConfig;
+import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.LmdbEnvironment;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
@@ -48,6 +57,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +68,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
     // Make sure the search request is the same as the one we expected to make.
-    private final Path resourcesDir = SearchDebugUtil.getDir();
+    private final Path resourcesDir = SearchDebugUtil.initialise();
+
+    private DataStoreFactory dataStoreFactory;
+
+    @BeforeEach
+    void setup(@TempDir final Path tempDir) {
+        final LmdbConfig lmdbConfig = new LmdbConfig();
+        final TempDirProvider tempDirProvider = () -> tempDir;
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(tempDirProvider, lmdbConfig, pathCreator);
+        dataStoreFactory = new LmdbDataStoreFactory(
+                lmdbEnvironment,
+                new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
+                lmdbConfig);
+    }
 
     @Test
     void test() throws Exception {
@@ -71,9 +95,13 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final String queryKey = UUID.randomUUID().toString();
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -81,12 +109,13 @@ class TestSearchResultCreation {
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
+
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -96,15 +125,70 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                sizesProvider,
+                collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
     }
+//
+//    @Test
+//    void testSinglePayloadTransfer() throws Exception {
+//        final SearchRequest searchRequest = createSingleSearchRequest();
+//
+//        // Validate the search request.
+//        validateSearchRequest(searchRequest);
+//
+//        // Get sizes.
+//        final SizesProvider sizesProvider = createSizesProvider();
+//
+//        // Create coprocessors.
+//        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+//        final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
+//        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+//
+//        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+//
+//        // Reorder values if field mappings have changed.
+//        final int[] mappings = createMappings(consumer);
+//
+//        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+//
+//        // Add data to the consumer.
+//        final String[] lines = getLines();
+//        for (int i = 0; i < lines.length; i++) {
+//            final String line = lines[i];
+//            final String[] values = line.split(",");
+//            supplyValues(values, mappings, consumer);
+//        }
+//        consumer.getCompletionConsumer().accept((long) lines.length);
+//
+//
+//        transferPayloads(coprocessors, coprocessors2);
+//
+//
+//        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
+//                null,
+//                null,
+//                null,
+//                null,
+//                null,
+//                null,
+//                coprocessors2);
+//
+//        collector.complete();
+//
+//        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+//        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+//
+//        // Validate the search response.
+//        validateSearchResponse(searchResponse);
+//    }
 
     @Test
     void testPayloadTransfer() throws Exception {
@@ -117,29 +201,40 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final String queryKey = UUID.randomUUID().toString();
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
             supplyValues(values, mappings, consumer);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
 
+        // Perform final payload transfer.
         transferPayloads(coprocessors, coprocessors2);
 
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -149,7 +244,7 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
@@ -170,28 +265,44 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final String queryKey = UUID.randomUUID().toString();
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                sizesProvider,
+                dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(consumer1);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         // Add data to the consumer.
         final String[] lines = getLines();
-        for (int i = 0; i < lines.length; i++) {
-            final String line = lines[i];
+        for (final String line : lines) {
             final String[] values = line.split(",");
-            supplyValues(values, mappings, consumer);
+            supplyValues(values, mappings, consumer1);
 
             transferPayloads(coprocessors, coprocessors2);
         }
-        consumer.getCompletionConsumer().accept((long) lines.length);
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, lines.length);
+
+        // Perform final payload transfer.
+        transferPayloads(coprocessors, coprocessors2);
+
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, lines.length);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -201,14 +312,24 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
+                sizesProvider,
+                collector);
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
+    }
+
+    private void complete(final Coprocessors coprocessors, final int size) throws InterruptedException {
+        // Tell the consumer we are finished receiving data.
+        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        consumer.getCompletionConsumer().accept((long) size);
+        // Wait for the coprocessors to finish processing data.
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     //    @Test
@@ -230,16 +351,24 @@ class TestSearchResultCreation {
         final SizesProvider sizesProvider = createSizesProvider();
 
         // Create coprocessors.
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider);
+        final String queryKey = UUID.randomUUID().toString();
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                queryKey,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
         final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
         final int[] mappings = createMappings(consumer);
 
-        final Coprocessors coprocessors2 = coprocessorsFactory.create(coprocessorSettings, searchRequest.getQuery().getParams());
+        final String queryKey2 = UUID.randomUUID().toString();
+        final Coprocessors coprocessors2 = coprocessorsFactory.create(
+                queryKey2,
+                coprocessorSettings,
+                searchRequest.getQuery().getParams());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -251,7 +380,7 @@ class TestSearchResultCreation {
         final int perThread = count / threads;
 
         // Create value supply futures.
-        final CompletableFuture[] futures = new CompletableFuture[threads];
+        final CompletableFuture<?>[] futures = new CompletableFuture[threads];
         int thread = 0;
         for (; thread < threads; thread++) {
             futures[thread] = CompletableFuture.runAsync(() -> {
@@ -263,7 +392,7 @@ class TestSearchResultCreation {
         CompletableFuture.allOf(futures).thenRunAsync(countDownLatch::countDown);
 
         // Create payload transfer future.
-        final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
+        final CompletableFuture<?> completableFuture = CompletableFuture.runAsync(() -> {
             boolean complete = false;
             while (!complete) {
                 try {
@@ -277,9 +406,14 @@ class TestSearchResultCreation {
         });
         completableFuture.join();
 
+        // Tell the consumer we are finished receiving data.
+        complete(coprocessors, count);
 
-        consumer.getCompletionConsumer().accept((long) count);
+        // Perform final payload transfer.
+        transferPayloads(coprocessors, coprocessors2);
 
+        // Ensure the target coprocessors get a chance to add the data from the payloads.
+        complete(coprocessors2, count);
 
         final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
                 null,
@@ -289,12 +423,12 @@ class TestSearchResultCreation {
                 null,
                 null,
                 coprocessors2);
-
+        // Mark the collector as artificially complete.
         collector.complete();
 
-        final Data data = collector.getData("table-78LF4");
-        final DataItems dataItems = data.get();
-        final DataItem dataItem = dataItems.iterator().next();
+        final DataStore data = collector.getData("table-78LF4");
+        final Items dataItems = data.get();
+        final Item dataItem = dataItems.iterator().next();
         final Val val = dataItem.getValue(2);
         assertThat(val.toLong()).isEqualTo(count);
 
@@ -434,20 +568,42 @@ class TestSearchResultCreation {
         SearchDebugUtil.validateResponse();
     }
 
-    private SearchRequest createSearchRequest() {
+    private SearchRequest createSingleSearchRequest() {
         final QueryKey key = new QueryKey("e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
         final DocRef dataSource = new DocRef("Index", "57a35b9a-083c-4a93-a813-fc3ddfe1ff44", "Example index");
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm("EventTime", Condition.BETWEEN, "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
                 .build();
-        final Query query = new Query.Builder()
+        final Query query = Query.builder()
                 .dataSource(dataSource)
                 .expression(expression)
                 .addParam("currentUser()", "admin")
                 .build();
 
         final String dateTimeLocale = "Europe/London";
-        return new SearchRequest.Builder()
+        return SearchRequest.builder()
+                .key(key)
+                .query(query)
+                .addResultRequests(createGroupedUserTableResultRequest())
+                .dateTimeLocale(dateTimeLocale)
+                .incremental(true)
+                .build();
+    }
+
+    private SearchRequest createSearchRequest() {
+        final QueryKey key = new QueryKey("e177cf16-da6c-4c7d-a19c-09a201f5a2da|Test Dashboard|query-MRGPM|57UG_1605699732322");
+        final DocRef dataSource = new DocRef("Index", "57a35b9a-083c-4a93-a813-fc3ddfe1ff44", "Example index");
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm("EventTime", Condition.BETWEEN, "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z")
+                .build();
+        final Query query = Query.builder()
+                .dataSource(dataSource)
+                .expression(expression)
+                .addParam("currentUser()", "admin")
+                .build();
+
+        final String dateTimeLocale = "Europe/London";
+        return SearchRequest.builder()
                 .key(key)
                 .query(query)
                 .addResultRequests(createGroupedUserTableResultRequest())
@@ -461,19 +617,19 @@ class TestSearchResultCreation {
     }
 
     private ResultRequest createGroupedUserTableResultRequest() {
-        return new ResultRequest.Builder()
+        return ResultRequest.builder()
                 .componentId("table-BKJT6")
                 .addMappings(createGroupedUserTableSettings())
-                .requestedRange(new OffsetRange.Builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
     }
 
     private TableSettings createGroupedUserTableSettings() {
-        return new TableSettings.Builder()
+        return TableSettings.builder()
                 .queryId("query-MRGPM")
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("table-BKJT6|RACJI")
                         .name("UserId")
                         .expression("${UserId}")
@@ -482,20 +638,20 @@ class TestSearchResultCreation {
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("table-BKJT6|89WRT")
                         .name("Count")
                         .expression("count()")
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("__stream_id__")
                         .name("__stream_id__")
                         .expression("${StreamId}")
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("__event_id__")
                         .name("__event_id__")
                         .expression("${EventId}")
@@ -509,7 +665,7 @@ class TestSearchResultCreation {
 
 
     private ResultRequest createDonutResultRequest() {
-        return new ResultRequest.Builder()
+        return ResultRequest.builder()
                 .componentId("vis-QYG7H")
                 .addMappings(createGroupedUserTableSettings())
                 .addMappings(createDonutVisSettings())
@@ -519,19 +675,19 @@ class TestSearchResultCreation {
     }
 
     private TableSettings createDonutVisSettings() {
-        return new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        return TableSettings.builder()
+                .addFields(Field.builder()
                         .sort(new Sort(null, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${UserId}")
                         .format(Format.GENERAL)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()
@@ -543,19 +699,19 @@ class TestSearchResultCreation {
 
 
     private ResultRequest createGroupedUserAndEventTimeTableResultRequest() {
-        return new ResultRequest.Builder()
+        return ResultRequest.builder()
                 .componentId("table-78LF4")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
-                .requestedRange(new OffsetRange.Builder().offset(0L).length(100L).build())
+                .requestedRange(OffsetRange.builder().offset(0L).length(100L).build())
                 .resultStyle(ResultStyle.TABLE)
                 .fetch(Fetch.CHANGES)
                 .build();
     }
 
     private TableSettings createGroupedUserAndEventTimeTableSettings() {
-        return new TableSettings.Builder()
+        return TableSettings.builder()
                 .queryId("query-MRGPM")
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("table-78LF4|7JU9H")
                         .name("EventTime")
                         .expression("roundMinute(${EventTime})")
@@ -564,7 +720,7 @@ class TestSearchResultCreation {
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("table-78LF4|T5WYU")
                         .name("UserId")
                         .expression("${UserId}")
@@ -573,20 +729,20 @@ class TestSearchResultCreation {
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("table-78LF4|MT5IM")
                         .name("Count")
                         .expression("count()")
                         .format(Format.NUMBER)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("__stream_id__")
                         .name("__stream_id__")
                         .expression("${StreamId}")
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("__event_id__")
                         .name("__event_id__")
                         .expression("${EventId}")
@@ -600,7 +756,7 @@ class TestSearchResultCreation {
 
 
     private ResultRequest createBubbleResultRequest() {
-        return new ResultRequest.Builder()
+        return ResultRequest.builder()
                 .componentId("vis-L1AL1")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createBubbleVisSettings())
@@ -610,28 +766,28 @@ class TestSearchResultCreation {
     }
 
     private TableSettings createBubbleVisSettings() {
-        return new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        return TableSettings.builder()
+                .addFields(Field.builder()
                         .expression("${EventTime}")
                         .sort(new Sort(0, SortDirection.ASCENDING))
                         .format(Format.DATE_TIME)
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${UserId}")
                         .sort(new Sort(1, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .group(1)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${UserId}")
                         .sort(new Sort(2, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()
@@ -643,7 +799,7 @@ class TestSearchResultCreation {
 
 
     private ResultRequest createLineResultRequest() {
-        return new ResultRequest.Builder()
+        return ResultRequest.builder()
                 .componentId("vis-SPSCW")
                 .addMappings(createGroupedUserAndEventTimeTableSettings())
                 .addMappings(createLineVisSettings())
@@ -653,27 +809,27 @@ class TestSearchResultCreation {
     }
 
     private TableSettings createLineVisSettings() {
-        return new TableSettings.Builder()
-                .addFields(new Field.Builder()
+        return TableSettings.builder()
+                .addFields(Field.builder()
                         .sort(new Sort(0, SortDirection.ASCENDING))
                         .format(Format.GENERAL)
                         .group(0)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${UserId}")
                         .sort(new Sort(1, SortDirection.ASCENDING)) // TODO : The original was not sorted but this makes the test results consistent
                         .format(Format.GENERAL)
                         .group(1)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${EventTime}")
                         .sort(new Sort(2, SortDirection.ASCENDING))
                         .format(Format.DATE_TIME)
                         .build()
                 )
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .expression("${Count}")
                         .format(Format.NUMBER)
                         .build()

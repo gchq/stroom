@@ -18,11 +18,13 @@ package stroom.widget.tooltip.client.presenter;
 
 
 import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class TooltipUtil {
@@ -47,6 +49,15 @@ public final class TooltipUtil {
 
     public static SafeHtml boldText(final Object value) {
         return withFormatting(value, BOLD_OPEN, BOLD_CLOSE);
+    }
+
+    public static SafeHtml styledSpan(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+
+        SafeStylesBuilder builder = new SafeStylesBuilder();
+        if (stylesBuilderConsumer != null) {
+            stylesBuilderConsumer.accept(builder);
+        }
+        return styledSpan(value, builder.toSafeStyles());
     }
 
     public static SafeHtml styledSpan(final Object value, final SafeStyles safeStyles) {
@@ -94,7 +105,9 @@ public final class TooltipUtil {
         return new Builder();
     }
 
-    public static class Builder {
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    public static final class Builder {
         private final SafeHtmlBuilder buffer;
 
         private Builder() {
@@ -192,6 +205,8 @@ public final class TooltipUtil {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     public static class TableBuilder {
         private final SafeHtmlBuilder buffer;
 
@@ -286,7 +301,13 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
-            return buffer.appendHtmlConstant("<table>")
+            buffer.appendHtmlConstant("</table>");
+
+            // Make the text selectable, e.g. for copy/pasting
+            return new SafeHtmlBuilder()
+                    .appendHtmlConstant("<div style=\"user-select: text;\">")
+                    .append(buffer.toSafeHtml())
+                    .appendHtmlConstant("</div>")
                     .toSafeHtml();
         }
 

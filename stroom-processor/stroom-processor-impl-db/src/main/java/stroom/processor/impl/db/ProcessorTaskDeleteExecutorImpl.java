@@ -195,7 +195,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private void deleteOldFilters(final Instant deleteThreshold) {
         try {
             // Get all filters that have not been polled for a while.
-            final ExpressionOperator expression = new ExpressionOperator.Builder()
+            final ExpressionOperator expression = ExpressionOperator.builder()
                     .addTerm(
                         ProcessorFilterFields.LAST_POLL_MS,
                         ExpressionTerm.Condition.LESS_THAN,

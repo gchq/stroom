@@ -17,22 +17,22 @@
 
 package stroom.pipeline;
 
-import event.logging.BaseObject;
-import event.logging.Object;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProvider;
 
+import event.logging.BaseObject;
+import event.logging.OtherObject;
+
 class DocObjectInfoProvider implements ObjectInfoProvider {
     @Override
-    public BaseObject createBaseObject(final java.lang.Object obj) {
+    public BaseObject createBaseObject(final Object obj) {
         final Doc doc = (Doc) obj;
 
-        final Object object = new Object();
-        object.setType(doc.getType());
-        object.setId(doc.getUuid());
-        object.setName(doc.getName());
-
-        return object;
+        return OtherObject.builder()
+                .withId(doc.getUuid())
+                .withType(doc.getType())
+                .withName(doc.getName())
+                .build();
     }
 
     @Override

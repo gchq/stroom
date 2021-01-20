@@ -85,6 +85,10 @@ public final class ResultRequest {
         this.fetch = fetch;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public String getComponentId() {
         return componentId;
     }
@@ -145,6 +149,10 @@ public final class ResultRequest {
                 '}';
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     public enum ResultStyle {
         FLAT,
         TABLE
@@ -159,18 +167,25 @@ public final class ResultRequest {
     /**
      * Builder for constructing a {@link ResultRequest}
      */
-    public static class Builder {
+    public static final class Builder {
         private String componentId;
-
         private List<TableSettings> mappings;
-
         private OffsetRange requestedRange;
-
         private Set<String> openGroups;
-
         private ResultRequest.ResultStyle resultStyle;
-
         private ResultRequest.Fetch fetch;
+
+        private Builder() {
+        }
+
+        private Builder(final ResultRequest resultRequest) {
+            componentId = resultRequest.componentId;
+            mappings = resultRequest.mappings;
+            requestedRange = resultRequest.requestedRange;
+            openGroups = resultRequest.openGroups;
+            resultStyle = resultRequest.resultStyle;
+            fetch = resultRequest.fetch;
+        }
 
         /**
          * @param value The ID of the component that will receive the results corresponding to this ResultRequest
@@ -190,6 +205,11 @@ public final class ResultRequest {
             return this;
         }
 
+        public Builder openGroups(final Set<String> openGroups) {
+            this.openGroups = openGroups;
+            return this;
+        }
+
         /**
          * @param values Adding a set of TableSettings which are used to map the raw results to the output
          * @return The {@link Builder}, enabling method chaining
@@ -204,15 +224,15 @@ public final class ResultRequest {
         }
 
         /**
-         * @param values TODO
+         * @param groups TODO
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOpenGroups(final String... values) {
-            if (values.length > 0 && openGroups == null) {
+        public Builder addOpenGroups(final String... groups) {
+            if (groups.length > 0 && openGroups == null) {
                 openGroups = new HashSet<>();
             }
 
-            this.openGroups.addAll(Arrays.asList(values));
+            this.openGroups.addAll(Arrays.asList(groups));
             return this;
         }
 

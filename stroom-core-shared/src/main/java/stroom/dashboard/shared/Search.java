@@ -9,6 +9,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.QueryComponentSettings.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -125,8 +126,15 @@ public class Search {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    public static class Builder {
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private DocRef dataSourceRef;
         private ExpressionOperator expression;
         private Map<String, ComponentSettings> componentSettingsMap;
@@ -135,10 +143,10 @@ public class Search {
         private boolean storeHistory;
         private String queryInfo;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Search search) {
+        private Builder(final Search search) {
             this.dataSourceRef = search.dataSourceRef;
             this.expression = search.expression;
             this.componentSettingsMap = search.componentSettingsMap;

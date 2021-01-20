@@ -68,9 +68,9 @@ public class CommonTestScenarioCreator {
     }
 
     public void createBasicTranslateStreamProcessor(final String feed) {
-        final QueryData findStreamQueryData = new QueryData.Builder()
+        final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                .expression(ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed)
                         .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
@@ -120,7 +120,7 @@ public class CommonTestScenarioCreator {
      * @return a basic raw file
      */
     public Meta createSample2LineRawFile(final String feed, final String streamType) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .build();
@@ -134,7 +134,7 @@ public class CommonTestScenarioCreator {
     }
 
     public Meta createSampleBlankProcessedFile(final String feed, final Meta sourceMeta) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
                 .parent(sourceMeta)

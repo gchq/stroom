@@ -522,7 +522,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     id = type.getId() + "-" + RandomId.createId(5);
                 }
 
-                final ComponentConfig componentData = new ComponentConfig.Builder()
+                final ComponentConfig componentData = ComponentConfig
+                        .builder()
                         .type(type.getId())
                         .id(id)
                         .name(type.getName())

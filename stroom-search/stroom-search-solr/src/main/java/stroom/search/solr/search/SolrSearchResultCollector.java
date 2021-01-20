@@ -16,9 +16,8 @@
 
 package stroom.search.solr.search;
 
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Data;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -47,7 +46,6 @@ public class SolrSearchResultCollector implements Store {
     private final SolrAsyncSearchTask task;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
-    private final CompletionState completionState = new CompletionState();
 
     private SolrSearchResultCollector(final Executor executor,
                                       final TaskContextFactory taskContextFactory,
@@ -81,7 +79,7 @@ public class SolrSearchResultCollector implements Store {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Don't begin execution if we have been asked to complete already.
-            if (!completionState.isComplete()) {
+            if (!coprocessors.getCompletionState().isComplete()) {
                 final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();
                 asyncSearchTaskHandler.exec(taskContext, task, coprocessors, this);
             }
@@ -99,37 +97,37 @@ public class SolrSearchResultCollector implements Store {
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
                             coprocessors.getErrorConsumer().accept(t);
-                            completionState.complete();
+                            coprocessors.getCompletionState().complete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        completionState.complete();
+                        coprocessors.getCompletionState().complete();
                     }
                 });
     }
 
     @Override
     public void destroy() {
-        completionState.complete();
+        coprocessors.clear();
     }
 
     public void complete() {
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -155,7 +153,7 @@ public class SolrSearchResultCollector implements Store {
     }
 
     @Override
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         return coprocessors.getData(componentId);
     }
 
@@ -163,7 +161,7 @@ public class SolrSearchResultCollector implements Store {
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", complete=" + completionState.isComplete() +
+                ", complete=" + coprocessors.getCompletionState() +
                 '}';
     }
 }

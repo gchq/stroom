@@ -110,7 +110,8 @@ public class RulesPresenter
         registerHandler(copyButton.addClickHandler(event -> {
             final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
-                final ConditionalFormattingRule newRule = new ConditionalFormattingRule.Builder(selected)
+                final ConditionalFormattingRule newRule = selected
+                        .copy()
                         .build();
 
                 final int index = rules.indexOf(selected);
@@ -128,7 +129,8 @@ public class RulesPresenter
         registerHandler(disableButton.addClickHandler(event -> {
             final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
-                final ConditionalFormattingRule newRule = new ConditionalFormattingRule.Builder(selected)
+                final ConditionalFormattingRule newRule = selected
+                        .copy()
                         .enabled(!selected.isEnabled())
                         .build();
                 final int index = rules.indexOf(selected);
@@ -191,7 +193,8 @@ public class RulesPresenter
     }
 
     private void add() {
-        final ConditionalFormattingRule newRule = new ConditionalFormattingRule.Builder()
+        final ConditionalFormattingRule newRule = ConditionalFormattingRule
+                .builder()
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
@@ -314,10 +317,11 @@ public class RulesPresenter
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
         final TableComponentSettings oldSettings = (TableComponentSettings) componentConfig.getSettings();
-        final TableComponentSettings newSettings = new TableComponentSettings.Builder(oldSettings)
+        final TableComponentSettings newSettings = oldSettings
+                .copy()
                 .conditionalFormattingRules(rules)
                 .build();
-        return new ComponentConfig.Builder(componentConfig).settings(newSettings).build();
+        return componentConfig.copy().settings(newSettings).build();
     }
 
     @Override

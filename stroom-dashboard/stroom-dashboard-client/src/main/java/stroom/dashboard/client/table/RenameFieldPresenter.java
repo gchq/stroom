@@ -112,7 +112,7 @@ public class RenameFieldPresenter
                             "Field name \"" + newFieldName + "\" is already in use",
                             null);
                 } else {
-                    fieldChangeConsumer.accept(field, new Field.Builder(field).name(newFieldName).build());
+                    fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
 
                     tablePresenter.setDirty(true);
                     tablePresenter.redrawHeaders();

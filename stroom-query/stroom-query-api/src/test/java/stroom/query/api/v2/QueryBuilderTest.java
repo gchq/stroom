@@ -1,6 +1,7 @@
 package stroom.query.api.v2;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator.Op;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,14 @@ class QueryBuilderTest {
         final String dataSourceType = "someDocRefType";
         final String dataSourceUuid = UUID.randomUUID().toString();
 
-        final Query query = new Query.Builder()
+        final Query query = Query
+                .builder()
                 .dataSource(new DocRef(dataSourceType, dataSourceUuid, dataSourceName))
                 .addParam("someKey0", "someValue0")
                 .addParam("someKey1", "someValue1")
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                .expression(ExpressionOperator.builder()
                         .addTerm("fieldX", ExpressionTerm.Condition.EQUALS, "abc")
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm("fieldA", ExpressionTerm.Condition.EQUALS, "Fred")
                                 .addTerm("fieldA", ExpressionTerm.Condition.EQUALS, "Fred")
                                 .build())
@@ -62,7 +64,7 @@ class QueryBuilderTest {
 
         assertThat(rootChild2 instanceof ExpressionOperator).isTrue();
         ExpressionOperator child2Op = (ExpressionOperator) rootChild2;
-        assertThat(child2Op.op()).isEqualTo(ExpressionOperator.Op.OR);
+        assertThat(child2Op.op()).isEqualTo(Op.OR);
         assertThat(child2Op.getChildren()).hasSize(2);
 
         assertThat(rootChild3 instanceof ExpressionTerm).isTrue();

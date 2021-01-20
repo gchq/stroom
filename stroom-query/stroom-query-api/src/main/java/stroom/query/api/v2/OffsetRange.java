@@ -88,12 +88,28 @@ public final class OffsetRange {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link OffsetRange}
      */
-    public static class Builder {
+    public static final class Builder {
         private Long offset;
         private Long length;
+
+        private Builder() {
+        }
+
+        private Builder(final OffsetRange offsetRange) {
+            offset = offsetRange.offset;
+            length = offsetRange.length;
+        }
 
         /**
          * @param value The start offset for this sub-set of data,

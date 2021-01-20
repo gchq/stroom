@@ -73,11 +73,11 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
-                new ExpressionOperator.Builder(true, Op.AND)
+                ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName1)
                         .build(), RETENTION_PERIOD_DAYS, TimeUnit.DAYS);
         final DataRetentionRule rule2 = createForeverRule(2,
-                new ExpressionOperator.Builder(true, Op.AND)
+                ExpressionOperator.builder()
                         .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName2)
                         .build());
 
@@ -146,7 +146,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private Meta createMeta(final String feedName, final long createTime) {
         Meta meta = metaService.create(
-                new MetaProperties.Builder()
+                MetaProperties.builder()
                         .feedName(feedName)
                         .typeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(createTime)

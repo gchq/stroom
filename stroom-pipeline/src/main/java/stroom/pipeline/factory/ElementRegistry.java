@@ -153,7 +153,7 @@ public class ElementRegistry {
             }
         }
 
-        return new PipelinePropertyType.Builder()
+        return PipelinePropertyType.builder()
                 .elementType(elementType)
                 .name(propertyName)
                 .type(typeName)

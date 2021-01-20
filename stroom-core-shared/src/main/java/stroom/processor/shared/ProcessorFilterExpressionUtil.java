@@ -11,7 +11,7 @@ public final class ProcessorFilterExpressionUtil {
     }
 
     public static ExpressionOperator createBasicExpression() {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
@@ -22,13 +22,13 @@ public final class ProcessorFilterExpressionUtil {
     }
 
     public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
         if (folders != null) {
             if (folders.length == 1) {
                 builder.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folders[0]);
             } else if (folders.length > 0) {
-                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
+                final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
                 for (final DocRef folder : folders) {
                     or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
                 }
@@ -42,7 +42,7 @@ public final class ProcessorFilterExpressionUtil {
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
                 .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)

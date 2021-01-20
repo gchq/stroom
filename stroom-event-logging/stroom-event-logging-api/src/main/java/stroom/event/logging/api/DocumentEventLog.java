@@ -18,6 +18,7 @@
 package stroom.event.logging.api;
 
 import event.logging.Query;
+
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageResponse;
 
@@ -29,7 +30,7 @@ public interface DocumentEventLog {
     void create(final String entityType, final String entityName, final String eventTypeId, final String verb, final Throwable ex);
     void create(final String entityType, final String entityName, final String eventTypeId, final Throwable ex);
     void create(final String entityType, final String entityName, final Throwable ex);
-    void create(final Object entity, final String eventTypeId, final String deverbscription, final Throwable ex);
+    void create(final Object entity, final String eventTypeId, final String verb, final Throwable ex);
     void create(final Object entity, final String eventTypeId, final Throwable ex);
     void create(final Object entity, final Throwable ex);
 
@@ -44,11 +45,11 @@ public interface DocumentEventLog {
     void download(final Object entity, final String eventTypeId, final Throwable ex);
     void download(final Object entity, final Throwable ex);
 
-    void move(final Object before, final Object after, final String eventTypeId, final String deverbscription, final Throwable ex);
+    void move(final Object before, final Object after, final String eventTypeId, final String verb, final Throwable ex);
     void move(final Object before, final Object after, final String eventTypeId, final Throwable ex);
     void move(final Object before, final Object after, final Throwable ex);
 
-    void process(final Object entity, final String eventTypeId, final String descriptiverbon, final Throwable ex);
+    void process(final Object entity, final String eventTypeId, final String description, final Throwable ex);
     void process(final Object entity, final String eventTypeId, final Throwable ex);
 
     void rename(final Object before, final Object after, final String eventTypeId, final String verb, final Throwable ex);
@@ -60,7 +61,7 @@ public interface DocumentEventLog {
 
     void unknownOperation(final Object entity, final String eventTypeId, String description, Throwable ex);
 
-    void update(final Object before, final Object after, String eventTypeId, String descriverbption, Throwable ex);
+    void update(final Object before, final Object after, String eventTypeId, String verb, Throwable ex);
     void update(final Object before, final Object after, String eventTypeId, Throwable ex);
     void update(final Object before, final Object after, Throwable ex);
 

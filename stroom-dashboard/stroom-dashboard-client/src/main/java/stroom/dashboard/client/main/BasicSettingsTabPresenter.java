@@ -40,7 +40,8 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        return new Builder(componentConfig)
+        return componentConfig
+                .copy()
                 .name(getView().getName())
                 .build();
     }

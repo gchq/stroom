@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.Search.Builder;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest.Fetch;
 
@@ -79,16 +80,24 @@ public class VisResultRequest extends ComponentResultRequest {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String componentId;
         private Fetch fetch;
         private VisComponentSettings visDashboardSettings;
         private OffsetRange requestedRange;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final VisResultRequest visResultRequest) {
+        private Builder(final VisResultRequest visResultRequest) {
             this.componentId = visResultRequest.getComponentId();
             this.fetch = visResultRequest.getFetch();
             this.visDashboardSettings = visResultRequest.visDashboardSettings;

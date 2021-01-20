@@ -563,9 +563,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
         final ComponentSettings settings = componentConfig.getSettings();
         if (settings instanceof TextComponentSettings) {
-            builder = new TextComponentSettings.Builder(getTextSettings());
+            builder = getTextSettings().copy();
         } else {
-            builder = new TextComponentSettings.Builder();
+            builder = TextComponentSettings.builder();
         }
 
         final Version version = Version.parse(getTextSettings().getModelVersion());
@@ -603,7 +603,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             newTableId = null;
         }
 
-        setSettings(new TextComponentSettings.Builder(getTextSettings())
+        setSettings(getTextSettings()
+                .copy()
                 .tableId(newTableId)
                 .build());
         update(currentTablePresenter);

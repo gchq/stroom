@@ -20,13 +20,15 @@ class FlatResultBuilderTest {
         final int numberResultSets = 10;
 
         // When
-        final FlatResult.Builder flatResultBuilder = new FlatResult.Builder()
+        final FlatResult.Builder flatResultBuilder = FlatResult
+                .builder()
                 .componentId(componentId)
                 .error(error);
         final List<Field> fields = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
                 fields
-                        .add(new Field.Builder()
+                        .add(Field
+                                .builder()
                                 .id(String.format("id%d", x))
                                 .name(String.format("field%d", x))
                                 .expression("expression")

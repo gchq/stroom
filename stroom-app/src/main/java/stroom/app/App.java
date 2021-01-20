@@ -23,6 +23,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.StroomConfigurationSourceProvider;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
@@ -39,7 +40,8 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
-import stroom.config.app.StroomConfigurationSourceProvider;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
@@ -96,6 +98,10 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private BuildInfo buildInfo;
+    @Inject
+    private HomeDirProvider homeDirProvider;
+    @Inject
+    private TempDirProvider tempDirProvider;
     @Inject
     private StroomServerLoggingFilter serverLoggingFilterProvider;
 
@@ -191,6 +197,7 @@ public class App extends Application<Config> {
                         Level.INFO,
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+
         // Check if we are running GWT Super Dev Mode
         checkForSuperDev(configuration.getAppConfig());
 
@@ -209,7 +216,7 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
+        LOGGER.info("Starting Stroom Application");
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
 
@@ -241,13 +248,18 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration);
 
-        showBuildInfo();
+        showInfo(configuration);
     }
 
-    private void showBuildInfo() {
+    private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
-        LOGGER.info("Build version: {}, date: {}",
-                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
+
+        LOGGER.info(""
+                + "\n  Build version: " + buildInfo.getBuildVersion()
+                + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Node name:     " + getNodeName(configuration.getAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {

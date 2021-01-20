@@ -20,12 +20,12 @@ import stroom.data.zip.StreamProgressMonitor;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.BufferFactory;
+import stroom.util.net.HostNameUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -155,11 +155,7 @@ public final class ProxyForwardingFileSetProcessor implements FileSetProcessor {
 
     private String getHostName() {
         if (hostName == null) {
-            try {
-                hostName = InetAddress.getLocalHost().getHostName();
-            } catch (final Exception ex) {
-                hostName = "Unknown";
-            }
+            hostName = HostNameUtil.determineHostName();
         }
         return hostName;
     }

@@ -78,7 +78,7 @@ public class MessageSupport implements FrameListener, HasHandlers {
         if ("link".equals(functionName)) {
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
-            final Hyperlink hyperlink = new Builder().href(href).type(target).build();
+            final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
             HyperlinkEvent.fire(this, hyperlink);
 
         } else {

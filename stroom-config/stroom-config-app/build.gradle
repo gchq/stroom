@@ -57,11 +57,13 @@ dependencies {
     compile libs.jackson_dataformat_yaml
     compile libs.javax_inject
 
+    testCompile project(':stroom-test-common')
+
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mbknor_jackson_jsonSchema
     testCompile libs.java_diff_utils
-    
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

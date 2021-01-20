@@ -254,7 +254,7 @@ public class RuleSetSettingsPresenter
                 System.currentTimeMillis(),
                 "",
                 true,
-                new ExpressionOperator.Builder(Op.AND).build(),
+                ExpressionOperator.builder().build(),
                 RuleAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);

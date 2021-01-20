@@ -56,7 +56,7 @@ public interface Store {
      * @param componentId The id of the component that results are being populated for.
      * @return A store of current search results for the specified component.
      */
-    Data getData(String componentId);
+    DataStore getData(String componentId);
 
     /**
      * Gets a list of strings containing all errors that have occurred so far during the

@@ -82,16 +82,24 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         ExpressionUtil.replaceExpressionParameters(searchRequest);
 
         // Load the index.
-        final IndexDoc index = securityContext.useAsReadResult(() -> indexStore.readDocument(query.getDataSource()));
+        final IndexDoc index = securityContext.useAsReadResult(() ->
+                indexStore.readDocument(query.getDataSource()));
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
+        final Set<String> highlights = getHighlights(
+                index,
+                query.getExpression(),
+                searchRequest.getDateTimeLocale(),
+                nowEpochMilli);
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory.createSettings(searchRequest);
 
         // Create a handler for search results.
-        final Coprocessors coprocessors = coprocessorsFactory.create(coprocessorSettingsList, query.getParams());
+        final Coprocessors coprocessors = coprocessorsFactory.create(
+                searchRequest.getKey().getUuid(),
+                coprocessorSettingsList,
+                query.getParams());
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";

@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.AbstractKryoSerde;
+import stroom.lmdb.AbstractKryoSerde;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

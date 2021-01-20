@@ -374,12 +374,12 @@ class TestConfigMapper {
         List<DocRef> initialValue = getter.get();
         List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
-                newValue.add(new DocRef.Builder()
+                newValue.add(DocRef.builder()
                         .type(docRef.getType() + "x")
                         .uuid(UUID.randomUUID().toString())
                         .name(docRef.getName() + "xx")
                         .build()));
-        newValue.add(new DocRef.Builder()
+        newValue.add(DocRef.builder()
                 .type("NewDocRefType")
                 .uuid(UUID.randomUUID().toString())
                 .build());

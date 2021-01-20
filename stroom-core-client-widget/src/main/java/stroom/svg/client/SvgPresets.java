@@ -40,6 +40,7 @@ public final class SvgPresets {
     public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);
     public static final SvgPreset FEED = new SvgPreset("images/feed.svg", "Feed", true);
+    public static final SvgPreset FIELD = new SvgPreset("images/field.svg", "Field", true);
     public static final SvgPreset FILE = new SvgPreset("images/file.svg", "File", true);
     public static final SvgPreset FILE_RAW = new SvgPreset("images/file-raw.svg", "Raw File", true);
     public static final SvgPreset FILE_FORMATTED = new SvgPreset("images/file-formatted.svg", "Formatted File", true);
@@ -47,12 +48,15 @@ public final class SvgPresets {
     public static final SvgPreset FOLDER = new SvgPreset("images/folder.svg", "Folder", true);
     public static final SvgPreset FOLDER_TREE = new SvgPreset("images/folder-tree.svg", "Folder Tree", true);
     public static final SvgPreset FORMAT = new SvgPreset("images/format.svg", "Format & Indent", true);
+    public static final SvgPreset FUNCTION = new SvgPreset("images/function.svg", "Function", true);
     public static final SvgPreset GENERATE = new SvgPreset("images/generate.svg", "Auto-generate roll-up permutations", true);
     public static final SvgPreset HELP = new SvgPreset("images/help.svg", "Help", true);
     public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);
     public static final SvgPreset INFO = new SvgPreset("images/info.svg", "Info", true);
     public static final SvgPreset INFO_DELETED = new SvgPreset("images/info-deleted.svg", "Info (Deleted)", true);
     public static final SvgPreset INFO_WARNING = new SvgPreset("images/info-warning.svg", "Info (Warning)", true);
+    public static final SvgPreset INSERT_ABOVE = new SvgPreset("images/insert-above.svg", "Insert above", true);
+    public static final SvgPreset INSERT_BELOW = new SvgPreset("images/insert-below.svg", "Insert below", true);
     public static final SvgPreset JOBS = new SvgPreset("images/jobs.svg", "Jobs", true);
     public static final SvgPreset KEY = new SvgPreset("images/key.svg", "API Keys", true);
     public static final SvgPreset LINK = new SvgPreset("images/dependencies.svg", "Dependencies", true);

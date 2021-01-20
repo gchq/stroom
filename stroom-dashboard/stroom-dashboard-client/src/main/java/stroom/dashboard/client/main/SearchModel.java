@@ -148,7 +148,8 @@ public class SearchModel {
                         dashboardUUID.getDashboardUuid(),
                         dashboardUUID.getComponentId());
 
-                currentSearch = new Search.Builder()
+                currentSearch = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(componentSettingsMap)
@@ -222,7 +223,8 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search.Builder()
+                    currentSearch = Search
+                            .builder()
                             .dataSourceRef(dataSourceRef)
                             .expression(currentExpression)
                             .componentSettingsMap(resultComponentMap)
@@ -330,17 +332,12 @@ public class SearchModel {
      */
     SearchRequest getCurrentRequest() {
         final Search search = currentSearch;
-        if (search == null || componentMap.size() == 0) {
-            return null;
-        }
-
         final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
             requests.add(componentResultRequest);
         }
-
         return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
@@ -364,7 +361,8 @@ public class SearchModel {
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
-                search = new Search.Builder()
+                search = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)

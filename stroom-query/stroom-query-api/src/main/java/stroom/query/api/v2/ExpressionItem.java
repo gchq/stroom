@@ -56,26 +56,19 @@ public abstract class ExpressionItem implements Serializable {
             value = "Whether this item in the expression tree is enabled or not",
             example = "true")
     @JsonProperty(value = "enabled")
-    private Boolean enabled;
+    private Boolean enabled; // TODO : XML serilisation still requires no-arg constructor and mutable fields
 
     public ExpressionItem() {
+        // TODO : XML serilisation still requires no-arg constructor and mutable fields
     }
 
     @JsonCreator
     public ExpressionItem(@JsonProperty("enabled") final Boolean enabled) {
-        setEnabled(enabled);
+        this.enabled = enabled;
     }
 
     public Boolean getEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final Boolean enabled) {
-        if (enabled == null || Boolean.TRUE.equals(enabled)) {
-            this.enabled = null;
-        } else {
-            this.enabled = enabled;
-        }
     }
 
     public boolean enabled() {
@@ -115,34 +108,37 @@ public abstract class ExpressionItem implements Serializable {
      * of ExpressionItem should provide a builder that extends this one.
      */
     public static abstract class Builder<T extends ExpressionItem, CHILD_CLASS extends Builder<T, ?>> {
-        private Boolean enabled;
+        Boolean enabled;
 
-        public Builder() {
+        Builder() {
         }
 
-        public Builder(final Boolean enabled) {
-            this.enabled = enabled;
+        Builder(final ExpressionItem expressionItem) {
+            this.enabled = expressionItem.enabled;
         }
+
+//        private Builder(final Boolean enabled) {
+//            if (enabled == null || Boolean.TRUE.equals(enabled)) {
+//                this.enabled = null;
+//            } else {
+//                this.enabled = enabled;
+//            }
+//        }
 
         /**
          * @param enabled Sets the terms state to enabled if true or null, disabled if false
          * @return The Builder Builder, enabling method chaining
          */
         public CHILD_CLASS enabled(final Boolean enabled) {
-            this.enabled = enabled;
+            if (Boolean.TRUE.equals(enabled)) {
+                this.enabled = null;
+            } else {
+                this.enabled = enabled;
+            }
             return self();
         }
 
-        /**
-         * Accessible to child classes when buildPojo() is called.
-         *
-         * @return Whether the expression is enabled or not
-         */
-        protected Boolean getEnabled() {
-            return enabled;
-        }
-
-        protected abstract CHILD_CLASS self();
+        abstract CHILD_CLASS self();
 
         public abstract T build();
     }

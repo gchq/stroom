@@ -50,7 +50,7 @@ public class NewUIIndexResourceImpl implements NewUIIndexResource {
     }
 
     private DocRef getDocRef(final String pipelineId) {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .uuid(pipelineId)
                 .type(IndexDoc.DOCUMENT_TYPE)
                 .build();

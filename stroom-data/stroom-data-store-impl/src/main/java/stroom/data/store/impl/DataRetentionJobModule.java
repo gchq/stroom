@@ -15,9 +15,9 @@ public class DataRetentionJobModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
-                        .withName("Feed Based Data Retention")
-                        .withDescription("Delete data that exceeds the retention period specified by feed")
-                        .withSchedule(CRON, "0 0 *"));
+                        .name("Feed Based Data Retention")
+                        .description("Delete data that exceeds the retention period specified by feed")
+                        .schedule(CRON, "0 0 *"));
     }
 
     private static class DataRetention extends RunnableWrapper {

@@ -88,7 +88,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         this.clientSecurityContext = clientSecurityContext;
         this.dataNavigatorData = new DataNavigatorData();
 
-        setEditorOptions(textPresenter);
+        setEditorOptions();
 
         view.setTextView(textPresenter.getView());
         view.setNavigatorView(characterNavigatorPresenter.getView());
@@ -107,7 +107,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     }
 
-    private void setEditorOptions(final TextPresenter textPresenter) {
+    private void setEditorOptions() {
         textPresenter.setReadOnly(true);
 
         // Default to wrapped lines
@@ -510,7 +510,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void setEditorMode(final FetchDataResult fetchDataResult) {
         final AceEditorMode mode;
 
-        if (StreamTypeNames.META.equals(fetchDataResult.getStreamTypeName())) {
+        if (fetchDataResult.getSourceLocation() != null
+                && StreamTypeNames.META.equals(fetchDataResult.getSourceLocation().getChildType())) {
             mode = AceEditorMode.PROPERTIES;
         } else {// We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
             mode = AceEditorMode.XML;

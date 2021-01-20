@@ -18,7 +18,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -27,32 +26,34 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-public class CompiledSorter implements Comparator<Item>, Function<List<Item>, List<Item>> {
-    private static final ValComparator COMPARATOR = new ValComparator();
-
+public class CompiledSorter<E extends HasGenerators> implements Comparator<E>, Function<Stream<E>, Stream<E>> {
     private final List<CompiledSort> compiledSorts = new ArrayList<>();
 
     private CompiledSorter() {
     }
 
-    public static CompiledSorter[] create(final int maxDepth, final CompiledField[] compiledFields) {
-        final CompiledSorter[] sorters = new CompiledSorter[maxDepth];
+    @SuppressWarnings("unchecked")
+    public static <E extends HasGenerators> CompiledSorter<E>[] create(final int maxDepth, final CompiledField[] compiledFields) {
+        final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
 
         if (compiledFields != null) {
-            for (int depth = 0; depth < maxDepth; depth++) {
-
+            for (int depth = 0; depth <= maxDepth; depth++) {
                 for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                     final CompiledField compiledField = compiledFields[fieldIndex];
                     final Field field = compiledField.getField();
                     if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
+                        // Get an appropriate comparator.
+                        final Comparator<Val> comparator = ComparatorFactory.create(field);
+
                         // Remember sorting info.
                         final Sort sort = field.getSort();
-                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort);
+                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort, comparator);
 
-                        CompiledSorter sorter = sorters[depth];
+                        CompiledSorter<E> sorter = sorters[depth];
                         if (sorter == null) {
-                            sorter = new CompiledSorter();
+                            sorter = new CompiledSorter<>();
                             sorters[depth] = sorter;
                         }
 
@@ -83,13 +84,12 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
     }
 
     @Override
-    public List<Item> apply(final List<Item> items) {
-        items.sort(this);
-        return items;
+    public Stream<E> apply(final Stream<E> stream) {
+        return stream.sorted(this);
     }
 
     @Override
-    public int compare(final Item o1, final Item o2) {
+    public int compare(final E o1, final E o2) {
         final Generator[] generators1 = o1.getGenerators();
         final Generator[] generators2 = o2.getGenerators();
         for (final CompiledSort compiledSort : compiledSorts) {
@@ -101,7 +101,7 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
             if (g1 != null && g2 != null) {
                 final Val v1 = g1.eval();
                 final Val v2 = g2.eval();
-                res = COMPARATOR.compare(v1, v2);
+                res = compiledSort.getComparator().compare(v1, v2);
             } else if (g1 != null) {
                 res = 1;
             } else if (g2 != null) {
@@ -120,10 +120,6 @@ public class CompiledSorter implements Comparator<Item>, Function<List<Item>, Li
         }
         return 0;
     }
-
-//    boolean hasSort() {
-//        return hasSort;
-//    }
 
     @Override
     public String toString() {

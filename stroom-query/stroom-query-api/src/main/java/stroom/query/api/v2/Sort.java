@@ -99,18 +99,25 @@ public final class Sort {
         }
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Sort sort}
      */
-    public static class Builder {
+    public static final class Builder {
         private Integer order;
-
         private SortDirection direction;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Sort sort) {
+        private Builder(final Sort sort) {
             this.order = sort.order;
             this.direction = sort.direction;
         }

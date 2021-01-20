@@ -20,8 +20,6 @@ import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -91,23 +89,29 @@ public class PathCreator {
     }
 
     public String replaceSystemProperties(String path) {
-        path = replace(
-                path,
-                STROOM_HOME,
-                () -> FileUtil.getCanonicalPath(homeDirProvider.get()));
-        path = replace(
-                path,
-                STROOM_TEMP,
-                () -> FileUtil.getCanonicalPath(tempDirProvider.get()));
-        path = FileUtil.replaceHome(path);
+        if (path != null) {
+            path = replace(
+                    path,
+                    STROOM_HOME,
+                    () -> FileUtil.getCanonicalPath(homeDirProvider.get()));
+            path = replace(
+                    path,
+                    STROOM_TEMP,
+                    () -> FileUtil.getCanonicalPath(tempDirProvider.get()));
+            path = FileUtil.replaceHome(path);
 
-        path = SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
-
-        // If this isn't an absolute path then make it so.
-        if (!path.startsWith("/") && !path.startsWith("\\")) {
-            path = FileUtil.getCanonicalPath(homeDirProvider.get()) + File.separator + path;
+            path = SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
         }
+        return path;
+    }
 
+    public String makeAbsolute(String path) {
+        if (path != null) {
+            // If this isn't an absolute path then make it so.
+            if (!path.startsWith("/") && !path.startsWith("\\")) {
+                path = FileUtil.getCanonicalPath(homeDirProvider.get()) + File.separator + path;
+            }
+        }
         return path;
     }
 

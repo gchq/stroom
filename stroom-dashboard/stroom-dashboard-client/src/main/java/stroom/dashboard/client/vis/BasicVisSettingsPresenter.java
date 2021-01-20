@@ -200,11 +200,12 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         ComponentConfig result = super.write(componentConfig);
         final VisComponentSettings oldSettings = (VisComponentSettings) result.getSettings();
         final VisComponentSettings newSettings = writeSettings(oldSettings);
-        return new ComponentConfig.Builder(result).settings(newSettings).build();
+        return result.copy().settings(newSettings).build();
     }
 
     private VisComponentSettings writeSettings(final VisComponentSettings settings) {
-        return new VisComponentSettings.Builder(settings)
+        return settings
+                .copy()
                 .tableId(getTableId())
                 .visualisation(getSelectedVisualisation())
                 .json(getJSON())

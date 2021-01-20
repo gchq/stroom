@@ -69,9 +69,4 @@ public final class ValNull implements Val {
     public int hashCode() {
         return 0;
     }
-
-    @Override
-    public int compareTo(final Val o) {
-        return 0;
-    }
 }

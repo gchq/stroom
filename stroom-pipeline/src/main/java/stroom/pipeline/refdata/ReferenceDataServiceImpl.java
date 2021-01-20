@@ -255,7 +255,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
                     refDataLookupRequest.getMapName(),
                     refDataLookupRequest.getKey(),
-                    refDataLookupRequest.getEffectiveTimeEpochMs());
+                    refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
+                            .orElse(Instant.now().toEpochMilli()));
 
             final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
                     refDataLookupRequest.getReferenceLoaders());
@@ -288,7 +289,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new NotFoundException(LogUtil.message("No value for map: {}, key: {}, time {}",
                         refDataLookupRequest.getMapName(),
                         refDataLookupRequest.getKey(),
-                        Instant.ofEpochMilli(refDataLookupRequest.getEffectiveTimeEpochMs()).toString()));
+                        refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
+                        .map(Instant::ofEpochMilli)
+                        .map(Objects::toString)
+                        .orElse("null")));
             }
 
             return stringWriter.toString();
@@ -401,17 +405,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         try {
             entries.stream()
-                    .filter(refStoreEntry -> {
-                                final boolean result = predicate.test(refStoreEntry);
-                                return result;
-                            })
+                    .filter(predicate)
                     .forEach(refStoreEntry -> {
                         final Val[] valArr = new Val[fields.length];
 
                         for (int i = 0; i < fields.length; i++) {
-                            final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
-                                    .apply(refStoreEntry);
-                            valArr[i] = convertToVal(value, fields[i]);;
+                            AbstractField field = fields[i];
+                            // May be a custom field that we obvs can't extract
+                            if (field != null) {
+                                final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                                        .apply(refStoreEntry);
+                                valArr[i] = convertToVal(value, fields[i]);;
+                            }
                         }
                         consumer.accept(valArr);
                     });
@@ -675,7 +680,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private Predicate<RefStoreEntry> buildDocRefFieldPredicate(final ExpressionTerm expressionTerm,
                                                                final Function<RefStoreEntry, DocRef> valueExtractor) {
-        final DocRef termValue = new DocRef.Builder()
+        final DocRef termValue = DocRef.builder()
                 .uuid(expressionTerm.getValue())
                 .build();
         if (expressionTerm.getCondition().equals(Condition.IS_DOC_REF)) {

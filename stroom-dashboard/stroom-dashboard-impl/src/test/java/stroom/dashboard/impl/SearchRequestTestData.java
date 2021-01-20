@@ -62,21 +62,21 @@ public class SearchRequestTestData {
     static stroom.dashboard.shared.SearchRequest dashboardSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionOperator.Builder expressionOperator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
+        ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
-        expressionOperator.addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build());
+        expressionOperator.addOperator(ExpressionOperator.builder().build());
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");
 
         final String componentId = "componentSettingsMapKey";
-        TableComponentSettings tableSettings = new TableComponentSettings.Builder()
+        TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .queryId("someQueryId")
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("1")
                         .name("name1")
                         .expression("expression1")
                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
                         .filter(new Filter("include1", "exclude1"))
-                        .format(new Format.Builder()
+                        .format(Format.builder()
                                 .type(Format.Type.NUMBER)
                                 .settings(new NumberFormatSettings(1, false))
                                 .build())
@@ -85,13 +85,13 @@ public class SearchRequestTestData {
                         .visible(true)
                         .special(false)
                         .build())
-                .addFields(new Field.Builder()
+                .addFields(Field.builder()
                         .id("2")
                         .name("name2")
                         .expression("expression2")
                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
                         .filter(new Filter("include2", "exclude2"))
-                        .format(new Format.Builder()
+                        .format(Format.builder()
                                 .type(Type.DATE_TIME)
                                 .settings(createDateTimeFormat())
                                 .build())
@@ -112,7 +112,7 @@ public class SearchRequestTestData {
 
         final List<Param> params = List.of(new Param("param1", "val1"), new Param("param2", "val2"));
 
-        final Search search = new Search.Builder()
+        final Search search = Search.builder()
                 .dataSourceRef(docRef)
                 .expression(expressionOperator.build())
                 .componentSettingsMap(componentSettingsMap)
@@ -124,8 +124,8 @@ public class SearchRequestTestData {
         final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
             final TableComponentSettings tableComponentSettings = (TableComponentSettings) entry.getValue();
-            final TableSettings ts = new TableComponentSettings.Builder(tableComponentSettings).buildTableSettings();
-            TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+            final TableSettings ts = tableComponentSettings.copy().buildTableSettings();
+            TableResultRequest tableResultRequest = TableResultRequest.builder()
                     .componentId(entry.getKey())
                     .tableSettings(ts)
                     .fetch(Fetch.CHANGES)

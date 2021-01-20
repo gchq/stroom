@@ -1,5 +1,6 @@
 package stroom.search.extraction;
 
+import stroom.meta.api.MetaProperties;
 import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.ArrayList;
@@ -31,8 +32,23 @@ public class ExpressionFilter extends ExpressionCopier {
         return null;
     }
 
-    public static class Builder {
-        private final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions = new ArrayList<>();
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions = new ArrayList<>();
+
+        private Builder() {
+        }
+
+        private Builder(final ExpressionFilter expressionFilter) {
+            functions = new ArrayList<>(expressionFilter.functions);
+        }
 
         public Builder addPrefixIncludeFilter(final String fieldPrefix) {
             final Function<ExpressionTerm.Builder, ExpressionTerm.Builder> function = builder -> {

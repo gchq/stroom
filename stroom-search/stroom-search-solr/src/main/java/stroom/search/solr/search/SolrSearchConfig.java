@@ -23,7 +23,7 @@ public class SolrSearchConfig extends AbstractConfig {
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
-    private CacheConfig searchResultCache = new CacheConfig.Builder()
+    private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

@@ -2,6 +2,8 @@ package stroom.query.api.v2;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,17 +21,21 @@ class TableResultBuilderTest {
         final Integer numberResults = 20;
 
         // When
-        final TableResult.Builder builder = new TableResult.Builder()
+        final TableResult.Builder builder = TableResult
+                .builder()
                 .componentId(componentId)
                 .error(error)
-                .resultRange(new OffsetRange.Builder()
+                .resultRange(OffsetRange
+                        .builder()
                         .offset(offset)
                         .length(length)
                         .build());
 
+        final List<Row> rows = new ArrayList<>();
         IntStream.range(0, numberResults).forEach(x ->
-                builder.addRows(new Row.Builder().groupKey(String.format("rowGroup%d", x)).build())
+                rows.add(Row.builder().groupKey(String.format("rowGroup%d", x)).build())
         );
+        builder.rows(rows);
 
         final TableResult tableResult = builder.build();
 

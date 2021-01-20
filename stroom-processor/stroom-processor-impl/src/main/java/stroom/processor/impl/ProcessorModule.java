@@ -68,14 +68,14 @@ public class ProcessorModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
-                        .withName("Processor Task Queue Statistics")
-                        .withDescription("Write statistics about the size of the task queue")
-                        .withSchedule(PERIODIC, "1m"))
+                        .name("Processor Task Queue Statistics")
+                        .description("Write statistics about the size of the task queue")
+                        .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
-                        .withName("Processor Task Retention")
-                        .withDescription("Physically delete processor tasks that have been logically " +
+                        .name("Processor Task Retention")
+                        .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.process.deletePurgeAge)")
-                        .withSchedule(PERIODIC, "1m"));
+                        .schedule(PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)

@@ -55,7 +55,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (expression != null) {
             editExpressionPresenter.read(expression);
         } else {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         }
     }
 

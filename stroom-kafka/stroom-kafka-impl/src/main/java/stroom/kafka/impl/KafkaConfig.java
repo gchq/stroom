@@ -13,7 +13,7 @@ public class KafkaConfig extends AbstractConfig {
 
     private String skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;
 
-    private CacheConfig kafkaConfigDocCache = new CacheConfig.Builder()
+    private CacheConfig kafkaConfigDocCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();

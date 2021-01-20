@@ -321,7 +321,7 @@ public class PhysicalDeleteExecutor {
     }
 
     private List<Meta> getDeleteList(final long minId, final long deleteThresholdEpochMs, final int batchSize) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(
                         MetaFields.STATUS,
                         Condition.EQUALS,

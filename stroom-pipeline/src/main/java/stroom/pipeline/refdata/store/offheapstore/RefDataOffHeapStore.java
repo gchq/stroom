@@ -37,8 +37,8 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbDb;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbDb;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -955,32 +955,32 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
 
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
-                    .withDetail("Path", dbDir.toAbsolutePath().toString())
-                    .withDetail("Environment max size", maxSize)
-                    .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
-                    .withDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
-                    .withDetail("Max readers", maxReaders)
-                    .withDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
-                    .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
-                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
+            SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
+                    .addDetail("Path", dbDir.toAbsolutePath().toString())
+                    .addDetail("Environment max size", maxSize)
+                    .addDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
+                    .addDetail("Purge age", referenceDataConfig.getPurgeAge())
+                    .addDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
+                    .addDetail("Max readers", maxReaders)
+                    .addDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
+                    .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
+                    .addDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
                             .map(Instant::toString)
                             .orElse(null))
-                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
+                    .addDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
                             .map(Instant::toString)
                             .orElse(null));
 
             LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
-                builder.withDetail("Database entry counts", databaseMap.entrySet().stream()
+                builder.addDetail("Database entry counts", databaseMap.entrySet().stream()
                         .collect(HasHealthCheck.buildTreeMapCollector(
                                 Map.Entry::getKey,
                                 entry -> entry.getValue().getEntryCount(txn))));
             });
             return builder.build();
         } catch (RuntimeException e) {
-            return SystemInfoResult.builder(getSystemInfoName())
-                    .withError(e)
+            return SystemInfoResult.builder().name(getSystemInfoName())
+                    .addError(e)
                     .build();
         }
     }
@@ -1005,7 +1005,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = pathCreator.replaceSystemProperties(referenceDataConfig.getLocalDir());
+        String storeDirStr = referenceDataConfig.getLocalDir();
+        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
         if (storeDirStr == null) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
@@ -1014,6 +1016,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
             storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
+            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
             storeDir = Paths.get(storeDirStr);
         }
 

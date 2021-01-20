@@ -2,6 +2,8 @@ package stroom.datasource.api.v2;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DataSourceBuilderTest {
@@ -13,10 +15,11 @@ class DataSourceBuilderTest {
         final String field2 = "field2";
 
         // When
-        final DataSource dataSource = new DataSource.Builder()
-                .addFields(new TextField(field0),
+        final DataSource dataSource = DataSource
+                .builder()
+                .fields(List.of(new TextField(field0),
                         new TextField(field1),
-                        new TextField(field2))
+                        new TextField(field2)))
                 .build();
 
         // Then

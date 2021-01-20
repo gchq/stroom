@@ -20,7 +20,6 @@ package stroom.search.solr.search;
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.Receiver;
@@ -42,7 +41,6 @@ class SolrClusterSearchTaskHandler {
     private final SolrSearchFactory solrSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
-    private final CompletionState searchCompletionState = new CompletionState();
 
     @Inject
     SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
@@ -91,7 +89,7 @@ class SolrClusterSearchTaskHandler {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    searchCompletionState.complete();
+                    coprocessors.getCompletionState().complete();
                 }
             }
         });
@@ -111,7 +109,7 @@ class SolrClusterSearchTaskHandler {
             final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
 
             // Search all index shards.
-            final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
@@ -133,7 +131,7 @@ class SolrClusterSearchTaskHandler {
                                 + coprocessor.getValuesCount().get() +
                                 " extractions");
 
-                        final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                        final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
                         if (!complete) {
                             allComplete = false;
                         }

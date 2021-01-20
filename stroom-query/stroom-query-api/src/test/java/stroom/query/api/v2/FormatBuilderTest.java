@@ -12,9 +12,11 @@ class FormatBuilderTest {
         final Integer decimalPlaces = 5;
         final Boolean useSeperator = true;
 
-        final Format format = new Format.Builder()
+        final Format format = Format
+                .builder()
                 .type(Type.NUMBER)
-                .settings(new NumberFormatSettings.Builder()
+                .settings(NumberFormatSettings
+                        .builder()
                         .decimalPlaces(decimalPlaces)
                         .useSeparator(useSeperator)
                         .build())
@@ -37,11 +39,14 @@ class FormatBuilderTest {
         final Integer offsetHours = 3;
         final Integer offsetMinutes = 5;
 
-        final Format format = new Format.Builder()
+        final Format format = Format
+                .builder()
                 .type(Type.DATE_TIME)
-                .settings(new DateTimeFormatSettings.Builder()
+                .settings(DateTimeFormatSettings
+                        .builder()
                         .pattern(pattern)
-                        .timeZone(new TimeZone.Builder()
+                        .timeZone(TimeZone
+                                .builder()
                                 .id(timeZoneId)
                                 .use(use)
                                 .offsetHours(offsetHours)

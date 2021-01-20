@@ -15,7 +15,7 @@ public class IndexConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private int ramBufferSizeMB = 1024;
     private IndexWriterConfig indexWriterConfig = new IndexWriterConfig();
-    private CacheConfig indexStructureCache = new CacheConfig.Builder()
+    private CacheConfig indexStructureCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterWrite(StroomDuration.ofSeconds(10))
             .build();

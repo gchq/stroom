@@ -21,7 +21,7 @@ public class ScheduledJobsBinder {
 
     public ScheduledJobsBinder bindJobTo(final Class<? extends Runnable> jobRunnableClass,
                                          final Consumer<ScheduledJob.Builder> jobScheduleBuilder) {
-        final ScheduledJob.Builder builder = new ScheduledJob.Builder();
+        final ScheduledJob.Builder builder = ScheduledJob.builder();
         jobScheduleBuilder.accept(builder);
         final ScheduledJob scheduledJob = builder.build();
 

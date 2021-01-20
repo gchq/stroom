@@ -38,14 +38,14 @@ public class MetaModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(FlushDataMetaDb.class, builder -> builder
-                        .withName("Flush Data Attributes To DB")
-                        .withDescription("Flush meta data attribute values to the database")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "10s"))
+                        .name("Flush Data Attributes To DB")
+                        .description("Flush meta data attribute values to the database")
+                        .managed(false)
+                        .schedule(PERIODIC, "10s"))
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
-                        .withName("Attribute Value Data Retention")
-                        .withDescription("Delete data attribute values older than system property stroom.meta.deleteAge")
-                        .withSchedule(PERIODIC, "1d"));
+                        .name("Attribute Value Data Retention")
+                        .description("Delete data attribute values older than system property stroom.meta.deleteAge")
+                        .schedule(PERIODIC, "1d"));
     }
 
     @Override

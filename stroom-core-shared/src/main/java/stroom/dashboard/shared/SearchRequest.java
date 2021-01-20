@@ -88,16 +88,24 @@ public class SearchRequest {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private DashboardQueryKey dashboardQueryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;
         private String dateTimeLocale;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final SearchRequest searchRequest) {
+        private Builder(final SearchRequest searchRequest) {
             this.dashboardQueryKey = searchRequest.dashboardQueryKey;
             this.search = searchRequest.search;
             this.componentResultRequests = searchRequest.componentResultRequests;

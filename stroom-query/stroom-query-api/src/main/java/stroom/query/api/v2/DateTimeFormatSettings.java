@@ -102,21 +102,28 @@ public final class DateTimeFormatSettings implements FormatSettings {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link DateTimeFormatSettings dateTimeFormat}
      */
-    public static class Builder {
+    public static final class Builder {
         private String pattern;
-
         private TimeZone timeZone;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final DateTimeFormatSettings dateTimeFormat) {
+        private Builder(final DateTimeFormatSettings dateTimeFormat) {
             this.pattern = dateTimeFormat.pattern;
             if (dateTimeFormat.timeZone != null) {
-                this.timeZone = new TimeZone.Builder(dateTimeFormat.timeZone).build();
+                this.timeZone = dateTimeFormat.timeZone;
             }
         }
 

@@ -19,7 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
-class Top extends AbstractSelectorFunction implements Serializable {
+public class Top extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "top";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -46,7 +46,7 @@ class Top extends AbstractSelectorFunction implements Serializable {
         return new TopSelector(super.createGenerator(), delimiter, limit);
     }
 
-    private static class TopSelector extends Selector {
+    public static class TopSelector extends Selector {
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;
@@ -58,10 +58,10 @@ class Top extends AbstractSelectorFunction implements Serializable {
             this.limit = limit;
         }
 
-        public Val select(final Generator[] subGenerators) {
+        public Val select(final Selection<Val> selection) {
             final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < limit && i < subGenerators.length; i++) {
-                final Val val = subGenerators[i].eval();
+            for (int i = 0; i < limit && i < selection.size(); i++) {
+                final Val val = selection.get(i);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append(delimiter);
@@ -70,6 +70,10 @@ class Top extends AbstractSelectorFunction implements Serializable {
                 }
             }
             return ValString.create(sb.toString());
+        }
+
+        public int getLimit() {
+            return limit;
         }
     }
 }

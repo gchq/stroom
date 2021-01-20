@@ -90,19 +90,25 @@ public final class SetupSampleData {
         injector.getInstance(TaskManager.class).shutdown();
     }
 
-    private static void downloadContent(final Path contentPacksDefinition, final PathCreator pathCreator, final Config config) {
+    private static void downloadContent(final Path contentPacksDefinition,
+                                        final PathCreator pathCreator,
+                                        final Config config) {
         try {
-            final String downloadDir = pathCreator.replaceSystemProperties(ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR);
-            final String importDir = pathCreator.replaceSystemProperties(
-                    config.getAppConfig().getContentPackImportConfig().getImportDirectory());
+            final String downloadDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR));
+            final String importDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    config.getAppConfig().getContentPackImportConfig().getImportDirectory()));
 
-            Path contentPackDownloadPath = Paths.get(downloadDir);
-            Path contentPackImportPath = Paths.get(importDir);
+            final Path contentPackDownloadPath = Paths.get(downloadDir);
+            final Path contentPackImportPath = Paths.get(importDir);
 
             Files.createDirectories(contentPackDownloadPath);
             Files.createDirectories(contentPackImportPath);
 
-            ContentPackDownloader.downloadPacks(contentPacksDefinition, contentPackDownloadPath, contentPackImportPath);
+            ContentPackDownloader.downloadPacks(
+                    contentPacksDefinition,
+                    contentPackDownloadPath,
+                    contentPackImportPath);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

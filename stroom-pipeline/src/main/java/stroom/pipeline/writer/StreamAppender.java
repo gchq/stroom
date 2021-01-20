@@ -128,7 +128,7 @@ public class StreamAppender extends AbstractAppender {
             streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
                 .parent(parentMeta)

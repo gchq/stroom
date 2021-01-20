@@ -123,15 +123,34 @@ public final class Row {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link Row}
      */
-    public static class Builder {
+    public static final class Builder {
         private String groupKey;
         private List<String> values;
         private Integer depth;
         private String backgroundColor;
         private String textColor;
+
+        private Builder() {
+        }
+
+        private Builder(final Row row) {
+            groupKey = row.groupKey;
+            values = row.values;
+            depth = row.depth;
+            backgroundColor = row.backgroundColor;
+            textColor = row.textColor;
+        }
 
         /**
          * @param value TODO

@@ -99,8 +99,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
 
-        return new DocRefInfo.Builder()
-                .docRef(new DocRef.Builder()
+        return DocRefInfo
+                .builder()
+                .docRef(DocRef.builder()
                         .type(explorerTreeNode.getType())
                         .uuid(explorerTreeNode.getUuid())
                         .name(explorerTreeNode.getName())

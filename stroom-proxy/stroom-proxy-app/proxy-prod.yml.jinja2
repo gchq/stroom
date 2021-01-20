@@ -9,9 +9,10 @@
   Stuff like
   "{{ 'my_value' | envVar('ENV_VAR') }}"
   will either render as
-  ${ENV_VAR:-my_value}
+    ${ENV_VAR:-my_value}
   or
-  my_value
+    my_value
+  See stroom.dist.GenerateDistributionConfig.EnvVarSubstitutionFilter
 
   ============================== NOTE ==============================
 

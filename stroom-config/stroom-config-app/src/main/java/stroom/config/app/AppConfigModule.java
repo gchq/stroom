@@ -39,6 +39,7 @@ import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.rs.logging.impl.RequestLoggingConfig;
+import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -156,6 +157,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, RequestLoggingConfig.class);
         bindConfig(AppConfig::getSearchConfig, AppConfig::setSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig, SearchConfig::getExtractionConfig, SearchConfig::setExtractionConfig, ExtractionConfig.class);
+            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, LmdbConfig.class);
             bindConfig(searchConfig, SearchConfig::getShardConfig, SearchConfig::setShardConfig, IndexShardSearchConfig.class);
         });
         bindConfig(AppConfig::getSearchableConfig, AppConfig::setSearchableConfig, SearchableConfig.class);

@@ -87,7 +87,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         if (ok) {
             final Format format = getFormat();
             if (!EqualsUtil.isEquals(format, field.getFormat())) {
-                fieldChangeConsumer.accept(field, new Field.Builder(field).format(format).build());
+                fieldChangeConsumer.accept(field, field.copy().format(format).build());
                 tablePresenter.setDirty(true);
                 tablePresenter.clearAndRefresh();
             }
@@ -145,7 +145,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {
-        TimeZone timeZone = TimeZone.local();
+        TimeZone timeZone = TimeZone.utc();
 
         if (!(settings instanceof DateTimeFormatSettings)) {
             getView().setPattern(null);

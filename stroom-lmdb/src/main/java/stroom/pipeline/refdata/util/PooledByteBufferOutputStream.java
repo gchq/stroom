@@ -118,11 +118,13 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     }
 
     public void write(byte b[], int off, int len) throws IOException {
-        checkWriteableState();
-        Objects.checkFromIndexSize(off, len, b.length);
-        checkSizeAndGrow(len);
+        if (len > 0) {
+            checkWriteableState();
+            Objects.checkFromIndexSize(off, len, b.length);
+            checkSizeAndGrow(len);
 
-        getCurrentPooledBuffer().getByteBuffer().put(b, off, len);
+            getCurrentPooledBuffer().getByteBuffer().put(b, off, len);
+        }
     }
 
     private void checkWriteableState() {

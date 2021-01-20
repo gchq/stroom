@@ -123,7 +123,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final LocationManager locationManager;
-    private TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+    private TableResultRequest tableResultRequest = TableResultRequest.builder()
             .requestedRange(new OffsetRange(0, 100))
             .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
@@ -226,7 +226,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
-            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+            tableResultRequest = tableResultRequest
+                    .copy()
                     .openGroup(result.getGroupKey(), !value.isExpanded())
                     .build();
             refresh();
@@ -242,7 +243,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final com.google.gwt.view.client.Range range = event.getNewRange();
-            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+            tableResultRequest = tableResultRequest
+                    .copy()
                     .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
                     .build();
             if (!ignoreRangeChange) {
@@ -295,7 +297,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final List<Field> addFields = new ArrayList<>();
             if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
-                    final Builder fieldBuilder = new Builder();
+                    final Builder fieldBuilder = Field.builder();
                     fieldBuilder.name(indexFieldName);
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
@@ -336,21 +338,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 }
             }
 
-            final Field count = new Field.Builder()
+            final Field count = Field.builder()
                     .name("Count")
                     .format(Format.NUMBER)
                     .expression("count()")
                     .build();
             addFields.add(count);
 
-            final Field countGroups = new Field.Builder()
+            final Field countGroups = Field.builder()
                     .name("Count Groups")
                     .format(Format.NUMBER)
                     .expression("countGroups()")
                     .build();
             addFields.add(countGroups);
 
-            final Field custom = new Field.Builder()
+            final Field custom = Field.builder()
                     .name("Custom")
                     .build();
             addFields.add(custom);
@@ -398,7 +400,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            final TableResultRequest tableResultRequest = new TableResultRequest.Builder()
+                            final TableResultRequest tableResultRequest = TableResultRequest
+                                    .builder()
                                     .componentId(getComponentConfig().getId())
                                     .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
                                     .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
@@ -408,7 +411,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             final List<ComponentResultRequest> requests = new ArrayList<>();
                             requests.add(tableResultRequest);
 
-                            final Search search = new Search.Builder()
+                            final Search search = Search
+                                    .builder()
                                     .dataSourceRef(activeSearch.getDataSourceRef())
                                     .expression(activeSearch.getExpression())
                                     .componentSettingsMap(activeSearch.getComponentSettingsMap())
@@ -459,9 +463,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
-        final TableSettings tableSettings = new TableComponentSettings.Builder(getTableSettings())
+        final TableSettings tableSettings = getTableSettings()
+                .copy()
                 .buildTableSettings();
-        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+        tableResultRequest = tableResultRequest
+                .copy()
                 .tableSettings(tableSettings)
                 .build();
     }
@@ -474,11 +480,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void setWantsData(final boolean wantsData) {
         getView().setRefreshing(wantsData);
         if (wantsData) {
-            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+            tableResultRequest = tableResultRequest
+                    .copy()
                     .fetch(Fetch.CHANGES)
                     .build();
         } else {
-            tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+            tableResultRequest = tableResultRequest
+                    .copy()
                     .fetch(Fetch.NONE)
                     .build();
         }
@@ -685,12 +693,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             throw new RuntimeException("Should not have a term without a parent operator");
                         }
 
-                        final ExpressionTerm newTerm = new ExpressionTerm(
-                                oldTerm.getEnabled(),
-                                newTermName,
-                                oldTerm.getCondition(),
-                                oldTerm.getValue(),
-                                oldTerm.getDocRef());
+                        final ExpressionTerm newTerm = oldTerm.copy().field(newTermName).build();
 
                         // Replace the old term with the new one
                         parent.getChildren().set(childOffset, newTerm);
@@ -745,7 +748,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void updateFields() {
         if (getTableSettings().getFields() == null) {
-            setSettings(new TableComponentSettings.Builder(getTableSettings()).fields(new ArrayList<>()).build());
+            setSettings(getTableSettings().copy().fields(new ArrayList<>()).build());
         }
 
         // Update columns.
@@ -783,7 +786,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     requiredSpecialDsFields.forEach(requiredSpecialDsField ->
                             getTableSettings().getFields().removeIf(field ->
                                     !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
-                    setSettings(new TableComponentSettings.Builder(getTableSettings())
+                    setSettings(getTableSettings()
+                            .copy()
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
                             .build());
                 }
@@ -807,7 +811,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public static Field buildSpecialField(final String indexFieldName) {
         final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
-        return new Field.Builder()
+        return Field.builder()
                 .id(obfuscatedColumnName)
                 .name(obfuscatedColumnName)
                 .expression(ParamUtil.makeParam(indexFieldName))
@@ -865,7 +869,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+        tableResultRequest = tableResultRequest
+                .copy()
                 .componentId(componentConfig.getId())
                 .build();
 
@@ -880,13 +885,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             getTableSettings().getFields().forEach(field -> {
                 Field f = field;
                 if (field.getId() == null) {
-                    f = new Field.Builder(field).id(createRandomFieldId()).build();
+                    f = field.copy().id(createRandomFieldId()).build();
                 } else {
                     usedFieldIds.add(field.getId());
                 }
                 fields.add(f);
             });
-            setSettings(new TableComponentSettings.Builder(getTableSettings()).fields(fields).build());
+            setSettings(getTableSettings().copy().fields(fields).build());
         }
     }
 
@@ -898,7 +903,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void link() {
         String queryId = getTableSettings().getQueryId();
         queryId = getComponents().validateOrGetFirstComponentId(queryId, QueryPresenter.TYPE.getId());
-        setSettings(new TableComponentSettings.Builder(getTableSettings()).queryId(queryId).build());
+        setSettings(getTableSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }
 
@@ -915,9 +920,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest createDownloadQueryRequest() {
-        final TableSettings tableSettings = new TableComponentSettings.Builder(getTableSettings())
+        final TableSettings tableSettings = getTableSettings()
+                .copy()
                 .buildTableSettings();
-        return new TableResultRequest.Builder(tableResultRequest)
+        return tableResultRequest
+                .copy()
                 .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
                 .tableSettings(tableSettings)
                 .fetch(Fetch.ALL)
@@ -930,7 +937,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         dataGrid.setRowData(0, new ArrayList<>());
         dataGrid.setRowCount(0, true);
         dataGrid.setVisibleRange(0, (int) length);
-        tableResultRequest = new TableResultRequest.Builder(tableResultRequest)
+        tableResultRequest = tableResultRequest
+                .copy()
                 .requestedRange(new OffsetRange(0L, length))
                 .build();
     }
@@ -958,7 +966,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             arr.add(maxResults[0]);
         }
 
-        return new TableComponentSettings.Builder().maxResults(arr).build();
+        return TableComponentSettings.builder().maxResults(arr).build();
     }
 
     public Set<String> getHighlights() {
@@ -999,7 +1007,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     suffix = " " + count;
                 }
 
-                field = new Field.Builder(field)
+                field = field.copy()
                         .name(fieldName + suffix)
                         .id(createRandomFieldId())
                         .build();

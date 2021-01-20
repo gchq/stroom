@@ -85,14 +85,14 @@ class TestStoredQueryDao {
         refQuery.setName("Ref query");
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query.Builder()
+        refQuery.setQuery(Query.builder()
                 .dataSource(indexRef)
-                .expression(new ExpressionOperator(true, Op.AND, Collections.emptyList()))
+                .expression(ExpressionOperator.builder().build())
                 .build());
         AuditUtil.stamp(securityContext.getUserId(), refQuery);
         storedQueryDao.create(refQuery);
 
-        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.OR);
+        final ExpressionOperator.Builder root = ExpressionOperator.builder().op(Op.OR);
         root.addTerm("Some field", Condition.EQUALS, "Some value");
 
         LOGGER.info(root.toString());
@@ -101,7 +101,7 @@ class TestStoredQueryDao {
         testQuery.setName("Test query");
         testQuery.setDashboardUuid(dashboardRef.getUuid());
         testQuery.setComponentId(QUERY_COMPONENT);
-        testQuery.setQuery(new Query.Builder()
+        testQuery.setQuery(Query.builder()
                 .dataSource(indexRef)
                 .expression(root.build())
                 .build());

@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -451,13 +452,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             try {
                 LOGGER.trace("Committing (put count {})", putsCounter);
                 writeTxn.commit();
+                writeTxn.close();
+                writeTxn = null;
+
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Txn held open for {}", (txnStartTime != null
                             ? Duration.between(txnStartTime, Instant.now())
                             : "-"));
                     txnStartTime = null;
                 }
-                writeTxn = null;
             } catch (Exception e) {
                 throw new RuntimeException("Error committing write transaction", e);
             }

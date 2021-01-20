@@ -20,14 +20,13 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -51,21 +50,30 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
-        // TODO : @66 fill out query
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query.Builder<Void> builder = Query.builder();
+
+        StroomEventLoggingUtil.appendSelection(builder, criteria.getSelection());
+
+        final Query query = builder.build();
 
         return securityContext.secureResult(() -> {
             ResultPage<FsVolume> result = null;
 
             try {
                 result = volumeServiceProvider.get().find(criteria);
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), result.getPageResponse(), null);
+                documentEventLog.search(
+                        criteria.getClass().getSimpleName(),
+                        query,
+                        FsVolume.class.getSimpleName(),
+                        result.getPageResponse(),
+                        null);
             } catch (final RuntimeException e) {
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), null, e);
+                documentEventLog.search(
+                        criteria.getClass().getSimpleName(),
+                        query,
+                        FsVolume.class.getSimpleName(),
+                        null,
+                        e);
                 throw e;
             }
 

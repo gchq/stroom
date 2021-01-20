@@ -20,10 +20,8 @@ package stroom.search.impl;
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
@@ -40,75 +38,52 @@ import java.util.concurrent.atomic.AtomicLong;
 class ClusterSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
-    private final CoprocessorsFactory coprocessorsFactory;
     private final IndexShardSearchFactory indexShardSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+
     private ClusterSearchTask task;
 
-    private Coprocessors coprocessors;
-
     @Inject
-    ClusterSearchTaskHandler(final CoprocessorsFactory coprocessorsFactory,
-                             final IndexShardSearchFactory indexShardSearchFactory,
+    ClusterSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
                              final SecurityContext securityContext) {
-        this.coprocessorsFactory = coprocessorsFactory;
         this.indexShardSearchFactory = indexShardSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
     }
 
-    public void exec(final TaskContext taskContext, final ClusterSearchTask task, final RemoteSearchResultFactory remoteSearchResultFactory) {
+    public void exec(final TaskContext taskContext,
+                     final ClusterSearchTask task,
+                     final Coprocessors coprocessors,
+                     final RemoteSearchResultFactory remoteSearchResultFactory) {
+        this.task = task;
         securityContext.useAsRead(() -> {
-            CompletionState sendingDataCompletionState = new CompletionState();
-            sendingDataCompletionState.complete();
-
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
-
-                this.task = task;
-                final Query query = task.getQuery();
-
                 try {
-                    // Make sure we have been given a query.
-                    if (query.getExpression() == null) {
-                        throw new SearchException("Search expression has not been set");
-                    }
-
-                    // Create coprocessors.
-                    coprocessors = coprocessorsFactory.create(
-                            task.getSettings(),
-                            query.getParams());
-                    // Start forwarding data to target node.
-                    remoteSearchResultFactory.setCoprocessors(coprocessors);
                     remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
                     remoteSearchResultFactory.setStarted(true);
 
-                    if (coprocessors.size() > 0) {
-                        // Start searching.
-                        search(taskContext, task, query, coprocessors);
-                    }
+                    // Start searching.
+                    search(taskContext, task, task.getQuery(), coprocessors);
+
                 } catch (final RuntimeException e) {
-                    if (coprocessors != null) {
-                        coprocessors.getErrorConsumer().accept(e);
-                    } else {
-                        LOGGER.error(e.getMessage(), e);
-                    }
+                    coprocessors.getErrorConsumer().accept(e);
                 } finally {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    remoteSearchResultFactory.complete();
+                    coprocessors.getCompletionState().complete();
                 }
             }
         });
     }
 
-    private void search(final TaskContext taskContext,
-                        final ClusterSearchTask task,
-                        final Query query,
-                        final Coprocessors coprocessors) {
+    public void search(final TaskContext taskContext,
+                       final ClusterSearchTask task,
+                       final Query query,
+                       final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
@@ -121,7 +96,7 @@ class ClusterSearchTaskHandler {
                         query);
 
                 // Search all index shards.
-                final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+                final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                         .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
@@ -143,7 +118,7 @@ class ClusterSearchTaskHandler {
                                     coprocessor.getValuesCount().get() +
                                     " extractions");
 
-                            final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                            final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
                             if (!complete) {
                                 allComplete = false;
                             }

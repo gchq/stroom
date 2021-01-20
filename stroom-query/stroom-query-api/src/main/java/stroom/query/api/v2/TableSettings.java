@@ -190,11 +190,18 @@ public final class TableSettings {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
 
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
-    public static class Builder {
+    public static final class Builder {
         protected String queryId;
         protected List<Field> fields;
         protected Boolean extractValues;
@@ -204,10 +211,10 @@ public final class TableSettings {
         protected List<ConditionalFormattingRule> conditionalFormattingRules;
         protected String modelVersion;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final TableSettings tableSettings) {
+        private Builder(final TableSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
             this.fields = tableSettings.getFields() == null
                     ? null : new ArrayList<>(tableSettings.getFields());
@@ -291,7 +298,7 @@ public final class TableSettings {
         public Builder extractionPipeline(final String type,
                                           final String uuid,
                                           final String name) {
-            return this.extractionPipeline(new DocRef.Builder().type(type).uuid(uuid).name(name).build());
+            return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
         public Builder maxResults(final List<Integer> maxResults) {

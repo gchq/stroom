@@ -82,9 +82,4 @@ public final class ValBoolean implements Val {
     public int hashCode() {
         return Objects.hash(value);
     }
-
-    @Override
-    public int compareTo(final Val o) {
-        return Boolean.compare(value, ((ValBoolean) o).value);
-    }
 }

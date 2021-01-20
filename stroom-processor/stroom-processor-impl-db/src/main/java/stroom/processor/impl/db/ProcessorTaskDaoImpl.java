@@ -282,17 +282,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //        ExpressionOperator.Builder builder;
 //
 //        if (expression != null) {
-//            builder = new ExpressionOperator.Builder(expression.op());
+//            builder = ExpressionOperator.builder().op(expression.op());
 //
 //            if (expression.enabled() && expression.getChildren() != null) {
 //                addChildren(builder, expression);
 //            }
 //
 //        } else {
-//            builder = new ExpressionOperator.Builder(Op.AND);
+//            builder = ExpressionOperator.builder();
 //        }
 //
-//        final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR)
+//        final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR)
 //                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.LOCKED.getDisplayValue())
 //                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
 //        builder.addOperator(or.build());
@@ -304,7 +304,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //            if (item.isEnabled()) {
 //                if (item instanceof ExpressionOperator) {
 //                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
-//                    final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);
+//                    final ExpressionOperator.Builder child = ExpressionOperator.builder().op(Op.OR);
 //                    addChildren(child, expressionOperator);
 //                    builder.addOperator(child.build());
 //                } else if (item instanceof ExpressionTerm) {
@@ -455,7 +455,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     totalTasksCreated = streams.size();
 
                     // Select them back
-                    final ExpressionOperator expression = new ExpressionOperator.Builder()
+                    final ExpressionOperator expression = ExpressionOperator.builder()
                             .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
                             .addTerm(ProcessorTaskFields.CREATE_TIME_MS, ExpressionTerm.Condition.EQUALS, streamTaskCreateMs)
                             .addTerm(ProcessorTaskFields.STATUS, ExpressionTerm.Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
@@ -927,7 +927,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
                     final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
                     if (pipelineName.isPresent()) {
-                        pipelineDocRef = new DocRef.Builder(pipelineDocRef).name(pipelineName.get()).build();
+                        pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
                     }
                     return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, count);
                 }));

@@ -53,7 +53,7 @@ public class ResolvedOpenIdConfig {
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
 
         if (openIdConfig.isUseInternal()) {
-            openIdConfiguration = new OpenIdConfigurationResponse.Builder()
+            openIdConfiguration = OpenIdConfigurationResponse.builder()
                     .issuer(INTERNAL_ISSUER)
                     .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
                     .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
@@ -61,7 +61,7 @@ public class ResolvedOpenIdConfig {
                     .build();
 
         } else if (configurationEndpoint == null || configurationEndpoint.isBlank()) {
-            openIdConfiguration = new OpenIdConfigurationResponse.Builder()
+            openIdConfiguration = OpenIdConfigurationResponse.builder()
                     .issuer(openIdConfig.getIssuer())
                     .authorizationEndpoint(openIdConfig.getAuthEndpoint())
                     .tokenEndpoint(openIdConfig.getTokenEndpoint())

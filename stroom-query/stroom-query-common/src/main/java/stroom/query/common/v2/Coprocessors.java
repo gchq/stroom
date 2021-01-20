@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -82,11 +83,70 @@ public class Coprocessors implements Iterable<Coprocessor> {
         return errorConsumer;
     }
 
+    public Consumer<Long> getCompletionConsumer() {
+        return count -> {
+            LOGGER.trace(() -> String.format("completion: [%s]", count));
+
+            // Give the data array to each of our coprocessors
+            coprocessorMap.values().forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(count));
+        };
+    }
+
+    public CompletionState getCompletionState() {
+        return new CompletionState() {
+            @Override
+            public void complete() {
+                for (final Coprocessor coprocessor : coprocessorMap.values()) {
+                    coprocessor.getCompletionState().complete();
+                }
+            }
+
+            @Override
+            public boolean isComplete() {
+                for (final Coprocessor coprocessor : coprocessorMap.values()) {
+                    if (!coprocessor.getCompletionState().isComplete()) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            @Override
+            public void awaitCompletion() throws InterruptedException {
+                for (final Coprocessor coprocessor : coprocessorMap.values()) {
+                    coprocessor.getCompletionState().awaitCompletion();
+                }
+            }
+
+            @Override
+            public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+                for (final Coprocessor coprocessor : coprocessorMap.values()) {
+                    if (!coprocessor.getCompletionState().awaitCompletion(timeout, unit)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            @Override
+            public void accept(final Long value) {
+                getCompletionConsumer().accept(value);
+            }
+        };
+    }
+
+    public void clear() {
+        for (final Coprocessor coprocessor : coprocessorMap.values()) {
+            coprocessor.getCompletionState().complete();
+            coprocessor.clear();
+        }
+    }
+
     public Coprocessor get(final int coprocessorId) {
         return coprocessorMap.get(coprocessorId);
     }
 
-    public Data getData(final String componentId) {
+    public DataStore getData(final String componentId) {
         LOGGER.debug(() -> LogUtil.message("getData called for componentId {}", componentId));
         final TableCoprocessor tableCoprocessor = componentIdCoprocessorMap.get(componentId);
         if (tableCoprocessor != null) {

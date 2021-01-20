@@ -98,15 +98,23 @@ public abstract class Result {
      * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
     public static abstract class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
-        private String componentId;
-        private String error;
+        String componentId;
+        String error;
+
+        Builder() {
+        }
+
+        Builder(final Result result) {
+            this.componentId = result.componentId;
+            this.error = result.error;
+        }
 
         /**
          * @param value The ID of the component that this result set was requested for. See ResultRequest in SearchRequest
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS componentId(final String value) {
-            this.componentId = value;
+        public CHILD_CLASS componentId(final String componentId) {
+            this.componentId = componentId;
             return self();
         }
 
@@ -114,20 +122,12 @@ public abstract class Result {
          * @param value If an error has occurred producing this result set then this will have details
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS error(final String value) {
-            this.error = value;
+        public CHILD_CLASS error(final String error) {
+            this.error = error;
             return self();
         }
 
-        protected String getComponentId() {
-            return componentId;
-        }
-
-        protected String getError() {
-            return error;
-        }
-
-        protected abstract CHILD_CLASS self();
+        abstract CHILD_CLASS self();
 
         public abstract T build();
     }

@@ -116,7 +116,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private static final MetaType parentType = META_TYPE.as("parentType");
     private static final MetaProcessor parentProcessor = META_PROCESSOR.as("parentProcessor");
 
-    private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> new Meta.Builder()
+    private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> Meta.builder()
             .id(record.get(meta.ID))
             .feedName(record.get(metaFeed.NAME))
             .typeName(record.get(metaType.NAME))
@@ -129,7 +129,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
             .effectiveMs(record.get(meta.EFFECTIVE_TIME))
             .build();
 
-    private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> new Meta.Builder()
+    private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> Meta.builder()
             .id(record.get(parent.ID))
             .feedName(record.get(parentFeed.NAME))
             .typeName(record.get(parentType.NAME))
@@ -324,7 +324,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .getId()
         );
 
-        return new Meta.Builder().id(id)
+        return Meta
+                .builder()
+                .id(id)
                 .feedName(metaProperties.getFeedName())
                 .typeName(metaProperties.getTypeName())
                 .processorUuid(metaProperties.getProcessorUuid())
@@ -431,7 +433,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
-            if (usedValKeys.isEmpty() && !containsPipelineCondition (criteria.getExpression())) {
+            if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -471,7 +473,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     return true;
                 }
             } else if (child instanceof ExpressionOperator) {
-                if (containsPipelineCondition((ExpressionOperator)child)){
+                if (containsPipelineCondition((ExpressionOperator) child)) {
                     return true;
                 }
             } else {
@@ -489,7 +491,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Condition filterCondition;
         if (criteria != null
                 && criteria.getExpression() != null
-                && !criteria.getExpression().equals(new ExpressionOperator.Builder(Op.AND).build())) {
+                && !criteria.getExpression().equals(ExpressionOperator.builder().build())) {
 
             filterCondition = expressionMapper.apply(criteria.getExpression());
         } else {

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,8 @@ public class DataRetentionImpactRow {
     private static final long AVG_MONTH_MS = 365 / 12 * DAY_MS; // Approx, only for sorting
     private static final long YEAR_MS = 365 * DAY_MS;
 
+    // Only to ensure uniqueness between rows that hold similar data
+    private final String rowKey;
     private final Integer ruleNumber;
     private final String ruleName;
     private final String ruleAgeStr;
@@ -63,7 +66,8 @@ public class DataRetentionImpactRow {
     private final int count;
     private Expander expander;
 
-    public DataRetentionImpactRow(final Integer ruleNumber,
+    public DataRetentionImpactRow(final String rowKey,
+                                  final Integer ruleNumber,
                                   final String ruleName,
                                   final String ruleAgeStr,
                                   final int ruleAge,
@@ -71,6 +75,7 @@ public class DataRetentionImpactRow {
                                   final String feedName,
                                   final String metaType,
                                   final int count) {
+        this.rowKey = rowKey;
         this.ruleNumber = ruleNumber;
         this.ruleName = ruleName;
         this.ruleAgeStr = ruleAgeStr;
@@ -80,6 +85,16 @@ public class DataRetentionImpactRow {
         this.metaType = metaType;
         this.count = count;
         this.expander = null;
+    }
+
+    private static String buildRowKey(final int ruleNumber,
+                                      final String metaType,
+                                      final String feedName) {
+        return ruleNumber + "|" + metaType + "|" + feedName;
+    }
+
+    private static String buildRowKey(final DataRetentionDeleteSummary summary) {
+        return buildRowKey(summary.getRuleNumber(), summary.getMetaType(), summary.getFeedName());
     }
 
     public Integer getRuleNumber() {
@@ -167,12 +182,17 @@ public class DataRetentionImpactRow {
                         rule -> Integer.valueOf(rule.getRuleNumber()), // Manual boxing to keep GWT happy
                         Function.identity()));
 
+        final AtomicLong rowNumber = new AtomicLong(1);
         return summaries.stream()
                 .map(summary -> {
                     final DataRetentionRule rule = ruleNoToRuleMap.get(summary.getRuleNumber());
+                    final int ruleNumber = summary.getRuleNumber();
+
+                    final String rowKey = buildRowKey(ruleNumber, summary.getMetaType(), summary.getFeedName());
 
                     return new DataRetentionImpactRow(
-                            summary.getRuleNumber(),
+                            rowKey,
+                            ruleNumber,
                             summary.getRuleName(),
                             rule.getAgeString(),
                             rule.getAge(),
@@ -197,9 +217,14 @@ public class DataRetentionImpactRow {
                         DataRetentionDeleteSummary::getRuleNumber,
                         Collectors.toSet()));
 
+        final AtomicLong rowNumber = new AtomicLong(1);
+
         rules.stream()
                 .map(rule ->
-                        buildRuleRow(rule, treeAction, ruleNoToSummariesMap.get(rule.getRuleNumber())))
+                        buildRuleRow(
+                                rule,
+                                treeAction,
+                                ruleNoToSummariesMap.get(rule.getRuleNumber())))
                 .sorted(getComparator(
                         criteria,
                         RULE_NO_COMPARATOR,
@@ -208,7 +233,8 @@ public class DataRetentionImpactRow {
                         FIELD_NAME_RULE_AGE,
                         FIELD_NAME_DELETE_COUNT))
                 .forEach(ruleRow -> {
-                    final Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(ruleRow.getRuleNumber());
+                    final Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(
+                            ruleRow.getRuleNumber());
                     rows.add(ruleRow);
 
                     if (isExpanded(treeAction, ruleRow, 0) && summariesForRule != null) {
@@ -224,6 +250,7 @@ public class DataRetentionImpactRow {
                         summariesByRuleAndType.keySet().stream()
                                 .map(metaType ->
                                         buildMetaTypeRow(
+                                                ruleRow.getRuleNumber(),
                                                 metaType,
                                                 summariesByRuleAndType.get(metaType),
                                                 treeAction))
@@ -247,7 +274,9 @@ public class DataRetentionImpactRow {
 
                                         rows.addAll(summariesForRuleAndType.stream()
                                                 .map(summaryForRuleTypeAndFeed ->
-                                                        buildFeedRow(summaryForRuleTypeAndFeed, treeAction))
+                                                        buildFeedRow(
+                                                                summaryForRuleTypeAndFeed,
+                                                                treeAction))
                                                 .sorted(feedRowComparator)
                                                 .collect(Collectors.toList()));
                                     }
@@ -305,6 +334,7 @@ public class DataRetentionImpactRow {
 
         // Set forever rules to 1000 years for sorting
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
+                buildRowKey(rule.getRuleNumber(), null, null),
                 rule.getRuleNumber(),
                 rule.getName(),
                 rule.getAgeString(),
@@ -323,7 +353,8 @@ public class DataRetentionImpactRow {
     }
 
 
-    private static DataRetentionImpactRow buildMetaTypeRow(final String metaType,
+    private static DataRetentionImpactRow buildMetaTypeRow(final int ruleNumber,
+                                                           final String metaType,
                                                            final Set<DataRetentionDeleteSummary> summaries,
                                                            final DataRetentionImpactTreeAction treeAction) {
 
@@ -337,6 +368,7 @@ public class DataRetentionImpactRow {
         }
 
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
+                buildRowKey(ruleNumber, metaType, null),
                 null,
                 null,
                 null,
@@ -358,6 +390,7 @@ public class DataRetentionImpactRow {
                                                        final DataRetentionImpactTreeAction treeAction) {
 
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
+                buildRowKey(summary),
                 null,
                 null,
                 null,
@@ -413,6 +446,7 @@ public class DataRetentionImpactRow {
         if (o == null || getClass() != o.getClass()) return false;
         final DataRetentionImpactRow that = (DataRetentionImpactRow) o;
         return count == that.count &&
+                Objects.equals(rowKey, that.rowKey) &&
                 Objects.equals(ruleNumber, that.ruleNumber) &&
                 Objects.equals(ruleName, that.ruleName) &&
                 Objects.equals(ruleAgeStr, that.ruleAgeStr) &&
@@ -422,13 +456,14 @@ public class DataRetentionImpactRow {
 
     @Override
     public int hashCode() {
-        return Objects.hash(ruleNumber, ruleName, ruleAgeStr, feedName, metaType, count);
+        return Objects.hash(rowKey, ruleNumber, ruleName, ruleAgeStr, feedName, metaType, count);
     }
 
     @Override
     public String toString() {
         return "DataRetentionImpactRow{" +
-                "ruleNumber=" + ruleNumber +
+                "rowKey=" + rowKey +
+                ", ruleNumber=" + ruleNumber +
                 ", ruleName='" + ruleName + '\'' +
                 ", ruleAge='" + ruleAgeStr + '\'' +
                 ", feedName='" + feedName + '\'' +

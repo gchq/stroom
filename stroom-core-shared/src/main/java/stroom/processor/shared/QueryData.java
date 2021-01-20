@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -80,31 +81,45 @@ public class QueryData implements Serializable {
         this.limits = limits;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        private final QueryData instance;
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-        public Builder() {
-            this.instance = new QueryData();
+    public static final class Builder {
+        private DocRef dataSource;
+        private ExpressionOperator expression;
+        private Limits limits;
+
+        private Builder() {
+        }
+
+        private Builder(final QueryData queryData) {
+            this.dataSource = queryData.dataSource;
+            this.expression = queryData.expression;
+            this.limits = queryData.limits;
         }
 
         public Builder dataSource(final DocRef value) {
-            this.instance.dataSource = value;
+            this.dataSource = value;
             return this;
         }
 
         public Builder limits(final Limits value) {
-            this.instance.limits = value;
+            this.limits = value;
             return this;
         }
 
         public Builder expression(final ExpressionOperator value) {
-            this.instance.expression = value;
+            this.expression = value;
             return this;
         }
 
         public QueryData build() {
-            return instance;
+            return new QueryData(dataSource, expression, limits);
         }
     }
 }

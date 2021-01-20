@@ -93,7 +93,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
                 if (!found) {
                     Files.createDirectories(Paths.get(volume.getPath()));
-                    final IndexVolume indexVolume = new IndexVolume.Builder()
+                    final IndexVolume indexVolume = IndexVolume.builder()
                             .nodeName(volume.getNodeName())
                             .path(volume.getPath())
                             .indexVolumeGroupId(indexVolumeGroup.getId())

@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 public class XsltConfig extends AbstractConfig {
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
-    private CacheConfig cacheConfig = new CacheConfig.Builder()
+    private CacheConfig cacheConfig = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

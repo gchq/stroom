@@ -256,7 +256,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
     void notEqualsTest() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567");
-        expression.addOperator(new ExpressionOperator.Builder(Op.NOT)
+        expression.addOperator(ExpressionOperator.builder().op(Op.NOT)
                 .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                 .build());
         test(expression, 24);
@@ -269,8 +269,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
     void notEqualsTest2() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                        .addOperator(new ExpressionOperator.Builder(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                                 .addTerm("EventTime", Condition.EQUALS, "2007-01-18T13:56:42.000Z")
                                 .build())
@@ -285,8 +285,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
     void notEqualsTest3() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                        .addOperator(new ExpressionOperator.Builder(Op.AND)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT)
+                        .addOperator(ExpressionOperator.builder()
                                 .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                                 .addTerm("UserId", Condition.EQUALS, "user4")
                                 .build())
@@ -301,9 +301,9 @@ class TestInteractiveSearch extends AbstractSearchTest {
     void notEqualsTest4() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user*", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description (Case Sensitive)", "E0567")
-                .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                        .addOperator(new ExpressionOperator.Builder(Op.OR)
-                                .addOperator(new ExpressionOperator.Builder(Op.AND)
+                .addOperator(ExpressionOperator.builder().op(Op.NOT)
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addOperator(ExpressionOperator.builder()
                                         .addTerm("EventTime", Condition.EQUALS, "2007-08-18T13:50:56.000Z")
                                         .addTerm("UserId", Condition.EQUALS, "user4")
                                         .build())
@@ -323,7 +323,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dic.setData("user1\nuser2\nuser5");
         dictionaryStore.writeDocument(dic);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
@@ -346,7 +346,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dic2.setData("msg");
         dictionaryStore.writeDocument(dic2);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
         and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
@@ -371,7 +371,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         dic2.setData("msg foo bar");
         dictionaryStore.writeDocument(dic2);
 
-        final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder and = ExpressionOperator.builder();
         and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
         and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
@@ -461,7 +461,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
         assertThat(indexRef).as("Index is null").isNotNull();
 
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query.Builder().dataSource(indexRef).expression(expressionIn.build()).build();
+        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
 
         final CountDownLatch complete = new CountDownLatch(1);
 
@@ -512,29 +512,29 @@ class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {
-        final Field streamIdField = new Field.Builder()
+        final Field streamIdField = Field.builder()
                 .name("Stream Id")
                 .expression(ParamUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
-        final Field eventIdField = new Field.Builder()
+        final Field eventIdField = Field.builder()
                 .name("Event Id")
                 .expression(ParamUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
-        final Field timeField = new Field.Builder()
+        final Field timeField = Field.builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
-        final Field statusField = new Field.Builder()
+        final Field statusField = Field.builder()
                 .name("Status")
                 .expression(ParamUtil.makeParam(AnnotationFields.STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        return new TableSettings.Builder()
+        return TableSettings.builder()
                 .addFields(streamIdField)
                 .addFields(eventIdField)
                 .addFields(timeField)
@@ -546,7 +546,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
     private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
                                                        final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
         operator.addTerm(wordsField, Condition.EQUALS, wordsTerm);
@@ -555,7 +555,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
     private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
                                                          final String to, final String wordsField, final String wordsTerm) {
-        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
         operator.addTerm(wordsField, Condition.IN, wordsTerm);

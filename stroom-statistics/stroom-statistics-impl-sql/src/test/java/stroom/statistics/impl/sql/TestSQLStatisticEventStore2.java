@@ -261,7 +261,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     @Test
     void testBuildCriteria_noDate() {
         assertThatThrownBy(() -> {
-            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
             final StatisticStoreDoc dataSource = new StatisticStoreDoc();
             dataSource.setName("MyDataSource");
@@ -273,7 +273,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     @Test
     void testBuildCriteria_invalidDateCondition() {
         assertThatThrownBy(() -> {
-            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
             final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
 
@@ -289,7 +289,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     void testBuildCriteria_validDateTerm() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -317,7 +317,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     @Test
     void testBuildCriteria_invalidDateTermOnlyOneDate() {
         assertThatThrownBy(() -> {
-            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
             final String fromDateStr = "2000-01-01T00:00:00.000Z";
             final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -336,7 +336,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     @Test
     void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
         assertThatThrownBy(() -> {
-            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+            final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
             final String fromDateStr = "2000-01-01T00:00:00.000Z";
             final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -357,7 +357,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     void testBuildCriteria_validDateTermOtherTermMissingFieldValue() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
@@ -380,7 +380,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
     @Test
     void testBuildCriteria_validDateTermAndOtherTerm() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder rootOperator = ExpressionOperator.builder();
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
         final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);

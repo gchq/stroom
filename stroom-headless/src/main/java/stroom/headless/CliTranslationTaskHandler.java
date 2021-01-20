@@ -157,7 +157,7 @@ class CliTranslationTaskHandler {
                     }
 
                     // Create the stream.
-                    final Meta meta = new Meta.Builder()
+                    final Meta meta = Meta.builder()
                             .effectiveMs(effectiveMs)
                             .feedName(feedName)
                             .build();
@@ -177,7 +177,8 @@ class CliTranslationTaskHandler {
                     metaHolder.setInputStreamProvider(inputStreamProvider);
 
                     try {
-                        pipeline.process(dataStream, feedProperties.getEncoding(feedName, feedProperties.getStreamTypeName(feedName)));
+                        pipeline.process(dataStream, feedProperties.getEncoding(
+                                feedName, feedProperties.getStreamTypeName(feedName), null));
                     } catch (final RuntimeException e) {
                         outputError(e);
                     }

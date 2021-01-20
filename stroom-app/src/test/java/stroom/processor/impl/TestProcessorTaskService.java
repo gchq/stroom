@@ -70,7 +70,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         assertThat(ps1).isNotNull();
         processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
-        final ExpressionOperator expressionOperator1 = new ExpressionOperator.Builder()
+        final ExpressionOperator expressionOperator1 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .build();
         ExpressionCriteria criteria = new ExpressionCriteria(expressionOperator1);
@@ -79,7 +79,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
-        final ExpressionOperator expressionOperator2 = new ExpressionOperator.Builder()
+        final ExpressionOperator expressionOperator2 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, file1.getCreateMs() - 10000)
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
@@ -88,7 +88,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         //setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
-        final ExpressionOperator expressionOperator3 = new ExpressionOperator.Builder()
+        final ExpressionOperator expressionOperator3 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
@@ -113,7 +113,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
                 .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
@@ -143,7 +143,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         final Node testNode = new Node();
         testNode.setId(1);
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
                 .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())

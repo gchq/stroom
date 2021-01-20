@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 public class ExplorerConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
 
-    private CacheConfig docRefInfoCache = new CacheConfig.Builder()
+    private CacheConfig docRefInfoCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

@@ -21,7 +21,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
 
     @Override
     public Processor create(final Processor processor) {
-        final ExpressionOperator findProcessorExpression = new ExpressionOperator.Builder()
+        final ExpressionOperator findProcessorExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, new DocRef("Pipeline", processor.getPipelineUuid()))
                 .build();
         final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(findProcessorExpression);

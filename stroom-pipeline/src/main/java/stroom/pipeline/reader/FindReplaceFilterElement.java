@@ -68,7 +68,7 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         Reader result = reader;
 
         try {
-            textReplacementFilterReader = new FindReplaceFilter.Builder()
+            textReplacementFilterReader = FindReplaceFilter.builder()
                     .reader(reader)
                     .find(escapeFind ? StringEscapeUtils.unescapeJava(find) : find)
                     .replacement(escapeReplacement ? StringEscapeUtils.unescapeJava(replacement) : replacement)

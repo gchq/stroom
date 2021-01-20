@@ -140,7 +140,15 @@ public class OpenIdConfigurationResponse {
         return userinfoEndpoint;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String authorizationEndpoint;
         private String[] claimsSupported;
         private String[] codeChallengeMethodsSupported;
@@ -156,6 +164,27 @@ public class OpenIdConfigurationResponse {
         private String tokenEndpoint;
         private String[] tokenEndpointAuthMethodsSupported;
         private String userinfoEndpoint;
+
+        private Builder() {
+        }
+
+        private Builder(final OpenIdConfigurationResponse openIdConfigurationResponse) {
+            authorizationEndpoint = openIdConfigurationResponse.authorizationEndpoint;
+            claimsSupported = openIdConfigurationResponse.claimsSupported;
+            codeChallengeMethodsSupported = openIdConfigurationResponse.codeChallengeMethodsSupported;
+            deviceAuthorizationEndpoint = openIdConfigurationResponse.deviceAuthorizationEndpoint;
+            grantTypesSupported = openIdConfigurationResponse.grantTypesSupported;
+            idTokenSigningSlgValuesSupported = openIdConfigurationResponse.idTokenSigningSlgValuesSupported;
+            issuer = openIdConfigurationResponse.issuer;
+            jwksUri = openIdConfigurationResponse.jwksUri;
+            responseTypesSupported = openIdConfigurationResponse.responseTypesSupported;
+            revocationEndpoint = openIdConfigurationResponse.revocationEndpoint;
+            scopesSupported = openIdConfigurationResponse.scopesSupported;
+            subjectTypesSupported = openIdConfigurationResponse.subjectTypesSupported;
+            tokenEndpoint = openIdConfigurationResponse.tokenEndpoint;
+            tokenEndpointAuthMethodsSupported = openIdConfigurationResponse.tokenEndpointAuthMethodsSupported;
+            userinfoEndpoint = openIdConfigurationResponse.userinfoEndpoint;
+        }
 
         public Builder authorizationEndpoint(final String authorizationEndpoint) {
             this.authorizationEndpoint = authorizationEndpoint;

@@ -87,28 +87,28 @@ class TestMetaValueDaoImpl {
 
         metaService.addAttributes(meta, createAttributes());
 
-        ExpressionOperator expression = new ExpressionOperator.Builder()
+        ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
         FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
@@ -122,28 +122,28 @@ class TestMetaValueDaoImpl {
 
         metaService.addAttributes(meta, createAttributes());
 
-        ExpressionOperator expression = new ExpressionOperator.Builder()
+        ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
         FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
@@ -152,7 +152,7 @@ class TestMetaValueDaoImpl {
 
         metaValueDao.deleteOldValues();
 
-        expression = new ExpressionOperator.Builder()
+        expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
@@ -161,7 +161,7 @@ class TestMetaValueDaoImpl {
     }
 
     private MetaProperties createProperties(final String feedName) {
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .createMs(1000L)
                 .feedName(feedName)
                 .processorUuid("12345")

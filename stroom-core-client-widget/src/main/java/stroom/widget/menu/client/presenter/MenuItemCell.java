@@ -16,6 +16,11 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.data.table.client.CellTableViewImpl.MenuResources;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgIcon;
+import stroom.widget.tab.client.presenter.ImageIcon;
+
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -34,10 +39,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.Image;
-import stroom.data.table.client.CellTableViewImpl.MenuResources;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class MenuItemCell extends AbstractCell<Item> {
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
@@ -113,6 +114,8 @@ public class MenuItemCell extends AbstractCell<Item> {
         if (value != null) {
             if (value instanceof IconMenuItem) {
                 new IconMenuItemAppearance(menuPresenter).render(this, context, (IconMenuItem) value, sb);
+            } else if (value instanceof SimpleMenuItem) {
+                new SimpleMenuItemAppearance(menuPresenter).render(this, context, (SimpleMenuItem) value, sb);
             } else if (value instanceof MenuItem) {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
@@ -138,6 +141,8 @@ public class MenuItemCell extends AbstractCell<Item> {
         String disabled();
 
         String text();
+
+        String simpleText();
 
         String shortcut();
     }
@@ -264,6 +269,64 @@ public class MenuItemCell extends AbstractCell<Item> {
 
             @Template("<img class=\"{0}\" src=\"{1}\">")
             SafeHtml icon(String className, SafeUri url);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml text(String className, SafeHtml text);
+        }
+    }
+
+    public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
+        private static final Template TEMPLATE = GWT.create(Template.class);
+        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+        private static final Resources RESOURCES = GWT.create(Resources.class);
+        private final MenuPresenter menuPresenter;
+
+        public SimpleMenuItemAppearance(final MenuPresenter menuPresenter) {
+            this.menuPresenter = menuPresenter;
+
+            // Make sure the CSS is injected.
+            RESOURCES.style().ensureInjected();
+        }
+
+        @Override
+        public void render(final MenuItemCell cell,
+                           final Context context,
+                           final SimpleMenuItem value,
+                           final SafeHtmlBuilder sb) {
+            if (value.getText() != null) {
+                SafeStyles styles = NORMAL;
+
+                if (!value.isEnabled()) {
+                    styles = DISABLED;
+                }
+
+                final SafeHtmlBuilder inner = new SafeHtmlBuilder();
+
+                inner.append(
+                        TEMPLATE.inner(
+                                RESOURCES.style().simpleText(),
+                                SafeHtmlUtils.fromTrustedString(value.getText())));
+
+                if (value.getShortcut() != null) {
+                    inner.append(TEMPLATE.inner(RESOURCES.style().shortcut(),
+                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                }
+
+                if (menuPresenter.isHighlighted(value)) {
+                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
+                } else {
+                    sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
+                }
+            }
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml inner(String className, SafeHtml icon);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);

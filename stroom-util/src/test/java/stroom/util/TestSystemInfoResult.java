@@ -21,9 +21,10 @@ class TestSystemInfoResult {
     @Test
     void test() {
 
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder("name1")
-                .withDetail("key1", "value1")
-                .withDetail("key2", "value2")
+        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+                .name("name1")
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
                 .build();
 
         LOGGER.info("systemInfo {}", systemInfoResult);
@@ -31,10 +32,11 @@ class TestSystemInfoResult {
 
     @Test
     void testSerde() throws IOException {
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder("name1")
-                .withDetail("key1", "value1")
-                .withDetail("key2", "value2")
-                .withDetail("key3", Map.of(
+        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+                .name("name1")
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
+                .addDetail("key3", Map.of(
                         "subKey1", "subVal1",
                         "subKey2", "subVal2"))
                 .build();
@@ -58,18 +60,20 @@ class TestSystemInfoResult {
 
     @Test
     void testSerde2() throws IOException {
-        final SystemInfoResult systemInfoResult1 = SystemInfoResult.builder("name1")
-                .withDetail("key1", "value1")
-                .withDetail("key2", "value2")
-                .withDetail("key3", Map.of(
+        final SystemInfoResult systemInfoResult1 = SystemInfoResult.builder()
+                .name("name1")
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
+                .addDetail("key3", Map.of(
                         "subKey1", "subVal1",
                         "subKey2", "subVal2"))
                 .build();
 
-        final SystemInfoResult systemInfoResult2 = SystemInfoResult.builder("name2")
-                .withDetail("key1", "value1")
-                .withDetail("key2", "value2")
-                .withDetail("key3", Map.of(
+        final SystemInfoResult systemInfoResult2 = SystemInfoResult.builder()
+                .name("name2")
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
+                .addDetail("key3", Map.of(
                         "subKey1", "subVal1",
                         "subKey2", "subVal2"))
                 .build();

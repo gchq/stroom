@@ -1,5 +1,7 @@
 package stroom.query.api.v2;
 
+import stroom.query.api.v2.ExpressionOperator.Op;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -7,9 +9,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ExpressionBuilderTest {
     @Test
     void doesBuild() {
-        ExpressionOperator root = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+        ExpressionOperator root = ExpressionOperator.builder()
                 .addTerm("fieldX", ExpressionTerm.Condition.EQUALS, "abc")
-                .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm("fieldA", ExpressionTerm.Condition.EQUALS, "Fred")
                         .addTerm("fieldA", ExpressionTerm.Condition.EQUALS, "Fred")
                         .build())
@@ -27,7 +29,7 @@ class ExpressionBuilderTest {
 
         assertThat(rootChild2 instanceof ExpressionOperator).isTrue();
         ExpressionOperator child2Op = (ExpressionOperator) rootChild2;
-        assertThat(child2Op.op()).isEqualTo(ExpressionOperator.Op.OR);
+        assertThat(child2Op.op()).isEqualTo(Op.OR);
         assertThat(child2Op.getChildren()).hasSize(2);
 
         assertThat(rootChild3 instanceof ExpressionTerm).isTrue();

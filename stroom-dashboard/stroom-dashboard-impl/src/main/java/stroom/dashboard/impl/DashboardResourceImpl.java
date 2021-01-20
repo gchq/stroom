@@ -167,7 +167,7 @@ class DashboardResourceImpl implements DashboardResource {
                 }
 
                 final SearchRequest searchRequest = request.getSearchRequest();
-                final SearchRequest.Builder builder = new SearchRequest.Builder(searchRequest);
+                final SearchRequest.Builder builder = searchRequest.copy();
                 final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
 
                 // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
@@ -180,12 +180,14 @@ class DashboardResourceImpl implements DashboardResource {
                                     final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
                                     // Remove special fields.
                                     tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
-                                    newRequest = new TableResultRequest.Builder(tableResultRequest)
+                                    newRequest = tableResultRequest
+                                            .copy()
                                             .fetch(Fetch.ALL)
                                             .build();
                                 } else if (componentResultRequest instanceof VisResultRequest) {
                                     final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-                                    newRequest = new VisResultRequest.Builder(visResultRequest)
+                                    newRequest = visResultRequest
+                                            .copy()
                                             .fetch(Fetch.ALL)
                                             .build();
                                 }
@@ -463,8 +465,8 @@ class DashboardResourceImpl implements DashboardResource {
                 params = new ArrayList<>();
             }
             params.add(new Param("currentUser()", securityContext.getUserId()));
-            search = new Search.Builder(search).params(params).build();
-            updatedSearchRequest = new SearchRequest.Builder(updatedSearchRequest).search(search).build();
+            search = search.copy().params(params).build();
+            updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
 
             stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);

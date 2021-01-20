@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.Receiver;
 import stroom.query.common.v2.ReceiverImpl;
 import stroom.security.api.SecurityContext;
@@ -57,7 +58,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
     private final AtomicLong indexSearchTotalValues = new AtomicLong();
 
-    private final CompletionState streamMapCreatorCompletionState = new CompletionState();
+    private final CompletionState streamMapCreatorCompletionState = new CompletionStateImpl();
     private final StreamEventMap streamEventMap;
     private final LinkedBlockingQueue<Optional<Val[]>> storedDataQueue;
     private final ExtractionProgressTracker tracker;

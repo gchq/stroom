@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.ComponentConfig.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -82,15 +83,23 @@ public class QueryComponentSettings implements ComponentSettings {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private DocRef dataSource;
         private ExpressionOperator expression;
         private Automate automate;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final QueryComponentSettings queryComponentSettings) {
+        private Builder(final QueryComponentSettings queryComponentSettings) {
             this.dataSource = queryComponentSettings.dataSource;
             this.expression = queryComponentSettings.expression;
             this.automate = queryComponentSettings.automate;

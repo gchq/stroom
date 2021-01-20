@@ -32,6 +32,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.mockito.stubbing.Answer;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,7 +94,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUser(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
-            final User user = new User.Builder()
+            final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .build();
@@ -98,7 +102,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUserGroup(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
-            final User user = new User.Builder()
+            final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .group(true)
@@ -107,8 +111,13 @@ public class MockServiceModule extends AbstractModule {
         });
         bind(UserService.class).toInstance(mockUserService);
 
-        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+        try {
+            final Path tempDir = Files.createTempDirectory("stroom");
+            bind(HomeDirProvider.class).toInstance(() -> tempDir);
+            bind(TempDirProvider.class).toInstance(() -> tempDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Provides

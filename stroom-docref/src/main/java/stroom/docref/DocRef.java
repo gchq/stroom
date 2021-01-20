@@ -206,18 +206,26 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link DocRef docRef}
      */
-    public static class Builder {
+    public static final class Builder {
         private String type;
         private String uuid;
         private String name;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final DocRef docRef) {
+        private Builder(final DocRef docRef) {
             this.type = docRef.type;
             this.uuid = docRef.uuid;
             this.name = docRef.name;

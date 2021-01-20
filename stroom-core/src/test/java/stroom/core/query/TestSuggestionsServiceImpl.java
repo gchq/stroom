@@ -142,7 +142,7 @@ class TestSuggestionsServiceImpl {
 
         Mockito.when(feedStore.list())
                 .thenReturn(storeFeedNames.stream()
-                        .map(name -> new DocRef.Builder().name(name).build())
+                        .map(name -> DocRef.builder().name(name).build())
                         .collect(Collectors.toList()));
 
         return suggestionsService.fetch(request);

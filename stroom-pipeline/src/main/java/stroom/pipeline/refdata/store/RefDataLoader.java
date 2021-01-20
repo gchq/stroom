@@ -17,7 +17,7 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.pipeline.refdata.store.offheapstore.PutOutcome;
+import stroom.lmdb.PutOutcome;
 import stroom.util.shared.Range;
 
 public interface RefDataLoader extends AutoCloseable {

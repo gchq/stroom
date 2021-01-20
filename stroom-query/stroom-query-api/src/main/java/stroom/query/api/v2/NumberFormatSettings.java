@@ -95,17 +95,25 @@ public final class NumberFormatSettings implements FormatSettings {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     /**
      * Builder for constructing a {@link NumberFormatSettings}
      */
-    public static class Builder {
+    public static final class Builder {
         private Integer decimalPlaces;
         private Boolean useSeparator;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final NumberFormatSettings numberFormat) {
+        private Builder(final NumberFormatSettings numberFormat) {
             this.decimalPlaces = numberFormat.decimalPlaces;
             this.useSeparator = numberFormat.useSeparator;
         }

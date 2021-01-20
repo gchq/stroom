@@ -16,8 +16,6 @@
         "condition" : "EQUALS",
         "value" : "value1"
       }, {
-        "type" : "operator"
-      }, {
         "type" : "term",
         "field" : "field2",
         "condition" : "BETWEEN",
@@ -58,7 +56,8 @@
         },
         "group" : 1,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "id" : "id2",
         "name" : "name2",
@@ -85,7 +84,8 @@
         },
         "group" : 2,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "extractValues" : false,
       "extractionPipeline" : {

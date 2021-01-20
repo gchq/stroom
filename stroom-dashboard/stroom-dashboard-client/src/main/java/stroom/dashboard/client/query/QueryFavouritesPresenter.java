@@ -121,7 +121,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
 
                             } else {
-                                final Query query = new Query.Builder()
+                                final Query query = Query.builder()
                                         .dataSource(currentDataSource)
                                         .expression(currentExpression)
                                         .build();

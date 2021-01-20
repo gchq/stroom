@@ -58,7 +58,7 @@ public class MockMetaService implements MetaService, Clearable {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());
 
-        final Meta.Builder builder = new Meta.Builder();
+        final Meta.Builder builder = Meta.builder();
         builder.parentDataId(properties.getParentId());
         builder.feedName(properties.getFeedName());
         builder.typeName(properties.getTypeName());
@@ -101,7 +101,8 @@ public class MockMetaService implements MetaService, Clearable {
                         ")");
             }
 
-            result = new Meta.Builder(meta)
+            result = meta
+                    .copy()
                     .status(newStatus)
                     .statusMs(System.currentTimeMillis())
                     .build();

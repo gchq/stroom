@@ -31,17 +31,17 @@ public class FsDataStoreJobsModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PhysicalDelete.class, builder -> builder
-                        .withName("Data Delete")
-                        .withDescription("Physically delete meta data and associated files that have been logically deleted " +
+                        .name("Data Delete")
+                        .description("Physically delete meta data and associated files that have been logically deleted " +
                                 "based on age of delete (stroom.data.store.deletePurgeAge)")
-                        .withSchedule(CRON, "0 0 *")
-                        .withAdvancedState(false))
+                        .schedule(CRON, "0 0 *")
+                        .advanced(false))
                 .bindJobTo(FileSystemClean.class, builder -> builder
-                        .withName("File System Clean (deprecated)")
-                        .withDescription("Job to process a volume deleting files that are no " +
+                        .name("File System Clean (deprecated)")
+                        .description("Job to process a volume deleting files that are no " +
                                 "longer indexed (maybe the retention period has past or they have been deleted)")
-                        .withSchedule(CRON, "0 0 *")
-                        .withEnabledState(false));
+                        .schedule(CRON, "0 0 *")
+                        .enabled(false));
     }
 
     private static class PhysicalDelete extends RunnableWrapper {

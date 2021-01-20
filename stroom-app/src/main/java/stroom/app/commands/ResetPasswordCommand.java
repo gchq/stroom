@@ -9,12 +9,10 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.Injector;
 import event.logging.AuthenticateAction;
+import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateOutcome;
-import event.logging.Event;
-import event.logging.Event.EventDetail.Authenticate;
-import event.logging.ObjectFactory;
 import event.logging.User;
-import event.logging.UserDetails;
+import event.logging.util.EventLoggingUtil;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -117,32 +115,19 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     private void logEvent(final String username,
                           final boolean wasSuccessful,
                           final String description) {
-        final Event event = stroomEventLoggingService.createAction(
+
+        stroomEventLoggingService.log(
                 "CliChangePassword",
-                LogUtil.message("The password for user {} was changed from the command line", username));
-
-        final ObjectFactory objectFactory = new ObjectFactory();
-        final Authenticate authenticate = objectFactory.createEventEventDetailAuthenticate();
-        event.getEventDetail().setAuthenticate(authenticate);
-
-        authenticate.setAction(AuthenticateAction.CHANGE_PASSWORD);
-
-        final AuthenticateOutcome authenticateOutcome = objectFactory.createAuthenticateOutcome();
-        authenticate.setOutcome(authenticateOutcome);
-        authenticateOutcome.setSuccess(wasSuccessful);
-        authenticateOutcome.setDescription(description);
-
-        final User user = objectFactory.createUser();
-        authenticate.setUser(user);
-        user.setName(username);
-
-        // TODO @AT UserDetails appears to be empty for some reason so can't set the user's name on it
-        final UserDetails userDetails = objectFactory.createUserDetails();
-        user.setUserDetails(userDetails);
-
-        // We are running as proc user so try and get the OS user, though that may just be a shared account
-        event.getEventSource().getUser().setId(System.getProperty("user.name"));
-
-        stroomEventLoggingService.log(event);
+                LogUtil.message("The password for user {} was changed from the command line", username),
+                AuthenticateEventAction.builder()
+                        .withAction(AuthenticateAction.CHANGE_PASSWORD)
+                        .withUser(User.builder()
+                                .withName(username)
+                                .build())
+                        .withOutcome(EventLoggingUtil.createOutcome(
+                                AuthenticateOutcome.class,
+                                wasSuccessful,
+                                description))
+                        .build());
     }
 }

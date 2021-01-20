@@ -19,6 +19,8 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
@@ -38,6 +40,9 @@ public class FsDataStoreModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(FsVolumeResourceImpl.class);
+
+        ObjectInfoProviderBinder.create(binder())
+                .bind(FsVolume.class, FsVolumeObjectInfoProvider.class);
 
         ServletBinder.create(binder())
                 .bind(EchoServlet.class);

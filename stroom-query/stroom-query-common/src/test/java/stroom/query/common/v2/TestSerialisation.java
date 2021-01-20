@@ -22,7 +22,6 @@ import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
@@ -73,51 +72,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSerialisation {
     private static DataSource getDataSource() {
-        return new DataSource.Builder()
-                .addFields(new TextField("field1"), new LongField("field2"))
+        return DataSource
+                .builder()
+                .fields(List.of(new TextField("field1"), new LongField("field2")))
                 .build();
     }
 
     private static SearchRequest getSearchRequest() {
-        return new SearchRequest.Builder()
+        return SearchRequest.builder()
                 .key("1234")
-                .query(new Query.Builder()
+                .query(Query.builder()
                         .dataSource(new DocRef("docRefType", "docRefUuid", "docRefName"))
-                        .expression(new ExpressionOperator.Builder(Op.AND)
+                        .expression(ExpressionOperator.builder()
                                 .addTerm("field1", Condition.EQUALS, "value1")
-                                .addOperator(new ExpressionOperator.Builder(Op.AND).build())
                                 .addTerm("field2", Condition.BETWEEN, "value2")
                                 .build())
                         .addParam("param1", "val1")
                         .addParam("param2", "val2")
                         .build())
-                .addResultRequests(new ResultRequest.Builder()
+                .addResultRequests(ResultRequest.builder()
                         .componentId("componentX")
-                        .requestedRange(new OffsetRange.Builder()
+                        .requestedRange(OffsetRange.builder()
                                 .offset(1L)
                                 .length(100L)
                                 .build())
-                        .addMappings(new TableSettings.Builder()
+                        .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
-                                .addFields(new Field.Builder()
+                                .addFields(Field.builder()
                                         .id("id1")
                                         .name("name1")
                                         .expression("expression1")
                                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
                                         .filter(new Filter("include1", "exclude1"))
-                                        .format(new Format.Builder()
+                                        .format(Format.builder()
                                                 .type(Type.NUMBER)
                                                 .settings(new NumberFormatSettings(1, false))
                                                 .build())
                                         .group(1)
                                         .build())
-                                .addFields(new Field.Builder()
+                                .addFields(Field.builder()
                                         .id("id2")
                                         .name("name2")
                                         .expression("expression2")
                                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
                                         .filter(new Filter("include2", "exclude2"))
-                                        .format(new Format.Builder()
+                                        .format(Format.builder()
                                                 .type(Type.DATE_TIME)
                                                 .settings(createDateTimeFormat())
                                                 .build())
@@ -252,7 +251,7 @@ class TestSerialisation {
         if (!unifiedDiff.isEmpty()) {
             System.out.println("\n  Differences exist!");
 
-            System.out.println("");
+            System.out.println();
             unifiedDiff.forEach(diffLine -> {
 
                 final ConsoleColour lineColour;
@@ -290,13 +289,13 @@ class TestSerialisation {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(new Field.Builder()
+        final List<Field> fields = Collections.singletonList(Field.builder()
                 .id("test")
                 .name("test")
                 .expression("${test}")
                 .build());
         final List<String> values = Collections.singletonList("test");
-        final List<Row> rows = Collections.singletonList(new Row.Builder()
+        final List<Row> rows = Collections.singletonList(Row.builder()
                 .groupKey("groupKey")
                 .values(values)
                 .depth(5)
@@ -316,25 +315,25 @@ class TestSerialisation {
 
     private FlatResult getVisResult1() {
         final List<Field> structure = new ArrayList<>();
-        structure.add(new Field.Builder()
+        structure.add(Field.builder()
                 .id("val1")
                 .name("val1")
                 .expression("${val1}")
                 .format(Format.GENERAL)
                 .build());
-        structure.add(new Field.Builder()
+        structure.add(Field.builder()
                 .id("val2")
                 .name("val2")
                 .expression("${val2}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(new Field.Builder()
+        structure.add(Field.builder()
                 .id("val3")
                 .name("val3")
                 .expression("${val3}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(new Field.Builder()
+        structure.add(Field.builder()
                 .id("val4")
                 .name("val4")
                 .expression("${val4}")

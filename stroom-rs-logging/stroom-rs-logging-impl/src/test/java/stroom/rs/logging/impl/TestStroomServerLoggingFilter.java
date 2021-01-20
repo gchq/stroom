@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +28,7 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Random;
@@ -64,6 +67,8 @@ public class TestStroomServerLoggingFilter {
     Random random = new Random();
 
     private Injector injector;
+
+    private AutoCloseable closeable;
 
     TestStroomServerLoggingFilter(){
         injector = Guice.createInjector(new MockRSLoggingModule());
@@ -197,10 +202,17 @@ public class TestStroomServerLoggingFilter {
     @BeforeEach
     void setup(){
         // Handle all the mock creation and injection.
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         filter = new StroomServerLoggingFilterImpl(requestEventLog, config, resourceInfo, request);
         objectMapper = createObjectMapper();
         requestContext.reset();
+    }
+
+    @AfterEach
+    void reset() throws Exception {
+        if (closeable != null){
+            closeable.close();
+        }
     }
 
 

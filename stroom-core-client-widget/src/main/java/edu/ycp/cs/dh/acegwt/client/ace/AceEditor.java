@@ -19,6 +19,7 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
@@ -654,7 +655,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      *               {@link AceAnnotationType} enumeration)
      */
     public void addAnnotation(final int row, final int column, final String text, final AceAnnotationType type) {
-        annotations.push(AceAnnotation.create(row, column, text, type.getName()));
+        final AceAnnotation aceAnnotation = AceAnnotation.create(row, column, text, type.getName());
+//        GWT.log("Adding annotation of type " + type + " to row " + row);
+        annotations.push(aceAnnotation);
     }
 
     /**

@@ -48,7 +48,7 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
         editExpressionPresenter.init(null, null, fields);
         this.originalRule = rule;
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }
@@ -67,7 +67,8 @@ public class RulePresenter extends MyPresenterWidget<RulePresenter.RuleView> {
         }
 
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new ConditionalFormattingRule.Builder()
+        return ConditionalFormattingRule
+                .builder()
                 .id(id)
                 .expression(expression)
                 .hide(getView().isHide())

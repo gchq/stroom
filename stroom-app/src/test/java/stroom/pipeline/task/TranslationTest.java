@@ -173,9 +173,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 final String streamType = feed.isReference() ?
                         StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
-                final QueryData findStreamQueryData = new QueryData.Builder()
+                final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(Op.AND)
+                        .expression(ExpressionOperator.builder()
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
@@ -322,7 +322,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
@@ -390,9 +390,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = pipelines.get(0);
 //        final FeedDoc feed = feeds.get();
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())

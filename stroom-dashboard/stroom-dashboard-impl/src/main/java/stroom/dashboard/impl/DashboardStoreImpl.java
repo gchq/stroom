@@ -176,7 +176,8 @@ class DashboardStoreImpl implements DashboardStore {
                             }
                         }
 
-                        final ComponentConfig newConfig = new ComponentConfig.Builder(componentConfig)
+                        final ComponentConfig newConfig = componentConfig
+                                .copy()
                                 .settings(componentSettings)
                                 .build();
                         newComponents.add(newConfig);
@@ -189,7 +190,7 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     private QueryComponentSettings remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings, final DependencyRemapper dependencyRemapper) {
-        final QueryComponentSettings.Builder builder = new QueryComponentSettings.Builder(queryComponentSettings);
+        final QueryComponentSettings.Builder builder = queryComponentSettings.copy();
 
         builder.dataSource(dependencyRemapper.remap(queryComponentSettings.getDataSource()));
 
@@ -201,7 +202,7 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     private TableComponentSettings remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
-        final TableComponentSettings.Builder builder = new TableComponentSettings.Builder(tableComponentSettings);
+        final TableComponentSettings.Builder builder = tableComponentSettings.copy();
 
         if (tableComponentSettings.getExtractionPipeline() != null &&
                 tableComponentSettings.getExtractionPipeline().getUuid() != null &&
@@ -213,7 +214,7 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     private VisComponentSettings remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {
-        final VisComponentSettings.Builder builder = new VisComponentSettings.Builder(visComponentSettings);
+        final VisComponentSettings.Builder builder = visComponentSettings.copy();
 
         builder.visualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
 
@@ -225,7 +226,7 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     private TextComponentSettings remapTextComponentSettings(final TextComponentSettings textComponentSettings, final DependencyRemapper dependencyRemapper) {
-        final TextComponentSettings.Builder builder = new TextComponentSettings.Builder(textComponentSettings);
+        final TextComponentSettings.Builder builder = textComponentSettings.copy();
         builder.pipeline(dependencyRemapper.remap(textComponentSettings.getPipeline()));
         return builder.build();
     }

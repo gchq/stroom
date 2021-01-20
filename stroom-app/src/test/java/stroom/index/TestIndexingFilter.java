@@ -88,7 +88,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
-        indexFields.add(new IndexField.Builder()
+        indexFields.add(IndexField
+                .builder()
                 .fieldType(IndexFieldType.NUMERIC_FIELD)
                 .fieldName("size")
                 .analyzerType(AnalyzerType.KEYWORD)

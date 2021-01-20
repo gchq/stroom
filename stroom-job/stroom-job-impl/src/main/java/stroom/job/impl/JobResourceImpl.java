@@ -23,9 +23,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import java.util.function.Consumer;
@@ -47,11 +47,12 @@ class JobResourceImpl implements JobResource {
     public ResultPage<Job> list() {
         ResultPage<Job> response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(And.builder()
+                                .build())
+                        .build())
+                .build();
 
         try {
             final FindJobCriteria findJobCriteria = new FindJobCriteria();
@@ -59,9 +60,19 @@ class JobResourceImpl implements JobResource {
             findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
 
             response = jobService.find(findJobCriteria);
-            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), response.getPageResponse(), null);
+            documentEventLog.search(
+                    "ListJobs",
+                    query,
+                    Job.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    "ListJobs",
+                    query,
+                    Job.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
         return response;

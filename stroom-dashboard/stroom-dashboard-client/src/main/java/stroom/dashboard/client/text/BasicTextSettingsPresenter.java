@@ -88,9 +88,7 @@ public class BasicTextSettingsPresenter
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getTableSettings().getFields();
             if (fields != null && fields.size() > 0) {
-                for (final Field field : fields) {
-                    allFields.add(field);
-                }
+                allFields.addAll(fields);
             }
         }
     }
@@ -111,7 +109,7 @@ public class BasicTextSettingsPresenter
         setTableList(list);
 
         TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
-        final TextComponentSettings.Builder builder = new TextComponentSettings.Builder(settings);
+        final TextComponentSettings.Builder builder = settings.copy();
         setTableId(settings.getTableId());
 
         updateFieldNames(getView().getTable());
@@ -166,11 +164,12 @@ public class BasicTextSettingsPresenter
         ComponentConfig result = super.write(componentConfig);
         final TextComponentSettings oldSettings = (TextComponentSettings) result.getSettings();
         final TextComponentSettings newSettings = writeSettings(oldSettings);
-        return new ComponentConfig.Builder(result).settings(newSettings).build();
+        return result.copy().settings(newSettings).build();
     }
 
     private TextComponentSettings writeSettings(final TextComponentSettings settings) {
-        return new TextComponentSettings.Builder(settings)
+        return settings
+                .copy()
                 .tableId(getTableId())
                 .streamIdField(getView().getStreamIdField())
                 .partNoField(getView().getPartNoField())

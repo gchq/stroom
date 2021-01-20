@@ -24,7 +24,7 @@ import java.io.Serializable;
 abstract class AbstractGenerator implements Generator, Serializable, Comparable<Generator> {
     private static final long serialVersionUID = 513621715143449935L;
 
-    private static final ValComparator COMPARATOR = new ValComparator();
+    private static final AutoComparator COMPARATOR = new AutoComparator();
 
     @Override
     public final int compareTo(final Generator gen) {

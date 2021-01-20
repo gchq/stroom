@@ -20,7 +20,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     private SearchConfig searchConfig = new SearchConfig();
     private int statisticAggregationBatchSize = 1000000;
     private StroomDuration maxProcessingAge;
-    private CacheConfig dataSourceCache = new CacheConfig.Builder()
+    private CacheConfig dataSourceCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

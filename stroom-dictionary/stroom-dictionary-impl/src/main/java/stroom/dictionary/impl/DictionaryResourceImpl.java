@@ -139,7 +139,7 @@ class DictionaryResourceImpl implements DictionaryResource {
     }
 
     private DocRef getDocRef(final String pipelineId) {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .uuid(pipelineId)
                 .type(DictionaryDoc.DOCUMENT_TYPE)
                 .build();

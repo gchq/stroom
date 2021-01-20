@@ -280,43 +280,6 @@ public class DataGridUtil {
         });
     }
 
-//    public static <T_ROW> Builder<T_ROW> builder(final DataGridView<T_ROW> view) {
-//        return new Builder<>(view);
-//    }
-//
-//    public static class Builder<T_ROW> {
-//
-//        private final DataGridView<T_ROW> view;
-//
-//        public Builder(final DataGridView<T_ROW> view) {
-//            this.view = view;
-//        }
-//
-//        public Builder<T_ROW> addResizableColumn(
-//                final Column<T_ROW, ?> column,
-//                final String name,
-//                final int width) {
-//            view.addResizableColumn(column, name, width);
-//            return this;
-//        }
-//
-//        public Builder<T_ROW> addColumn(
-//                final Column<T_ROW, ?> column,
-//                final String name,
-//                final int width) {
-//            view.addColumn(column, name, width);
-//            return this;
-//        }
-//
-//        public Builder<T_ROW> addEndColumn() {
-//            view.addEndColumn(new EndColumn<>());
-//            return this;
-//        }
-//
-//
-//    }
-
-
     // There ought to be a better way of doing this so we don't have to have so many
     // methods to initiate the builder
 

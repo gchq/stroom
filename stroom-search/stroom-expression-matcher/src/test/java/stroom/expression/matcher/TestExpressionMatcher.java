@@ -56,7 +56,7 @@ class TestExpressionMatcher {
 
     @Test
     void testMatchAll() {
-        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).build(), true);
+        test(createAttributeMap(), ExpressionOperator.builder().build(), true);
     }
 
     @Test
@@ -66,7 +66,7 @@ class TestExpressionMatcher {
 
     @Test
     void testMatchNone2() {
-        test(createAttributeMap(), new ExpressionOperator.Builder(Op.AND).enabled(false).build(), false);
+        test(createAttributeMap(), ExpressionOperator.builder().enabled(false).build(), false);
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
@@ -75,7 +75,7 @@ class TestExpressionMatcher {
     }
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(op);
         builder.addTerm(FEED_NAME, Condition.EQUALS, feedName);
         return builder.build();
     }

@@ -162,7 +162,7 @@ class OpenIdService {
             throw new BadRequestException("Redirect URI is not allowed");
         }
 
-        return new TokenResponse.Builder()
+        return TokenResponse.builder()
                 .idToken(accessCodeRequest.getToken())
                 .build();
     }

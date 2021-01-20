@@ -50,7 +50,7 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter {
                     .map(DocRef::getName)
                     .collect(Collectors.joining(","));
 
-            final Builder builder = new Builder(Op.AND);
+            final Builder builder = ExpressionOperator.builder();
             for (final String field : fields) {
                 builder.addTerm(field, Condition.IN, filteredFeeds);
             }

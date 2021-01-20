@@ -109,7 +109,7 @@ class TestStreamDumpTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();

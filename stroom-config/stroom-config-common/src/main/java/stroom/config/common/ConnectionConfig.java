@@ -135,16 +135,24 @@ public class ConnectionConfig extends AbstractConfig {
                 '}';
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String className = "com.mysql.cj.jdbc.Driver";
         private String url;
         private String user;
         private String password;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final ConnectionConfig connectionConfig) {
+        private Builder(final ConnectionConfig connectionConfig) {
             className = connectionConfig.className;
             url = connectionConfig.url;
             user = connectionConfig.user;
