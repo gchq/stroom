@@ -610,33 +610,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
        search(typeId, query, resultType, pageResponse, null, ex);
     }
 
-//    @Override
-//    public void searchSummary(final BaseCriteria criteria, final Query query, final String resultType, final BaseResultList<?> results,
-//                              final Throwable ex) {
-//        securityContext.insecure(() -> {
-//            try {
-//                final Event event = createAction(criteria.getClass().getSimpleName(),
-//                        "Finding Summary " + resultType, null);
-//                final Search search = new Search();
-//                event.getEventDetail().setSearch(search);
-//                search.setQuery(query);
-//
-//                if (results != null && results.getPageResponse() != null) {
-//                    final PageResponse pageResponse = results.getPageResponse();
-//                    final ResultPage resultPage = getResultPage(pageResponse);
-//                    search.setResultPage(resultPage);
-//                    if (pageResponse.getTotal() != null) {
-//                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
-//                    }
-//                }
-//
-//                search.setOutcome(EventLoggingUtil.createOutcome(ex));
-//                eventLoggingService.log(event);
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("Unable to doSearchSummary", e);
-//            }
-//        });
-//    }
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
         ResultPage resultPage = new ResultPage();
@@ -645,37 +618,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return resultPage;
     }
 
-//    private Event createAction(final String typeId, final String description, final java.lang.Object object) {
-//        final StringBuilder desc = new StringBuilder(description);
-//        if (object != null) {
-//            final String objectType = getObjectType(object);
-//            if (objectType != null) {
-//                desc.append(" ");
-//                desc.append(objectType);
-//            }
-//
-//            final String objectName = getObjectName(object);
-//            if (objectName != null) {
-//                desc.append(" \"");
-//                desc.append(objectName);
-//                desc.append("\"");
-//            }
-//
-//            final String objectId = getObjectId(object);
-//            if (objectId != null) {
-//                desc.append(" id=");
-//                desc.append(objectId);
-//            }
-//        }
-//
-//        return eventLoggingService.createAction(typeId, desc.toString());
-//    }
-//
-//    private Event createAction(final String typeId, final String description, final String objectType,
-//                               final String objectName) {
-//        final String desc = description + " " + objectType + " \"" + objectName;
-//        return eventLoggingService.createAction(typeId, desc);
-//    }
 
     private String getObjectType(final java.lang.Object object) {
         if (object instanceof DocRef) {
