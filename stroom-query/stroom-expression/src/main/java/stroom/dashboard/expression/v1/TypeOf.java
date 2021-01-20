@@ -24,14 +24,14 @@ import java.text.ParseException;
         name = TypeOf.NAME,
         commonCategory = FunctionCategory.TYPE_CHECKING,
         commonReturnType = Val.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The name of the data type of the value, e.g. 'null', 'error', 'string', etc.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Determine the data type of the passed value.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "The value to find the type of.",
+                                argType = Val.class)
                 }))
 class TypeOf extends AbstractFunction implements Serializable {
     static final String NAME = "typeOf";

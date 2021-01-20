@@ -408,10 +408,22 @@ public class FunctionDefinitionUtil {
                         final String argName = arg.isVarargs()
                                 ? arg.getName() + "1...N"
                                 : arg.getName();
+                        final StringBuilder descriptionBuilder = new StringBuilder();
+                        descriptionBuilder.append(arg.getDescription());
+                        if (!arg.getAllowedValues().isEmpty()) {
+                            if (descriptionBuilder.length() > 0) {
+                                descriptionBuilder.append(" ");
+                            }
+                            descriptionBuilder.append("Allowed values: ");
+                            descriptionBuilder.append(arg.getAllowedValues()
+                                    .stream()
+                                    .map(str -> "\"" + str + "\"")
+                                    .collect(Collectors.joining(", ")));
+                        }
                         tableBuilder.addRow(
                                 argName,
                                 convertType(arg.getArgType()),
-                                arg.getDescription());
+                                descriptionBuilder.toString());
                     });
             if (signature.getReturnType() != null) {
                 if (!signature.getArgs().isEmpty()) {

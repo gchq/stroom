@@ -12,7 +12,8 @@ public enum FunctionCategory {
     STRING("String"),
     TYPE_CHECKING("Type Checking"),
     URI("URI"),
-    VALUE("Value");
+    VALUE("Value"),
+    ;
 
     private final String name;
 

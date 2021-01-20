@@ -23,15 +23,14 @@ import java.io.Serializable;
         name = UpperCase.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The string in upper case.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Convert the supplied string to upper case.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "value",
+                                description = "The string to convert to upper case.",
+                                argType = ValString.class) }))
 class UpperCase extends AbstractStringFunction implements Serializable {
     static final String NAME = "upperCase";
     private static final long serialVersionUID = -305845496003936297L;

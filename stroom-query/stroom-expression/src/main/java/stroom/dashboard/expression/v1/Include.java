@@ -23,15 +23,21 @@ import java.io.Serializable;
         name = Include.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The input value if one of the patterns matches it, otherwise null.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "If the supplied input string matches one of the supplied regex patterns then return " +
+                        "the input string, otherwise return null.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input value to test against.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern",
+                                description = "The regex pattern to test against the input string.",
+                                argType = ValString.class,
+                                isVarargs = true,
+                                minVarargsCount = 1)}))
 class Include extends AbstractIncludeExclude implements Serializable {
     static final String NAME = "include";
     private static final long serialVersionUID = -305845496003936297L;

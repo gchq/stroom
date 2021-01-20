@@ -159,6 +159,7 @@ public class FunctionSignature {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Arg {
         @JsonProperty
         private final String name;
@@ -170,18 +171,22 @@ public class FunctionSignature {
         private final int minVarargsCount;
         @JsonProperty
         private final String description;
+        @JsonProperty
+        private final List<String> allowedValues;
 
         @JsonCreator
         public Arg(@JsonProperty("name") final String name,
                    @JsonProperty("argType") final Type argType,
                    @JsonProperty("isVarargs") final boolean isVarargs,
                    @JsonProperty("minVarargsCount") final int minVarargsCount,
-                   @JsonProperty("description") final String description) {
+                   @JsonProperty("description") final String description,
+                   @JsonProperty("allowedValues") final List<String> allowedValues) {
             this.name = name;
             this.argType = argType;
             this.isVarargs = isVarargs;
             this.minVarargsCount = minVarargsCount;
             this.description = description;
+            this.allowedValues = allowedValues;
         }
 
         public String getName() {
@@ -204,6 +209,10 @@ public class FunctionSignature {
             return description;
         }
 
+        public List<String> getAllowedValues() {
+            return allowedValues;
+        }
+
         @Override
         public String toString() {
             return "Arg{" +
@@ -212,6 +221,7 @@ public class FunctionSignature {
                     ", isVarargs=" + isVarargs +
                     ", minVarargsCount=" + minVarargsCount +
                     ", description='" + description + '\'' +
+                    ", allowedValues=" + allowedValues +
                     '}';
         }
 
@@ -220,7 +230,12 @@ public class FunctionSignature {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final Arg arg = (Arg) o;
-            return isVarargs == arg.isVarargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && Objects.equals(argType, arg.argType) && Objects.equals(description, arg.description);
+            return isVarargs == arg.isVarargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, argType, isVarargs, minVarargsCount, description, allowedValues);
         }
     }
 

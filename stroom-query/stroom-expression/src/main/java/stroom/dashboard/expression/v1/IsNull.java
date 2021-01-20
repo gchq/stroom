@@ -23,14 +23,14 @@ import java.io.Serializable;
         name = IsNull.NAME,
         commonCategory = FunctionCategory.TYPE_CHECKING,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "True if value is null.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Checks if the passed value has a null data type.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
                 }))
 class IsNull extends AbstractIsFunction implements Serializable {
     static final String NAME = "isNull";

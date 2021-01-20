@@ -24,15 +24,15 @@ import java.time.LocalDateTime;
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
         commonReturnType = ValLong.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Rounds the supplied time up to the start of the next day.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "time",
+                                description = "The time to round in milliseconds since the epoch or as a string " +
+                                        "formatted using the default date format.",
+                                argType = Val.class)}))
 class CeilingDay extends RoundDate {
     static final String NAME = "ceilingDay";
     private static final Calc CALC = new Calc();

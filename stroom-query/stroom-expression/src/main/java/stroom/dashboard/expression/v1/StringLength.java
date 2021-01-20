@@ -24,15 +24,14 @@ import java.text.ParseException;
         name = StringLength.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValInteger.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The length of the string in characters.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Return the length of the provided string.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "input",
+                                description = "The string to find the length of.",
+                                argType = ValString.class) }))
 class StringLength extends AbstractFunction implements Serializable {
     static final String NAME = "stringLength";
     private static final long serialVersionUID = -305845496003936297L;

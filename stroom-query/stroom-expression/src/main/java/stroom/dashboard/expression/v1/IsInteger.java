@@ -23,14 +23,14 @@ import java.io.Serializable;
         name = IsInteger.NAME,
         commonCategory = FunctionCategory.TYPE_CHECKING,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "True if value is an integer.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Checks if the passed value has an integer data type.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
                 }))
 class IsInteger extends AbstractIsFunction implements Serializable {
     static final String NAME = "isInteger";

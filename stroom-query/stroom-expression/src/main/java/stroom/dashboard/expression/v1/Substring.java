@@ -27,14 +27,22 @@ import java.text.ParseException;
         name = Substring.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The requested sub-string.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Extract a sub-string based on the start/end index values.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input string to extract a sub-string from.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "startIndex",
+                                description = "The index of the start of the sub-string range (zero based, inclusive).",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "endIndex",
+                                description = "The index of the end of the sub-string range (zero based, exclusive).",
+                                argType = ValString.class),
                 }))
 class Substring extends AbstractFunction implements Serializable {
     static final String NAME = "substring";

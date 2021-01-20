@@ -23,15 +23,14 @@ import java.io.Serializable;
         name = LowerCase.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The string in lower case.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Convert the supplied string to lower case.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "value",
+                                description = "The string to convert to lower case.",
+                                argType = ValString.class) }))
 class LowerCase extends AbstractStringFunction implements Serializable {
     static final String NAME = "lowerCase";
     private static final long serialVersionUID = -305845496003936297L;

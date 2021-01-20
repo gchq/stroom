@@ -27,14 +27,19 @@ import java.text.ParseException;
         name = SubstringAfter.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The requested sub-string.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Extract a sub-string from input after the first occurrence of delimiter. " +
+                        "e.g. substringAfter('key=>value', '=>') returns 'value'.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input string to extract a sub-string from.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "delimiter",
+                                description = "The string to find in input",
+                                argType = ValString.class),
                 }))
 class SubstringAfter extends AbstractFunction implements Serializable {
     static final String NAME = "substringAfter";

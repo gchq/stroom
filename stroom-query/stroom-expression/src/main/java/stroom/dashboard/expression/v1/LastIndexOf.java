@@ -27,14 +27,19 @@ import java.text.ParseException;
         name = LastIndexOf.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValInteger.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The last position of subString.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Finds the last position (zero based) of subString in inputString or -1 if it cannot be found. " +
+                        "Uses a simple literal match.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "inputString",
+                                description = "The string to find subString in.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "subString",
+                                description = "The string to find in inputString.",
+                                argType = ValString.class)
                 }))
 class LastIndexOf extends AbstractFunction implements Serializable {
     static final String NAME = "lastIndexOf";

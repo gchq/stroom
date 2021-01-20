@@ -25,15 +25,18 @@ import java.util.regex.Pattern;
         name = Match.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "True if pattern matches input",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Tests an input string using a regular expression pattern.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                        @FunctionArg(
+                                name = "input",
+                                description = "The string to test using the regex pattern.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern",
+                                description = "The regex pattern to test with.",
+                                argType = ValString.class) }))
 class Match extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "match";
     private static final long serialVersionUID = -305845496003936297L;

@@ -25,15 +25,14 @@ import java.time.temporal.ChronoUnit;
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
         commonReturnType = ValLong.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Rounds the supplied time up or down to the nearest start of a second.",
+                args = @FunctionArg(
+                        name = "time",
+                        description = "The time to round in milliseconds since the epoch or as a string " +
+                                "formatted using the default date format.",
+                        argType = Val.class)))
 class RoundSecond extends RoundDate {
     static final String NAME = "roundSecond";
     private static final Calc CALC = new Calc();

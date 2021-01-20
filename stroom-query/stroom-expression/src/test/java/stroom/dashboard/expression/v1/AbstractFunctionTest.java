@@ -111,8 +111,11 @@ public abstract class AbstractFunctionTest<T extends Function> {
     }
 
     private String argToString(final Param param) {
-       return "[" + param.getClass().getSimpleName() +
-               ": " + param.toString() + "]";
+        final String val = param instanceof ValString
+                ? "'" + param.toString() + "'"
+                : param.toString();
+        return "[" + param.getClass().getSimpleName() +
+                ": " + val + "]";
     }
 
     static class TestCase {
@@ -147,6 +150,34 @@ public abstract class AbstractFunctionTest<T extends Function> {
             return new TestCase(
                     testVariantName,
                     expectedReturn,
+                    Arrays.asList(params),
+                    Collections.emptyList());
+        }
+
+        /**
+         * Variant for where all args and return are ValString
+         */
+        public static TestCase of(final String testVariantName,
+                                  final String expectedReturn,
+                                  final String... params) {
+            return new TestCase(
+                    testVariantName,
+                    ValString.create(expectedReturn),
+                    Arrays.stream(params)
+                            .map(ValString::create)
+                            .collect(Collectors.toList()),
+                    Collections.emptyList());
+        }
+
+        /**
+         * Variant for where the return value is a ValString
+         */
+        public static TestCase of(final String testVariantName,
+                                  final String expectedReturn,
+                                  final Param... params) {
+            return new TestCase(
+                    testVariantName,
+                    ValString.create(expectedReturn),
                     Arrays.asList(params),
                     Collections.emptyList());
         }

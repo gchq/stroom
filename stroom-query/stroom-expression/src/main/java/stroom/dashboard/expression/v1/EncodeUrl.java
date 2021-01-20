@@ -23,14 +23,15 @@ import java.io.Serializable;
         name = EncodeUrl.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The input value in URL encoded form.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Encodes a URL or other string using standard URL encoding, e.g. replacing a space " +
+                        "with '%20'.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "value",
+                                description = "The URL or string to encode.",
+                                argType = ValString.class)
                 }))
 class EncodeUrl extends AbstractStringFunction implements Serializable {
     static final String NAME = "encodeUrl";

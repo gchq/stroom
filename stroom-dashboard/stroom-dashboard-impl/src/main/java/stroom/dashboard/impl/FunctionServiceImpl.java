@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -138,7 +139,8 @@ public class FunctionServiceImpl implements FunctionService {
                     convertType(functionArg.argType()),
                     functionArg.isVarargs(),
                     functionArg.minVarargsCount(),
-                    convertString(functionArg.description()));
+                    convertString(functionArg.description()),
+                    convertStringArray(functionArg.allowedValues()));
         } else {
             return null;
         }
@@ -151,6 +153,14 @@ public class FunctionServiceImpl implements FunctionService {
                     : str;
         } else {
             return null;
+        }
+    }
+
+    private static List<String> convertStringArray(final String[] arr) {
+        if (arr != null) {
+            return Arrays.asList(arr);
+        } else {
+            return Collections.emptyList();
         }
     }
 
