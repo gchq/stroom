@@ -57,8 +57,7 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
 
     @Override
     public Boolean delete(final Integer id) {
-        throw new RuntimeException("This operation went badly wrong - fortunately only to test failure logging!");
-//        return indexVolumeService.delete(id);
+        return indexVolumeService.delete(id);
     }
 
     @Override
