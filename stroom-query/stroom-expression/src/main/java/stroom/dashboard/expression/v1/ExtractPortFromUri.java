@@ -27,14 +27,16 @@ import java.net.URISyntaxException;
         name = ExtractPortFromUri.NAME,
         commonCategory = FunctionCategory.URI,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The port from the URI or null if not found or the URI is mall-formed. e.g. " +
+                ExtractPortFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                "p1=v1&p2=v2#more-details') returns '8080'.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Extract the port component from a URI.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The URI to extract the port from.",
+                                argType = ValString.class)
                 }))
 class ExtractPortFromUri extends ExtractionFunction {
     static final String NAME = "extractPortFromUri";

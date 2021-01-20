@@ -12,7 +12,18 @@ class TestAny extends AbstractFunctionTest<Any> {
     @Override
     Stream<TestCase> getTestCases() {
         return Stream.of(
-               // TODO @AT
+                TestCase.ofAggregate(
+                        "1",
+                        ValLong.create(3),
+                        ValLong.create(1),
+                        ValLong.create(2),
+                        ValLong.create(3)),
+                TestCase.ofAggregate(
+                        "2",
+                        ValLong.create(1),
+                        ValLong.create(3),
+                        ValLong.create(2),
+                        ValLong.create(1))
         );
     }
 }

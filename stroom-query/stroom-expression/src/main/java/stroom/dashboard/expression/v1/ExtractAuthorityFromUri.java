@@ -27,14 +27,16 @@ import java.net.URISyntaxException;
         name = ExtractAuthorityFromUri.NAME,
         commonCategory = FunctionCategory.URI,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The authority from the URI or null if not found or the URI is mall-formed. e.g. " +
+                ExtractAuthorityFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                "p1=v1&p2=v2#more-details') returns 'foo:bar@w1.superman.com:8080'.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Extract the authority component from a URI.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The URI to extract the authority from.",
+                                argType = ValString.class)
                 }))
 class ExtractAuthorityFromUri extends ExtractionFunction {
     static final String NAME = "extractAuthorityFromUri";

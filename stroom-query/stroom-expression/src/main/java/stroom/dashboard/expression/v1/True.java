@@ -21,15 +21,10 @@ package stroom.dashboard.expression.v1;
         name = True.NAME,
         commonCategory = FunctionCategory.VALUE,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The boolean true.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Returns the boolean true.",
+                args = {} ))
 class True extends AbstractStaticFunction {
     static final String NAME = "true";
 

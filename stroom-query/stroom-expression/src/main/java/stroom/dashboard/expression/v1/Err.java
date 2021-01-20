@@ -21,15 +21,10 @@ package stroom.dashboard.expression.v1;
         name = Err.NAME,
         commonCategory = FunctionCategory.VALUE,
         commonReturnType = ValErr.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "An error.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Returns an error.",
+                args = {} ))
 class Err extends AbstractStaticFunction {
     static final String NAME = "err";
 

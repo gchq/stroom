@@ -10,6 +10,8 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
@@ -165,7 +167,7 @@ public class FunctionDefinitionUtil {
 
             // Limit the width of the tooltip
             final Builder builder = TooltipUtil.builder(safeStylesBuilder ->
-                            safeStylesBuilder.appendTrustedString("max-width:500px;"))
+                            safeStylesBuilder.appendTrustedString("max-width:600px;"))
                     .addHeading(buildSignatureStr(signature))
                     .addSeparator();
 
@@ -173,7 +175,7 @@ public class FunctionDefinitionUtil {
                 builder.addSafeHtml(TooltipUtil.styledParagraph(
                         signature.getDescription(),
                         safeStylesBuilder ->
-                                safeStylesBuilder.appendTrustedString("white-space: pre-wrap;")));
+                                safeStylesBuilder.appendTrustedString("white-space: pre-wrap !important;")));
             }
 
             final boolean addedArgs = addArgsBlockToInfo(signature, builder);
@@ -403,6 +405,10 @@ public class FunctionDefinitionUtil {
         builder.addThreeColTable(tableBuilder -> {
             tableBuilder.addHeaderRow("Parameter", "Type", "Description");
 
+            final SafeStyles cellStyles = new SafeStylesBuilder()
+                    .appendTrustedString("white-space: pre-wrap !important;")
+                    .toSafeStyles();
+
             signature.getArgs()
                     .forEach(arg -> {
                         final String argName = arg.isVarargs()
@@ -423,7 +429,9 @@ public class FunctionDefinitionUtil {
                         tableBuilder.addRow(
                                 argName,
                                 convertType(arg.getArgType()),
-                                descriptionBuilder.toString());
+                                descriptionBuilder.toString(),
+                                false,
+                                cellStyles);
                     });
             if (signature.getReturnType() != null) {
                 if (!signature.getArgs().isEmpty()) {
@@ -432,7 +440,9 @@ public class FunctionDefinitionUtil {
                 tableBuilder.addRow(
                         "Return",
                         convertType(signature.getReturnType()),
-                        signature.getReturnDescription());
+                        signature.getReturnDescription(),
+                        false,
+                        cellStyles);
                 addedContent.set(true);
             }
             return tableBuilder.build();

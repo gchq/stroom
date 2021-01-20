@@ -17,6 +17,7 @@
 package stroom.widget.tooltip.client.presenter;
 
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -476,9 +477,15 @@ public final class TooltipUtil {
                                     final SafeStyles safeStyles) {
             Objects.requireNonNull(col1);
             final SafeHtml safeCol1 = objectToSafeHtml(col1);
-            final String cellStyles = safeStyles != null
-                    ? safeStyles.asString()
-                    : "padding-right: 8px;";
+
+            final SafeStylesBuilder cellStylesBuilder = new SafeStylesBuilder()
+                    .paddingRight(8, Unit.PX);
+
+            if (safeStyles != null) {
+                cellStylesBuilder.append(safeStyles);
+            }
+
+            final String cellStyles = cellStylesBuilder.toSafeStyles().asString();
 
             if (col2 != null || col3 != null) {
                 final SafeHtml safeCol2 = objectToSafeHtml(col2);
@@ -495,7 +502,7 @@ public final class TooltipUtil {
                             .appendHtmlConstant("<td style=\"" + cellStyles + "\">")
                             .append(safeCol2)
                             .appendHtmlConstant("</td>")
-                            .appendHtmlConstant("<td>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles + "\">")
                             .append(safeCol3)
                             .appendHtmlConstant("</td></tr>");
                 }

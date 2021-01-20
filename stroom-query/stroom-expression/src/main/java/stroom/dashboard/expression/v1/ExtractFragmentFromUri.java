@@ -27,14 +27,16 @@ import java.net.URISyntaxException;
         name = ExtractFragmentFromUri.NAME,
         commonCategory = FunctionCategory.URI,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "The fragment from the URI or null if not found or the URI is mall-formed. e.g. " +
+                ExtractFragmentFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                "p1=v1&p2=v2#more-details') returns 'more-details'.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Extract the fragment component from a URI.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The URI to extract the fragment from.",
+                                argType = ValString.class)
                 }))
 class ExtractFragmentFromUri extends ExtractionFunction {
     static final String NAME = "extractFragmentFromUri";

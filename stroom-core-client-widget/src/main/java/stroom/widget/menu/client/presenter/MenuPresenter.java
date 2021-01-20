@@ -47,7 +47,7 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
                         false,
                         MENU_RESOURCES,
                         50,
-                        500));
+                        600));
 
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
             @Override

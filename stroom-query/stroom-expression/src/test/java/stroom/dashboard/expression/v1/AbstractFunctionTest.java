@@ -184,15 +184,18 @@ public abstract class AbstractFunctionTest<T extends Function> {
 
         public static TestCase ofAggregate(final String testVariantName,
                                            final Val expectedReturn,
-                                           final List<Val> values) {
+                                           final List<Val> values,
+                                           final Param... extraParams) {
 
-            FieldIndex fieldIndex = FieldIndex.forFields("field1");
+//            FieldIndex fieldIndex = FieldIndex.forFields("field1");
             Ref ref = new Ref("field1", 0);
+            List<Param> params = Stream.concat(Stream.of(ref), Arrays.stream(extraParams))
+                    .collect(Collectors.toList());
 
             return new TestCase(
                     testVariantName,
                     expectedReturn,
-                    Collections.singletonList(ref),
+                    params,
                     values);
         }
 

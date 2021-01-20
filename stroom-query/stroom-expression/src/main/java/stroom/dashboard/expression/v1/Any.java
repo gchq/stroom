@@ -22,14 +22,14 @@ import java.io.Serializable;
         name = Any.NAME,
         commonCategory = FunctionCategory.SELECTION,
         commonReturnType = Val.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "One of the supplied values.",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Any one value from the supplied values. The value returned is indeterminate.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class)
                 }))
 public class Any extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "any";
