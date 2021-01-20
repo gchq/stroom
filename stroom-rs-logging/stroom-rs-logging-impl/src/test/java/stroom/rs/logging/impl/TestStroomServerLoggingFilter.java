@@ -1,7 +1,15 @@
 package stroom.rs.logging.impl;
 
+import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.mock.MockStroomEventLoggingService;
+
+import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.util.shared.EventLogged;
 import stroom.util.shared.HasId;
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.StroomLoggingOperationType;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -11,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.jupiter.api.AfterAll;
+import event.logging.Query;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,14 +31,13 @@ import org.mockito.MockitoAnnotations;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,8 +47,14 @@ public class TestStroomServerLoggingFilter {
 
     private MockContainerRequestContext requestContext = new MockContainerRequestContext();
 
+    private SecurityContext securityContext = new MockSecurityContext();
+
     @Mock
+    private DocumentEventLog documentEventLog;
+
     private RequestEventLog requestEventLog;
+
+    private StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
 
     @Mock
     private ResourceInfo resourceInfo;
@@ -52,13 +65,28 @@ public class TestStroomServerLoggingFilter {
     private RequestLoggingConfig config = new RequestLoggingConfig();
 
     @Captor
-    private ArgumentCaptor<RequestInfo> requestInfoArgumentCaptor;
+    private ArgumentCaptor<Object> objectCaptor;
 
     @Captor
-    private ArgumentCaptor<Object> responseEntityArgumentCaptor;
+    private ArgumentCaptor<Object> outcomeObjectCaptor;
 
     @Captor
-    private ArgumentCaptor<Exception> exceptionArgumentCaptor;
+    private ArgumentCaptor<String> listContentCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> eventTypeIdCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> verbCaptor;
+
+    @Captor
+    private ArgumentCaptor<Throwable> throwableCaptor;
+
+    @Captor
+    private ArgumentCaptor<Query> queryCaptor;
+
+    @Captor
+    private ArgumentCaptor<PageResponse> pageResponseCaptor;
 
     StroomServerLoggingFilterImpl filter;
 
@@ -86,13 +114,44 @@ public class TestStroomServerLoggingFilter {
         filter.filter(requestContext);
         filter.aroundWriteTo(writerInterceptorContext);
 
+        Mockito.verify(documentEventLog).view(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
 
+        Object loggedObject = objectCaptor.getValue();
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
 
-        Mockito.verify(requestEventLog).log(requestInfoArgumentCaptor.capture(), responseEntityArgumentCaptor.capture());
+        assertThat(loggedObject).isNull();
+        assertThat(eventTypeId).isEqualTo("TestResource.read");
+        assertThat(descriptionVerb).isNull();
+        assertThat(exception).isNull();
+    }
 
-        StroomLoggingOperationType operationType = requestInfoArgumentCaptor.getValue().getContainerResourceInfo().getOperationType();
+    @Test
+    public void testLogAlternativeLogMethod() throws Exception {
+        Method method = TestResource.class.getMethod("findAndDestroy");
 
-        assertThat(StroomLoggingOperationType.VIEW).isEqualTo(operationType);
+        //Set up resource and method
+        Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
+
+        Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
+
+        filter.filter(requestContext);
+        filter.aroundWriteTo(writerInterceptorContext);
+
+        Mockito.verify(documentEventLog).delete(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
+
+        Object loggedObject = objectCaptor.getValue();
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
+
+        assertThat(loggedObject).isNull();
+        assertThat(eventTypeId).isEqualTo("TestResource.findAndDestroy");
+        assertThat(descriptionVerb).isNull();
+        assertThat(exception).isNull();
     }
 
     @Test
@@ -122,35 +181,77 @@ public class TestStroomServerLoggingFilter {
         filter.filter(requestContext);
         filter.aroundWriteTo(writerInterceptorContext);
 
-        Mockito.verify(requestEventLog).log(requestInfoArgumentCaptor.capture(), responseEntityArgumentCaptor.capture());
+        Mockito.verify(documentEventLog).create(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
 
-        StroomLoggingOperationType operationType = requestInfoArgumentCaptor.getValue().getContainerResourceInfo().getOperationType();
-        assertThat(StroomLoggingOperationType.CREATE).isEqualTo(operationType);
+        Object loggedObject = objectCaptor.getValue();
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
 
-        Object responseObj = responseEntityArgumentCaptor.getValue();
-        assertThat(responseObj).isInstanceOf(TestObj.class);
-        if (responseObj instanceof TestObj){
-            TestObj entity = (TestObj) responseObj;
-            assertThat(entity.getId()).isEqualTo(responseId);
-        }
-        Object requestObj = requestInfoArgumentCaptor.getValue();
-        assertThat(requestObj).isInstanceOf(RequestInfo.class);
-        if (requestObj instanceof RequestInfo){
-            RequestInfo reqInfo = (RequestInfo) requestObj;
-            Object requestEntity = reqInfo.getRequestObj();
-            assertThat(requestEntity).isInstanceOf(TestObj.class);
-            if (requestEntity instanceof TestObj){
-                TestObj entity = (TestObj) requestEntity;
-                assertThat(entity.getId()).isEqualTo(requestId);
-            }
-        }
+        assertThat(loggedObject).isInstanceOf(TestObj.class);
+        TestObj entity = (TestObj) loggedObject;
+        assertThat(entity.getId()).isEqualTo(responseId);
 
+        assertThat(eventTypeId).isEqualTo("TestResource.create");
+        assertThat(descriptionVerb).isNull();
+        assertThat(exception).isNull();
+    }
 
+    @Test
+    public void testLogWithEntityAndAlternativeDescription() throws Exception {
+        Method method = TestResource.class.getMethod("update", TestObj.class);
+
+        //Set up resource and method
+        Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
+        Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
+
+        int run = random.nextInt();
+        String requestId = "request-" + run;
+        String responseId = "response-" + run;
+
+        TestObj requestTestObj = new TestObj(requestId);
+        TestObj responseTestObj = new TestObj(responseId);
+        //Set up Stream containing serialized object
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        objectMapper.writeValue(bos, requestTestObj);
+        bos.flush();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        requestContext.setEntityStream(byteArrayInputStream);
+        Mockito.when(writerInterceptorContext.getEntity()).thenReturn(responseTestObj);
+
+        filter.filter(requestContext);
+        filter.aroundWriteTo(writerInterceptorContext);
+
+        Mockito.verify(documentEventLog).update(objectCaptor.capture(), outcomeObjectCaptor.capture(),
+                eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
+
+        Object loggedObject = objectCaptor.getValue();
+        Object afterLoggedObject = outcomeObjectCaptor.getValue();
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
+
+        assertThat(loggedObject).isInstanceOf(TestObj.class);
+
+        TestObj entity = (TestObj) loggedObject;
+        assertThat(entity.getId()).isEqualTo(requestId);
+
+        assertThat(afterLoggedObject).isInstanceOf(TestObj.class);
+        entity = (TestObj) afterLoggedObject;
+        assertThat(entity.getId()).isEqualTo(responseId);
+
+        assertThat(eventTypeId).isEqualTo("TestingUpdate");
+        assertThat(descriptionVerb).isEqualTo("Testing");
+        assertThat(exception).isNull();
     }
 
     @Test
     public void testLogWithException() throws Exception {
-        Method method = TestResource.class.getMethod("find", Integer.class);
+        Method method = TestResource.class.getMethod("random", Integer.class);
 
         //Set up resource and method
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
@@ -167,7 +268,7 @@ public class TestStroomServerLoggingFilter {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
-        ((MockURIInfo)requestContext.getUriInfo()).setId(pathId);
+        ((MockURIInfo) requestContext.getUriInfo()).setId(pathId);
 
         String message = "Testing exception handling";
         Exception testException = new Exception(message);
@@ -175,37 +276,100 @@ public class TestStroomServerLoggingFilter {
         filter.filter(requestContext);
         filter.toResponse(testException);
 
-        Mockito.verify(requestEventLog).log(requestInfoArgumentCaptor.capture(), responseEntityArgumentCaptor.capture(), exceptionArgumentCaptor.capture());
+        Mockito.verify(documentEventLog).unknownOperation(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
 
-        StroomLoggingOperationType operationType = requestInfoArgumentCaptor.getValue().getContainerResourceInfo().getOperationType();
-        assertThat(StroomLoggingOperationType.SEARCH).isEqualTo(operationType);
+        Object loggedObject = objectCaptor.getValue();
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
 
-        Exception exceptionObj = exceptionArgumentCaptor.getValue();
-        assertThat(exceptionObj.getMessage()).isEqualTo(message);
+        assertThat(loggedObject).isInstanceOf(HasId.class);
 
-        Object requestObj = requestInfoArgumentCaptor.getValue();
+        HasId hasId = (HasId) loggedObject;
+        assertThat(hasId.getId()).isEqualTo(pathId);
 
-        assertThat(requestObj).isInstanceOf(RequestInfo.class);
-        if (requestObj instanceof RequestInfo){
-            RequestInfo requestInfo = (RequestInfo) requestObj;
-            assertThat(requestInfo.getRequestObj()).isInstanceOf(HasId.class);
-            if (requestInfo.getRequestObj() instanceof HasId){
-                HasId hasId = (HasId) requestInfo.getRequestObj();
-                assertThat(hasId.getId()).isEqualTo(pathId);
-            }
-        }
+        assertThat(eventTypeId).isEqualTo("TestResource.random");
+        assertThat(descriptionVerb).isNotEmpty();
+        assertThat(exception).isNotNull();
+        assertThat(exception.getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    public void testLogSearch() throws Exception {
+        Method method = TestResource.class.getMethod("find", Integer.class, TestObj.class);
+
+        //Set up resource and method
+        Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
+        Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
+
+        int run = random.nextInt();
+        String requestId = "request-" + run;
+        String responseId = "response-" + run;
+
+        TestObj requestTestObj = new TestObj(requestId);
+        TestObj responseTestObj = new TestObj(responseId);
+
+        ResultPage<TestObj> resultPage = new ResultPage<>(List.of(responseTestObj));
+
+        //Set up Stream containing serialized object
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        objectMapper.writeValue(bos, requestTestObj);
+        bos.flush();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        requestContext.setEntityStream(byteArrayInputStream);
+        Mockito.when(writerInterceptorContext.getEntity()).thenReturn(resultPage);
+
+        filter.filter(requestContext);
+        filter.aroundWriteTo(writerInterceptorContext);
+
+        Mockito.verify(documentEventLog).search (eventTypeIdCaptor.capture(), queryCaptor.capture(),
+                listContentCaptor.capture(),
+                pageResponseCaptor.capture(), verbCaptor.capture(), throwableCaptor.capture());
 
 
+//        search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String verb, final Throwable ex);
+//                (typeId, query, listContents, pageResponse, descriptionVerb, erro
+//                (objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+//                throwableCaptor.capture());
+
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        Query query = queryCaptor.getValue();
+        String listContents = listContentCaptor.getValue();
+        PageResponse pageResponse = pageResponseCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
+
+        assertThat(pageResponse).isNotNull();
+        assertThat(pageResponse.getLength()).isEqualTo(1);
+
+        assertThat(listContents).isEqualTo("TestObjs");
+        assertThat(eventTypeId).isEqualTo("TestResource.find");
+        assertThat(descriptionVerb).isNull();
+        assertThat(exception).isNull();
+
+        assertThat(query.getRaw()).isNotEmpty();
+
+        TestObj deserialised = null;
+
+        try {
+            deserialised = objectMapper.readValue(query.getRaw().getBytes(), TestObj.class);
+        } catch (Exception e) {}
+
+        assertThat(deserialised).isNotNull();
+        assertThat(deserialised.getId()).isEqualTo(requestId);
 
     }
 
     @BeforeEach
     void setup(){
-        // Handle all the mock creation and injection.
-        closeable = MockitoAnnotations.openMocks(this);
-        filter = new StroomServerLoggingFilterImpl(requestEventLog, config, resourceInfo, request);
         objectMapper = createObjectMapper();
-        requestContext.reset();
+        closeable = MockitoAnnotations.openMocks(this);
+        requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
+
+        filter = new StroomServerLoggingFilterImpl(requestEventLog, config, resourceInfo, request);
     }
 
     @AfterEach
@@ -249,11 +413,11 @@ public class TestStroomServerLoggingFilter {
     @EventLogged
     public static class TestResource {
 
-        public String getCall() {
+        public String find(@PathParam("id") Integer id, TestObj query) {
             return null;
         }
 
-        public String find(@PathParam("id") Integer idj) {
+        public String random(@PathParam("id") Integer id) {
             return null;
         }
 
@@ -265,6 +429,11 @@ public class TestStroomServerLoggingFilter {
             return null;
         }
 
+        @EventLogged(typeId = "TestingUpdate", verb = "Testing")
+        public String update(TestObj testObj) {return null;}
+
+        @EventLogged(value = StroomLoggingOperationType.DELETE)
+        public void findAndDestroy() {}
     }
 
 }
