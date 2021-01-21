@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1791** : Fixed Solr connection test response.
 
+* Issue **#2009** : Fixed Solr searches not returning results after the first search completes.
+
 
 ## [v6.1.28] - 2020-11-25
 
