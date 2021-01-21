@@ -1,0 +1,41 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ext.moduleName = 'stroom.event.logging.rs.impl'
+
+dependencies {
+
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security:stroom-security-api')
+
+    compile libs.jackson_annotations
+    compile libs.slf4j_api
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.jersey_common
+    compile libs.jersey_server
+
+    //--------testing----------
+    testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
+    testCompile libs.assertj_core
+    testCompileOnly libs.junit_jupiter_api
+    testCompile libs.mockito_core
+
+    testRuntimeOnly libs.junit_jupiter_engine
+}
