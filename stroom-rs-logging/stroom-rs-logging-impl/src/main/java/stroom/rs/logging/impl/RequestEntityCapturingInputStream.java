@@ -1,8 +1,22 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.rs.logging.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ResourceInfo;
@@ -15,18 +29,17 @@ import java.lang.reflect.Parameter;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static stroom.rs.logging.impl.StroomServerLoggingFilterImpl.LOGGER;
+import static stroom.rs.logging.impl.RestResourceAutoLoggerImpl.LOGGER;
 
-class LoggingInputStream extends BufferedInputStream {
+class RequestEntityCapturingInputStream extends BufferedInputStream {
     private final static int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
     private final Class<?> requestParamClass;
     private final boolean constructed;
 
-    public LoggingInputStream (final ResourceInfo resourceInfo, final InputStream original, final ObjectMapper objectMapper, final Charset charset) throws IOException {
+    public RequestEntityCapturingInputStream(final ResourceInfo resourceInfo, final InputStream original, final ObjectMapper objectMapper, final Charset charset) throws IOException {
         super(original);
         this.requestParamClass = findRequestParamClass(resourceInfo);
         readEntity(objectMapper, charset);

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.rs.logging.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
@@ -6,11 +21,11 @@ import stroom.event.logging.mock.MockStroomEventLoggingService;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.util.shared.EventLogged;
+import stroom.util.shared.AutoLogged;
 import stroom.util.shared.HasId;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StroomLoggingOperationType;
+import stroom.util.shared.AutoLogged.OperationType;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -42,7 +57,7 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestStroomServerLoggingFilter {
+public class TestRestResourceAutoLogger {
     private HttpServletRequest request = new MockHttpServletRequest();
 
     private MockContainerRequestContext requestContext = new MockContainerRequestContext();
@@ -88,7 +103,7 @@ public class TestStroomServerLoggingFilter {
     @Captor
     private ArgumentCaptor<PageResponse> pageResponseCaptor;
 
-    StroomServerLoggingFilterImpl filter;
+    RestResourceAutoLoggerImpl filter;
 
     ObjectMapper objectMapper;
 
@@ -98,7 +113,7 @@ public class TestStroomServerLoggingFilter {
 
     private AutoCloseable closeable;
 
-    TestStroomServerLoggingFilter(){
+    TestRestResourceAutoLogger(){
         injector = Guice.createInjector(new MockRSLoggingModule());
     }
 
@@ -369,7 +384,7 @@ public class TestStroomServerLoggingFilter {
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
 
-        filter = new StroomServerLoggingFilterImpl(requestEventLog, config, resourceInfo, request);
+        filter = new RestResourceAutoLoggerImpl(requestEventLog, config, resourceInfo, request);
     }
 
     @AfterEach
@@ -410,7 +425,7 @@ public class TestStroomServerLoggingFilter {
     }
 
 
-    @EventLogged
+    @AutoLogged
     public static class TestResource {
 
         public String find(@PathParam("id") Integer id, TestObj query) {
@@ -429,10 +444,10 @@ public class TestStroomServerLoggingFilter {
             return null;
         }
 
-        @EventLogged(typeId = "TestingUpdate", verb = "Testing")
+        @AutoLogged(typeId = "TestingUpdate", verb = "Testing")
         public String update(TestObj testObj) {return null;}
 
-        @EventLogged(value = StroomLoggingOperationType.DELETE)
+        @AutoLogged(value = OperationType.DELETE)
         public void findAndDestroy() {}
     }
 

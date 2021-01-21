@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.rs.logging.impl;
+package stroom.rs.logging.api;
 
-import javax.annotation.Nullable;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.WriterInterceptor;
 
-public class MockRequestEventLog implements RequestEventLog {
-    @Override
-    public void log(final RequestInfo info, @Nullable final Object responseEntity) {
-
-    }
-
-    @Override
-    public void log(final RequestInfo info, @Nullable final Object responseEntity, final Throwable error) {
-
-    }
+/**
+ * Interface implemented in order to support Automatic logging for Java RS Remote resource method calls.
+ * @see stroom.util.shared.AutoLogged
+ */
+public interface RestResourceAutoLogger extends ContainerRequestFilter, WriterInterceptor, ExceptionMapper<Exception>
+{
 }
