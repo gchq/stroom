@@ -15,8 +15,6 @@
  */
 package stroom.event.logging.rs.impl;
 
-import stroom.rs.logging.impl.RequestInfo;
-
 import javax.annotation.Nullable;
 
 public class MockRequestEventLog implements RequestEventLog {
