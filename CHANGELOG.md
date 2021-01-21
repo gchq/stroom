@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Introduce functionality to provide configurable, automatic logging for RESTful API calls.
+
 * Add `search_results` dir to dockerfile.
 
 * Fix NPE in StroomEventLoggingUtil.
