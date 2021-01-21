@@ -150,9 +150,7 @@ class DashboardResourceImpl implements DashboardResource {
     public ValidateExpressionResult validateExpression(final String expressionString) {
         try {
             final FieldIndex fieldIndex = new FieldIndex();
-            final ExpressionParser expressionParser = new ExpressionParser(
-                    functionServiceProvider.get().getFunctionFactory(),
-                    new ParamFactory());
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
             final Expression expression = expressionParser.parse(fieldIndex, expressionString);
             String correctedExpression = "";
             if (expression != null) {

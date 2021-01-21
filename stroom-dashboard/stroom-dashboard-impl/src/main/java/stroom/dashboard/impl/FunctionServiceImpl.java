@@ -30,13 +30,11 @@ import java.util.stream.Stream;
 @Singleton
 public class FunctionServiceImpl implements FunctionService {
     private final List<FunctionSignature> signatures;
-    private final FunctionFactory functionFactory;
 
     @Inject
-    public FunctionServiceImpl(final FunctionFactory functionFactory) {
-        this.functionFactory = functionFactory;
+    public FunctionServiceImpl() {
         // Flatten the nested FunctionDef objects into signatures
-        this.signatures = functionFactory.getFunctionDefinitions()
+        this.signatures = FunctionFactory.getFunctionDefinitions()
                 .stream()
                 .flatMap(this::convertFunctionDef)
                 .collect(Collectors.toList());
@@ -45,11 +43,6 @@ public class FunctionServiceImpl implements FunctionService {
     @Override
     public List<FunctionSignature> getSignatures() {
         return signatures;
-    }
-
-    @Override
-    public FunctionFactory getFunctionFactory() {
-        return functionFactory;
     }
 
     private Stream<FunctionSignature> convertFunctionDef(final FunctionDef functionDef) {

@@ -32,14 +32,16 @@ import java.util.stream.Stream;
 
 public class FunctionFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionFactory.class);
-    private final Map<String, Class<? extends Function>> aliasMap = new HashMap<>();
-    private final Map<Class<? extends Function>, FunctionDef> functionDefMap = new HashMap<>();
 
-    public FunctionFactory() {
+    // Hold them statically as we only want to scan the class path once
+    private static final Map<String, Class<? extends Function>> ALIAS_MAP = new HashMap<>();
+    private static final Map<Class<? extends Function>, FunctionDef> FUNCTION_DEF_MAP = new HashMap<>();
+
+    static {
         scanClassPathForFunctions();
     }
 
-    private void scanClassPathForFunctions() {
+    private static void scanClassPathForFunctions() {
         // Scan the class path to find all the classes with @FunctionDef
         try (ScanResult result = new ClassGraph()
                 .whitelistPackages(Function.class.getPackageName())
@@ -57,21 +59,21 @@ public class FunctionFactory {
 
                             final FunctionDef functionDef = clazz.getAnnotation(FunctionDef.class);
 
-                            functionDefMap.put(functionClazz, functionDef);
+                            FUNCTION_DEF_MAP.put(functionClazz, functionDef);
 
                             // Add the class to our alias map for each name it has
                             Stream.concat(Stream.of(functionDef.name()), Stream.of(functionDef.aliases()))
                                     .filter(Objects::nonNull)
                                     .map(String::toLowerCase)
                                     .forEach(name -> {
-                                        if (aliasMap.containsKey(name)) {
-                                            final Class<? extends Function> existingClass = aliasMap.get(name);
+                                        if (ALIAS_MAP.containsKey(name)) {
+                                            final Class<? extends Function> existingClass = ALIAS_MAP.get(name);
                                             throw new RuntimeException(("Name/alias [" + name +
                                                     "] for class " + clazz.getName() +
                                                     " already exists for class " +
                                                     existingClass.getName()));
                                         }
-                                        aliasMap.put(name, functionClazz);
+                                        ALIAS_MAP.put(name, functionClazz);
                                     });
 
                             LOGGER.debug("Adding function {}", functionClazz.getName());
@@ -80,8 +82,8 @@ public class FunctionFactory {
         }
     }
 
-    public Function create(final String functionName) {
-        final Class<? extends Function> clazz = aliasMap.get(functionName.toLowerCase());
+    public static Function create(final String functionName) {
+        final Class<? extends Function> clazz = ALIAS_MAP.get(functionName.toLowerCase());
         if (clazz != null) {
             try {
                 return clazz.getConstructor(String.class).newInstance(functionName);
@@ -96,11 +98,11 @@ public class FunctionFactory {
         return null;
     }
 
-    public Optional<FunctionDef> getFunctionDefinition(final Class<? extends Function> clazz) {
-        return Optional.ofNullable(functionDefMap.get(clazz));
+    public static Optional<FunctionDef> getFunctionDefinition(final Class<? extends Function> clazz) {
+        return Optional.ofNullable(FUNCTION_DEF_MAP.get(clazz));
     }
 
-    public List<FunctionDef> getFunctionDefinitions() {
-        return new ArrayList<>(functionDefMap.values());
+    public static List<FunctionDef> getFunctionDefinitions() {
+        return new ArrayList<>(FUNCTION_DEF_MAP.values());
     }
 }

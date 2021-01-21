@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Equals.NAME,
+        aliases = Equals.ALIAS,
         commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
         commonReturnDescription = "True if the two values are equal even if the types are not.",
