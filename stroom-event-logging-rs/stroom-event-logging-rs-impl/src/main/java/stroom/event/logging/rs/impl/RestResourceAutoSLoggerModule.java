@@ -15,11 +15,11 @@
  */
 package stroom.event.logging.rs.impl;
 
-import stroom.rs.logging.api.RestResourceAutoLogger;
+import stroom.event.logging.rs.api.RestResourceAutoLogger;
 
 import com.google.inject.AbstractModule;
 
-public class RSLoggingModule extends AbstractModule {
+public class RestResourceAutoSLoggerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RestResourceAutoLogger.class).to(RestResourceAutoLoggerImpl.class);

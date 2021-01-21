@@ -35,7 +35,7 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.rs.logging.api.RestResourceAutoLogger;
+import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
