@@ -693,7 +693,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return builder.build();
     }
 
-    private List<Data> getDataItems(java.lang.Object obj){
+    static List<Data> getDataItems(java.lang.Object obj){
         if (obj == null){
             return List.of();
         }
@@ -725,7 +725,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
     //itself is logged, e.g. due to configuration settings
     //Assess whether this field should be redacted
-    private boolean shouldRedact (String propNameLowercase){
+    private static boolean shouldRedact (String propNameLowercase){
         //TODO consider replacing or augmenting this hard coding
         // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
         return propNameLowercase.endsWith("password") ||
