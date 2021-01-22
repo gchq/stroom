@@ -5,11 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo {
+public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -45,6 +46,7 @@ public class IndexVolumeGroup implements HasAuditInfo {
         this.name = name;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

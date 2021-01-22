@@ -9,10 +9,11 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+    compile project(':stroom-docref')
 
     compile libs.eventLogging
-    compile project(':stroom-docref')
-    
+
+    compile libs.commons_beanutils
     compile libs.guice4
 
     testCompile project(':stroom-test-common')

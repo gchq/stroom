@@ -35,6 +35,7 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
+import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
@@ -101,6 +102,8 @@ public class App extends Application<Config> {
     private HomeDirProvider homeDirProvider;
     @Inject
     private TempDirProvider tempDirProvider;
+    @Inject
+    private RestResourceAutoLogger resourceAutoLogger;
 
     private final Path configFile;
 
@@ -218,6 +221,9 @@ public class App extends Application<Config> {
         final AppModule appModule = new AppModule(configuration, environment, configFile);
 
         Guice.createInjector(appModule).injectMembers(this);
+
+        //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
+        environment.jersey().register(resourceAutoLogger);
 
         // Add health checks
         healthChecks.register();

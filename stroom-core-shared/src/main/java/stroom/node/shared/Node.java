@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
 @JsonInclude(Include.NON_NULL)
-public class Node implements HasAuditInfo {
+public class Node implements HasAuditInfo, HasIntegerId {
     public static final String ENTITY_TYPE = "Node";
 
     @JsonProperty
@@ -98,6 +99,7 @@ public class Node implements HasAuditInfo {
         return node;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

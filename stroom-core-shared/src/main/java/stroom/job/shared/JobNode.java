@@ -6,13 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class JobNode implements HasAuditInfo {
+public class JobNode implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -85,6 +86,7 @@ public class JobNode implements HasAuditInfo {
         this.enabled = enabled;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
