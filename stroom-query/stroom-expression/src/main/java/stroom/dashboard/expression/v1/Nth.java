@@ -23,14 +23,21 @@ import java.text.ParseException;
         name = Nth.NAME,
         commonCategory = FunctionCategory.SELECTION,
         commonReturnType = Val.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Selects the Nth value in a set of grouped values. If there is no explicit ordering " +
+                        "on the field selected then the value returned is indeterminate. E.g. for values " +
+                        "[20, 40, 10, 30, 50], " + Nth.NAME + "(${field}, 2) returns 40.",
+                returnDescription = "The Nth value of the grouped set.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "position",
+                                description = "The position of the value in the grouped set to select. " +
+                                        "Position is one based.",
+                                argType = ValInteger.class)
                 }))
 public class Nth extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "nth";

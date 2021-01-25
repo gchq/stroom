@@ -24,14 +24,15 @@ import java.util.Map;
         name = QueryParam.NAME,
         commonCategory = FunctionCategory.VALUE,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Fetches the value of named query parameter or " + Null.NAME + "() if the key " +
+                        "cannot be found.",
+                returnDescription = "The value associated with the supplied parameter key.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "paramKey",
+                                description = "The parameter key name to fetch the value for.",
+                                argType = Val.class)
                 }))
 class QueryParam extends AbstractFunction {
     static final String NAME = "param";

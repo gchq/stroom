@@ -247,7 +247,7 @@ public class AnnotationEditPresenter
             ok = false;
             AlertEvent.fireError(
                     this,
-                    "No stream id has been provided for the annotation",
+                    "No event/stream id has been provided for the annotation",
                     null);
         }
 

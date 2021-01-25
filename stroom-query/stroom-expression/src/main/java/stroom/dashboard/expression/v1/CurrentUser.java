@@ -24,15 +24,10 @@ import java.util.Map;
         name = CurrentUser.NAME,
         commonCategory = FunctionCategory.VALUE,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
+        commonReturnDescription = "Username of the logged in user.",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Returns the user name of the current logged in user.",
+                args = { }))
 class CurrentUser extends AbstractFunction {
     static final String KEY = "currentUser()";
     static final String NAME = "currentUser";

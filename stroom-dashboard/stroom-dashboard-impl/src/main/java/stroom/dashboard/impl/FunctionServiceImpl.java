@@ -130,6 +130,7 @@ public class FunctionServiceImpl implements FunctionService {
             return new Arg(
                     convertString(functionArg.name()),
                     convertType(functionArg.argType()),
+                    functionArg.isOptional(),
                     functionArg.isVarargs(),
                     functionArg.minVarargsCount(),
                     convertString(functionArg.description()),

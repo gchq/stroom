@@ -21,20 +21,34 @@ package stroom.dashboard.expression.v1;
         name = Stepping.NAME,
         commonCategory = FunctionCategory.LINK,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Produces a hyperlink for opening a stepping tab for the selected source data.",
+                returnDescription = "A hyperlink that will open the a stepping tab for the selected source data.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = Stepping.ARG_ID,
+                                description = "The ID of the stream to step.",
+                                argType = ValLong.class),
+                        @FunctionArg(
+                                name = Stepping.ARG_PART_NO,
+                                description = "The part number to begin the stepping in (one based).",
+                                isOptional = true,
+                                argType = ValLong.class),
+                        @FunctionArg(
+                                name = Stepping.ARG_RECORD_NO,
+                                description = "The record number to begin the stepping at (one based).",
+                                isOptional = true,
+                                argType = ValLong.class)
                 }))
 class Stepping extends AbstractLink {
     static final String NAME = "stepping";
 
+    static final String ARG_ID = "id";
+    static final String ARG_PART_NO = "partNo";
+    static final String ARG_RECORD_NO = "recordNo";
+
     public Stepping(final String name) {
-        super(name, 2, 4);
+        super(name, 1, 3);
     }
 
     @Override
@@ -60,11 +74,14 @@ class Stepping extends AbstractLink {
         public Val eval() {
             final StringBuilder sb = new StringBuilder();
 
-            append(sb, 1, "id");
-            append(sb, 2, "partNo");
-            append(sb, 3, "recordNo");
+            append(sb, 1, ARG_ID);
+            append(sb, 2, ARG_PART_NO);
+            append(sb, 3, ARG_RECORD_NO);
 
-            return makeLink(getEscapedString(childGenerators[0].eval()), EncodingUtil.encodeUrl(sb.toString()), "stepping");
+            return makeLink(
+                    getEscapedString(childGenerators[0].eval()),
+                    EncodingUtil.encodeUrl(sb.toString()),
+                    "stepping");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {

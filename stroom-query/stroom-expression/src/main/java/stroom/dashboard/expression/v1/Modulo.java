@@ -18,25 +18,37 @@ package stroom.dashboard.expression.v1;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = Modulus.NAME,
+        name = Modulo.NAME,
+        aliases = {
+                Modulo.ALIAS1,
+                Modulo.ALIAS2},
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Calculates the modulus after dividing the dividend by the divisor. If more than one " +
+                        "divisor is provided then the each subsequent divisor will be used to calculate the modulus " +
+                        "using the previous result as the dividend, e.g. " + Modulo.ALIAS2 + "(100, 30, 4) returns 2, " +
+                        "i.e. (100 % 30) % 4.",
+                returnDescription = "The remainder (modulus) after dividing the dividend by the divisor.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "dividend",
+                                description = "The number to divide by the divisor.",
+                                argType = ValNumber.class),
+                        @FunctionArg(
+                                name = "divisor",
+                                description = "The number to divide the dividend by.",
+                                argType = ValNumber.class,
+                                isVarargs = true,
+                                minVarargsCount = 1)
                 }))
-class Modulus extends NumericFunction {
+class Modulo extends NumericFunction {
     static final String NAME = "%";
     static final String ALIAS1 = "mod";
-    static final String ALIAS2 = "modulus";
+    static final String ALIAS2 = "modulo";
     private static final Calc CALC = new Calc();
 
-    public Modulus(final String name) {
+    public Modulo(final String name) {
         super(name, 2, Integer.MAX_VALUE);
     }
 

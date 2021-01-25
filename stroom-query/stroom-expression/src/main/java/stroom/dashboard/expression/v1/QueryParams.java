@@ -25,15 +25,10 @@ import java.util.Set;
         name = QueryParams.NAME,
         commonCategory = FunctionCategory.VALUE,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+                description = "Returns all the query parameters for the current query, e.g. 'user=bob site=HQ'.",
+                returnDescription = "All query parameters as a space delimited string.",
+                args = { }))
 class QueryParams extends AbstractFunction {
     private static final Set<String> INTERNAL_PARAMS = Collections.singleton(CurrentUser.KEY);
 

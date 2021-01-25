@@ -26,22 +26,60 @@ import java.util.List;
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Joining.NAME,
-        commonCategory = FunctionCategory.STRING,
+        commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
-        signatures = @FunctionSignature(
-                description = "",
-                args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
-                }))
+        signatures = {
+                @FunctionSignature(
+                        description = "Concatenates the supplied values together with no delimiter.",
+                        returnDescription = "The values concatenated together into one string with no delimiter. " +
+                                "Up to a maximum of " + Joining.DEFAULT_LIMIT + " values.",
+                        args = {
+                                @FunctionArg(
+                                        name = "values",
+                                        description = "Grouped field or the result of another function.",
+                                        argType = Val.class)
+                        }),
+                @FunctionSignature(
+                        description = "Concatenates the supplied values together with the supplied delimiter.",
+                        returnDescription = "The values concatenated together into one string using the supplied " +
+                                "delimiter. Up to a maximum of " + Joining.DEFAULT_LIMIT + " values.",
+                        args = {
+                                @FunctionArg(
+                                        name = "values",
+                                        description = "Grouped field or the result of another function.",
+                                        argType = Val.class),
+                                @FunctionArg(
+                                        name = "delimiter",
+                                        description = "The string to delimit each concatenated value with, e.g. ', '.",
+                                        argType = Val.class)
+                        }),
+                @FunctionSignature(
+                        description = "Concatenates up to limit of the supplied values together with the supplied " +
+                                "delimiter.",
+                        returnDescription = "The values concatenated together into one string using the supplied " +
+                                "delimiter.",
+                        args = {
+                                @FunctionArg(
+                                        name = "values",
+                                        description = "Grouped field or the result of another function.",
+                                        argType = Val.class),
+                                @FunctionArg(
+                                        name = "delimiter",
+                                        description = "The string to delimit each concatenated value with, e.g. ', '.",
+                                        argType = Val.class),
+                                @FunctionArg(
+                                        name = "limit",
+                                        description = "The maximum number of values to concatenate together.",
+                                        argType = ValInteger.class),
+                        })
+        })
 class Joining extends AbstractFunction {
     static final String NAME = "joining";
+    static final int DEFAULT_LIMIT = 10;
 
     private String delimiter = "";
-    private int limit = 10;
+
+    private int limit = DEFAULT_LIMIT;
 
     private Function function;
 

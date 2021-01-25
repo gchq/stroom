@@ -21,6 +21,13 @@ public @interface FunctionArg {
     Class<? extends Val> argType();
 
     /**
+     * @return True if the argument is optional. As arguments are positional rather than named
+     * all arguments after an optional argument must also be optional. You can either make arguments
+     * optional or define multiple overloaded signatures.
+     */
+    boolean isOptional() default false;
+
+    /**
      * @return True if this argument is a varargs parameter, i.e. arg...
      */
     boolean isVarargs() default false;

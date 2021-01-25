@@ -60,7 +60,12 @@ public abstract class AbstractFunctionTest<T extends Function> {
                         }
 
                         // Run the function
-                        final Val returnVal = generator.eval();
+                        final Val returnVal;
+                        if (generator instanceof Selector) {
+                            returnVal = ((Selector) generator).select(createSelection(testCase.getAggregateValues()));
+                        } else {
+                            returnVal = generator.eval();
+                        }
 
                         LOGGER.info("Return val: {}", argToString(returnVal));
 
@@ -78,6 +83,20 @@ public abstract class AbstractFunctionTest<T extends Function> {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+    private Selection<Val> createSelection(final List<Val> vals) {
+        return new Selection<Val>() {
+            @Override
+            public int size() {
+                return vals.size();
+            }
+
+            @Override
+            public Val get(final int pos) {
+                return vals.get(pos);
+            }
+        };
     }
 
     Supplier<T> getFunctionSupplier() {

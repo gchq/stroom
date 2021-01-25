@@ -22,9 +22,11 @@ import java.io.Serializable;
         name = Any.NAME,
         commonCategory = FunctionCategory.SELECTION,
         commonReturnType = Val.class,
-        commonReturnDescription = "One of the supplied values.",
         signatures = @FunctionSignature(
-                description = "Any one value from the supplied values. The value returned is indeterminate.",
+                description = "Selects the first value found in the group that is not " + Null.NAME + "() or " +
+                Err.NAME + "(). If no explicit ordering is set then " +
+                        "the value selected is indeterminate.",
+                returnDescription = "The first value of the group.",
                 args = {
                         @FunctionArg(
                                 name = "values",

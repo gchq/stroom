@@ -23,14 +23,24 @@ import java.text.ParseException;
         name = Bottom.NAME,
         commonCategory = FunctionCategory.SELECTION,
         commonReturnType = ValString.class,
-        commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Selects the bottom N values and returns them as a delimited string in the order they " +
+                        "are read. E.g. for values [1, 2, 3, 4, 5], " + Bottom.NAME + "(${field}, ',', 2) returns " +
+                        "'4,5'.",
+                returnDescription = "The bottom N values as a delimited string.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "delimiter",
+                                description = "The delimiter string to use between each selected value, e.g. ', '.",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "limit",
+                                description = "The maximum number of values to included in the selection.",
+                                argType = ValInteger.class)
                 }))
 public class Bottom extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "bottom";

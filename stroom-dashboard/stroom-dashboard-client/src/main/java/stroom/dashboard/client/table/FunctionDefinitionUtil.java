@@ -233,6 +233,7 @@ public class FunctionDefinitionUtil {
             argsStr = "";
         } else {
             final AtomicInteger argPosition = new AtomicInteger(1);
+            final AtomicBoolean foundOptArg = new AtomicBoolean(false);
             argsStr = signature.getArgs()
                     .stream()
                     .flatMap(arg -> {
@@ -243,6 +244,9 @@ public class FunctionDefinitionUtil {
                                 final String argName = arg.getName() + i;
                                 snippetArgStrs.add(argToSnippetArg(argName, argPosition.getAndIncrement()));
                             }
+                        } else if (arg.isOptional()) {
+                            final String name = "[" + arg.getName() + "]";
+                            snippetArgStrs.add(argToSnippetArg(arg.getName(), argPosition.getAndIncrement()));
                         } else {
                             snippetArgStrs.add(argToSnippetArg(arg.getName(), argPosition.getAndIncrement()));
                         }
@@ -326,11 +330,11 @@ public class FunctionDefinitionUtil {
     }
 
     private static String buildSignatureStr(final FunctionSignature signature) {
-        final String argsStr;
+        String argsStr;
         if (signature.getArgs().isEmpty()) {
             argsStr = "";
         } else {
-
+            final AtomicBoolean foundOptArg = new AtomicBoolean(false);
             argsStr = signature.getArgs()
                     .stream()
                     .flatMap(arg -> {
@@ -347,12 +351,19 @@ public class FunctionDefinitionUtil {
 //                                argStrs.add(prefix + arg.getName() + suffix);
                                 argStrs.add(buildVarargsName(arg, i));
                             }
+                        } else if (arg.isOptional()) {
+                            argStrs.add("[" + arg.getName());
+                            foundOptArg.set(true);
                         } else {
                             argStrs.add(arg.getName());
                         }
                         return argStrs.stream();
                     })
                     .collect(Collectors.joining(", "));
+
+            if (foundOptArg.get()) {
+                argsStr += "]";
+            }
         }
 
         return signature.getName() + "(" + argsStr + ")";
@@ -411,9 +422,17 @@ public class FunctionDefinitionUtil {
 
             signature.getArgs()
                     .forEach(arg -> {
-                        final String argName = arg.isVarargs()
-                                ? arg.getName() + "1...N"
-                                : arg.getName();
+
+                        final String argName;
+
+                        if (arg.isVarargs()) {
+                            argName = arg.getName() + "1...N";
+                        } else if (arg.isOptional()) {
+                            argName = "[" + arg.getName() + "]";
+                        } else {
+                            argName = arg.getName();
+                        }
+
                         final StringBuilder descriptionBuilder = new StringBuilder();
                         descriptionBuilder.append(arg.getDescription());
                         if (!arg.getAllowedValues().isEmpty()) {

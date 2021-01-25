@@ -24,12 +24,15 @@ import java.io.Serializable;
         commonReturnType = Val.class,
         commonReturnDescription = "",
         signatures = @FunctionSignature(
-                description = "",
+                description = "Selects the last value found in the group even if it is " +
+                        Null.NAME + "() or " + Err.NAME + "(). " +
+                        "If no explicit ordering is set then the value selected is indeterminate.",
+                returnDescription = "The last value of the group.",
                 args = {
-//                        @FunctionArg(
-//                                name = "",
-//                                description = "",
-//                                argType = .class)
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class)
                 }))
 public class Last extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "last";
