@@ -38,6 +38,7 @@ import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.event.logging.rs.impl.RequestLoggingConfig;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
@@ -153,6 +154,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getProxyAggregationConfig, AppConfig::setProxyAggregationConfig, ProxyAggregationConfig.class);
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
+        bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, RequestLoggingConfig.class);
         bindConfig(AppConfig::getSearchConfig, AppConfig::setSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig, SearchConfig::getExtractionConfig, SearchConfig::setExtractionConfig, ExtractionConfig.class);
             bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, LmdbConfig.class);

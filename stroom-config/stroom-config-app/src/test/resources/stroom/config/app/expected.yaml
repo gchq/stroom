@@ -459,6 +459,8 @@ appConfig:
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
+  requestLogging:
+    globalLoggingEnabled: false
   search:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024

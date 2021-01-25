@@ -17,6 +17,31 @@
 
 package stroom.event.logging.impl;
 
+import event.logging.BaseObject;
+import event.logging.CopyEventAction;
+import event.logging.CopyMoveOutcome;
+import event.logging.CreateEventAction;
+import event.logging.Criteria;
+import event.logging.Data;
+import event.logging.DeleteEventAction;
+import event.logging.Event;
+import event.logging.EventAction;
+import event.logging.ExportEventAction;
+import event.logging.ImportEventAction;
+import event.logging.MoveEventAction;
+import event.logging.MultiObject;
+import event.logging.OtherObject;
+import event.logging.ProcessEventAction;
+import event.logging.Query;
+import event.logging.ResultPage;
+import event.logging.SearchEventAction;
+import event.logging.UnknownEventAction;
+import event.logging.UpdateEventAction;
+import event.logging.ViewEventAction;
+import event.logging.util.EventLoggingUtil;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
@@ -25,33 +50,20 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
-
-import event.logging.BaseObject;
-import event.logging.CopyEventAction;
-import event.logging.CopyMoveOutcome;
-import event.logging.CreateEventAction;
-import event.logging.Criteria;
-import event.logging.DeleteEventAction;
-import event.logging.ExportEventAction;
-import event.logging.MoveEventAction;
-import event.logging.MultiObject;
-import event.logging.OtherObject;
-import event.logging.Query;
-import event.logging.ResultPage;
-import event.logging.SearchEventAction;
-import event.logging.UpdateEventAction;
-import event.logging.ViewEventAction;
-import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {
@@ -94,11 +106,31 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {
+        create(objectType, objectName, null, ex);
+    }
+    @Override
+    public void create(final String objectType, final String objectName, final String eventTypeId, final Throwable ex) {
+      create(objectType, objectName,  eventTypeId, null, ex);
+    }
+
+    @Override
+    public void create(final java.lang.Object object, final Throwable ex) {
+        create(object, null, ex);
+    }
+
+
+    @Override
+    public void create(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        create(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void create(final String objectType, final String objectName, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 eventLoggingService.log(
-                        "Create",
-                        "Creating " + objectType + " \"" + objectName + "\"",
+                        eventTypeId != null ? eventTypeId : "Create",
+                        description != null ? description : "Creating" + " " + objectType + " \"" + objectName + "\"",
                         CreateEventAction.builder()
                                 .addObject(OtherObject.builder()
                                         .withType(objectType)
@@ -107,40 +139,103 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
                                 .build());
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to create event!", e);
+                LOGGER.error("Unable to log create event!", e);
             }
         });
     }
 
-//    @Override
-//    public void create(final Object object) {
-//        create(object, null);
-//    }
-
     @Override
-    public void create(final Object object, final Throwable ex) {
+    public void create(final java.lang.Object object, final String eventTypeId, final String verb, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 eventLoggingService.log(
-                        "Create",
-                        createEventDescription("Create", object),
+                        eventTypeId != null ? eventTypeId : "Create",
+                        createEventDescription(verb, "Creating", object),
                         CreateEventAction.builder()
                                 .withObjects(createBaseObject(object))
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
                                 .build());
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to create event!", e);
+                LOGGER.error("Unable to log create event!", e);
             }
         });
     }
 
+
+    private String createEventDescription(final String descriptionVerb,
+                                          final String defaultDescription,
+                                          final Object objectOrObjectType) {
+        final String description = Optional.ofNullable(descriptionVerb).orElse(defaultDescription);
+        final StringBuilder desc = new StringBuilder(description);
+        if (objectOrObjectType != null) {
+            if (objectOrObjectType instanceof String){
+                //Object type name supplied
+                desc.append(" ");
+                desc.append(objectOrObjectType);
+            } else {
+                //Actual object supplied
+                final String objectType = getObjectType(objectOrObjectType);
+                if (objectType != null) {
+                    desc.append(" ");
+                    desc.append(objectType);
+                }
+
+                final String objectName = getObjectName(objectOrObjectType);
+                if (objectName != null) {
+                    desc.append(" \"");
+                    desc.append(objectName);
+                    desc.append("\"");
+                }
+
+                final String objectId = getObjectId(objectOrObjectType);
+                if (objectId != null) {
+                    desc.append(" id=");
+                    desc.append(objectId);
+                }
+            }
+        }
+        return desc.toString();
+    }
+
 //    @Override
-//    public void update(final Object before, final Object after) {
+//    public void update(final java.lang.Object before, final java.lang.Object after) {
 //        update(before, after, null);
 //    }
 
     @Override
-    public void update(final Object before, final Object after, final Throwable ex) {
+    public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        update(before, after, null, ex);
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+
+                eventLoggingService.log(
+                        eventTypeId != null ? eventTypeId : "Upload",
+                        createEventDescription(descriptionVerb, "Importing", object),
+                        ImportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .withObjects(createBaseObject(object))
+                                        .build())
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
+
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        update(before, after, null, ex);
+    }
+
+
+    @Override
+    public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final UpdateEventAction.Builder<Void> updateBuilder = UpdateEventAction.builder();
@@ -160,24 +255,29 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 updateBuilder.withOutcome(EventLoggingUtil.createOutcome(ex));
 
                 eventLoggingService.log(
-                        "Update",
-                        createEventDescription("Updating", before),
+                        eventTypeId != null ? eventTypeId : "Update",
+                        createEventDescription(description,"Updating", before),
                         updateBuilder.build());
 
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to update event!", e);
+                LOGGER.error("Unable to log update event!", e);
             }
         });
+
     }
 
 //    @Override
-//    public void move(final Object before, final Object after) {
+//    public void move(final java.lang.Object before, final java.lang.Object after) {
 //        move(before, after, null);
 //    }
 
+    @Override
+    public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        copy(before, after, null, ex);
+    }
 
     @Override
-    public void copy(final Object source, final Object destination, final Throwable ex) {
+    public void copy(final java.lang.Object source, final java.lang.Object destination, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final CopyEventAction.Builder<Void> copyBuilder = CopyEventAction.builder();
@@ -200,18 +300,33 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
 
                 eventLoggingService.log(
-                        "Copy",
-                        createEventDescription("Copying", source),
+                        eventTypeId != null ? eventTypeId : "Copy",
+                        createEventDescription(description, "Copying", source),
                         copyBuilder.build());
 
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to copy event!", e);
+                LOGGER.error("Unable to log copy event!", e);
             }
         });
     }
 
     @Override
-    public void move(final Object source, final Object destination, final Throwable ex) {
+    public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+     copy (before, after, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void move(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        move(before, after, null, ex);
+    }
+
+    @Override
+    public void move(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        move(before,after,eventTypeId,null, ex);
+    }
+
+    @Override
+    public void move(final java.lang.Object source, final java.lang.Object destination, final String eventTypeId, final String verb, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final MoveEventAction.Builder<Void> moveBuilder = MoveEventAction.builder();
@@ -234,18 +349,29 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
 
                 eventLoggingService.log(
-                        "Move",
-                        createEventDescription("Moving", source),
+                        eventTypeId != null ? eventTypeId : "Move",
+                        createEventDescription(verb,"Moving", source),
                         moveBuilder.build());
-
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to move event!", e);
+                LOGGER.error("Unable to log move event!", e);
             }
         });
     }
 
+
     @Override
-    public void rename(final Object before, final Object after, final Throwable ex) {
+    public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
+        rename(before, after, null, ex);
+    }
+
+
+    @Override
+    public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
+        rename(before, after, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final MoveEventAction.Builder<Void> moveBuilder = MoveEventAction.builder();
@@ -268,55 +394,18 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
 
                 eventLoggingService.log(
-                        "Rename",
-                        createEventDescription("Renaming", before),
+                        eventTypeId != null ? eventTypeId : "Rename",
+                        createEventDescription(descriptionVerb,"Renaming", before),
                         moveBuilder.build());
 
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to move event!", e);
+                LOGGER.error("Unable to log rename event!", e);
             }
         });
     }
 
     @Override
-    public void delete(final Object object, final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                eventLoggingService.log(
-                        "Delete",
-                        createEventDescription("Deleting", object),
-                        DeleteEventAction.builder()
-                                .withObjects(createBaseObject(object))
-                                .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                .build());
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to delete event!", e);
-            }
-        });
-    }
-
-    @Override
-    public void view(final Object object, final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                eventLoggingService.log(
-                        "View",
-                        createEventDescription("Viewing", object),
-                        ViewEventAction.builder()
-                                .withObjects(createBaseObject(object))
-                                .withOutcome(EventLoggingUtil.createOutcome(ex))
-                                .build());
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to view event!", e);
-            }
-        });
-    }
-
-    @Override
-    public void delete(final BaseCriteria criteria,
-                       final Query query,
-                       final Long size,
-                       final Throwable ex) {
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final String description, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final Criteria.Builder<Void> criteriaBuilder = Criteria.builder()
@@ -327,31 +416,96 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
 
                 eventLoggingService.log(
-                        criteria.getClass().getSimpleName(),
-                        createEventDescription("Finding " + getObjectType(criteria), null),
+                        eventTypeId != null ? eventTypeId : "Delete by " + criteria.getClass().getSimpleName(),
+                        createEventDescription(description, "Delete by criteria", getObjectType(criteria)),
                         DeleteEventAction.builder()
                                 .withObjects(createBaseObject(criteriaBuilder.build()))
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
                                 .build());
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to doDelete!", e);
+                LOGGER.error("Unable to log delete event!", e);
             }
         });
     }
 
     @Override
-    public void download(final Object object, final Throwable ex) {
+    public void delete(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 eventLoggingService.log(
-                        "Download",
-                        createEventDescription("Downloading", object),
+                        eventTypeId != null ? eventTypeId : "Delete",
+                        createEventDescription(descriptionVerb,"Deleting", object),
+                        DeleteEventAction.builder()
+                                .withObjects(createBaseObject(object))
+                                .withOutcome(EventLoggingUtil.createOutcome(ex))
+                                .build());
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to log delete event!", e);
+            }
+        });
+    }
+
+    @Override
+    public void delete(final java.lang.Object object, final Throwable ex) {
+       delete(object, null, ex);
+    }
+
+    @Override
+    public void delete(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+       delete(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final Throwable ex) {
+        view(object, null, ex);
+    }
+
+    @Override
+    public void view(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        view (object, eventTypeId, null, ex);
+    }
+
+
+    @Override
+    public void view(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                eventLoggingService.log(
+                        eventTypeId != null ? eventTypeId : "View",
+                        createEventDescription(descriptionVerb,"Viewing", object),
+                        ViewEventAction.builder().withOutcome(EventLoggingUtil.createOutcome(ex)).
+                                withObjects(createBaseObject(object)).build());
+
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to log view event!", e);
+            }
+        });
+    }
+
+    @Override
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex) {
+        delete(criteria, query, size, criteria.getClass().getSimpleName(), ex);
+    }
+
+    @Override
+    public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex) {
+      delete(criteria, query, size, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void download(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                eventLoggingService.log(
+                        eventTypeId != null ? eventTypeId : "Download",
+                        createEventDescription(descriptionVerb, "Exporting", object),
                         ExportEventAction.builder()
                                 .withSource(MultiObject.builder()
                                         .withObjects(createBaseObject(object))
                                         .build())
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
                                 .build());
+
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -359,12 +513,74 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void search(final String typeId,
-                       final Query query,
-                       final String resultType,
-                       final PageResponse pageResponse,
-                       final Throwable ex) {
+    public void download(final java.lang.Object object, final Throwable ex) {
+        download(object, null, ex);
+    }
 
+
+    @Override
+    public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+      download(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final Throwable ex) {
+        upload(object, null, ex);
+    }
+
+    @Override
+    public void upload(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        upload(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void process(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                ProcessEventAction.Builder<Void> builder = ProcessEventAction.builder().withOutcome(EventLoggingUtil.createOutcome(ex));
+                if (object != null){
+                    builder = builder.withInput(MultiObject.builder().addObjects(createBaseObject(object)).build());
+                }
+
+                eventLoggingService.log(
+                        eventTypeId,
+                        createEventDescription(descriptionVerb,"Processing", object),
+                        builder.build());
+
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void process(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
+        process(object, eventTypeId, null, ex);
+    }
+
+    @Override
+    public void unknownOperation(final java.lang.Object object, final String eventTypeId, final String descriptionVerb,
+                                 final Throwable ex) {
+        securityContext.insecure(() -> {
+            try {
+                UnknownEventAction.Builder<Void> builder = UnknownEventAction.builder().withData(getDataItems(object));
+                if (ex != null){
+                    builder = builder.withData(Data.builder().withName("Error").withValue(ex.getMessage()).build());
+                }
+                eventLoggingService.log(
+                        eventTypeId != null ? eventTypeId : "Unspecified Operation",
+                        createEventDescription(descriptionVerb, "No further detail", object),
+                        builder.build());
+
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
+
+    @Override
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String descriptionVerb, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final SearchEventAction.Builder<Void> searchBuilder = SearchEventAction.builder()
@@ -379,43 +595,21 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 }
 
                 eventLoggingService.log(
-                        typeId,
-                        createEventDescription("Finding " + resultType, null),
+                        typeId != null ? typeId : "Search",
+                        createEventDescription(descriptionVerb,"Finding" , resultType),
                         searchBuilder.build());
 
             } catch (final RuntimeException e) {
-                LOGGER.error("Unable to doSearch!", e);
+                LOGGER.error("Unable to log search event!", e);
             }
         });
     }
 
-//    @Override
-//    public void searchSummary(final BaseCriteria criteria, final Query query, final String resultType, final BaseResultList<?> results,
-//                              final Throwable ex) {
-//        securityContext.insecure(() -> {
-//            try {
-//                final Event event = createAction(criteria.getClass().getSimpleName(),
-//                        "Finding Summary " + resultType, null);
-//                final Search search = new Search();
-//                event.getEventDetail().setSearch(search);
-//                search.setQuery(query);
-//
-//                if (results != null && results.getPageResponse() != null) {
-//                    final PageResponse pageResponse = results.getPageResponse();
-//                    final ResultPage resultPage = getResultPage(pageResponse);
-//                    search.setResultPage(resultPage);
-//                    if (pageResponse.getTotal() != null) {
-//                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
-//                    }
-//                }
-//
-//                search.setOutcome(EventLoggingUtil.createOutcome(ex));
-//                eventLoggingService.log(event);
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("Unable to doSearchSummary", e);
-//            }
-//        });
-//    }
+    @Override
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex) {
+       search(typeId, query, resultType, pageResponse, null, ex);
+    }
+
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
         ResultPage resultPage = new ResultPage();
@@ -424,87 +618,40 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return resultPage;
     }
 
-    private String createEventDescription(final String description,
-                                          final Object object) {
-        final StringBuilder desc = new StringBuilder(description);
-        if (object != null) {
-            final String objectType = getObjectType(object);
-            if (objectType != null) {
-                desc.append(" ");
-                desc.append(objectType);
-            }
 
-            final String objectName = getObjectName(object);
-            if (objectName != null) {
-                desc.append(" \"");
-                desc.append(objectName);
-                desc.append("\"");
-            }
-
-            final String objectId = getObjectId(object);
-            if (objectId != null) {
-                desc.append(" id=");
-                desc.append(objectId);
-            }
-        }
-        return desc.toString();
-    }
-
-//    private Event createAction(final String typeId, final String description, final Object object) {
-//        final StringBuilder desc = new StringBuilder(description);
-//        if (object != null) {
-//            final String objectType = getObjectType(object);
-//            if (objectType != null) {
-//                desc.append(" ");
-//                desc.append(objectType);
-//            }
-//
-//            final String objectName = getObjectName(object);
-//            if (objectName != null) {
-//                desc.append(" \"");
-//                desc.append(objectName);
-//                desc.append("\"");
-//            }
-//
-//            final String objectId = getObjectId(object);
-//            if (objectId != null) {
-//                desc.append(" id=");
-//                desc.append(objectId);
-//            }
-//        }
-//
-//        return eventLoggingService.createSkeletonEvent(typeId, desc.toString());
-//    }
-
-//    private Event createAction(final String typeId,
-//                               final String description,
-//                               final String objectType,
-//                               final String objectName) {
-//        final String desc = description + " " + objectType + " \"" + objectName;
-//        return eventLoggingService.createSkeletonEvent(typeId, desc);
-//    }
-
-
-    private String getObjectType(final Object object) {
+    private String getObjectType(final java.lang.Object object) {
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getType());
         }
 
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender == null) {
-            return null;
+        final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
+        if (objectInfoProvider == null){
+            if (object instanceof Collection){
+                Collection collection = (Collection) object;
+                if (collection.isEmpty()) {
+                    return "Empty collection";
+                } else {
+                    return "Collection containing " + collection.stream().count()
+                            + collection.stream().findFirst().get().getClass().getSimpleName() +
+                            " and possibly other objects";
+                }
+            }
+            return object.getClass().getSimpleName();
         }
-        return objectInfoAppender.getObjectType(object);
+        return objectInfoProvider.getObjectType(object);
     }
 
-    private String getObjectName(final Object object) {
+    private String getObjectName(final java.lang.Object object) {
         if (object instanceof DocRef) {
             return ((DocRef) object).getName();
+        } else if  (object instanceof HasName){
+            return ((HasName) object).getName();
         }
+
         return null;
     }
 
-    private String getObjectId(final Object object) {
+    private String getObjectId(final java.lang.Object object) {
         if (object instanceof HasUuid) {
             return ((HasUuid) object).getUuid();
         }
@@ -513,21 +660,78 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             return String.valueOf(((HasId) object).getId());
         }
 
+        if (object instanceof HasIntegerId) {
+            return String.valueOf(((HasIntegerId) object).getId());
+        }
+
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getUuid());
         }
 
-        return "";
+        return null;
     }
 
-    private BaseObject createBaseObject(final Object object) {
+    private Iterable<BaseObject> createBaseObject(final java.lang.Object object) {
         if (object == null) {
-            return null;
+            return List.of();
         }
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
-            return null;
+            return List.of(createDefaultBaseObject(object));
         }
-        return objectInfoAppender.createBaseObject(object);
+        return List.of(objectInfoAppender.createBaseObject(object));
+    }
+
+    private BaseObject createDefaultBaseObject(final java.lang.Object object) {
+        final OtherObject.Builder<Void> builder = OtherObject.builder()
+                .withType(getObjectType(object))
+                .withId(getObjectId(object))
+                .withName(getObjectName(object));
+
+        builder.addData(getDataItems(object));
+
+        return builder.build();
+    }
+
+    static List<Data> getDataItems(java.lang.Object obj){
+        if (obj == null){
+            return List.of();
+        }
+        try{
+            final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
+
+            return allProps.keySet().stream().map(propName -> {
+                java.lang.Object val = allProps.get(propName);
+
+                if (val == null){
+                    return null;
+                }
+
+                Data d = new Data();
+                d.setName(propName);
+
+                if (shouldRedact(propName.toLowerCase())){
+                    d.setValue("********");
+                } else {
+                    d.setValue(val.toString());
+                }
+                return d;
+            }).filter(data -> data != null).collect(Collectors.toList());
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
+    //itself is logged, e.g. due to configuration settings
+    //Assess whether this field should be redacted
+    private static boolean shouldRedact (String propNameLowercase){
+        //TODO consider replacing or augmenting this hard coding
+        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
+        return propNameLowercase.endsWith("password") ||
+                propNameLowercase.endsWith("secret") ||
+                propNameLowercase.endsWith("token") ||
+                propNameLowercase.endsWith("nonce") ||
+                propNameLowercase.endsWith("key");
     }
 }

@@ -21,9 +21,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.query.api.v2.Query;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class StoredQuery implements HasAuditInfo {
+public class StoredQuery implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -79,6 +80,7 @@ public class StoredQuery implements HasAuditInfo {
         this.query = query;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

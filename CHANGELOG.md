@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
+* Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
+
+* Introduce functionality to provide configurable, automatic logging for RESTful API calls.
+
+* Add `search_results` dir to dockerfile.
+
 * Fix NPE in StroomEventLoggingUtil.
 
 

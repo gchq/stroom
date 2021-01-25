@@ -22,12 +22,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilterTracker {
+public class ProcessorFilterTracker implements HasIntegerId {
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
 
@@ -103,6 +105,7 @@ public class ProcessorFilterTracker {
         this.eventCount = eventCount;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

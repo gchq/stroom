@@ -18,12 +18,14 @@
 
 package stroom.security.identity.account;
 
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Account {
+public class Account implements HasIntegerId {
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -146,6 +148,7 @@ public class Account {
         this.processingAccount = processingAccount;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
