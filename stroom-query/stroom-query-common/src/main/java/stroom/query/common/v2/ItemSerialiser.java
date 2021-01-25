@@ -63,48 +63,15 @@ public class ItemSerialiser {
     }
 
     byte[] toBytes(final Consumer<Output> outputConsumer) {
-//        byte[] buffer = bytesPool.poll();
-//        if (buffer == null) {
-//            buffer = new byte[100];
-//        }
-
         byte[] result;
         try (final Output output = new Output(100, 4096)) {
             outputConsumer.accept(output);
             output.flush();
 
-
             result = output.toBytes();
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-
-//            buffer = output.getBuffer();
         }
 
-//        bytesPool.add(buffer);
-
         return result;
-
-//        try (final Output output = new Output(100, 4096)) {
-//            outputConsumer.accept(output);
-//            output.flush();
-//            return output.toBytes();
-////            } catch (final IOException e) {
-////                throw new UncheckedIOException(e);
-//        }
-
-
-//        try (final PooledByteBufferOutputStream byteArrayOutputStream = outputStreamProvider.get()) {
-//            try (final Output output = new Output(byteArrayOutputStream)) {
-//                writeKey(key, output);
-//                output.flush();
-//                byteArrayOutputStream.flush();
-//                return getBytes(byteArrayOutputStream);
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-//            }
-//        }
-
     }
 
     RawKey toRawKey(final Key key) {
@@ -215,31 +182,4 @@ public class ItemSerialiser {
             }
         });
     }
-
-//    byte[] toBytes(final Item item) {
-//        return Metrics.measure("Item toBytes", () -> {
-//            final RawItem rawItem = new RawItem(toBytes(item.getKey()), toBytes(item.getGenerators()));
-//            return toBytes(rawItem);
-//        });
-//    }
-//
-//    Item readItem(final byte[] bytes) {
-//        return Metrics.measure("Item readItem", () -> {
-//            final RawItem rawItem = readRawItem(bytes);
-//            Generator[] generators = readGenerators(rawItem.getGenerators());
-//            return new Item(rawItem.getGroupKey(), generators);
-//        });
-//    }
-
-
-//    private byte[] getBytes(final PooledByteBufferOutputStream bufferOutputStream) {
-//        return getBytes(bufferOutputStream.getPooledByteBuffer().getByteBuffer());
-//    }
-//
-//    private byte[] getBytes(final ByteBuffer byteBuffer) {
-//        final byte[] arr = new byte[byteBuffer.remaining()];
-//        byteBuffer.get(arr);
-//        return arr;
-//    }
-
 }
