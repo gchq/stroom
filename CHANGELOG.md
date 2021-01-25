@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2003** : Fixed some issues with LMDB search results.
+
 * Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
 
 * Introduce functionality to provide configurable, automatic logging for RESTful API calls.

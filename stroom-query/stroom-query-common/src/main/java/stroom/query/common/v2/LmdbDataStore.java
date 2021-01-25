@@ -73,10 +73,8 @@ import java.util.concurrent.locks.Lock;
 
 public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
-
-    private static RawKey ROOT_RAW_KEY;
     private static final long COMMIT_FREQUENCY_MS = 1000;
-
+    private static RawKey ROOT_RAW_KEY;
     private final LmdbEnvironment lmdbEnvironment;
     private final LmdbConfig lmdbConfig;
     private final Dbi<ByteBuffer> lmdbDbi;
@@ -102,9 +100,6 @@ public class LmdbDataStore implements DataStore {
     private final AtomicBoolean createPayload = new AtomicBoolean();
     private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
 
-
-    private final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(4096);
-    private final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(4096);
     private final LinkedBlockingQueue<Optional<QueueItem>> queue = new LinkedBlockingQueue<>(1000000);
 
     private final CountDownLatch addedData;
@@ -138,15 +133,6 @@ public class LmdbDataStore implements DataStore {
 
         this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
         this.byteBufferPool = byteBufferPool;
-
-        final int keySerdeCapacity = keySerde.getBufferCapacity();
-        final int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
-        if (keySerdeCapacity > envMaxKeySize) {
-            LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
-                            "key size for the environment {}. " +
-                            "The max environment key size {} will be used instead.",
-                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
-        }
 
         // Find out if we have any sorting.
         boolean hasSort = false;
@@ -377,12 +363,7 @@ public class LmdbDataStore implements DataStore {
             try {
                 LOGGER.trace(() -> "insert");
 
-                // Reset the buffers ready for use.
-                keyBuffer.clear();
-                valueBuffer.clear();
-
-                keySerde.serialize(keyBuffer, key);
-                keyBuffer.flip();
+                final ByteBuffer keyBuffer = keySerde.serialize(key);
 
                 if (key.isGrouped()) {
                     Metrics.measure("Grouped insert", () -> {
@@ -391,16 +372,16 @@ public class LmdbDataStore implements DataStore {
                         try {
                             // See if we can find an existing item.
                             final ByteBuffer existing = Metrics.measure("Grouped get", () -> lmdbDbi.get(txn, keyBuffer));
+                            ByteBuffer valueBuffer;
                             if (existing != null) {
                                 final Generator[] existingValue = valueSerde.deserialize(existing);
                                 final Generator[] combined = combine(existingValue, value);
 
-                                valueSerde.serialize(valueBuffer, combined);
-                                valueBuffer.flip();
+                                valueBuffer = valueSerde.serialize(combined);
+
                             } else {
                                 resultCount.incrementAndGet();
-                                valueSerde.serialize(valueBuffer, value);
-                                valueBuffer.flip();
+                                valueBuffer = valueSerde.serialize(value);
                             }
 
                             Metrics.measure("Grouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
@@ -412,8 +393,7 @@ public class LmdbDataStore implements DataStore {
                 } else {
                     Metrics.measure("Ungrouped insert", () -> {
                         resultCount.incrementAndGet();
-                        valueSerde.serialize(valueBuffer, value);
-                        valueBuffer.flip();
+                        final ByteBuffer valueBuffer = valueSerde.serialize(value);
 
                         Metrics.measure("Ungrouped put", () -> lmdbDbi.put(txn, keyBuffer, valueBuffer));
                     });
@@ -531,8 +511,8 @@ public class LmdbDataStore implements DataStore {
                         writeTxn.commit();
                     }
 
-                } catch (RuntimeException e) {
-                    throw new RuntimeException(LogUtil.message("Error clearing db", e));
+                } catch (final RuntimeException e) {
+                    throw new RuntimeException("Error clearing DB", e);
                 }
             }
         });
