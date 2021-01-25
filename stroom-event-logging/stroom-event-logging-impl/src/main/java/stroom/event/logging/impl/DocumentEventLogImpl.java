@@ -693,7 +693,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return builder.build();
     }
 
-    private List<Data> getDataItems(java.lang.Object obj){
+    static List<Data> getDataItems(java.lang.Object obj){
         if (obj == null){
             return List.of();
         }
@@ -709,7 +709,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 Data d = new Data();
                 d.setName(propName);
-                d.setValue(val.toString());
+
+                if (shouldRedact(propName.toLowerCase())){
+                    d.setValue("********");
+                } else {
+                    d.setValue(val.toString());
+                }
                 return d;
             }).filter(data -> data != null).collect(Collectors.toList());
         } catch (Exception ex) {
@@ -717,6 +722,16 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         }
     }
 
-
-
+    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
+    //itself is logged, e.g. due to configuration settings
+    //Assess whether this field should be redacted
+    private static boolean shouldRedact (String propNameLowercase){
+        //TODO consider replacing or augmenting this hard coding
+        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
+        return propNameLowercase.endsWith("password") ||
+                propNameLowercase.endsWith("secret") ||
+                propNameLowercase.endsWith("token") ||
+                propNameLowercase.endsWith("nonce") ||
+                propNameLowercase.endsWith("key");
+    }
 }
