@@ -10,7 +10,9 @@ import java.lang.annotation.Target;
 public @interface FunctionArg {
 
     /**
-     * The name of the argument, typically lower camel case, e.g. inputValue.
+     * The name of the argument, typically lower camel case, e.g. inputValue. If the arg is
+     * varargs then the name should be singular as numbers will be appended to it automatically
+     * in the expression editor menus/snippets.
      */
     String name();
 
