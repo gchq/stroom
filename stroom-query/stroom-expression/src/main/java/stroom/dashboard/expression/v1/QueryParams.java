@@ -23,10 +23,10 @@ import java.util.Set;
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = QueryParams.NAME,
-        commonCategory = FunctionCategory.VALUE,
+        commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
         signatures = @FunctionSignature(
-                description = "Returns all the query parameters for the current query, e.g. 'user=bob site=HQ'.",
+                description = "Returns all the query parameters for the current query, e.g. 'user=jbloggs site=HQ'.",
                 returnDescription = "All query parameters as a space delimited string.",
                 args = { }))
 class QueryParams extends AbstractFunction {

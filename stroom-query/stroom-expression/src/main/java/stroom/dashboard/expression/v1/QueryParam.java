@@ -22,7 +22,7 @@ import java.util.Map;
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = QueryParam.NAME,
-        commonCategory = FunctionCategory.VALUE,
+        commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
         signatures = @FunctionSignature(
                 description = "Fetches the value of named query parameter or " + Null.NAME + "() if the key " +

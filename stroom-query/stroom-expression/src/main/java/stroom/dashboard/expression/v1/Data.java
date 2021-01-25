@@ -31,13 +31,17 @@ package stroom.dashboard.expression.v1;
                                 argType = ValLong.class),
                         @FunctionArg(
                                 name = Data.ARG_PART_NO,
-                                description = "The part number (one based).",
-                                argType = ValInteger.class),
+                                description = "The part number (one based). The part number is only applicable " +
+                                        "for non-segmented streams (i.e uncooked streams). If a stream is segmented " +
+                                        "or is not multi-part then the part number will be 1.",
+                                argType = ValLong.class),
                         @FunctionArg(
                                 name = Data.ARG_RECORD_NO,
-                                description = "The record number (one based).",
+                                description = "The record number (one based). The record number is only applicable for " +
+                                        "segmented streams (i.e. cooked streams). Its value will be ignored for " +
+                                        "non-segmented streams.",
                                 isOptional = true,
-                                argType = ValInteger.class),
+                                argType = ValLong.class),
                         @FunctionArg(
                                 name = Data.ARG_LINE_FROM,
                                 description = "The line number of the start of the desired range of data " +
@@ -73,9 +77,9 @@ package stroom.dashboard.expression.v1;
                         @FunctionArg(
                                 name = Data.ARG_DISPLAY_TYPE,
                                 description = "How the data will be displayed in the user interface. Defaults to " +
-                                        "'popup'.",
+                                        "'dialog'.",
                                 isOptional = true,
-                                allowedValues = { "popup", "tab" },
+                                allowedValues = { "dialog", "tab" },
                                 argType = ValString.class),
                 }))
 class Data extends AbstractLink {

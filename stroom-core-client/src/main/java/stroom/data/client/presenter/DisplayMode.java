@@ -4,7 +4,7 @@ public enum DisplayMode {
     /**
      * Displays the presenter in a popup modal dialog
      */
-    DIALOG("popup"),
+    DIALOG("dialog"),
     /**
      * Displays the presenter in a top level stroom tab (not a browser tab)
      */
