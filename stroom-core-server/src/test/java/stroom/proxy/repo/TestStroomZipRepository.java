@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 
 public class TestStroomZipRepository {
@@ -206,6 +207,7 @@ public class TestStroomZipRepository {
 
         String pattern = "yyyy-MM-dd";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         String nowStr = simpleDateFormat.format(new Date());
         Assert.assertEquals(nowStr, dateDirStr);
     }

@@ -120,13 +120,8 @@ class ResultSenderImpl implements ResultSender {
                             LOGGER.trace(() -> "await finished with result " + awaitResult);
                         }
 
-                        // Make sure we don't continue to execute this task if it should have terminated.
-                        if (!taskContext.isTerminated()) {
-                            // Try to send more data.
-                            doSend(coprocessors, consumer, frequency, searchComplete, errors);
-                        } else {
-                            sendingData.complete();
-                        }
+                        // Try to send more data.
+                        doSend(coprocessors, consumer, frequency, searchComplete, errors);
                     }
                 })
                 .exceptionally(t -> {
