@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix dashboards not handling NUMERIC index fields.
+
 * Fix bug in Negate expression function.
 
 * Issue **#1995** : Add help info to the expression functions drop down menu.
