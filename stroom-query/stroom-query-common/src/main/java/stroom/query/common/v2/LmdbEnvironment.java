@@ -16,7 +16,6 @@ import org.lmdbjava.Txn;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -74,7 +73,7 @@ public class LmdbEnvironment {
                         "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
                 maxSize,
                 lmdbConfig.getMaxDbs(),
-                dbDir.toAbsolutePath().toString() + File.separatorChar,
+                FileUtil.getCanonicalPath(dbDir),
                 maxReaders,
                 maxPutsBeforeCommit,
                 lmdbConfig.isReadAheadEnabled());
@@ -156,7 +155,11 @@ public class LmdbEnvironment {
         try {
             return lmdbEnvironment.openDbi(toBytes(name), DbiFlags.MDB_CREATE);
         } catch (final Exception e) {
-            throw new RuntimeException(LogUtil.message("Error opening LMDB database {}", name), e);
+            throw new RuntimeException(LogUtil.message("Error opening LMDB database '{}' in '{}' ({})",
+                    name,
+                    FileUtil.getCanonicalPath(dbDir),
+                    e.getMessage()),
+                    e);
         }
     }
 
