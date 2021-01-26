@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2006** : Use UTC timezone when comparing date in repository folder name.
+
+* Issue **#2006** : Use `ArrayList.size()` as a method, instead of a property in Gradle build.
+
 * Issue **#2016** : Fixed StackOverflowException in document event log. 
 
 * Issue **#2003** : Fixed some issues with LMDB search results.
