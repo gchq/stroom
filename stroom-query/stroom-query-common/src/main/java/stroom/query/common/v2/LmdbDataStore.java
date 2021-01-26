@@ -165,7 +165,7 @@ public class LmdbDataStore implements DataStore {
                 try {
                     queue.put(Optional.empty());
                 } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.debug(e.getMessage(), e);
                     Thread.currentThread().interrupt();
                     addedData.countDown();
                 }

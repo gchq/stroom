@@ -1,13 +1,14 @@
 {
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
-  "version" : "f21d8c78-98c4-42e8-889f-4014912cbe64",
+  "version" : "3b3810d9-c186-4ed9-8ec1-86c1b9ede08b",
+  "description" : "",
   "fields" : [ {
     "fieldUse" : "FIELD",
     "fieldName" : "_nest_path_",
     "fieldType" : "_nest_path_",
     "stored" : false,
-    "indexed" : false,
+    "indexed" : true,
     "uninvertible" : false,
     "docValues" : false,
     "multiValued" : false,
@@ -433,6 +434,10 @@
     } ]
   },
   "solrConnectionConfig" : {
-    "useZk" : false
+    "useZk" : false,
+    "instanceType" : "SINGLE_NOOE",
+    "solrUrls" : [ "http://localhost:8983/solr/mycore" ],
+    "zkHosts" : [ "" ],
+    "zkPath" : ""
   }
 }
