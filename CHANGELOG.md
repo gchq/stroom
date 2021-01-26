@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2016** : Fixed StackOverflowException in document event log. 
+
 * Issue **#2003** : Fixed some issues with LMDB search results.
 
 * Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.

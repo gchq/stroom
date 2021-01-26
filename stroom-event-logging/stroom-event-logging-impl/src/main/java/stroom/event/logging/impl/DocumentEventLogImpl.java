@@ -17,6 +17,19 @@
 
 package stroom.event.logging.impl;
 
+import stroom.docref.DocRef;
+import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.event.logging.api.ObjectType;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasName;
+import stroom.util.shared.HasUuid;
+import stroom.util.shared.PageResponse;
+
 import event.logging.BaseObject;
 import event.logging.CopyEventAction;
 import event.logging.CopyMoveOutcome;
@@ -24,8 +37,6 @@ import event.logging.CreateEventAction;
 import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.DeleteEventAction;
-import event.logging.Event;
-import event.logging.EventAction;
 import event.logging.ExportEventAction;
 import event.logging.ImportEventAction;
 import event.logging.MoveEventAction;
@@ -42,18 +53,6 @@ import event.logging.util.EventLoggingUtil;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.event.logging.api.ObjectType;
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.HasId;
-import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasName;
-import stroom.util.shared.HasUuid;
-import stroom.util.shared.PageResponse;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -82,6 +81,48 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         this.securityContext = securityContext;
     }
 
+    static List<Data> getDataItems(java.lang.Object obj) {
+        if (obj == null) {
+            return List.of();
+        }
+        try {
+            final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
+
+            return allProps.keySet().stream().map(propName -> {
+                java.lang.Object val = allProps.get(propName);
+
+                if (val == null) {
+                    return null;
+                }
+
+                Data d = new Data();
+                d.setName(propName);
+
+                if (shouldRedact(propName.toLowerCase())) {
+                    d.setValue("********");
+                } else {
+                    d.setValue(val.toString());
+                }
+                return d;
+            }).filter(data -> data != null).collect(Collectors.toList());
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
+    //itself is logged, e.g. due to configuration settings
+    //Assess whether this field should be redacted
+    private static boolean shouldRedact(String propNameLowercase) {
+        //TODO consider replacing or augmenting this hard coding
+        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
+        return propNameLowercase.endsWith("password") ||
+                propNameLowercase.endsWith("secret") ||
+                propNameLowercase.endsWith("token") ||
+                propNameLowercase.endsWith("nonce") ||
+                propNameLowercase.endsWith("key");
+    }
+
     private ObjectInfoProvider getInfoAppender(final Class<?> type) {
         ObjectInfoProvider appender = null;
 
@@ -108,16 +149,16 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     public void create(final String objectType, final String objectName, final Throwable ex) {
         create(objectType, objectName, null, ex);
     }
+
     @Override
     public void create(final String objectType, final String objectName, final String eventTypeId, final Throwable ex) {
-      create(objectType, objectName,  eventTypeId, null, ex);
+        create(objectType, objectName, eventTypeId, null, ex);
     }
 
     @Override
     public void create(final java.lang.Object object, final Throwable ex) {
         create(object, null, ex);
     }
-
 
     @Override
     public void create(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
@@ -144,6 +185,11 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
+//    @Override
+//    public void update(final java.lang.Object before, final java.lang.Object after) {
+//        update(before, after, null);
+//    }
+
     @Override
     public void create(final java.lang.Object object, final String eventTypeId, final String verb, final Throwable ex) {
         securityContext.insecure(() -> {
@@ -161,14 +207,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-
     private String createEventDescription(final String descriptionVerb,
                                           final String defaultDescription,
                                           final Object objectOrObjectType) {
         final String description = Optional.ofNullable(descriptionVerb).orElse(defaultDescription);
         final StringBuilder desc = new StringBuilder(description);
         if (objectOrObjectType != null) {
-            if (objectOrObjectType instanceof String){
+            if (objectOrObjectType instanceof String) {
                 //Object type name supplied
                 desc.append(" ");
                 desc.append(objectOrObjectType);
@@ -197,11 +242,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return desc.toString();
     }
 
-//    @Override
-//    public void update(final java.lang.Object before, final java.lang.Object after) {
-//        update(before, after, null);
-//    }
-
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         update(before, after, null, ex);
@@ -228,11 +268,15 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
+//    @Override
+//    public void move(final java.lang.Object before, final java.lang.Object after) {
+//        move(before, after, null);
+//    }
+
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
-        update(before, after, null, ex);
+        update(before, after, eventTypeId, null, ex);
     }
-
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final String description, final Throwable ex) {
@@ -256,7 +300,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "Update",
-                        createEventDescription(description,"Updating", before),
+                        createEventDescription(description, "Updating", before),
                         updateBuilder.build());
 
             } catch (final RuntimeException e) {
@@ -265,11 +309,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
 
     }
-
-//    @Override
-//    public void move(final java.lang.Object before, final java.lang.Object after) {
-//        move(before, after, null);
-//    }
 
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
@@ -312,7 +351,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void copy(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
-     copy (before, after, eventTypeId, null, ex);
+        copy(before, after, eventTypeId, null, ex);
     }
 
     @Override
@@ -322,7 +361,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void move(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
-        move(before,after,eventTypeId,null, ex);
+        move(before, after, eventTypeId, null, ex);
     }
 
     @Override
@@ -350,7 +389,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "Move",
-                        createEventDescription(verb,"Moving", source),
+                        createEventDescription(verb, "Moving", source),
                         moveBuilder.build());
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to log move event!", e);
@@ -358,12 +397,10 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final Throwable ex) {
         rename(before, after, null, ex);
     }
-
 
     @Override
     public void rename(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
@@ -395,7 +432,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "Rename",
-                        createEventDescription(descriptionVerb,"Renaming", before),
+                        createEventDescription(descriptionVerb, "Renaming", before),
                         moveBuilder.build());
 
             } catch (final RuntimeException e) {
@@ -434,7 +471,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             try {
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "Delete",
-                        createEventDescription(descriptionVerb,"Deleting", object),
+                        createEventDescription(descriptionVerb, "Deleting", object),
                         DeleteEventAction.builder()
                                 .withObjects(createBaseObject(object))
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
@@ -447,12 +484,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final java.lang.Object object, final Throwable ex) {
-       delete(object, null, ex);
+        delete(object, null, ex);
     }
 
     @Override
     public void delete(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
-       delete(object, eventTypeId, null, ex);
+        delete(object, eventTypeId, null, ex);
     }
 
     @Override
@@ -462,9 +499,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void view(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
-        view (object, eventTypeId, null, ex);
+        view(object, eventTypeId, null, ex);
     }
-
 
     @Override
     public void view(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
@@ -472,7 +508,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             try {
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "View",
-                        createEventDescription(descriptionVerb,"Viewing", object),
+                        createEventDescription(descriptionVerb, "Viewing", object),
                         ViewEventAction.builder().withOutcome(EventLoggingUtil.createOutcome(ex)).
                                 withObjects(createBaseObject(object)).build());
 
@@ -489,7 +525,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex) {
-      delete(criteria, query, size, eventTypeId, null, ex);
+        delete(criteria, query, size, eventTypeId, null, ex);
     }
 
     @Override
@@ -517,10 +553,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         download(object, null, ex);
     }
 
-
     @Override
     public void download(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
-      download(object, eventTypeId, null, ex);
+        download(object, eventTypeId, null, ex);
     }
 
     @Override
@@ -538,13 +573,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         securityContext.insecure(() -> {
             try {
                 ProcessEventAction.Builder<Void> builder = ProcessEventAction.builder().withOutcome(EventLoggingUtil.createOutcome(ex));
-                if (object != null){
+                if (object != null) {
                     builder = builder.withInput(MultiObject.builder().addObjects(createBaseObject(object)).build());
                 }
 
                 eventLoggingService.log(
                         eventTypeId,
-                        createEventDescription(descriptionVerb,"Processing", object),
+                        createEventDescription(descriptionVerb, "Processing", object),
                         builder.build());
 
             } catch (final RuntimeException e) {
@@ -564,7 +599,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         securityContext.insecure(() -> {
             try {
                 UnknownEventAction.Builder<Void> builder = UnknownEventAction.builder().withData(getDataItems(object));
-                if (ex != null){
+                if (ex != null) {
                     builder = builder.withData(Data.builder().withName("Error").withValue(ex.getMessage()).build());
                 }
                 eventLoggingService.log(
@@ -577,7 +612,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             }
         });
     }
-
 
     @Override
     public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String descriptionVerb, final Throwable ex) {
@@ -596,7 +630,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(
                         typeId != null ? typeId : "Search",
-                        createEventDescription(descriptionVerb,"Finding" , resultType),
+                        createEventDescription(descriptionVerb, "Finding", resultType),
                         searchBuilder.build());
 
             } catch (final RuntimeException e) {
@@ -607,9 +641,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     @Override
     public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex) {
-       search(typeId, query, resultType, pageResponse, null, ex);
+        search(typeId, query, resultType, pageResponse, null, ex);
     }
-
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
         ResultPage resultPage = new ResultPage();
@@ -618,15 +651,14 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return resultPage;
     }
 
-
     private String getObjectType(final java.lang.Object object) {
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getType());
         }
 
         final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
-        if (objectInfoProvider == null){
-            if (object instanceof Collection){
+        if (objectInfoProvider == null) {
+            if (object instanceof Collection) {
                 Collection collection = (Collection) object;
                 if (collection.isEmpty()) {
                     return "Empty collection";
@@ -644,7 +676,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     private String getObjectName(final java.lang.Object object) {
         if (object instanceof DocRef) {
             return ((DocRef) object).getName();
-        } else if  (object instanceof HasName){
+        } else if (object instanceof HasName) {
             return ((HasName) object).getName();
         }
 
@@ -691,47 +723,5 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         builder.addData(getDataItems(object));
 
         return builder.build();
-    }
-
-    static List<Data> getDataItems(java.lang.Object obj){
-        if (obj == null){
-            return List.of();
-        }
-        try{
-            final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
-
-            return allProps.keySet().stream().map(propName -> {
-                java.lang.Object val = allProps.get(propName);
-
-                if (val == null){
-                    return null;
-                }
-
-                Data d = new Data();
-                d.setName(propName);
-
-                if (shouldRedact(propName.toLowerCase())){
-                    d.setValue("********");
-                } else {
-                    d.setValue(val.toString());
-                }
-                return d;
-            }).filter(data -> data != null).collect(Collectors.toList());
-        } catch (Exception ex) {
-            return List.of();
-        }
-    }
-
-    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
-    //itself is logged, e.g. due to configuration settings
-    //Assess whether this field should be redacted
-    private static boolean shouldRedact (String propNameLowercase){
-        //TODO consider replacing or augmenting this hard coding
-        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
-        return propNameLowercase.endsWith("password") ||
-                propNameLowercase.endsWith("secret") ||
-                propNameLowercase.endsWith("token") ||
-                propNameLowercase.endsWith("nonce") ||
-                propNameLowercase.endsWith("key");
     }
 }
