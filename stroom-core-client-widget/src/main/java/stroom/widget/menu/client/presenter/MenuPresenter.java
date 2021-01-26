@@ -44,10 +44,11 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
     @Inject
     public MenuPresenter(final EventBus eventBus) {
         super(eventBus, new ScrollableCellTableViewImpl<>(
-                        false,
-                        MENU_RESOURCES,
-                        50,
-                        600));
+                false,
+                MENU_RESOURCES,
+                50,
+                600,
+                600));
 
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
             @Override

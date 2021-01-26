@@ -36,7 +36,8 @@ public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> impleme
     public ScrollableCellTableViewImpl(final boolean supportsSelection,
                                        final Resources resources,
                                        final int minWidth,
-                                       final int maxWidth) {
+                                       final int maxWidth,
+                                       final int maxHeight) {
         super(supportsSelection, resources);
 
         final CellTable<R> cellTable = getCellTable();
@@ -46,7 +47,7 @@ public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> impleme
         final ScrollPanel scrollPanel = new ScrollPanel(cellTable);
         scrollPanel.getElement().getStyle().setProperty("minWidth", minWidth + "px");
         scrollPanel.getElement().getStyle().setProperty("maxWidth", maxWidth + "px");
-        scrollPanel.getElement().getStyle().setProperty("maxHeight", "300px");
+        scrollPanel.getElement().getStyle().setProperty("maxHeight", maxHeight + "px");
         setWidget(scrollPanel);
     }
 }
