@@ -16,11 +16,15 @@
 
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,12 +40,15 @@ import java.util.stream.Collectors;
 class UserServiceImpl implements UserService {
     private final SecurityContext securityContext;
     private final UserDao userDao;
+    private final EntityEventBus eventBus;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
-                    final UserDao userDao) {
+                    final UserDao userDao,
+                    final EntityEventBus eventBus) {
         this.securityContext = securityContext;
         this.userDao = userDao;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -61,8 +68,11 @@ class UserServiceImpl implements UserService {
         user.setName(name);
         user.setGroup(isGroup);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
-                userDao.create(user));
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            final User newUser = userDao.create(user);
+            fireEntityChangeEvent(newUser, EntityAction.CREATE);
+            return newUser;
+        });
     }
 
     @Override
@@ -88,14 +98,20 @@ class UserServiceImpl implements UserService {
     @Override
     public User update(User user) {
         AuditUtil.stamp(securityContext.getUserId(), user);
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () ->
-                userDao.update(user));
+        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            final User updatedUser = userDao.update(user);
+            fireEntityChangeEvent(updatedUser, EntityAction.UPDATE);
+            return updatedUser;
+        });
     }
 
     @Override
     public Boolean delete(final String userUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
-                userDao.delete(userUuid));
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            userDao.delete(userUuid);
+
+            fireEntityChangeEvent(userUuid, EntityAction.DELETE);
+        });
         return true;
     }
 
@@ -127,15 +143,19 @@ class UserServiceImpl implements UserService {
 
     @Override
     public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
-                userDao.addUserToGroup(userUuid, groupUuid));
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            userDao.addUserToGroup(userUuid, groupUuid);
+            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+        });
         return true;
     }
 
     @Override
     public Boolean removeUserFromGroup(final String userUuid, final String groupUuid) {
-        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
-                userDao.removeUserFromGroup(userUuid, groupUuid));
+        securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+            userDao.removeUserFromGroup(userUuid, groupUuid);
+            fireEntityChangeEvent(userUuid, EntityAction.UPDATE);
+        });
         return true;
     }
 
@@ -177,5 +197,26 @@ class UserServiceImpl implements UserService {
                 .map(User::getName)
                 .sorted()
                 .collect(Collectors.toList());
+    }
+
+    private void fireEntityChangeEvent(final User user, final EntityAction entityAction) {
+        EntityEvent.fire(
+                eventBus,
+                DocRef.builder()
+                        .name(user.getName())
+                        .uuid(user.getUuid())
+                        .type(UserDocRefUtil.USER)
+                        .build(),
+                entityAction);
+    }
+
+    private void fireEntityChangeEvent(final String userUuid, final EntityAction entityAction) {
+        EntityEvent.fire(
+                eventBus,
+                DocRef.builder()
+                        .uuid(userUuid)
+                        .type(UserDocRefUtil.USER)
+                        .build(),
+                entityAction);
     }
 }

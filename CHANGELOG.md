@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1871** : Invalidate the users and user groups cache when the _manage_users_ command is run.
+
 * Issue **#2003** : Fixed some issues with LMDB search results.
 
 * Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
