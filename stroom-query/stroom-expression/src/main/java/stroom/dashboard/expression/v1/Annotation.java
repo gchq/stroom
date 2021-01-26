@@ -114,7 +114,7 @@ class Annotation extends AbstractLink {
             append(sb, 2, ARG_STREAM_ID);
             append(sb, 3, ARG_EVENT_ID);
             append(sb, 4, ARG_TITLE);
-            append(sb, 5, ARG_TITLE);
+            append(sb, 5, ARG_SUBJECT);
             append(sb, 6, ARG_STATUS);
             append(sb, 7, ARG_ASSIGNED_TO);
             append(sb, 8, ARG_COMMENT);
