@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1946** : Removed unnecessary index shard state change error.
+
 
 ## [v7.0-beta.79] - 2021-01-26
 
