@@ -17,12 +17,6 @@
 
 package stroom.streamstore.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import stroom.feed.MetaMap;
 import stroom.jobsystem.server.ClusterLockService;
 import stroom.node.server.StroomPropertyService;
@@ -35,20 +29,26 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Component
 public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
-
     public static final int BATCH_SIZE = 1000;
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeValueFlushImpl.class);
+    private final Queue<AsyncFlush> queue = new LinkedBlockingQueue<>(1000000);
     @Resource
     private StreamAttributeKeyService streamAttributeKeyService;
     @Resource
@@ -60,11 +60,12 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @Resource
     private ClusterLockService clusterLockService;
 
-    private final Queue<AsyncFlush> queue = new ConcurrentLinkedQueue<>();
-
     @Override
     public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
-        queue.add(new AsyncFlush(stream, append, metaMap));
+        while (!queue.offer(new AsyncFlush(stream, append, metaMap))) {
+            // If we aren't able to add the item to the queue it must be full so flush it.
+            flush();
+        }
     }
 
     @Override
@@ -75,7 +76,6 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
     @StroomShutdown
     public void shutdown() {
         flush();
-
     }
 
     /**
@@ -111,8 +111,8 @@ public class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush 
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
                 criteria.obtainStreamIdSet().add(item.getStream());
-
             }
+
             if (batchInsert.size() < BATCH_SIZE) {
                 ranOutOfItems = true;
             }
