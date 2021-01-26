@@ -242,15 +242,24 @@ class TestJsonSerialisation {
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(additionalGetters)
-                            .describedAs("%s - Additional getters: %s", clazz.getName(), additionalGetters)
+                            .describedAs(
+                                    "%s - Additional getters: %s",
+                                    clazz.getName(),
+                                    additionalGetters)
                             .isEmpty();
 
                     softly.assertThat(additionalSetters)
-                            .describedAs("%s - Additional setters: %s", clazz.getName(), additionalSetters)
+                            .describedAs(
+                                    "%s - Additional setters: %s",
+                                    clazz.getName(),
+                                    additionalSetters)
                             .isEmpty();
 
                     softly.assertThat(uselessIgnore)
-                            .describedAs("%s - Useless @JsonIgnore annotation: %s", clazz.getName(), uselessIgnore)
+                            .describedAs(
+                                    "%s - Useless @JsonIgnore annotation: %s",
+                                    clazz.getName(),
+                                    uselessIgnore)
                             .isEmpty();
                 });
             }

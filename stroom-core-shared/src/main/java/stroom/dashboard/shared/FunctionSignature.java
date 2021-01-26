@@ -64,7 +64,6 @@ public class FunctionSignature {
         }
     }
 
-    @JsonIgnore
     private Set<String> getAllNames() {
         return Stream.concat(Stream.of(name), this.aliases.stream())
                 .collect(Collectors.toSet());
@@ -108,7 +107,6 @@ public class FunctionSignature {
         return categoryPath;
     }
 
-    @JsonIgnore
     public Optional<String> getCategory(final int depth) {
         return depth < categoryPath.size()
                 ? Optional.ofNullable(categoryPath.get(depth))
@@ -166,9 +164,9 @@ public class FunctionSignature {
         @JsonProperty
         private final Type argType;
         @JsonProperty
-        private final boolean isOptional;
+        private final boolean optional;
         @JsonProperty
-        private final boolean isVarargs;
+        private final boolean varargs;
         @JsonProperty
         private final int minVarargsCount;
         @JsonProperty
@@ -179,15 +177,15 @@ public class FunctionSignature {
         @JsonCreator
         public Arg(@JsonProperty("name") final String name,
                    @JsonProperty("argType") final Type argType,
-                   @JsonProperty("isOptional") final boolean isOptional,
-                   @JsonProperty("isVarargs") final boolean isVarargs,
+                   @JsonProperty("optional") final boolean optional,
+                   @JsonProperty("varargs") final boolean varargs,
                    @JsonProperty("minVarargsCount") final int minVarargsCount,
                    @JsonProperty("description") final String description,
                    @JsonProperty("allowedValues") final List<String> allowedValues) {
             this.name = name;
             this.argType = argType;
-            this.isOptional = isOptional;
-            this.isVarargs = isVarargs;
+            this.optional = optional;
+            this.varargs = varargs;
             this.minVarargsCount = minVarargsCount;
             this.description = description;
             this.allowedValues = allowedValues;
@@ -202,11 +200,11 @@ public class FunctionSignature {
         }
 
         public boolean isOptional() {
-            return isOptional;
+            return optional;
         }
 
         public boolean isVarargs() {
-            return isVarargs;
+            return varargs;
         }
 
         public int getMinVarargsCount() {
@@ -226,12 +224,12 @@ public class FunctionSignature {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final Arg arg = (Arg) o;
-            return isOptional == arg.isOptional && isVarargs == arg.isVarargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues);
+            return optional == arg.optional && varargs == arg.varargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, argType, isOptional, isVarargs, minVarargsCount, description, allowedValues);
+            return Objects.hash(name, argType, optional, varargs, minVarargsCount, description, allowedValues);
         }
 
         @Override
@@ -239,8 +237,8 @@ public class FunctionSignature {
             return "Arg{" +
                     "name='" + name + '\'' +
                     ", argType=" + argType +
-                    ", isOptional=" + isOptional +
-                    ", isVarargs=" + isVarargs +
+                    ", optional=" + optional +
+                    ", varargs=" + varargs +
                     ", minVarargsCount=" + minVarargsCount +
                     ", description='" + description + '\'' +
                     ", allowedValues=" + allowedValues +
