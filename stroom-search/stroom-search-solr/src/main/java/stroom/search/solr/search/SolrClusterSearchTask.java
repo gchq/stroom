@@ -26,8 +26,6 @@ import stroom.util.task.ServerTask;
 import java.util.Map;
 
 class SolrClusterSearchTask extends ServerTask<NodeResult> {
-    private static final long serialVersionUID = -1305243739417365803L;
-
     private final CachedSolrIndex cachedSolrIndex;
     private final Query query;
     private final int resultSendFrequency;

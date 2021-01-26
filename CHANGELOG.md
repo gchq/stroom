@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2009** : Fixed issue where Solr searches were not returning results.
+
 * Issue **#1964** : BGZIP files are now closed on exception.
 
 * Changed default dashboard time zone to use UTC.

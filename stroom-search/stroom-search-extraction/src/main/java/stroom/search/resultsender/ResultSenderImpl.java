@@ -17,7 +17,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 class ResultSenderImpl implements ResultSender {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultSenderImpl.class);
@@ -53,41 +52,39 @@ class ResultSenderImpl implements ResultSender {
 
         LOGGER.trace(() -> "sendData() called");
 
-        final Supplier<Boolean> supplier = taskWrapper.wrap(() -> {
-            // Find out if searching is complete.
-            final boolean complete = searchComplete.isComplete();
+        final Runnable runnable = taskWrapper.wrap(() -> {
+            boolean keepSending = true;
+            while (keepSending) {
+                keepSending = false;
+                try {
+                    // Find out if searching is complete.
+                    final boolean complete = searchComplete.isComplete();
 
-            if (!taskContext.isTerminated()) {
-                taskContext.setName("Search Result Sender");
-                taskContext.info("Creating search result");
+                    if (!taskContext.isTerminated()) {
+                        taskContext.setName("Search Result Sender");
+                        taskContext.info("Creating search result");
 
-                // Produce payloads for each coprocessor.
-                final Map<CoprocessorKey, Payload> payloadMap = coprocessors.createPayloads();
+                        // Produce payloads for each coprocessor.
+                        final Map<CoprocessorKey, Payload> payloadMap = coprocessors.createPayloads();
 
-                // Drain all current errors to a list.
-                List<String> errorsSnapshot = new ArrayList<>();
-                errors.drainTo(errorsSnapshot);
-                if (errorsSnapshot.size() == 0) {
-                    errorsSnapshot = null;
-                }
+                        // Drain all current errors to a list.
+                        List<String> errorsSnapshot = new ArrayList<>();
+                        errors.drainTo(errorsSnapshot);
+                        if (errorsSnapshot.size() == 0) {
+                            errorsSnapshot = null;
+                        }
 
-                // Only send a result if we have something new to send.
-                if (payloadMap != null || errorsSnapshot != null || complete) {
-                    // Form a result to send back to the requesting node.
-                    final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, complete);
+                        // Only send a result if we have something new to send.
+                        if (payloadMap != null || errorsSnapshot != null || complete) {
+                            // Form a result to send back to the requesting node.
+                            final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, complete);
 
-                    // Give the result to the callback.
-                    taskContext.info("Sending search result");
-                    consumer.accept(result);
-                }
-            }
+                            // Give the result to the callback.
+                            taskContext.info("Sending search result");
+                            consumer.accept(result);
+                        }
+                    }
 
-            return complete;
-        });
-
-        // Run the sending code asynchronously.
-        CompletableFuture.supplyAsync(supplier, executor)
-                .thenAccept(complete -> {
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
                         sendingData.complete();
@@ -120,10 +117,29 @@ class ResultSenderImpl implements ResultSender {
                             LOGGER.trace(() -> "await finished with result " + awaitResult);
                         }
 
-                        // Try to send more data.
-                        doSend(coprocessors, consumer, frequency, searchComplete, errors);
+                        // Make sure we don't continue to execute this task if it should have terminated.
+                        if (!taskContext.isTerminated()) {
+                            // Try to send more data.
+                            keepSending = true;
+                        } else {
+                            boolean ter = taskContext.isTerminated();
+
+                            sendingData.complete();
+                        }
                     }
-                })
+
+                } catch (final Exception e) {
+                    // If we failed to send the result or the source node rejected the result because the source
+                    // task has been terminated then terminate the task.
+                    LOGGER.info(() -> "Terminating search because we were unable to send result");
+                    sendingData.complete();
+                }
+            }
+        });
+
+        // Run the sending code asynchronously.
+        CompletableFuture
+                .runAsync(runnable, executor)
                 .exceptionally(t -> {
                     // If we failed to send the result or the source node rejected the result because the source
                     // task has been terminated then terminate the task.
