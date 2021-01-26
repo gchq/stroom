@@ -10,6 +10,7 @@ import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -29,11 +30,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FunctionDefinitionUtil {
+public class FunctionSignatureUtil {
 
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
 
-    private FunctionDefinitionUtil() {
+    private FunctionSignatureUtil() {
     }
 
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
@@ -120,7 +121,7 @@ public class FunctionDefinitionUtil {
 //                        GWT.log("Func: " +
 //                                buildSignatureStr(functionSignature) + " " +
 //                                isBracketedForm(functionSignature)))
-                .filter(FunctionDefinitionUtil::isBracketedForm)
+                .filter(FunctionSignatureUtil::isBracketedForm)
                 .sorted(Comparator.comparing(FunctionSignature::getName))
                 .collect(Collectors.toList());
 
@@ -153,7 +154,7 @@ public class FunctionDefinitionUtil {
         // e.g. 1+2 vs add(1, 2)
         return signatures.stream()
                 .flatMap(signature -> signature.asAliases().stream())
-                .filter(FunctionDefinitionUtil::isBracketedForm)
+                .filter(FunctionSignatureUtil::isBracketedForm)
                 .map(signature ->
                         convertFunctionDefinitionToCompletion(
                                 signature,
@@ -351,7 +352,7 @@ public class FunctionDefinitionUtil {
 //                                argStrs.add(prefix + arg.getName() + suffix);
                                 argStrs.add(buildVarargsName(arg, i));
                             }
-                        } else if (arg.isOptional()) {
+                        } else if (arg.isOptional() && !foundOptArg.get()) {
                             argStrs.add("[" + arg.getName());
                             foundOptArg.set(true);
                         } else {
@@ -418,6 +419,7 @@ public class FunctionDefinitionUtil {
 
             final SafeStyles cellStyles = new SafeStylesBuilder()
                     .appendTrustedString("white-space: pre-wrap !important;")
+                    .paddingTop(0.25, Unit.EM)
                     .toSafeStyles();
 
             signature.getArgs()

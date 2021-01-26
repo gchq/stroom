@@ -124,12 +124,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             rest
                     .onSuccess(functions -> {
                         functionCompletions.clear();
-                        functionsMenuItems = FunctionDefinitionUtil.buildMenuItems(
+                        functionsMenuItems = FunctionSignatureUtil.buildMenuItems(
                                 functions,
                                 this::addFunction,
                                 helpUrl);
                         // addAll rather than assignment due to .js closure scope
-                        functionCompletions.addAll(FunctionDefinitionUtil.buildCompletions(
+                        functionCompletions.addAll(FunctionSignatureUtil.buildCompletions(
                                 functions,
                                 helpUrl));
                         functionsCompletionProvider = buildCompletionProvider(functionCompletions);
