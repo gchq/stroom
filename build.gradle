@@ -752,8 +752,8 @@ task setupSampleData() {
 
 gradle.buildFinished {
     //if any of the tests failed dump the junit xml to the console
-    if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size > 0) {
-        println "Build has ${failedTestReportFiles.size} failed test classes, dumping JUnit xml output"
+    if (getPropertyOrDefault('dumpFailedTestXml', 'false') == 'true' && failedTestReportFiles.size() > 0) {
+        println "Build has ${failedTestReportFiles.size()} failed test classes, dumping JUnit xml output"
         failedTestReportFiles.each { pair ->
             def info = pair.first
             def reportFile = pair.second

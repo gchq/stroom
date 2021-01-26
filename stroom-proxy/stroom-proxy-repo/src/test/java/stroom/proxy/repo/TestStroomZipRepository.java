@@ -1,6 +1,5 @@
 package stroom.proxy.repo;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.zip.CharsetConstants;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
@@ -8,6 +7,8 @@ import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.util.io.FileUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -207,6 +209,7 @@ class TestStroomZipRepository {
 
         String pattern = "yyyy-MM-dd";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         String nowStr = simpleDateFormat.format(new Date());
         assertThat(dateDirStr).isEqualTo(nowStr);
     }
