@@ -27,7 +27,6 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +35,6 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Singleton
 class UserServiceImpl implements UserService {
     private final SecurityContext securityContext;
     private final UserDao userDao;
