@@ -350,8 +350,9 @@ public class FunctionSignatureUtil {
         // funcX (sigY) -> info
 
         final String signatureStr = buildInsertText(signature);
+        final String snippetStr = buildSnippetText(signature);
 
-        final Command command = () -> insertFunction.accept(signatureStr);
+        final Command command = () -> insertFunction.accept(snippetStr);
         final InfoMenuItem infoMenuItem = new InfoMenuItem(
                 buildInfoHtml(signature, helpUrlBase),
                 null,

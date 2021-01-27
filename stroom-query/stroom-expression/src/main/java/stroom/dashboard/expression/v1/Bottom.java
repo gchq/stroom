@@ -36,7 +36,7 @@ import java.text.ParseException;
                         @FunctionArg(
                                 name = "delimiter",
                                 description = "The delimiter string to use between each selected value, e.g. ', '.",
-                                argType = Val.class),
+                                argType = ValString.class),
                         @FunctionArg(
                                 name = "limit",
                                 description = "The maximum number of values to included in the selection.",

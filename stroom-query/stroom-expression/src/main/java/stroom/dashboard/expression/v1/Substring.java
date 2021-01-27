@@ -38,11 +38,11 @@ import java.text.ParseException;
                         @FunctionArg(
                                 name = "startIndex",
                                 description = "The index of the start of the sub-string range (zero based, inclusive).",
-                                argType = ValString.class),
+                                argType = ValInteger.class),
                         @FunctionArg(
                                 name = "endIndex",
                                 description = "The index of the end of the sub-string range (zero based, exclusive).",
-                                argType = ValString.class),
+                                argType = ValInteger.class),
                 }))
 class Substring extends AbstractFunction implements Serializable {
     static final String NAME = "substring";

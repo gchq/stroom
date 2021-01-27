@@ -229,7 +229,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         editorPresenter.getBasicAutoCompletionOption().setOn();
         editorPresenter.getSnippetsOption().setOn();
 
-
         fieldsMenuItems = createFieldsMenuItems();
     }
 
@@ -392,36 +391,36 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 //        };
 //    }
 
-    private List<Item> createFunctionsMenuItemsAndSnippets() {
-
-        // TODO Once we have function definitions (name, desc, args) on the actual functions in
-        //  stroom-expression we need to reinstate a variant of this to build the menu.
-//        return new MenuBuilder()
-//                .addBranch("Aggregate", childBuilder -> childBuilder
-//                        .addLeaf(FunctionDef.AVERAGE, createLeafBuilder())
-//                        .addLeaf(FunctionDef.COUNT, createLeafBuilder()))
-//                .addBranch("Cast", childBuilder -> childBuilder
-//                        .addLeaf(FunctionDef.TO_BOOLEAN, createLeafBuilder()))
-//                .build();
-
-
-        final List<Item> children = new ArrayList<>();
-        int item = 0;
-        children.add(createAggregateFunctions(item++, "Aggregate"));
-        children.add(createCastFunctions(item++, "Cast"));
-        children.add(createDateFunctions(item++, "Date"));
-        children.add(createLinkFunctions(item++, "Link"));
-        children.add(createLogicFunctions(item++, "Logic"));
-        children.add(createMathematicsFunctions(item++, "Mathematics"));
-        children.add(createParamFunctions(item++, "Param"));
-        children.add(createRoundingFunctions(item++, "Rounding"));
-        children.add(createSelectionFunctions(item++, "Selection"));
-        children.add(createStringFunctions(item++, "String"));
-        children.add(createTypeCheckingFunctions(item++, "Type Checking"));
-        children.add(createUriFunctions(item++, "Uri"));
-        children.add(createValueFunctions(item++, "Value"));
-        return children;
-    }
+//    private List<Item> createFunctionsMenuItemsAndSnippets() {
+//
+//        // TODO Once we have function definitions (name, desc, args) on the actual functions in
+//        //  stroom-expression we need to reinstate a variant of this to build the menu.
+////        return new MenuBuilder()
+////                .addBranch("Aggregate", childBuilder -> childBuilder
+////                        .addLeaf(FunctionDef.AVERAGE, createLeafBuilder())
+////                        .addLeaf(FunctionDef.COUNT, createLeafBuilder()))
+////                .addBranch("Cast", childBuilder -> childBuilder
+////                        .addLeaf(FunctionDef.TO_BOOLEAN, createLeafBuilder()))
+////                .build();
+//
+//
+//        final List<Item> children = new ArrayList<>();
+//        int item = 0;
+//        children.add(createAggregateFunctions(item++, "Aggregate"));
+//        children.add(createCastFunctions(item++, "Cast"));
+//        children.add(createDateFunctions(item++, "Date"));
+//        children.add(createLinkFunctions(item++, "Link"));
+//        children.add(createLogicFunctions(item++, "Logic"));
+//        children.add(createMathematicsFunctions(item++, "Mathematics"));
+//        children.add(createParamFunctions(item++, "Param"));
+//        children.add(createRoundingFunctions(item++, "Rounding"));
+//        children.add(createSelectionFunctions(item++, "Selection"));
+//        children.add(createStringFunctions(item++, "String"));
+//        children.add(createTypeCheckingFunctions(item++, "Type Checking"));
+//        children.add(createUriFunctions(item++, "Uri"));
+//        children.add(createValueFunctions(item++, "Value"));
+//        return children;
+//    }
 
     private List<Item> createFieldsMenuItems() {
 
@@ -839,8 +838,9 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private void addFunction(final String func) {
-        // will insert if there is no selection
-        editorPresenter.replaceSelectedText(func);
+        // will insert if there is no selection or replace if there is
+        editorPresenter.insertSnippet(func);
+        editorPresenter.focus();
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -49,6 +49,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void replaceSelectedText(final String text);
 
+    void insertSnippet(final String snippet);
+
     void setFirstLineNumber(int firstLineNumber);
 
     void setIndicators(final IndicatorLines indicators);
