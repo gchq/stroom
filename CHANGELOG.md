@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
 
+* Issue **#2017** : Fixed dashboard table filtering.
+
 * Issue **#1946** : Removed unnecessary index shard state change error.
 
 
