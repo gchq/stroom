@@ -33,12 +33,17 @@ package stroom.dashboard.expression.v1;
                         "the supplied values ready to create a new annotation.",
                 args = {
                         @FunctionArg(
+                                name = "text",
+                                description = "The displayed text of the annotation link.",
+                                argType = ValString.class),
+                        @FunctionArg(
                                 name = Annotation.ARG_ANNOTATION_ID,
                                 description = "The ID of the annotation or a blank string if not known.",
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = Annotation.ARG_STREAM_ID,
                                 description = "The ID of the stream of the linked event.",
+                                isOptional = true,
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = Annotation.ARG_EVENT_ID,
