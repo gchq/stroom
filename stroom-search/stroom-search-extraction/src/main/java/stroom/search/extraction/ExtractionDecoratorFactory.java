@@ -75,9 +75,15 @@ public class ExtractionDecoratorFactory {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Consumer<Val[]> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-                final Consumer<Throwable> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
-                final Consumer<Long> completionConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionConsumer().accept(delta));
+                final Consumer<Val[]> valuesConsumer = values ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getValuesConsumer().accept(values));
+                final Consumer<Throwable> errorConsumer = error ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getErrorConsumer().accept(error));
+                final Consumer<Long> completionConsumer = delta ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.getCompletionConsumer().accept(delta));
                 receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 

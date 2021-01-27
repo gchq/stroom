@@ -56,5 +56,6 @@ public interface AnnotationFields {
             ASSIGNED_TO_FIELD,
             COMMENT_FIELD,
             HISTORY_FIELD);
-    Map<String, AbstractField> FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    Map<String, AbstractField> FIELD_MAP = FIELDS.stream()
+            .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 }

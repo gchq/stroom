@@ -27,42 +27,39 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
-    private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = new HashMap<>();
-    private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = new HashMap<>();
 
-    static {
-        VALUE_MAPPING.put(AnnotationFields.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
-        VALUE_MAPPING.put(AnnotationFields.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
-        VALUE_MAPPING.put(AnnotationFields.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
-        VALUE_MAPPING.put(AnnotationFields.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
-        VALUE_MAPPING.put(AnnotationFields.UPDATED_BY, annotation -> annotation.getUpdateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getUpdateUser()));
-        VALUE_MAPPING.put(AnnotationFields.TITLE, annotation -> annotation.getTitle() == null ? ValNull.INSTANCE : ValString.create(annotation.getTitle()));
-        VALUE_MAPPING.put(AnnotationFields.SUBJECT, annotation -> annotation.getSubject() == null ? ValNull.INSTANCE : ValString.create(annotation.getSubject()));
-        VALUE_MAPPING.put(AnnotationFields.STATUS, annotation -> annotation.getStatus() == null ? ValNull.INSTANCE : ValString.create(annotation.getStatus()));
-        VALUE_MAPPING.put(AnnotationFields.ASSIGNED_TO, annotation -> annotation.getAssignedTo() == null ? ValNull.INSTANCE : ValString.create(annotation.getAssignedTo()));
-        VALUE_MAPPING.put(AnnotationFields.COMMENT, annotation -> annotation.getComment() == null ? ValNull.INSTANCE : ValString.create(annotation.getComment()));
-        VALUE_MAPPING.put(AnnotationFields.HISTORY, annotation -> annotation.getHistory() == null ? ValNull.INSTANCE : ValString.create(annotation.getHistory()));
-    }
+    private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
+            nullSafeEntry(AnnotationFields.ID, Annotation::getId),
+            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
+            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
+            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
+            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateTime),
+            nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
+            nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
+            nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
+            nullSafeEntry(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo),
+            nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
+            nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
 
-    static {
-        OBJECT_MAPPING.put(AnnotationFields.ID, Annotation::getId);
-        OBJECT_MAPPING.put(AnnotationFields.CREATED_ON, Annotation::getCreateTime);
-        OBJECT_MAPPING.put(AnnotationFields.CREATED_BY, Annotation::getCreateUser);
-        OBJECT_MAPPING.put(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime);
-        OBJECT_MAPPING.put(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser);
-        OBJECT_MAPPING.put(AnnotationFields.TITLE, Annotation::getTitle);
-        OBJECT_MAPPING.put(AnnotationFields.SUBJECT, Annotation::getSubject);
-        OBJECT_MAPPING.put(AnnotationFields.STATUS, Annotation::getStatus);
-        OBJECT_MAPPING.put(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo);
-        OBJECT_MAPPING.put(AnnotationFields.COMMENT, Annotation::getComment);
-        OBJECT_MAPPING.put(AnnotationFields.HISTORY, Annotation::getHistory);
-    }
+    private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
+            Map.entry(AnnotationFields.ID, Annotation::getId),
+            Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
+            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
+            Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
+            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
+            Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
+            Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
+            Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
+            Map.entry(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo),
+            Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
+            Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
 
     private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
@@ -149,8 +146,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         };
 
         // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in which
-        // case we would increment the completion count after providing values.
-        return new ExtractionReceiver(valuesConsumer, receiver.getErrorConsumer(), receiver.getCompletionConsumer(), fieldIndex);
+        //   case we would increment the completion count after providing values.
+        return new ExtractionReceiver(
+                valuesConsumer,
+                receiver.getErrorConsumer(),
+                receiver.getCompletionConsumer(),
+                fieldIndex);
     }
 
     private Annotation createDefaultAnnotation() {
@@ -198,7 +199,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         return result;
     }
 
-    private void setValue(final Val[] values, final FieldIndex fieldIndex, final String field, final Annotation annotation) {
+    private void setValue(final Val[] values,
+                          final FieldIndex fieldIndex,
+                          final String field,
+                          final Annotation annotation) {
         final Integer index = fieldIndex.getPos(field);
         if (index != null && values.length > index) {
             // Only add values that are missing.
@@ -207,5 +211,26 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 values[index] = val;
             }
         }
+    }
+
+    private static <T> Entry<String, Function<Annotation, Val>> nullSafeEntry(
+            final String fieldName,
+            final Function<Annotation, T> getter) {
+
+        return Map.entry(fieldName, annotation -> {
+            T value = getter.apply(annotation);
+
+            if (value == null) {
+                return ValNull.INSTANCE;
+            } else {
+                if (value instanceof String) {
+                    return ValString.create((String) value);
+                } if (value instanceof Long) {
+                    return ValLong.create((Long) value);
+                } else {
+                    throw new RuntimeException("Unexpected type " + value.getClass().getName());
+                }
+            }
+        });
     }
 }
