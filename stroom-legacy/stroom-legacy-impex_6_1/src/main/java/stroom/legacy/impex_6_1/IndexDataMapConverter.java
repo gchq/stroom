@@ -3,6 +3,7 @@ package stroom.legacy.impex_6_1;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.index.impl.IndexSerialiser;
+import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.Severity;
 
@@ -15,10 +16,13 @@ import java.util.Map;
 @Deprecated
 class IndexDataMapConverter implements DataMapConverter {
     private final IndexSerialiser serialiser;
+    private final VolumeConfig volumeConfig;
 
     @Inject
-    IndexDataMapConverter(final IndexSerialiser serialiser) {
+    IndexDataMapConverter(final IndexSerialiser serialiser,
+                          final VolumeConfig volumeConfig) {
         this.serialiser = serialiser;
+        this.volumeConfig = volumeConfig;
     }
 
     @Override
@@ -32,8 +36,12 @@ class IndexDataMapConverter implements DataMapConverter {
             try {
                 IndexDoc document = new LegacyIndexDeserialiser()
                         .getIndexDocFromLegacyImport(
-                                new stroom.legacy.model_6_1.DocRef(docRef.getType(), docRef.getUuid(), docRef.getName()),
-                                dataMap);
+                                new stroom.legacy.model_6_1.DocRef(
+                                        docRef.getType(),
+                                        docRef.getUuid(),
+                                        docRef.getName()),
+                                dataMap,
+                                volumeConfig);
 
                 result = serialiser.write(document);
 
