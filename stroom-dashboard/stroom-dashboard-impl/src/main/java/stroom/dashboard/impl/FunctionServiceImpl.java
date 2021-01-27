@@ -134,20 +134,17 @@ public class FunctionServiceImpl implements FunctionService {
                     functionArg.isVarargs(),
                     functionArg.minVarargsCount(),
                     convertString(functionArg.description()),
-                    convertStringArray(functionArg.allowedValues()));
+                    convertStringArray(functionArg.allowedValues()),
+                    convertString(functionArg.defaultValue()));
         } else {
             return null;
         }
     }
 
     private static String convertString(final String str) {
-        if (str != null) {
-            return str.isEmpty()
-                    ? null
-                    : str;
-        } else {
-            return null;
-        }
+        return str != null && !str.isEmpty()
+                ? str
+                : null;
     }
 
     private static List<String> convertStringArray(final String[] arr) {

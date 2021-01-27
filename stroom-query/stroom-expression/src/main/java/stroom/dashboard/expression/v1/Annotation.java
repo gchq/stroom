@@ -21,62 +21,86 @@ package stroom.dashboard.expression.v1;
 /**
  * See also HyperlinkEventHandlerImpl
  */
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Annotation.NAME,
         commonCategory = FunctionCategory.LINK,
         commonReturnType = ValString.class,
-        signatures = @FunctionSignature(
-                returnDescription = "A hyperlink to open the annotation edit screen.",
-                description = "Creates a hyperlink that will open the annotation edit screen showing the existing " +
-                        "annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + " or pre-populated with " +
-                        "the supplied values ready to create a new annotation.",
-                args = {
-                        @FunctionArg(
-                                name = "text",
-                                description = "The displayed text of the annotation link.",
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_ANNOTATION_ID,
-                                description = "The ID of the annotation or a blank string if not known.",
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_STREAM_ID,
-                                description = "The ID of the stream of the linked event.",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_EVENT_ID,
-                                description = "The ID of the of the linked event.",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_TITLE,
-                                description = "The title of the annotation",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_SUBJECT,
-                                description = "The subject of the annotation.",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_STATUS,
-                                description = "The status of the annotation (see stroom.annotation.statusValues " +
-                                        "property for possible values.",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_ASSIGNED_TO,
-                                description = "The username of the user that this annotation will be assigned to.",
-                                isOptional = true,
-                                argType = ValString.class),
-                        @FunctionArg(
-                                name = Annotation.ARG_COMMENT,
-                                description = "A comment for this annotation.",
-                                isOptional = true,
-                                argType = ValString.class),
-                }))
+        signatures = {
+                @FunctionSignature(
+                        returnDescription = "A hyperlink to open the annotation edit screen for an existing annotation.",
+                        description = "Creates a hyperlink that will open the annotation edit screen showing the existing " +
+                                "annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The displayed text of the annotation link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ANNOTATION_ID,
+                                        description = "The ID of the annotation.",
+                                        argType = ValString.class,
+                                        defaultValue = "${annotation:Id}")}),
+                @FunctionSignature(
+                        returnDescription = "A hyperlink to open the annotation edit screen.",
+                        description = "Creates a hyperlink that will open the annotation edit screen showing the " +
+                                "existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + " or if " +
+                                "that is '' or null() then it will show the edit screen pre-populated with the " +
+                                "supplied values ready to create a new annotation.",
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The displayed text of the annotation link.",
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ANNOTATION_ID,
+                                        description = "The ID of the existing annotation or null() if creating " +
+                                                "a new one.",
+                                        argType = ValString.class,
+                                        defaultValue = "${annotation:Id}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_STREAM_ID,
+                                        description = "The ID of the stream of the linked event. Must be provided " +
+                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                        isOptional = true,
+                                        argType = ValString.class,
+                                        defaultValue = "${streamId}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_EVENT_ID,
+                                        description = "The ID of the of the linked event. Must be provided " +
+                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                        isOptional = true,
+                                        argType = ValString.class,
+                                        defaultValue = "${eventId}"),
+                                @FunctionArg(
+                                        name = Annotation.ARG_TITLE,
+                                        description = "The title of the annotation",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_SUBJECT,
+                                        description = "The subject of the annotation.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_STATUS,
+                                        description = "The status of the annotation (see stroom.annotation.statusValues " +
+                                                "property for possible values.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_ASSIGNED_TO,
+                                        description = "The username of the user that this annotation will be assigned to.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_COMMENT,
+                                        description = "A comment for this annotation.",
+                                        isOptional = true,
+                                        argType = ValString.class),
+                        })
+        })
 class Annotation extends AbstractLink {
     static final String NAME = "annotation";
 

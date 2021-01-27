@@ -173,6 +173,8 @@ public class FunctionSignature {
         private final String description;
         @JsonProperty
         private final List<String> allowedValues;
+        @JsonProperty
+        private final String defaultValue;
 
         @JsonCreator
         public Arg(@JsonProperty("name") final String name,
@@ -181,7 +183,8 @@ public class FunctionSignature {
                    @JsonProperty("varargs") final boolean varargs,
                    @JsonProperty("minVarargsCount") final int minVarargsCount,
                    @JsonProperty("description") final String description,
-                   @JsonProperty("allowedValues") final List<String> allowedValues) {
+                   @JsonProperty("allowedValues") final List<String> allowedValues,
+                   @JsonProperty("defaultValue") final String defaultValue) {
             this.name = name;
             this.argType = argType;
             this.optional = optional;
@@ -189,6 +192,7 @@ public class FunctionSignature {
             this.minVarargsCount = minVarargsCount;
             this.description = description;
             this.allowedValues = allowedValues;
+            this.defaultValue = defaultValue;
         }
 
         public String getName() {
@@ -219,21 +223,26 @@ public class FunctionSignature {
             return allowedValues;
         }
 
+        public String getDefaultValue() {
+            return defaultValue;
+        }
+
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final Arg arg = (Arg) o;
-            return optional == arg.optional && varargs == arg.varargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues);
+            return optional == arg.optional && varargs == arg.varargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues) && Objects.equals(defaultValue, arg.defaultValue);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, argType, optional, varargs, minVarargsCount, description, allowedValues);
+            return Objects.hash(name, argType, optional, varargs, minVarargsCount, description, allowedValues, defaultValue);
         }
 
         @Override
-        public String toString() {
+        public String
+        toString() {
             return "Arg{" +
                     "name='" + name + '\'' +
                     ", argType=" + argType +
@@ -242,6 +251,7 @@ public class FunctionSignature {
                     ", minVarargsCount=" + minVarargsCount +
                     ", description='" + description + '\'' +
                     ", allowedValues=" + allowedValues +
+                    ", defaultValue=" + defaultValue +
                     '}';
         }
 

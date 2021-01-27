@@ -243,13 +243,22 @@ public class FunctionSignatureUtil {
                         if (arg.isVarargs()) {
                             for (int i = 1; i <= arg.getMinVarargsCount(); i++) {
                                 final String argName = arg.getName() + i;
-                                snippetArgStrs.add(argToSnippetArg(argName, argPosition.getAndIncrement()));
+                                snippetArgStrs.add(argToSnippetArg(
+                                        argName,
+                                        arg,
+                                        argPosition.getAndIncrement()));
                             }
                         } else if (arg.isOptional()) {
                             final String name = "[" + arg.getName() + "]";
-                            snippetArgStrs.add(argToSnippetArg(arg.getName(), argPosition.getAndIncrement()));
+                            snippetArgStrs.add(argToSnippetArg(
+                                    name,
+                                    arg,
+                                    argPosition.getAndIncrement()));
                         } else {
-                            snippetArgStrs.add(argToSnippetArg(arg.getName(), argPosition.getAndIncrement()));
+                            snippetArgStrs.add(argToSnippetArg(
+                                    arg.getName(),
+                                    arg,
+                                    argPosition.getAndIncrement()));
                         }
                         return snippetArgStrs.stream();
                     })
@@ -260,8 +269,34 @@ public class FunctionSignatureUtil {
     }
 
     private static String argToSnippetArg(final String argName,
+                                          final Arg arg,
                                           final int position) {
-        return "${" + position + ":" + argName + "}";
+        final String snippetDefault = arg.getDefaultValue() != null
+                ? arg.getDefaultValue()
+                : argName;
+
+        final StringBuilder stringBuilder = new StringBuilder();
+        final boolean addQuotes = Type.STRING.equals(arg.getArgType())
+                && !snippetDefault.startsWith("${")
+                && !snippetDefault.endsWith("}");
+
+        if (addQuotes) {
+            stringBuilder.append("'");
+        }
+        stringBuilder
+                .append("${")
+                .append(position)
+                .append(":")
+                .append(snippetDefault
+                        .replace("$", "\\$")
+                        .replace("}", "\\}"))
+                .append("}");
+
+        if (addQuotes) {
+            stringBuilder.append("'");
+        }
+
+        return stringBuilder.toString();
     }
 
     private static Item convertFunctionDefinitionToItem(final String name,
@@ -371,27 +406,34 @@ public class FunctionSignatureUtil {
     }
 
     private static String buildInsertText(final FunctionSignature signature) {
-        final String argsStr;
+        String argsStr;
+        final AtomicBoolean foundOptArg = new AtomicBoolean(false);
         if (signature.getArgs().isEmpty()) {
             argsStr = "";
         } else {
-            final AtomicInteger argPosition = new AtomicInteger(1);
             argsStr = signature.getArgs()
                     .stream()
                     .flatMap(arg -> {
-                        final List<String> snippetArgStrs = new ArrayList<>();
+                        final List<String> argStrs = new ArrayList<>();
 
                         if (arg.isVarargs()) {
                             for (int i = 1; i <= arg.getMinVarargsCount(); i++) {
                                 final String argName = arg.getName() + i;
-                                snippetArgStrs.add(argName);
+                                argStrs.add(argName);
                             }
+                        } else if (arg.isOptional() && !foundOptArg.get()) {
+                            argStrs.add("[" + arg.getName());
+                            foundOptArg.set(true);
                         } else {
-                            snippetArgStrs.add(arg.getName());
+                            argStrs.add(arg.getName());
                         }
-                        return snippetArgStrs.stream();
+                        return argStrs.stream();
                     })
                     .collect(Collectors.joining(", "));
+        }
+
+        if (foundOptArg.get()) {
+            argsStr += "]";
         }
 
         return signature.getName() + "(" + argsStr + ")";
@@ -438,15 +480,27 @@ public class FunctionSignatureUtil {
                         final StringBuilder descriptionBuilder = new StringBuilder();
                         descriptionBuilder.append(arg.getDescription());
                         if (!arg.getAllowedValues().isEmpty()) {
-                            if (descriptionBuilder.length() > 0) {
-                                descriptionBuilder.append(" ");
-                            }
-                            descriptionBuilder.append("Allowed values: ");
-                            descriptionBuilder.append(arg.getAllowedValues()
-                                    .stream()
-                                    .map(str -> "\"" + str + "\"")
-                                    .collect(Collectors.joining(", ")));
+                            appendSpaceIfNeeded(descriptionBuilder)
+                                    .append("Allowed values: ")
+                                    .append(arg.getAllowedValues()
+                                            .stream()
+                                            .map(str -> "\"" + str + "\"")
+                                            .collect(Collectors.joining(", ")))
+                                    .append(".");
                         }
+
+                        if (arg.getDefaultValue() != null && !arg.getDefaultValue().isEmpty()) {
+                            appendSpaceIfNeeded(descriptionBuilder)
+                                    .append("Default value: '")
+                                    .append(arg.getDefaultValue())
+                                    .append("'.");
+                        }
+
+                        if (arg.isOptional()) {
+                            appendSpaceIfNeeded(descriptionBuilder)
+                                    .append("Optional argument.");
+                        }
+
                         tableBuilder.addRow(
                                 argName,
                                 convertType(arg.getArgType()),
@@ -469,6 +523,13 @@ public class FunctionSignatureUtil {
             return tableBuilder.build();
         });
         return addedContent.get();
+    }
+
+    private static StringBuilder appendSpaceIfNeeded(final StringBuilder stringBuilder) {
+        if (stringBuilder.length() > 0) {
+            stringBuilder.append(" ");
+        }
+        return stringBuilder;
     }
 
     private static void addHelpLinkToInfo(final FunctionSignature signature,
