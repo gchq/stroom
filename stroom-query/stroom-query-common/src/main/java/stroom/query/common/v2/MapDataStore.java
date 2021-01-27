@@ -185,17 +185,46 @@ public class MapDataStore implements DataStore {
 
                 final Expression expression = compiledField.getExpression();
                 if (expression != null) {
-                    if (groupIndices[fieldIndex] || valueIndices[fieldIndex]) {
-                        final Generator generator = expression.createGenerator();
-                        generator.set(values);
+                    Generator generator = null;
+                    Val value = null;
 
-                        if (groupIndices[fieldIndex]) {
-                            groupValues[groupIndex++] = generator.eval();
-                        }
+                    // If this is the first level then check if we should filter out this data.
+                    if (depth == 0) {
+                        final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
+                        if (compiledFilter != null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
 
-                        if (valueIndices[fieldIndex]) {
-                            generators[fieldIndex] = generator;
+                            // If we are filtering then we need to evaluate this field
+                            // now so that we can filter the resultant value.
+                            value = generator.eval();
+
+                            if (value != null && !compiledFilter.match(value.toString())) {
+                                // We want to exclude this item so get out of this method ASAP.
+                                return;
+                            }
                         }
+                    }
+
+                    // If we are grouping at this level then evaluate the expression and add to the group values.
+                    if (groupIndices[fieldIndex]) {
+                        // If we haven't already created the generator then do so now.
+                        if (generator == null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
+                            value = generator.eval();
+                        }
+                        groupValues[groupIndex++] = value;
+                    }
+
+                    // If we need a value at this level then evaluate the expression and add the value.
+                    if (valueIndices[fieldIndex]) {
+                        // If we haven't already created the generator then do so now.
+                        if (generator == null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
+                        }
+                        generators[fieldIndex] = generator;
                     }
                 }
             }
@@ -224,33 +253,6 @@ public class MapDataStore implements DataStore {
             parentKey = childKey;
         }
     }
-
-//    public void write(final Val[] values,
-//                      final Output output) {
-//        for (final CompiledField compiledField : compiledFields) {
-//            final Expression expression = compiledField.getExpression();
-//            if (expression != null) {
-//                final Generator generator = expression.createGenerator();
-//                generator.set(values);
-//                generator.write(output);
-//            }
-//        }
-//    }
-//
-//    public Generator[] read(final Input input) {
-//        // Process list into fields.
-//        final Generator[] generators = new Generator[compiledFields.length];
-//        for (int i = 0; i < compiledFields.length; i++) {
-//            final CompiledField compiledField = compiledFields[i];
-//            final Expression expression = compiledField.getExpression();
-//            if (expression != null) {
-//                final Generator generator = expression.createGenerator();
-//                generator.read(input);
-//                generators[i] = generator;
-//            }
-//        }
-//        return generators;
-//    }
 
     private void addToChildMap(final int depth,
                                final byte[] parentKey,
@@ -356,6 +358,11 @@ public class MapDataStore implements DataStore {
         return result;
     }
 
+    @Override
+    public CompletionState getCompletionState() {
+        return completionState;
+    }
+
     public static class ItemsImpl implements Items {
         private final int trimmedSize;
         private final int maxSize;
@@ -394,21 +401,6 @@ public class MapDataStore implements DataStore {
             return list;
         }
 
-//    synchronized void add(final byte[] item) {
-//        if (groupingFunction != null || sortingFunction != null) {
-//            list.add(item);
-//            trimmed = false;
-//            if (list.size() > maxSize) {
-//                sortAndTrim();
-//            }
-//        } else if (list.size() < trimmedSize) {
-//            list.add(item);
-//        } else {
-//            full = true;
-//            removeHandler.accept(ByteItem.create(item).groupKey);
-//        }
-//    }
-
         synchronized void add(final byte[] groupKey, final byte[] generators) {
             if (groupingFunction != null || sortingFunction != null) {
                 list.add(itemSerialiser.toBytes(new RawItem(groupKey, generators)));
@@ -431,43 +423,6 @@ public class MapDataStore implements DataStore {
             }
             return items;
         }
-//
-//    private List<UnpackedItem> group(final List<byte[]> bytesList) {
-//        final Map<RawKey, Generator[]> groupingMap = new HashMap<>();
-//        for (final byte[] bytes : bytesList) {
-//            final RawItem rawItem = itemSerialiser.readRawItem(bytes);
-//            final RawKey rawKey = new RawKey(rawItem.getKey());
-//            final Generator[] generators = itemSerialiser.readGenerators(rawItem.getGenerators());
-//
-//            groupingMap.compute(rawKey, (k, v) -> {
-//                Generator[] result = v;
-//
-//                if (result == null) {
-//                    result = generators;
-//                } else {
-//                    // Combine the new item into the original item.
-//                    for (int i = 0; i < result.length; i++) {
-//                        Generator existingGenerator = result[i];
-//                        Generator newGenerator = generators[i];
-//                        if (newGenerator != null) {
-//                            if (existingGenerator == null) {
-//                                result[i] = newGenerator;
-//                            } else {
-//                                existingGenerator.merge(newGenerator);
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                return result;
-//            });
-//        }
-//        return groupingMap
-//                .entrySet()
-//                .parallelStream()
-//                .map(e -> new UnpackedItem(e.getKey(), e.getValue(), itemSerialiser.toBytes(e.getValue())))
-//                .collect(Collectors.toList());
-//    }
 
         private Item toItem(final byte[] bytes) {
             return new ItemImpl(
@@ -475,14 +430,6 @@ public class MapDataStore implements DataStore {
                     dataStore,
                     bytes);
         }
-
-//    private List<byte[]> toBytesList(final List<Item> itemList) {
-//        final List<byte[]> items = new ArrayList<>(itemList.size());
-//        for (final Item item : itemList) {
-//            items.add(((ItemImpl) item).bytes);
-//        }
-//        return items;
-//    }
 
         @Override
         public int size() {
@@ -663,10 +610,5 @@ public class MapDataStore implements DataStore {
 
             return null;
         }
-    }
-
-    @Override
-    public CompletionState getCompletionState() {
-        return completionState;
     }
 }

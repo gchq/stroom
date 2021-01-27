@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1871** : Invalidate the users and user groups cache when the _manage_users_ command is run.
 
+* Issue **#2004** : Fix import of legacy v6 index so default volume group is assigned.
+
+* Issue **#2017** : Fixed dashboard table filtering.
+
+* Issue **#1946** : Removed unnecessary index shard state change error.
+
+
+## [v7.0-beta.79] - 2021-01-26
+
+* Issue **#2006** : Use UTC timezone when comparing date in repository folder name.
+
+* Issue **#2006** : Use `ArrayList.size()` as a method, instead of a property in Gradle build.
+
+* Issue **#2016** : Fixed StackOverflowException in document event log. 
+
 * Issue **#2003** : Fixed some issues with LMDB search results.
 
 * Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
@@ -2993,7 +3008,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.78...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.79...HEAD
+[v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
 [v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
 [v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
 [v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76

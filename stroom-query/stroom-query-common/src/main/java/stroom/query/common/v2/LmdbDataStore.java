@@ -165,7 +165,7 @@ public class LmdbDataStore implements DataStore {
                 try {
                     queue.put(Optional.empty());
                 } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.debug(e.getMessage(), e);
                     Thread.currentThread().interrupt();
                     addedData.countDown();
                 }
@@ -227,17 +227,46 @@ public class LmdbDataStore implements DataStore {
 
                 final Expression expression = compiledField.getExpression();
                 if (expression != null) {
-                    if (groupIndices[fieldIndex] || valueIndices[fieldIndex]) {
-                        final Generator generator = expression.createGenerator();
-                        generator.set(values);
+                    Generator generator = null;
+                    Val value = null;
 
-                        if (groupIndices[fieldIndex]) {
-                            groupValues[groupIndex++] = generator.eval();
-                        }
+                    // If this is the first level then check if we should filter out this data.
+                    if (depth == 0) {
+                        final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
+                        if (compiledFilter != null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
 
-                        if (valueIndices[fieldIndex]) {
-                            generators[fieldIndex] = generator;
+                            // If we are filtering then we need to evaluate this field
+                            // now so that we can filter the resultant value.
+                            value = generator.eval();
+
+                            if (value != null && !compiledFilter.match(value.toString())) {
+                                // We want to exclude this item so get out of this method ASAP.
+                                return;
+                            }
                         }
+                    }
+
+                    // If we are grouping at this level then evaluate the expression and add to the group values.
+                    if (groupIndices[fieldIndex]) {
+                        // If we haven't already created the generator then do so now.
+                        if (generator == null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
+                            value = generator.eval();
+                        }
+                        groupValues[groupIndex++] = value;
+                    }
+
+                    // If we need a value at this level then evaluate the expression and add the value.
+                    if (valueIndices[fieldIndex]) {
+                        // If we haven't already created the generator then do so now.
+                        if (generator == null) {
+                            generator = expression.createGenerator();
+                            generator.set(values);
+                        }
+                        generators[fieldIndex] = generator;
                     }
                 }
             }
@@ -453,7 +482,6 @@ public class LmdbDataStore implements DataStore {
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 lmdbEnvironment.list();
-//                throw new RuntimeException(LogUtil.message("Error dropping db", e));
             } finally {
                 resultCount.set(0);
                 totalResultCount.set(0);

@@ -76,6 +76,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
                     || (filter != null && !filter.equals(field.getFilter()))) {
                 fieldChangeConsumer.accept(field, field.copy().filter(filter).build());
                 tablePresenter.setDirty(true);
+                tablePresenter.updateColumns();
                 tablePresenter.clearAndRefresh();
             }
         }
