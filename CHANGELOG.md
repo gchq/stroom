@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v6.1.30] - 2021-01-27
+
+* Failed bintray deployment.
+
+
 ## [v6.1.29] - 2021-01-26
 
 * Issue **#2013** : The attribute value queue is now bounded and should prevent out of memory exceptions. 
@@ -2320,7 +2325,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.29...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.30...6.1
+[v6.1.30]: https://github.com/gchq/stroom/compare/v6.1.29...v6.1.30
 [v6.1.29]: https://github.com/gchq/stroom/compare/v6.1.28...v6.1.29
 [v6.1.28]: https://github.com/gchq/stroom/compare/v6.1.27...v6.1.28
 [v6.1.27]: https://github.com/gchq/stroom/compare/v6.1.26...v6.1.27
