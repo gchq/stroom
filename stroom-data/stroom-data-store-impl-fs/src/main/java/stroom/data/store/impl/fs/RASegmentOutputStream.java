@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.CloseableUtil;
 
 import java.io.IOException;
@@ -73,7 +74,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
         if (indexOutputStream == null) {
             indexOutputStream = indexOutputStreamSupplier.getWithIO();
             buffer = new byte[LONG_BYTES];
-            longBuffer = ByteBuffer.wrap(buffer).asLongBuffer();
+            longBuffer = ByteBufferFactory.wrap(buffer).asLongBuffer();
         }
 
         longBuffer.rewind();

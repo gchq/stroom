@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.util;
 
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import org.assertj.core.api.Assertions;
@@ -425,7 +426,7 @@ class TestByteBufferPool {
     private static final class NonPooledByteBufferPool implements ByteBufferPool {
 
         private ByteBuffer getBuffer(final int minCapacity) {
-            return ByteBuffer.allocateDirect(minCapacity);
+            return ByteBufferFactory.allocateDirect(minCapacity);
         }
 
         @Override
@@ -439,8 +440,8 @@ class TestByteBufferPool {
             return new PooledByteBufferPair(
                     byteBuffer -> {
                     },
-                    ByteBuffer.allocateDirect(minKeyCapacity),
-                    ByteBuffer.allocateDirect(minValueCapacity));
+                    ByteBufferFactory.allocateDirect(minKeyCapacity),
+                    ByteBufferFactory.allocateDirect(minValueCapacity));
         }
 
         @Override

@@ -16,10 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.ByteBufferInputStream;
-import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.util.io.ByteBufferFactory;
+
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -2855,22 +2853,22 @@ class TestExpressionParser {
     private void testKryo(final Generator inputGenerator, final Generator outputGenerator) {
         final Val val = inputGenerator.eval();
 
-        ByteBuffer buffer = ByteBuffer.allocateDirect(1000);
+        final OutputFactory outputFactory = new OutputFactory();
 
-        try (final Output output = new Output(new ByteBufferOutputStream(buffer))) {
+        try (final Output output = outputFactory.create()) {
             inputGenerator.write(output);
+
+            final ByteBuffer buffer = output.toByteBuffer();
+            print(buffer);
+
+            try (final Input input = new Input(buffer)) {
+                outputGenerator.read(input);
+            }
+
+            final Val newVal = outputGenerator.eval();
+
+            assertThat(newVal).isEqualTo(val);
         }
-
-        buffer.flip();
-        print(buffer);
-
-        try (final Input input = new Input(new ByteBufferInputStream(buffer))) {
-            outputGenerator.read(input);
-        }
-
-        final Val newVal = outputGenerator.eval();
-
-        assertThat(newVal).isEqualTo(val);
     }
 
     private void print(final ByteBuffer byteBuffer) {

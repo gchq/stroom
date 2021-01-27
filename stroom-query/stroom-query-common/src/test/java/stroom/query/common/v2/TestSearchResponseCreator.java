@@ -2,6 +2,9 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
@@ -16,8 +19,6 @@ import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.query.test.util.TimingUtils;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,7 +94,8 @@ class TestSearchResponseCreator {
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
                 sizesProvider,
-                mockStore);
+                mockStore,
+                new MapDataStoreFactory(new OutputFactory()));
     }
 
     @Test
@@ -289,7 +291,7 @@ class TestSearchResponseCreator {
                 Field.builder().name("f2").expression("'B'").build(),
                 Field.builder().name("f3").expression("'C'").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, new FieldIndex(), null);
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields, new OutputFactory());
 
         final ItemsImpl items = new ItemsImpl(
                 100,

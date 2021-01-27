@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.FileUtil;
 
 import javax.annotation.Nonnull;
@@ -41,7 +42,7 @@ class BlockGZIPFileVerifier {
 
     // Used a a buffer to read longs into
     private final byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
-    private final LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
+    private final LongBuffer longBuffer = ByteBufferFactory.wrap(longRawBuffer).asLongBuffer();
     private final byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
     private final byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
 

@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class TestUnsignedBytesInstances {
 
     @Test
     void testPutAll() {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(10);
         for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
 
             byteBuffer.clear();
@@ -58,7 +59,7 @@ class TestUnsignedBytesInstances {
 
     private void doValTest(final long val) {
         LOGGER.info("val {}", val);
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(4);
 
         FOUR_UNSIGNED_BYTES.put(byteBuffer, val);
         byteBuffer.flip();
@@ -116,7 +117,7 @@ class TestUnsignedBytesInstances {
     @Test
     void testIncrement() {
         final int len = 4;
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(len);
 
         // the following will test all values but takes a few minutes
 //        long max = FOUR_UNSIGNED_BYTES.getMaxVal();
@@ -135,7 +136,7 @@ class TestUnsignedBytesInstances {
 
     @Test
     void testIncrementAll() {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(10);
 
         for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
             byteBuffer.clear();
@@ -163,7 +164,7 @@ class TestUnsignedBytesInstances {
     @Test
     void testIncrement_bad() {
         final int len = FOUR_UNSIGNED_BYTES.length();
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(len);
 
         Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> {
@@ -204,7 +205,7 @@ class TestUnsignedBytesInstances {
     @Test
     void testDecrement() {
         int len = FOUR_UNSIGNED_BYTES.length();
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(len);
 
         // the following will test all values but takes a good few minutes
 //        long max = FOUR_UNSIGNED_BYTES.getMaxVal();
@@ -225,7 +226,7 @@ class TestUnsignedBytesInstances {
 
     @Test
     void testDecrementAll() {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(10);
 
         for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
             byteBuffer.clear();
@@ -253,7 +254,7 @@ class TestUnsignedBytesInstances {
     @Test
     void testDecrement_bad() {
         final int len = FOUR_UNSIGNED_BYTES.length();
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(len);
 
         Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> {

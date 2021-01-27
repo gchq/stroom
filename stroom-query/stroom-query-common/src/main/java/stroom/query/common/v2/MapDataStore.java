@@ -19,6 +19,9 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.dashboard.expression.v1.Selection;
 import stroom.dashboard.expression.v1.Selector;
 import stroom.dashboard.expression.v1.Val;
@@ -26,9 +29,7 @@ import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.util.logging.Metrics;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -73,7 +74,8 @@ public class MapDataStore implements DataStore {
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final Sizes maxResults,
-                        final Sizes storeSize) {
+                        final Sizes storeSize,
+                        final OutputFactory outputFactory) {
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
@@ -81,7 +83,7 @@ public class MapDataStore implements DataStore {
         this.maxResults = maxResults;
         this.storeSize = storeSize;
 
-        itemSerialiser = new ItemSerialiser(compiledFields);
+        itemSerialiser = new ItemSerialiser(compiledFields, outputFactory);
         if (ROOT_KEY == null) {
             ROOT_KEY = itemSerialiser.toRawKey(Key.root());
         }

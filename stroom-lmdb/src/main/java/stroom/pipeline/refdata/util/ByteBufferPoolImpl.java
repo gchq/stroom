@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.util;
 
 import stroom.util.HasHealthCheck;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import org.slf4j.Logger;
@@ -141,7 +142,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
         totalPooledCapacity.addAndGet(capacity);
         largestBufferInPool.updateAndGet(currVal ->
                 Math.max(currVal, capacity));
-        return ByteBuffer.allocateDirect(capacity);
+        return ByteBufferFactory.allocateDirect(capacity);
     }
 
     void release(final ByteBuffer buffer) {

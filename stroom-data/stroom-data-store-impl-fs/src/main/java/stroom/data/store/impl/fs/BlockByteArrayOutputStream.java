@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.util.io.ByteBufferFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,7 +33,7 @@ class BlockByteArrayOutputStream extends ByteArrayOutputStream {
      * Used for the long conversion
      */
     private byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
-    private LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();
+    private LongBuffer longBuffer = ByteBufferFactory.wrap(longRawBuffer).asLongBuffer();
 
     /**
      * @param initialSize used if you have a good idea how big you want us to be

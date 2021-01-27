@@ -21,6 +21,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+import stroom.util.io.ByteBufferFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -53,11 +54,11 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     @Test
     void testIncrementRefCount() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(20);
 
         getSerde().serialize(byteBuffer, valueStoreMeta);
 
-        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer newBuffer = ByteBufferFactory.allocate(20);
 
         getSerde().cloneAndIncrementRefCount(byteBuffer, newBuffer);
 
@@ -70,11 +71,11 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     @Test
     void testDecrementRefCount() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(20);
 
         getSerde().serialize(byteBuffer, valueStoreMeta);
 
-        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer newBuffer = ByteBufferFactory.allocate(20);
 
         getSerde().cloneAndDecrementRefCount(byteBuffer, newBuffer);
 

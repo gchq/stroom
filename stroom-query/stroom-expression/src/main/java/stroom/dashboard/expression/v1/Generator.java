@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.io.Serializable;
 
 public interface Generator extends Serializable, Comparable<Generator> {

@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.shared.Range;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStore
 
     @Test
     void testSerialiseDeserialise() {
-        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final UID uid = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final Range<Long> range = new Range<>(23L, 52L);
 
         final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, range);

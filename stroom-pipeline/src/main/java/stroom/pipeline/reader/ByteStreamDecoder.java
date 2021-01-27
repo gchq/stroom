@@ -1,6 +1,7 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -25,7 +26,7 @@ public class ByteStreamDecoder {
 
     // Buffer used to feed the charsetDecoder, filled with one byte at a time till we have something
     // that will decode ok.
-    private final java.nio.ByteBuffer inputBuffer = java.nio.ByteBuffer.allocate(MAX_BYTES_PER_CHAR);
+    private final java.nio.ByteBuffer inputBuffer = ByteBufferFactory.allocate(MAX_BYTES_PER_CHAR);
     // The Buffer to output our decode char into, only needs to be length 1 as we are only dealing
     // in one char at time.
     private final java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(2);

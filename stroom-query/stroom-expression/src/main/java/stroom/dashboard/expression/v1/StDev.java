@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +104,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         @Override
         public void read(final Input input) {
             super.read(input);
-            final int size = input.readInt(true);
+            final int size = input.readInt();
             list.clear();
             for (int i = 0; i < size; i++) {
                 list.add(input.readDouble());
@@ -117,7 +114,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         @Override
         public void write(final Output output) {
             super.write(output);
-            output.writeInt(list.size(), true);
+            output.writeInt(list.size());
             for (final double d : list) {
                 output.writeDouble(d);
             }

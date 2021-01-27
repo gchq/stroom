@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.dashboard.expression.v1.Output;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -92,14 +93,14 @@ public class RemoteSearchService {
         return true;
     }
 
-    public void poll(final String queryKey, final OutputStream outputStream) throws IOException {
+    public void poll(final String queryKey, final Output output) throws IOException {
         try {
             LOGGER.debug(() -> "poll " + queryKey);
             final Optional<RemoteSearchResultFactory> optional = remoteSearchResults.get(queryKey);
 
             if (optional.isPresent()) {
                 final RemoteSearchResultFactory factory = optional.get();
-                factory.write(outputStream);
+                factory.write(output);
 
             } else {
                 // There aren't any results in the cache so the search is probably dead
@@ -109,9 +110,6 @@ public class RemoteSearchService {
 //                NodeResultSerialiser.writeEmptyResponse(output, true);
 //            }
             }
-
-            outputStream.flush();
-            outputStream.close();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;

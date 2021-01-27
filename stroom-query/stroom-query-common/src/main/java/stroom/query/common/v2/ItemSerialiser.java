@@ -2,22 +2,32 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.util.io.ByteBufferFactory;
+import stroom.util.logging.Metrics;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ItemSerialiser {
     private final CompiledField[] fields;
+    private final OutputFactory outputFactory;
 
-    public ItemSerialiser(final CompiledField[] fields) {
+    public ItemSerialiser(final CompiledField[] fields,
+                          final OutputFactory outputFactory) {
         this.fields = fields;
+        this.outputFactory = outputFactory;
+    }
+
+    Key readKey(final ByteBuffer byteBuffer) {
+        try (final Input input = new Input(byteBuffer)) {
+            return readKey(input);
+        }
     }
 
     Key readKey(final Input input) {
@@ -63,48 +73,13 @@ public class ItemSerialiser {
     }
 
     byte[] toBytes(final Consumer<Output> outputConsumer) {
-//        byte[] buffer = bytesPool.poll();
-//        if (buffer == null) {
-//            buffer = new byte[100];
-//        }
-
         byte[] result;
-        try (final Output output = new Output(100, 4096)) {
+        try (final Output output = outputFactory.create()) {
             outputConsumer.accept(output);
-            output.flush();
-
-
             result = output.toBytes();
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-
-//            buffer = output.getBuffer();
         }
 
-//        bytesPool.add(buffer);
-
         return result;
-
-//        try (final Output output = new Output(100, 4096)) {
-//            outputConsumer.accept(output);
-//            output.flush();
-//            return output.toBytes();
-////            } catch (final IOException e) {
-////                throw new UncheckedIOException(e);
-//        }
-
-
-//        try (final PooledByteBufferOutputStream byteArrayOutputStream = outputStreamProvider.get()) {
-//            try (final Output output = new Output(byteArrayOutputStream)) {
-//                writeKey(key, output);
-//                output.flush();
-//                byteArrayOutputStream.flush();
-//                return getBytes(byteArrayOutputStream);
-//            } catch (final IOException e) {
-//                throw new UncheckedIOException(e);
-//            }
-//        }
-
     }
 
     RawKey toRawKey(final Key key) {
@@ -119,7 +94,7 @@ public class ItemSerialiser {
 
     Key toKey(final byte[] bytes) {
         return Metrics.measure("Key toKey (bytes)", () -> {
-            try (final Input input = new Input(bytes)) {
+            try (final Input input = new Input(ByteBufferFactory.wrap(bytes))) {
                 return readKey(input);
             }
         });
@@ -134,20 +109,16 @@ public class ItemSerialiser {
 
     RawItem readRawItem(final Input input) {
         return Metrics.measure("Item readRawItem input", () -> {
-            try {
-                final int groupKeyLength = input.readInt();
-                final byte[] key = input.readBytes(groupKeyLength);
-                final byte[] generators = input.readAllBytes();
-                return new RawItem(key, generators);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            final int groupKeyLength = input.readInt();
+            final byte[] key = input.readBytes(groupKeyLength);
+            final byte[] generators = input.readAllBytes();
+            return new RawItem(key, generators);
         });
     }
 
     RawItem readRawItem(final byte[] bytes) {
         return Metrics.measure("Item readRawItem bytes", () -> {
-            try (final Input input = new Input(bytes)) {
+            try (final Input input = new Input(ByteBufferFactory.wrap(bytes))) {
                 return readRawItem(input);
             }
         });
@@ -174,9 +145,15 @@ public class ItemSerialiser {
                         writeGenerators(generators, output)));
     }
 
+    Generator[] readGenerators(final ByteBuffer byteBuffer) {
+        try (final Input input = new Input(byteBuffer)) {
+            return readGenerators(input);
+        }
+    }
+
     Generator[] readGenerators(final byte[] bytes) {
         return Metrics.measure("Item readGenerators bytes", () -> {
-            try (final Input input = new Input(bytes)) {
+            try (final Input input = new Input(ByteBufferFactory.wrap(bytes))) {
                 return readGenerators(input);
             }
         });
@@ -215,31 +192,4 @@ public class ItemSerialiser {
             }
         });
     }
-
-//    byte[] toBytes(final Item item) {
-//        return Metrics.measure("Item toBytes", () -> {
-//            final RawItem rawItem = new RawItem(toBytes(item.getKey()), toBytes(item.getGenerators()));
-//            return toBytes(rawItem);
-//        });
-//    }
-//
-//    Item readItem(final byte[] bytes) {
-//        return Metrics.measure("Item readItem", () -> {
-//            final RawItem rawItem = readRawItem(bytes);
-//            Generator[] generators = readGenerators(rawItem.getGenerators());
-//            return new Item(rawItem.getGroupKey(), generators);
-//        });
-//    }
-
-
-//    private byte[] getBytes(final PooledByteBufferOutputStream bufferOutputStream) {
-//        return getBytes(bufferOutputStream.getPooledByteBuffer().getByteBuffer());
-//    }
-//
-//    private byte[] getBytes(final ByteBuffer byteBuffer) {
-//        final byte[] arr = new byte[byteBuffer.remaining()];
-//        byteBuffer.get(arr);
-//        return arr;
-//    }
-
 }

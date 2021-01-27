@@ -43,6 +43,7 @@ import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
@@ -660,7 +661,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
                 assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
                 RefDataValue valueCopy = fastInfosetValue.copy(
-                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
+                        () -> ByteBufferFactory.allocateDirect(fastInfosetValue.size()));
                 assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
                 keyValueValues.add(valueCopy);
             } else {
@@ -675,7 +676,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
                 assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
                 RefDataValue valueCopy = fastInfosetValue.copy(
-                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
+                        () -> ByteBufferFactory.allocateDirect(fastInfosetValue.size()));
                 assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
                 rangeValueValues.add(valueCopy);
             } else {

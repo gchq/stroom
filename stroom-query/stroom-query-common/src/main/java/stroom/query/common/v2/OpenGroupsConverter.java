@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.util.logging.Metrics;
+
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;

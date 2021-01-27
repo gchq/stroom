@@ -19,6 +19,7 @@ package stroom.lmdb;
 
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -251,7 +252,7 @@ public class LmdbUtils {
      * @return The newly allocated {@link ByteBuffer}
      */
     public static <T> ByteBuffer buildDbBuffer(final T object, final Serde<T> serde, final int bufferSize) {
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
+        ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(bufferSize);
         serde.serialize(byteBuffer, object);
         return byteBuffer;
     }

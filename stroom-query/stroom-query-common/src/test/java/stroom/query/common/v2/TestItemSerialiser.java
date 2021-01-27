@@ -2,6 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
@@ -28,7 +29,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields, new OutputFactory());
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -112,7 +113,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields, new OutputFactory());
 
         final Generator[] generators = new Generator[fields.size()];
         for (int i = 0; i < generators.length; i++) {
@@ -171,7 +172,7 @@ class TestItemSerialiser {
         fields.add(Field.builder().expression("${EventId}").build());
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex, Map.of());
 
-        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields);
+        final ItemSerialiser itemSerialiser = new ItemSerialiser(compiledFields, new OutputFactory());
 
         final Generator[] generators = new Generator[fields.size()];
 

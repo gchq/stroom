@@ -22,6 +22,7 @@ import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     }
 
     ByteBuffer serialize(final T object) {
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getSerde().getBufferCapacity());
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(getSerde().getBufferCapacity());
         getSerde().serialize(byteBuffer, object);
         return byteBuffer;
     }
@@ -100,7 +101,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         final S serde2 = serdeSupplier.get();
 
         // allocate a buffer size bigger than we need
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(BYTE_BUFFER_SIZE);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(BYTE_BUFFER_SIZE);
 
         serde1.serialize(byteBuffer, inputObject);
 
@@ -131,7 +132,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         final Serde<T> serde2 = serdeSupplier.get();
 
         // allocate a buffer size bigger than we need
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(BYTE_BUFFER_SIZE);
+        final ByteBuffer byteBuffer = ByteBufferFactory.allocate(BYTE_BUFFER_SIZE);
 
         serde1.serialize(byteBuffer, object);
 

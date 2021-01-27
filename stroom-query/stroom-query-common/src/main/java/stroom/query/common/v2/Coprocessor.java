@@ -16,8 +16,8 @@
 
 package stroom.query.common.v2;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
 
 import java.util.concurrent.atomic.AtomicLong;
 

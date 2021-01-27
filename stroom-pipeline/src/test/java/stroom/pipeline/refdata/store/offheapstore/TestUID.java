@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -69,6 +70,6 @@ class TestUID {
     ByteBuffer getNewUidBuffer() {
         // Don't use UID capacity for more realistic testing as we are normally using
         // pooled buffers of random sizes
-        return ByteBuffer.allocateDirect(10);
+        return ByteBufferFactory.allocateDirect(10);
     }
 }

@@ -26,6 +26,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,9 +56,9 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     @Test
     void forEachEntry() {
 
-        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
-        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
-        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
+        final UID uid1 = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
 
         final KeyValueStoreKey keyValueStoreKey11 = new KeyValueStoreKey(uid1, "key11");
         final KeyValueStoreKey keyValueStoreKey21 = new KeyValueStoreKey(uid2, "key21");
@@ -106,7 +107,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             keyValueStoreDb.deleteMapEntries(
                     writeTxn,
-                    UID.of(2, ByteBuffer.allocateDirect(10)),
+                    UID.of(2, ByteBufferFactory.allocateDirect(10)),
                     (keyBuffer, valueBuffer) -> {
                         LOGGER.info("{} - {}",
                                 ByteBufferUtils.byteBufferInfo(keyBuffer),
@@ -128,7 +129,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
         keyValueStoreDb.put(
                 writeTxn,
                 new KeyValueStoreKey(
-                        UID.of(uidVal, ByteBuffer.allocateDirect(10)),
+                        UID.of(uidVal, ByteBufferFactory.allocateDirect(10)),
                         key),
                 new ValueStoreKey(valueHash, valueUniqueId),
                 false);

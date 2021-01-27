@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.util.io.BasicStreamCloser;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
@@ -119,7 +120,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
      * Write the buffer to the file and reset it.
      */
     private void flushMainBuffer() throws IOException {
-        raFile.write(ByteBuffer.wrap(mainBuffer.getRawBuffer(), 0, mainBuffer.size()));
+        raFile.write(ByteBufferFactory.wrap(mainBuffer.getRawBuffer(), 0, mainBuffer.size()));
         mainBuffer.reset();
     }
 
@@ -242,7 +243,7 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
                 final long idxStart = raFile.position();
 
                 // Append the Index
-                raFile.write(ByteBuffer.wrap(indexBuffer.getRawBuffer(), 0, indexBuffer.size()));
+                raFile.write(ByteBufferFactory.wrap(indexBuffer.getRawBuffer(), 0, indexBuffer.size()));
 
                 // Now Record the EOF
                 final long eof = raFile.size();

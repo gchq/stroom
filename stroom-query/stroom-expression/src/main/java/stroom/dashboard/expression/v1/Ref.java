@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 class Ref extends AbstractFunction {
     private static final NullGen NULL_GEN = new NullGen();
     private final String text;

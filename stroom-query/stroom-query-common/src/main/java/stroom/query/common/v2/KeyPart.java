@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.Output;
 
 interface KeyPart {
     boolean isGrouped();

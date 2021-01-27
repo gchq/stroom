@@ -46,6 +46,7 @@ public class SearchResponseCreator {
 
     private final SizesProvider sizesProvider;
     private final Store store;
+    private final MapDataStoreFactory mapDataStoreFactory;
     private final Duration defaultTimeout;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
@@ -57,9 +58,11 @@ public class SearchResponseCreator {
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator(final SizesProvider sizesProvider,
-                                 final Store store) {
+                                 final Store store,
+                                 final MapDataStoreFactory mapDataStoreFactory) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
+        this.mapDataStoreFactory = mapDataStoreFactory;
         this.defaultTimeout = FALL_BACK_DEFAULT_TIMEOUT;
     }
 
@@ -70,9 +73,11 @@ public class SearchResponseCreator {
      */
     SearchResponseCreator(final SizesProvider sizesProvider,
                           final Store store,
+                          final MapDataStoreFactory mapDataStoreFactory,
                           final Duration defaultTimeout) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
+        this.mapDataStoreFactory = mapDataStoreFactory;
         this.defaultTimeout = Objects.requireNonNull(defaultTimeout);
     }
 
@@ -293,7 +298,7 @@ public class SearchResponseCreator {
                     resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
-                            new MapDataStoreFactory(),
+                            mapDataStoreFactory,
                             queryKey,
                             componentId,
                             resultRequest,

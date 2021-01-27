@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 abstract class AbstractAggregateFunction extends AbstractManyChildFunction implements AggregateFunction {
     private final Calculator calculator;
 

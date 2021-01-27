@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 class Average extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "average";
     static final String ALIAS = "mean";
@@ -95,14 +92,14 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         public void read(final Input input) {
             super.read(input);
             current = ValSerialiser.read(input);
-            count = input.readInt(true);
+            count = input.readInt();
         }
 
         @Override
         public void write(final Output output) {
             super.write(output);
             ValSerialiser.write(output, current);
-            output.writeInt(count, true);
+            output.writeInt(count);
         }
     }
 

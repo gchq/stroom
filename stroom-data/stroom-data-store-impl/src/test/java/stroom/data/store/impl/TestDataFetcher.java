@@ -1,5 +1,7 @@
 package stroom.data.store.impl;
 
+import stroom.util.io.ByteBufferFactory;
+
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Test;
@@ -76,7 +78,7 @@ class TestDataFetcher {
                         .append(Hex.encodeHexString(arr))
                         .append(" ");
 
-                ByteBuffer byteBuffer = ByteBuffer.wrap(arr);
+                ByteBuffer byteBuffer = ByteBufferFactory.wrap(arr);
                 char chr;
                 try {
                     CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);

@@ -2,6 +2,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
+import stroom.util.io.ByteBufferFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +41,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
         ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
+        ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(serde.getBufferCapacity());
 
         serde.serialize(byteBuffer, originalValueStoreKey);
 
@@ -59,7 +60,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
         ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
+        ByteBuffer byteBuffer = ByteBufferFactory.allocateDirect(serde.getBufferCapacity());
         serde.serialize(byteBuffer, originalValueStoreKey);
 
         short extractedId = ValueStoreKeySerde.extractId(byteBuffer);

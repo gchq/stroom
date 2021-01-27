@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 abstract class AbstractSingleChildGenerator extends AbstractGenerator {
     private static final long serialVersionUID = 513621715143449935L;
 

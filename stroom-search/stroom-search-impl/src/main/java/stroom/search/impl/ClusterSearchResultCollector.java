@@ -16,22 +16,23 @@
 
 package stroom.search.impl;
 
+import stroom.dashboard.expression.v1.Input;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.StreamUtil;
 
-import com.esotericsoftware.kryo.io.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -138,7 +139,7 @@ public class ClusterSearchResultCollector implements Store {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
-        try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+        try (final Input input = new Input(ByteBufferFactory.wrap(byteArrayOutputStream.toByteArray()))) {
             final Set<String> errors = new HashSet<>();
             success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
             if (errors.size() > 0) {

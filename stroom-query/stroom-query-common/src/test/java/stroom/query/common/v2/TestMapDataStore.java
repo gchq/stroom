@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.query.api.v2.TableSettings;
 
 import java.util.Collections;
@@ -31,6 +32,7 @@ class TestMapDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                storeSize,
+                new OutputFactory());
     }
 }

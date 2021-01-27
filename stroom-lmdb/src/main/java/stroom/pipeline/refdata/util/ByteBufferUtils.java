@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.util;
 
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -188,7 +189,7 @@ public class ByteBufferUtils {
      * buffer. The new buffer will be flipped to set its position read for get operations
      */
     public static ByteBuffer copyToDirectBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        ByteBuffer output = ByteBufferFactory.allocateDirect(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();

@@ -29,6 +29,7 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.io.ByteBufferFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,8 +85,8 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     void testSmallDbKey() {
         Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
         String keyStr = "greeting";
-        final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
-        final ByteBuffer value = ByteBuffer.allocateDirect(20);
+        final ByteBuffer key = ByteBufferFactory.allocateDirect(keyStr.length());
+        final ByteBuffer value = ByteBufferFactory.allocateDirect(20);
         key.put(keyStr.getBytes(StandardCharsets.UTF_8)).flip();
         value.put("Hello world".getBytes(StandardCharsets.UTF_8)).flip();
 
@@ -109,7 +110,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         assertThat(entries).isEqualTo(1);
 
-        final ByteBuffer searchKey = ByteBuffer.allocateDirect(30);
+        final ByteBuffer searchKey = ByteBufferFactory.allocateDirect(30);
         searchKey.put("greeting".getBytes(StandardCharsets.UTF_8)).flip();
         LOGGER.debug("searchKey {}", ByteBufferUtils.byteBufferInfo(searchKey));
 
@@ -363,7 +364,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                                             final boolean deletePairAfterwards) {
 
         Optional<UID> optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
-                writeTxn, inputRefStreamDefinition, () -> ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
+                writeTxn, inputRefStreamDefinition, () -> ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH));
 
         assertThat(optMapUid.isPresent()).isEqualTo(optExpectedMapDefinition.isPresent());
 

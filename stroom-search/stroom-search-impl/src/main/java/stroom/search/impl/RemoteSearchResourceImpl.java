@@ -16,6 +16,9 @@
 
 package stroom.search.impl;
 
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.shared.ResourcePaths;
 
 import io.swagger.annotations.Api;
@@ -26,6 +29,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
+import java.nio.ByteBuffer;
 
 @Api(value = "remoteSearch - /v1")
 @Path("/remoteSearch" + ResourcePaths.V1)
@@ -33,10 +37,13 @@ import javax.ws.rs.core.StreamingOutput;
 @Consumes(MediaType.APPLICATION_JSON)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
     private final RemoteSearchService remoteSearchService;
+    private final OutputFactory outputFactory;
 
     @Inject
-    public RemoteSearchResourceImpl(final RemoteSearchService remoteSearchService) {
+    public RemoteSearchResourceImpl(final RemoteSearchService remoteSearchService,
+                                    final OutputFactory outputFactory) {
         this.remoteSearchService = remoteSearchService;
+        this.outputFactory = outputFactory;
     }
 
     @Override
@@ -46,7 +53,12 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
 
     @Override
     public StreamingOutput poll(final String queryKey) {
-        return outputStream -> remoteSearchService.poll(queryKey, outputStream);
+        return outputStream -> {
+            try (final Output output = outputFactory.create()) {
+                remoteSearchService.poll(queryKey, output);
+                outputStream.write(output.toBytes());
+            }
+        };
     }
 
     @Override

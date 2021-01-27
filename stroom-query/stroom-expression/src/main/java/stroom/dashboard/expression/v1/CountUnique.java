@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
@@ -107,7 +104,7 @@ class CountUnique extends AbstractFunction {
         @Override
         public void read(final Input input) {
             uniqueValues.clear();
-            final int length = input.readInt(true);
+            final int length = input.readInt();
             for (int i = 0; i < length; i++) {
                 uniqueValues.add(ValSerialiser.read(input));
             }
@@ -115,7 +112,7 @@ class CountUnique extends AbstractFunction {
 
         @Override
         public void write(final Output output) {
-            output.writeInt(uniqueValues.size(), true);
+            output.writeInt(uniqueValues.size());
             for (final Val val : uniqueValues) {
                 ValSerialiser.write(output, val);
             }

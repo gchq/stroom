@@ -1,5 +1,6 @@
 package stroom.search.impl;
 
+import stroom.dashboard.expression.v1.Output;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.security.api.SecurityContext;
@@ -8,9 +9,6 @@ import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.esotericsoftware.kryo.io.Output;
-
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,41 +31,39 @@ class RemoteSearchResultFactory {
         this.securityContext = securityContext;
     }
 
-    public void write(final OutputStream outputStream) {
-        try (final Output output = new Output(outputStream)) {
-            if (initialisationError != null) {
-                NodeResultSerialiser.write(output, true, coprocessors, Collections.singletonList(initialisationError));
-            } else {
-                try {
-                    // Wait to complete.
-                    final boolean complete = coprocessors.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
+    public void write(final Output output) {
+        if (initialisationError != null) {
+            NodeResultSerialiser.write(output, true, coprocessors, Collections.singletonList(initialisationError));
+        } else {
+            try {
+                // Wait to complete.
+                final boolean complete = coprocessors.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
 
-                    // Write completion status.
-                    if (!started) {
-                        LOGGER.debug(() -> "Node search not started");
-                        NodeResultSerialiser.writeEmptyResponse(output, false);
+                // Write completion status.
+                if (!started) {
+                    LOGGER.debug(() -> "Node search not started");
+                    NodeResultSerialiser.writeEmptyResponse(output, false);
 
-                    } else if (Thread.currentThread().isInterrupted() || destroy) {
-                        LOGGER.debug(() -> "Terminated or destroyed: terminated=" +
-                                Thread.currentThread().isInterrupted() +
-                                ", destroyed=" +
-                                destroy);
-                        NodeResultSerialiser.writeEmptyResponse(output, true);
-
-                    } else {
-                        // Drain all current errors to a list.
-                        final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
-
-                        NodeResultSerialiser.write(output, complete, coprocessors, errorsSnapshot);
-                    }
-
-                } catch (final InterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
+                } else if (Thread.currentThread().isInterrupted() || destroy) {
+                    LOGGER.debug(() -> "Terminated or destroyed: terminated=" +
+                            Thread.currentThread().isInterrupted() +
+                            ", destroyed=" +
+                            destroy);
                     NodeResultSerialiser.writeEmptyResponse(output, true);
 
-                    // Keep interrupting.
-                    Thread.currentThread().interrupt();
+                } else {
+                    // Drain all current errors to a list.
+                    final List<String> errorsSnapshot = coprocessors.getErrorConsumer().drain();
+
+                    NodeResultSerialiser.write(output, complete, coprocessors, errorsSnapshot);
                 }
+
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                NodeResultSerialiser.writeEmptyResponse(output, true);
+
+                // Keep interrupting.
+                Thread.currentThread().interrupt();
             }
         }
     }

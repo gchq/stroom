@@ -17,6 +17,8 @@
 
 package stroom.pipeline.refdata.util;
 
+import stroom.util.io.ByteBufferFactory;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -55,8 +57,8 @@ class TestByteBufferUtils {
     @Test
     void testIntCompare() {
 
-        ByteBuffer buf1 = ByteBuffer.allocate(Integer.BYTES);
-        ByteBuffer buf2 = ByteBuffer.allocate(Integer.BYTES);
+        ByteBuffer buf1 = ByteBufferFactory.allocate(Integer.BYTES);
+        ByteBuffer buf2 = ByteBufferFactory.allocate(Integer.BYTES);
 
         doIntCompareTest(0, 0, buf1, buf2);
         doIntCompareTest(0, 1, buf1, buf2);
@@ -80,8 +82,8 @@ class TestByteBufferUtils {
     @Test
     void testLongCompare() {
 
-        ByteBuffer buf1 = ByteBuffer.allocate(Long.BYTES);
-        ByteBuffer buf2 = ByteBuffer.allocate(Long.BYTES);
+        ByteBuffer buf1 = ByteBufferFactory.allocate(Long.BYTES);
+        ByteBuffer buf2 = ByteBufferFactory.allocate(Long.BYTES);
         doLongCompareTest(0L, 0L, buf1, buf2);
         doLongCompareTest(0L, 1L, buf1, buf2);
         doLongCompareTest(-1L, 0L, buf1, buf2);
@@ -104,8 +106,8 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_match() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
+        ByteBuffer byteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -115,8 +117,8 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_match2() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0});
+        ByteBuffer byteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBufferFactory.wrap(new byte[]{0});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -126,8 +128,8 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_bufferTooShort() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
+        ByteBuffer byteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2});
+        ByteBuffer prefixByteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -137,8 +139,8 @@ class TestByteBufferUtils {
     @Test
     void testContainsPrefix_noMatch() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4});
+        ByteBuffer byteBuffer = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBufferFactory.wrap(new byte[]{1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -200,12 +202,12 @@ class TestByteBufferUtils {
     @Test
     void testBasicHashCode() {
 
-        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        ByteBuffer byteBuffer1 = ByteBufferFactory.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);
         byteBuffer1.limit(7);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
 
-        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        ByteBuffer byteBuffer2 = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer2.position(1);
         byteBuffer2.limit(6);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
@@ -219,12 +221,12 @@ class TestByteBufferUtils {
     @Test
     void testXxHash() {
 
-        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        ByteBuffer byteBuffer1 = ByteBufferFactory.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);
         byteBuffer1.limit(7);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
 
-        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        ByteBuffer byteBuffer2 = ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer2.position(1);
         byteBuffer2.limit(6);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
@@ -258,8 +260,8 @@ class TestByteBufferUtils {
         final int iterations = 10_000;
         final int bufferSize = 1_000;
 
-        final ByteBuffer src = ByteBuffer.allocateDirect(bufferSize);
-        final ByteBuffer dest = ByteBuffer.allocateDirect(bufferSize);
+        final ByteBuffer src = ByteBufferFactory.allocateDirect(bufferSize);
+        final ByteBuffer dest = ByteBufferFactory.allocateDirect(bufferSize);
 
         final Random random = new Random();
 
@@ -355,7 +357,7 @@ class TestByteBufferUtils {
                 name, fileCount.get(), Duration.between(startTime, Instant.now()));
 
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(300);
+        ByteBuffer byteBuffer = ByteBufferFactory.allocate(300);
 
         startTime = Instant.now();
 

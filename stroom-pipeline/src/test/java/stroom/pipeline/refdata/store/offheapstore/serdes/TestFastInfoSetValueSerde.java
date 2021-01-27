@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.util.io.ByteBufferFactory;
 
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
@@ -17,7 +18,7 @@ class TestFastInfoSetValueSerde extends AbstractSerdeTest<RefDataValue, RefDataV
     @Test
     void testSerialisationDeserialisation() {
 
-        FastInfosetValue fastInfosetValue = new FastInfosetValue(ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4}));
+        FastInfosetValue fastInfosetValue = new FastInfosetValue(ByteBufferFactory.wrap(new byte[]{0, 1, 2, 3, 4}));
 //        FastInfosetValue fastInfosetValue = new FastInfosetValue(new byte[]{0, 1, 2, 3, 4});
         doSerialisationDeserialisationTest(fastInfosetValue);
     }

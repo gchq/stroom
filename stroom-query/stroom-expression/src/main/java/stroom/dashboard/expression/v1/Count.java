@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 class Count extends AbstractFunction {
     static final String NAME = "count";
 
@@ -65,12 +62,12 @@ class Count extends AbstractFunction {
 
         @Override
         public void read(final Input input) {
-            count = input.readLong(true);
+            count = input.readLong();
         }
 
         @Override
         public void write(final Output output) {
-            output.writeLong(count, true);
+            output.writeLong(count);
         }
     }
 }

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -64,10 +65,10 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
                 123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
 
-        ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
+        ByteBuffer refStreamDefBuffer = ByteBufferFactory.allocate(60);
         refStreamDefinitionSerde.serialize(refStreamDefBuffer, refStreamDefinition);
 
-        ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
+        ByteBuffer mapDefBuffer = ByteBufferFactory.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer, mapDefinition);
 
         int compareResult = ByteBufferUtils.compare(refStreamDefBuffer, mapDefBuffer);
@@ -75,7 +76,7 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
         assertThat(compareResult).isEqualTo(0);
 
         final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "myMapName");
-        ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
+        ByteBuffer mapDefBuffer2 = ByteBufferFactory.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer2, mapDefinition2);
 
         assertThat(mapDefBuffer2.remaining()).isGreaterThan(mapDefBuffer.remaining());

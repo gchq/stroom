@@ -1,6 +1,9 @@
 package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
@@ -32,25 +35,24 @@ import stroom.query.common.v2.Items;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.LmdbEnvironment;
+import stroom.query.common.v2.MapDataStoreFactory;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -71,16 +73,18 @@ class TestSearchResultCreation {
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
     private DataStoreFactory dataStoreFactory;
+    private OutputFactory outputFactory;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         final LmdbConfig lmdbConfig = new LmdbConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        outputFactory = new OutputFactory();
         final LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(tempDirProvider, lmdbConfig, pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvironment,
-                new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
+                outputFactory,
                 lmdbConfig);
     }
 
@@ -130,7 +134,8 @@ class TestSearchResultCreation {
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
                 sizesProvider,
-                collector);
+                collector,
+                new MapDataStoreFactory(outputFactory));
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -247,7 +252,8 @@ class TestSearchResultCreation {
         // Mark the collector as artificially complete.
         collector.complete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector);
+        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(sizesProvider, collector,
+                new MapDataStoreFactory(outputFactory));
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -317,7 +323,8 @@ class TestSearchResultCreation {
 
         final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
                 sizesProvider,
-                collector);
+                collector,
+                new MapDataStoreFactory(outputFactory));
         final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
 
         // Validate the search response.
@@ -449,14 +456,13 @@ class TestSearchResultCreation {
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {
-        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (final Output output = new Output(outputStream)) {
-            source.writePayloads(output);
-        }
 
-        final byte[] bytes = outputStream.toByteArray();
-        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
-            target.readPayloads(input);
+        try (final Output output = outputFactory.create()) {
+            source.writePayloads(output);
+            final ByteBuffer byteBuffer = output.toByteBuffer();
+            try (final Input input = new Input(byteBuffer)) {
+                target.readPayloads(input);
+            }
         }
     }
 

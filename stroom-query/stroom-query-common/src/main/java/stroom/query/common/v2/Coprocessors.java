@@ -1,14 +1,13 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
 import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;

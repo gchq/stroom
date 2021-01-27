@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.util.io.ByteBufferFactory;
 
 import java.nio.ByteBuffer;
 
@@ -130,7 +131,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     }
 
     private void doAccessTest(final long timeUnderTestMs, final ByteBuffer valueBuffer, final boolean expectedResult) {
-        ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
+        ByteBuffer timeBuffer = ByteBufferFactory.allocate(Long.BYTES);
         timeBuffer.putLong(timeUnderTestMs);
         timeBuffer.flip();
         boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);

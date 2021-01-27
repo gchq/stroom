@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.util;
 
 import stroom.util.HasHealthCheck;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import org.slf4j.Logger;
@@ -166,7 +167,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     }
 
     private ByteBuffer getUnPooledBuffer(final int minCapacity) {
-        return ByteBuffer.allocateDirect(minCapacity);
+        return ByteBufferFactory.allocateDirect(minCapacity);
     }
 
     private ByteBuffer getBuffer(final int minCapacity) {
@@ -340,7 +341,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 if (bufferCounter.compareAndSet(currBufferCount, currBufferCount + 1)) {
                     // Succeeded in incrementing the count so we can create one
                     final int roundedCapacity = bufferSizes[offset];
-                    byteBuffer = ByteBuffer.allocateDirect(roundedCapacity);
+                    byteBuffer = ByteBufferFactory.allocateDirect(roundedCapacity);
                     break;
                 } else {
                     // CAS failed so another thread beat us, go round again.

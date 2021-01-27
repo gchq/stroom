@@ -1,8 +1,5 @@
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
@@ -41,19 +38,19 @@ public final class GroupKeySerialiser {
         }
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final Output output = new Output(byteArrayOutputStream)) {
-            write(output, groupKey);
-        }
+//        try (final Output output = new Output(byteArrayOutputStream)) {
+//            write(output, groupKey);
+//        }
         return byteArrayOutputStream.toByteArray();
     }
 
-    public static GroupKey toGroupKey(final byte[] bytes) {
-        if (bytes == null) {
-            return null;
-        }
-
-        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
-            return read(input);
-        }
-    }
+//    public static GroupKey toGroupKey(final byte[] bytes) {
+//        if (bytes == null) {
+//            return null;
+//        }
+//
+//        try (final Input input = new Input(new ByteArrayInputStream(bytes))) {
+//            return read(input);
+//        }
+//    }
 }

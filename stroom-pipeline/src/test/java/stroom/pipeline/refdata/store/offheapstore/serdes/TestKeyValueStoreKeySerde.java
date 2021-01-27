@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
@@ -40,7 +41,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
 
     @Test
     void serializeDeserialize() {
-        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final UID uid = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
                 "myKey");
@@ -50,7 +51,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
 
     @Test
     void serializeDeserialize_emptyString() {
-        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final UID uid = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
                 "");
@@ -63,7 +64,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
     void testOutput() {
 
         // verify that we can directly use Output and Input classes to manage our own (de)ser
-        ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        ByteBuffer byteBuffer = ByteBufferFactory.allocate(20);
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
         Output output = new Output(new ByteBufferOutputStream(byteBuffer));
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
@@ -85,11 +86,11 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
 
     @Test
     void testSerialiseWithoutKeyPart() {
-        final ByteBuffer keyValueStoreKeyBuffer1 = ByteBuffer.allocate(20);
-        final ByteBuffer keyValueStoreKeyBuffer2 = ByteBuffer.allocate(20);
-        final ByteBuffer keyValueStoreKeyBuffer3 = ByteBuffer.allocate(20);
+        final ByteBuffer keyValueStoreKeyBuffer1 = ByteBufferFactory.allocate(20);
+        final ByteBuffer keyValueStoreKeyBuffer2 = ByteBufferFactory.allocate(20);
+        final ByteBuffer keyValueStoreKeyBuffer3 = ByteBufferFactory.allocate(20);
 
-        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final UID uid = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey1 = new KeyValueStoreKey(uid, "key1");
         final KeyValueStoreKey keyValueStoreKey2 = new KeyValueStoreKey(uid, "key2");
 

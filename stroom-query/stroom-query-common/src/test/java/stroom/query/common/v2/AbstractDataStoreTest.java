@@ -30,6 +30,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.logging.Metrics;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -93,7 +94,7 @@ abstract class AbstractDataStoreTest {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-    //    @Test
+        @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
             System.out.println("\n------ RUN " + (i + 1) + " -------");

@@ -21,6 +21,8 @@ import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.dashboard.expression.v1.Output;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -53,7 +55,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ class AsyncSearchTaskHandler {
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
     private final RemoteSearchService remoteSearchService;
+    private final OutputFactory outputFactory;
 
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
@@ -93,7 +95,8 @@ class AsyncSearchTaskHandler {
                            final NodeService nodeService,
                            final NodeInfo nodeInfo,
                            final WebTargetFactory webTargetFactory,
-                           final RemoteSearchService remoteSearchService) {
+                           final RemoteSearchService remoteSearchService,
+                           final OutputFactory outputFactory) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
@@ -106,6 +109,7 @@ class AsyncSearchTaskHandler {
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
         this.remoteSearchService = remoteSearchService;
+        this.outputFactory = outputFactory;
     }
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
@@ -253,9 +257,9 @@ class AsyncSearchTaskHandler {
                     if (NodeCallUtil.shouldExecuteLocally(nodeInfo, targetNode)) {
                         // Just transfer the payload from the local search result store.
                         byte[] bytes;
-                        try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                            remoteSearchService.poll(queryKey, outputStream);
-                            bytes = outputStream.toByteArray();
+                        try (final Output output = outputFactory.create()) {
+                            remoteSearchService.poll(queryKey, output);
+                            bytes = output.toBytes();
                         }
                         try (final InputStream inputStream = new ByteArrayInputStream(bytes)) {
                             LOGGER.debug(() -> "Receive result for node: " + targetNode);

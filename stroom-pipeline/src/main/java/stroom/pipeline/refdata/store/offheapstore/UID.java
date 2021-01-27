@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -107,7 +108,7 @@ public class UID {
      * wraps an LMDB managed bytebuffer that you want to de-associate from.
      */
     public UID cloneToNewBuffer() {
-        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
+        final ByteBuffer newBuffer = ByteBufferFactory.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
         byteBuffer.rewind();
         newBuffer.flip();

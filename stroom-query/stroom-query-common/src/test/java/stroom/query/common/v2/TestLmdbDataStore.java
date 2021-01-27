@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.OutputFactory;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
@@ -46,19 +47,18 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbConfig lmdbConfig = new LmdbConfig();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
         final LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(tempDirProvider, lmdbConfig, pathCreator);
 
         return new LmdbDataStore(
                 lmdbEnvironment,
                 lmdbConfig,
-                byteBufferPool,
                 UUID.randomUUID().toString(),
                 "0",
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                storeSize,
+                new OutputFactory());
     }
 }

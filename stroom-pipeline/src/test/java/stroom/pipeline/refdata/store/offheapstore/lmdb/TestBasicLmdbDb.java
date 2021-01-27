@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -199,7 +200,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
 
-        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
+        ByteBuffer keyBuffer = ByteBufferFactory.allocateDirect(50);
         basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
 
         AtomicReference<ByteBuffer> valueBufRef = new AtomicReference<>();
@@ -374,7 +375,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb2.put("key2", "value3", false);
 
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
-            ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
+            ByteBuffer keyBuffer = ByteBufferFactory.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer, "key1");
             ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
 
@@ -424,7 +425,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
 
-            ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
+            ByteBuffer keyBuffer1 = ByteBufferFactory.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer1, "key1");
 
             ByteBuffer valueBuffer1 = basicLmdbDb.getAsBytes(txn, keyBuffer1).get();
@@ -435,7 +436,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(value1).isEqualTo("value1");
 
             // now do another get on a different key to get a different value
-            ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
+            ByteBuffer keyBuffer2 = ByteBufferFactory.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer2, "key2");
             ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
 

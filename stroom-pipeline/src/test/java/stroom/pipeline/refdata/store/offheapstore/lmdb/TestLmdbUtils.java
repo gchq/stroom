@@ -8,6 +8,7 @@ import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.io.ByteBufferFactory;
 
 import java.nio.ByteBuffer;
 
@@ -19,7 +20,7 @@ class TestLmdbUtils {
 
     @Test
     void copyDirectBuffer() {
-        ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(50);
+        ByteBuffer sourceBuffer = ByteBufferFactory.allocateDirect(50);
 
 
         final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(

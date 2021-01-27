@@ -1,6 +1,7 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.refdata.util.ByteArrayUtils;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
@@ -38,10 +39,10 @@ class TestReaderRecorder {
         final CharsetDecoder charsetDecoder = Charset.forName(charset.name()).newDecoder();
 
         final int byteBufferSize = 10; // Surely we can't have a char that takes more than 10 bytes
-        java.nio.ByteBuffer inputBuffer = java.nio.ByteBuffer.allocate(byteBufferSize);
+        java.nio.ByteBuffer inputBuffer = ByteBufferFactory.allocate(byteBufferSize);
         LOGGER.info("ByteBuffer size {}", byteBufferSize);
 
-//        java.nio.ByteBuffer in = java.nio.ByteBuffer.wrap(input.getBytes(charset.name()));
+//        java.nio.ByteBuffer in = java.nio.ByteBufferFactory.wrap(input.getBytes(charset.name()));
         java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(1);
 
         int byteOffset = 0;

@@ -61,6 +61,8 @@ public class PooledByteBuffer implements AutoCloseable {
         } else if (byteBufferSupplier == null) {
             throw new IllegalStateException(LogUtil.message("The byteBuffer has been returned to the pool"));
         } else {
+
+
             byteBuffer = byteBufferSupplier.get();
             return byteBuffer;
         }

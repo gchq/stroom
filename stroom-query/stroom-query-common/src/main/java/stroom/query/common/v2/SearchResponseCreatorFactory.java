@@ -5,17 +5,20 @@ import java.time.Duration;
 
 public class SearchResponseCreatorFactory {
     private final SizesProvider sizesProvider;
+    private final MapDataStoreFactory mapDataStoreFactory;
 
     @Inject
-    public SearchResponseCreatorFactory(final SizesProvider sizesProvider) {
+    public SearchResponseCreatorFactory(final SizesProvider sizesProvider,
+                                        final MapDataStoreFactory mapDataStoreFactory) {
         this.sizesProvider = sizesProvider;
+        this.mapDataStoreFactory = mapDataStoreFactory;
     }
 
     /**
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator create(final Store store) {
-        return new SearchResponseCreator(sizesProvider, store);
+        return new SearchResponseCreator(sizesProvider, store, mapDataStoreFactory);
     }
 
     /**
@@ -25,6 +28,6 @@ public class SearchResponseCreatorFactory {
      */
     public SearchResponseCreator create(final Store store,
                                         final Duration defaultTimeout) {
-        return new SearchResponseCreator(sizesProvider, store, defaultTimeout);
+        return new SearchResponseCreator(sizesProvider, store, mapDataStoreFactory, defaultTimeout);
     }
 }

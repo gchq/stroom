@@ -16,9 +16,6 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -80,20 +77,20 @@ class CountGroups extends AbstractFunction {
         @Override
         public void read(final Input input) {
             childGroups.clear();
-            final int length = input.readInt(true);
+            final int length = input.readInt();
             for (int i = 0; i < length; i++) {
                 childGroups.add(GroupKeySerialiser.read(input));
             }
-            nonGroupedChildCount = input.readLong(true);
+            nonGroupedChildCount = input.readLong();
         }
 
         @Override
         public void write(final Output output) {
-            output.writeInt(childGroups.size(), true);
+            output.writeInt(childGroups.size());
             for (final GroupKey key : childGroups) {
                 GroupKeySerialiser.write(output, key);
             }
-            output.writeLong(nonGroupedChildCount, true);
+            output.writeLong(nonGroupedChildCount);
         }
     }
 }

@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
 import stroom.pipeline.refdata.store.offheapstore.UID;
+import stroom.util.io.ByteBufferFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ class TestUIDSerde extends AbstractSerdeTest<UID, UIDSerde> {
     @Test
     void testSerialisationDeserialisation() {
 
-        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final UID uid = UID.of(ByteBufferFactory.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
 
         doSerialisationDeserialisationTest(uid);
     }

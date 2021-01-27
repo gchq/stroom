@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentInputStream;
+import stroom.util.io.ByteBufferFactory;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
 
@@ -45,7 +46,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
     private final byte[] singleByte = new byte[1];
-    private final LongBuffer longBuffer = ByteBuffer.wrap(eightBytes).asLongBuffer();
+    private final LongBuffer longBuffer = ByteBufferFactory.wrap(eightBytes).asLongBuffer();
     private InputStream data;
     private InputStream indexInputStream;
     private Set<Long> included;

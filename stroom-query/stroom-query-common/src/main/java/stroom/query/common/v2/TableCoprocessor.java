@@ -16,11 +16,10 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Input;
+import stroom.dashboard.expression.v1.Output;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.TableSettings;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;

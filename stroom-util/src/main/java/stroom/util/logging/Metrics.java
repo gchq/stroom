@@ -1,4 +1,4 @@
-package stroom.query.common.v2;
+package stroom.util.logging;
 
 import stroom.util.shared.ModelStringUtil;
 
