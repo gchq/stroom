@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2017** : Fixed dashboard table filtering.
+
 * Issue **#1946** : Removed unnecessary index shard state change error.
 
 
