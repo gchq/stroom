@@ -16,7 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import org.apache.lucene.index.IndexWriter;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.index.impl.IndexShardService;
@@ -34,11 +33,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Clearable;
 
+import org.apache.lucene.index.IndexWriter;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
@@ -227,17 +232,17 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     public void refresh() {
         final ICache<Key, IndexShardSearcher> cache = getCache();
         if (cache != null) {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            cache.asMap().values().forEach(v -> {
-                if (v != null) {
-                    try {
-                        v.getSearcherManager().maybeRefresh();
-                    } catch (final IOException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                }
-            });
-            LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
+            LOGGER.logDurationIfDebugEnabled(() ->
+                            cache.asMap().values().forEach(v -> {
+                                if (v != null) {
+                                    try {
+                                        v.getSearcherManager().maybeRefresh();
+                                    } catch (final IOException e) {
+                                        LOGGER.error(e::getMessage, e);
+                                    }
+                                }
+                            }),
+                    "refresh()");
         } else {
             LOGGER.debug(() -> "Cache is null");
         }

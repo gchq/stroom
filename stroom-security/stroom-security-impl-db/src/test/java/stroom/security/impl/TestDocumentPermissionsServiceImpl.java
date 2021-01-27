@@ -188,7 +188,7 @@ class TestDocumentPermissionsServiceImpl {
     }
 
     private DocRef createTestDocRef() {
-        return new DocRef.Builder()
+        return DocRef.builder()
                 .type("Index")
                 .uuid(UUID.randomUUID().toString())
                 .build();

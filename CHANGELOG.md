@@ -7,14 +7,274 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-<<<<<<< HEAD
+* Issue **#2017** : Fixed dashboard table filtering.
+
+* Issue **#1946** : Removed unnecessary index shard state change error.
+
+
+## [v7.0-beta.79] - 2021-01-26
+
+* Issue **#2006** : Use UTC timezone when comparing date in repository folder name.
+
+* Issue **#2006** : Use `ArrayList.size()` as a method, instead of a property in Gradle build.
+
+* Issue **#2016** : Fixed StackOverflowException in document event log. 
+
+* Issue **#2003** : Fixed some issues with LMDB search results.
+
+* Issue **#2011** : Redacting obviously sensitive data in automatically generated logs.
+
+* Introduce functionality to provide configurable, automatic logging for RESTful API calls.
+
+* Add `search_results` dir to dockerfile.
+
+* Fix NPE in StroomEventLoggingUtil.
+
+
+## [v7.0-beta.78] - 2021-01-14
+
+* Issue **#2000** : `RemoteSearchResultFactory.destroy()` is now performed as the processing user.
+
+* Issue **#2000** : Fixed NPE affecting adding/removing columns on a dashboard table and changing column options like grouping and sorting.
+
+* Issue **#2000** : Fixed dashboard table child result expansion.
+
+* Issue **#2001** : Fixed intermittent test failure associated with byte buffers being used incorrectly with LMDB.
+
+* Issue **#1997** : Fix missing _Format_ option on XSLT and TextConverter editors.
+
+* Improved security for handling entity events.
+
+
+## [v7.0-beta.77] - 2021-01-12
+
+* Issue **#1867** : Cluster entity events are now sent to each node asynchronously to prevent delays caused by one or more slow/bad nodes.
+
+* Issue **#1923** : Fixed an issue affecting sorting dashboard table values that have mixed data types. In addition you can now sort columns alphanumerically if the column format is set to text. 
+
+* Issue **#1811** : Fixed issue where deleting or cutting/pasting text in a dashboard query editor was not marking the dashboard as dirty.
+
+* Search results are now stored off-heap to reduce the chance of out of memory errors.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
+
+* Issue **#1990** : Change order of items in quick filter popup help.
+
+* Change quick filter word boundary matching to handle a mix of delimited and canelCase, e.g. `stroom.prop.maxFileSize`.
+
+* Issue **#1986** : Fix missing gutter warning/error icons in the stepper code editor.
+
+
+## [v7.0-beta.76] - 2021-01-07
+
+* No changes.
+
+
+## [v7.0-beta.75] - 2021-01-06
+
+* Issue **#1989** : Fix for dashboard tables that were only showing a total of 100 rows.
+
+* Change event logging to use new fluent API.
+
+
+## [v7.0-beta.74] - 2020-12-15
+
+* No changes.
+
+
+## [v7.0-beta.73] - 2020-12-15
+
+* Change github tokens in travis build.
+
+
+## [v7.0-beta.72] - 2020-12-15
+
+* Issue **#1983** : Fix line number inconsistency in View Source when last char is a line break.
+
+* Issue **#1971** : Fix 'no appender' errors when editing a Data volume.
+
+* Issue **#1965** : Ignore gzipped data that has no uncompressed content.
+
+* Issue **#1976** : Add an enabled check box and insert above button to retention rules list.
+
+* Fix bug with retention rules impact summary when rows are identical.
+
+* Replace two buttons with toggle button on retetion impact summary.
+
+* Fix path for user event logs.
+
+* Uplift send_to_stroom script to v3.0.
+
+* Issue **#1978** : Fix Meta tab losing syntax highlighting when switching streams.
+
+* Remove byte count in brackets on Info tab when size is below 1024 bytes.
+
+* Fix help links on Jobs screen.
+
+* Fix inability to select text on Info tab in Data viewer.
+
+* Issue **#1963** : Fix data/source view progress bar showing blue when all data is visible.
+
+* Issue **#1974** : Fix job screen only showing one job.
+
+* Issue **#1970** : Fixed issue related to accidental execution of SearchDebugUtil outside of tests.
+
+* Change reference data lookup request object to support string or epoch millis date.
+
+* Add byte count to Info tab, make date values consistent.
+
+* Fix problem of wrong charset being used.
+
+* Fix syntax highlighting for Meta streams in Source view.
+
+* Fix bug in PreviewInputStream read() method.
+
+* Improve the way the YAML logger paths are modified on boot.
+
+* Issue **#1964** : BGZIP files are now closed on exception.
+
+* Changed default dashboard time zone to use UTC.
+
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
+* Issue **#1954** : Change code that sets ReceivedPath to try getting a value from DOCKER_HOST_(HOSTNAME|IP) env vars first.
+
+
+## [v7.0-beta.71] - 2020-12-02
+
+* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+
+* Issue **#1960** : Fix the data preview display of empty streams.
+
+* Moved content download to Java.
+
+* All paths in the config YAML including logging config can now be made relative to the home dir.
+
+* Issue **#1912** : Moved dashboard table conditional formatting logic to server.
+
+* Fix missing favicon.
+
+* Issue **#1808** : Fix bug with permission handling for Retention Policy feature.
+
+* Issue **#1948** : Made UI report errors that occur during download.
+
+* Issue **#1944** : You can now define a stroom home config property and all relative paths will become subpaths of this location. 
+
+* Fix byte conversion bug with `read()` method in RASegmentInputStream.
+
+* Add `viewType` and `displayType` args to `data(...)` dashboard expression.
+
+* Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
+
+* Add _progress_ bar to Source Data view and Data Preview to show location in the file.
+
+* Issue **#1678** : Fix data display in dashboard text pane.
+
+* Issue **#1679** : Fix data display in dashboard text pane.
+
+* Issue **#1777** : Fix sub stream tab selection when switching streams in data screen.
+
+* Issue **#1647** : Right align numeric columns in data screen.
+
+* Issue **#1872** : Fix display of source data when data has no line breaks.
+
+* Add completion and snippets to dashboard expression builder.
+
+* Issue **#1895** : Change dashboard field expression editor use the Ace editor like other edit screens.
+
+* Replace stream Info icon on data screen with a sub-stream type tab.
+
+* Add Source View tab available from Data Preview screen to show the unformatted source data.
+
+* Fix highlighting while stepping single line data.
+
+* Add completion and snippets to edit screens using the ACE editor.
+
+* Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
+
+* Issue **#1949** : Fixed bug in download for streams from multiple feeds.
+
+
+## [v7.0-beta.70] - 2020-11-16
+
+* Issue **#1947** : Fixed NPE thrown when trying to unassign processing tasks by setting the assigned node to null.
+
+* Issue **#1940** : Old searches are now terminated by the processing user.
+
+* Issue **#1932** : Physical stream delete will no longer fail if a file or directory it wants to delete cannot be found, i.e. has been deleted by another external process.
+
+* Fix log output counts for reference data.
+
+* Add REST endpoint for purging reference data.
+
+* Issue **#1938** : Fix missing ref loading errors/warnings, improve warning messages.
+
+
+## [v7.0-beta.69] - 2020-11-10
+
+* Improve handling of duplicates in reference data loads.
+
+* Improve error messages for reference loading failures.
+
+* Issue **#1936** : Fix reference data loaded not loading string values > 1000btyes.
+
+* Improve PooledByteBufferOutputStream.
+
+* Issue **#1807** : Remove need for Manage Nodes permission in order to list nodes (needed to manage volumes).
+
+* Issue **#1806** : Remove need for Manage Nodes permission in order to list nodes (needed to manage tasks).
+
+* Issue **#1925** : Fixed logging error that was happening on search.
+
+* Issue **#1921** : Fixed problem with the dashboard text pane not migrating properly to the new special stream id and event id fields. 
+
+* Issue **#1910** : Fixed issue preventing display of table data where a table had duplicate column names.
+
+* Issue **#1919** : Fixed issue that was preventing dashboard tabs from being closed.
+
+* Removed rxjava.
+
+* Issue **#1919** : Dashboards now prevent tabs being closed from the close button if some nested tabs on the same pane are hidden.
+
+* Issue **#1915** : Multiple statistic searches on a dashboard are now executed in parallel.
+
+* Issue **#1915** : Fixed task context user identity for statistics searches.
+
+* Issue **#1915** : Fixed task context for statistics searches.
+
+* Merged external expression and query libraries into the source code and added Kryo serialisation to search results.
+
+* Issue **#1910** : Duplicate fields in dashboard tables are now avoided by adding a numeric suffix to the field name when adding a duplicate.
+
+* Issue **#1918** : Text presenter was losing track of stream and event id fields when settings were changed.
+
+* Issue **#1906** : Added info about queue sizes to extraction task.
+
+* Issue **#1906** : Made changes to allow early termination of searches if we have enough data.
+
+* Issue **#1906** : Fixed node task nesting.
+
+* Issue **#1906** : The maximum size of the stream event map is now configurable with the `stroom.search.extraction.maxStreamEventMapSize` property.
+
+* Issue **#1906** : Improved the way search extractions events are grouped so we can extract more events per stream and therefore improve performance.
+
+* Issue **#1907** : Fixed NPE.
+
+
+## [v7.0-beta.68] - 2020-10-22
+
+* Issue **#1733** : Support xsl:output options for XML output from pipeline (XMLWriter)
+
+* Issue **#1893** : Change delimited string volume properties to lists of strings
+
+* Issue **#1848** : Fix NPE when importing certain processor filters.
+
 * Issue **#1894** : Improvements to search performance and fix for hanging searches.
-=======
+
 
 ## [v7.0-beta.67] - 2020-10-15
 
 * Issue **#1901** : Create default (index) volume group if it is used prior to UI.
->>>>>>> c98f99306ce1ba44518c853227f2ae4033831acc
 
 * Issue **#1900** : Fix inter-node task assignment, change how processing user equality is checked.
 
@@ -2744,8 +3004,20 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.67...HEAD
-[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.67
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.79...HEAD
+[v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
+[v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
+[v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
+[v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
+[v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75
+[v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74
+[v7.0-beta.73]: https://github.com/gchq/stroom/compare/v7.0-beta.72...v7.0-beta.73
+[v7.0-beta.72]: https://github.com/gchq/stroom/compare/v7.0-beta.71...v7.0-beta.72
+[v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
+[v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
+[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
+[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
+[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.67
 [v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
 [v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
 [v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64

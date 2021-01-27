@@ -55,6 +55,8 @@ public class Pager extends AbstractPager {
     @UiField(provided = true)
     SvgButton refresh;
     @UiField
+    Label lblTitle;
+    @UiField
     Label lblFrom;
     @UiField
     TextBox txtFrom;
@@ -354,6 +356,16 @@ public class Pager extends AbstractPager {
         } else {
             refresh.getElement().removeClassName("fa-spin");
         }
+    }
+
+    public void setTitle(final String title) {
+        lblTitle.setText(title);
+    }
+
+    public void setToVisibleState(final boolean isVisible) {
+            lblTo.setVisible(isVisible);
+//            txtTo.setVisible(isVisible);
+            lblToSeparator.setVisible(isVisible);
     }
 
     public interface Binder extends UiBinder<Widget, Pager> {

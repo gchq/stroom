@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
@@ -32,7 +33,7 @@ import java.util.Objects;
  * Some path on the network where we can store stuff.
  */
 @JsonInclude(Include.NON_NULL)
-public class FsVolume implements HasAuditInfo {
+public class FsVolume implements HasAuditInfo, HasIntegerId {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
 
@@ -102,6 +103,7 @@ public class FsVolume implements HasAuditInfo {
         return volume;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }

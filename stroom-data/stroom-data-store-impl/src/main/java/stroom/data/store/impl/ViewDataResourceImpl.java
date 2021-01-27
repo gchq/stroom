@@ -31,12 +31,24 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.SourceConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+
+import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+@Timed
 class ViewDataResourceImpl implements ViewDataResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewDataResourceImpl.class);
+
     private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
 
@@ -53,7 +65,9 @@ class ViewDataResourceImpl implements ViewDataResource {
                          final PipelineDataCache pipelineDataCache,
                          final StreamEventLog streamEventLog,
                          final SecurityContext securityContext,
-                         final PipelineScopeRunnable pipelineScopeRunnable) {
+                         final PipelineScopeRunnable pipelineScopeRunnable,
+                         final SourceConfig sourceConfig) {
+
         dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
                 feedHolderProvider,
@@ -66,36 +80,46 @@ class ViewDataResourceImpl implements ViewDataResource {
                 pipelineDataCache,
                 streamEventLog,
                 securityContext,
-                pipelineScopeRunnable);
+                pipelineScopeRunnable,
+                sourceConfig);
+
         this.securityContext = securityContext;
     }
 
 
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
-        if (request.getPipeline() != null) {
-            return securityContext.secureResult(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION, () -> {
-                final Long streamId = request.getStreamId();
+        try {
+            final String permissionName = request.getPipeline() != null
+                    ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
+                    : PermissionNames.VIEW_DATA_PERMISSION;
 
-                if (streamId != null) {
-                    return dataFetcher.getData(streamId, request.getChildStreamType(), request.getStreamRange(), request.getPageRange(),
-                            request.isMarkerMode(), request.getPipeline(), request.isShowAsHtml());
-                }
+            return securityContext.secureResult(permissionName, () ->
+                    dataFetcher.getData(request));
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+            throw e;
+        }
+    }
 
-                return null;
+    @Override
+    public Set<String> getChildStreamTypes(final long id, final long partNo) {
+        try {
+            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
+
+            return securityContext.secureResult(permissionName, () -> {
+
+                final Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
+                LOGGER.debug(() ->
+                        LogUtil.message("childTypes {}",
+                                childTypes.stream()
+                                        .sorted().collect(Collectors.joining(","))));
+                return childTypes;
             });
-
-        } else {
-            return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-                final Long streamId = request.getStreamId();
-
-                if (streamId != null) {
-                    return dataFetcher.getData(streamId, request.getChildStreamType(), request.getStreamRange(), request.getPageRange(),
-                            request.isMarkerMode(), null, request.isShowAsHtml(), request.getExpandedSeverities());
-                }
-
-                return null;
-            });
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
+                    id, partNo), e);
+            throw e;
         }
     }
 }

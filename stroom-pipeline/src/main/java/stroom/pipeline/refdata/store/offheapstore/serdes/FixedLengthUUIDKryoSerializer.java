@@ -50,7 +50,7 @@ class FixedLengthUUIDKryoSerializer extends Serializer<String> {
     }
 
     @Override
-    public String read(final Kryo kryo, final Input input, final Class<String> type) {
+    public String read(final Kryo kryo, final Input input, final Class<? extends String> type) {
         final long uuidHighBits = input.readLong();
         final long uuidLowBits = input.readLong();
         return new UUID(uuidHighBits, uuidLowBits).toString();

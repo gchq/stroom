@@ -1,15 +1,5 @@
 package stroom.index;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientResponse;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
@@ -22,6 +12,17 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.servicediscovery.api.RegisteredService;
 import stroom.util.shared.ResourcePaths;
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientResponse;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -54,15 +55,14 @@ class TestStroomIndexQueryResource {
     private String jwtToken;
 
     private static SearchRequest getSearchRequest() {
-        QueryKey queryKey = new QueryKey("Some UUID");
-        Query query = new Query(
-                new DocRef("docRefType", "docRefUuid", "docRefName"),
-                new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+        final QueryKey queryKey = new QueryKey("Some UUID");
+        final Query query = Query.builder()
+                .dataSource(new DocRef("docRefType", "docRefUuid", "docRefName"))
+                .expression(ExpressionOperator.builder()
                         .addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1")
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build())
                         .addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2")
-                        .build()
-        );
+                        .build())
+                .build();
 
         List<ResultRequest> resultRequestList = new ArrayList<>();
         String datetimeLocale = "en-gb";
@@ -86,7 +86,8 @@ class TestStroomIndexQueryResource {
         return objectMapper.writeValueAsString(searchRequest);
     }
 
-    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    @Disabled
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
     @Test
     void testSavedFromFile() throws IOException {
         // Given
@@ -111,7 +112,8 @@ class TestStroomIndexQueryResource {
         System.out.println(response.toString());
     }
 
-    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    @Disabled
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
     @Test
     void test() throws JsonProcessingException {
         // Given

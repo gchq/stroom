@@ -8,11 +8,12 @@ dependencies {
     compile project(':stroom-annotation:stroom-annotation-api')
     compile project(':stroom-annotation:stroom-annotation-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db-jooq')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
 
 //    compile libs.dropwizard_jersey
     compile libs.flyway_core
@@ -22,7 +23,6 @@ dependencies {
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
-    compile libs.stroomExpression
 
     runtimeOnly libs.mysql_connector_java
     

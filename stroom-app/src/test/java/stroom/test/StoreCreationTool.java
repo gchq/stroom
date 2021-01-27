@@ -27,8 +27,10 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -82,6 +84,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,6 +120,7 @@ public final class StoreCreationTool {
     private final ProcessorFilterService processorFilterService;
     private final IndexStore indexStore;
     private final ExplorerService explorerService;
+    private final ExplorerNodeService explorerNodeService;
 
     @Inject
     public StoreCreationTool(final Store store,
@@ -129,7 +133,8 @@ public final class StoreCreationTool {
                              final ProcessorService processorService,
                              final ProcessorFilterService processorFilterService,
                              final IndexStore indexStore,
-                             final ExplorerService explorerService) {
+                             final ExplorerService explorerService,
+                             final ExplorerNodeService explorerNodeService) {
         this.store = store;
         this.feedStore = feedStore;
         this.textConverterStore = textConverterStore;
@@ -141,6 +146,7 @@ public final class StoreCreationTool {
         this.processorFilterService = processorFilterService;
         this.indexStore = indexStore;
         this.explorerService = explorerService;
+        this.explorerNodeService = explorerNodeService;
     }
 
     /**
@@ -172,7 +178,7 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(referenceFeed.getName())
                 .typeName(StreamTypeNames.RAW_REFERENCE)
                 .createMs(effectiveMs)
@@ -220,9 +226,9 @@ public final class StoreCreationTool {
                     textConverterLocation, xsltLocation);
 
             // Setup the stream processor filter.
-            final QueryData findStreamQueryData = new QueryData.Builder()
+            final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .expression(ExpressionOperator.builder()
                             .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                             .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
@@ -355,7 +361,7 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
@@ -430,9 +436,9 @@ public final class StoreCreationTool {
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
-            final QueryData findStreamQueryData = new QueryData.Builder()
+            final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .expression(ExpressionOperator.builder()
                             .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, docRef.getName())
                             .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
@@ -755,9 +761,9 @@ public final class StoreCreationTool {
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
-            final QueryData findStreamQueryData = new QueryData.Builder()
+            final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .expression(ExpressionOperator.builder()
                             .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
@@ -818,5 +824,69 @@ public final class StoreCreationTool {
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
+    }
+
+    public DocRef ensurePath(final String path) {
+        return ensurePath(ExplorerConstants.ROOT_DOC_REF, path);
+    }
+
+    public DocRef ensurePath(final DocRef parentFolder, final String path) {
+        Objects.requireNonNull(path);
+
+        final int slashIdx = path.indexOf("/");
+        final String firstChild;
+        final String childDescendants;
+        if (slashIdx == -1) {
+            firstChild = path;
+            childDescendants = null;
+        } else {
+            firstChild = path.substring(0, slashIdx);
+            childDescendants = path.substring(slashIdx + 1);
+        }
+        final ExplorerNode parentNode = explorerNodeService.getNode(parentFolder)
+                .orElseThrow(() -> new RuntimeException("Parent node not found " + parentFolder));
+
+        final DocRef childFolder = explorerNodeService.getNodesByName(parentNode, firstChild)
+                .stream()
+                .findFirst()
+                .map(ExplorerNode::getDocRef)
+                .orElseGet(() -> {
+                    final DocRef childDocRef = new DocRef("Folder", UUID.randomUUID().toString(), firstChild);
+                    LOGGER.info("Creating folder {} in {}", childDocRef.getName(), parentFolder.getName());
+                    explorerNodeService.createNode(
+                            childDocRef,
+                            parentNode.getDocRef(),
+                            PermissionInheritance.DESTINATION);
+                    return childDocRef;
+                });
+
+        if (childDescendants != null) {
+            return ensurePath(childFolder, childDescendants);
+        } else {
+            return childFolder;
+        }
+    }
+
+    public DocRef createFeed(final String feedName, 
+                             final DocRef folder,
+                             final String streamType,
+                             final String encoding,
+                             final boolean isReference) {
+        LOGGER.info("Creating feed {} in {} with type {} encoding {}");
+        DocRef docRef;
+        docRef = explorerService.create(
+                FeedDoc.DOCUMENT_TYPE, feedName, 
+                ExplorerConstants.ROOT_DOC_REF, 
+                PermissionInheritance.DESTINATION);
+        if (docRef == null) {
+            // allow for a mocked explorer service
+            docRef = feedStore.createDocument(feedName);
+        }
+        FeedDoc feedDoc = feedStore.readDocument(docRef);
+        feedDoc.setReference(isReference);
+        feedDoc.setEncoding(encoding);
+        feedDoc.setStreamType(streamType);
+        feedStore.writeDocument(feedDoc);
+        return docRef;
     }
 }

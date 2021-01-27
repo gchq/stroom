@@ -251,7 +251,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private void onAdd() {
         final Set<String> otherNames = getFieldNames();
 
-        indexFieldEditPresenter.read(new IndexField.Builder().build(), otherNames);
+        indexFieldEditPresenter.read(IndexField.builder().build(), otherNames);
         indexFieldEditPresenter.show("New Field", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {

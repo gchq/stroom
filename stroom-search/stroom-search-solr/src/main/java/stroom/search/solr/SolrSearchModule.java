@@ -69,17 +69,17 @@ public class SolrSearchModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
-                        .withName("Solr Index Retention")
-                        .withDescription("Logically delete indexed documents in Solr indexes based on the specified deletion query")
-                        .withSchedule(CRON, "0 2 *"))
+                        .name("Solr Index Retention")
+                        .description("Logically delete indexed documents in Solr indexes based on the specified deletion query")
+                        .schedule(CRON, "0 2 *"))
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .withName("Evict expired elements")
-                        .withSchedule(PERIODIC, "10s")
-                        .withManagedState(false))
+                        .name("Evict expired elements")
+                        .schedule(PERIODIC, "10s")
+                        .managed(false))
                 .bindJobTo(SolrIndexOptimiseExecutorJob.class, builder -> builder
-                        .withName("Solr Index Optimise")
-                        .withDescription("Optimise Solr indexes")
-                        .withSchedule(CRON, "0 3 *"));
+                        .name("Solr Index Optimise")
+                        .description("Optimise Solr indexes")
+                        .schedule(CRON, "0 3 *"));
     }
 
     private static class DataRetention extends RunnableWrapper {

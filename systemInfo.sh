@@ -41,32 +41,45 @@ check_for_installed_binaries() {
 main(){
     check_for_installed_binaries
 
-    if [ ! -n "${TOKEN}" ]; then
-      error_exit "${RED}TOKEN not defined!${NC}" \
-        "TOKEN env var must be set to your API key." \
-        "e.g.\n${BLUE}export TOKEN=<your api key>${NC}"
+    local name_arg="$1"
+
+    local api_token
+    if [ -n "${TOKEN}" ]; then
+      echo -e "${GREEN}Using token from ${BLUE}\${TOKEN}${NC}"
+      api_token="${TOKEN}"
+    else
+      # Hard coded token that works with the hard coded default open id creds
+      # for use in dev only
+      echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
+      local api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2MzY0NDQ1NzcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YFcNS0W8-whP9F0ANSHoe8MNBUUs3VAhyqB06jF40bPEvdq_gAhQR8KVMdgYaYxK-NcQH3Pi062ve7cbwYJ2p1t6J-PRUyY7SwdMf4z-LgoOQXyyoaFBe5Jy100mXOzrEtlQ28DRtzes8X6A7NDzdtbghG5cpfjSqB29WgLWjHoqQiKYv_s_29xajkooUBQXOvKCDR8se3hA9SKwPoO-qyYHC0sZyvRJ9KgdXA6DkHJPuqjnYY-kjkeDOdI5ufTteTsAaQV0ot44XR2SF9yenD4Bzk7IyfN5H31Ly5Bh30S4E0dRiUghvnGeiD0mKB1zPEV_6ZDss6tOXdwQML4Wfw"
     fi
 
-    http_auth_args="Authorization:Bearer ${TOKEN}"
+    http_auth_args="Authorization:Bearer ${api_token}"
     base_url="http://localhost:8080/api/systemInfo/v1"
     names_url="${base_url}/names"
 
-    echo -e "Using URL ${BLUE}${names_url}${NC}"
+    echo -e "${GREEN}Using names URL ${BLUE}${names_url}${NC}"
     echo
 
-    # Use fzf to get a system info name
     local sys_info_name
-    sys_info_name="$( \
+
+    if [ -n "${name_arg}" ]; then
+      sys_info_name="${name_arg}"
+    else
+      # Use fzf to get a system info name
+      sys_info_name="$( \
         http --body "${names_url}" "${http_auth_args}" | 
         jq -r '.[]' | 
         sort |
         fzf --border --header="Select the System Info set to view" --height=15)"
 
-    [ $? -eq 0 ] || error_exit "Something went wrong looking up the sys_info_name"
+      [ $? -eq 0 ] || error_exit "Something went wrong looking up the sys_info_name"
+    fi
 
     info_url="${base_url}/${sys_info_name}"
 
-    echo -e "Querying system info ${BLUE}${sys_info_name}${NC}"
+    echo -e "${GREEN}Querying system info ${BLUE}${sys_info_name}${GREEN}" \
+      "at\n${BLUE}${info_url}${NC}"
 
     http --body "${info_url}" "${http_auth_args}" |
       jq '.details'

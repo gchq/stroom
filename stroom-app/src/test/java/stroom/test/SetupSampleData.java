@@ -16,13 +16,19 @@
 
 package stroom.test;
 
-import stroom.db.util.DbModule;
+import stroom.config.app.Config;
+import stroom.config.app.YamlUtil;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
-import stroom.util.io.TempDirProvider;
+import stroom.util.io.PathCreator;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -43,12 +49,27 @@ import com.google.inject.Injector;
  */
 public final class SetupSampleData {
     public static void main(final String[] args) {
+        if (args.length != 1) {
+            throw new RuntimeException("Expected 1 argument that is the location of the config.");
+        }
+        final Path configFile = YamlUtil.getYamlFileFromArgs(args);
+        Config config;
+        try {
+            config = YamlUtil.readConfig(configFile);
+        } catch (final IOException e) {
+            throw new RuntimeException("Unable to read yaml config");
+        }
+
+        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.json");
+
         // We are running stroom so want to use a proper db
-        final Injector injector = Guice.createInjector(new DbModule(), new CoreTestModule());
+        final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
+
+        final PathCreator pathCreator = injector.getInstance(PathCreator.class);
+        downloadContent(contentPackDefinition, pathCreator, config);
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
-        final TempDirProvider tempDirProvider = injector.getInstance(TempDirProvider.class);
 
         final CommonTestControl commonTestControl = injector.getInstance(CommonTestControl.class);
 
@@ -67,5 +88,29 @@ public final class SetupSampleData {
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();
+    }
+
+    private static void downloadContent(final Path contentPacksDefinition,
+                                        final PathCreator pathCreator,
+                                        final Config config) {
+        try {
+            final String downloadDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR));
+            final String importDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
+                    config.getAppConfig().getContentPackImportConfig().getImportDirectory()));
+
+            final Path contentPackDownloadPath = Paths.get(downloadDir);
+            final Path contentPackImportPath = Paths.get(importDir);
+
+            Files.createDirectories(contentPackDownloadPath);
+            Files.createDirectories(contentPackImportPath);
+
+            ContentPackDownloader.downloadPacks(
+                    contentPacksDefinition,
+                    contentPackDownloadPath,
+                    contentPackImportPath);
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

@@ -50,14 +50,14 @@ public class ExpressionCopier {
     }
 
     public static ExpressionOperator.Builder createOperatorBuilder(final ExpressionOperator expressionOperator) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.op(expressionOperator.op());
         builder.enabled(expressionOperator.enabled());
         return builder;
     }
 
     public static ExpressionTerm.Builder createTermBuilder(final ExpressionTerm expressionTerm) {
-        final ExpressionTerm.Builder builder = new ExpressionTerm.Builder();
+        final ExpressionTerm.Builder builder = ExpressionTerm.builder();
         builder.enabled(expressionTerm.enabled());
         builder.field(expressionTerm.getField());
         builder.condition(expressionTerm.getCondition());

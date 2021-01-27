@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -38,6 +39,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.util.io.ByteSize;
+import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -123,6 +125,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     @Override
                     protected void configure() {
                         bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
                         bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
@@ -218,17 +221,28 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, key, value2));
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, key, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
+
+            putOutcome = loader.put(mapDefinition, key, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
         refDataStore.logAllContents();
 
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
         assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
     }
@@ -246,24 +260,32 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
 
-        final AtomicBoolean didPutSucceed = new AtomicBoolean(false);
-
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value1));
-            assertThat(didPutSucceed).isTrue();
+            PutOutcome putOutcome;
 
-            didPutSucceed.set(loader.put(mapDefinition, range, value2));
+            putOutcome = loader.put(mapDefinition, range, value1);
+
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
 
             // second put for same key, should only succeed if overwriteExisting is enabled
-            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+            putOutcome = loader.put(mapDefinition, range, value2);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
 
             loader.completeProcessing();
         });
 
         refDataStore.logAllContents();
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
+                .isEqualTo(expectedFinalValue);
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
     }
@@ -670,6 +692,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
     /**
      * Make entryCount very big for manual performance testing or profiling
+     * 50_000 takes about 4mins and makes a 250Mb db file.
      */
     @Test
     void testBigLoadForPerfTesting() {
@@ -815,6 +838,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         List<RefStreamDefinition> refStreamDefs1 = null;
         List<RefStreamDefinition> refStreamDefs2 = null;
 
+        final Instant startInstant = Instant.now();
+
         if (doLoad) {
             LOGGER.info("-------------------------load starts here--------------------------------------");
             refStreamDefs1 = loadBulkData(
@@ -839,6 +864,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
             refStreamDefs2 = loadBulkData(
                     refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+
+            LAMBDA_LOGGER.info("Completed both loads in {}",
+                    Duration.between(startInstant, Instant.now()).toString());
         }
 
         if (doAsserts) {
@@ -1009,7 +1037,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         return IntStream.rangeClosed(1, count)
                 .boxed()
-                .map(i -> buildRefStreamDefintion(i + offset))
+                .map(i -> buildRefStreamDefinition(i + offset))
                 .collect(Collectors.toList());
     }
 
@@ -1036,6 +1064,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
+        final Instant startInstant = Instant.now();
+
         buildRefStreamDefs(refStreamDefinitionCount, refStreamDefinitionOffset)
                 .forEach(refStreamDefinition -> {
                     refStreamDefinitions.add(refStreamDefinition);
@@ -1054,10 +1084,18 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             });
                 });
 
+        LAMBDA_LOGGER.info("Loaded {} ref stream definitions in {}",
+                refStreamDefinitionCount, Duration.between(startInstant, Instant.now()).toString());
+
+        LOGGER.info("Counts:, KeyValue: {}, KeyRangeValue: {}, ProcInfo: {}",
+                refDataStore.getKeyValueEntryCount(),
+                refDataStore.getKeyRangeValueEntryCount(),
+                refDataStore.getProcessingInfoEntryCount());
+
         return refStreamDefinitions;
     }
 
-    private RefStreamDefinition buildRefStreamDefintion(final long i) {
+    private RefStreamDefinition buildRefStreamDefinition(final long i) {
         return new RefStreamDefinition(
                 FIXED_PIPELINE_UUID,
                 FIXED_PIPELINE_VERSION,

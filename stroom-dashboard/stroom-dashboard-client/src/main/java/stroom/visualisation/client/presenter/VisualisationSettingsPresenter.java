@@ -17,14 +17,6 @@
 
 package stroom.visualisation.client.presenter;
 
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -35,6 +27,15 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
+
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class VisualisationSettingsPresenter
         extends DocumentSettingsPresenter<VisualisationSettingsView, VisualisationDoc> {
@@ -107,7 +108,7 @@ public class VisualisationSettingsPresenter
         super.onReadOnly(readOnly);
         scriptPresenter.setEnabled(!readOnly);
         editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+        editorPresenter.getFormatAction().setAvailable(!readOnly);
     }
 
     public interface VisualisationSettingsView extends View {

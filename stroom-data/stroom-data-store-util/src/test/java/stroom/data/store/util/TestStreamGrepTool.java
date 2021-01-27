@@ -26,6 +26,7 @@ import stroom.meta.api.MetaProperties;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.Guice;
@@ -42,6 +43,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {
@@ -51,6 +53,8 @@ class TestStreamGrepTool {
     private FsVolumeConfig volumeConfig;
     @Inject
     private FsVolumeService fsVolumeService;
+    @Inject
+    private HomeDirProviderImpl homeDirProvider;
     @Inject
     private TempDirProviderImpl tempDirProvider;
 
@@ -68,12 +72,13 @@ class TestStreamGrepTool {
         injector.injectMembers(this);
 
         // Clear any lingering volumes or data.
+        homeDirProvider.setHomeDir(tempDir);
         tempDirProvider.setTempDir(tempDir);
         final String path = tempDir
                 .resolve("volumes/defaultStreamVolume")
                 .toAbsolutePath()
                 .toString();
-        volumeConfig.setDefaultStreamVolumePaths(path);
+        volumeConfig.setDefaultStreamVolumePaths(List.of(path));
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
@@ -102,7 +107,7 @@ class TestStreamGrepTool {
     }
 
     private void addData(final String feedName, final String data) {
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();

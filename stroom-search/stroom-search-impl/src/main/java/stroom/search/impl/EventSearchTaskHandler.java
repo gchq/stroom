@@ -17,48 +17,39 @@
 package stroom.search.impl;
 
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.Sizes;
-import stroom.search.api.EventRefs;
-import stroom.search.coprocessor.EventCoprocessorSettings;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.EventCoprocessor;
+import stroom.query.common.v2.EventCoprocessorSettings;
+import stroom.query.common.v2.EventRefs;
 import stroom.security.api.SecurityContext;
-import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 
 public class EventSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeInfo nodeInfo;
-    private final SearchConfig searchConfig;
-    private final UiConfig clientConfig;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final SecurityContext securityContext;
+    private final CoprocessorsFactory coprocessorsFactory;
 
     @Inject
     EventSearchTaskHandler(final NodeInfo nodeInfo,
-                           final SearchConfig searchConfig,
-                           final UiConfig clientConfig,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final CoprocessorsFactory coprocessorsFactory) {
         this.nodeInfo = nodeInfo;
-        this.searchConfig = searchConfig;
-        this.clientConfig = clientConfig;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.securityContext = securityContext;
+        this.coprocessorsFactory = coprocessorsFactory;
     }
 
     public EventRefs exec(final EventSearchTask task) {
@@ -72,15 +63,16 @@ public class EventSearchTaskHandler {
             final Query query = task.getQuery();
 
             // Replace expression parameters.
-            ExpressionOperator expression = query.getExpression();
-            final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
-            expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
-            query.setExpression(expression);
+            ExpressionUtil.replaceExpressionParameters(query);
 
-            final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
-                    task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
-            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
-            coprocessorMap.put(new CoprocessorKey(0, new String[]{"eventCoprocessor"}), settings);
+            final int coprocessorId = 0;
+            final EventCoprocessorSettings settings = new EventCoprocessorSettings(
+                    coprocessorId,
+                    task.getMinEvent(),
+                    task.getMaxEvent(),
+                    task.getMaxStreams(),
+                    task.getMaxEvents(),
+                    task.getMaxEventsPerStream());
 
             // Create an asynchronous search task.
             final String searchName = "Event Search";
@@ -88,21 +80,22 @@ public class EventSearchTaskHandler {
                     task.getKey(),
                     searchName,
                     query,
-                    coprocessorMap,
+                    Collections.singletonList(settings),
                     null,
                     nowEpochMilli);
 
+            final Coprocessors coprocessors = coprocessorsFactory.create(
+                    task.getKey().getUuid(),
+                    Collections.singletonList(settings),
+                    query.getParams());
+            final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
+
             // Create a collector to store search results.
-            final Sizes storeSize = getStoreSizes();
-            final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-            final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                     asyncSearchTask,
                     nodeInfo.getThisNodeName(),
                     null,
-                    resultHandler,
-                    defaultMaxResultsSizes,
-                    storeSize);
+                    coprocessors);
 
             // Tell the task where results will be collected.
             asyncSearchTask.setResultCollector(searchResultCollector);
@@ -116,7 +109,7 @@ public class EventSearchTaskHandler {
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
 
-                eventRefs = resultHandler.getEventRefs();
+                eventRefs = eventCoprocessor.getEventRefs();
                 if (eventRefs != null) {
                     eventRefs.trim();
                 }
@@ -135,29 +128,5 @@ public class EventSearchTaskHandler {
 
             return eventRefs;
         });
-    }
-
-    private Sizes getDefaultMaxResultsSizes() {
-        final String value = clientConfig.getDefaultMaxResults();
-        return extractValues(value);
-    }
-
-    private Sizes getStoreSizes() {
-        final String value = searchConfig.getStoreSize();
-        return extractValues(value);
-    }
-
-    private Sizes extractValues(String value) {
-        if (value != null) {
-            try {
-                return Sizes.create(Arrays.stream(value.split(","))
-                        .map(String::trim)
-                        .map(Integer::valueOf)
-                        .collect(Collectors.toList()));
-            } catch (RuntimeException e) {
-                LOGGER.warn(e::getMessage);
-            }
-        }
-        return Sizes.create(Integer.MAX_VALUE);
     }
 }

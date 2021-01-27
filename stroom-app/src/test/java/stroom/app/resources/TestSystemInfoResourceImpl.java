@@ -4,23 +4,20 @@ import stroom.core.sysinfo.SystemInfoResource;
 import stroom.core.sysinfo.SystemInfoResourceImpl;
 import stroom.core.sysinfo.SystemInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
-import event.logging.Event;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 
@@ -28,24 +25,10 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSystemInfoResourceImpl.class);
 
+    private final StroomEventLoggingService stroomEventLoggingService = new MockStroomEventLoggingService();
+
     @Mock
     private SystemInfoService systemInfoService;
-    @Mock
-    private StroomEventLoggingService stroomEventLoggingService;
-
-    @BeforeEach
-    void setUp() {
-        LOGGER.info("Setup");
-        
-        when(stroomEventLoggingService.createEvent())
-                .thenReturn(new Event());
-
-        doAnswer(invocation -> {
-                    LOGGER.info("log() called for {}", invocation.getArguments()[0]);
-                    return null;
-                })
-                .when(stroomEventLoggingService).log(Mockito.any());
-    }
 
     @Test
     void getAll() {
@@ -70,10 +53,11 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
     }
 
     private SystemInfoResult buildSystemInfoResult(final String name) {
-        return SystemInfoResult.builder(name)
-                    .withDetail("key1", "value1")
-                    .withDetail("key2", "value2")
-                    .build();
+        return SystemInfoResult.builder()
+                .name(name)
+                .addDetail("key1", "value1")
+                .addDetail("key2", "value2")
+                .build();
     }
 
     @NotNull
@@ -84,6 +68,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
             public String getSystemInfoName() {
                 return systemInfoResult.getName();
             }
+
             @Override
             public SystemInfoResult getSystemInfo() {
                 return systemInfoResult;

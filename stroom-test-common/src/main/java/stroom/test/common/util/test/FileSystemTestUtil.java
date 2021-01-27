@@ -26,8 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
-    private static final String CONFIG_PATH = "../stroom-config";
-
     // These zips are downloaded by the gradle task downloadStroomContent
     private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get("../build/contentPackDownload");
     private static final Path EXPLODED_DIR = CONTENT_PACK_DOWNLOADS_DIR.resolve("exploded");
@@ -84,11 +82,11 @@ public abstract class FileSystemTestUtil {
     public static Path getExplodedContentPackDir(final ContentPack contentPack) {
 
         final Path explodedPackDir = getExplodedContentPacksDir()
-                .resolve(contentPack.getVersionedNameAsStr());
+                .resolve(contentPack.toString());
 
         if (!Files.exists(explodedPackDir)) {
             final Path packZip = getContentPackDownloadsDir()
-                    .resolve(contentPack.getVersionedNameAsStr() + ".zip");
+                    .resolve(contentPack.toFileName());
 
             if (!Files.exists(packZip)) {
                 throw new RuntimeException(LogUtil.message(

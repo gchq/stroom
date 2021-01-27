@@ -272,7 +272,7 @@ class TestMetaService extends StroomIntegrationTest {
 
     private MetaProperties createProps(final Meta parent, final String feedName, final String typeName) {
         final long now = System.currentTimeMillis();
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .parent(parent)
                 .feedName(feedName)
                 .typeName(typeName)

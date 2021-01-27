@@ -16,7 +16,7 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 /**
  * A recorder collects data from either the input or output of a pipeline
@@ -28,10 +28,10 @@ public interface Recorder {
      *
      * @return Any data that has been captured by this recorder.
      */
-    Object getData(Highlight highlight);
+    Object getData(TextRange textRange);
 
     /**
      * Clear the current data from this recorder.
      */
-    void clear(Highlight highlight);
+    void clear(TextRange textRange);
 }

@@ -33,16 +33,16 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(UnlockOldLocks.class, builder -> builder
-                        .withName("Unlock old locks")
-                        .withDescription("Every 10 minutes try and unlock/remove any locks that " +
+                        .name("Unlock old locks")
+                        .description("Every 10 minutes try and unlock/remove any locks that " +
                                 "we hold that have not been refreshed by their owner for 10 minutes.")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "10m"))
+                        .managed(false)
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(KeepAlive.class, builder -> builder
-                        .withName("Keep alive")
-                        .withDescription("Keeps a locks alive")
-                        .withManagedState(false)
-                        .withSchedule(PERIODIC, "1m"));
+                        .name("Keep alive")
+                        .description("Keeps a locks alive")
+                        .managed(false)
+                        .schedule(PERIODIC, "1m"));
     }
 
     @Override

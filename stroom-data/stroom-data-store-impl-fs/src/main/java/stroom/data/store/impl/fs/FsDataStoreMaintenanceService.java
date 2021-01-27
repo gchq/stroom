@@ -240,7 +240,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             return Optional.empty();
         }
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         try {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
             builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamTypeName);

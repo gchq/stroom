@@ -1,17 +1,27 @@
 package stroom.task;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.task.api.*;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
+import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;

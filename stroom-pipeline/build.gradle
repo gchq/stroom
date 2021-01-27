@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-processor:stroom-processor-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
@@ -51,8 +52,7 @@ dependencies {
     compile libs.okhttp
     compile libs.saxon_he
     compile libs.slf4j_api
-    compile libs.stroomDocRef
-    compile libs.stroomQueryCommon
+    compile project(':stroom-docref')
     compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api
@@ -86,5 +86,5 @@ dependencies {
     testRuntimeOnly libs.logback_core
 }
 
-// Need the schemas for the DataSplitter tests
-tasks.test.dependsOn rootProject.downloadStroomContent
+//// Need the schemas for the DataSplitter tests
+//tasks.test.dependsOn rootProject.downloadStroomContent

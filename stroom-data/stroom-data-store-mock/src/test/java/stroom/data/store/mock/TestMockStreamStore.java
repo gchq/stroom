@@ -47,7 +47,7 @@ class TestMockStreamStore {
 
         mockStreamStore.clear();
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName("TEST")
                 .typeName(StreamTypeNames.EVENTS)
                 .build();

@@ -401,7 +401,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(meta.getFeedName(), meta.getTypeName());
+                    final String encoding = feedProperties.getEncoding(
+                            meta.getFeedName(), meta.getTypeName(), null);
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.
@@ -584,7 +585,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
                 // Create a processing info stream to write all processing
                 // information to.
-                final MetaProperties dataProperties = new MetaProperties.Builder()
+                final MetaProperties dataProperties = MetaProperties.builder()
                         .feedName(meta.getFeedName())
                         .typeName(StreamTypeNames.ERROR)
                         .parent(meta)

@@ -12,6 +12,8 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-resource:stroom-resource-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-api')
@@ -35,9 +37,7 @@ dependencies {
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api
-    compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile project(':stroom-docref')
     compile libs.ws_rs_api
 
     testCompile libs.assertj_core

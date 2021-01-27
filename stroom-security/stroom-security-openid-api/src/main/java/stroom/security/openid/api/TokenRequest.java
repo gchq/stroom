@@ -51,12 +51,31 @@ public class TokenRequest {
         return code;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String grantType;
         private String clientId;
         private String clientSecret;
         private String redirectUri;
         private String code;
+
+        private Builder() {
+        }
+
+        private Builder(final TokenRequest tokenRequest) {
+            grantType = tokenRequest.grantType;
+            clientId = tokenRequest.clientId;
+            clientSecret = tokenRequest.clientSecret;
+            redirectUri = tokenRequest.redirectUri;
+            code = tokenRequest.code;
+        }
 
         public Builder grantType(final String grantType) {
             this.grantType = grantType;

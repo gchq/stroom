@@ -23,6 +23,7 @@ import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.processor.impl.ProcessorTaskManager;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Clearable;
 
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,6 +54,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final FsVolumeConfig fsVolumeConfig;
     private final VolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
+    private final PathCreator pathCreator;
 
     private static boolean needsCleanup;
 
@@ -64,7 +67,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final Set<Clearable> clearables,
                               final VolumeConfig volumeConfig,
                               final FsVolumeConfig fsVolumeConfig,
-                              final FsVolumeService fsVolumeService) {
+                              final FsVolumeService fsVolumeService,
+                              final PathCreator pathCreator) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -74,6 +78,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.volumeConfig = volumeConfig;
         this.fsVolumeConfig = fsVolumeConfig;
         this.fsVolumeService = fsVolumeService;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -83,17 +88,17 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         Path fsVolDir;
         Path indexVolDir;
         if (tempDir == null) {
-            final String fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths().split(",")[0];
-            fsVolDir = handleRelativePath(fsVolPathStr);
-            final String volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",")[0];
-            indexVolDir = handleRelativePath(volGroupPathStr);
+            final List<String> fsVolPathStr = fsVolumeConfig.getDefaultStreamVolumePaths();
+            fsVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(fsVolPathStr.get(0))));
+            final List<String> volGroupPathStr = volumeConfig.getDefaultIndexVolumeGroupPaths();
+            indexVolDir = Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(volGroupPathStr.get(0))));
         } else {
             fsVolDir = tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath();
             indexVolDir = tempDir;
         }
 
         LOGGER.debug("Creating stream volumes in {}", fsVolDir.toAbsolutePath().normalize().toString());
-        fsVolumeConfig.setDefaultStreamVolumePaths(fsVolDir.toString());
+        fsVolumeConfig.setDefaultStreamVolumePaths(List.of(fsVolDir.toString()));
 
         LOGGER.debug("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize().toString());
         volumeCreator.setup(indexVolDir);
@@ -105,16 +110,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
 
         needsCleanup = true;
-    }
-
-    private Path handleRelativePath(final String pathStr) {
-        if (pathStr.startsWith("/")) {
-            return Paths.get(pathStr);
-        } else {
-            return Paths.get(System.getProperty("user.home"))
-                    .resolve(".stroom")
-                    .resolve(pathStr);
-        }
     }
 
     @Override

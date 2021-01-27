@@ -14,13 +14,16 @@ class TestUID {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUID.class);
 
     @Test
-    void nextUid() {
+    void incrementUid() {
         final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 1);
         LOGGER.info("uid1 {}", ByteBufferUtils.byteBufferInfo(uid1.getBackingBuffer()));
-        final UID uid2 = uid1.nextUid(getNewUidBuffer());
+        final UID uid2 = UID.of(getNewUidBuffer(), 0, 0, 0, 2);
+        LOGGER.info("uid2 {}", ByteBufferUtils.byteBufferInfo(uid2.getBackingBuffer()));
 
-        Assertions.assertThat(uid2.getBackingBuffer())
-                .isEqualByComparingTo(UID.of(getNewUidBuffer(), 0,0,0,2).getBackingBuffer());
+        UID.incrementUid(uid1.getBackingBuffer());
+
+        Assertions.assertThat(uid1.getBackingBuffer())
+                .isEqualByComparingTo(uid2.getBackingBuffer());
     }
 
     @Test

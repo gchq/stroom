@@ -15,13 +15,10 @@
  */
 package stroom.annotation.pipeline;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.impl.AnnotationService;
-import stroom.annotation.shared.*;
-import stroom.event.logging.api.DocumentEventLog;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -30,11 +27,13 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 
 /**

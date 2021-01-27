@@ -2,7 +2,6 @@ package stroom.config.app;
 
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
@@ -37,7 +36,10 @@ import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.event.logging.rs.impl.RequestLoggingConfig;
+import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -61,6 +63,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.InfoPopupConfig;
 import stroom.ui.config.shared.QueryConfig;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -72,17 +75,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
-
     private final ConfigHolder configHolder;
 
     public AppConfigModule(final ConfigHolder configHolder) {
@@ -114,9 +112,9 @@ public class AppConfigModule extends AbstractModule {
 
         bindConfig(AppConfig::getActivityConfig, AppConfig::setActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, AppConfig::setAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bindConfig(AppConfig::getByteBufferPoolConfig, AppConfig::setByteBufferPoolConfig, ByteBufferPoolConfig.class);
         bindConfig(AppConfig::getClusterConfig, AppConfig::setClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, AppConfig::setClusterLockConfig, ClusterLockConfig.class);
-        bindConfig(AppConfig::getClusterTaskConfig, AppConfig::setClusterTaskConfig, ClusterTaskConfig.class);
         bindConfig(AppConfig::getCommonDbConfig, AppConfig::setCommonDbConfig, CommonDbConfig.class);
         bindConfig(AppConfig::getContentPackImportConfig, AppConfig::setContentPackImportConfig, ContentPackImportConfig.class);
         bindConfig(AppConfig::getLegacyDbConfig, AppConfig::setLegacyDbConfig, LegacyDbConfig.class);
@@ -156,8 +154,10 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getProxyAggregationConfig, AppConfig::setProxyAggregationConfig, ProxyAggregationConfig.class);
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
+        bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, RequestLoggingConfig.class);
         bindConfig(AppConfig::getSearchConfig, AppConfig::setSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig, SearchConfig::getExtractionConfig, SearchConfig::setExtractionConfig, ExtractionConfig.class);
+            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, LmdbConfig.class);
             bindConfig(searchConfig, SearchConfig::getShardConfig, SearchConfig::setShardConfig, IndexShardSearchConfig.class);
         });
         bindConfig(AppConfig::getSearchableConfig, AppConfig::setSearchableConfig, SearchableConfig.class);
@@ -194,6 +194,7 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(uiConfig, UiConfig::getTheme, UiConfig::setTheme, ThemeConfig.class);
             bindConfig(uiConfig, UiConfig::getUrl, UiConfig::setUrl, UrlConfig.class);
             bindConfig(uiConfig, UiConfig::getUiPreferences, UiConfig::setUiPreferences, UiPreferences.class);
+            bindConfig(uiConfig, UiConfig::getSource, UiConfig::setSource, SourceConfig.class);
         });
         bindConfig(AppConfig::getUiUri, AppConfig::setUiUri, UiUriConfig.class);
         bindConfig(AppConfig::getVolumeConfig, AppConfig::setVolumeConfig, VolumeConfig.class);

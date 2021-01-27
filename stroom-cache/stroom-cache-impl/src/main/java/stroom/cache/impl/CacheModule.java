@@ -39,10 +39,10 @@ public class CacheModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .withName("Evict expired elements")
-                        .withDescription("Evicts expired cache entries")
-                        .withManagedState(false)
-                        .withSchedule(Schedule.ScheduleType.PERIODIC, "1m"));
+                        .name("Evict expired elements")
+                        .description("Evicts expired cache entries")
+                        .managed(false)
+                        .schedule(Schedule.ScheduleType.PERIODIC, "1m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(CacheManagerClose.class);

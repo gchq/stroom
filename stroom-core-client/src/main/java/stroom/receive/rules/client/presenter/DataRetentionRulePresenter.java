@@ -66,7 +66,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         } else {
             editExpressionPresenter.read(rule.getExpression());
         }

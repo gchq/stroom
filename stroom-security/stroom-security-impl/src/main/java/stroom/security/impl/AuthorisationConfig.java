@@ -12,19 +12,19 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
-    private CacheConfig userGroupsCache = new CacheConfig.Builder()
+    private CacheConfig userGroupsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userAppPermissionsCache = new CacheConfig.Builder()
+    private CacheConfig userAppPermissionsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userCache = new CacheConfig.Builder()
+    private CacheConfig userCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
             .build();
-    private CacheConfig userDocumentPermissionsCache = new CacheConfig.Builder()
+    private CacheConfig userDocumentPermissionsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

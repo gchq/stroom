@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
-import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -29,8 +28,12 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.Result;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -145,11 +148,12 @@ public class SearchModel {
                         dashboardUUID.getDashboardUuid(),
                         dashboardUUID.getComponentId());
 
-                currentSearch = new Search.Builder()
+                currentSearch = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(componentSettingsMap)
-                        .paramMap(currentParameterMap)
+                        .params(getParams(currentParameterMap))
                         .incremental(incremental)
                         .storeHistory(storeHistory)
                         .queryInfo(queryInfo)
@@ -157,6 +161,14 @@ public class SearchModel {
             }
         }
         return componentSettingsMap;
+    }
+
+    private List<Param> getParams(final Map<String, String> parameterMap) {
+        final List<Param> params = new ArrayList<>();
+        for (final Entry<String, String> entry : parameterMap.entrySet()) {
+            params.add(new Param(entry.getKey(), entry.getValue()));
+        }
+        return params;
     }
 
     /**
@@ -211,11 +223,12 @@ public class SearchModel {
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
-                    currentSearch = new Search.Builder()
+                    currentSearch = Search
+                            .builder()
                             .dataSourceRef(dataSourceRef)
                             .expression(currentExpression)
                             .componentSettingsMap(resultComponentMap)
-                            .paramMap(currentParameterMap)
+                            .params(getParams(currentParameterMap))
                             .incremental(true)
                             .storeHistory(false)
                             .build();
@@ -271,20 +284,24 @@ public class SearchModel {
     void update(final SearchResponse result) {
         currentResult = result;
 
-        for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final String componentId = entry.getKey();
-            final ResultComponent resultComponent = entry.getValue();
-            if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final ComponentResult componentResult = result.getResults().get(componentId);
-                resultComponent.setData(componentResult);
+        // Give results to the right components.
+        if (result.getResults() != null) {
+            for (final Result componentResult : result.getResults()) {
+                final ResultComponent resultComponent = componentMap.get(componentResult.getComponentId());
+                if (resultComponent != null) {
+                    resultComponent.setData(componentResult);
+                }
             }
+        }
 
-            if (result.isComplete()) {
+        // Tell all components if we are complete.
+        if (result.isComplete()) {
+            componentMap.values().forEach(resultComponent -> {
                 // Stop the spinner from spinning and tell components that they
                 // no longer want data.
                 resultComponent.setWantsData(false);
                 resultComponent.endSearch();
-            }
+            });
         }
 
         queryPresenter.setErrors(result.getErrors());
@@ -315,19 +332,13 @@ public class SearchModel {
      */
     SearchRequest getCurrentRequest() {
         final Search search = currentSearch;
-        if (search == null || componentMap.size() == 0) {
-            return null;
-        }
-
-        final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+        final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
-            requestMap.put(componentId, componentResultRequest);
+            requests.add(componentResultRequest);
         }
-
-        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     /**
@@ -350,11 +361,12 @@ public class SearchModel {
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
-                search = new Search.Builder()
+                search = Search
+                        .builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)
-                        .paramMap(currentParameterMap)
+                        .params(getParams(currentParameterMap))
                         .incremental(incremental)
                         .storeHistory(storeHistory)
                         .queryInfo(queryInfo)
@@ -366,15 +378,14 @@ public class SearchModel {
             return null;
         }
 
-        final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+        final List<ComponentResultRequest> requests = new ArrayList<>();
         for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
-            final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
-            requestMap.put(componentId, componentResultRequest);
+            requests.add(componentResultRequest);
         }
 
-        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {

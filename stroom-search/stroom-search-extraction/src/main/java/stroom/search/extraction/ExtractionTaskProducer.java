@@ -16,12 +16,12 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.docref.DocRef;
 import stroom.query.common.v2.CompletionState;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.CompletionStateImpl;
+import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ReceiverImpl;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -51,24 +51,25 @@ class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
     private static final String TASK_NAME = "Extraction";
 
-    private final Consumer<Error> parentErrorConsumer;
+    private final Consumer<Throwable> parentErrorConsumer;
     private final Map<DocRef, ExtractionReceiver> receivers;
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Queue<Consumer<TaskContext>> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final AtomicLong indexSearchTotalValues = new AtomicLong();
 
-    private final CompletionState streamMapCreatorCompletionState = new CompletionState();
+    private final CompletionState streamMapCreatorCompletionState = new CompletionStateImpl();
     private final StreamEventMap streamEventMap;
-    private final LinkedBlockingQueue<Optional<Values>> storedDataQueue;
+    private final LinkedBlockingQueue<Optional<Val[]>> storedDataQueue;
     private final ExtractionProgressTracker tracker;
 
     ExtractionTaskProducer(final TaskExecutor taskExecutor,
                            final StreamMapCreator streamMapCreator,
-                           final Consumer<Error> parentErrorConsumer,
+                           final Consumer<Throwable> parentErrorConsumer,
                            final Map<DocRef, ExtractionReceiver> receivers,
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
+                           final int maxStreamEventMapSize,
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
                            final TaskContext parentContext,
@@ -82,7 +83,7 @@ class ExtractionTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
-        streamEventMap = new StreamEventMap(1000000);
+        streamEventMap = new StreamEventMap(maxStreamEventMapSize);
         storedDataQueue = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
 
         // Start mapping streams.
@@ -92,33 +93,33 @@ class ExtractionTaskProducer extends TaskProducer {
                 LOGGER.debug("Starting extraction task producer");
                 try {
                     while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
-                        try {
-                            // Poll for the next set of values.
-                            final Optional<Values> optional = storedDataQueue.take();
+                        tc.info(() -> "" +
+                                "Creating extraction tasks - stored data queue size: " +
+                                storedDataQueue.size() +
+                                " stream event map size: " +
+                                streamEventMap.size());
 
+                        // Poll for the next set of values.
+                        final Optional<Val[]> optional = storedDataQueue.take();
+
+                        try {
                             // We will have a value here unless index search has finished adding values in which case we
                             // will have an empty optional.
                             if (optional.isPresent()) {
                                 try {
                                     // If we have some values then map them.
-                                    streamMapCreator.addEvent(streamEventMap, optional.get().getValues());
+                                    streamMapCreator.addEvent(streamEventMap, optional.get());
 
                                 } catch (final RuntimeException e) {
                                     LOGGER.debug(e.getMessage(), e);
                                     receivers.values().forEach(receiver ->
-                                            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e)));
+                                            receiver.getErrorConsumer().accept(e));
                                 }
                             } else {
-                                // We got no values from the topic so index search must have completed and we have also
-                                // completed mapping.
+                                // We got no values from the topic so if index search ois complete then we have finished
+                                // mapping too.
                                 streamMapCreatorCompletionState.complete();
                             }
-                        } catch (final InterruptedException e) {
-                            // Continue to interrupt.
-                            Thread.currentThread().interrupt();
-
-                            LOGGER.debug(e.getMessage(), e);
-                            throw new RuntimeException(e.getMessage(), e);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
                             throw e;
@@ -127,11 +128,16 @@ class ExtractionTaskProducer extends TaskProducer {
                             signalAvailable();
                         }
                     }
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    // Continue to interrupt.
+                    Thread.currentThread().interrupt();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
                     streamMapCreatorCompletionState.complete();
-                    LOGGER.debug("Finished adding extraction tasks");
+                    tc.info(() -> "Finished creating extraction tasks");
+                    LOGGER.debug("Finished creating extraction tasks");
 
                     // Tell the supplied executor that we are ready to deliver final tasks.
                     signalAvailable();
@@ -161,9 +167,9 @@ class ExtractionTaskProducer extends TaskProducer {
                 });
     }
 
-    public void addToStoredDataQueue(final Values t) {
+    public void addToStoredDataQueue(final Val[] values) {
         try {
-            storedDataQueue.put(Optional.ofNullable(t));
+            storedDataQueue.put(Optional.ofNullable(values));
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();

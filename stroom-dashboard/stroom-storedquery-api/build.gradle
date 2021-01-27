@@ -27,9 +27,7 @@ dependencies {
 //    compile libs.poi
 //    compile libs.poi_ooxml
 //    compile libs.slf4j_api
-//    compile libs.stroomDocRef
-//    compile libs.stroomExpression
-//    compile libs.stroomQueryApi
+//    compile project(':stroom-docref')
 //    compile libs.ws_rs_api
 //
 //    testCompile libs.assertj_core

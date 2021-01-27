@@ -17,8 +17,6 @@
 
 package stroom.pipeline.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -28,6 +26,10 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
@@ -97,6 +99,7 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
         settingsPresenter.onReadOnly(readOnly);
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -108,10 +111,12 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     private EditorPresenter getOrCreateCodePresenter() {
         if (codePresenter == null) {
             codePresenter = editorPresenterProvider.get();
+            codePresenter.setMode(AceEditorMode.XML);
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
             codePresenter.setReadOnly(readOnly);
-            if (getEntity() != null) {
+            codePresenter.getFormatAction().setAvailable(!readOnly);
+            if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }
         }

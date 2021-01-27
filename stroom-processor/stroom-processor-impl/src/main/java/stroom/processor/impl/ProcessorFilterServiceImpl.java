@@ -38,8 +38,6 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
@@ -245,7 +243,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             // If the user is not an admin then only show them filters that were created by them.
             if (!securityContext.isAdmin()) {
-                final ExpressionOperator.Builder builder = new Builder(Op.AND)
+                final ExpressionOperator.Builder builder = ExpressionOperator.builder()
                         .addTerm(ProcessorFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
                         .addOperator(criteria.getExpression());
                 criteria.setExpression(builder.build());
@@ -265,9 +263,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
 
-            final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+            final ExpressionOperator processorExpression = ExpressionOperator.builder()
                     .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
-                     .build();
+                    .build();
             final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(processorExpression));
 
             // Get unique processors.
@@ -357,7 +355,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         // First try to find the associated processors
-        final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+        final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
         if (processorResultPage.size() == 0)
@@ -366,7 +364,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         final ArrayList<ProcessorFilter> filters = new ArrayList<>();
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
-            final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
+            final ExpressionOperator filterExpression = ExpressionOperator.builder()
                     .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
             filters.addAll(filterResultPage.getValues());
@@ -376,7 +374,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     private ExpressionOperator decorate(final ExpressionOperator operator) {
-        final ExpressionOperator.Builder builder = new Builder()
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .op(operator.op())
                 .enabled(operator.enabled());
 
@@ -393,7 +391,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         if (docRef != null) {
                             final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
                             if (optionalDocRefInfo.isPresent()) {
-                                term = new ExpressionTerm.Builder()
+                                term = ExpressionTerm.builder()
                                         .enabled(term.enabled())
                                         .field(term.getField())
                                         .condition(term.getCondition())
@@ -483,7 +481,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         int priority = defaultPriority;
 
-        final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
+        final ExpressionOperator filterExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
                 .addTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();

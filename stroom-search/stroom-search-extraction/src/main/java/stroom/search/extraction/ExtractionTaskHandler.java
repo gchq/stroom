@@ -40,7 +40,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.search.coprocessor.Error;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -61,7 +60,7 @@ import java.util.List;
 class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
-    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final Store streamStore;
     private final FeedHolder feedHolder;
@@ -159,7 +158,7 @@ class ExtractionTaskHandler {
             final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
                     AbstractSearchResultOutputFilter.class);
 
-            searchResultOutputFilter.setup(task.getReceiver().getFieldIndexMap(), task.getReceiver().getValuesConsumer());
+            searchResultOutputFilter.setup(task.getReceiver().getFieldMap(), task.getReceiver().getValuesConsumer());
 
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);

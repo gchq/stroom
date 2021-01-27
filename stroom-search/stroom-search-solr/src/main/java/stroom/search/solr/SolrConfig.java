@@ -11,11 +11,11 @@ import javax.inject.Singleton;
 @Singleton
 public class SolrConfig extends AbstractConfig {
     private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
-    private CacheConfig indexClientCache = new CacheConfig.Builder()
+    private CacheConfig indexClientCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig indexCache = new CacheConfig.Builder()
+    private CacheConfig indexCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterWrite(StroomDuration.ofMinutes(10))
             .build();

@@ -43,9 +43,9 @@ public class SQLStatisticSearchModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
-                        .withName("Evict expired elements")
-                        .withSchedule(PERIODIC, "10s")
-                        .withManagedState(false));
+                        .name("Evict expired elements")
+                        .schedule(PERIODIC, "10s")
+                        .managed(false));
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {

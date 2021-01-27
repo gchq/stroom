@@ -16,38 +16,27 @@
 
 package stroom.dashboard.shared;
 
+import stroom.dashboard.shared.ComponentConfig.Builder;
+import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"dataSource", "expression", "automate"})
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "query")
-@XmlType(name = "QueryComponentSettings", propOrder = {"dataSource", "expression", "automate"})
-public class QueryComponentSettings extends ComponentSettings {
-    @XmlElement(name = "dataSource")
+public class QueryComponentSettings implements ComponentSettings {
     @JsonProperty("dataSource")
-    private DocRef dataSource;
-    @XmlElement(name = "expression")
+    private final DocRef dataSource;
     @JsonProperty("expression")
-    private ExpressionOperator expression;
-    @XmlElement(name = "automate")
+    private final ExpressionOperator expression;
     @JsonProperty("automate")
-    private Automate automate;
-
-    public QueryComponentSettings() {
-    }
+    private final Automate automate;
 
     @JsonCreator
     public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
@@ -62,23 +51,77 @@ public class QueryComponentSettings extends ComponentSettings {
         return dataSource;
     }
 
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public ExpressionOperator getExpression() {
         return expression;
-    }
-
-    public void setExpression(final ExpressionOperator expression) {
-        this.expression = expression;
     }
 
     public Automate getAutomate() {
         return automate;
     }
 
-    public void setAutomate(final Automate automate) {
-        this.automate = automate;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final QueryComponentSettings that = (QueryComponentSettings) o;
+        return Objects.equals(dataSource, that.dataSource) &&
+                Objects.equals(expression, that.expression) &&
+                Objects.equals(automate, that.automate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataSource, expression, automate);
+    }
+
+    @Override
+    public String toString() {
+        return "QueryComponentSettings{" +
+                "dataSource=" + dataSource +
+                ", expression=" + expression +
+                ", automate=" + automate +
+                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private DocRef dataSource;
+        private ExpressionOperator expression;
+        private Automate automate;
+
+        private Builder() {
+        }
+
+        private Builder(final QueryComponentSettings queryComponentSettings) {
+            this.dataSource = queryComponentSettings.dataSource;
+            this.expression = queryComponentSettings.expression;
+            this.automate = queryComponentSettings.automate;
+        }
+
+        public Builder dataSource(final DocRef dataSource) {
+            this.dataSource = dataSource;
+            return this;
+        }
+
+        public Builder expression(final ExpressionOperator expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        public Builder automate(final Automate automate) {
+            this.automate = automate;
+            return this;
+        }
+
+        public QueryComponentSettings build() {
+            return new QueryComponentSettings(dataSource, expression, automate);
+        }
     }
 }

@@ -18,97 +18,68 @@
 package stroom.search.solr.search;
 
 import stroom.annotation.api.AnnotationFields;
-import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.CompletionState;
-import stroom.search.coprocessor.Coprocessors;
-import stroom.search.coprocessor.CoprocessorsFactory;
-import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.NewCoprocessor;
-import stroom.search.coprocessor.Receiver;
+import stroom.query.api.v2.Query;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
-import stroom.search.resultsender.NodeResult;
-import stroom.search.resultsender.ResultSender;
-import stroom.search.resultsender.ResultSenderFactory;
+import stroom.search.solr.CachedSolrIndex;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
-class SolrClusterSearchTaskHandler implements Consumer<Error> {
+class SolrClusterSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrClusterSearchTaskHandler.class);
 
-    private final CoprocessorsFactory coprocessorsFactory;
     private final SolrSearchFactory solrSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
-    private final ResultSenderFactory resultSenderFactory;
     private final SecurityContext securityContext;
-    private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>();
-    private final CompletionState searchCompletionState = new CompletionState();
-
-    private SolrClusterSearchTask task;
 
     @Inject
-    SolrClusterSearchTaskHandler(final CoprocessorsFactory coprocessorsFactory,
-                                 final SolrSearchFactory solrSearchFactory,
+    SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
                                  final ExtractionDecoratorFactory extractionDecoratorFactory,
-                                 final ResultSenderFactory resultSenderFactory,
                                  final SecurityContext securityContext) {
-        this.coprocessorsFactory = coprocessorsFactory;
         this.solrSearchFactory = solrSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
-        this.resultSenderFactory = resultSenderFactory;
         this.securityContext = securityContext;
     }
 
-    public void exec(final TaskContext taskContext, final SolrClusterSearchTask task, final SolrSearchResultCollector callback) {
+    public void exec(final TaskContext taskContext,
+                     final CachedSolrIndex cachedSolrIndex,
+                     final Query query,
+                     final String[] storedFields,
+                     final long now,
+                     final String dateTimeLocale,
+                     final Coprocessors coprocessors) {
         securityContext.useAsRead(() -> {
-            final Consumer<NodeResult> resultConsumer = callback::onSuccess;
-            CompletionState sendingDataCompletionState = new CompletionState();
-            sendingDataCompletionState.complete();
-
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
 
-                this.task = task;
-                final stroom.query.api.v2.Query query = task.getQuery();
-
                 try {
-                    final long frequency = task.getResultSendFrequency();
-
                     // Make sure we have been given a query.
                     if (query.getExpression() == null) {
                         throw new SearchException("Search expression has not been set");
                     }
 
                     // Get the stored fields that search is hoping to use.
-                    final String[] storedFields = task.getStoredFields();
                     if (storedFields == null || storedFields.length == 0) {
                         throw new SearchException("No stored fields have been requested");
                     }
 
-                    // Create coprocessors.
-                    final Coprocessors coprocessors = coprocessorsFactory.create(task.getCoprocessorMap(), storedFields, query.getParams(), this);
-
                     if (coprocessors.size() > 0) {
-                        // Start forwarding data to target node.
-                        final ResultSender resultSender = resultSenderFactory.create(taskContext);
-                        sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
-
                         // Start searching.
-                        search(taskContext, task, query, coprocessors);
+                        search(taskContext, cachedSolrIndex, query, storedFields, now, dateTimeLocale, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(e);
+                        coprocessors.getErrorConsumer().accept(e);
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
@@ -118,47 +89,38 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    searchCompletionState.complete();
-                }
-
-                // Now we must wait for results to be sent to the requesting node.
-                try {
-                    taskContext.info(() -> "Sending final results");
-                    while (!Thread.currentThread().isInterrupted() && !sendingDataCompletionState.isComplete()) {
-                        sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
-                    }
-                } catch (InterruptedException e) {
-                    //Don't want to reset interrupt status as this thread will go back into
-                    //the executor's pool. Throwing an exception will terminate the task
-                    throw new RuntimeException("Thread interrupted");
+                    coprocessors.getCompletionState().complete();
                 }
             }
         });
     }
 
     private void search(final TaskContext taskContext,
-                        final SolrClusterSearchTask task,
-                        final stroom.query.api.v2.Query query,
+                        final CachedSolrIndex cachedSolrIndex,
+                        final Query query,
+                        final String[] storedFields,
+                        final long now,
+                        final String dateTimeLocale,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, this, task.getStoredFields(), coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
 
             // Search all index shards.
-            final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
-            final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
+            final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            solrSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount);
+            solrSearchFactory.search(cachedSolrIndex, storedFields, now, expression, extractionReceiver, taskContext, hitCount, dateTimeLocale);
 
             // Wait for search completion.
             boolean allComplete = false;
             while (!allComplete) {
                 allComplete = true;
-                for (final NewCoprocessor coprocessor : coprocessors.getSet()) {
+                for (final Coprocessor coprocessor : coprocessors) {
                     if (!Thread.currentThread().isInterrupted()) {
                         taskContext.info(() -> "" +
                                 "Searching... " +
@@ -169,7 +131,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
                                 + coprocessor.getValuesCount().get() +
                                 " extractions");
 
-                        final boolean complete = coprocessor.awaitCompletion(1, TimeUnit.SECONDS);
+                        final boolean complete = coprocessor.getCompletionState().awaitCompletion(1, TimeUnit.SECONDS);
                         if (!complete) {
                             allComplete = false;
                         }
@@ -185,20 +147,5 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
-    }
-
-    @Override
-    public void accept(final Error error) {
-        if (error != null) {
-            LOGGER.debug(error::getMessage, error.getThrowable());
-            if (!(error.getThrowable() instanceof TaskTerminatedException)) {
-                final String msg = MessageUtil.getMessage(error.getMessage(), error.getThrowable());
-                errors.offer(msg);
-            }
-        }
-    }
-
-    public SolrClusterSearchTask getTask() {
-        return task;
     }
 }

@@ -7,6 +7,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
 import org.jooq.Condition;
@@ -110,7 +111,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
                 // AND {}, OR {}, equal true, so don't need to do anything with them
                 if (result == null) {
-                    if (ExpressionOperator.Op.NOT.equals(operator.op())) {
+                    if (Op.NOT.equals(operator.op())) {
                         result = DSL.falseCondition();
                     } else {
                         result = DSL.trueCondition();

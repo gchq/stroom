@@ -15,15 +15,15 @@ import javax.inject.Singleton;
 public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private MetaValueConfig metaValueConfig = new MetaValueConfig();
-    private CacheConfig metaFeedCache = new CacheConfig.Builder()
+    private CacheConfig metaFeedCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig metaProcessorCache = new CacheConfig.Builder()
+    private CacheConfig metaProcessorCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig metaTypeCache = new CacheConfig.Builder()
+    private CacheConfig metaTypeCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();

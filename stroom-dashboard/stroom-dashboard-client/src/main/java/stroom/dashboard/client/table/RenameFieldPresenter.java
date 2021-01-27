@@ -16,15 +16,8 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.shared.Field;
+import stroom.query.api.v2.Field;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -32,13 +25,23 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 public class RenameFieldPresenter
         extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView>
         implements PopupUiHandlers {
     private TablePresenter tablePresenter;
     private Field field;
+    private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public RenameFieldPresenter(final EventBus eventBus, final RenameFieldView view) {
@@ -56,9 +59,12 @@ public class RenameFieldPresenter
         }));
     }
 
-    public void show(final TablePresenter tablePresenter, final Field field) {
+    public void show(final TablePresenter tablePresenter,
+                     final Field field,
+                     final BiConsumer<Field, Field> fieldChangeConsumer) {
         this.tablePresenter = tablePresenter;
         this.field = field;
+        this.fieldChangeConsumer = fieldChangeConsumer;
 
         getView().getName().setText(field.getName());
 
@@ -92,9 +98,9 @@ public class RenameFieldPresenter
 
                 // Need to ensure any conditional formatting rules that use this field name
                 // are renamed too.
-                tablePresenter.handleFieldRename(field.getId(), field.getName(), newFieldName);
+                tablePresenter.handleFieldRename(field.getName(), newFieldName);
 
-                final boolean isNameInUse = tablePresenter.getSettings()
+                final boolean isNameInUse = tablePresenter.getTableSettings()
                         .getFields()
                         .stream()
                         .map(Field::getName)
@@ -106,16 +112,17 @@ public class RenameFieldPresenter
                             "Field name \"" + newFieldName + "\" is already in use",
                             null);
                 } else {
-                    field.setName(newFieldName);
+                    fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
+
                     tablePresenter.setDirty(true);
                     tablePresenter.redrawHeaders();
-                    HidePopupEvent.fire(tablePresenter, this);
+                    HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
                 }
             } else {
-                HidePopupEvent.fire(tablePresenter, this);
+                HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
             }
         } else {
-            HidePopupEvent.fire(tablePresenter, this);
+            HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
         }
     }
 

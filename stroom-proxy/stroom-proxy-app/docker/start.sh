@@ -2,7 +2,7 @@
 
 ROOT_DIR=/stroom-proxy
 BIND_MOUNT_CONFIG_FILE="${ROOT_DIR}/config/config.yml"
-FALLBACK_CONFIG_FILE="${ROOT_DIR}/config-fallback/config.yml"
+FALLBACK_CONFIG_FILE="${ROOT_DIR}/config_fallback/config.yml"
 
 main() {
   # To allow us to run the container outside of a stack it needs a config file

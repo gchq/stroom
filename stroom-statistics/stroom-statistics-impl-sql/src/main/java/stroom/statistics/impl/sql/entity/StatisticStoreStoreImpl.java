@@ -42,7 +42,10 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
                                    final StatisticStoreSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
+        this.store = storeFactory.createStore(
+                serialiser,
+                StatisticStoreDoc.DOCUMENT_TYPE,
+                StatisticStoreDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,8 @@
 package stroom.hyperlink.client;
 
-import com.google.gwt.http.client.URL;
 import stroom.svg.client.SvgPreset;
+
+import com.google.gwt.http.client.URL;
 
 import java.util.Objects;
 
@@ -16,7 +17,14 @@ public class Hyperlink {
     private String type;
     private SvgPreset icon;
 
-    private Hyperlink() {
+    public Hyperlink(final String text,
+                     final String href,
+                     final String type,
+                     final SvgPreset icon) {
+        this.text = text;
+        this.href = href;
+        this.type = type;
+        this.icon = icon;
     }
 
     public static Hyperlink create(final String value) {
@@ -121,35 +129,56 @@ public class Hyperlink {
         return sb.toString();
     }
 
-    public static class Builder {
-        private final Hyperlink instance;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public Builder() {
-            this.instance = new Hyperlink();
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private String text;
+        private String href;
+        private String type;
+        private SvgPreset icon;
+
+        private Builder() {
+        }
+
+        private Builder(final Hyperlink hyperlink) {
+            this.text = hyperlink.text;
+            this.href = hyperlink.href;
+            this.type = hyperlink.type;
+            this.icon = hyperlink.icon;
         }
 
         public Builder text(final String text) {
-            this.instance.text = text;
+            this.text = text;
             return this;
         }
 
         public Builder href(final String href) {
-            this.instance.href = href;
+            this.href = href;
             return this;
         }
 
         public Builder type(final String type) {
-            this.instance.type = type;
+            this.type = type;
             return this;
         }
 
         public Builder icon(final SvgPreset icon) {
-            this.instance.icon = icon;
+            this.icon = icon;
             return this;
         }
 
         public Hyperlink build() {
-            return instance;
+            return new Hyperlink(
+                    text,
+                    href,
+                    type,
+                    icon);
         }
     }
 }

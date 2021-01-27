@@ -17,10 +17,10 @@
 package stroom.dashboard.impl.format;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.TimeZone;
-import stroom.dashboard.shared.TimeZone.Use;
+import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.TimeZone;
+import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 
@@ -37,7 +37,7 @@ public class DateFormatter implements Formatter {
     }
 
     public static DateFormatter create(final FormatSettings settings, final String dateTimeLocale) {
-        Use use = Use.LOCAL;
+        Use use = Use.UTC;
         String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
         int offsetHours = 0;
         int offsetMinutes = 0;

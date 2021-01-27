@@ -1,23 +1,21 @@
 package stroom.dictionary.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DictionaryDTO extends DocRef {
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String data;
+    private final String data;
     @JsonProperty
-    private List<DocRef> imports;
-
-    public DictionaryDTO() {
-    }
+    private final List<DocRef> imports;
 
     public DictionaryDTO(final DictionaryDoc doc) {
         super(DictionaryDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
@@ -49,17 +47,5 @@ public class DictionaryDTO extends DocRef {
 
     public List<DocRef> getImports() {
         return imports;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public void setImports(List<DocRef> imports) {
-        this.imports = imports;
     }
 }

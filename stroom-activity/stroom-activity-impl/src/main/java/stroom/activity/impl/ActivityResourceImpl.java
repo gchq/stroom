@@ -7,21 +7,19 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import event.logging.Banner;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Event;
-import event.logging.Event.EventDetail.Update;
+import event.logging.Data;
 import event.logging.MultiObject;
-import event.logging.Object;
-import event.logging.ObjectOutcome;
+import event.logging.OtherObject;
+import event.logging.OtherObject.Builder;
 import event.logging.Query;
-import event.logging.Query.Advanced;
+import event.logging.UpdateEventAction;
+import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,12 +55,9 @@ class ActivityResourceImpl implements ActivityResource {
         return securityContext.secureResult(() -> {
             ResultPage<Activity> result;
 
-            final Query query = new Query();
-            final Advanced advanced = new Advanced();
-            query.setAdvanced(advanced);
-            final And and = new And();
-            advanced.getAdvancedQueryItems()
-                    .add(and);
+            final Query query = Query.builder()
+                    .withRaw(filter)
+                    .build();
 
             final String eventType = "ActivitySearch";
 
@@ -181,47 +176,34 @@ class ActivityResourceImpl implements ActivityResource {
 
     @Override
     public Activity setCurrentActivity(final Activity activity) {
-        try {
-            final Activity beforeActivity = currentActivity.getActivity();
-            final Activity afterActivity = activity;
+        final Activity beforeActivity = currentActivity.getActivity();
 
-            currentActivity.setActivity(afterActivity);
-
-            if (beforeActivity != null && afterActivity != null) {
-                final Event event = eventLoggingService.createAction("Set Activity", "User has changed activity");
-
-                final Update update = new Update();
-                update.setBefore(convertActivity(beforeActivity));
-                update.setAfter(convertActivity(afterActivity));
-
-                event.getEventDetail().setUpdate(update);
-                eventLoggingService.log(event);
-            }
-
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return activity;
+        return eventLoggingService.loggedResult(
+                "Set Activity",
+                "User has changed activity",
+                UpdateEventAction.builder()
+                        .withBefore(convertActivity(beforeActivity))
+                        .withAfter(convertActivity(activity))
+                        .build(),
+                () -> {
+                    currentActivity.setActivity(activity);
+                    return activity;
+                });
     }
 
     @Override
     public Boolean acknowledgeSplash(final AcknowledgeSplashRequest request) {
         try {
-            final Event event = eventLoggingService.createAction("Acknowledge Splash", "User has acknowledged the splash screen");
-
-            final Banner banner = new Banner();
-            banner.setMessage(request.getMessage());
-            banner.setVersion(request.getVersion());
-
-            final ObjectOutcome view = new ObjectOutcome();
-            view.getObjects().add(banner);
-            event.getEventDetail().setView(view);
-
-            eventLoggingService.log(event);
-
+            eventLoggingService.log(
+                    "Acknowledge Splash",
+                    "User has acknowledged the splash screen",
+                    ViewEventAction.builder()
+                            .addBanner(Banner.builder()
+                                    .withMessage(request.getMessage())
+                                    .withVersion(request.getVersion())
+                                    .build())
+                            .build());
             return true;
-
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -230,13 +212,20 @@ class ActivityResourceImpl implements ActivityResource {
     }
 
     private MultiObject convertActivity(final Activity activity) {
-        final Object object = new Object();
-        object.setType("Activity");
-        PurposeUtil.addData(object.getData(), activity);
 
-        final MultiObject multiObject = new MultiObject();
-        multiObject.getObjects().add(object);
+        final Builder<Void> objectBuilder = OtherObject.builder()
+                .withType("Activity");
 
-        return multiObject;
+        if (activity != null && activity.getDetails() != null) {
+            activity.getDetails().getProperties().forEach(prop ->
+                    objectBuilder.addData(Data.builder()
+                            .withName(prop.getId())
+                            .withValue(prop.getValue())
+                            .build()));
+        }
+
+        return MultiObject.builder()
+                .addObject(objectBuilder.build())
+                .build();
     }
 }

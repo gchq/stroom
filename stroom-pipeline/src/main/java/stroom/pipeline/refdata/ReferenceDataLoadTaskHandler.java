@@ -114,12 +114,12 @@ class ReferenceDataLoadTaskHandler {
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    public void exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+    public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+        final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
             // on can be read.
             securityContext.useAsRead(() -> {
-                final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
@@ -152,7 +152,6 @@ class ReferenceDataLoadTaskHandler {
                                 meta,
                                 source,
                                 feedName,
-                                meta.getTypeName(),
                                 refStreamDefinition);
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
@@ -163,13 +162,13 @@ class ReferenceDataLoadTaskHandler {
                 }
             });
         });
+        return storedErrorReceiver;
     }
 
     private void populateMaps(final Pipeline pipeline,
                               final Meta meta,
                               final Source source,
                               final String feedName,
-                              final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
         // Set the source meta.
         metaHolder.setMeta(meta);
@@ -184,7 +183,8 @@ class ReferenceDataLoadTaskHandler {
 
         try {
             // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+            final String encoding = feedProperties.getEncoding(
+                    feedName, meta.getTypeName(), null);
 
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
             locationFactory.setLocationFactory(streamLocationFactory);

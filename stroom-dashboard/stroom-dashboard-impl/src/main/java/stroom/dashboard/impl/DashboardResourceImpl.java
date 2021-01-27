@@ -18,7 +18,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.impl.datasource.DataSourceProvider;
@@ -34,7 +34,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
 import stroom.dashboard.shared.SearchRequest;
@@ -42,18 +41,23 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.storedquery.api.StoredQueryService;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -62,6 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -70,13 +75,14 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -95,6 +101,9 @@ class DashboardResourceImpl implements DashboardResource {
     private final ActiveQueriesManager activeQueriesManager;
     private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final SecurityContext securityContext;
+    private final HttpServletRequestHolder httpServletRequestHolder;
+    private final ExecutorProvider executorProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     DashboardResourceImpl(final DashboardStore dashboardStore,
@@ -105,7 +114,10 @@ class DashboardResourceImpl implements DashboardResource {
                           final SearchEventLog searchEventLog,
                           final ActiveQueriesManager activeQueriesManager,
                           final DataSourceProviderRegistry searchDataSourceProviderRegistry,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final HttpServletRequestHolder httpServletRequestHolder,
+                          final ExecutorProvider executorProvider,
+                          final TaskContextFactory taskContextFactory) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -115,6 +127,9 @@ class DashboardResourceImpl implements DashboardResource {
         this.activeQueriesManager = activeQueriesManager;
         this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.securityContext = securityContext;
+        this.httpServletRequestHolder = httpServletRequestHolder;
+        this.executorProvider = executorProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -130,9 +145,9 @@ class DashboardResourceImpl implements DashboardResource {
     @Override
     public ValidateExpressionResult validateExpression(final String expressionString) {
         try {
-            final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+            final FieldIndex fieldIndex = new FieldIndex();
             final ExpressionParser expressionParser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
-            final Expression expression = expressionParser.parse(fieldIndexMap, expressionString);
+            final Expression expression = expressionParser.parse(fieldIndex, expressionString);
             String correctedExpression = "";
             if (expression != null) {
                 correctedExpression = expression.toString();
@@ -150,27 +165,43 @@ class DashboardResourceImpl implements DashboardResource {
                 if (request.getSearchRequest() == null) {
                     throw new EntityServiceException("Query is empty");
                 }
+
                 final SearchRequest searchRequest = request.getSearchRequest();
+                final SearchRequest.Builder builder = searchRequest.copy();
+                final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
 
                 // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
-                if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
+                if (searchRequest.getComponentResultRequests() != null) {
                     searchRequest.getComponentResultRequests()
-                            .forEach((k, componentResultRequest) ->
-                                    componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+                            .forEach(componentResultRequest -> {
 
-                    // Remove special fields.
-                    searchRequest.getComponentResultRequests().forEach((k, v) -> {
-                        if (v instanceof TableResultRequest) {
-                            final TableResultRequest tableResultRequest = (TableResultRequest) v;
-                            tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
-                        }
-                    });
+                                ComponentResultRequest newRequest = null;
+                                if (componentResultRequest instanceof TableResultRequest) {
+                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                                    // Remove special fields.
+                                    tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
+                                    newRequest = tableResultRequest
+                                            .copy()
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                } else if (componentResultRequest instanceof VisResultRequest) {
+                                    final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
+                                    newRequest = visResultRequest
+                                            .copy()
+                                            .fetch(Fetch.ALL)
+                                            .build();
+                                }
+
+                                componentResultRequests.add(newRequest);
+                            });
                 }
+
+                builder.componentResultRequests(componentResultRequests);
 
                 // Convert our internal model to the model used by the api
                 stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                         request.getDashboardQueryKey(),
-                        searchRequest);
+                        builder.build());
 
                 if (apiSearchRequest == null) {
                     throw new EntityServiceException("Query could not be mapped to a SearchRequest");
@@ -260,16 +291,19 @@ class DashboardResourceImpl implements DashboardResource {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().get(request.getComponentId());
-                if (componentResultRequest == null) {
+                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
+                        .stream()
+                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
+                        .findFirst();
+                if (optional.isEmpty()) {
                     throw new EntityServiceException("No component result request found");
                 }
 
-                if (!(componentResultRequest instanceof TableResultRequest)) {
+                if (!(optional.get() instanceof TableResultRequest)) {
                     throw new EntityServiceException("Component result request is not a table");
                 }
 
-                final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
                 final List<Field> fields = tableResultRequest.getTableSettings().getFields();
                 final List<Row> rows = tableResult.getRows();
 
@@ -330,7 +364,7 @@ class DashboardResourceImpl implements DashboardResource {
                 }
 
                 final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
-                final Set<SearchResponse> searchResults = new HashSet<>();
+                final Set<SearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
@@ -345,14 +379,34 @@ class DashboardResourceImpl implements DashboardResource {
                 activeQueries.destroyUnusedQueries(keys);
 
                 // Get query results for every active query.
+                final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
+                final Executor executor = executorProvider.get();
+                final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final SearchRequest searchRequest : request.getSearchRequests()) {
-                    final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
-                    if (searchRequest.getSearch() != null) {
-                        final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
-                        if (searchResponse != null) {
-                            searchResults.add(searchResponse);
+                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                        try {
+                            httpServletRequestHolder.set(httpServletRequest);
+                            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
+                            if (searchRequest.getSearch() != null) {
+                                final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
+                                if (searchResponse != null) {
+                                    searchResults.add(searchResponse);
+                                }
+                            }
+                        } finally {
+                            countDownLatch.countDown();
+                            httpServletRequestHolder.set(null);
                         }
-                    }
+                    });
+                    executor.execute(runnable);
+                }
+
+                // Wait for all results to come back.
+                try {
+                    countDownLatch.await();
+                } catch (final InterruptedException e) {
+                    // Keep interrupting.
+                    Thread.currentThread().interrupt();
                 }
 
                 return searchResults;
@@ -366,7 +420,8 @@ class DashboardResourceImpl implements DashboardResource {
         SearchResponse result;
 
         boolean newSearch = false;
-        final Search search = searchRequest.getSearch();
+        SearchRequest updatedSearchRequest = searchRequest;
+        Search search = updatedSearchRequest.getSearch();
 
         try {
             synchronized (DashboardResourceImpl.class) {
@@ -403,18 +458,17 @@ class DashboardResourceImpl implements DashboardResource {
                                     "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
             // Add a param for `currentUser()`
-            if (searchRequest.getSearch() != null) {
-                Map<String, String> paramMap = searchRequest.getSearch().getParamMap();
-                if (paramMap != null) {
-                    paramMap = new HashMap<>(paramMap);
-                } else {
-                    paramMap = new HashMap<>();
-                }
-                paramMap.put("currentUser()", securityContext.getUserId());
-                searchRequest.getSearch().setParamMap(paramMap);
+            List<Param> params = search.getParams();
+            if (params != null) {
+                params = new ArrayList<>(params);
+            } else {
+                params = new ArrayList<>();
             }
+            params.add(new Param("currentUser()", securityContext.getUserId()));
+            search = search.copy().params(params).build();
+            updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
 
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
@@ -446,16 +500,7 @@ class DashboardResourceImpl implements DashboardResource {
             try {
                 // Add this search to the history so the user can get back to
                 // this search again.
-                List<Param> params;
-                if (search.getParamMap() != null && search.getParamMap().size() > 0) {
-                    params = new ArrayList<>(search.getParamMap().size());
-                    for (final Entry<String, String> entry : search.getParamMap().entrySet()) {
-                        params.add(new Param(entry.getKey(), entry.getValue()));
-                    }
-                } else {
-                    params = null;
-                }
-
+                final List<Param> params = search.getParams();
                 final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
 
                 final StoredQuery storedQuery = new StoredQuery();

@@ -1,16 +1,14 @@
 package stroom.job.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.Objects;
 
 public class ScheduledJob {
-    private String description;
-    private boolean enabled;
-    private boolean advanced;
-    private boolean managed;
-    private Schedule schedule;
-    private String name;
+    private final String description;
+    private final boolean enabled;
+    private final boolean advanced;
+    private final boolean managed;
+    private final Schedule schedule;
+    private final String name;
 
     private ScheduledJob(final Schedule schedule,
                          final String name,
@@ -50,40 +48,53 @@ public class ScheduledJob {
         return schedule;
     }
 
-    @JsonIgnore
-    public Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     public static final class Builder {
-
-        // Mandatory
-        private String name;
+        private String description;
+        private boolean enabled = true;
+        private boolean advanced = true;
+        private boolean managed = true;
         private Schedule schedule;
+        private String name;
 
-        // Optional
-        private boolean isEnabled = true;
-        private boolean isAdvanced = true;
-        private boolean isManaged = true;
-        private String description = "";
+        private Builder() {
+        }
 
-        public Builder withDescription(String description) {
+        private Builder(final ScheduledJob scheduledJob) {
+            description = scheduledJob.description;
+            enabled = scheduledJob.enabled;
+            advanced = scheduledJob.advanced;
+            managed = scheduledJob.managed;
+            schedule = scheduledJob.schedule;
+            name = scheduledJob.name;
+        }
+
+        public Builder description(String description) {
             this.description = description;
             return this;
         }
 
-        public Builder withEnabledState(boolean isEnabled) {
-            this.isEnabled = isEnabled;
+        public Builder enabled(boolean enabled) {
+            this.enabled = enabled;
             return this;
         }
 
-        public Builder withAdvancedState(boolean isAdvanced) {
-            this.isAdvanced = isAdvanced;
+        public Builder advanced(boolean advanced) {
+            this.advanced = advanced;
             return this;
         }
 
-        public Builder withManagedState(boolean isManaged) {
-            this.isManaged = isManaged;
+        public Builder managed(boolean managed) {
+            this.managed = managed;
             return this;
         }
 
@@ -91,12 +102,12 @@ public class ScheduledJob {
          * See {@link stroom.util.scheduler.SimpleCronScheduler} or
          * {@link stroom.util.scheduler.FrequencyScheduler} for schedule string format.
          */
-        public Builder withSchedule(Schedule.ScheduleType scheduleType, String schedule) {
+        public Builder schedule(Schedule.ScheduleType scheduleType, String schedule) {
             this.schedule = new Schedule(scheduleType, schedule);
             return this;
         }
 
-        public Builder withName(String name) {
+        public Builder name(String name) {
             this.name = name;
             return this;
         }
@@ -104,7 +115,7 @@ public class ScheduledJob {
         public ScheduledJob build() {
             Objects.requireNonNull(schedule);
             Objects.requireNonNull(name);
-            return new ScheduledJob(schedule, name, description, isEnabled, isAdvanced, isManaged);
+            return new ScheduledJob(schedule, name, description, enabled, advanced, managed);
         }
     }
 }

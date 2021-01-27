@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
@@ -152,7 +153,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
     private void addWidgetLeft(final Widget widget) {
@@ -328,9 +329,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
-            final ComponentConfig componentData = new ComponentConfig();
-            component.write(componentData);
-            componentDataList.add(componentData);
+            final ComponentConfig componentConfig = component.write();
+            componentDataList.add(componentConfig);
         }
 
         final DashboardConfig dashboardConfig = new DashboardConfig();
@@ -378,13 +378,30 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabConfig) {
-        ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
-            if (ok) {
-                layoutPresenter.closeTab(tabConfig);
-                components.remove(tabConfig.getId(), true);
+    public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        // Figure out what tabs would remain after removal.
+        int hiddenCount = 0;
+        int totalCount = 0;
+        for (final TabConfig tab : tabLayoutConfig.getTabs()) {
+            if (tab != tabConfig) {
+                if (!tab.visible()) {
+                    hiddenCount++;
+                }
+                totalCount++;
             }
-        });
+        }
+
+        // If all remaining tabs are hidden the we can't allow removal.
+        if (totalCount > 0 && totalCount == hiddenCount) {
+            AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
+        } else {
+            ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
+                if (ok) {
+                    layoutPresenter.closeTab(tabConfig);
+                    components.remove(tabConfig.getId(), true);
+                }
+            });
+        }
     }
 
     @Override
@@ -505,10 +522,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     id = type.getId() + "-" + RandomId.createId(5);
                 }
 
-                final ComponentConfig componentData = new ComponentConfig();
-                componentData.setType(type.getId());
-                componentData.setId(id);
-                componentData.setName(type.getName());
+                final ComponentConfig componentData = ComponentConfig
+                        .builder()
+                        .type(type.getId())
+                        .id(id)
+                        .name(type.getName())
+                        .build();
 
                 final Component componentPresenter = addComponent(componentData.getType(), componentData);
                 if (componentPresenter != null) {

@@ -38,9 +38,9 @@ public class ShardModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexSearcherCacheRefresh.class, builder -> builder
-                        .withName("Index Searcher Cache Refresh")
-                        .withDescription("Job to refresh index shard searchers in the cache")
-                        .withSchedule(PERIODIC, "10m"));
+                        .name("Index Searcher Cache Refresh")
+                        .description("Job to refresh index shard searchers in the cache")
+                        .schedule(PERIODIC, "10m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(IndexShardSearchTaskExecutorShutdown.class);

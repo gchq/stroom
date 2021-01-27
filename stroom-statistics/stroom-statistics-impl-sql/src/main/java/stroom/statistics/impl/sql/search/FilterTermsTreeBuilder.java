@@ -112,7 +112,13 @@ public class FilterTermsTreeBuilder {
 
                         for (final String value : values) {
                             orTermNodes.add(convertTermNode(
-                                    new ExpressionTerm(oldNode.getField(), Condition.EQUALS, value), fieldBlackList));
+                                    ExpressionTerm
+                                            .builder()
+                                            .field(oldNode.getField())
+                                            .condition(Condition.EQUALS)
+                                            .value(value)
+                                            .build(),
+                                    fieldBlackList));
                         }
                         newNode = new OperatorNode(FilterOperationMode.OR, orTermNodes);
                     }

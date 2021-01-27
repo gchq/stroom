@@ -16,18 +16,23 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 
-public class ClassificationWrappedDataPresenter extends ClassificationWrapperPresenter implements BeginSteppingHandler {
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
+public class ClassificationWrappedDataPresenter
+        extends ClassificationWrapperPresenter
+        implements BeginSteppingHandler {
+
     private final DataPresenter dataPresenter;
     private SourceLocation sourceLocation;
 
     @Inject
-    public ClassificationWrappedDataPresenter(final EventBus eventBus, final ClassificationWrapperView view,
+    public ClassificationWrappedDataPresenter(final EventBus eventBus,
+                                              final ClassificationWrapperView view,
                                               final DataPresenter dataPresenter) {
         super(eventBus, view);
         this.dataPresenter = dataPresenter;
@@ -47,12 +52,25 @@ public class ClassificationWrappedDataPresenter extends ClassificationWrapperPre
         this.sourceLocation = null;
     }
 
-    public void setFormatOnLoad(final boolean formatOnLoad) {
-        dataPresenter.setFormatOnLoad(formatOnLoad);
+    public void setNavigationControlsVisible(final boolean visible) {
+        dataPresenter.setNavigationControlsVisible(visible);
+    }
+
+    public void setDisplayMode(final DisplayMode displayMode) {
+        dataPresenter.setDisplayMode(displayMode);
     }
 
     @Override
     public void beginStepping(final long streamId, final String childStreamType) {
-        BeginPipelineSteppingEvent.fire(this, streamId, null, childStreamType, new StepLocation(streamId, sourceLocation.getPartNo(), sourceLocation.getRecordNo()), null);
+        BeginPipelineSteppingEvent.fire(
+                this,
+                streamId,
+                null,
+                childStreamType,
+                new StepLocation(
+                        streamId,
+                        sourceLocation.getPartNo(),
+                        sourceLocation.getSegmentNo()),
+                null);
     }
 }

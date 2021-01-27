@@ -11,12 +11,12 @@ server:
   requestLog:
     appenders:
     - type: file
-      currentLogFilename: ${HOME}/.stroom/logs/access.log
+      currentLogFilename: logs/access/access.log
       threshold: ALL
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: ${HOME}/.stroom/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 10
       timeZone: UTC
 
@@ -37,12 +37,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: ${HOME}/.stroom/logs/event.log
+        currentLogFilename: logs/user/user.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: ${HOME}/.stroom/logs/event-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 10
         timeZone: UTC
         logFormat: "%msg%n"
@@ -52,12 +52,12 @@ logging:
     logFormat: "%highlight(%-5level) %d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC} %yellow(%thread) %cyan(%-30logger{25}) %msg %n"
     timeZone: UTC
   - type: file
-    currentLogFilename: ${HOME}/.stroom/logs/app.log
+    currentLogFilename: logs/app/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: ${HOME}/.stroom/logs/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
     archivedFileCount: 10
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
@@ -71,16 +71,15 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: true
-  data:
-    filesystemVolume:
-      defaultStreamVolumePaths: ${HOME}/.stroom/volumes/defaultStreamVolume
   job:
     enabled: true
     executionInterval: "10s"
   node:
     name: node1a
   path:
-    temp: "${HOME}/.stroom/temp"
+    # Versioned dirs for dev to allow running multiple stroom instances
+    home: "~/.stroom/v7"
+    temp: "/tmp/stroom/v7"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:
@@ -115,6 +114,4 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
-  volumes:
-    defaultIndexVolumeGroupPaths: ${HOME}/.stroom/volumes/defaultIndexVolume
 

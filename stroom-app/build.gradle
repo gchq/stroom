@@ -19,8 +19,9 @@ import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 import org.reflections.util.ConfigurationBuilder
 import org.reflections.util.FilterBuilder
-import java.nio.file.Paths
+
 import java.nio.file.Files
+import java.nio.file.Paths
 
 ext.moduleName = 'stroom.app'
 
@@ -29,10 +30,13 @@ def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
-def releaseBuildDir = 'build/release'
-def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
-def configSchemaFile = releaseBuildDir + '/config/config-schema.yml'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.0'
+def releaseBuildDir = "${projectDir}/build/release"
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
+def stroomZipDistContentPacksDir = "${releaseBuildDir}/content_packs"
+def stroomDockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -64,9 +68,11 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-dropwizard-common')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-elastic:stroom-elastic-impl-http')
+//    compile project(':stroom-elastic:stroom-elastic-impl')
+//    compile project(':stroom-elastic:stroom-elastic-impl-http')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-impl')
     compile project(':stroom-explorer:stroom-explorer-impl')
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-impl')
@@ -84,6 +90,8 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-resource:stroom-resource-impl')
@@ -130,7 +138,7 @@ dependencies {
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     compile libs.validation_api
     compile libs.ws_rs_api
 
@@ -153,9 +161,10 @@ dependencies {
     testCompile project(':stroom-docstore:stroom-docstore-api')
     testCompile project(':stroom-docstore:stroom-docstore-impl')
     testCompile project(':stroom-docstore:stroom-docstore-impl-memory')
-    testCompile project(':stroom-elastic:stroom-elastic-impl')
+//    testCompile project(':stroom-elastic:stroom-elastic-impl')
     testCompile project(':stroom-event-logging:stroom-event-logging-api')
     testCompile project(':stroom-event-logging:stroom-event-logging-impl')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-explorer:stroom-explorer-api')
     testCompile project(':stroom-explorer:stroom-explorer-impl')
@@ -195,7 +204,6 @@ dependencies {
     testCompile libs.lucene_core
     testCompile libs.saxon_he
     testCompile libs.slf4j_api
-    testCompile libs.stroomQueryCommon
     testCompile libs.stroomTestData
     testCompile libs.vavr
 
@@ -287,10 +295,10 @@ task migrate(type: JavaExec) {
     args 'migrate', '../local.yml'
 }
 
-def stroomDockerBuildDir = "${projectDir}/docker/build"
 
 clean {
     delete stroomDockerBuildDir
+    delete releaseBuildDir
 }
 
 // Generate the confi.yml files for the zip and docker distributions
@@ -299,17 +307,40 @@ task generateConfigFiles(type: JavaExec) {
     main = "stroom.dist.GenerateDistributionConfig"
 }
 
+task downloadStroomContentForDocker(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomDockerContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
+}
+
+task downloadStroomContentForZipDist(type: JavaExec) {
+    println "Downloading/copying content packs to ${stroomZipDistContentPacksDir}"
+
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
+    // We need to set the working directory as the stroom root
+    workingDir '../'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'stroom.test.DownloadStroomContentApp'
+
+    args = [contentPackDefinitionFile, contentPackDownloadDir, stroomZipDistContentPacksDir]
+}
+
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
-    dependsOn parent.downloadStroomContent
+    //dependsOn parent.downloadStroomContent
     dependsOn generateConfigFiles
+    dependsOn downloadStroomContentForDocker
 
     doFirst {
-        new File(stroomPluginsDir).mkdirs()
-        def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/contentPacks"
-        def stroomDockerPluginsDir = "${stroomDockerBuildDir}/plugins"
-        new File(stroomPluginsDir).mkdirs()
 
         // Copy the stroom app fat jar
         copy {
@@ -320,10 +351,10 @@ task copyFilesForStroomDockerBuild() {
         // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
-        copy {
-            from "${contentPackDownloadDir}"
-            into stroomDockerContentPacksDir
-        }
+        //copy {
+            //from "${contentPackDownloadDir}"
+            //into stroomDockerContentPacksDir
+        //}
     }
 }
 
@@ -371,7 +402,7 @@ swagger {
             keyName = 'Authorization'
         }
         // Defing the named security definition to use for the whole API
-        security = [ [ ApiKeyAuth : [] ] ]
+        security = [[ApiKeyAuth: []]]
         swaggerDirectory = "${swaggerDir}"
     }
 }
@@ -388,62 +419,62 @@ task prepareSwaggerClasses {
     doLast {
         // Get all jars from the compile classpath
         def urls = project.configurations.compileClasspath.resolve()
-            .collect { 
-                it.toURI().toURL() 
-            }
+                .collect {
+                    it.toURI().toURL()
+                }
 
         // Add each one to the gradle build script classpath
         // so the swagger plugin can see them all.
         // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
-        urls.each { 
+        urls.each {
             //println "classpath url ${it}"
-            buildscript.classLoader.addURL it 
+            buildscript.classLoader.addURL it
         }
 
         // Now filter down to just our stroom jars
         def stroomUrls = urls
-            .findAll {
-                // We need the version in there as jars are versioned
-                // when we set an explicit build version
-                boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
-                //if (isStroomJar) {
+                .findAll {
+                    // We need the version in there as jars are versioned
+                    // when we set an explicit build version
+                    boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
+                    //if (isStroomJar) {
                     //println it.toString()
-                //}
-                return isStroomJar
-            }
-            .findAll {
-                // ensure it exists - it should really
-                Files.isRegularFile(Paths.get(it.toURI()))
-            }
-            .sort {
-                it.toString()
-            }
-            .unique();
+                    //}
+                    return isStroomJar
+                }
+                .findAll {
+                    // ensure it exists - it should really
+                    Files.isRegularFile(Paths.get(it.toURI()))
+                }
+                .sort {
+                    it.toString()
+                }
+                .unique();
 
         // Scan all the stroom pkgs in the stroom jars
         // Filter should be redundant if we only look in stroom jars, but what the heck
         ConfigurationBuilder configBuilder = new ConfigurationBuilder()
-             .filterInputsBy(new FilterBuilder().includePackage("stroom"))
-             .setUrls(stroomUrls)
-             .setScanners(
-                new TypeAnnotationsScanner(), 
-                new SubTypesScanner()
-             );
+                .filterInputsBy(new FilterBuilder().includePackage("stroom"))
+                .setUrls(stroomUrls)
+                .setScanners(
+                        new TypeAnnotationsScanner(),
+                        new SubTypesScanner()
+                );
 
         // Find all the @Api classes
         Reflections reflections = new Reflections(configBuilder);
         Set<Class<?>> restClasses = reflections
-            .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
+                .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
 
         logger.info("Adding API classes to Swagger spec")
 
         // Add them to a list for swagger to scan over
         restClasses
-            .sort { it.name }
-            .each {
-                restResourceClassNames.add(it.name)
-                logger.info it.name
-            }
+                .sort { it.name }
+                .each {
+                    restResourceClassNames.add(it.name)
+                    logger.info it.name
+                }
         print "Using swagger directory ${swaggerDir}"
     }
 }
@@ -470,7 +501,7 @@ task copySupportingFiles(type: Copy) {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
         //exec {
-            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
         //}
     }
 }
@@ -489,7 +520,7 @@ task downloadSendArgs(type: Download) {
 
 task makeSendExecutable {
     dependsOn downloadSend
-    doLast{
+    doLast {
         // The args script is sourced so doesn't need execute perms
         exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
@@ -497,10 +528,10 @@ task makeSendExecutable {
     }
 }
 
-task copyContentPackToDistribution(type: Copy) {
-    from contentPackDownloadDir
-    into "${releaseBuildDir}/contentPacks"
-}
+//task copyContentPackToDistribution(type: Copy) {
+    //from contentPackDownloadDir
+    //into "${releaseBuildDir}/contentPacks"
+//}
 
 // Create an example yaml config file from the compile-time defaults
 task generateConfigDefaultsYamlFile(type: JavaExec) {
@@ -521,8 +552,7 @@ task buildDistribution(type: Zip) {
     dependsOn downloadSend
     dependsOn downloadSendArgs
     dependsOn makeSendExecutable
-    dependsOn parent.downloadStroomContent
-    dependsOn copyContentPackToDistribution
+    dependsOn downloadStroomContentForZipDist
     dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
@@ -578,24 +608,22 @@ shadowDistTar.enabled = false
 ////}
 //}
 
-
 task setupSampleDataApplication(type: JavaExec) {
-    dependsOn this:compileJava
-    dependsOn this:compileTestJava
+    dependsOn this: compileJava
+    dependsOn this: compileTestJava
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
     classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
+
+    args = ['local.yml']
 }
 
 ////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
 ////for its test. This is a TODO as stroom-connectors needs a big refactor once we
 ////decide what we are doing with plugable client libs and pipeline elements.
 //tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
-
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-
 
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
@@ -612,3 +640,5 @@ tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
+
+// vim: set tabstop=4 shiftwidth=4 expandtab:

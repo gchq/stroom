@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.shared.StreamTypeNames;
@@ -10,6 +11,7 @@ import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -38,6 +40,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.PermissionException;
+import stroom.util.time.StroomDuration;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -67,7 +70,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private static final DocRef REF_STORE_PSEUDO_DOC_REF = new DocRef(
             "Searchable",
             "Reference Data Store",
-            "Reference Data Store");
+            "Reference Data Store (This Node Only)");
 
     private static final List<Condition> SUPPORTED_STRING_CONDITIONS = List.of(Condition.EQUALS);
     private static final List<Condition> SUPPORTED_DOC_REF_CONDITIONS = List.of(Condition.IS_DOC_REF, Condition.EQUALS);
@@ -76,6 +79,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             "Key", true, SUPPORTED_STRING_CONDITIONS);
     private static final AbstractField VALUE_FIELD = new TextField(
             "Value", true, SUPPORTED_STRING_CONDITIONS);
+    private static final AbstractField VALUE_REF_COUNT_FIELD = new IntegerField(
+            "Value Reference Count", false);
     private static final AbstractField MAP_NAME_FIELD = new TextField(
             "Map Name", true, SUPPORTED_STRING_CONDITIONS);
     private static final AbstractField CREATE_TIME_FIELD = new DateField(
@@ -98,6 +103,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private static final List<AbstractField> FIELDS = List.of(
             KEY_FIELD,
             VALUE_FIELD,
+            VALUE_REF_COUNT_FIELD,
             MAP_NAME_FIELD,
             CREATE_TIME_FIELD,
             EFFECTIVE_TIME_FIELD,
@@ -142,6 +148,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     RefStoreEntry::getKey),
             Map.entry(VALUE_FIELD.getName(),
                     RefStoreEntry::getValue),
+            Map.entry(VALUE_REF_COUNT_FIELD.getName(),
+                    RefStoreEntry::getValueReferenceCount),
             Map.entry(MAP_NAME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getMapName()),
             Map.entry(CREATE_TIME_FIELD.getName(), refStoreEntry ->
@@ -225,12 +233,30 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 .get();
     }
 
+    @Override
+    public void purge(final StroomDuration purgeAge) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+                taskContextFactory.context("Reference Data Purge",
+                        taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () ->
+                                                performPurge(purgeAge),
+                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
+                        .run());
+
+    }
+
+    private void performPurge(final StroomDuration purgeAge) {
+        refDataStore.purgeOldData(purgeAge);
+    }
+
     private String performLookup(final RefDataLookupRequest refDataLookupRequest) {
         try {
             final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
                     refDataLookupRequest.getMapName(),
                     refDataLookupRequest.getKey(),
-                    refDataLookupRequest.getEffectiveTimeEpochMs());
+                    refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
+                            .orElse(Instant.now().toEpochMilli()));
 
             final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
                     refDataLookupRequest.getReferenceLoaders());
@@ -263,7 +289,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new NotFoundException(LogUtil.message("No value for map: {}, key: {}, time {}",
                         refDataLookupRequest.getMapName(),
                         refDataLookupRequest.getKey(),
-                        Instant.ofEpochMilli(refDataLookupRequest.getEffectiveTimeEpochMs()).toString()));
+                        refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
+                        .map(Instant::ofEpochMilli)
+                        .map(Objects::toString)
+                        .orElse("null")));
             }
 
             return stringWriter.toString();
@@ -381,9 +410,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         final Val[] valArr = new Val[fields.length];
 
                         for (int i = 0; i < fields.length; i++) {
-                            final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
-                                    .apply(refStoreEntry);
-                            valArr[i] = convertToVal(value, fields[i]);;
+                            AbstractField field = fields[i];
+                            // May be a custom field that we obvs can't extract
+                            if (field != null) {
+                                final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                                        .apply(refStoreEntry);
+                                valArr[i] = convertToVal(value, fields[i]);;
+                            }
                         }
                         consumer.accept(valArr);
                     });
@@ -397,7 +430,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private Predicate<RefStoreEntry> buildEntryPredicate(final ExpressionCriteria expressionCriteria) {
         try {
             if (expressionCriteria != null) {
-                return convertExpressionOperator(expressionCriteria.getExpression());
+                final Predicate<RefStoreEntry> predicate = convertExpressionItem(expressionCriteria.getExpression());
+                if (predicate == null) {
+                    if (expressionCriteria.getExpression() != null
+                            && Op.NOT.equals(expressionCriteria.getExpression().op())) {
+                        return refStoreEntry -> false;
+                    } else {
+                        return refStoreEntry -> true;
+                    }
+                } else {
+                    return predicate;
+                }
             } else {
                 return refStoreEntry -> true;
             }
@@ -417,7 +460,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new RuntimeException("Unknown class " + expressionItem.getClass().getName());
             }
         } else {
-            return refStoreEntry -> true;
+            return null;
         }
     }
 
@@ -428,32 +471,117 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // AND { NOT {x=1}, NOT {y=1}
 
         if (expressionOperator.getChildren() != null) {
-            Predicate<RefStoreEntry> predicate = null;
-            for (final ExpressionItem child : expressionOperator.getChildren()) {
-                final Predicate<RefStoreEntry> childPredicate = convertExpressionItem(child);
-                if (predicate == null) {
-                    if (expressionOperator.op().equals(Op.NOT)) {
-                        predicate = childPredicate.negate();
-                    } else {
-                        predicate = childPredicate;
-                    }
-                } else {
-                    if (expressionOperator.op().equals(Op.AND)) {
-                        predicate = predicate.and(childPredicate);
-                    } else if (expressionOperator.op().equals(Op.OR)) {
-                        predicate = predicate.or(childPredicate);
-                    } else if (expressionOperator.op().equals(Op.NOT)) {
-                        predicate = predicate.and(childPredicate.negate());
-                    } else {
-                        throw new RuntimeException("Unknown op " + expressionOperator.op());
+            final List<Predicate<RefStoreEntry>> childPredicates = expressionOperator.getChildren()
+                    .stream()
+                    .map(this::convertExpressionItem)
+                    .collect(Collectors.toList());
+            return buildOperatorPredicate(childPredicates, expressionOperator);
+        } else {
+            return null;
+        }
+    }
+
+    private <T> Predicate<T> buildOperatorPredicate(
+            final List<Predicate<T>> childPredicates,
+            final ExpressionOperator expressionOperator) {
+
+        final List<Predicate<T>> effectivePredicates = childPredicates.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (expressionOperator.op().equals(Op.AND)) {
+            return buildAndPredicate(effectivePredicates);
+        } else if (expressionOperator.op().equals(Op.OR)) {
+            return buildOrPredicate(effectivePredicates);
+        } else if (expressionOperator.op().equals(Op.NOT)) {
+            return buildNotPredicate(effectivePredicates);
+        } else {
+            throw new RuntimeException("Unexpected op " + expressionOperator.op());
+        }
+    }
+
+    private <T> Predicate<T> buildAndPredicate(final List<Predicate<T>> childPredicates) {
+
+        if (childPredicates != null && !childPredicates.isEmpty()) {
+            return val -> {
+                boolean compoundResult = true;
+
+                // expecting all list items to be non null
+                for (final Predicate<T> childPredicate : childPredicates) {
+                    boolean testResult = childPredicate.test(val);
+
+                    compoundResult = compoundResult && testResult;
+
+                    // Found one FALSE so drop out early
+                    if (!compoundResult) {
+                        break;
                     }
                 }
-            }
-            return predicate != null
-                    ? predicate
-                    : refStoreEntry -> true;
+                return compoundResult;
+            };
         } else {
-            return refStoreEntry -> true;
+            // empty AND() so no effectively no predicate
+            return null;
+        }
+    }
+
+    private <T> Predicate<T> buildOrPredicate(final List<Predicate<T>> childPredicates) {
+
+        if (childPredicates != null && !childPredicates.isEmpty()) {
+            return val -> {
+                boolean compoundResult = false;
+
+                // expecting all list items to be non null
+                for (final Predicate<T> childPredicate : childPredicates) {
+                    boolean testResult = childPredicate.test(val);
+
+                    compoundResult = compoundResult || testResult;
+
+                    // Found one TRUE so drop out early
+                    if (compoundResult) {
+                        break;
+                    }
+                }
+                return compoundResult;
+            };
+        } else {
+            // empty AND() so no effectively no predicate
+            return null;
+        }
+    }
+
+    private <T> Predicate<T> buildNotPredicate(final List<Predicate<T>> childPredicates) {
+
+        if (childPredicates != null && !childPredicates.isEmpty()) {
+            return val -> {
+                Boolean compoundResult = null;
+
+                // expecting all list items to be non null
+                for (final Predicate<T> childPredicate : childPredicates) {
+                    // treat NOT(x, y) as AND(NOT(x), NOT(y))
+                    boolean testResult = !childPredicate.test(val);
+
+                    if (compoundResult == null) {
+                        compoundResult = testResult;
+                    } else {
+                        compoundResult = compoundResult && testResult;
+                    }
+
+                    // Found one FALSE so drop out early
+                    if (!compoundResult) {
+                        break;
+                    }
+                }
+                if (compoundResult != null) {
+                    return compoundResult;
+                } else {
+                    // No children i.e. empty NOT()
+                    return false;
+                }
+            };
+        } else {
+            // empty AND() so no effectively no predicate
+            return null;
         }
     }
 
@@ -496,9 +624,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, String> valueExtractor) {
         // TODO @AT Handle wildcarding in term
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec -> Objects.equals(expressionTerm.getValue(), valueExtractor.apply(rec));
+            return rec -> {
+                final String termValue = expressionTerm.getValue();
+                final String entryValue = valueExtractor.apply(rec);
+                return Objects.equals(termValue, entryValue);
+            };
         } else if (expressionTerm.getCondition().equals(Condition.CONTAINS)) {
-            return rec -> valueExtractor.apply(rec).contains(expressionTerm.getValue());
+            return rec -> {
+                final String termValue = expressionTerm.getValue();
+                final String entryValue = valueExtractor.apply(rec);
+                return entryValue.contains(termValue);
+            };
         } else {
             throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
         }
@@ -544,7 +680,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private Predicate<RefStoreEntry> buildDocRefFieldPredicate(final ExpressionTerm expressionTerm,
                                                                final Function<RefStoreEntry, DocRef> valueExtractor) {
-        final DocRef termValue = new DocRef.Builder()
+        final DocRef termValue = DocRef.builder()
                 .uuid(expressionTerm.getValue())
                 .build();
         if (expressionTerm.getCondition().equals(Condition.IS_DOC_REF)) {
@@ -584,6 +720,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         switch (field.getType()) {
             case FieldTypes.TEXT:
                 return ValString.create((String) object);
+            case FieldTypes.INTEGER:
+                return ValInteger.create((Integer) object);
             case FieldTypes.LONG:
             case FieldTypes.ID:
             case FieldTypes.DATE:

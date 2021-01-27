@@ -16,11 +16,13 @@
 
 package stroom.core.entity.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -38,17 +40,30 @@ class EntityEventHandler {
     private volatile boolean initialised;
 
     private final Provider<Set<Handler>> entityEventHandlerProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityEventHandler(final Provider<Set<Handler>> entityEventHandlerProvider) {
+    EntityEventHandler(final Provider<Set<Handler>> entityEventHandlerProvider,
+                       final SecurityContext securityContext) {
         this.entityEventHandlerProvider = entityEventHandlerProvider;
+        this.securityContext = securityContext;
     }
 
     void fireLocally(final EntityEvent event) {
-        // Fire to type specific handlers.
-        fireEventByType(event, event.getDocRef().getType());
-        // Fire to any (*) type handlers.
-        fireEventByType(event, "*");
+        // Ensure all incoming calls belong to authenticated users with administrative permissions.
+        // Note that this should always be the processing user really as the EntityEventBus is responsible for
+        // distributing entity events to all nodes and should be sending all requests as the processing user.
+        if (!securityContext.isAdmin()) {
+            LOGGER.error("Only an account with administrative privileges can fire entity events (" +
+                    securityContext.getUserIdentity() +
+                    ")");
+
+        } else {
+            // Fire to type specific handlers.
+            fireEventByType(event, event.getDocRef().getType());
+            // Fire to any (*) type handlers.
+            fireEventByType(event, "*");
+        }
     }
 
     /**
@@ -99,7 +114,6 @@ class EntityEventHandler {
         }
     }
 
-    //    @Override
     private void addHandler(final Handler handler, final String type, final EntityAction... action) {
         final Map<EntityAction, List<Handler>> map = handlers.computeIfAbsent(type, k -> new HashMap<>());
         if (action == null || action.length == 0) {

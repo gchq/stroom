@@ -18,22 +18,22 @@ class HyperlinkTest {
         namedUrls.put("shades-shop", "http://shades.com/shop/item");
 
         final Map<String, Hyperlink> testLinks = new HashMap<>();
-        testLinks.put("[Orange](__orange-ui__){DIALOG}", new Hyperlink.Builder()
+        testLinks.put("[Orange](__orange-ui__){DIALOG}", Hyperlink.builder()
                 .text("Orange")
                 .href("http://colors/orange")
                 .type(HyperlinkType.DIALOG.name().toLowerCase())
                 .build());
-        testLinks.put("[Blue](__colors-ui__/get?id=blue){STROOM_TAB}", new Hyperlink.Builder()
+        testLinks.put("[Blue](__colors-ui__/get?id=blue){STROOM_TAB}", Hyperlink.builder()
                 .text("Blue")
                 .href("http://colors/get?id=blue")
                 .type(HyperlinkType.TAB.name().toLowerCase())
                 .build());
-        testLinks.put("[Magenta](__shades-shop__?id=kinda%20purple){STROOM_TAB}", new Hyperlink.Builder()
+        testLinks.put("[Magenta](__shades-shop__?id=kinda%20purple){STROOM_TAB}", Hyperlink.builder()
                 .text("Magenta")
                 .href("http://shades.com/shop/item?id=kinda%20purple")
                 .type(HyperlinkType.TAB.name().toLowerCase())
                 .build());
-        testLinks.put("[First](http//some-url/First){BROWSER_TAB}", new Hyperlink.Builder()
+        testLinks.put("[First](http//some-url/First){BROWSER_TAB}", Hyperlink.builder()
                 .text("First")
                 .href("http//some-url/First")
                 .type(HyperlinkType.BROWSER.name().toLowerCase())

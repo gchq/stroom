@@ -16,38 +16,31 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
+import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
+import stroom.editor.client.presenter.EditorView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
-import stroom.widget.button.client.ImageButton;
 
 public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionView {
-    private static Resources resources;
     private final Widget widget;
 
     @UiField
-    TextArea expression;
+    ResizeSimplePanel editorContainer;
     @UiField
-    ImageButton addFunction;
+    ButtonPanel buttonPanel;
 
     @Inject
     public ExpressionViewImpl(final Binder binder) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-        }
 
         widget = binder.createAndBindUi(this);
-
-        addFunction.setEnabledImage(resources.expression());
     }
 
     @Override
@@ -56,44 +49,13 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
     }
 
     @Override
-    public String getExpression() {
-        return this.expression.getText();
+    public void setEditor(final EditorView editor) {
+        this.editorContainer.setWidget(editor.asWidget());
     }
 
     @Override
-    public void setExpression(final String expression) {
-        this.expression.setText(expression);
-    }
-
-    @UiHandler("addFunction")
-    public void onAddFunctionClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onAddFunction(event);
-        }
-    }
-
-    @Override
-    public void focus() {
-        expression.setFocus(true);
-    }
-
-    @Override
-    public int getCursorPos() {
-        return expression.getCursorPos();
-    }
-
-    @Override
-    public void setCursorPos(final int pos) {
-        expression.setCursorPos(pos);
-    }
-
-    @Override
-    public int getSelectionLength() {
-        return expression.getSelectionLength();
-    }
-
-    public interface Resources extends ClientBundle {
-        ImageResource expression();
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {

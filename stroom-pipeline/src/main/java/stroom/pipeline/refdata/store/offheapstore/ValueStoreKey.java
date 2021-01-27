@@ -68,7 +68,8 @@ public class ValueStoreKey {
     public ValueStoreKey nextKey() {
         if (uniqueId == MAX_UNIQUE_ID) {
             throw new RuntimeException(LogUtil.message(
-                    "Unable to create the next key as the max ID {} has been reached", MAX_UNIQUE_ID));
+                    "Unable to create the next key as the max ID {} has been reached",
+                    MAX_UNIQUE_ID));
         }
         return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));
     }

@@ -16,16 +16,8 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
-import stroom.dashboard.shared.ComponentConfig;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -33,10 +25,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Consumer;
+
 public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> implements PopupUiHandlers {
     private DashboardPresenter dashboardPresenter;
     private TabLayout tabLayout;
-    private ComponentConfig componentConfig;
+    private String componentName;
+    private Consumer<String> nameChangeConsumer;
 
     @Inject
     public RenameTabPresenter(final EventBus eventBus, final RenameTabView view) {
@@ -54,12 +57,16 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
         }));
     }
 
-    public void show(final DashboardPresenter dashboardPresenter, final TabLayout flexLayout, final ComponentConfig componentConfig) {
+    public void show(final DashboardPresenter dashboardPresenter,
+                     final TabLayout flexLayout,
+                     final String componentName,
+                     final Consumer<String> nameChangeConsumer) {
         this.dashboardPresenter = dashboardPresenter;
         this.tabLayout = flexLayout;
-        this.componentConfig = componentConfig;
+        this.componentName = componentName;
+        this.nameChangeConsumer = nameChangeConsumer;
 
-        getView().getName().setText(componentConfig.getName());
+        getView().getName().setText(componentName);
 
         final PopupSize popupSize = new PopupSize(250, 78, 250, 78, 1000, 78, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Rename Tab", this);
@@ -70,8 +77,9 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
             final String name = getView().getName().getText();
-            if (name != null && !name.trim().isEmpty() && !EqualsUtil.isEquals(name, componentConfig.getName())) {
-                componentConfig.setName(name);
+            if (name != null && !name.trim().isEmpty() && !EqualsUtil.isEquals(name, componentName)) {
+                nameChangeConsumer.accept(name);
+
 //                tabLayout.clear();
                 tabLayout.refresh();
                 dashboardPresenter.onDirty();

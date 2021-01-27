@@ -18,14 +18,19 @@
 
 package stroom.security.identity.token;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.Date;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CreateTokenRequest {
 
     @NotNull
+    @JsonProperty
     private String userId;
 
     // TODO should be an enum really
@@ -33,15 +38,19 @@ public class CreateTokenRequest {
     @Pattern(
             regexp = "^user$|^api$|^email_reset$",
             message = "tokenType must be one of: 'user', 'api', 'email_reset'")
+    @JsonProperty
     private String tokenType;
 
     @Nullable
+    @JsonProperty
     private Long expiresOnMs;
 
     @Nullable
+    @JsonProperty
     private String comments;
 
     @Nullable
+    @JsonProperty
     private boolean enabled = true;
 
     // Needed for serialisation
@@ -58,11 +67,12 @@ public class CreateTokenRequest {
         this.comments = comments;
     }
 
-    public CreateTokenRequest(final String userId,
-                              final String tokenType,
-                              final boolean enabled,
-                              final String comments,
-                              final Long expiresOnMs) {
+    @JsonCreator
+    public CreateTokenRequest(@JsonProperty("userId") final String userId,
+                              @JsonProperty("tokenType") final String tokenType,
+                              @JsonProperty("enabled") final boolean enabled,
+                              @JsonProperty("comments") final String comments,
+                              @JsonProperty("expiresOnMs") final Long expiresOnMs) {
         this.userId = userId;
         this.tokenType = tokenType;
         this.enabled = enabled;

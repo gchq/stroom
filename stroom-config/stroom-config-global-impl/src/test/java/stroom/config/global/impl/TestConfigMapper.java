@@ -374,12 +374,12 @@ class TestConfigMapper {
         List<DocRef> initialValue = getter.get();
         List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
-                newValue.add(new DocRef.Builder()
+                newValue.add(DocRef.builder()
                         .type(docRef.getType() + "x")
                         .uuid(UUID.randomUUID().toString())
                         .name(docRef.getName() + "xx")
                         .build()));
-        newValue.add(new DocRef.Builder()
+        newValue.add(DocRef.builder()
                 .type("NewDocRefType")
                 .uuid(UUID.randomUUID().toString())
                 .build());
@@ -592,23 +592,23 @@ class TestConfigMapper {
         return new AppConfig();
     }
 
-    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {
-        ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
-
-        ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
-
-        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
-                .create(
-                        Config.class,
-                        io.dropwizard.jersey.validation.Validators.newValidator(),
-                        Jackson.newObjectMapper(),
-                        "dw");
-        Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
-
-        return config.getAppConfig();
-    }
+//    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {
+//        ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
+//                new FileConfigurationSourceProvider(),
+//                new EnvironmentVariableSubstitutor(false));
+//
+//        ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+//
+//        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
+//                .create(
+//                        Config.class,
+//                        io.dropwizard.jersey.validation.Validators.newValidator(),
+//                        Jackson.newObjectMapper(),
+//                        "dw");
+//        Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
+//
+//        return config.getAppConfig();
+//    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -6,7 +6,6 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DbUrl;
-import stroom.db.util.DbUrl.Builder;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
@@ -108,21 +107,24 @@ public class DbTestUtil {
             if (isUseEmbeddedDb()) {
                 connectionConfig = DbTestUtil.createEmbeddedMySqlInstance();
 
-                rootConnectionConfig = new ConnectionConfig.Builder(connectionConfig)
+                rootConnectionConfig = connectionConfig
+                        .copy()
                         .user("root")
                         .password("")
                         .build();
 
             } else {
                 final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
-                final String url = new Builder()
+                final String url = DbUrl
+                        .builder()
                         .scheme(dbUrl.getScheme())
                         .host(dbUrl.getHost())
                         .port(dbUrl.getPort())
                         .build()
                         .toString();
 
-                rootConnectionConfig = new ConnectionConfig.Builder(connectionConfig)
+                rootConnectionConfig = connectionConfig
+                        .copy()
                         .url(url)
                         .user("root")
                         .password("my-secret-pw")
@@ -147,13 +149,15 @@ public class DbTestUtil {
             }
 
             // Create a URL for connecting to the new DB.
-            final String url = new Builder()
+            final String url = DbUrl
+                    .builder()
                     .parse(rootConnectionConfig.getUrl())
                     .dbName(dbName)
                     .build()
                     .toString();
 
-            final ConnectionConfig newConnectionConfig = new ConnectionConfig.Builder(connectionConfig)
+            final ConnectionConfig newConnectionConfig = connectionConfig
+                    .copy()
                     .url(url)
                     .build();
             dbConfig.setConnectionConfig(newConnectionConfig);
@@ -205,8 +209,8 @@ public class DbTestUtil {
         }
 
         final MysqldConfig mysqlConfig = embeddedMysql.getConfig();
-        final String url = new DbUrl
-                .Builder()
+        final String url = DbUrl
+                .builder()
                 .port(mysqlConfig.getPort())
                 .query("useUnicode=yes&characterEncoding=UTF-8")
                 .build()
@@ -247,8 +251,8 @@ public class DbTestUtil {
     }
 
     private static ConnectionConfig createConnectionConfig(final String dbName, final MysqldConfig mysqlConfig) {
-        final String url = new DbUrl
-                .Builder()
+        final String url = DbUrl
+                .builder()
                 .port(mysqlConfig.getPort())
                 .dbName(dbName)
                 .query("useUnicode=yes&characterEncoding=UTF-8")

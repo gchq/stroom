@@ -21,26 +21,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class SearchRequest implements Serializable {
-    private static final long serialVersionUID = -6668626615097471925L;
-
+public class SearchRequest {
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty
     private final Search search;
     @JsonProperty
-    private final Map<String, ComponentResultRequest> componentResultRequests;
+    private final List<ComponentResultRequest> componentResultRequests;
     @JsonProperty
     private final String dateTimeLocale;
 
     @JsonCreator
     public SearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
                          @JsonProperty("search") final Search search,
-                         @JsonProperty("componentResultRequests") final Map<String, ComponentResultRequest> componentResultRequests,
+                         @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
                          @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
@@ -56,7 +54,7 @@ public class SearchRequest implements Serializable {
         return search;
     }
 
-    public Map<String, ComponentResultRequest> getComponentResultRequests() {
+    public List<ComponentResultRequest> getComponentResultRequests() {
         return componentResultRequests;
     }
 
@@ -68,20 +66,74 @@ public class SearchRequest implements Serializable {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         final SearchRequest that = (SearchRequest) o;
-
-        if (search != null ? !search.equals(that.search) : that.search != null) return false;
-        if (componentResultRequests != null ? !componentResultRequests.equals(that.componentResultRequests) : that.componentResultRequests != null)
-            return false;
-        return dateTimeLocale != null ? dateTimeLocale.equals(that.dateTimeLocale) : that.dateTimeLocale == null;
+        return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
+                Objects.equals(search, that.search) &&
+                Objects.equals(componentResultRequests, that.componentResultRequests) &&
+                Objects.equals(dateTimeLocale, that.dateTimeLocale);
     }
 
     @Override
     public int hashCode() {
-        int result = search != null ? search.hashCode() : 0;
-        result = 31 * result + (componentResultRequests != null ? componentResultRequests.hashCode() : 0);
-        result = 31 * result + (dateTimeLocale != null ? dateTimeLocale.hashCode() : 0);
-        return result;
+        return Objects.hash(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+    }
+
+    @Override
+    public String toString() {
+        return "SearchRequest{" +
+                "dashboardQueryKey=" + dashboardQueryKey +
+                ", search=" + search +
+                ", componentResultRequests=" + componentResultRequests +
+                ", dateTimeLocale='" + dateTimeLocale + '\'' +
+                '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private DashboardQueryKey dashboardQueryKey;
+        private Search search;
+        private List<ComponentResultRequest> componentResultRequests;
+        private String dateTimeLocale;
+
+        private Builder() {
+        }
+
+        private Builder(final SearchRequest searchRequest) {
+            this.dashboardQueryKey = searchRequest.dashboardQueryKey;
+            this.search = searchRequest.search;
+            this.componentResultRequests = searchRequest.componentResultRequests;
+            this.dateTimeLocale = searchRequest.dateTimeLocale;
+        }
+
+        public Builder dashboardQueryKey(final DashboardQueryKey dashboardQueryKey) {
+            this.dashboardQueryKey = dashboardQueryKey;
+            return this;
+        }
+
+        public Builder search(final Search search) {
+            this.search = search;
+            return this;
+        }
+
+        public Builder componentResultRequests(final List<ComponentResultRequest> componentResultRequests) {
+            this.componentResultRequests = componentResultRequests;
+            return this;
+        }
+
+        public Builder dateTimeLocale(final String dateTimeLocale) {
+            this.dateTimeLocale = dateTimeLocale;
+            return this;
+        }
+
+        public SearchRequest build() {
+            return new SearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+        }
     }
 }

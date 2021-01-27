@@ -23,7 +23,6 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.refdata.store.ByteBufferConsumerId;
-import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -35,9 +34,11 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -383,7 +384,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .thenReturn(buildUniqueRefStreamDefinition());
 
         Mockito.when(refDataLoader.initialise(Mockito.anyBoolean()))
-                .thenReturn(true);
+                .thenReturn(PutOutcome.success());
 
         // capture the args passed to the two put methods. Have to use doAnswer
         // so we can copy the buffer that is reused and therefore mutates.
@@ -391,7 +392,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
             loadedRefDataValues.addKeyValue(
                     invocation.getArgument(1),
                     invocation.getArgument(2));
-            return true;
+            return PutOutcome.newEntry();
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.any(String.class),
@@ -401,7 +402,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
             loadedRefDataValues.addRangeValue(
                     invocation.getArgument(1), // mockito can infer the type
                     invocation.getArgument(2));
-            return true;
+            return PutOutcome.newEntry();
         }).when(refDataLoader).put(
                 Mockito.any(),
                 Mockito.<Range<Long>>any(),

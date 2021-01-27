@@ -17,14 +17,15 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
+import stroom.event.logging.api.StroomEventLoggingService;
+
 import event.logging.Data;
-import event.logging.Event;
-import event.logging.ObjectOutcome;
+import event.logging.OtherObject;
+import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.event.logging.api.StroomEventLoggingService;
 
 import javax.inject.Inject;
 
@@ -45,46 +46,56 @@ public class PipelineEventLog {
                            final Throwable th) {
         try {
             if (eventId != null) {
-                final Event event = eventLoggingService.createAction("Stepping", "Stepping Stream");
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createStreamObject(eventId, feedName, streamTypeName, pipelineRef));
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
-                eventLoggingService.log(event);
+
+                eventLoggingService.log(
+                        "Stepping",
+                        "Stepping Stream",
+                        ViewEventAction.builder()
+                                .withObjects(createStreamObject(eventId, feedName, streamTypeName, pipelineRef))
+                                .withOutcome(EventLoggingUtil.createOutcome(th))
+                                .build());
             }
         } catch (final Exception e) {
             LOGGER.error("Unable to step stream!", e);
         }
     }
 
-    private event.logging.Object createStreamObject(final String eventId,
-                                                    final String feedName,
-                                                    final String streamTypeName,
-                                                    final DocRef pipelineRef) {
-        final event.logging.Object object = new event.logging.Object();
-        object.setType("Stream");
-        object.setId(eventId);
+    private OtherObject createStreamObject(final String eventId,
+                                           final String feedName,
+                                           final String streamTypeName,
+                                           final DocRef pipelineRef) {
+        final OtherObject.Builder<Void> objectBuilder = OtherObject.builder()
+                .withType("Stream")
+                .withId(eventId);
+
         if (feedName != null) {
-            object.getData().add(EventLoggingUtil.createData("Feed", feedName));
+            objectBuilder.addData(EventLoggingUtil.createData("Feed", feedName));
         }
         if (streamTypeName != null) {
-            object.getData().add(EventLoggingUtil.createData("StreamType", streamTypeName));
+            objectBuilder.addData(EventLoggingUtil.createData("StreamType", streamTypeName));
         }
         if (pipelineRef != null) {
-            object.getData().add(convertDocRef("Pipeline", pipelineRef));
+            objectBuilder.addData(convertDocRef("Pipeline", pipelineRef));
         }
 
-        return object;
+        return objectBuilder.build();
     }
 
     private Data convertDocRef(final String name, final DocRef docRef) {
-        final Data data = new Data();
-        data.setName(name);
-
-        data.getData().add(EventLoggingUtil.createData("type", docRef.getType()));
-        data.getData().add(EventLoggingUtil.createData("uuid", docRef.getUuid()));
-        data.getData().add(EventLoggingUtil.createData("name", docRef.getName()));
-
-        return data;
+        return Data.builder()
+                .withName(name)
+                .addData(Data.builder()
+                        .withName("type")
+                        .withValue(docRef.getType())
+                        .build())
+                .addData(Data.builder()
+                        .withName("uuid")
+                        .withValue(docRef.getUuid())
+                        .build())
+                .addData(Data.builder()
+                        .withName("name")
+                        .withValue(docRef.getName())
+                        .build())
+                .build();
     }
 }

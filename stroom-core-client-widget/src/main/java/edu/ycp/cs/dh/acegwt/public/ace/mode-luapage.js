@@ -784,6 +784,7 @@ oop.inherits(Mode, TextMode);
     };
 
     this.$id = "ace/mode/javascript";
+    this.snippetFileId = "ace/snippets/javascript";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
@@ -1103,11 +1104,7 @@ var CssCompletions = function() {
             this.defineCompletions();
         }
 
-        var token = session.getTokenAt(pos.row, pos.column);
-
-        if (!token)
-            return [];
-        if (state==='ruleset'){
+        if (state==='ruleset' || session.$mode.$id == "ace/mode/scss") {
             var line = session.getLine(pos.row).substr(0, pos.column);
             if (/:[^;]+$/.test(line)) {
                 /([\w\-]+):[^:]*$/.test(line);
@@ -1320,6 +1317,7 @@ oop.inherits(Mode, TextMode);
     };
 
     this.$id = "ace/mode/css";
+    this.snippetFileId = "ace/snippets/css";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
@@ -2497,6 +2495,7 @@ oop.inherits(Mode, TextMode);
     };
 
     this.$id = "ace/mode/html";
+    this.snippetFileId = "ace/snippets/html";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
@@ -2741,7 +2740,7 @@ oop.inherits(FoldMode, BaseFoldMode);
         }
     };
 
-    this.luaBlock = function(session, row, column) {
+    this.luaBlock = function(session, row, column, tokenRange) {
         var stream = new TokenIterator(session, row, column);
         var indentKeywords = {
             "function": 1,
@@ -2783,6 +2782,12 @@ oop.inherits(FoldMode, BaseFoldMode);
                     stack.unshift(token.value);
             }
         }
+
+        if (!token)
+            return null;
+
+        if (tokenRange)
+            return stream.getCurrentTokenRange();
 
         var row = stream.getCurrentTokenRow();
         if (dir === -1)
@@ -2893,17 +2898,31 @@ oop.inherits(Mode, TextMode);
         return (tokens[0].type == "keyword" && outdentKeywords.indexOf(tokens[0].value) != -1);
     };
 
-    this.autoOutdent = function(state, session, row) {
-        var prevLine = session.getLine(row - 1);
-        var prevIndent = this.$getIndent(prevLine).length;
-        var prevTokens = this.getTokenizer().getLineTokens(prevLine, "start").tokens;
-        var tabLength = session.getTabString().length;
-        var expectedIndent = prevIndent + tabLength * getNetIndentLevel(prevTokens);
-        var curIndent = this.$getIndent(session.getLine(row)).length;
-        if (curIndent <= expectedIndent) {
-            return;
+    this.getMatching = function(session, row, column) {
+        if (row == undefined) {
+            var pos = session.selection.lead;
+            column = pos.column;
+            row = pos.row;
         }
-        session.outdentRows(new Range(row, 0, row + 2, 0));
+
+        var startToken = session.getTokenAt(row, column);
+        if (startToken && startToken.value in indentKeywords)
+            return this.foldingRules.luaBlock(session, row, column, true);
+    };
+
+    this.autoOutdent = function(state, session, row) {
+        var line = session.getLine(row);
+        var column = line.match(/^\s*/)[0].length;
+        if (!column || !row) return;
+
+        var startRange = this.getMatching(session, row, column + 1);
+        if (!startRange || startRange.start.row == row)
+             return;
+        var indent = this.$getIndent(session.getLine(startRange.start.row));
+        if (indent.length != column) {
+            session.replace(new Range(row, 0, row, column), indent);
+            session.outdentRows(new Range(row + 1, 0, row + 1, 0));
+        }
     };
 
     this.createWorker = function(session) {
@@ -2922,6 +2941,7 @@ oop.inherits(Mode, TextMode);
     };
 
     this.$id = "ace/mode/lua";
+    this.snippetFileId = "ace/snippets/lua";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

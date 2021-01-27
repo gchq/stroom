@@ -2,6 +2,8 @@ package stroom.dist;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.YamlUtil;
+import stroom.util.io.DiffUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import com.hubspot.jinjava.Jinjava;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -65,9 +68,12 @@ public class GenerateDistributionConfig {
 
         final String configTemplate = Files.readString(configTemplateFile);
 
+        final List<Path> generatedFiles = new ArrayList<>();
+
         CONTEXTS.forEach(context -> {
-            LOGGER.info("======================================================================");
+            LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             LOGGER.info("Building template for {} distribution", context.get(DIST_KEY));
+            LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
             final String renderedTemplate = jinjava.render(configTemplate, context);
 
@@ -81,14 +87,42 @@ public class GenerateDistributionConfig {
                 Files.createDirectories(outputFileNameFile.getParent());
 
                 LOGGER.info("Writing file {}", outputFileNameFile.normalize().toAbsolutePath());
+                generatedFiles.add(outputFileNameFile);
 
                 Files.writeString(outputFileNameFile, renderedTemplate);
 
+                LOGGER.info("Verifying {} can be read into Config tree",
+                        outputFileNameFile.toAbsolutePath().normalize());
+                LOGGER.info("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
                 verifyOutputFile(outputFileNameFile);
+                LOGGER.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+
+        if (generatedFiles.size() > 1) {
+            for (int i = 1; i < generatedFiles.size(); i++) {
+                final Path file1 = generatedFiles.get(0);
+                final Path file2 = generatedFiles.get(i);
+
+                outputUnifiedDiff(file1, file2);
+            }
+        }
+    }
+
+    public static void outputUnifiedDiff(final Path file1, final Path file2) {
+
+        DiffUtil.unifiedDiff(
+                file1,
+                file2,
+                true,
+                3,
+                diffLines ->
+                        LOGGER.info("Comparing {} and {}\n{}",
+                                FileUtil.getCanonicalPath(file1),
+                                FileUtil.getCanonicalPath(file2),
+                                String.join("\n", diffLines)));
     }
 
     private static void verifyOutputFile(final Path configFile) throws IOException {

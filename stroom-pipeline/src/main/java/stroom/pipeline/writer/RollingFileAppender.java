@@ -26,6 +26,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -107,6 +108,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 dir = getRandomOutputPath();
                 dir = pathCreator.replaceContextVars(dir);
                 dir = pathCreator.replaceSystemProperties(dir);
+                dir = pathCreator.makeAbsolute(dir);
 
                 fileName = fileNamePattern;
                 fileName = pathCreator.replaceContextVars(fileName);

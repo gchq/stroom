@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +81,36 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
         int i = input.readInt(true);
         assertThat(str).isEqualTo("MyTestString");
         assertThat(i).isEqualTo(1);
+    }
+
+    @Test
+    void testSerialiseWithoutKeyPart() {
+        final ByteBuffer keyValueStoreKeyBuffer1 = ByteBuffer.allocate(20);
+        final ByteBuffer keyValueStoreKeyBuffer2 = ByteBuffer.allocate(20);
+        final ByteBuffer keyValueStoreKeyBuffer3 = ByteBuffer.allocate(20);
+
+        final UID uid = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 1, 2, 3);
+        final KeyValueStoreKey keyValueStoreKey1 = new KeyValueStoreKey(uid, "key1");
+        final KeyValueStoreKey keyValueStoreKey2 = new KeyValueStoreKey(uid, "key2");
+
+
+        final KeyValueStoreKeySerde keyValueStoreKeySerde = new KeyValueStoreKeySerde();
+
+        keyValueStoreKeySerde.serializeWithoutKeyPart(keyValueStoreKeyBuffer1, keyValueStoreKey1);
+        keyValueStoreKeySerde.serializeWithoutKeyPart(keyValueStoreKeyBuffer2, keyValueStoreKey2);
+
+        LOGGER.info("keyValueStoreKeyBuffer1 {}", ByteBufferUtils.byteBufferInfo(keyValueStoreKeyBuffer1));
+        LOGGER.info("keyValueStoreKeyBuffer2 {}", ByteBufferUtils.byteBufferInfo(keyValueStoreKeyBuffer2));
+
+        Assertions.assertThat(keyValueStoreKeyBuffer2)
+                .isEqualByComparingTo(keyValueStoreKeyBuffer1);
+
+        keyValueStoreKeySerde.serialize(keyValueStoreKeyBuffer3, keyValueStoreKey1);
+
+        LOGGER.info("keyValueStoreKeyBuffer3 {}", ByteBufferUtils.byteBufferInfo(keyValueStoreKeyBuffer3));
+
+        Assertions.assertThat(keyValueStoreKeyBuffer3)
+                .isNotEqualByComparingTo(keyValueStoreKeyBuffer1);
     }
 
     @Override

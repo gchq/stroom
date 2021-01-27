@@ -79,7 +79,8 @@ public class TestFindReplaceFilter2 {
         final StringBuilder replace = new StringBuilder();
         replace.append(REPLACE_CHAR);
 
-        return new FindReplaceFilter.Builder()
+        return FindReplaceFilter
+                .builder()
                 .find(find.toString())
                 .replacement(replace.toString())
                 .regex(true)

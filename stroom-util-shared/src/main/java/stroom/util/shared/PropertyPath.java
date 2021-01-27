@@ -119,10 +119,6 @@ public class PropertyPath implements Comparable<PropertyPath> {
         return parts.get(parts.size() - 1);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     @Override
     public int compareTo(final PropertyPath other) {
         return toString().compareTo(other.toString());
@@ -164,11 +160,22 @@ public class PropertyPath implements Comparable<PropertyPath> {
         return Objects.hash(parts);
     }
 
-    public static class Builder {
-        private List<String> parts = null;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        @SuppressWarnings("unused") // Needed for GWT
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private List<String> parts;
+
         private Builder() {
+        }
+
+        private Builder(final PropertyPath propertyPath) {
+            parts = propertyPath.parts;
         }
 
         /**

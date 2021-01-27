@@ -31,9 +31,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
-import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.AdvancedQuery;
+import event.logging.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -70,11 +70,15 @@ class NodeResourceImpl implements NodeResource {
 
     @Override
     public List<String> listAllNodes() {
-        return find().getValues()
-                .stream()
-                .map(NodeStatusResult::getNode)
-                .map(Node::getName)
-                .collect(Collectors.toList());
+        FetchNodeStatusResponse response = find();
+        if (response != null && response.getValues() != null){
+            return response.getValues()
+                    .stream()
+                    .map(NodeStatusResult::getNode)
+                    .map(Node::getName)
+                    .collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     @Override
@@ -91,11 +95,12 @@ class NodeResourceImpl implements NodeResource {
     public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query query = Query.builder()
+                .withAdvanced(AdvancedQuery.builder()
+                        .addAnd(And.builder()
+                                .build())
+                        .build())
+                .build();
 
         try {
             final List<Node> nodes = nodeService.find(new FindNodeCriteria()).getValues();
@@ -114,9 +119,20 @@ class NodeResourceImpl implements NodeResource {
             }
             response = new FetchNodeStatusResponse(resultList);
 
-            documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
+            documentEventLog.search(
+                    "List Nodes",
+                    query,
+                    Node.class.getSimpleName(),
+                    response.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    "List Nodes",
+                    query,
+                    Node.class.getSimpleName(),
+                    null,
+                    e);
+            throw e;
         }
 
         return response;

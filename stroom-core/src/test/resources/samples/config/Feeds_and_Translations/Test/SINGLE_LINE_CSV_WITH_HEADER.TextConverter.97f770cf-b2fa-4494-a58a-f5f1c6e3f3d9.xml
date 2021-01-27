@@ -9,7 +9,7 @@
 
   <!-- The first line contains the field names -->
   <split delimiter="|" maxMatch="1">
-    <group>
+    <group value="$1">
       <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
         <var id="heading" />
       </split>
@@ -18,7 +18,7 @@
 
   <!-- All subsequent lines are records -->
   <split delimiter="|">
-    <group>
+    <group value="$1">
       <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
         <data name="$heading$1" value="$1" />
       </split>

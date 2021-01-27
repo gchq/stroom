@@ -55,10 +55,16 @@ public class MetaHolder implements Holder {
         return inputStreamProvider;
     }
 
+    /**
+     * One based
+     */
     public long getStreamNo() {
         return streamNo;
     }
 
+    /**
+     * One based
+     */
     public void setStreamNo(final long streamNo) {
         this.streamNo = streamNo;
     }

@@ -17,9 +17,6 @@
 
 package stroom.script.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
@@ -31,6 +28,10 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
@@ -47,8 +48,11 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private int loadCount;
 
     @Inject
-    public ScriptPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                           final ScriptSettingsPresenter settingsPresenter, final ClientSecurityContext securityContext, final Provider<EditorPresenter> editorPresenterProvider) {
+    public ScriptPresenter(final EventBus eventBus,
+                           final LinkTabPanelView view,
+                           final ScriptSettingsPresenter settingsPresenter,
+                           final ClientSecurityContext securityContext,
+                           final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
@@ -111,7 +115,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         settingsPresenter.onReadOnly(readOnly);
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
         }
     }
 
@@ -127,7 +131,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
             if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }

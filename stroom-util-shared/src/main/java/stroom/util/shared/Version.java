@@ -57,6 +57,59 @@ public class Version implements Serializable, Comparable<Version> {
         return new Version(major, minor, patch);
     }
 
+    public static Version parse(final String string) {
+        Integer major = null;
+        Integer minor = null;
+        Integer patch = null;
+        if (string != null) {
+            final String[] parts = string.split("\\.");
+            if (parts.length > 0) {
+                major = Integer.parseInt(parts[0]);
+            }
+            if (parts.length > 1) {
+                minor = Integer.parseInt(parts[1]);
+            }
+            if (parts.length > 2) {
+                patch = Integer.parseInt(parts[2]);
+            }
+        }
+        return new Version(major, minor, patch);
+    }
+
+    public boolean gt(final Version version) {
+        final int[] a = toArray(this);
+        final int[] b = toArray(version);
+
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] > b[i]) {
+                return true;
+            } else if (a[i] < b[i]) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean lt(final Version version) {
+        final int[] a = toArray(this);
+        final int[] b = toArray(version);
+
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < b[i]) {
+                return true;
+            } else if (a[i] > b[i]) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private int[] toArray(final Version v) {
+        return new int[]{v.major != null ? v.major : 0, v.minor != null ? v.minor : 0, v.patch != null ? v.patch : 0};
+    }
+
     public Integer getMajor() {
         return major;
     }

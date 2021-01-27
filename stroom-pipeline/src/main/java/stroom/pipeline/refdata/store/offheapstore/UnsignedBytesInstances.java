@@ -25,18 +25,18 @@ import java.nio.ByteBuffer;
 
 /**
  * Each instance provides methods for working with unsigned longs that are written
- * to len bytes. The maximum size of the unsigned value will be governed by len, e.g
- * for len == 1, the range of values are 0-255.
+ * to len bytes. The maximum numeric value of the unsigned value will be governed
+ * by len, e.g for len == 1, the range of values are 0-255.
  */
 public enum UnsignedBytesInstances implements UnsignedBytes {
-    ONE(1),
-    TWO(2),
-    THREE(3),
-    FOUR(4),
-    FIVE(5),
-    SIX(6),
-    SEVEN(7),
-    EIGHT(8);
+    ONE(1), //    max                       255
+    TWO(2), //    max                    65,535
+    THREE(3), //  max                16,777,215
+    FOUR(4), //   max             4,294,967,295
+    FIVE(5), //   max         1,099,511,627,775
+    SIX(6), //    max       281,474,976,710,655
+    SEVEN(7), //  max    72,057,594,037,927,935
+    EIGHT(8); //  max 9,223,372,036,854,775,807
 
     private final int len;
     private final long maxVal;

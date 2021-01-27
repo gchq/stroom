@@ -17,13 +17,15 @@
 
 package stroom.job.impl;
 
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.job.shared.Job;
+
 import event.logging.BaseObject;
-import event.logging.Object;
+import event.logging.OtherObject;
+import event.logging.OtherObject.Builder;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.job.shared.Job;
 
 class JobObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobObjectInfoProvider.class);
@@ -41,20 +43,19 @@ class JobObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get job description!", e);
         }
 
-        final Object object = new Object();
-        object.setType("Job");
-        object.setId(String.valueOf(job.getId()));
-        object.setName(job.getName());
-        object.setDescription(description);
+        final Builder<Void> builder = OtherObject.builder()
+        .withType("Job")
+        .withId(String.valueOf(job.getId()))
+        .withName(job.getName())
+        .withDescription(description);
 
         try {
-            object.getData()
-                    .add(EventLoggingUtil.createData("Enabled", String.valueOf(job.isEnabled())));
+            builder.addData(EventLoggingUtil.createData("Enabled", String.valueOf(job.isEnabled())));
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to add unknown but useful data!", e);
         }
 
-        return object;
+        return builder.build();
     }
 
     @Override

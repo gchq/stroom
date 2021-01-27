@@ -16,31 +16,42 @@
 
 package stroom.event.logging.impl;
 
-import event.logging.Device;
-import event.logging.Event;
-import event.logging.Event.EventDetail;
-import event.logging.Event.EventSource;
-import event.logging.Event.EventTime;
-import event.logging.System;
-import event.logging.User;
-import event.logging.impl.DefaultEventLoggingService;
-import event.logging.util.DeviceUtil;
-import event.logging.util.EventLoggingUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 
+import event.logging.BaseOutcome;
+import event.logging.Device;
+import event.logging.Event;
+import event.logging.EventAction;
+import event.logging.EventDetail;
+import event.logging.EventSource;
+import event.logging.EventTime;
+import event.logging.Purpose;
+import event.logging.SystemDetail;
+import event.logging.User;
+import event.logging.impl.DefaultEventLoggingService;
+import event.logging.util.DeviceUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+@Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
     /**
      * Logger - should not be used for event logs
@@ -58,6 +69,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
+    private final Map<Class<? extends EventAction>, Optional<Function<EventAction, BaseOutcome>>> outcomeFactoryMap = new ConcurrentHashMap<>();
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext securityContext,
@@ -71,53 +83,113 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
-    public Event createEvent() {
+    public void log(final Event event) {
+        try {
+            super.log(event);
+        } catch (Exception e) {
+            // Swallow the exception so failure to log does not prevent the action being logged
+            // from succeeding
+            LOGGER.error("Error logging event", e);
+        }
+    }
+
+    @Override
+    public Event createEvent(final String typeId,
+                             final String description,
+                             final Purpose purpose,
+                             final EventAction eventAction) {
         // Get the current request.
         final HttpServletRequest request = getRequest();
-        // Create event time.
-        final EventTime eventTime = new EventTime();
-        eventTime.setTimeCreated(new Date());
 
-        // Get device.
-        final Device device = getDevice(request);
-
-        // Get client.
-        final Device client = getClient(request);
-
-        // Get user.
-        final User user = getUser();
-
-        // Create system.
-        final System system = new System();
-        system.setName(SYSTEM);
-        system.setEnvironment(ENVIRONMENT);
-        system.setVersion(buildInfoProvider.get().getBuildVersion());
-
-        // Create event source.
-        final EventSource eventSource = new EventSource();
-        eventSource.setSystem(system);
-        eventSource.setGenerator(GENERATOR);
-        eventSource.setDevice(device);
-        eventSource.setClient(client);
-        eventSource.setUser(user);
-
-        // Create event.
-        final Event event = super.createEvent();
-        event.setEventTime(eventTime);
-        event.setEventSource(eventSource);
-
-        return event;
+        return Event.builder()
+                .withEventTime(EventTime.builder()
+                        .withTimeCreated(new Date())
+                        .build())
+                .withEventSource(EventSource.builder()
+                        .withSystem(SystemDetail.builder()
+                                .withName(SYSTEM)
+                                .withEnvironment(ENVIRONMENT)
+                                .withVersion(buildInfoProvider.get().getBuildVersion())
+                                .build())
+                        .withGenerator(GENERATOR)
+                        .withDevice(getClient(request))
+                        .withClient(getClient(request))
+                        .withUser(getUser())
+                        .build())
+                .withEventDetail(EventDetail.builder()
+                        .withTypeId(typeId)
+                        .withDescription(description)
+                        .withPurpose(mergePurposes(PurposeUtil.create(currentActivity.getActivity()), purpose))
+                        .withEventAction(eventAction)
+                        .build())
+                .build();
     }
 
-    public Event createAction(final String typeId, final String description) {
-        final Event event = createEvent();
+    /**
+     * Shallow merge of the two Purpose objects
+     */
+    private Purpose mergePurposes(final Purpose base, final Purpose override) {
+        if (base == null && override == null) {
+            return null;
+        } else if (base != null && override == null) {
+            return base;
+        } else if (override != null && base == null) {
+            return override;
+        } else {
+            final Purpose purpose = base.newCopyBuilder().build();
+            mergeValue(override::getAuthorisations, purpose::setAuthorisations);
+            mergeValue(override::getClassification, purpose::setClassification);
+            mergeValue(override::getJustification, purpose::setJustification);
+            mergeValue(override::getStakeholders, purpose::setStakeholders);
+            mergeValue(override::getExpectedOutcome, purpose::setExpectedOutcome);
+            mergeValue(override::getSubject, purpose::setSubject);
 
-        final EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
-        eventDetail.setPurpose(PurposeUtil.create(currentActivity.getActivity()));
-        event.setEventDetail(eventDetail);
-
-        return event;
+            // Combine the list of Data items from each
+            purpose.getData().clear();
+            purpose.getData().addAll(base.getData());
+            purpose.getData().addAll(override.getData());
+            return purpose;
+        }
     }
+
+    private <T> void mergeValue(final Supplier<T> getter, final Consumer<T> setter) {
+        T value = getter.get();
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+
+//    public Event createSkeletonEvent(final String typeId, final String description) {
+//        return createSkeletonEvent(typeId, description, null);
+//    }
+//
+//    @Override
+//    public Event createSkeletonEvent(final String typeId,
+//                                     final String description,
+//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
+//                .withTypeId(typeId)
+//                .withDescription(description)
+//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
+//
+//        if (eventDetailBuilderConsumer != null) {
+//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
+//        }
+//
+//        return buildEvent()
+//                .withEventDetail(eventDetailBuilder.build())
+//                .build();
+//    }
+
+//    @Override
+//    public void log(final String typeId,
+//                    final String description,
+//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
+//
+//        super.log(typeId, description, eventDetailBuilderConsumer);
+//    }
+
 
     private Device getDevice(final HttpServletRequest request) {
         // Get stored device info.
@@ -167,11 +239,24 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
-            final String userId = securityContext.getUserId();
+            final String userId;
+            if (securityContext.isProcessingUser()) {
+                // We are running as proc user so try and get the OS user,
+                // though that may just be a shared account.
+                // This is useful where a CLI command is being used
+                final String osUser = System.getProperty("user.name");
+
+                userId = osUser != null
+                        ? osUser
+                        : securityContext.getUserId();
+            } else {
+                userId = securityContext.getUserId();
+            }
+
             if (userId != null) {
-                final User user = new User();
-                user.setId(userId);
-                return user;
+                return User.builder()
+                        .withId(userId)
+                        .build();
             }
         } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);
@@ -234,4 +319,5 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
         return null;
     }
+
 }

@@ -7,8 +7,7 @@ dependencies {
     compile project(':stroom-dashboard:stroom-storedquery-impl-db-jooq')
     compile project(':stroom-db-util')
 
-//    compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
+//    compile project(':stroom-docref')
     
     compile libs.flyway_core
     compile libs.guice4

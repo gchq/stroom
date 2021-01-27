@@ -2,7 +2,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.KryoSerializer;
+import stroom.lmdb.KryoSerializer;
 import stroom.util.logging.LogUtil;
 
 import java.util.UUID;

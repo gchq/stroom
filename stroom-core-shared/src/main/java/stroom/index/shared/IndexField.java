@@ -264,7 +264,15 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return conditions;
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private IndexFieldType fieldType = IndexFieldType.FIELD;
         private String fieldName;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
@@ -272,6 +280,19 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         private boolean stored;
         private boolean termPositions;
         private boolean caseSensitive;
+
+        private Builder() {
+        }
+
+        private Builder(final IndexField indexField) {
+            this.fieldType = indexField.fieldType;
+            this.fieldName = indexField.fieldName;
+            this.analyzerType = indexField.analyzerType;
+            this.indexed = indexField.indexed;
+            this.stored = indexField.stored;
+            this.termPositions = indexField.termPositions;
+            this.caseSensitive = indexField.caseSensitive;
+        }
 
         public Builder fieldType(final IndexFieldType fieldType) {
             this.fieldType = fieldType;

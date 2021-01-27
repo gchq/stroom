@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
+import stroom.meta.api.MetaProperties;
 import stroom.util.Period;
 
 public class FindAnalyticOutputCriteria {
@@ -52,12 +53,26 @@ public class FindAnalyticOutputCriteria {
                 + rowNumber + "]";
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private Period period;
         private Integer rowNumber;
         private FilterTermsTree filterTermsTree;
 
         private Builder() {
+        }
+
+        private Builder(final FindAnalyticOutputCriteria findAnalyticOutputCriteria) {
+            period = findAnalyticOutputCriteria.period;
+            rowNumber = findAnalyticOutputCriteria.rowNumber;
+            filterTermsTree = findAnalyticOutputCriteria.filterTermsTree;
         }
 
         public Builder setPeriod(final Period period) {

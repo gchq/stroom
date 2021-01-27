@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1792" viewBox="0 0 1792 1792">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) -->
     <path style="fill:#2196f3"
-          d="M1363 141q19-19 32-13t13 32v1472q0 26-13 32t-32-13l-710-710q-9-9-13-19v678q0 26-19 45t-45 19h-128q-26 0-45-19t-19-45v-1408q0-26 19-45t45-19h128q26 0 45 19t19 45v678q4-10 13-19z"/>
+          d="m 112,436 0,-360 c 0,-6.6 5.4,-12 12,-12 l 40,0 c 6.6,0 12,5.4 12,12 L 176,227.9 347.5,71.4 C 368.1,54.3 400,68.6 400,96 c 0,99.29198 0,160.44686 0,320 0,27.4 -31.9,41.7 -52.5,24.6 L 176,285.3 176,436 c 0,6.6 -5.4,12 -12,12 l -40,0 c -6.6,0 -12,-5.4 -12,-12 z" />
 </svg>

@@ -1,57 +1,63 @@
 package stroom.security.impl;
 
 public class CreateDTO {
-    private String name;
-    private Boolean isGroup;
+    private final String name;
+    private final Boolean group;
+
+    public CreateDTO(final String name,
+                     final Boolean group) {
+        this.name = name;
+        this.group = group;
+    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Boolean getGroup() {
-        return isGroup;
-    }
-
-    public void setGroup(Boolean group) {
-        isGroup = group;
+        return group;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("CreateDTO{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", group=").append(isGroup);
-        sb.append('}');
-        return sb.toString();
+        return "CreateDTO{" +
+                "name='" + name + '\'' +
+                ", group=" + group +
+                '}';
     }
 
-    public static class Builder {
-        private final CreateDTO instance;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-        public Builder(final CreateDTO instance) {
-            this.instance = instance;
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+        private String name;
+        private Boolean group;
+
+        private Builder() {
         }
 
-        public Builder() {
-            this(new CreateDTO());
+        private Builder(final CreateDTO createDTO) {
+            name = createDTO.name;
+            group = createDTO.group;
         }
 
-        public Builder name(final String value) {
-            instance.setName(value);
+        public Builder name(final String name) {
+            this.name = name;
             return this;
         }
 
-        public Builder group(final Boolean value) {
-            instance.setGroup(value);
+        public Builder group(final Boolean group) {
+            this.group = group;
             return this;
         }
 
         public CreateDTO build() {
-            return instance;
+            return new CreateDTO(name, group);
         }
     }
 }

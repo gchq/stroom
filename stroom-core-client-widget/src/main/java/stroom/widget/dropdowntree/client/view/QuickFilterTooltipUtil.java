@@ -10,6 +10,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class QuickFilterTooltipUtil {
 
@@ -26,10 +27,16 @@ public class QuickFilterTooltipUtil {
                                          final Consumer<Builder> preambleBuilder,
                                          final List<FilterFieldDefinition> fieldDefinitions) {
 
+        final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
+
+        final String description = "By default matches on " +
+                (defaultFieldNames != null ?  defaultFieldNames  + " " : "") +
+        "with the characters input appearing anywhere (in order) in the matches.";
         // All this help content needs to match what happens in QuickFilterPredicateFactory
         final Builder builder = TooltipUtil.builder()
                 .addHeading(header)
-                .addBreak();
+                .addBreak()
+                .addLine(description);
 
         // Add the supplied pre-amble
         if (preambleBuilder != null) {
@@ -43,13 +50,13 @@ public class QuickFilterTooltipUtil {
                 .addTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
-                            .addRow(TooltipUtil.fixedWidthText("/xxx"), "Regular expression matching.")
-                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching.")
-                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match.")
-                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match.")
-                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix match.")
-                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (default).")
-                            .addRow(TooltipUtil.fixedWidthText("!abc"), "Negated match.");
+                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
+                            .addRow(TooltipUtil.fixedWidthText("/abc"), "Regular expression matching (matches 'xxabcxx').")
+                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching (matches 'AlphaBravoCharlie').")
+                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match (matches 'abc'.")
+                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match (matches 'xxxabc')")
+                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix match (matches abcxxx').")
+                            .addRow(TooltipUtil.fixedWidthText("!abc"), "Negated match (matches 'xxx').");
 
                     if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
                         tableBuilder
@@ -75,15 +82,40 @@ public class QuickFilterTooltipUtil {
         return builder.build();
     }
 
+    private static String getDefaultFieldNamesInfo(final List<FilterFieldDefinition> fieldDefinitions) {
+        if (fieldDefinitions != null) {
+            final List<String> fieldNames = fieldDefinitions.stream()
+                    .filter(FilterFieldDefinition::isDefaultField)
+                    .map(FilterFieldDefinition::getDisplayName)
+                    .map(str -> "\"" + str + "\"")
+                    .collect(Collectors.toList());
+            if (fieldNames.isEmpty()) {
+                return null;
+            } else if (fieldNames.size() == 1) {
+                return "field " + fieldNames.get(0);
+            } else if (fieldNames.size() == 2) {
+                return "fields " + fieldNames.get(0) + " or " + fieldNames.get(1);
+            } else {
+                return "fields "
+                        + String.join(", ", fieldNames.subList(0, fieldNames.size() - 1))
+                        + " or "
+                        + fieldNames.get(fieldNames.size() - 1);
+            }
+        } else {
+            return null;
+        }
+    }
+
     private static void addFieldInfo(final List<FilterFieldDefinition> fieldDefinitions,
                                      final Builder builder) {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             builder
+                    .addBreak()
                     .addTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Filterable fields", "Field qualifier");
                         fieldDefinitions.forEach(fieldDefinition -> {
                             String suffix = fieldDefinition.isDefaultField()
-                                    ? " *"
+                                    ? " (Default)"
                                     : "";
                             final SafeHtml value = new SafeHtmlBuilder()
                                     .append(TooltipUtil.fixedWidthText(fieldDefinition.getFilterQualifier()))
@@ -93,8 +125,6 @@ public class QuickFilterTooltipUtil {
                         });
                         return tableBuilder.build();
                     })
-                    .addBreak()
-                    .addLine("* indicates the field will be included in default matching.")
                     .addBreak();
         }
     }

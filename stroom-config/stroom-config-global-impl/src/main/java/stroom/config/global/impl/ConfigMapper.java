@@ -864,7 +864,7 @@ public class ConfigMapper {
                     "Expecting three parts to a docRef: type, UUID and name. Found {}", parts.size()));
             }
 
-            return new DocRef.Builder()
+            return DocRef.builder()
                     .type(parts.get(0))
                     .uuid(parts.get(1))
                     .name(parts.get(2))

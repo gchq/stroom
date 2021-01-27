@@ -1,0 +1,20 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="dateTime" value="2020-08-29T04:00:40.832"/>
+      <data name="uuid" value="fd296b10-8c7d-4988-83ea-5e6114c66e8a"/>
+      <data name="firstName" value="Chantay"/>
+      <data name="surname" value="Huel"/>
+      <data name="username" value="teodora.toy"/>
+      <data name="bloodGroup" value="AB+"/>
+      <data name="emotionalState" value="😗"/>
+      <data name="address" value="3242 Berge Centers, Port Brenda, MO Z28 6XL"/>
+      <data name="company" value="Ebert, Jones and McGlynn"/>
+      <data name="companyLogo"
+            value="https://pigment.github.io/fake-logos/logos/medium/color/13.png"/>
+      <data name="lorum" value="alias modi et accusamus"/>
+   </record>
+</records>

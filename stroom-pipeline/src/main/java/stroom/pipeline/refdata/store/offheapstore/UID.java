@@ -131,14 +131,19 @@ public class UID {
     }
 
     /**
-     * Writes the next uid value after this to the passed bytebuffer and wraps it with
-     * a new UID instance.
+     * Increments the UID bytes found at offset 0 in byteBuffer to the next UID value.
+     * The position/limit of byteBuffer are unchanged.
      */
-    public UID nextUid(final ByteBuffer byteBuffer) {
-        // TODO @AT Maybe ought to be doing this by manipulating the bits into the passed buffer
-        //   as this might be faster
-        writeNextUid(byteBuffer);
-        return UID.wrap(byteBuffer);
+    public static void incrementUid(final ByteBuffer byteBuffer) {
+        UNSIGNED_BYTES.increment(byteBuffer, 0);
+    }
+
+    /**
+     * Increments the UID bytes found at offset in byteBuffer to the next UID value.
+     * The position/limit of byteBuffer are unchanged.
+     */
+    public static void incrementUid(final ByteBuffer byteBuffer, final int offset) {
+        UNSIGNED_BYTES.increment(byteBuffer, offset);
     }
 
     /**
@@ -185,7 +190,7 @@ public class UID {
     }
 
     /**
-     * Write a UID for id into the passed buffer
+     * Write a UID for id into the passed buffer, flips the buffer
      */
     private static ByteBuffer writeUid(final long id, final ByteBuffer byteBuffer) {
         UNSIGNED_BYTES.put(byteBuffer, id);

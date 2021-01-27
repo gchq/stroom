@@ -56,7 +56,8 @@ public final class IndexShardKeyUtil {
         final String partition = ALL;
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
 
-        return new IndexShardKey.Builder()
+        return IndexShardKey
+                .builder()
                 .indexUuid(index.getUuid())
                 .partition(partition)
                 .shardNo(shardNo)
@@ -125,7 +126,8 @@ public final class IndexShardKeyUtil {
             partitionToTime = dateTo.atStartOfDay(UTC).toInstant().toEpochMilli();
         }
 
-        return new IndexShardKey.Builder()
+        return IndexShardKey
+                .builder()
                 .indexUuid(index.getUuid())
                 .partition(partition)
                 .partitionFromTime(partitionFromTime)

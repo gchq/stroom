@@ -1,11 +1,12 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.query.common.v2.Receiver;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -15,17 +16,14 @@ import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
-import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -55,56 +52,84 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_PRECISION_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.PRECISION;
     private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
-
-    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
-    private final SearchConfig searchConfig;
-    private final TaskContextFactory taskContextFactory;
-
-    //defines how the entity fields relate to the table columns
-
     private static final Map<String, List<String>> COMMON_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
             StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL),
             StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL),
             StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL)
     );
-
     // VALUE stat only cols
     private static final Map<String, List<String>> VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
             StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL)
     );
 
+    //defines how the entity fields relate to the table columns
+    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
+    private final SearchConfig searchConfig;
+
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
-                                final SearchConfig searchConfig,
-                                final TaskContextFactory taskContextFactory) {
+                                final SearchConfig searchConfig) {
         this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
-        this.taskContextFactory = taskContextFactory;
+    }
+
+    /**
+     * TODO: This is a bit simplistic as a user could create a filter that said
+     * user=user1 AND user='*' which makes no sense. At the moment we would
+     * assume that the user tag is being rolled up so user=user1 would never be
+     * found in the data and thus would return no data.
+     */
+    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
+                                                                final StatisticStoreDoc statisticsDataSource) {
+        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
+
+        final RollUpBitMask result;
+
+        if (rolledUpTagsFound.size() > 0) {
+            final List<Integer> rollUpTagPositionList = new ArrayList<>();
+
+            for (final String tag : rolledUpTagsFound) {
+                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                if (position == null) {
+                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
+                }
+                rollUpTagPositionList.add(position);
+            }
+            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
+
+        } else {
+            result = RollUpBitMask.ZERO_MASK;
+        }
+        return result;
     }
 
     @Override
-    public Flowable<Val[]> search(final TaskContext parentTaskContext,
-                                  final StatisticStoreDoc statisticStoreEntity,
-                                  final FindEventCriteria criteria,
-                                  final FieldIndexMap fieldIndexMap) {
+    public void search(final TaskContext taskContext,
+                       final StatisticStoreDoc statisticStoreEntity,
+                       final FindEventCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final Receiver receiver) {
+        try {
+            List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
+            SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndex);
 
-        List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndexMap);
-        SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndexMap);
+            // build a mapper function to convert a resultSet row into a String[] based on the fields
+            // required by all coprocessors
+            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
-        // build a mapper function to convert a resultSet row into a String[] based on the fields
-        // required by all coprocessors
-        Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
-
-        // the query will not be executed until somebody subscribes to the flowable
-        return getFlowableQueryResults(parentTaskContext, sql, resultSetMapper);
+            // the query will not be executed until somebody subscribes to the flowable
+            getFlowableQueryResults(taskContext, sql, resultSetMapper, receiver);
+        } catch (final RuntimeException e) {
+            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+        }
     }
 
     private List<String> getSelectColumns(final StatisticStoreDoc statisticStoreEntity,
-                                          final FieldIndexMap fieldIndexMap) {
+                                          final FieldIndex fieldIndex) {
         //assemble a map of how fields map to 1-* select cols
 
-        if (fieldIndexMap == null || fieldIndexMap.size() == 0) {
+        if (fieldIndex == null || fieldIndex.size() == 0) {
             // This is a slight fudge to allow a dash query with a table that only has custom cols
             // tha involve no fields, e.g. one col of 'add(1,2)'. So we just return a col of nulls.
             return Collections.singletonList("null");
@@ -126,7 +151,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     .flatMap(entry ->
                             entry.getValue().stream()
                                     .map(colName ->
-                                            getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
+                                            getOptFieldIndexPosition(fieldIndex, entry.getKey())
                                                     .map(val -> colName))
                                     .filter(Optional::isPresent)
                                     .map(Optional::get))
@@ -137,27 +162,25 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     /**
      * Construct the sql select for the query's criteria
+     * <p>
+     * SQL for testing querying the stat/tag names
+     * <p>
+     * create table test (name varchar(255)) ENGINE=InnoDB DEFAULT
+     * CHARSET=latin1;
+     * <p>
+     * insert into test values ('StatName1');
+     * <p>
+     * insert into test values ('StatName2¬Tag1¬Val1¬Tag2¬Val2');
+     * <p>
+     * insert into test values ('StatName2¬Tag2¬Val2¬Tag1¬Val1');
+     * <p>
+     * select * from test where name REGEXP '^StatName1(¬|$)';
+     * <p>
+     * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
      */
     private SqlBuilder buildSql(final StatisticStoreDoc statisticStoreEntity,
                                 final FindEventCriteria criteria,
-                                final FieldIndexMap fieldIndexMap) {
-        /**
-         * SQL for testing querying the stat/tag names
-         * <p>
-         * create table test (name varchar(255)) ENGINE=InnoDB DEFAULT
-         * CHARSET=latin1;
-         * <p>
-         * insert into test values ('StatName1');
-         * <p>
-         * insert into test values ('StatName2¬Tag1¬Val1¬Tag2¬Val2');
-         * <p>
-         * insert into test values ('StatName2¬Tag2¬Val2¬Tag1¬Val1');
-         * <p>
-         * select * from test where name REGEXP '^StatName1(¬|$)';
-         * <p>
-         * select * from test where name REGEXP '¬Tag1¬Val1(¬|$)';
-         */
-
+                                final FieldIndex fieldIndex) {
         final RollUpBitMask rollUpBitMask = buildRollUpBitMaskFromCriteria(criteria, statisticStoreEntity);
 
         final String statNameWithMask = statisticStoreEntity.getName() + rollUpBitMask.asHexString();
@@ -165,8 +188,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
 
-        String selectColsStr = getSelectColumns(statisticStoreEntity, fieldIndexMap).stream()
-                .collect(Collectors.joining(", "));
+        String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndex));
 
         sql.append(selectColsStr);
 
@@ -204,30 +226,25 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         return sql;
     }
 
-    private Optional<Integer> getOptFieldIndexPosition(final FieldIndexMap fieldIndexMap, final String fieldName) {
-        int idx = fieldIndexMap.get(fieldName);
-        if (idx == -1) {
-            return Optional.empty();
-        } else {
-            return Optional.of(idx);
-        }
+    private Optional<Integer> getOptFieldIndexPosition(final FieldIndex fieldIndex, final String fieldName) {
+        final Integer idx = fieldIndex.getPos(fieldName);
+        return Optional.ofNullable(idx);
     }
-
 
     /**
      * Build a mapper function that will only extract the columns of interest from the resultSet row.
      * Assumes something external to the returned function will advance the resultSet
      */
     private Function<ResultSet, Val[]> buildResultSetMapper(
-            final FieldIndexMap fieldIndexMap,
+            final FieldIndex fieldIndex,
             final StatisticStoreDoc statisticStoreEntity) {
 
         LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
-                fieldIndexMap, statisticStoreEntity.getUuid()));
+                fieldIndex, statisticStoreEntity.getUuid()));
 
         // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
-        List<ValueExtractor> valueExtractors = fieldIndexMap.getMap().entrySet().stream()
+        List<ValueExtractor> valueExtractors = fieldIndex.stream()
                 .map(entry -> {
                     final int idx = entry.getValue();
                     final String fieldName = entry.getKey();
@@ -368,64 +385,68 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<Val[]> getFlowableQueryResults(final TaskContext parentContext,
-                                                    final SqlBuilder sql,
-                                                    final Function<ResultSet, Val[]> resultSetMapper) {
+    private void getFlowableQueryResults(final TaskContext taskContext,
+                                         final SqlBuilder sql,
+                                         final Function<ResultSet, Val[]> resultSetMapper,
+                                         final Receiver receiver) {
+        long count = 0;
 
-        //Not thread safe as each onNext will get the same ResultSet instance, however its position
-        // will have moved on each time.
-        return Flowable
-                .using(
-                        () -> new PreparedStatementResourceHolder(SQLStatisticsDbConnProvider, sql, searchConfig),
-                        factory -> {
-                            LOGGER.debug("Converting factory to a flowable");
-                            Preconditions.checkNotNull(factory);
-                            PreparedStatement ps = factory.getPreparedStatement();
-                            return Flowable.generate(
-                                    () -> executeQuery(parentContext, sql, ps),
-                                    (rs, emitter) -> {
-                                        // The line below can be un-commented in development debugging to slow down the
-                                        // return of all results to test iterative results and dashboard polling.
-                                        // LockSupport.parkNanos(200_000);
+        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
+            //settings ot prevent mysql from reading the whole resultset into memory
+            //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
+            //Also needs 'useCursorFetch=true' on the jdbc connect string
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    sql.toString(),
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
 
-                                        //advance the resultSet, if it is a row emit it, else finish the flow
-                                        if (Thread.currentThread().isInterrupted()) {
-                                            LOGGER.debug("Task is terminated/interrupted, calling onComplete");
-                                            emitter.onComplete();
-                                        } else {
-                                            if (rs.next()) {
-                                                LOGGER.trace("calling onNext");
-                                                Val[] values = resultSetMapper.apply(rs);
-                                                emitter.onNext(values);
-                                            } else {
-                                                LOGGER.debug("End of resultSet, calling onComplete");
-                                                emitter.onComplete();
-                                            }
-                                        }
-                                    });
-                        },
-                        PreparedStatementResourceHolder::dispose);
-    }
+                final int fetchSize = searchConfig.getFetchSize();
+                LOGGER.debug("Setting fetch size to {}", fetchSize);
+                preparedStatement.setFetchSize(fetchSize);
 
-    private ResultSet executeQuery(final TaskContext parentContext,
-                                   final SqlBuilder sql,
-                                   final PreparedStatement ps) {
-        return taskContextFactory.contextResult(
-                parentContext,
-                SqlStatisticsStore.TASK_NAME,
-                taskContext -> {
-                    final Supplier<String> message = () -> "Executing query " + sql.toString();
-                    taskContext.info(message);
-                    LAMBDA_LOGGER.debug(message);
+                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
+                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
 
-                    try {
-                        return ps.executeQuery();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(String.format("Error executing query %s, %s",
-                                ps.toString(), e.getMessage()), e);
+                final String message = String.format("Executing query %s", sql.toString());
+                taskContext.info(() -> message);
+                LAMBDA_LOGGER.debug(() -> message);
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                    // TODO prob needs to change in 6.1
+                    while (resultSet.next() &&
+                            !Thread.currentThread().isInterrupted()) {
+                        LOGGER.trace("Adding resultt");
+                        final Val[] values = resultSetMapper.apply(resultSet);
+                        receiver.getValuesConsumer().accept(values);
+                        count++;
                     }
-                })
-                .get();
+
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("Task is terminated/interrupted, calling onComplete");
+                    } else {
+                        LOGGER.debug("End of resultSet, calling onComplete");
+                    }
+
+                } catch (SQLException e) {
+                    throw new RuntimeException(String.format("Error executing query %s, %s",
+                            preparedStatement.toString(), e.getMessage()), e);
+
+                } finally {
+                    receiver.getCompletionConsumer().accept(count);
+                }
+
+            } catch (SQLException e) {
+                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
+            }
+
+        } catch (final SQLException e) {
+            throw new RuntimeException("Error getting connection", e);
+
+        } finally {
+            receiver.getCompletionConsumer().accept(count);
+        }
     }
 
     /**
@@ -458,36 +479,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    /**
-     * TODO: This is a bit simplistic as a user could create a filter that said
-     * user=user1 AND user='*' which makes no sense. At the moment we would
-     * assume that the user tag is being rolled up so user=user1 would never be
-     * found in the data and thus would return no data.
-     */
-    private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                                final StatisticStoreDoc statisticsDataSource) {
-        final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
-
-        final RollUpBitMask result;
-
-        if (rolledUpTagsFound.size() > 0) {
-            final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
-            for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
-                if (position == null) {
-                    throw new RuntimeException(String.format("No field position found for tag %s", tag));
-                }
-                rollUpTagPositionList.add(position);
-            }
-            result = RollUpBitMask.fromTagPositions(rollUpTagPositionList);
-
-        } else {
-            result = RollUpBitMask.ZERO_MASK;
-        }
-        return result;
-    }
-
     @FunctionalInterface
     private interface ValueExtractor {
         /**
@@ -504,68 +495,4 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                      final Val[] data,
                      final Map<String, Val> fieldValueCache);
     }
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    private static class PreparedStatementResourceHolder {
-        private Connection connection;
-        private PreparedStatement preparedStatement;
-
-        PreparedStatementResourceHolder(final DataSource dataSource,
-                                        final SqlBuilder sql,
-                                        final SearchConfig searchConfig) {
-            try {
-                connection = dataSource.getConnection();
-            } catch (SQLException e) {
-                throw new RuntimeException("Error getting connection", e);
-            }
-            try {
-                //settings ot prevent mysql from reading the whole resultset into memory
-                //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
-                //Also needs 'useCursorFetch=true' on the jdbc connect string
-                preparedStatement = connection.prepareStatement(
-                        sql.toString(),
-                        ResultSet.TYPE_FORWARD_ONLY,
-                        ResultSet.CONCUR_READ_ONLY,
-                        ResultSet.CLOSE_CURSORS_AT_COMMIT);
-
-                final int fetchSize = searchConfig.getFetchSize();
-                LOGGER.debug("Setting fetch size to {}", fetchSize);
-                preparedStatement.setFetchSize(fetchSize);
-
-                PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
-
-            } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
-            }
-        }
-
-        PreparedStatement getPreparedStatement() {
-            return preparedStatement;
-        }
-
-        void dispose() {
-            LOGGER.debug("dispose called");
-            if (preparedStatement != null) {
-                try {
-                    LOGGER.debug("Closing preparedStatement");
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing preparedStatement", e);
-                }
-                preparedStatement = null;
-            }
-            if (connection != null) {
-                try {
-                    LOGGER.debug("Closing connection");
-                    connection.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error closing connection", e);
-                }
-                connection = null;
-            }
-        }
-    }
-
 }

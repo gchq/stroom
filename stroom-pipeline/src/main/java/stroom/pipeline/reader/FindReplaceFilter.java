@@ -526,7 +526,11 @@ public class FindReplaceFilter extends FilterReader {
         }
     }
 
-    static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    static final class Builder {
         private Reader reader;
         private String find;
         private String replacement = "";
@@ -537,6 +541,9 @@ public class FindReplaceFilter extends FilterReader {
         private LocationFactory locationFactory;
         private ErrorReceiver errorReceiver;
         private String elementId;
+
+        private Builder() {
+        }
 
         public Builder reader(final Reader reader) {
             this.reader = reader;

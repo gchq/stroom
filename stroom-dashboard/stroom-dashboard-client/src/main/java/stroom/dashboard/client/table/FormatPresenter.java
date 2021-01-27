@@ -16,31 +16,34 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.shared.DateTimeFormatSettings;
-import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format;
-import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.FormatSettings;
-import stroom.dashboard.shared.NumberFormatSettings;
-import stroom.dashboard.shared.TimeZone;
+import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.v2.TimeZone;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
     private final TimeZones timeZones;
     private Type type;
     private TablePresenter tablePresenter;
     private Field field;
+    private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public FormatPresenter(final EventBus eventBus, final FormatView view, final TimeZones timeZones) {
@@ -52,9 +55,12 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         getView().setTimeZoneIds(timeZones.getIds());
     }
 
-    public void show(final TablePresenter tablePresenter, final Field field) {
+    public void show(final TablePresenter tablePresenter,
+                     final Field field,
+                     final BiConsumer<Field, Field> fieldChangeConsumer) {
         this.tablePresenter = tablePresenter;
         this.field = field;
+        this.fieldChangeConsumer = fieldChangeConsumer;
 
         final Format format = field.getFormat();
         if (format == null || format.getType() == null) {
@@ -81,7 +87,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         if (ok) {
             final Format format = getFormat();
             if (!EqualsUtil.isEquals(format, field.getFormat())) {
-                field.setFormat(format);
+                fieldChangeConsumer.accept(field, field.copy().format(format).build());
                 tablePresenter.setDirty(true);
                 tablePresenter.clearAndRefresh();
             }
@@ -139,9 +145,9 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {
-        TimeZone timeZone = TimeZone.local();
+        TimeZone timeZone = TimeZone.utc();
 
-        if (settings == null || !(settings instanceof DateTimeFormatSettings)) {
+        if (!(settings instanceof DateTimeFormatSettings)) {
             getView().setPattern(null);
         } else {
             final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;

@@ -16,13 +16,15 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.data.zip.*;
+import stroom.data.zip.StroomFileNameUtil;
+import stroom.data.zip.StroomZipEntry;
+import stroom.data.zip.StroomZipFileType;
+import stroom.data.zip.StroomZipOutputStream;
+import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -36,6 +38,11 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -61,7 +68,6 @@ public class DataDownloadTaskHandler {
 
     private final AtomicLong fileCount = new AtomicLong(0);
     private String lastPossibleFileName;
-    private String lastFeedName;
 
     @Inject
     public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
@@ -111,12 +117,11 @@ public class DataDownloadTaskHandler {
                         metaMap.put("streamType", meta.getTypeName());
                         metaMap.put("streamId", String.valueOf(meta.getId()));
                         final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, format, metaMap, ZIP_EXTENSION);
-                        if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
+                        if (stroomZipOutputStream != null && !possibleFilename.equals(lastPossibleFileName)) {
                             stroomZipOutputStream.close();
                             stroomZipOutputStream = null;
                         }
                         lastPossibleFileName = possibleFilename;
-                        lastFeedName = meta.getFeedName();
 
                         // Open a zip output stream if we don't currently have one.
                         if (stroomZipOutputStream == null) {
@@ -156,6 +161,7 @@ public class DataDownloadTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
+                        result.addMessage(new Message(Severity.WARNING,e.getMessage()));
                     }
                 }
 

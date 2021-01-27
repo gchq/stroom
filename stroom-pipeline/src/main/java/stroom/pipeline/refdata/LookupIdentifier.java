@@ -83,7 +83,7 @@ public class LookupIdentifier {
         sb.append(primaryMapName);
         sb.append(", key = ");
         sb.append(key);
-        sb.append(", eventTime = ");
+        sb.append(", event time = ");
         sb.append(DateUtil.createNormalDateTimeString(eventTime));
         sb.append(")");
     }

@@ -17,7 +17,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
     
     runtimeOnly libs.mysql_connector_java
     

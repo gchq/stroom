@@ -16,15 +16,16 @@
 
 package stroom.search.extraction;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.coprocessor.Values;
+import stroom.query.common.v2.SearchDebugUtil;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
@@ -47,9 +48,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final int fieldIndex = fieldIndexes.get(name);
-                    if (fieldIndex >= 0) {
-                        values[fieldIndex] = ValString.create(value);
+                    final Integer pos = fieldIndexes.getPos(name);
+                    if (pos != null) {
+                        values[pos] = ValString.create(value);
                     }
                 }
             }
@@ -62,7 +63,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            consumer.accept(new Values(values));
+            SearchDebugUtil.writeExtractionData(values);
+
+            consumer.accept(values);
             count++;
             values = null;
         }

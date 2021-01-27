@@ -16,9 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Coprocessors;
 import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
@@ -30,34 +28,26 @@ public class ClusterSearchResultCollectorFactory {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     @Inject
     private ClusterSearchResultCollectorFactory(final Executor executor,
                                                 final TaskContextFactory taskContextFactory,
-                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                                final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
                                                final String nodeName,
                                                final Set<String> highlights,
-                                               final ResultHandler resultHandler,
-                                               final Sizes defaultMaxResultsSizes,
-                                               final Sizes storeSize) {
+                                               final Coprocessors coprocessors) {
         return new ClusterSearchResultCollector(executor,
                 taskContextFactory,
                 asyncSearchTaskHandlerProvider,
                 task,
                 nodeName,
                 highlights,
-                clusterResultCollectorCache,
-                resultHandler,
-                defaultMaxResultsSizes,
-                storeSize);
+                coprocessors);
     }
 }

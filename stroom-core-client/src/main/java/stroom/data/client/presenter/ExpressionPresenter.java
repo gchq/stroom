@@ -50,7 +50,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         if (expression != null) {
             editExpressionPresenter.read(expression);
         } else {
-            editExpressionPresenter.read(new ExpressionOperator.Builder(Op.AND).build());
+            editExpressionPresenter.read(ExpressionOperator.builder().build());
         }
     }
 

@@ -201,7 +201,7 @@ public class DataUploadTaskHandler {
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                 "Read");
 
-        final MetaProperties metaProperties = new MetaProperties.Builder()
+        final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feedName)
                 .typeName(streamTypeName)
                 .effectiveMs(effectiveMs)

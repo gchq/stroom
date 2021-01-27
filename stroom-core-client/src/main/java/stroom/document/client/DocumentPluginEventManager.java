@@ -74,7 +74,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -490,7 +490,7 @@ public class DocumentPluginEventManager extends Plugin {
         super.onReveal(event);
 
         // Add menu bar item menu.
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new SimpleParentMenuItem(1, "Item", null) {
+        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem(1, "Item", null) {
             @Override
             public Future<List<Item>> getChildren() {
                 final FutureImpl<List<Item>> future = new FutureImpl<>();
@@ -562,7 +562,7 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean allowNew = children.size() > 0;
 
             if (allowNew) {
-                final Item newItem = new SimpleParentMenuItem(1, SvgPresets.NEW_ITEM, SvgPresets.NEW_ITEM, "New",
+                final Item newItem = new IconParentMenuItem(1, SvgPresets.NEW_ITEM, SvgPresets.NEW_ITEM, "New",
                         null, true, null) {
                     @Override
                     public Future<List<Item>> getChildren() {
@@ -740,10 +740,9 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(priority, SvgPresets.PERMISSIONS, SvgPresets.PERMISSIONS, "Permissions", null,
+        return new IconMenuItem(priority, SvgPresets.LOCKED_AMBER, SvgPresets.LOCKED_AMBER, "Permissions", null,
                 enabled, command);
     }
-
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {
         documentPluginRegistry.register(entityType, plugin);

@@ -126,7 +126,7 @@ class TestJSONParser extends StroomUnitTest {
         final OutputStreamAppender xmlAppender = new OutputStreamAppender(errorReceiverProxy, xmlOS);
         final OutputStreamAppender jsonAppender = new OutputStreamAppender(errorReceiverProxy, jsonOS);
 
-        final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null);
+        final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null, null, null, null, null, null);
         xmlWriter.setIndentOutput(true);
         xmlWriter.setTarget(xmlAppender);
 

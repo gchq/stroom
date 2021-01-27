@@ -6,11 +6,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo {
+public class User implements HasAuditInfo, HasIntegerId {
     public static final String ADMIN_USER_NAME = "admin";
 
     @JsonProperty
@@ -65,6 +66,7 @@ public class User implements HasAuditInfo {
         this.enabled = enabled;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
@@ -192,7 +194,15 @@ public class User implements HasAuditInfo {
         return Objects.hash(uuid);
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private Integer id;
         private Integer version;
         private Long createTimeMs;
@@ -203,6 +213,22 @@ public class User implements HasAuditInfo {
         private String uuid;
         private boolean group;
         private boolean enabled = true;
+
+        private Builder() {
+        }
+
+        private Builder(final User user) {
+            this.id = user.id;
+            this.version = user.version;
+            this.createTimeMs = user.createTimeMs;
+            this.createUser = user.createUser;
+            this.updateTimeMs = user.updateTimeMs;
+            this.updateUser = user.updateUser;
+            this.name = user.name;
+            this.uuid = user.uuid;
+            this.group = user.group;
+            this.enabled = user.enabled;
+        }
 
         public Builder id(final int value) {
             id = value;

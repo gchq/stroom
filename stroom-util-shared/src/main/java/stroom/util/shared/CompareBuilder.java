@@ -35,7 +35,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Long.compare(lhs, lhs);
+        comparison = Long.compare(lhs, rhs);
         return this;
     }
 
@@ -43,7 +43,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Integer.compare(lhs, lhs);
+        comparison = Integer.compare(lhs, rhs);
         return this;
     }
 
@@ -51,7 +51,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Short.compare(lhs, lhs);
+        comparison = Short.compare(lhs, rhs);
         return this;
     }
 
@@ -59,7 +59,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Character.compare(lhs, lhs);
+        comparison = Character.compare(lhs, rhs);
         return this;
     }
 
@@ -67,7 +67,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Byte.compare(lhs, lhs);
+        comparison = Byte.compare(lhs, rhs);
         return this;
     }
 
@@ -75,7 +75,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Double.compare(lhs, lhs);
+        comparison = Double.compare(lhs, rhs);
         return this;
     }
 
@@ -83,7 +83,7 @@ public class CompareBuilder {
         if (comparison != 0) {
             return this;
         }
-        comparison = Float.compare(lhs, lhs);
+        comparison = Float.compare(lhs, rhs);
         return this;
     }
 

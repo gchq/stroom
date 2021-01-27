@@ -43,9 +43,9 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.search.api.EventSearch;
+import stroom.query.common.v2.EventRef;
+import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.EventSearch;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
@@ -426,7 +426,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Get an up to date list of all enabled stream processor filters.
         LOGGER.trace("Getting enabled non deleted filters");
         taskContext.info(() -> "Getting enabled non deleted filters");
-        final ExpressionOperator expression = new Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
                 .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
@@ -632,7 +632,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         try {
             // First look for any items that are no-longer locked etc
-            final ExpressionOperator findProcessorTaskExpression = new ExpressionOperator.Builder()
+            final ExpressionOperator findProcessorTaskExpression = ExpressionOperator.builder()
                     .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
                     .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
                     .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
@@ -650,10 +650,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
             if (processorTasks.size() > 0) {
                 // Find unlocked meta data corresponding to this list of unowned tasks.
-                final ExpressionOperator.Builder metaIdExpressionBuilder = new ExpressionOperator.Builder(Op.OR);
+                final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
                 processorTasks.forEach(task -> metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId()));
 
-                final ExpressionOperator findMetaExpression = new ExpressionOperator.Builder(Op.AND)
+                final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
                         .addOperator(metaIdExpressionBuilder.build())
                         .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                         .build();
@@ -760,7 +760,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
         }
 
-        final Query query = new Query(queryData.getDataSource(), queryData.getExpression());
+        final Query query = Query.builder()
+                .dataSource(queryData.getDataSource())
+                .expression(queryData.getExpression())
+                .build();
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");
@@ -950,12 +953,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final int length) {
         if (reprocess) {
             // Don't select deleted streams.
-            final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
+            final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
                     .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
-            ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND)
+            ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
                     .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
@@ -979,12 +982,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         } else {
             // Don't select deleted streams.
-            final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
+            final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
                     .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
-            ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND)
+            ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
                     .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
             if (minMetaCreateMs != null) {

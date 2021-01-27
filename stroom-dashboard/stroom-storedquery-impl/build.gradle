@@ -5,14 +5,14 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-dashboard:stroom-storedquery-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
+    compile project(':stroom-docref')
     
     compile libs.guice4
     compile libs.jackson_annotations

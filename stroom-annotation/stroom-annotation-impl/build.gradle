@@ -7,7 +7,8 @@ dependencies {
 //    compile project(':stroom-explorer:stroom-explorer-api')
 //    compile project(':stroom-explorer:stroom-collection-api')
 //    compile project(':stroom-event-logging:stroom-event-logging-api')
-
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
@@ -21,6 +22,4 @@ dependencies {
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
 }

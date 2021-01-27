@@ -20,6 +20,7 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamCloser;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
@@ -40,17 +41,20 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     private long lastMarkPosition;
 
     // Use to help track non-closed streams
-    private StreamCloser streamCloser = new BasicStreamCloser();
+    private final StreamCloser streamCloser = new BasicStreamCloser();
 
     UncompressedInputStream(final Path file, boolean lazy) throws IOException {
-        if (lazy && !Files.isRegularFile(file)) {
-            raFile = null;
-            streamAdaptor = null;
-        } else {
-            raFile = FileChannel.open(file, StandardOpenOption.READ);
-            streamAdaptor = new BlockBufferedInputStream(Channels.newInputStream(raFile));
-            streamCloser.add(raFile).add(streamAdaptor);
+        FileChannel fileChannel = null;
+        BlockBufferedInputStream blockBufferedInputStream = null;
+
+        if (!lazy || Files.isRegularFile(file)) {
+            fileChannel = FileChannel.open(file, StandardOpenOption.READ);
+            blockBufferedInputStream = new BlockBufferedInputStream(Channels.newInputStream(fileChannel));
+            streamCloser.add(fileChannel).add(blockBufferedInputStream);
         }
+
+        raFile = fileChannel;
+        streamAdaptor = blockBufferedInputStream;
     }
 
     /**
@@ -73,9 +77,8 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     /**
      * @param b to fill
      */
-    @SuppressWarnings("NullableProblems")
     @Override
-    public int read(final byte[] b) throws IOException {
+    public int read(@Nonnull final byte[] b) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;
@@ -93,9 +96,8 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
      * @param off offset
      * @param len length
      */
-    @SuppressWarnings("NullableProblems")
     @Override
-    public int read(final byte[] b, final int off, final int len) throws IOException {
+    public int read(@Nonnull final byte[] b, final int off, final int len) throws IOException {
         if (streamAdaptor == null) {
             // LAZY
             return -1;

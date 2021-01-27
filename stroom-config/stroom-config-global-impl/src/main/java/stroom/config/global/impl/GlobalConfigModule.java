@@ -32,9 +32,9 @@ public class GlobalConfigModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
-                        .withName("Property Cache Reload")
-                        .withDescription("Reload properties in the cluster")
-                        .withSchedule(PERIODIC, "1m"));
+                        .name("Property Cache Reload")
+                        .description("Reload properties in the cluster")
+                        .schedule(PERIODIC, "1m"));
     }
 
     @Override

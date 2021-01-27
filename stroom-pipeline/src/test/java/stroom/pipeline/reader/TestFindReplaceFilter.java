@@ -40,7 +40,7 @@ class TestFindReplaceFilter {
 
     @Test
     void test() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("nasty")
                 .replacement("friendly");
         test(builder, "This is a nasty string", "This is a friendly string", null);
@@ -48,7 +48,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testSmallReads() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("nasty")
                 .replacement("friendly");
         test(builder, 2, "This is a nasty string", "This is a friendly string", null);
@@ -56,7 +56,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testSingleReplacement() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("cat")
                 .replacement("dog")
                 .maxReplacements(1);
@@ -67,7 +67,7 @@ class TestFindReplaceFilter {
     void testBiggerReplacement() {
         final String input = getDogCat();
         final String expected = input.replaceAll("cat", "dog");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("cat")
                 .replacement("dog");
         test(builder, input, expected, null);
@@ -77,7 +77,7 @@ class TestFindReplaceFilter {
     void testBiggerReplacement2() {
         final String input = getDogCat2();
         final String expected = input.replaceAll("cat", "a");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("cat")
                 .replacement("a");
         test(builder, 100000, input, expected, null);
@@ -85,7 +85,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testStartMatch() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^cat")
                 .replacement("dog")
                 .regex(true);
@@ -97,7 +97,7 @@ class TestFindReplaceFilter {
         final String input = getDogCat3();
         final String expected = input.replaceAll("cat$", "a");
         assertThat(expected.endsWith("aaacata")).isTrue();
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("cat$")
                 .replacement("a")
                 .regex(true);
@@ -112,7 +112,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("^a", "b");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^a")
                 .replacement("b")
                 .regex(true);
@@ -127,7 +127,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("a$", "b");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("a$")
                 .replacement("b")
                 .regex(true);
@@ -146,7 +146,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("^a|a$", "b");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^a|a$")
                 .replacement("b")
                 .regex(true);
@@ -156,7 +156,7 @@ class TestFindReplaceFilter {
     @Test
     void testInvalidRegex() {
         try {
-            new Builder()
+            FindReplaceFilter.builder()
                     .find("{{bad}}")
                     .replacement("a")
                     .regex(true)
@@ -169,7 +169,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testEscapedChars() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("[\u0000-\u0009\u000C\u000E-\u001F]")
                 .replacement(" ")
                 .regex(true);
@@ -184,7 +184,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("cat", "dog");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("cat")
                 .replacement("dog");
         test(builder, input, expected, null);
@@ -198,7 +198,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("^cat", "dog");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^cat")
                 .replacement("dog")
                 .regex(true);
@@ -216,7 +216,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("\u0000", "");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
@@ -237,7 +237,7 @@ class TestFindReplaceFilter {
 //                    sb.append("a");
 //                }
 //
-//                final Builder builder = new Builder()
+//                final Builder builder = FindReplaceFilter.builder()
 //                        .find("\u0000")
 //                        .replacement("")
 //                        .regex(true);
@@ -258,7 +258,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("\u0000", "");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
@@ -274,7 +274,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("\u0000", "");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
@@ -298,7 +298,7 @@ class TestFindReplaceFilter {
 //            }
 //            final String value = sb.toString();
 //
-//            final Builder builder = new Builder()
+//            final Builder builder = FindReplaceFilter.builder()
 //                    .find("[\u0000-\u0009\u000C\u000E-\u001F]")
 //                    .replacement("a")
 //                    .regex(true);
@@ -320,7 +320,7 @@ class TestFindReplaceFilter {
         }
         final String input = sb.toString();
         final String expected = input.replaceAll("[^a]", "a");
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("[\u0000-\u0009\u000C\u000E-\u001F]")
                 .replacement("a")
                 .regex(true);
@@ -329,7 +329,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testEmptyMatch() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^$")
                 .replacement("<EventRoot/>")
                 .regex(true);
@@ -340,7 +340,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testNegativeEmptyMatch() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("^$")
                 .replacement("<EventRoot/>")
                 .regex(true);
@@ -414,7 +414,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testExhaustBuffer1() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find(".*")
                 .replacement("b")
                 .regex(true);
@@ -430,7 +430,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testExhaustBuffer2() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("a*")
                 .replacement("c")
                 .regex(true);
@@ -447,7 +447,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testExhaustBuffer3() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("a*")
                 .replacement("c")
                 .regex(true);
@@ -464,7 +464,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testExhaustBuffer4() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("a+")
                 .replacement("c")
                 .regex(true);
@@ -493,7 +493,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testEscapedSquareBracket() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("<(\\[dog)")
                 .replacement("wolf")
                 .regex(true);
@@ -502,7 +502,7 @@ class TestFindReplaceFilter {
 
     @Test
     void testReplacement() {
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("(\n)type=")
                 .replacement("$1missingToken=bar type=")
                 .regex(true);
@@ -532,7 +532,7 @@ class TestFindReplaceFilter {
                 "missingToken=bar type=CRED_DISP msg=audit(1505728861.754:487): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sy stem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
                 "missingToken=bar type=USER_END msg=audit(1505728861.764:488): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sys tem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:session_close acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success.";
 
-        final Builder builder = new Builder()
+        final Builder builder = FindReplaceFilter.builder()
                 .find("(\n)type=")
                 .replacement("$1missingToken=bar type=")
                 .regex(true);
@@ -541,11 +541,11 @@ class TestFindReplaceFilter {
 
     @Test
     public void testMultiFilter() {
-        final Builder builder1 = new Builder()
+        final Builder builder1 = FindReplaceFilter.builder()
                 .find("a")
                 .replacement("")
                 .regex(true);
-        final Builder builder2 = new Builder()
+        final Builder builder2 = FindReplaceFilter.builder()
                 .find("b")
                 .replacement("c")
                 .regex(true);

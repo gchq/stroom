@@ -87,7 +87,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
             Objects.requireNonNull(processor, "Stream processor must not be null");
 
             if (!superseded) {
-                final ExpressionOperator findMetaExpression = new ExpressionOperator.Builder(Op.AND)
+                final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
                         .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, sourceMeta.getId())
                         .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
                         .build();
@@ -95,7 +95,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 final List<Meta> streamList = dataMetaService.find(findMetaCriteria).getValues();
 
                 // Find any task id's that are greater than the current task id for this input meta.
-                final ExpressionOperator findTaskExpression = new ExpressionOperator.Builder()
+                final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
                         .addTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, sourceMeta.getId())
                         .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                         .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, processorTask.getId())

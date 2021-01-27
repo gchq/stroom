@@ -25,8 +25,7 @@ dependencies {
 //    compile project(':stroom-util-shared')
 //
 //    // Stroom external bintray libs
-//    compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
+//    compile project(':stroom-docref')
 //
 //    // 3rd party libs
 //    compile libs.dropwizard_metrics_healthchecks

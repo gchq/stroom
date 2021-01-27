@@ -42,22 +42,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestPipelineModel {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
-    private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE1 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty1")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE2 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty2")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE3 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE3 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty3")
             .type("String")
             .build();
-    private static final PipelinePropertyType PROP_TYPE4 = new PipelinePropertyType.Builder()
+    private static final PipelinePropertyType PROP_TYPE4 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
             .name("TestProperty4")
             .type("String")

@@ -26,7 +26,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -41,6 +41,7 @@ import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class TabManager {
     private final Components components;
@@ -70,6 +71,7 @@ public class TabManager {
         final Component component = components.get(tabConfig.getId());
         if (component != null) {
             final ComponentConfig componentConfig = component.getComponentConfig();
+            final Consumer<String> nameChangeConsumer = component::setComponentName;
 
             new Timer() {
                 @Override
@@ -100,7 +102,7 @@ public class TabManager {
                             }
                         };
 
-                        updateMenuItems(tabLayout.getTabLayoutConfig(), tabConfig, componentConfig);
+                        updateMenuItems(tabLayout.getTabLayoutConfig(), tabConfig, componentConfig, nameChangeConsumer);
 
 //                            Element element = event.getEventTarget().cast();
 //                            while (!element.getTagName().toLowerCase().equals("th")) {
@@ -116,8 +118,9 @@ public class TabManager {
     }
 
 
-    public void showRename(final ComponentConfig componentConfig) {
-        renameTabPresenterProvider.get().show(dashboardPresenter, tabLayout, componentConfig);
+    public void showRename(final ComponentConfig componentConfig,
+                           final Consumer<String> nameChangeConsumer) {
+        renameTabPresenterProvider.get().show(dashboardPresenter, tabLayout, componentConfig.getName(), nameChangeConsumer);
     }
 
     public void showSettings(final TabConfig tabConfig) {
@@ -127,12 +130,8 @@ public class TabManager {
         }
     }
 
-    private void deleteTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        if (tabLayoutConfig.getVisibleTabCount() <= 1) {
-            AlertEvent.fireError(dashboardPresenter, "You cannot remove or hide all tabs", null);
-        } else {
-            dashboardPresenter.requestTabClose(tabConfig);
-        }
+    private void closeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.requestTabClose(tabLayoutConfig, tabConfig);
     }
 
     private void showTab(final TabConfig tabConfig) {
@@ -153,11 +152,14 @@ public class TabManager {
         }
     }
 
-    private void updateMenuItems(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig, final ComponentConfig componentConfig) {
+    private void updateMenuItems(final TabLayoutConfig tabLayoutConfig,
+                                 final TabConfig tabConfig,
+                                 final ComponentConfig componentConfig,
+                                 final Consumer<String> nameChangeConsumer) {
         final List<Item> menuItems = new ArrayList<>();
 
         // Create rename menu.
-        menuItems.add(createRenameMenu(componentConfig));
+        menuItems.add(createRenameMenu(componentConfig, nameChangeConsumer));
 
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
@@ -177,8 +179,10 @@ public class TabManager {
         menuListPresenter.setData(menuItems);
     }
 
-    private Item createRenameMenu(final ComponentConfig componentConfig) {
-        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, true, () -> showRename(componentConfig));
+    private Item createRenameMenu(final ComponentConfig componentConfig,
+                                  final Consumer<String> nameChangeConsumer) {
+        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, true, () ->
+                showRename(componentConfig, nameChangeConsumer));
     }
 
     private Item createSettingsMenu(final TabConfig tabConfig) {
@@ -208,10 +212,10 @@ public class TabManager {
             return null;
         }
 
-        return new SimpleParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+        return new IconParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
     }
 
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Close", null, true, () -> deleteTab(tabLayoutConfig, tabConfig));
+        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Close", null, true, () -> closeTab(tabLayoutConfig, tabConfig));
     }
 }

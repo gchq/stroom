@@ -6,7 +6,7 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.eventLogging
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 
     compile libs.javax_servlet_api
     compile libs.guice4

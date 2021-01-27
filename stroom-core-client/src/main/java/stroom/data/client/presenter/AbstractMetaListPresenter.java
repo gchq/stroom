@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
@@ -40,7 +39,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.data.shared.DataInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
@@ -55,11 +53,13 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
@@ -67,15 +67,12 @@ import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
@@ -85,11 +82,15 @@ import javax.inject.Provider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGridView<MetaRow>> implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+public abstract class AbstractMetaListPresenter
+        extends MyPresenterWidget<DataGridView<MetaRow>>
+        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -301,130 +302,77 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         });
     }
 
-    private SvgPreset getInfoCellState(final MetaRow object) {
+    protected SvgPreset getInfoCellState(final MetaRow metaRow) {
         // Should only show unlocked ones by default
-        final Status status = object.getMeta().getStatus();
+        final Status status = metaRow.getMeta().getStatus();
         if (Status.UNLOCKED.equals(status)) {
-            return SvgPresets.INFO.title("Info (Unlocked)");
+            // Be default the screen only shows unlocked streams so have no icon for those
+            return null;
         } else if (Status.DELETED.equals(status)) {
-            return SvgPresets.INFO_DELETED.title("Info (Deleted)");
+            return SvgPresets.DELETED.title("Deleted Stream");
         } else if (Status.LOCKED.equals(status)) {
-            return SvgPresets.INFO_WARNING.title("Info (Locked)");
+            return SvgPresets.LOCKED_AMBER.title("Locked Stream");
         } else {
             throw new RuntimeException("Unknown status " + status);
         }
     }
 
     void addInfoColumn() {
-        // Info column.
-        final InfoColumn<MetaRow> infoColumn = new InfoColumn<MetaRow>() {
-            @Override
-            public SvgPreset getValue(final MetaRow object) {
-                return getInfoCellState(object);
-            }
-
-            @Override
-            protected void showInfo(final MetaRow row, final int x, final int y) {
-                final Rest<List<DataInfoSection>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            final TooltipUtil.Builder builder = TooltipUtil.builder();
-
-                            builder.addTable(tableBuilder -> {
-                                for (int i = 0; i < result.size(); i++) {
-                                    final DataInfoSection section = result.get(i);
-                                    tableBuilder.addHeaderRow(section.getTitle());
-                                    section.getEntries()
-                                            .forEach(entry ->
-                                                    tableBuilder.addRow(entry.getKey(), entry.getValue()));
-                                    if (i < result.size() - 1) {
-                                        tableBuilder.addBlankRow();
-                                    }
-                                }
-                                return tableBuilder.build();
-                            });
-
-                            tooltipPresenter.setHTML(builder.build());
-                            final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(
-                                    AbstractMetaListPresenter.this,
-                                    tooltipPresenter,
-                                    PopupType.POPUP,
-                                    popupPosition,
-                                    null);
-                        })
-                        .call(DATA_RESOURCE)
-                        .info(row.getMeta().getId());
-            }
-        };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        DataGridUtil.addStatusIconColumn(getView(), this::getInfoCellState);
     }
 
     void addCreatedColumn() {
-        // Created.
-        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.CREATE_TIME) {
-            @Override
-            public String getValue(final MetaRow row) {
-                return ClientDateUtil.toISOString(row.getMeta().getCreateMs());
-            }
-        }, "Created", ColumnSizeConstants.DATE_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                        ClientDateUtil.toISOString(metaRow.getMeta().getCreateMs()))
+                        .withSorting(MetaFields.CREATE_TIME)
+                        .build()
+                ,"Created",
+                ColumnSizeConstants.DATE_COL);
     }
 
-//    void addEffectiveColumn() {
-//        // Effective.
-//        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final StreamAttributeMap row) {
-//                return ClientDateUtil.toISOString(row.getMeta().getEffectiveMs());
-//            }
-//        }, "Effective", ColumnSizeConstants.DATE_COL);
-//    }
-
     void addFeedColumn() {
-        // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.FEED_NAME) {
-            @Override
-            public String getValue(final MetaRow row) {
-                if (row != null && row.getMeta() != null && row.getMeta().getFeedName() != null) {
-                    return row.getMeta().getFeedName();
-                }
-                return "";
-            }
-        }, "Feed", ColumnSizeConstants.BIG_COL);
-        // }
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                        Optional.ofNullable(metaRow)
+                                .map(MetaRow::getMeta)
+                                .map(Meta::getFeedName)
+                                .orElse(""))
+                        .withSorting(MetaFields.FEED_NAME)
+                        .build(),
+                "Feed",
+                ColumnSizeConstants.BIG_COL);
     }
 
     void addStreamTypeColumn() {
-        // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.TYPE_NAME) {
-            @Override
-            public String getValue(final MetaRow row) {
-                if (row != null && row.getMeta() != null && row.getMeta().getTypeName() != null) {
-                    return row.getMeta().getTypeName();
-                }
-                return "";
-            }
-        }, "Type", 80);
-        // }
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                        Optional.ofNullable(metaRow)
+                                .map(MetaRow::getMeta)
+                                .map(Meta::getTypeName)
+                                .orElse(""))
+                        .withSorting(MetaFields.TYPE_NAME)
+                        .build(),
+                "Type",
+                80);
     }
 
     void addPipelineColumn() {
-        // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final MetaRow row) {
-                if (row.getMeta().getProcessorUuid() != null) {
-                    if (row.getPipelineName() != null) {
-                        return row.getPipelineName();
-                    } else {
-                        return "Not visible";
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((MetaRow metaRow) -> {
+                    if (metaRow.getMeta().getProcessorUuid() != null) {
+                        if (metaRow.getPipelineName() != null) {
+                            return metaRow.getPipelineName();
+                        } else {
+                            return "Not visible";
+                        }
                     }
-                }
-                return "";
-
-            }
-        }, "Pipeline", ColumnSizeConstants.BIG_COL);
-        // }
+                    return "";
+                })
+                        .build(),
+                "Pipeline",
+                ColumnSizeConstants.BIG_COL);
     }
 
     protected MultiSelectionModel<MetaRow> getSelectionModel() {
@@ -450,18 +398,92 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         return resultPage;
     }
 
-    void addAttributeColumn(final String name, final AbstractField attribute, final Function<String, String> formatter, final int size) {
-        final Column<MetaRow, String> column = new Column<MetaRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final MetaRow row) {
-                final String value = row.getAttributeValue(attribute.getName());
-                if (value == null) {
-                    return null;
-                }
+    void addAttributeColumn(final String name,
+                            final AbstractField attribute,
+                            final Function<String, String> formatter,
+                            final int size) {
+
+        final Function<MetaRow, String> extractor = metaRow -> {
+            final String value = metaRow.getAttributeValue(attribute.getName());
+            if (value == null) {
+                return null;
+            } else {
+                return value;
+            }
+        };
+
+        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
+                .build();
+
+        getView().addResizableColumn(
+                column,
+                name,
+                size);
+    }
+
+    void addRightAlignedAttributeColumn(final String name,
+                                        final AbstractField attribute,
+                                        final Function<String, String> formatter,
+                                        final int size) {
+
+        final Function<MetaRow, String> extractor = metaRow -> {
+            final String value = metaRow.getAttributeValue(attribute.getName());
+            if (value == null) {
+                return null;
+            } else {
+                return value;
+            }
+        };
+
+        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
+                .rightAligned()
+                .build();
+
+        getView().addResizableColumn(
+                column,
+                DataGridUtil.createRightAlignedHeader(name),
+                size);
+    }
+
+    void addColouredSizeAttributeColumn(final String name,
+                                        final AbstractField attribute,
+                                        final Function<String, String> formatter,
+                                        final int size) {
+
+        final Function<MetaRow, String> extractor = metaRow -> {
+            final String value = metaRow.getAttributeValue(attribute.getName());
+            if (value == null) {
+                return null;
+            } else {
                 return formatter.apply(value);
             }
         };
-        getView().addResizableColumn(column, name, size);
+
+        final Function<String, String> colourFunc = val -> {
+            if (val == null) {
+                return "black";
+            } else if (val.endsWith("B")) {
+                return "blue";
+            } else if (val.endsWith("K")) {
+                return "green";
+            } else if (val.endsWith("M")) {
+                return "#FF7F00";
+            } else if (val.endsWith("G")) {
+                return "red";
+            } else {
+                return "red";
+            }
+        };
+
+        final Column<MetaRow, SafeHtml> column = DataGridUtil.htmlColumnBuilder(
+                DataGridUtil.colouredCellExtractor(extractor, colourFunc))
+                .rightAligned()
+                .build();
+
+        getView().addResizableColumn(
+                column,
+                DataGridUtil.createRightAlignedHeader(name),
+                size);
     }
 
     public void setExpression(final ExpressionOperator expression) {
@@ -500,7 +522,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
             };
             processChoicePresenter.show(processChoiceUiHandler);
         } else {
-            AlertEvent.fireError(AbstractMetaListPresenter.this, "You have not selected any items", null);
+            AlertEvent.fireError(
+                    AbstractMetaListPresenter.this,
+                    "You have not selected any items",
+                    null);
         }
     }
 
@@ -556,10 +581,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         validateSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             if (expression != null) {
-                final Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
+                final Builder not = ExpressionOperator.builder().op(Op.NOT);
                 not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
-                final Builder builder = new ExpressionOperator.Builder();
+                final Builder builder = ExpressionOperator.builder();
                 builder.addOperator(expression);
                 builder.addOperator(not.build());
 
@@ -579,7 +604,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         validateSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             if (expression != null) {
-                final Builder builder = new ExpressionOperator.Builder();
+                final Builder builder = ExpressionOperator.builder();
                 builder.addOperator(expression);
                 builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
 
@@ -595,13 +620,18 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         });
     }
 
-    private Runnable update(final FindMetaCriteria criteria, final String text, final Status currentStatus, final Status newStatus) {
+    private Runnable update(final FindMetaCriteria criteria,
+                            final String text,
+                            final Status currentStatus,
+                            final Status newStatus) {
         return () -> {
             final Rest<Integer> rest = restFactory.create();
             rest
                     .onSuccess(result ->
-                            AlertEvent.fireInfo(AbstractMetaListPresenter.this,
-                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
+                            AlertEvent.fireInfo(
+                                    AbstractMetaListPresenter.this,
+                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""),
+                                    this::refresh))
                     .call(META_RESOURCE)
                     .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
         };
@@ -610,7 +640,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private void download(final FindMetaCriteria criteria) {
         final Rest<ResourceGeneration> rest = restFactory.create();
         rest
-                .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                 .call(DATA_RESOURCE)
                 .download(criteria);
     }
@@ -618,7 +648,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private void process(final DocRef pipeline,
                          final FindMetaCriteria criteria,
                          final ProcessChoice processChoice) {
-        final QueryData queryData = new QueryData(MetaFields.STREAM_STORE_DOC_REF, criteria.getExpression(), null);
+        final QueryData queryData = new QueryData(
+                MetaFields.STREAM_STORE_DOC_REF,
+                criteria.getExpression(),
+                null);
         final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
                 pipeline,
                 queryData,
@@ -642,7 +675,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     private void reprocess(final FindMetaCriteria criteria,
                            final ProcessChoice processChoice) {
-        final QueryData queryData = new QueryData(MetaFields.STREAM_STORE_DOC_REF, criteria.getExpression(), null);
+        final QueryData queryData = new QueryData(
+                MetaFields.STREAM_STORE_DOC_REF,
+                criteria.getExpression(),
+                null);
         final CreateReprocessFilterRequest request = new CreateReprocessFilterRequest(
                 queryData,
                 processChoice.getPriority(),
@@ -674,20 +710,26 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                         if (maxSeverity != null) {
                             switch (maxSeverity) {
                                 case INFO:
-                                    AlertEvent.fireInfo(AbstractMetaListPresenter.this, "Result Details",
-                                            sb.toString().trim(), null);
+                                    AlertEvent.fireInfo(
+                                            AbstractMetaListPresenter.this,
+                                            "Result Details",
+                                            sb.toString().trim(),
+                                            null);
                                     break;
                                 case WARNING:
-                                    AlertEvent.fireWarn(AbstractMetaListPresenter.this, "Result Details",
-                                            sb.toString().trim(), null);
+                                    AlertEvent.fireWarn(
+                                            AbstractMetaListPresenter.this,
+                                            "Result Details",
+                                            sb.toString().trim(),
+                                            null);
                                     break;
                                 case ERROR:
-                                    AlertEvent.fireError(AbstractMetaListPresenter.this, "Result Details",
-                                            sb.toString().trim(), null);
-                                    break;
                                 case FATAL_ERROR:
-                                    AlertEvent.fireError(AbstractMetaListPresenter.this, "Result Details",
-                                            sb.toString().trim(), null);
+                                    AlertEvent.fireError(
+                                            AbstractMetaListPresenter.this,
+                                            "Result Details",
+                                            sb.toString().trim(),
+                                            null);
                                     break;
                             }
                         }
@@ -735,12 +777,16 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                         }
                     });
         } else {
-            AlertEvent.fireError(AbstractMetaListPresenter.this, "You have not selected any items", null);
+            AlertEvent.fireError(
+                    AbstractMetaListPresenter.this,
+                    "You have not selected any items",
+                    null);
         }
     }
 
-    private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria, final Selection<Long> selection) {
-//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
+    private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
+                                                     final Selection<Long> selection) {
+//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.

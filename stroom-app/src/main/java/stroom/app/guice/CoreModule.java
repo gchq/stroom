@@ -1,7 +1,10 @@
 package stroom.app.guice;
 
+import stroom.event.logging.rs.impl.RestResourceAutoSLoggerModule;
 import stroom.security.identity.AuthModule;
 import stroom.security.identity.db.AuthDbModule;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
@@ -78,6 +81,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.db.ProcessorDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
+        install(new RestResourceAutoSLoggerModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
@@ -103,7 +107,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
 
-        // Bind the temporary directory provider.
+        // Bind the directory providers.
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 }

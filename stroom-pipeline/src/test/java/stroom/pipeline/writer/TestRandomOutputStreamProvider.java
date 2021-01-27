@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -62,7 +63,7 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
 
     private FileAppender buildTestObject(final Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final FileAppender provider = new FileAppender(null, pathCreator);
         provider.setOutputPaths(
                 FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir())

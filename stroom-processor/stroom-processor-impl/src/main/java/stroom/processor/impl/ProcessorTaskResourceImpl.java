@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -31,9 +32,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
-import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
-import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -68,17 +67,25 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTask> result;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query.Builder<Void> queryBuilder = Query.builder();
+        StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());
+        final Query query = queryBuilder.build();
 
         try {
             result = processorTaskService.find(criteria);
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTask.class.getSimpleName(), result.getPageResponse(), null);
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    ProcessorTask.class.getSimpleName(),
+                    result.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTask.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    ProcessorTask.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
 
@@ -89,17 +96,25 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         ResultPage<ProcessorTaskSummary> result;
 
-        final Query query = new Query();
-        final Advanced advanced = new Advanced();
-        query.setAdvanced(advanced);
-        final And and = new And();
-        advanced.getAdvancedQueryItems().add(and);
+        final Query.Builder<Void> queryBuilder = Query.builder();
+        StroomEventLoggingUtil.appendExpression(queryBuilder, criteria.getExpression());
+        final Query query = queryBuilder.build();
 
         try {
             result = processorTaskService.findSummary(criteria);
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTaskSummary.class.getSimpleName(), result.getPageResponse(), null);
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    ProcessorTaskSummary.class.getSimpleName(),
+                    result.getPageResponse(),
+                    null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTaskSummary.class.getSimpleName(), null, e);
+            documentEventLog.search(
+                    criteria.getClass().getSimpleName(),
+                    query,
+                    ProcessorTaskSummary.class.getSimpleName(),
+                    null,
+                    e);
             throw e;
         }
 

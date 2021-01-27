@@ -7,6 +7,8 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-api')
     compile project(':stroom-index:stroom-index-impl')
     compile project(':stroom-pipeline')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-task:stroom-task-api')
@@ -15,6 +17,24 @@ dependencies {
     compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser
-    compile libs.stroomExpression
-    compile libs.stroomQueryCommon
+
+    testCompile project(':stroom-test-common')
+
+    testCompile libs.assertj_core
+    testCompile libs.dropwizard_client
+    testCompile libs.dropwizard_testing
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
+
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.javax_el
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.junit_jupiter_engine
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

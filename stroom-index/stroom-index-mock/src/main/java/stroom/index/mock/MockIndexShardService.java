@@ -67,10 +67,12 @@ public class MockIndexShardService implements IndexShardService {
 
         // checkedLimit.increment();
         final IndexShard indexShard = new IndexShard();
-        indexShard.setVolume(new IndexVolume.Builder()
-                .nodeName(ownerNodeName)
-                .path(FileUtil.getCanonicalPath(tempDirProvider.get()))
-                .build());
+        indexShard.setVolume(
+                IndexVolume
+                        .builder()
+                        .nodeName(ownerNodeName)
+                        .path(FileUtil.getCanonicalPath(tempDirProvider.get()))
+                        .build());
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());

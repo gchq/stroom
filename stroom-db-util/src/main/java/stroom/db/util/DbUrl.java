@@ -1,5 +1,7 @@
 package stroom.db.util;
 
+import stroom.security.shared.User;
+
 import java.util.Objects;
 
 public final class DbUrl {
@@ -87,12 +89,31 @@ public final class DbUrl {
         return sb.toString();
     }
 
-    public static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
         private String scheme = "jdbc:mysql";
         private String host = "localhost";
         private int port = 3306;
         private String dbName;
         private String query;
+
+        private Builder() {
+        }
+
+        private Builder(final DbUrl dbUrl) {
+            this.scheme = dbUrl.scheme;
+            this.host = dbUrl.host;
+            this.port = dbUrl.port;
+            this.dbName = dbUrl.dbName;
+            this.query = dbUrl.query;
+        }
 
         public Builder parse(final String url) {
             String remaining = url;

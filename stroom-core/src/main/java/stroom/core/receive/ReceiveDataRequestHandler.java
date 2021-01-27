@@ -17,12 +17,10 @@
 
 package stroom.core.receive;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
@@ -34,6 +32,9 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.BufferFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -107,11 +108,20 @@ class ReceiveDataRequestHandler implements RequestHandler {
                     throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE);
                 }
 
-                List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedProperties, metaDataStatistics, feedName, typeName);
+                List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler
+                        .buildSingleHandlerList(
+                                streamStore,
+                                feedProperties,
+                                metaDataStatistics,
+                                feedName,
+                                typeName);
 
                 final byte[] buffer = bufferFactory.create();
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StandardHeaderArguments.GUID));
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                        attributeMap,
+                        handlers,
+                        buffer,
+                        "DataFeedRequestHandler-" + attributeMap.get(StandardHeaderArguments.GUID));
 
                 try {
                     stroomStreamProcessor.processRequestHeader(request);

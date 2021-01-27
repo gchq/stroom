@@ -26,6 +26,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -109,10 +110,11 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails()).isNotNull();
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isFalse();
 
-        final QueryData findStreamQueryData = new QueryData.Builder()
+        final QueryData findStreamQueryData = QueryData
+                .builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName1)
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())

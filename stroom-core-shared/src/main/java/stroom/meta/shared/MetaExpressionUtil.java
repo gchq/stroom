@@ -20,7 +20,7 @@ public final class MetaExpressionUtil {
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
         final String delimitedList = idSet.stream().map(String::valueOf).collect(Collectors.joining(","));
-        return new ExpressionOperator.Builder(Op.OR)
+        return ExpressionOperator.builder().op(Op.OR)
                 .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
                 .build();
     }
@@ -30,41 +30,41 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createDataIdExpression(final long id, final Status status) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, id)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createParentIdExpression(final long parentId, final Status status) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createTypeExpression(final String typeName, final Status status) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, typeName)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
 //    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 //
 //        if (folders != null) {
 //            if (folders.length == 1) {
 //                builder.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folders[0]);
 //            } else {
-//                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
+//                final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
 //                for (final DocRef folder : folders) {
 //                    or.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder);
 //                }
@@ -77,21 +77,21 @@ public final class MetaExpressionUtil {
 //    }
 
     public static ExpressionOperator createFeedExpression(final String feedName) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createFeedsExpression(final String... feedNames) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.IN, String.join(",", feedNames))
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();

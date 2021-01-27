@@ -21,6 +21,8 @@ import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeModule;
@@ -30,6 +32,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.mockito.stubbing.Answer;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,7 +94,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUser(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
-            final User user = new User.Builder()
+            final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .build();
@@ -96,7 +102,7 @@ public class MockServiceModule extends AbstractModule {
         });
         when(mockUserService.createUserGroup(any())).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
-            final User user = new User.Builder()
+            final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
                     .name(name)
                     .group(true)
@@ -104,7 +110,14 @@ public class MockServiceModule extends AbstractModule {
             return mockUserService.update(user);
         });
         bind(UserService.class).toInstance(mockUserService);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
+        try {
+            final Path tempDir = Files.createTempDirectory("stroom");
+            bind(HomeDirProvider.class).toInstance(() -> tempDir);
+            bind(TempDirProvider.class).toInstance(() -> tempDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Provides

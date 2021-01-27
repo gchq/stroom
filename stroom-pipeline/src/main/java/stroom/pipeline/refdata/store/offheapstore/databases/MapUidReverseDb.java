@@ -18,8 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.UID;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -93,8 +94,8 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
                                 final ByteBuffer uidKeyBuffer,
                                 final ByteBuffer mapDefinitionValueBuffer) {
 
-        boolean didPutSuceed = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
-        if (!didPutSuceed) {
+        final PutOutcome putOutcome = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
+        if (!putOutcome.isSuccess()) {
             throw new RuntimeException(LogUtil.message("Failed to put mapDefinition {}, uid {}",
                     ByteBufferUtils.byteBufferInfo(uidKeyBuffer),
                     ByteBufferUtils.byteBufferInfo(mapDefinitionValueBuffer)));

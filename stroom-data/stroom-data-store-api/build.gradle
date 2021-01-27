@@ -5,5 +5,5 @@ dependencies {
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-meta:stroom-meta-api')
     
-    compile libs.stroomDocRef
+    compile project(':stroom-docref')
 }

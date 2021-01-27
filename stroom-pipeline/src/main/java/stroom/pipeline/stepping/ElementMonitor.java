@@ -20,7 +20,7 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Indicators;
 
 public class ElementMonitor {
@@ -61,7 +61,7 @@ public class ElementMonitor {
         return steppingFilter != null && steppingFilter.filterMatches(currentRecordNo);
     }
 
-    public void clear(final Highlight highlight) {
+    public void clear(final TextRange highlight) {
         if (inputRecorder != null) {
             inputRecorder.clear(highlight);
         }
@@ -70,16 +70,17 @@ public class ElementMonitor {
         }
     }
 
-    public ElementData getElementData(final LoggingErrorReceiver loggingErrorReceiver, final Highlight highlight) {
+    public ElementData getElementData(final LoggingErrorReceiver loggingErrorReceiver,
+                                      final TextRange textRange) {
         final ElementData elementData = new ElementData(elementId, elementType);
 
         if (inputRecorder != null) {
-            final Object data = inputRecorder.getData(highlight);
+            final Object data = inputRecorder.getData(textRange);
             elementData.setInput(data);
             elementData.setFormatInput(!(data == null || data instanceof String));
         }
         if (outputRecorder != null) {
-            final Object data = outputRecorder.getData(highlight);
+            final Object data = outputRecorder.getData(textRange);
             elementData.setOutput(data);
             elementData.setFormatOutput(!(data == null || data instanceof String) || element instanceof XMLWriter);
         }

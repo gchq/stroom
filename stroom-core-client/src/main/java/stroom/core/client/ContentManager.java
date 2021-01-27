@@ -16,11 +16,6 @@
 
 package stroom.core.client;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.security.client.api.event.LogoutEvent;
@@ -28,6 +23,12 @@ import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,8 +46,12 @@ public class ContentManager implements HasHandlers {
             final CloseHandler closeHandler = handlerMap.get(tabData);
             close(closeHandler, tabData, false);
         });
-        eventBus.addHandler(RequestCloseAllTabsEvent.getType(), event -> closeAll(false));
-        eventBus.addHandler(RequestLogoutEvent.getType(), event -> closeAll(true));
+        eventBus.addHandler(
+                RequestCloseAllTabsEvent.getType(),
+                event -> closeAll(false));
+        eventBus.addHandler(
+                RequestLogoutEvent.getType(),
+                event -> closeAll(true));
     }
 
     private void closeAll(final boolean logoffAfterClose) {
@@ -69,7 +74,9 @@ public class ContentManager implements HasHandlers {
         }
     }
 
-    private void close(final CloseHandler closeHandler, final TabData tabData, final boolean logoffAfterClose) {
+    private void close(final CloseHandler closeHandler,
+                       final TabData tabData,
+                       final boolean logoffAfterClose) {
         closeHandler.onCloseRequest(ok -> {
             if (ok) {
                 forceClose(tabData);
@@ -89,7 +96,9 @@ public class ContentManager implements HasHandlers {
         handlerMap.remove(tabData);
     }
 
-    public void open(final CloseHandler closeHandler, final TabData tabData, final Layer layer) {
+    public void open(final CloseHandler closeHandler,
+                     final TabData tabData,
+                     final Layer layer) {
         handlerMap.put(tabData, closeHandler);
         OpenContentTabEvent.fire(this, tabData, layer);
     }

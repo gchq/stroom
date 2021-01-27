@@ -18,7 +18,6 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -53,6 +52,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.VisualisationDoc;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -151,38 +152,44 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
-        final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
-        queryComponentSettings.setDataSource(indexRef);
-        queryComponentSettings.setExpression(createExpression(dictionary).build());
+        final QueryComponentSettings queryComponentSettings = QueryComponentSettings.builder()
+                .dataSource(indexRef)
+                .expression(createExpression(dictionary).build())
+                .build();
 
-        final ComponentConfig query = new ComponentConfig();
-        query.setId("query-1234");
-        query.setName("Query");
-        query.setType("query");
-        query.setSettings(queryComponentSettings);
+        final ComponentConfig query = ComponentConfig.builder()
+                .id("query-1234")
+                .name("Query")
+                .type("query")
+                .settings(queryComponentSettings)
+                .build();
 
         // Create table.
-        final TableComponentSettings tableSettings = new TableComponentSettings();
-        tableSettings.setExtractValues(true);
-        tableSettings.setExtractionPipeline(pipelineRef);
+        final TableComponentSettings tableSettings = TableComponentSettings.builder()
+                .extractValues(true)
+                .extractionPipeline(pipelineRef)
+                .build();
 
-        final ComponentConfig table = new ComponentConfig();
-        table.setId("table-1234");
-        table.setName("Table");
-        table.setType("table");
-        table.setSettings(tableSettings);
+        final ComponentConfig table = ComponentConfig.builder()
+                .id("table-1234")
+                .name("Table")
+                .type("table")
+                .settings(tableSettings)
+                .build();
 
         // Create visualisation.
-        final VisComponentSettings visSettings = new VisComponentSettings();
-        visSettings.setTableId("table-1234");
-        visSettings.setTableSettings(tableSettings);
-        visSettings.setVisualisation(visRef);
+        final VisComponentSettings visSettings = VisComponentSettings.builder()
+                .tableId("table-1234")
+                .tableSettings(tableSettings)
+                .visualisation(visRef)
+                .build();
 
-        final ComponentConfig visualisation = new ComponentConfig();
-        visualisation.setId("visualisation-1234");
-        visualisation.setName("Visualisation");
-        visualisation.setType("vis");
-        visualisation.setSettings(visSettings);
+        final ComponentConfig visualisation = ComponentConfig.builder()
+                .id("visualisation-1234")
+                .name("Visualisation")
+                .type("vis")
+                .settings(visSettings)
+                .build();
 
         // Create component list.
         final List<ComponentConfig> components = new ArrayList<>();
@@ -291,7 +298,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
-        final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder root = ExpressionOperator.builder();
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
         root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;

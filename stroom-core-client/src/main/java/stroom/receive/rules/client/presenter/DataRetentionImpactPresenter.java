@@ -33,11 +33,11 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -88,10 +88,9 @@ public class DataRetentionImpactPresenter
     private final ButtonView runButton;
     private final ButtonView stopButton;
     private final ButtonView filterButton;
-    private final ButtonView flatViewButton;
-    private final ButtonView nestedViewButton;
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
+    private final ToggleButtonView flatNestedToggleButton;
 
     private final FindDataRetentionImpactCriteria criteria;
     private final DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
@@ -113,15 +112,16 @@ public class DataRetentionImpactPresenter
         runButton = getView().addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
         stopButton = getView().addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
         filterButton = getView().addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
-        nestedViewButton = getView().addButton(SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
-        flatViewButton = getView().addButton(SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE));
+        flatNestedToggleButton = getView().addToggleButton(
+                SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE),
+                SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
         expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.title(BTN_TITLE_EXPAND_ALL));
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.title(BTN_TITLE_COLLAPSE_ALL));
 
         updateButtonStates();
 
         criteria = new FindDataRetentionImpactCriteria();
-        criteria.setExpression(new ExpressionOperator.Builder(Op.AND).build());
+        criteria.setExpression(ExpressionOperator.builder().build());
 
         initColumns();
 
@@ -167,9 +167,9 @@ public class DataRetentionImpactPresenter
                         treeAction.reset();
                         isQueryRunning = false;
                         refreshVisibleData();
-                        GWT.log("Query finished (success)");
+//                        GWT.log("Query finished (success)");
                     } else {
-                        GWT.log("Query finished (different queryId)");
+//                        GWT.log("Query finished (different queryId)");
                         clearTable();
                         isQueryRunning = false;
                         refreshVisibleData();
@@ -193,7 +193,7 @@ public class DataRetentionImpactPresenter
                         clearTable();
                         refreshVisibleData();
                         updateButtonStates();
-                        GWT.log("Cancel finished (success)");
+//                        GWT.log("Cancel finished (success)");
                     })
                     .onFailure(throwable -> {
                         // Have to assume it is still running
@@ -210,9 +210,7 @@ public class DataRetentionImpactPresenter
         runButton.setEnabled(!isQueryRunning);
         stopButton.setEnabled(isQueryRunning);
         filterButton.setEnabled(!isQueryRunning);
-
-        nestedViewButton.setEnabled(!isQueryRunning && !isTableNested);
-        flatViewButton.setEnabled(!isQueryRunning && isTableNested);
+        flatNestedToggleButton.setState(isTableNested);
 
         expandAllButton.setEnabled(!isQueryRunning
                 && isTableNested
@@ -229,13 +227,13 @@ public class DataRetentionImpactPresenter
                 .map(summaries -> {
                             if (isTableNested) {
                                 return DataRetentionImpactRow.buildNestedTable(
-                                        dataRetentionRules.getRules(),
+                                        dataRetentionRules.getActiveRules(),
                                         summaries,
                                         treeAction,
                                         criteria);
                             } else {
                                 return DataRetentionImpactRow.buildFlatTable(
-                                        dataRetentionRules.getRules(),
+                                        dataRetentionRules.getActiveRules(),
                                         summaries,
                                         criteria);
                             }
@@ -243,7 +241,7 @@ public class DataRetentionImpactPresenter
                 )
                 .orElse(Collections.emptyList());
         dataProvider.setCompleteList(rows);
-
+//        rows.forEach(row -> GWT.log(row.toString()));
         updateButtonStates();
     }
 
@@ -265,17 +263,16 @@ public class DataRetentionImpactPresenter
             openFilterPresenter();
         }));
 
-        registerHandler(nestedViewButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            isTableNested = true;
-            refreshVisibleData();
-        }));
-
-        registerHandler(flatViewButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            isTableNested = false;
-            refreshVisibleData();
-        }));
+        registerHandler(flatNestedToggleButton.addClickHandler(
+                onClickedEvent -> {
+                    // Get the user's rules without our default one
+                    isTableNested = false;
+                    refreshVisibleData();
+                },
+                offClickedEvent -> {
+                    isTableNested = true;
+                    refreshVisibleData();
+                }));
 
         registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll();

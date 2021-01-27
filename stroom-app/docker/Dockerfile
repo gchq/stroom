@@ -66,6 +66,9 @@ EXPOSE 8081
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 
+# Create Docker volume for the content_pack_import dir as this will be mutated on 
+VOLUME /stroom/content_pack_import/
+
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
 
@@ -73,10 +76,13 @@ VOLUME /stroom/logs/
 VOLUME /stroom/output/
 
 # Create Docker volume for the proxy aggregation repo location
-VOLUME /stroom/proxy-repo/
+VOLUME /stroom/proxy_repo/
 
-# Create Docker volume for Stroom's volumes dir
-VOLUME /stroom/ref-data/
+# Create Docker volume for Stroom's off-heap reference data
+VOLUME /stroom/reference_data/
+
+# Create Docker volume for Stroom's off-heap search result data
+VOLUME /stroom/search_results/
 
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
@@ -101,29 +107,30 @@ RUN \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
     mkdir -p /stroom && \
     mkdir -p /stroom/config && \
-    mkdir -p /stroom/config-fallback && \
-    mkdir -p /stroom/contentPackImport && \
+    mkdir -p /stroom/config_fallback && \
+    mkdir -p /stroom/content_pack_import && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
     mkdir -p /stroom/logs/migration && \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
-    mkdir -p /stroom/proxy-repo && \
-    mkdir -p /stroom/ref-data && \
+    mkdir -p /stroom/proxy_repo && \
+    mkdir -p /stroom/reference_data && \
+    mkdir -p /stroom/search_results && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
 # Those that are most likely to have changed get copied last to speed up build
 
 # Copy in the content packs downloaded by gradle
-COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
+COPY --chown=stroom:stroom ./build/content_packs /stroom/content_pack_import
 
 # Copy all the fat jars for the application and connectors
 COPY --chown=stroom:stroom *.sh /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
-COPY --chown=stroom:stroom build/config.yml /stroom/config-fallback/config.yml
+COPY --chown=stroom:stroom build/config.yml /stroom/config_fallback/config.yml
 
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 

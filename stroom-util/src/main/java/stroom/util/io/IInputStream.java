@@ -22,9 +22,9 @@ import java.io.IOException;
 public interface IInputStream extends Closeable {
     int read() throws IOException;
 
-    int read(byte b[]) throws IOException;
+    int read(byte[] b) throws IOException;
 
-    int read(byte b[], int off, int len) throws IOException;
+    int read(byte[] b, int off, int len) throws IOException;
 
     long skip(long n) throws IOException;
 

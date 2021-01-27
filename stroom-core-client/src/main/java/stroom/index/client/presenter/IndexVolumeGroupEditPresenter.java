@@ -117,7 +117,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
     }
 
     private void create() {
-        final IndexVolume indexVolume = new IndexVolume.Builder().indexVolumeGroupId(volumeGroup.getId()).build();
+        final IndexVolume indexVolume = IndexVolume.builder().indexVolumeGroupId(volumeGroup.getId()).build();
         editVolume(indexVolume, "Add Volume");
     }
 

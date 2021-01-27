@@ -17,8 +17,6 @@
 
 package stroom.search.solr;
 
-import org.apache.lucene.search.Query;
-import org.apache.solr.client.solrj.SolrServerException;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -33,6 +31,9 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+
+import org.apache.lucene.search.Query;
+import org.apache.solr.client.solrj.SolrServerException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -75,7 +76,8 @@ public class SolrIndexRetentionExecutor {
     }
 
     public void exec() {
-        taskContextFactory.context(TASK_NAME, this::exec).run();
+        taskContextFactory.context(TASK_NAME, this::exec)
+                .run();
     }
 
     private void exec(final TaskContext taskContext) {
@@ -86,7 +88,8 @@ public class SolrIndexRetentionExecutor {
                 if (!Thread.currentThread().isInterrupted()) {
                     final List<DocRef> docRefs = solrIndexStore.list();
                     if (docRefs != null) {
-                        docRefs.forEach(docRef -> performRetention(taskContext, docRef));
+                        docRefs.forEach(docRef ->
+                                performRetention(taskContext, docRef));
                     }
                     info(taskContext, () -> "Finished in " + logExecutionTime);
                 }
@@ -102,7 +105,8 @@ public class SolrIndexRetentionExecutor {
                 final CachedSolrIndex cachedSolrIndex = solrIndexCache.get(docRef);
                 if (cachedSolrIndex != null) {
                     final SolrIndexDoc solrIndexDoc = cachedSolrIndex.getIndex();
-                    final int termCount = ExpressionUtil.terms(solrIndexDoc.getRetentionExpression(), null).size();
+                    final int termCount = ExpressionUtil.terms(solrIndexDoc.getRetentionExpression(), null)
+                            .size();
                     if (termCount > 0) {
                         final Map<String, SolrIndexField> indexFieldsMap = cachedSolrIndex.getFieldsMap();
                         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
@@ -111,13 +115,19 @@ public class SolrIndexRetentionExecutor {
                                 searchConfig.getMaxBooleanClauseCount(),
                                 null,
                                 System.currentTimeMillis());
-                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(solrIndexDoc.getRetentionExpression());
+                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery
+                                (solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                             try {
-                                info(taskContext, () -> "Deleting data from '" + solrIndexDoc.getName() + "' matching query '" + queryString + "'");
-                                solrClient.deleteByQuery(solrIndexDoc.getCollection(), queryString, 10000);
+                                info(taskContext, () ->
+                                                "Deleting data from '" + solrIndexDoc.getName()
+                                                        + "' matching query '" + queryString + "'");
+                                solrClient.deleteByQuery(
+                                        solrIndexDoc.getCollection(),
+                                        queryString,
+                                        10000);
                             } catch (final SolrServerException | IOException e) {
                                 LOGGER.error(e::getMessage, e);
                             }

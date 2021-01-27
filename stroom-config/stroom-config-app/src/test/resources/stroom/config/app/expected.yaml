@@ -39,6 +39,15 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
+  byteBufferPool:
+    pooledByteBufferCounts:
+      1: 50
+      10: 50
+      100: 50
+      1000: 50
+      10000: 50
+      100000: 10
+      1000000: 3
   cluster:
     clusterCallUseLocal: true
     clusterCallReadTimeout: "PT30S"
@@ -60,11 +69,6 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-  clusterTask:
-    clusterResultCollectorCache:
-      maximumSize: 1000000
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
@@ -82,7 +86,7 @@ appConfig:
       maxPoolSize: 30
   contentPackImport:
     enabled: false
-    importDirectory: null
+    importDirectory: "content_pack_import"
   core:
     db:
       connection:
@@ -165,7 +169,8 @@ appConfig:
           maxPoolSize: 30
     filesystemVolume:
       volumeSelector: "RoundRobin"
-      defaultStreamVolumePaths: "volumes/defaultStreamVolume"
+      defaultStreamVolumePaths:
+      - "volumes/default_stream_volume"
       defaultStreamVolumeFilesystemUtilisation: 0.9
       createDefaultStreamVolumesOnStart: true
       feedPathCache:
@@ -336,7 +341,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    temp: "/tmp"
+    home: "."
+    temp: "/tmp/stroom"
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -359,20 +365,12 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "${stroom.temp}/refDataOffHeapStore"
+      localDir: "reference_data"
       lmdbSystemLibraryPath: null
       maxPutsBeforeCommit: 0
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"
-      pooledByteBufferCounts:
-        1: 50
-        10: 50
-        100: 50
-        1000: 50
-        10000: 50
-        100000: 10
-        1000000: 3
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
@@ -444,7 +442,7 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "${stroom.temp}/proxy"
+    proxyDir: "proxy_repo"
     proxyThreads: 10
     maxFileScan: 100000
     maxConcurrentMappedFiles: 100000
@@ -461,6 +459,8 @@ appConfig:
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
+  requestLogging:
+    globalLoggingEnabled: false
   search:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
@@ -473,6 +473,7 @@ appConfig:
       maxStoredDataQueueSize: 1000
       maxThreads: 4
       maxThreadsPerTask: 2
+      maxStreamEventMapSize: 1000000
     shard:
       maxDocIdQueueSize: 1000000
       maxThreads: 4
@@ -485,6 +486,21 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
+    lmdb:
+      localDir: "search_results"
+      lmdbSystemLibraryPath: null
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      maxDbs: 1000
+      purgeAge: "P30D"
+      readAheadEnabled: true
+      offHeapResults: true
+      payloadLimit: "0B"
+    remoteSearchResultCache:
+      maximumSize: 100
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
@@ -633,6 +649,7 @@ appConfig:
         maxStoredDataQueueSize: 1000
         maxThreads: 4
         maxThreadsPerTask: 2
+        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"
@@ -659,7 +676,6 @@ appConfig:
           maxPoolSize: 30
       search:
         storeSize: "1000000,100,10,1"
-        resultHandlerBatchSize: 5000
         maxResults: 100000
         fetchSize: 5000
         searchResultCache:
@@ -797,6 +813,10 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    source:
+      maxCharactersInPreviewFetch: 30000
+      maxCharactersPerFetch: 80000
+      maxCharactersToCompleteLine: 10000
     splash:
       enabled: false
       title: "Splash Screen"
@@ -832,6 +852,8 @@ appConfig:
     volumeSelector: "RoundRobin"
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeGroupName: "Default Volume Group"
-    defaultIndexVolumeGroupPaths: "volumes/defaultIndexVolume"
-    defaultIndexVolumeGroupNodes: "node1a"
+    defaultIndexVolumeGroupPaths:
+    - "volumes/default_index_volume"
+    defaultIndexVolumeGroupNodes:
+    - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9

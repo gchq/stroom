@@ -109,7 +109,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         getView().setCollection(index.getCollection());
 
         if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
+            index.setRetentionExpression(ExpressionOperator.builder().build());
         }
         editExpressionPresenter.init(restFactory, docRef, SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());

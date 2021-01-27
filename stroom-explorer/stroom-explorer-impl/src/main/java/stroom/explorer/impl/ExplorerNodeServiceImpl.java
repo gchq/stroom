@@ -347,7 +347,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return new ExplorerNode.Builder()
+        return ExplorerNode
+                .builder()
                 .type(explorerTreeNode.getType())
                 .uuid(explorerTreeNode.getUuid())
                 .name(explorerTreeNode.getName())

@@ -99,7 +99,7 @@ class TestMetaServiceImpl {
         final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
         final Meta meta2 = metaService.create(createRawProperties(FEED_2));
 
-        final ExpressionOperator expression = new Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
@@ -142,7 +142,7 @@ class TestMetaServiceImpl {
         List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(
                         1,
-                        new ExpressionOperator.Builder(Op.AND).build(),
+                        ExpressionOperator.builder().build(),
                         RetentionRuleOutcome.DELETE)
         );
         setupRetentionData();
@@ -164,7 +164,7 @@ class TestMetaServiceImpl {
         List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(
                         1,
-                        new ExpressionOperator.Builder(Op.NOT).build(),
+                        ExpressionOperator.builder().op(Op.NOT).build(),
                         RetentionRuleOutcome.DELETE)
         );
         setupRetentionData();
@@ -593,7 +593,7 @@ class TestMetaServiceImpl {
 
     private void assertTotalRowCount(final int expectedRowCount, final Status status) {
         FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(new ExpressionOperator.Builder(true, Op.AND)
+        criteria.setExpression(ExpressionOperator.builder()
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build());
         final int rowCount = metaDao.count(criteria);
@@ -630,7 +630,7 @@ class TestMetaServiceImpl {
     }
 
     private MetaProperties createProperties(final String feedName, final Instant createTime) {
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .createMs(createTime.toEpochMilli())
                 .feedName(feedName)
                 .processorUuid("12345")
@@ -640,7 +640,7 @@ class TestMetaServiceImpl {
     }
 
     private MetaProperties createRawProperties(final String feedName) {
-        return new MetaProperties.Builder()
+        return MetaProperties.builder()
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .typeName("RAW_TEST_STREAM_TYPE")
@@ -651,7 +651,7 @@ class TestMetaServiceImpl {
                                                     final String feedName,
                                                     final RetentionRuleOutcome outcome) {
 
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, Op.AND)
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
                 .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
                 .build();
@@ -665,7 +665,7 @@ class TestMetaServiceImpl {
                                         final int age,
                                         final TimeUnit timeUnit) {
 
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, Op.AND)
+        final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
                 .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
                 .build();

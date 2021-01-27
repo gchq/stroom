@@ -4,7 +4,6 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
@@ -26,7 +25,9 @@ import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
+import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.event.logging.rs.impl.RequestLoggingConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -51,6 +52,7 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
+    public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -79,6 +81,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_REQUEST_LOGGING = "requestLogging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -94,9 +97,9 @@ public class AppConfig extends AbstractConfig {
 
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
-    private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
     private CommonDbConfig commonDbConfig = new CommonDbConfig();
     private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
     private LegacyDbConfig legacyDbConfig = new LegacyDbConfig();
@@ -120,6 +123,7 @@ public class AppConfig extends AbstractConfig {
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+    private RequestLoggingConfig requestLoggingConfig = new RequestLoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -169,6 +173,16 @@ public class AppConfig extends AbstractConfig {
         this.annotationConfig = annotationConfig;
     }
 
+    @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
+    public ByteBufferPoolConfig getByteBufferPoolConfig() {
+        return byteBufferPoolConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setByteBufferPoolConfig(final ByteBufferPoolConfig byteBufferPoolConfig) {
+        this.byteBufferPoolConfig = byteBufferPoolConfig;
+    }
+
     @JsonProperty(PROP_NAME_CLUSTER)
     public ClusterConfig getClusterConfig() {
         return clusterConfig;
@@ -187,16 +201,6 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setClusterLockConfig(ClusterLockConfig clusterLockConfig) {
         this.clusterLockConfig = clusterLockConfig;
-    }
-
-    @JsonProperty(PROP_NAME_CLUSTER_TASK)
-    public ClusterTaskConfig getClusterTaskConfig() {
-        return clusterTaskConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterTaskConfig(final ClusterTaskConfig clusterTaskConfig) {
-        this.clusterTaskConfig = clusterTaskConfig;
     }
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
@@ -446,6 +450,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
         this.receiveDataConfig = receiveDataConfig;
+    }
+
+    @JsonProperty(PROP_NAME_REQUEST_LOGGING)
+    public RequestLoggingConfig getRequestLoggingConfig() {
+        return requestLoggingConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRequestLoggingConfig(final RequestLoggingConfig requestLoggingConfig) {
+        this.requestLoggingConfig = requestLoggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)

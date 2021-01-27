@@ -85,8 +85,13 @@ public class StreamAttributeMapResource implements RestResource {
             criteria.setSort(new Sort("Create Time", true, false));
 
             // Set status to unlocked
-            ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
-            ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
+            ExpressionTerm expressionTerm = ExpressionTerm
+                    .builder()
+                    .field("Status")
+                    .condition(Condition.EQUALS)
+                    .value("Unlocked")
+                    .build();
+            ExpressionOperator expressionOperator = ExpressionOperator.builder().addTerm(expressionTerm).build();
             criteria.setExpression(expressionOperator);
 
             ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
@@ -119,7 +124,7 @@ public class StreamAttributeMapResource implements RestResource {
             //TODO disable this and have it as a default field
             // Set status to unlocked
 //             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
-//             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
+//             ExpressionOperator expressionOperator = ExpressionOperator.builder()(true, Op.AND, expressionTerm);
 //             criteria.setExpression(expressionOperator);
 
             criteria.setExpression(expression);

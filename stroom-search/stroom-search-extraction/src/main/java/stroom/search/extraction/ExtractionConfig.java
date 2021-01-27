@@ -1,7 +1,8 @@
 package stroom.search.extraction;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
@@ -16,10 +17,12 @@ public class ExtractionConfig extends AbstractConfig {
 
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
+    private static final int DEFAULT_MAX_STREAM_EVENT_MAP_SIZE = 1000000;
 
     private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
     private int maxThreads = DEFAULT_MAX_THREADS;
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
+    private int maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
@@ -48,11 +51,22 @@ public class ExtractionConfig extends AbstractConfig {
         this.maxThreadsPerTask = maxThreadsPerTask;
     }
 
+    @JsonPropertyDescription("The maximum size of the stream event map used to queue events prior to extraction")
+    public int getMaxStreamEventMapSize() {
+        return maxStreamEventMapSize;
+    }
+
+    public void setMaxStreamEventMapSize(final int maxStreamEventMapSize) {
+        this.maxStreamEventMapSize = maxStreamEventMapSize;
+    }
+
     @Override
     public String toString() {
         return "ExtractionConfig{" +
-                "maxThreads=" + maxThreads +
+                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+                ", maxThreads=" + maxThreads +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
+                ", maxStreamEventMapSize=" + maxStreamEventMapSize +
                 '}';
     }
 }

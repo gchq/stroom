@@ -122,7 +122,7 @@ public class NewUIExplorerResource implements RestResource {
     @Path("/info/{type}/{uuid}")
     public DocRefInfo getDocInfo(@PathParam("type") final String type,
                                  @PathParam("uuid") final String uuid) {
-        return docRefInfoService.info(new DocRef.Builder()
+        return docRefInfoService.info(DocRef.builder()
                 .type(type)
                 .uuid(uuid)
                 .build())
@@ -376,7 +376,7 @@ public class NewUIExplorerResource implements RestResource {
                     .findFirst()
                     .orElse(children.get(0));
 
-            results.add(new DocRef.Builder()
+            results.add(DocRef.builder()
                     .uuid(systemNode.getUuid())
                     .name(systemNode.getName())
                     .type(systemNode.getType())
@@ -385,7 +385,7 @@ public class NewUIExplorerResource implements RestResource {
             getChildren(systemNode, filteredModel)
                     .stream()
                     .map(c ->
-                            new DocRef.Builder()
+                            DocRef.builder()
                                     .uuid(c.getUuid())
                                     .name(c.getName())
                                     .type(c.getType())

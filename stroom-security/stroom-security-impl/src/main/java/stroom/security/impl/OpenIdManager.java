@@ -176,7 +176,7 @@ class OpenIdManager {
                 }
             } else {
                 try {
-                    final TokenRequest tokenRequest = new TokenRequest.Builder()
+                    final TokenRequest tokenRequest = TokenRequest.builder()
                             .code(code)
                             .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                             .clientId(openIdConfig.getClientId())

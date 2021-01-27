@@ -60,6 +60,7 @@ class Lookup extends AbstractLookup {
 
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
 
+
         boolean wasFound = false;
         try {
             if (result.getRefDataValueProxy().isPresent()) {
@@ -70,15 +71,55 @@ class Lookup extends AbstractLookup {
                 sequenceMaker.close();
 
                 if (wasFound && trace) {
-                    outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+                    outputInfo(
+                            Severity.INFO,
+                            "Success ",
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
+                } else if (!wasFound && !ignoreWarnings) {
+                    outputInfo(
+                            Severity.WARNING,
+                            "Key not found ",
+                            lookupIdentifier,
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
                 }
+            } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
+                // We have effective streams so as there is no proxy present then the map was not found
+                // in the loaded streams
+                outputInfo(
+                        Severity.WARNING,
+                        "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
+                        lookupIdentifier,
+                        trace,
+                        ignoreWarnings,
+                        result,
+                        context);
+            } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+                // No effective streams were found to lookup from
+                outputInfo(
+                        Severity.WARNING,
+                        "No effective streams found ",
+                        lookupIdentifier,
+                        trace,
+                        ignoreWarnings,
+                        result,
+                        context);
             }
         } catch (XPathException e) {
-            outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
-        }
-
-        if (!wasFound && !ignoreWarnings) {
-            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+            outputInfo(
+                    Severity.ERROR,
+                    "Lookup errored: " + e.getMessage(),
+                    lookupIdentifier,
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
         }
 
         return sequenceMaker.toSequence();

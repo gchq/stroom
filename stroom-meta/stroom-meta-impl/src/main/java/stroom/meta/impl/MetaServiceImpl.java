@@ -146,7 +146,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final long now = System.currentTimeMillis();
         final int result = updateStatus(meta.getId(), currentStatus, newStatus, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
-            return new Meta.Builder(meta)
+            return meta
+                    .copy()
                     .status(newStatus)
                     .statusMs(now)
                     .build();
@@ -347,14 +348,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private Meta findParent(final Meta meta) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
         final ResultPage<Meta> parentList = simpleFind(expression);
         if (parentList != null && parentList.size() > 0) {
             return parentList.getFirst();
         }
-        return new Meta.Builder()
+        return Meta
+                .builder()
                 .id(meta.getParentMetaId())
                 .build();
     }
@@ -367,7 +369,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private Builder copyExpression(final ExpressionOperator expressionOperator, final Set<String> excludedFields) {
-        final Builder builder = new Builder(expressionOperator.enabled(), expressionOperator.op());
+        final Builder builder = ExpressionOperator
+                .builder()
+                .op(expressionOperator.op())
+                .enabled(expressionOperator.enabled());
         if (expressionOperator.getChildren() != null) {
             expressionOperator.getChildren().forEach(expressionItem -> {
                 if (expressionItem instanceof ExpressionTerm) {
@@ -392,7 +397,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final Set<Meta> set = new HashSet<>();
         if (optionalId.isPresent()) {
             // Get the data that occurs just before or ast the start of the period.
-            final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+            final ExpressionOperator expression = ExpressionOperator.builder()
                     .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, optionalId.get())
                     .build();
             // There is no need to apply security here are is has been applied when finding the data id above.
@@ -402,7 +407,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
 
         // Now add all data that occurs within the requested period.
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
@@ -419,7 +424,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
@@ -434,7 +439,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs) {
 //        if (timestampMs == null)
 //            return null;
-//        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+//        final ExpressionOperator expression = ExpressionOperator.builder()
 //                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
 //                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
 //                .build();
@@ -617,7 +622,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
             } else {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
-                final Meta meta = new Meta.Builder()
+                final Meta meta = Meta
+                        .builder()
                         .id(child.getParentMetaId())
                         .build();
                 result.add(meta);
@@ -627,12 +633,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
-            return new ExpressionOperator.Builder(Op.AND)
+            return ExpressionOperator.builder()
                     .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
@@ -640,12 +646,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
-            return new ExpressionOperator.Builder(Op.AND)
+            return ExpressionOperator.builder()
                     .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
-        return new ExpressionOperator.Builder(Op.AND)
+        return ExpressionOperator.builder()
                 .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
@@ -664,7 +670,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             }
 
             if (filter != null) {
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+                final ExpressionOperator.Builder builder = ExpressionOperator.builder();
                 builder.addOperator(expression);
                 builder.addOperator(filter);
                 return builder.build();

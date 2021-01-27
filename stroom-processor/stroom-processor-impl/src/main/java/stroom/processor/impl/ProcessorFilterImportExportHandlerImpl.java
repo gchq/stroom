@@ -112,14 +112,20 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             processorFilter.getPipelineUuid(),
                             processorFilter.getPipelineName());
 
-                    processorFilterService.importFilter(processor,
-                            new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
-                            processorFilter.getQueryData(),
-                            processorFilter.getPriority(),
-                            false,
-                            processorFilter.isReprocess(),
-                            enable,
-                            trackerStartMs);
+                    if (processor != null) {
+                        processorFilterService.importFilter(processor,
+                                new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
+                                processorFilter.getQueryData(),
+                                processorFilter.getPriority(),
+                                false,
+                                processorFilter.isReprocess(),
+                                enable,
+                                trackerStartMs);
+                    } else {
+                        LOGGER.error("Processor not found on pipeline " + processorFilter.getPipelineName() +
+                        "(" +  processorFilter.getPipelineUuid() + ")" +
+                                " and failed to create");
+                    }
                 }
 
             } else if (ImportState.State.UPDATE.equals(importState.getState())) {
@@ -138,7 +144,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         if (docRef == null || docRef.getUuid() == null)
             return null;
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
@@ -258,24 +264,32 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             return null;
         }
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<Processor> page = processorService.find(criteria);
 
-        RuntimeException ex = null;
+        Processor result;
+        RuntimeException ex;
         if (page.size() == 0) {
             if (pipelineUuid != null) {
                 //Create the missing processor
-                processorService.create(new DocRef(Processor.ENTITY_TYPE, processorUuid), new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName), true);
+                result = processorService.create(new DocRef(Processor.ENTITY_TYPE, processorUuid), new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName), true);
+                ex = null;
             } else {
-                throw new RuntimeException("Unable to find processor for filter " + filterUuid);
+                ex = new IllegalStateException("Unable to find processor for filter " + filterUuid);
+                result = null;
             }
-        }
-
-        if (page.size() > 1) {
+        } else if (page.size() > 1) {
             ex = new IllegalStateException("Multiple processors with DocRef " + filterUuid + " found.");
+            result = null;
+        } else if (page.size() == 1){
+            result = page.getFirst();
+            ex = null;
+        } else {
+            ex = new IllegalStateException("Found " + page.size() + " processors with DocRef " + filterUuid + "!");
+            result = null;
         }
 
         if (ex != null) {
@@ -283,7 +297,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw ex;
         }
 
-        return page.getFirst();
+        return result;
     }
 
     @Override
@@ -317,7 +331,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
         final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-        final ExpressionOperator expression = new ExpressionOperator.Builder()
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);

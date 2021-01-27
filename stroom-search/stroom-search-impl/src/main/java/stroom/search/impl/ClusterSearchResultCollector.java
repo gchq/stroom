@@ -16,29 +16,25 @@
 
 package stroom.search.impl;
 
-import stroom.cluster.task.api.ClusterResultCollector;
-import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.cluster.task.api.CollectorId;
-import stroom.cluster.task.api.CollectorIdFactory;
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
-import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.io.StreamUtil;
 
+import com.esotericsoftware.kryo.io.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -46,56 +42,42 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
+public class ClusterSearchResultCollector implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
-    private final ClusterResultCollectorCache clusterResultCollectorCache;
-    private final CollectorId id;
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
-    private final CompletionState completionState = new CompletionState();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
     private final AsyncSearchTask task;
     private final String nodeName;
     private final Set<String> highlights;
-    private final ResultHandler resultHandler;
-    private final Sizes defaultMaxResultsSizes;
-    private final Sizes storeSize;
+    private final Coprocessors coprocessors;
 
-    ClusterSearchResultCollector(final Executor executor,
-                                 final TaskContextFactory taskContextFactory,
-                                 final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                 final AsyncSearchTask task,
-                                 final String nodeName,
-                                 final Set<String> highlights,
-                                 final ClusterResultCollectorCache clusterResultCollectorCache,
-                                 final ResultHandler resultHandler,
-                                 final Sizes defaultMaxResultsSizes,
-                                 final Sizes storeSize) {
+    public ClusterSearchResultCollector(final Executor executor,
+                                        final TaskContextFactory taskContextFactory,
+                                        final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
+                                        final AsyncSearchTask task,
+                                        final String nodeName,
+                                        final Set<String> highlights,
+                                        final Coprocessors coprocessors) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
         this.task = task;
         this.nodeName = nodeName;
         this.highlights = highlights;
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
-        this.resultHandler = resultHandler;
-        this.defaultMaxResultsSizes = defaultMaxResultsSizes;
-        this.storeSize = storeSize;
-
-        id = CollectorIdFactory.create();
-
-        clusterResultCollectorCache.put(id, this);
+        this.coprocessors = coprocessors;
     }
 
     public void start() {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             // Don't begin execution if we have been asked to complete already.
-            if (!completionState.isComplete()) {
+            if (!coprocessors.getCompletionState().isComplete()) {
                 final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
                 asyncSearchTaskHandler.exec(taskContext, task);
             }
@@ -112,75 +94,90 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
-                            getErrorSet(nodeName).add(t.getMessage());
-                            completionState.complete();
+                            onFailure(nodeName, t);
+                            coprocessors.getCompletionState().complete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        completionState.complete();
+                        coprocessors.getCompletionState().complete();
                     }
                 });
     }
 
     @Override
     public void destroy() {
-        clusterResultCollectorCache.remove(id);
-        completionState.complete();
+        coprocessors.clear();
     }
 
     public void complete() {
-        completionState.complete();
+        coprocessors.getCompletionState().complete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+    public boolean awaitCompletion(final long timeout,
+                                   final TimeUnit unit) throws InterruptedException {
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
-    @Override
-    public CollectorId getId() {
-        return id;
-    }
+    public synchronized boolean onSuccess(final String nodeName,
+                                          final InputStream inputStream) {
+        final AtomicBoolean complete = new AtomicBoolean();
 
-    @Override
-    public boolean onReceive() {
-        return true;
-    }
+        boolean success = true;
 
-    @Override
-    public synchronized void onSuccess(final String nodeName, final NodeResult result) {
-        try {
-            final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
-            final List<String> errors = result.getErrors();
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
-            if (payloadMap != null) {
-                resultHandler.handle(payloadMap);
-            }
-
-            if (errors != null) {
+        try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+            final Set<String> errors = new HashSet<>();
+            success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
+            if (errors.size() > 0) {
                 getErrorSet(nodeName).addAll(errors);
             }
         } catch (final RuntimeException e) {
-            getErrorSet(nodeName).add(e.getMessage());
+            onFailure(nodeName, e);
         }
+
+        // If the result collector returns false it is because we have already collected enough data and can
+        // therefore consider search complete.
+        return complete.get() || !success;
     }
 
-    @Override
-    public synchronized void onFailure(final String nodeName, final Throwable throwable) {
+//    public synchronized boolean onSuccess(final String nodeName, final NodeResult result) {
+//        boolean success = true;
+//        try {
+//            final List<Payload> payloads = result.getPayloads();
+//            final List<String> errors = result.getErrors();
+//
+//            if (payloads != null) {
+//                success = coprocessors.consumePayloads(payloads);
+//            }
+//
+//            if (errors != null) {
+//                getErrorSet(nodeName).addAll(errors);
+//            }
+//        } catch (final RuntimeException e) {
+//            getErrorSet(nodeName).add(e.getMessage());
+//        }
+//        return success;
+//    }
+
+    public synchronized void onFailure(final String nodeName,
+                                       final Throwable throwable) {
         getErrorSet(nodeName).add(throwable.getMessage());
     }
 
-    public Set<String> getErrorSet(final String nodeName) {
+    private Set<String> getErrorSet(final String nodeName) {
         Set<String> errorSet = errors.get(nodeName);
         if (errorSet == null) {
             errorSet = new HashSet<>();
@@ -224,28 +221,15 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public Sizes getDefaultMaxResultsSizes() {
-        return defaultMaxResultsSizes;
-    }
-
-    @Override
-    public Sizes getStoreSize() {
-        return storeSize;
-    }
-
-    @Override
-    public Data getData(final String componentId) {
-        // Keep the cluster result collector cache fresh.
-        clusterResultCollectorCache.get(getId());
-
-        return resultHandler.getResultStore(componentId);
+    public DataStore getData(final String componentId) {
+        return coprocessors.getData(componentId);
     }
 
     @Override
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", complete=" + completionState.isComplete() +
+                ", complete=" + coprocessors.getCompletionState() +
                 '}';
     }
 }

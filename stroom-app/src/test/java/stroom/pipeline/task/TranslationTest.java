@@ -66,6 +66,7 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 
 import org.slf4j.Logger;
@@ -172,9 +173,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 final String streamType = feed.isReference() ?
                         StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
-                final QueryData findStreamQueryData = new QueryData.Builder()
+                final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(Op.AND)
+                        .expression(ExpressionOperator.builder()
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
@@ -321,7 +322,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final MetaProperties metaProperties = new MetaProperties.Builder()
+            final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feed.getName())
                     .typeName(streamTypeName)
                     .createMs(millis)
@@ -389,9 +390,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = pipelines.get(0);
 //        final FeedDoc feed = feeds.get();
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+        final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                         .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
@@ -564,8 +565,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
-            ComparisonHelper.compare(expectedFile, actualFile, false, true);
-            Files.deleteIfExists(actualFile);
+            boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile, 0);
+            if (areFilesTheSame) {
+                Files.deleteIfExists(actualFile);
+            } else {
+                throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)));
+            }
         } catch (final IOException | RuntimeException e) {
             exceptions.add(e);
         }

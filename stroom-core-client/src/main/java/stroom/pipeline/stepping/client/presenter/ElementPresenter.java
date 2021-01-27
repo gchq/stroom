@@ -96,7 +96,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                 getView().setCodeView(getCodePresenter().getView());
 
                 try {
-                    final FindElementDocRequest findElementDocRequest = new FindElementDocRequest.Builder()
+                    final FindElementDocRequest findElementDocRequest = FindElementDocRequest.builder()
                             .pipelineElement(element)
                             .properties(properties)
                             .feedName(feedName)
@@ -198,7 +198,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return codePresenter.getText();
     }
 
-    public void setCode(final String code, final IndicatorLines codeIndicators) {
+    public void setCode(final String code,
+                        final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
 
@@ -207,6 +208,14 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             }
 
             codePresenter.setIndicators(codeIndicators);
+
+            // Done here to ensure the editor is attached
+            codePresenter.getBasicAutoCompletionOption().setAvailable();
+            codePresenter.getBasicAutoCompletionOption().setOn();
+            codePresenter.getSnippetsOption().setAvailable();
+            codePresenter.getSnippetsOption().setOn();
+            codePresenter.getLiveAutoCompletionOption().setAvailable();
+            codePresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -217,7 +226,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         }
     }
 
-    public void setInput(final String input, final int inputStartLineNo, final boolean formatInput,
+    public void setInput(final String input,
+                         final int inputStartLineNo,
+                         final boolean formatInput,
                          final IndicatorLines inputIndicators) {
         if (inputPresenter != null) {
             inputPresenter.getStylesOption().setOn(formatInput);
@@ -228,10 +239,19 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
             inputPresenter.setIndicators(inputIndicators);
+
+            inputPresenter.getBasicAutoCompletionOption().setUnavailable();
+            inputPresenter.getBasicAutoCompletionOption().setOff();
+            inputPresenter.getSnippetsOption().setUnavailable();
+            inputPresenter.getSnippetsOption().setOff();
+            inputPresenter.getLiveAutoCompletionOption().setUnavailable();
+            inputPresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
-    public void setOutput(final String output, final int outputStartLineNo, final boolean formatOutput,
+    public void setOutput(final String output,
+                          final int outputStartLineNo,
+                          final boolean formatOutput,
                           final IndicatorLines outputIndicators) {
         if (outputPresenter != null) {
             outputPresenter.getStylesOption().setOn(formatOutput);
@@ -242,6 +262,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
             outputPresenter.setIndicators(outputIndicators);
+
+            outputPresenter.getBasicAutoCompletionOption().setUnavailable();
+            outputPresenter.getBasicAutoCompletionOption().setOff();
+            outputPresenter.getSnippetsOption().setUnavailable();
+            outputPresenter.getSnippetsOption().setOff();
+            outputPresenter.getLiveAutoCompletionOption().setUnavailable();
+            outputPresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -289,8 +316,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getCodePresenter() {
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
-            setOptions(codePresenter);
-            codePresenter.getLineNumbersOption().setOn(true);
+            setCommonEditorOptions(codePresenter);
+
+            codePresenter.getFormatAction().setAvailable(true);
 
             registerHandler(codePresenter.addValueChangeHandler(event -> {
                 dirtyCode = true;
@@ -307,8 +335,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getInputPresenter() {
         if (inputPresenter == null) {
             inputPresenter = editorProvider.get();
-            inputPresenter.setReadOnly(true);
-            setOptions(inputPresenter);
+            setCommonEditorOptions(inputPresenter);
+            setReadOnlyEditorOptions(inputPresenter);
 
             inputPresenter.setShowFilterSettings(false);
             inputPresenter.setInput(true);
@@ -319,12 +347,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getOutputPresenter() {
         if (outputPresenter == null) {
             outputPresenter = editorProvider.get();
-            outputPresenter.setReadOnly(true);
-            setOptions(outputPresenter);
+            setCommonEditorOptions(outputPresenter);
+            setReadOnlyEditorOptions(outputPresenter);
 
             // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
             // validation errors in the gutter.
-            if (element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
+            if (element != null && element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
                 outputPresenter.getLineNumbersOption().setOn(true);
             }
 
@@ -340,11 +368,29 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return outputPresenter;
     }
 
-    private void setOptions(final EditorPresenter editorPresenter) {
+    private void setReadOnlyEditorOptions(final EditorPresenter editorPresenter) {
+        editorPresenter.setReadOnly(true);
+        // Default to wrapped lines as a lot of output is un-formatted xml
+        editorPresenter.getLineWrapOption().setOn(true);
+
+        editorPresenter.getFormatAction().setAvailable(false);
+    }
+
+    private void setCommonEditorOptions(final EditorPresenter editorPresenter) {
         editorPresenter.getIndicatorsOption().setAvailable(true);
         editorPresenter.getIndicatorsOption().setOn(true);
+
         editorPresenter.getLineNumbersOption().setAvailable(true);
-        editorPresenter.getLineNumbersOption().setOn(false);
+        editorPresenter.getLineNumbersOption().setOn(true);
+
+        editorPresenter.getLineWrapOption().setAvailable(true);
+        editorPresenter.getLineWrapOption().setOn(false);
+
+        editorPresenter.getShowInvisiblesOption().setAvailable(true);
+        editorPresenter.getShowInvisiblesOption().setOn(false);
+
+        editorPresenter.getUseVimBindingsOption().setAvailable(true);
+        editorPresenter.getUseVimBindingsOption().setOn(false);
     }
 
     public interface ElementView extends View {

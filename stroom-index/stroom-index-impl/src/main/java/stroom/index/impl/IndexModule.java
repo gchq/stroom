@@ -74,25 +74,25 @@ public class IndexModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(IndexShardDelete.class, builder -> builder
-                        .withName("Index Shard Delete")
-                        .withDescription("Job to delete index shards from disk that have been marked as deleted")
-                        .withSchedule(CRON, "0 0 *"))
+                        .name("Index Shard Delete")
+                        .description("Job to delete index shards from disk that have been marked as deleted")
+                        .schedule(CRON, "0 0 *"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
-                        .withName("Index Shard Retention")
-                        .withDescription("Job to set index shards to have a status of deleted that have past their retention period")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Shard Retention")
+                        .description("Job to set index shards to have a status of deleted that have past their retention period")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
-                        .withName("Index Writer Cache Sweep")
-                        .withDescription("Job to remove old index shard writers from the cache")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Writer Cache Sweep")
+                        .description("Job to remove old index shard writers from the cache")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterFlush.class, builder -> builder
-                        .withName("Index Writer Flush")
-                        .withDescription("Job to flush index shard data to disk")
-                        .withSchedule(PERIODIC, "10m"))
+                        .name("Index Writer Flush")
+                        .description("Job to flush index shard data to disk")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(VolumeStatus.class, builder -> builder
-                        .withName("Index Volume Status")
-                        .withDescription("Update the usage status of volumes owned by the node")
-                        .withSchedule(PERIODIC, "5m"));
+                        .name("Index Volume Status")
+                        .description("Update the usage status of volumes owned by the node")
+                        .schedule(PERIODIC, "5m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)

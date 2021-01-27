@@ -59,7 +59,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Meta meta = create(
-                            new MetaProperties.Builder()
+                            MetaProperties.builder()
                                     .feedName(refFeedName)
                                     .typeName(StreamTypeNames.RAW_REFERENCE)
                                     .createMs(workingDate)
@@ -129,7 +129,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
-            referenceDataConfig.setEffectiveStreamCache(new CacheConfig.Builder()
+            referenceDataConfig.setEffectiveStreamCache(CacheConfig.builder()
                     .maximumSize(1000L)
                     .expireAfterWrite(StroomDuration.ofMillis(100))
                     .build());
@@ -224,7 +224,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
             final Meta meta = create(
-                    new MetaProperties.Builder()
+                    MetaProperties.builder()
                             .feedName(feedName)
                             .typeName(StreamTypeNames.RAW_REFERENCE)
                             .createMs(effectiveTimeMs)

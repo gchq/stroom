@@ -41,6 +41,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
@@ -250,11 +251,11 @@ public final class SetupSampleDataBean {
                 final DocRef pipeline = pipelines.get(0);
 
                 // Create a processor for this feed.
-                final QueryData criteria = new QueryData.Builder()
+                final QueryData criteria = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                        .expression(ExpressionOperator.builder()
                                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .addOperator(ExpressionOperator.builder().op(Op.OR)
                                         .addTerm(MetaFields.TYPE_NAME,
                                                 ExpressionTerm.Condition.EQUALS,
                                                 StreamTypeNames.RAW_EVENTS)
@@ -320,7 +321,7 @@ public final class SetupSampleDataBean {
         } else {
             final DocRef pipeline = pipelines.get(0);
 
-            final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+            final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder()
                     .addTerm(
                             MetaFields.TYPE_NAME,
                             ExpressionTerm.Condition.EQUALS,
@@ -330,7 +331,7 @@ public final class SetupSampleDataBean {
                     expressionBuilder.addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
 
             // Create a processor for this index.
-            final QueryData criteria = new QueryData.Builder()
+            final QueryData criteria = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(expressionBuilder.build())
                     .build();
@@ -440,7 +441,8 @@ public final class SetupSampleDataBean {
                         // Then load event data.
                         dataLoader.read(dir, false, startTime);
                     } else {
-                        LOGGER.info("Directory {} doesn't exist so skipping", dir.toAbsolutePath().normalize());
+                        LOGGER.info("Directory {} doesn't exist so skipping",
+                                dir.toAbsolutePath().normalize());
                     }
                 });
 
