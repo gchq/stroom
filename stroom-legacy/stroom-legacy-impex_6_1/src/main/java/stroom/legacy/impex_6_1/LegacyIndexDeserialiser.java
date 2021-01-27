@@ -1,5 +1,6 @@
 package stroom.legacy.impex_6_1;
 
+import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexDoc;
 import stroom.legacy.model_6_1.DocRef;
 import stroom.legacy.model_6_1.Index;
@@ -9,7 +10,11 @@ import java.util.UUID;
 
 @Deprecated
 public class LegacyIndexDeserialiser {
-    public IndexDoc getIndexDocFromLegacyImport(final DocRef docRef, final Map<String, byte[]> dataMap) {
+    public IndexDoc getIndexDocFromLegacyImport(
+            final DocRef docRef,
+            final Map<String, byte[]> dataMap,
+            final VolumeConfig volumeConfig) {
+
         final Index oldIndex = new Index();
         LegacyXmlSerialiser.performImport(oldIndex, dataMap);
 
@@ -35,6 +40,17 @@ public class LegacyIndexDeserialiser {
         final stroom.legacy.model_6_1.IndexFields indexFields =
                 LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(oldIndex.getIndexFields());
         document.setFields(MappingUtil.map(indexFields));
+
+        // The legacy index has only a set of index volumes but we need an index volume group.
+        // so use the default one.
+        if (volumeConfig.getDefaultIndexVolumeGroupName() != null
+                && !volumeConfig.getDefaultIndexVolumeGroupName().isEmpty()) {
+            document.setVolumeGroupName(volumeConfig.getDefaultIndexVolumeGroupName());
+        } else {
+            throw new RuntimeException("Property " +
+                    volumeConfig.getFullPath(VolumeConfig.PROP_NAME_DEFUALT_VOLUME_GROUP_NAME) +
+                    " is not set. Unable to migrate index.");
+        }
 
         return document;
     }
