@@ -16,6 +16,25 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Equals.NAME,
+        aliases = Equals.ALIAS,
+        commonCategory = FunctionCategory.LOGIC,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if the two values are equal even if the types are not.",
+        signatures = @FunctionSignature(
+                description = "Tests the equality of two values. It will attempt to convert the parameters " +
+                        "to the type of the first parameter, e.g. equals(123, \"123\") returns true.",
+                args = {
+                        @FunctionArg(
+                                name = "arg1",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "arg2",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)}))
 class Equals extends AbstractEqualityFunction {
     static final String NAME = "=";
     static final String ALIAS = "equals";

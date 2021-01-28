@@ -18,6 +18,22 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@FunctionDef(
+        name = Last.NAME,
+        commonCategory = FunctionCategory.SELECTION,
+        commonReturnType = Val.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "Selects the last value found in the group even if it is " +
+                        Null.NAME + "() or " + Err.NAME + "(). " +
+                        "If no explicit ordering is set then the value selected is indeterminate.",
+                returnDescription = "The last value of the group.",
+                args = {
+                        @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = Val.class)
+                }))
 public class Last extends AbstractSelectorFunction implements Serializable {
     static final String NAME = "last";
     private static final long serialVersionUID = -305845496003936297L;

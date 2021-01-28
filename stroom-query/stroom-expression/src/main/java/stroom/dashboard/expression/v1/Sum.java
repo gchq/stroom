@@ -16,6 +16,29 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Sum.NAME,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "Sum of all values",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the sum of the value of expression across all grouped records",
+                        args = @FunctionArg(
+                                name = "expression",
+                                description = "Grouped field or the result of another function",
+                                argType = ValNumber.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        description = "Determines the sum of all the arguments.",
+                        args = @FunctionArg(
+                                name = "arg",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValNumber.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))
+        })
 class Sum extends AbstractAggregateFunction {
     static final String NAME = "sum";
 

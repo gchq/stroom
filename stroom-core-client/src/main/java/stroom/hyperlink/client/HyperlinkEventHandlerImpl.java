@@ -218,8 +218,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openStepping(final String href) {
         final long id = getParam(href, "id", -1);
-        final long partNo = getParam(href, "partNo", 0);
-        final long recordNo = getParam(href, "recordNo", 0);
+        final long partNo = getParam(href, "partNo", 1);
+        final long recordNo = getParam(href, "recordNo", 1);
         BeginPipelineSteppingEvent.fire(
                 this,
                 id,

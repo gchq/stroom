@@ -19,6 +19,16 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = "count",
+        commonCategory = FunctionCategory.AGGREGATE,
+        commonDescription = "Counts the number of records that are passed through it. Doesn't take any " +
+                "notice of the values of any fields.",
+        signatures = @FunctionSignature(
+                returnType = ValLong.class,
+                returnDescription = "Number of records",
+                args = {}))
 class Count extends AbstractFunction {
     static final String NAME = "count";
 

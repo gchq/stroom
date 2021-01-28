@@ -18,6 +18,20 @@ package stroom.dashboard.expression.v1;
 
 import java.time.LocalDateTime;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = FloorDay.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonSubCategories = RoundDate.FLOOR_SUB_CATEGORY,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        signatures = @FunctionSignature(
+                description = "Rounds the supplied time down to the start of the current day.",
+                args = @FunctionArg(
+                        name = "time",
+                        description = "The time to round in milliseconds since the epoch or as a string " +
+                                "formatted using the default date format.",
+                        argType = Val.class)))
 class FloorDay extends RoundDate {
     static final String NAME = "floorDay";
     private static final Calc CALC = new Calc();

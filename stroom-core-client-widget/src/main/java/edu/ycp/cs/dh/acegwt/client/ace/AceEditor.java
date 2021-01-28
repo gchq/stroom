@@ -19,7 +19,6 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
@@ -199,6 +198,18 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         } else {
             editor.session.replace(range, text);
         }
+	}-*/;
+
+    /**
+     * Insert the supplied snippet.
+     *
+     * @param snippet The snippet to insert e.g "concat('${1:arg1}', '${2;arg2}')$0"
+     */
+    public native void insertSnippet(final String snippet) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        $wnd.ace.require("ace/ext/language_tools");
+
+        editor.insertSnippet(snippet);
 	}-*/;
 
     /**

@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Map;
 
+@ArchitecturalFunction
 public class StaticValueFunction implements Function, Appendable {
     private final Val value;
     private final Generator gen;

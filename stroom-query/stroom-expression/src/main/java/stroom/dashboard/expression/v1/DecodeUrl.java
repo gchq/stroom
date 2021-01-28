@@ -18,6 +18,21 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = DecodeUrl.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The input value with all URL encoding converted back to its plain text form.",
+        signatures = @FunctionSignature(
+                description = "Decodes a URL or other string that is the product of standard URL encoding, e.g. " +
+                        "replacing '%20' with a space.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "The URL or string to decode.",
+                                argType = ValString.class)
+                }))
 class DecodeUrl extends AbstractStringFunction implements Serializable {
     static final String NAME = "decodeUrl";
     private static final long serialVersionUID = -305845496003936297L;

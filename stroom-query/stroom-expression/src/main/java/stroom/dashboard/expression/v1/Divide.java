@@ -16,6 +16,23 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Divide.NAME,
+        aliases = Divide.ALIAS,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The value of arg1 divided by arg2.",
+        commonDescription = "The value of arg1 divided by arg2. If more than two arguments are supplied then " +
+                "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. Can be expressed as " +
+                "'${field1}/${field2}'.",
+        signatures = @FunctionSignature(
+                args = @FunctionArg(
+                        name = "arg",
+                        description = "Field, the result of another function or a constant.",
+                        argType = ValNumber.class,
+                        isVarargs = true,
+                        minVarargsCount = 2)))
 class Divide extends NumericFunction {
     static final String NAME = "/";
     static final String ALIAS = "divide";

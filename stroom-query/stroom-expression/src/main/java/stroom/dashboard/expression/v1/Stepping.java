@@ -16,11 +16,69 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Stepping.NAME,
+        commonCategory = FunctionCategory.LINK,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "A hyperlink that will open the a stepping tab for the requested source data.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Produces a hyperlink for opening a stepping tab for the requested stream.",
+                        args = {
+                                @FunctionArg(
+                                        name = Stepping.ARG_ID,
+                                        description = "The ID of the stream to step.",
+                                        argType = ValLong.class)
+                        }),
+                @FunctionSignature(
+                        description = "Produces a hyperlink for opening a stepping tab for the requested stream and " +
+                                "part number.",
+                        args = {
+                                @FunctionArg(
+                                        name = Stepping.ARG_ID,
+                                        description = "The ID of the stream to step.",
+                                        argType = ValLong.class),
+                                @FunctionArg(
+                                        name = Stepping.ARG_PART_NO,
+                                        description = "The part number to begin the stepping in (one based). The part " +
+                                                "number is only applicable for non-segmented streams (i.e uncooked streams). " +
+                                                "If a stream is segmented or is not multi-part then the part number will " +
+                                                "be 1.",
+                                        argType = ValLong.class)
+                        }),
+                @FunctionSignature(
+                        description = "Produces a hyperlink for opening a stepping tab for the requested stream, part " +
+                                "number and record number.",
+                        args = {
+                                @FunctionArg(
+                                        name = Stepping.ARG_ID,
+                                        description = "The ID of the stream to step.",
+                                        argType = ValLong.class),
+                                @FunctionArg(
+                                        name = Stepping.ARG_PART_NO,
+                                        description = "The part number to begin the stepping in (one based). The part " +
+                                                "number is only applicable for non-segmented streams (i.e uncooked streams). " +
+                                                "If a stream is segmented or is not multi-part then the part number will " +
+                                                "be 1.",
+                                        argType = ValLong.class),
+                                @FunctionArg(
+                                        name = Stepping.ARG_RECORD_NO,
+                                        description = "The record number to begin the stepping at (one based). The record " +
+                                                "number is only applicable for segmented streams (i.e. cooked streams). " +
+                                                "Its value will be ignored for non-segmented streams.",
+                                        argType = ValLong.class)
+                        })
+        })
 class Stepping extends AbstractLink {
     static final String NAME = "stepping";
 
+    static final String ARG_ID = "id";
+    static final String ARG_PART_NO = "partNo";
+    static final String ARG_RECORD_NO = "recordNo";
+
     public Stepping(final String name) {
-        super(name, 2, 4);
+        super(name, 1, 3);
     }
 
     @Override
@@ -46,11 +104,14 @@ class Stepping extends AbstractLink {
         public Val eval() {
             final StringBuilder sb = new StringBuilder();
 
-            append(sb, 1, "id");
-            append(sb, 2, "partNo");
-            append(sb, 3, "recordNo");
+            append(sb, 1, ARG_ID);
+            append(sb, 2, ARG_PART_NO);
+            append(sb, 3, ARG_RECORD_NO);
 
-            return makeLink(getEscapedString(childGenerators[0].eval()), EncodingUtil.encodeUrl(sb.toString()), "stepping");
+            return makeLink(
+                    getEscapedString(childGenerators[0].eval()),
+                    EncodingUtil.encodeUrl(sb.toString()),
+                    "stepping");
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {

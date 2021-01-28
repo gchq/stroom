@@ -225,7 +225,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
+                        .addTwoColTable(tableBuilder -> {
                             if (index != null) {
                                 tableBuilder.addRow("Index UUID", String.valueOf(index.getUuid()));
                             }

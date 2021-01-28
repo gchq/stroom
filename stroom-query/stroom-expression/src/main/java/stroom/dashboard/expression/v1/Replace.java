@@ -20,6 +20,28 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Replace.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "",
+        signatures = @FunctionSignature(
+                description = "Perform text replacement on an input string using a regular expression to match part " +
+                        "(or all) of the input string and a replacement string to insert in place of all matches.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The string to search using the regex pattern.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern",
+                                description = "The regex pattern to match all or part of the input string.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "replacement",
+                                description = "The string to replace each match with.",
+                                argType = ValString.class) }))
 class Replace extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "replace";
     private static final long serialVersionUID = -305845496003936297L;

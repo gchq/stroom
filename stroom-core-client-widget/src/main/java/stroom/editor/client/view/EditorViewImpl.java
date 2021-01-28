@@ -246,6 +246,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
+    public void insertSnippet(final String snippet) {
+        editor.insertSnippet(snippet);
+    }
+
+    @Override
     public void setFirstLineNumber(final int firstLineNumber) {
         this.firstLineNumber = firstLineNumber;
         editor.setFirstLineNumber(firstLineNumber);

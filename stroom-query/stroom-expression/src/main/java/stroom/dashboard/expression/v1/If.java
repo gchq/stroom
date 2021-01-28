@@ -19,6 +19,29 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = If.NAME,
+        commonCategory = FunctionCategory.LOGIC,
+        commonReturnType = Val.class,
+        commonReturnDescription = "If condition is true, the value of the 2nd parameter else the value of the 3rd " +
+                "parameter. The type will match that of the selected parameter.",
+        signatures = @FunctionSignature(
+                description = "Tests if the 1st parameter is true and if so returns parameter 2 else it returns " +
+                        "parameter 3.",
+                args = {
+                        @FunctionArg(
+                                name = "condition",
+                                description = "A field, function or constant that evaluates to a boolean.",
+                                argType = ValBoolean.class),
+                        @FunctionArg(
+                                name = "valueIfTrue",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class),
+                        @FunctionArg(
+                                name = "valueIfFalse",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)}))
 class If extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "if";
     private static final long serialVersionUID = -305845496003936297L;

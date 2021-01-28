@@ -280,7 +280,7 @@ public class TaskManagerListPresenter
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
         return TooltipUtil.builder()
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                     tableBuilder.addHeaderRow("Task")
                             .addRow("Name", row.getTaskName())
                             .addRow("User", row.getUserName())

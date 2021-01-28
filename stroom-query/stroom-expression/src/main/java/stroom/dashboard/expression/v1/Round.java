@@ -16,6 +16,34 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Round.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The rounded value.",
+        signatures = {
+                @FunctionSignature(
+                        description = "Rounds the supplied value to the nearest whole number. e.g. ceiling(1.8) " +
+                                "returns 2.",
+                        args = @FunctionArg(
+                                name = "value",
+                                argType = ValNumber.class,
+                                description = "The number to round to the nearest whole number.")),
+                @FunctionSignature(
+                        description = "Rounds the supplied value keeping the specified " +
+                                "number of decimal places. e.g. ceiling(1.22345, 3) returns 1.223",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = ValNumber.class,
+                                        description = "The number to round down."),
+                                @FunctionArg(
+                                        name = "decimalPlaces",
+                                        argType = ValInteger.class,
+                                        description = "The maximum number of decimal places to round to.")}
+                )})
 class Round extends AbstractRoundingFunction {
     static final String NAME = "round";
 

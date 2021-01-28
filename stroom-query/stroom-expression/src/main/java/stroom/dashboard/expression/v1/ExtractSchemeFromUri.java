@@ -22,6 +22,22 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ExtractSchemeFromUri.NAME,
+        commonCategory = FunctionCategory.URI,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The scheme from the URI or null if not found or the URI is mall-formed. e.g. " +
+                ExtractSchemeFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                "p1=v1&p2=v2#more-details') returns 'http'.",
+        signatures = @FunctionSignature(
+                description = "Extract the scheme component from a URI.",
+                args = {
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The URI to extract the scheme from.",
+                                argType = ValString.class)
+                }))
 class ExtractSchemeFromUri extends ExtractionFunction {
     static final String NAME = "extractSchemeFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();
