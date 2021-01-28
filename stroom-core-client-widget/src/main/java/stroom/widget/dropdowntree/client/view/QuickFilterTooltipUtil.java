@@ -47,7 +47,7 @@ public class QuickFilterTooltipUtil {
         addFieldInfo(fieldDefinitions, builder);
 
         builder
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
                             .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
@@ -111,7 +111,7 @@ public class QuickFilterTooltipUtil {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             builder
                     .addBreak()
-                    .addTable(tableBuilder -> {
+                    .addTwoColTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Filterable fields", "Field qualifier");
                         fieldDefinitions.forEach(fieldDefinition -> {
                             String suffix = fieldDefinition.isDefaultField()
@@ -134,7 +134,7 @@ public class QuickFilterTooltipUtil {
             builder
                     .addBreak()
                     .addHeading("Examples:")
-                    .addTable(tableBuilder -> tableBuilder
+                    .addTwoColTable(tableBuilder -> tableBuilder
                             .addRow(
                                     TooltipUtil.fixedWidthText("/abc type:^err"),
                                     "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")

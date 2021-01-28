@@ -19,6 +19,15 @@ package stroom.dashboard.expression.v1;
 import java.text.ParseException;
 import java.util.Map;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = CurrentUser.NAME,
+        commonCategory = FunctionCategory.VALUE,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "Username of the logged in user.",
+        signatures = @FunctionSignature(
+                description = "Returns the user name of the current logged in user.",
+                args = { }))
 class CurrentUser extends AbstractFunction {
     static final String KEY = "currentUser()";
     static final String NAME = "currentUser";

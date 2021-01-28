@@ -22,6 +22,25 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = SubstringBefore.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The requested sub-string.",
+        signatures = @FunctionSignature(
+                description = "Extract a sub-string from input before the first occurrence of delimiter. " +
+                        "e.g. substringBefore('key=>value', '=>') returns 'key'.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input string to extract a sub-string from.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "delimiter",
+                                description = "The string to find in input",
+                                argType = ValString.class),
+                }))
 class SubstringBefore extends AbstractFunction implements Serializable {
     static final String NAME = "substringBefore";
     private static final long serialVersionUID = -305845496003936297L;

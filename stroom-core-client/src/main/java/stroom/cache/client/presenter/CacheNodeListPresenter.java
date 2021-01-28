@@ -155,7 +155,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     private SafeHtml getInfoHtml(final CacheInfo cacheInfo) {
 
         return TooltipUtil.builder()
-                .addTable(tableBuilder -> {
+                .addTwoColTable(tableBuilder -> {
                     tableBuilder.addHeaderRow(cacheInfo.getNodeName());
                     final Map<String, String> map = cacheInfo.getMap();
                     map.keySet().stream()

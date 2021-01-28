@@ -72,6 +72,7 @@ public final class IndexDataSourceFieldUtil {
                 return new BooleanField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case INTEGER_FIELD:
                 return new IntegerField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case NUMERIC_FIELD: // Alias for LONG_FIELD
             case LONG_FIELD:
                 return new LongField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case FLOAT_FIELD:

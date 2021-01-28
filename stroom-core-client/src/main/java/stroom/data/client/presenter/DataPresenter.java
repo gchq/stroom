@@ -963,7 +963,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
         final TooltipUtil.Builder builder = TooltipUtil.builder();
 
-        builder.addTable(tableBuilder -> {
+        builder.addTwoColTable(tableBuilder -> {
             for (final DataInfoSection section : dataInfoSections) {
                 // Add the section header
 

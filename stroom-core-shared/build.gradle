@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.core.shared'
 
 dependencies {
     compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-query:stroom-expression')
     compile project(':stroom-util-shared')
 
     compile project(':stroom-docref')

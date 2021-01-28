@@ -23,6 +23,30 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = StDev.NAME,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The standard deviation of all values.",
+        signatures = {
+                @FunctionSignature(
+                        category = FunctionCategory.AGGREGATE,
+                        description = "Determines the standard deviation across all grouped records.",
+                        args = @FunctionArg(
+                                name = "values",
+                                description = "Grouped field or the result of another function",
+                                argType = ValNumber.class)),
+                @FunctionSignature(
+                        category = FunctionCategory.MATHEMATICS,
+                        subCategories = "Statistical",
+                        description = "Determines the standard deviation from all the arguments.",
+                        args = @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValNumber.class,
+                                isVarargs = true,
+                                minVarargsCount = 2))
+        })
 class StDev extends AbstractManyChildFunction implements AggregateFunction {
     static final String NAME = "stDev";
 

@@ -19,6 +19,19 @@ package stroom.dashboard.expression.v1;
 import java.io.Serializable;
 import java.text.ParseException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = StringLength.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValInteger.class,
+        commonReturnDescription = "The length of the string in characters.",
+        signatures = @FunctionSignature(
+                description = "Return the length of the provided string.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The string to find the length of.",
+                                argType = ValString.class) }))
 class StringLength extends AbstractFunction implements Serializable {
     static final String NAME = "stringLength";
     private static final long serialVersionUID = -305845496003936297L;

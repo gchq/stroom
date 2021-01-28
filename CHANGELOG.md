@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix dashboards not handling NUMERIC index fields.
+
+* Fix bug in Negate expression function.
+
+* Issue **#1995** : Add help info to the expression functions drop down menu.
+
+* Issue **#1911** : Add a drop down menu for picking index fields in the expression editor.
+
 * Issue **#2004** : Fix import of legacy v6 index so default volume group is assigned.
 
 * Issue **#2017** : Fixed dashboard table filtering.

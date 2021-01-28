@@ -222,7 +222,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
             builder
-                    .addTable(tableBuilder -> {
+                    .addTwoColTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Node Details");
                         tableBuilder.addRow("Node Name", result.getNodeName(), true);
                         if (buildInfo != null) {
@@ -255,7 +255,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 }
             }
         } else {
-            builder.addTable(tableBuilder -> tableBuilder
+            builder.addTwoColTable(tableBuilder -> tableBuilder
                     .addRow("Node Name", node.getName(), true)
                     .addRow("Cluster URL", node.getUrl(), true)
                     .build());

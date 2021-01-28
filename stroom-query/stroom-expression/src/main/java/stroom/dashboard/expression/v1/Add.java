@@ -16,9 +16,25 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Add.NAME,
+        aliases = Add.ALIAS,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "The sum of all values",
+        commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
+                "'${field1}+${field2}'.",
+        signatures = @FunctionSignature(
+                args = @FunctionArg(
+                        name = "arg",
+                        description = "Field, the result of another function or a constant.",
+                        argType = ValNumber.class,
+                        isVarargs = true,
+                        minVarargsCount = 2)))
 class Add extends NumericFunction {
-    static final String NAME = "+";
-    static final String ALIAS = "add";
+    static final String NAME = "add";
+    static final String ALIAS = "+";
     private static final Calc CALC = new Calc();
 
     public Add(final String name) {

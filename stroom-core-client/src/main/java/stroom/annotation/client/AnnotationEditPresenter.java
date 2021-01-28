@@ -247,7 +247,7 @@ public class AnnotationEditPresenter
             ok = false;
             AlertEvent.fireError(
                     this,
-                    "No stream id has been provided for the annotation",
+                    "No event/stream id has been provided for the annotation",
                     null);
         }
 
@@ -256,12 +256,17 @@ public class AnnotationEditPresenter
             this.initialComment = annotation.getComment();
             readAnnotation(annotation);
 
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<AnnotationDetail> rest = restFactory.create();
-            rest
-                    .onSuccess(this::edit)
-                    .call(annotationResource)
-                    .get(annotation.getId());
+            if (annotation.getId() == null) {
+                // e.g. From a link in the dash table to create a new anno with pre-populated content
+                edit(null);
+            } else {
+                final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+                final Rest<AnnotationDetail> rest = restFactory.create();
+                rest
+                        .onSuccess(this::edit)
+                        .call(annotationResource)
+                        .get(annotation.getId());
+            }
         }
     }
 

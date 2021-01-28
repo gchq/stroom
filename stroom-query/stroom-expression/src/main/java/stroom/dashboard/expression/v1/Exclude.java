@@ -18,6 +18,26 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Exclude.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "Null if the input matches one of the patterns, otherwise the input value.",
+        signatures = @FunctionSignature(
+                description = "If the supplied string matches one of the supplied regex patterns then return " +
+                        "null, otherwise return the supplied string.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input value to test against.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern",
+                                description = "The regex pattern to test against the input string.",
+                                argType = ValString.class,
+                                isVarargs = true,
+                                minVarargsCount = 1)}))
 class Exclude extends AbstractIncludeExclude implements Serializable {
     static final String NAME = "exclude";
     private static final long serialVersionUID = -305845496003936297L;

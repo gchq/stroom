@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ToString.NAME,
+        commonCategory = FunctionCategory.CAST,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The value as the string type.",
+        signatures = @FunctionSignature(
+                description = "Converts the supplied value to a string, e.g. 1.23 becomes \"1.23\" and true() becomes " +
+                        "\"true\".",
+                args = @FunctionArg(
+                        name = "value",
+                        description = "Field, the result of another function or a constant.",
+                        argType = Val.class)))
 class ToString extends AbstractCast implements Serializable {
     static final String NAME = "toString";
     private static final ValErr ERROR = ValErr.create("Unable to cast to a string");
