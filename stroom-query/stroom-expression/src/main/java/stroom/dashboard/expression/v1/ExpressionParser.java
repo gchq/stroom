@@ -43,11 +43,9 @@ public class ExpressionParser {
             Type.LESS_THAN_OR_EQUAL_TO
     };
 
-    private final FunctionFactory functionFactory;
     private final ParamFactory paramFactory;
 
-    public ExpressionParser(final FunctionFactory functionFactory, final ParamFactory paramFactory) {
-        this.functionFactory = functionFactory;
+    public ExpressionParser(final ParamFactory paramFactory) {
         this.paramFactory = paramFactory;
     }
 
@@ -202,7 +200,7 @@ public class ExpressionParser {
             functionName = functionName.substring(0, functionName.length() - 1);
 
             // Create the function.
-            function = functionFactory.create(functionName);
+            function = FunctionFactory.create(functionName);
         }
 
         if (function == null) {
@@ -307,7 +305,7 @@ public class ExpressionParser {
                                 param = negate;
                             }
                         } else {
-                            final Function function = functionFactory.create(token.toString());
+                            final Function function = FunctionFactory.create(token.toString());
                             function.setParams(new Param[]{leftParam, rightParam});
                             param = function;
                         }
@@ -342,7 +340,7 @@ public class ExpressionParser {
                             throw new ParseException("No parameter after operator", token.getStart());
                         }
 
-                        final Function function = functionFactory.create(token.toString());
+                        final Function function = FunctionFactory.create(token.toString());
                         function.setParams(new Param[]{leftParam, rightParam});
                         return Collections.singletonList(function);
                     }

@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Map;
 
+@ArchitecturalFunction
 public class Expression implements Function {
     private Function function;
     private boolean hasAggregate;

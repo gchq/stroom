@@ -22,6 +22,22 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ExtractUserInfoFromUri.NAME,
+        commonCategory = FunctionCategory.URI,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The user info from the URI or null if not found or the URI is mall-formed. e.g. " +
+                ExtractUserInfoFromUri.NAME + "('http://foo:bar@w1.superman.com:8080/very/long/path.html?" +
+                "p1=v1&p2=v2#more-details') returns 'foo:bar'.",
+        signatures = @FunctionSignature(
+                description = "Extract the user info component from a URI.",
+                args = {
+                        @FunctionArg(
+                                name = "uri",
+                                description = "The URI to extract the user info from.",
+                                argType = ValString.class)
+                }))
 class ExtractUserInfoFromUri extends ExtractionFunction {
     static final String NAME = "extractUserInfoFromUri";
     private static final Extractor EXTRACTOR = new ExtractorImpl();

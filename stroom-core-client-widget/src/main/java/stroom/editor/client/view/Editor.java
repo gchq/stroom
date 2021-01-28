@@ -156,6 +156,14 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         }
     }
 
+    public void insertSnippet(String snippet) {
+        if (started) {
+            textDirty = true;
+            editor.insertSnippet(snippet);
+            this.text = editor.getText();
+        }
+    }
+
     private void updateText() {
         if (started && textDirty) {
             editor.setText(this.text);

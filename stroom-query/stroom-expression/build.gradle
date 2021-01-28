@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.expression'
 
 dependencies {
+    compile libs.classgraph
     compile libs.jaxb_api
     compile libs.kryo
     compile libs.slf4j_api

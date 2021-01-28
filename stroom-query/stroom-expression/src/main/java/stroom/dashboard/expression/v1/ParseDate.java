@@ -22,6 +22,49 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = ParseDate.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonReturnType = ValLong.class,
+        commonReturnDescription = "The date as number of milliseconds since the epoch.",
+        signatures = {
+                @FunctionSignature(
+                        args = @FunctionArg(
+                                name = "dateString",
+                                argType = ValString.class,
+                                description = "The date string, e.g. '2014 02 22'"),
+                        description = "Parse dateString using the default date format pattern (" +
+                                DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "dateString",
+                                        argType = ValString.class,
+                                        description = "The date string, e.g. '2014 02 22'"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ValString.class,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'")},
+                        description = "Parse dateString using the supplied date format pattern and " +
+                                "the default timezone (UTC)."),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "dateString",
+                                        argType = ValString.class,
+                                        description = "The date string, e.g. '2014 02 22'"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ValString.class,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'"),
+
+                                @FunctionArg(
+                                        name = "timezone",
+                                        argType = ValString.class,
+                                        description = "The timezone, e.g. '+0400'"),
+                                },
+                        description = "Parse dateString using the supplied date format pattern and timezone.")})
 class ParseDate extends AbstractFunction implements Serializable {
     static final String NAME = "parseDate";
     private static final long serialVersionUID = -305845496003936297L;

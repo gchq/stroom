@@ -61,7 +61,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.TableBuilder;
+import stroom.widget.tooltip.client.presenter.TooltipUtil.TableBuilder2;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.FieldUpdater;
@@ -198,7 +198,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             @Override
             protected void showInfo(final ProcessorListRow row, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
+                        .addTwoColTable(tableBuilder -> {
                             if (row instanceof ProcessorRow) {
                                 final ProcessorRow processorRow = (ProcessorRow) row;
                                 final Processor processor = processorRow.getProcessor();
@@ -564,7 +564,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         this.nextSelection = nextSelection;
     }
 
-    private void addRowDateString(final TableBuilder builder, final String label, final Long ms) {
+    private void addRowDateString(final TableBuilder2 builder, final String label, final Long ms) {
         if (ms != null) {
             builder.addRow(label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
         }

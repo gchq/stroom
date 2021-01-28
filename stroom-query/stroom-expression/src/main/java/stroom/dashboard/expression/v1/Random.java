@@ -19,6 +19,18 @@ package stroom.dashboard.expression.v1;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Random.NAME,
+        commonCategory = FunctionCategory.MATHEMATICS,
+        commonReturnType = ValDouble.class,
+        commonReturnDescription = "A random number between 0.0 (inc.) and 1.0 (excl.)",
+        signatures = @FunctionSignature(
+                description = "Returns a double value with a positive sign, greater than or equal to 0.0 and " +
+                        "less than 1.0. Returned values are chosen pseudorandomly with (approximately) uniform " +
+                        "distribution from that range.",
+                args = {
+                }))
 class Random extends AbstractFunction {
     static final String NAME = "random";
 

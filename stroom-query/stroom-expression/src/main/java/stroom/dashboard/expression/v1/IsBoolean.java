@@ -18,6 +18,20 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = IsBoolean.NAME,
+        commonCategory = FunctionCategory.TYPE_CHECKING,
+        commonReturnType = ValBoolean.class,
+        commonReturnDescription = "True if value is a boolean.",
+        signatures = @FunctionSignature(
+                description = "Checks if the passed value has a boolean data type.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "Field, the result of another function or a constant.",
+                                argType = Val.class)
+                }))
 class IsBoolean extends AbstractIsFunction implements Serializable {
     static final String NAME = "isBoolean";
     private static final long serialVersionUID = -305145496413936297L;

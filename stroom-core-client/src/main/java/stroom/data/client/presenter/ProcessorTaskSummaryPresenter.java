@@ -35,7 +35,6 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -93,7 +92,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
+                        .addTwoColTable(tableBuilder -> {
                             tableBuilder.addHeaderRow("Key Data");
                             final DocRef pipeline = row.getPipeline();
                             if (pipeline != null) {

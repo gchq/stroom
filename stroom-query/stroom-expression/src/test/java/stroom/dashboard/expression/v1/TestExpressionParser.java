@@ -21,7 +21,9 @@ import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.assertj.core.data.Offset;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,50 +37,55 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParser.class);
 
-    private final ExpressionParser parser = new ExpressionParser(new FunctionFactory(), new ParamFactory());
+    private final ExpressionParser parser = new ExpressionParser(new ParamFactory());
 
-    @Test
-    void testBasic() {
-        test("${val1}");
-        test("min(${val1})");
-        test("max(${val1})");
-        test("sum(${val1})");
-        test("min(round(${val1}, 4))");
-        test("min(roundDay(${val1}))");
-        test("min(roundMinute(${val1}))");
-        test("ceiling(${val1})");
-        test("floor(${val1})");
-        test("ceiling(floor(min(roundMinute(${val1}))))");
-        test("ceiling(floor(min(round(${val1}))))");
-        test("max(${val1})-min(${val1})");
-        test("max(${val1})/count()");
-        test("round(${val1})/(min(${val1})+max(${val1}))");
-        test("concat('this is', 'it')");
-        test("concat('it''s a string', 'with a quote')");
-        test("'it''s a string'");
-        test("50");
-        test("stringLength('it''s a string')");
-        test("upperCase('it''s a string')");
-        test("lowerCase('it''s a string')");
-        test("encodeUrl('http://www.example.com')");
-        test("decodeUrl('http://www.example.com')");
-        test("substring('Hello', 0, 1)");
-        test("equals(${val1}, ${val1})");
-        test("greaterThan(1, 0)");
-        test("lessThan(1, 0)");
-        test("greaterThanOrEqualTo(1, 0)");
-        test("lessThanOrEqualTo(1, 0)");
-        test("1=0");
-        test("decode('fred', 'fr.+', 'freda', 'freddy')");
-        test("extractHostFromUri('http://www.example.com:1234/this/is/a/path')");
-        test("link('title', 'http://www.somehost.com/somepath', 'target')");
-        test("dashboard('title', 'someuuid', 'param1=value1')");
+    @TestFactory
+    Stream<DynamicTest> testBasic() {
+        return List.of(
+                "${val1}",
+                "max(${val1})",
+                "sum(${val1})",
+                "min(round(${val1}, 4))",
+                "min(roundDay(${val1}))",
+                "min(roundMinute(${val1}))",
+                "ceiling(${val1})",
+                "floor(${val1})",
+                "ceiling(floor(min(roundMinute(${val1}))))",
+                "ceiling(floor(min(round(${val1}))))",
+                "max(${val1})-min(${val1})",
+                "max(${val1})/count()",
+                "round(${val1})/(min(${val1})+max(${val1}))",
+                "concat('this is', 'it')",
+                "concat('it''s a string', 'with a quote')",
+                "'it''s a string'",
+                "50",
+                "stringLength('it''s a string')",
+                "upperCase('it''s a string')",
+                "lowerCase('it''s a string')",
+                "encodeUrl('http://www.example.com')",
+                "decodeUrl('http://www.example.com')",
+                "substring('Hello', 0, 1)",
+                "equals(${val1}, ${val1})",
+                "greaterThan(1, 0)",
+                "lessThan(1, 0)",
+                "greaterThanOrEqualTo(1, 0)",
+                "lessThanOrEqualTo(1, 0)",
+                "1=0",
+                "decode('fred', 'fr.+', 'freda', 'freddy')",
+                "extractHostFromUri('http://www.example.com:1234/this/is/a/path')",
+                "link('title', 'http://www.somehost.com/somepath', 'target')",
+                "dashboard('title', 'someuuid', 'param1=value1')")
+                .stream()
+                .map(expr ->
+                        DynamicTest.dynamicTest(expr, () ->
+                                test(expr)));
     }
 
     private void test(final String expression) {

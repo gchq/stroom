@@ -20,6 +20,43 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Decode.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "One of the result arguments, if matched, or the value of the otherwise argument if " +
+                "no match is found.",
+        signatures = @FunctionSignature(
+                description = "Similar to a switch/case statement. The arguments are split into 3 parts: " +
+                        "the input value to test, pairs of regex patterns with their respective output values " +
+                        "and a default result if no matches are found. It must always have an even number of arguments " +
+                        "and can have any number of pattern/result pairs.",
+                args = {
+                        @FunctionArg(
+                                name = "input",
+                                description = "The input string to test the regex patterns against.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "pattern1",
+                                description = "A regex pattern to test against the input string.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "result1",
+                                description = "The result of the function if test1 matches.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "patternN",
+                                description = "A regex pattern to test against the input string.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "resultN",
+                                description = "The result of the function if testN matches.",
+                                argType = ValString.class),
+                        @FunctionArg(
+                                name = "otherwise",
+                                description = "The result of the function if none of the test arguments match.",
+                                argType = ValString.class)}))
 class Decode extends AbstractManyChildFunction implements Serializable {
     static final String NAME = "decode";
     private static final long serialVersionUID = -305845496003936297L;

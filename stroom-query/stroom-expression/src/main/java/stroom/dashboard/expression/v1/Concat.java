@@ -16,6 +16,22 @@
 
 package stroom.dashboard.expression.v1;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = Concat.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "A string containing all the arguments concatenated together.",
+        signatures = @FunctionSignature(
+                description = "Appends all the arguments end to end in a single string.",
+                args = {
+                        @FunctionArg(
+                                name = "arg",
+                                description = "Field, the result of another function or a constant.",
+                                argType = ValString.class,
+                                isVarargs = true,
+                                minVarargsCount = 2)
+                }))
 class Concat extends AbstractManyChildFunction {
     static final String NAME = "concat";
 

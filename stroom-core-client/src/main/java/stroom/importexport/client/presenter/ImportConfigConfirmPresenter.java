@@ -279,7 +279,7 @@ public class ImportConfigConfirmPresenter extends
                 if (action.getMessageList().size() > 0) {
                     builder
                             .addHeading("Messages:")
-                            .addTable(tableBuilder -> {
+                            .addTwoColTable(tableBuilder -> {
                                 for (final Message msg : action.getMessageList()) {
                                     tableBuilder.addRow(
                                             msg.getSeverity().getDisplayValue(),

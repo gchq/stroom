@@ -18,6 +18,19 @@ package stroom.dashboard.expression.v1;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = LowerCase.NAME,
+        commonCategory = FunctionCategory.STRING,
+        commonReturnType = ValString.class,
+        commonReturnDescription = "The string in lower case.",
+        signatures = @FunctionSignature(
+                description = "Convert the supplied string to lower case.",
+                args = {
+                        @FunctionArg(
+                                name = "value",
+                                description = "The string to convert to lower case.",
+                                argType = ValString.class) }))
 class LowerCase extends AbstractStringFunction implements Serializable {
     static final String NAME = "lowerCase";
     private static final long serialVersionUID = -305845496003936297L;

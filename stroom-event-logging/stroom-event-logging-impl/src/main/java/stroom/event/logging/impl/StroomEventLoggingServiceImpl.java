@@ -379,16 +379,32 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private ObjectInfoProvider getInfoAppender(final Class<?> type) {
         ObjectInfoProvider appender = null;
 
-        // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
-        Class<?> currentType = type;
-        Provider<ObjectInfoProvider> provider = null;
-        while (currentType != null && provider == null) {
-            provider = objectInfoProviderMap.get(new ObjectType(currentType));
-            currentType = currentType.getSuperclass();
-        }
+        if (String.class.equals(type)) {
+            appender = new ObjectInfoProvider() {
+                @Override
+                public BaseObject createBaseObject(final Object object) {
+                    return OtherObject.builder()
+                            .withName(object.toString())
+                            .build();
+                }
 
-        if (provider != null) {
-            appender = provider.get();
+                @Override
+                public String getObjectType(final Object object) {
+                    return null;
+                }
+            };
+        } else {
+            // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+            Class<?> currentType = type;
+            Provider<ObjectInfoProvider> provider = null;
+            while (currentType != null && provider == null) {
+                provider = objectInfoProviderMap.get(new ObjectType(currentType));
+                currentType = currentType.getSuperclass();
+            }
+
+            if (provider != null) {
+                appender = provider.get();
+            }
         }
 
         if (appender == null) {

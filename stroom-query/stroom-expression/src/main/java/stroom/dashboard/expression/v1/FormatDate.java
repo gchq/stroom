@@ -22,6 +22,50 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+@SuppressWarnings("unused") //Used by FunctionFactory
+@FunctionDef(
+        name = FormatDate.NAME,
+        commonCategory = FunctionCategory.DATE,
+        commonReturnType = ValString.class,
+        signatures = {
+                @FunctionSignature(
+                        args = @FunctionArg(
+                                name = "date",
+                                argType = ValLong.class,
+                                description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                        returnDescription = "A date string in the default date format pattern.",
+                        description = "Convert the date to a string using the default date format pattern (" +
+                                DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "date",
+                                        argType = ValLong.class,
+                                        description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ValString.class,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'")},
+                        returnDescription = "A date string in the supplied date format pattern.",
+                        description = "Convert the date to a string using the supplied date format pattern and " +
+                                "the default timezone (UTC)."),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "date",
+                                        argType = ValLong.class,
+                                        description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ValString.class,
+                                        description = "The format pattern, e.g. 'yyyy MM dd'"),
+
+                                @FunctionArg(
+                                        name = "timezone",
+                                        argType = ValString.class,
+                                        description = "The timezone, e.g. '+0400'")},
+                        returnDescription = "A date string in the supplied date format pattern.",
+                        description = "Convert the date to a string using the supplied date format pattern and timezone.")})
 class FormatDate extends AbstractFunction implements Serializable {
     static final String NAME = "formatDate";
     private static final long serialVersionUID = -305845496003936297L;

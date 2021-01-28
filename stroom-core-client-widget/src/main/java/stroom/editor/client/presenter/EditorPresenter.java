@@ -101,6 +101,10 @@ public class EditorPresenter
         getView().replaceSelectedText(text);
     }
 
+    public void insertSnippet(final String snippet) {
+        getView().insertSnippet(snippet);
+    }
+
     public void setText(final String text, final boolean format) {
         if (text == null) {
             getView().setText("");
