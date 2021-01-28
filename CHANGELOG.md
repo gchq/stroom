@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+* Updated tokens to fix Travis build.
+
+
 ## [v6.1.31] - 2021-01-27
 
 * Failed bintray deployment.
