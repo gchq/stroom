@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2018** : Fixed intermittent search issue that was sometimes causing search to complete too early without results.
+
 * Fix dashboards not handling NUMERIC index fields.
 
 * Fix bug in Negate expression function.
