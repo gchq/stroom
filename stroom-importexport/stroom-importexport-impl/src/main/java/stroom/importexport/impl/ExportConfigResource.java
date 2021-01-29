@@ -24,7 +24,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Set;
 
-@Api(value = "export - /v1")
+@Api(tags = "Export")
 @Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
     private final transient ImportExportService importExportService;

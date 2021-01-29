@@ -52,7 +52,7 @@ import java.util.List;
 
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
-@Api(value = "stream attribute map - /v1")
+@Api(tags = "Stream Attribute Maps")
 @Path("/streamattributemap" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

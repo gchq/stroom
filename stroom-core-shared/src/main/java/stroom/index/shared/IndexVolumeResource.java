@@ -21,11 +21,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "index volume - /v2")
+@Api(tags = "Index Volumes")
 @Path(IndexVolumeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexVolumeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/index/volume" + ResourcePaths.V2;
     String RESCAN_SUB_PATH = "/rescan";
 

@@ -1,12 +1,13 @@
 package stroom.core.welcome;
 
-import io.swagger.annotations.Api;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.SessionInfo;
+
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -16,11 +17,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "sessionInfo - /v1")
+@Api(tags = "Session Info")
 @Path("/sessionInfo" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SessionInfoResourceImpl implements SessionInfoResource {
+
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final Provider<BuildInfo> buildInfoProvider;
@@ -36,6 +38,9 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
 
     @GET
     public SessionInfo get() {
-        return new SessionInfo(securityContext.getUserId(), nodeInfo.getThisNodeName(), buildInfoProvider.get());
+        return new SessionInfo(
+                securityContext.getUserId(),
+                nodeInfo.getThisNodeName(),
+                buildInfoProvider.get());
     }
 }

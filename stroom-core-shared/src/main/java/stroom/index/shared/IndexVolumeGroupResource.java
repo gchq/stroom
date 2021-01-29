@@ -20,7 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "index volumeGroup - /v2")
+@Api(tags = "Index Volume Groups")
 @Path("/index/volumeGroup" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

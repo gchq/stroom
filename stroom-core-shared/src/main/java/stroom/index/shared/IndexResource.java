@@ -34,7 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "index - /v2")
+@Api(tags = "Indexes (v2)")
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

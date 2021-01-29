@@ -1,14 +1,16 @@
 package stroom.job.shared;
 
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
 
 import java.util.Objects;
 
@@ -187,8 +189,12 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.enabled = enabled;
     }
 
+    @ApiModel
     public enum JobType implements HasPrimitiveValue {
-        UNKNOWN("UNKNOWN", 0), CRON("Cron", 1), FREQUENCY("Fequency", 2), DISTRIBUTED("Distributed", 3);
+        UNKNOWN("UNKNOWN", 0),
+        CRON("Cron", 1),
+        FREQUENCY("Frequency", 2),
+        DISTRIBUTED("Distributed", 3);
 
         public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 JobType.values());

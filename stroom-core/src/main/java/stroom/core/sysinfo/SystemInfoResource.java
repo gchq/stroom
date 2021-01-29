@@ -16,7 +16,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "system info - /v1")
+@Api(tags = "System Info")
 @Path(SystemInfoResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

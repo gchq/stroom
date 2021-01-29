@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Api(value = "explorer - /v1")
+@Api(tags = "Explorer (v1)")
 @Path("/explorer" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

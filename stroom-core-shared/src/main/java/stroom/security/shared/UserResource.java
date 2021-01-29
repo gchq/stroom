@@ -1,12 +1,13 @@
 package stroom.security.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -21,9 +22,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(
-        value = "authorisation - /v1",
-        description = "Stroom Authorisation API")
+@Api(tags = "Authorisation")
 @Path("/users" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

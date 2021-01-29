@@ -42,10 +42,10 @@ import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
 
+@Api(tags = "Account")
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(description = "Stroom Account API", tags = {"Account"})
 public interface AccountResource extends RestResource {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");

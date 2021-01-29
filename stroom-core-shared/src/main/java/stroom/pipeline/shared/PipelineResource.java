@@ -16,14 +16,15 @@
 
 package stroom.pipeline.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -34,7 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "pipeline - /v1")
+@Api(tags = "Pipelines")
 @Path("/pipeline" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

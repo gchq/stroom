@@ -16,14 +16,18 @@
 
 package stroom.job.shared;
 
+import stroom.job.shared.JobNode.JobType;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.job.shared.JobNode.JobType;
+import io.swagger.annotations.ApiModel;
 
+@ApiModel
 @JsonInclude(Include.NON_NULL)
 public class GetScheduledTimesRequest {
+
     @JsonProperty
     private final JobType jobType;
     @JsonProperty

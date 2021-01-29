@@ -31,10 +31,17 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface OpenIdResource extends RestResource {
+
+    String API_KEYS_TAG = "API Keys";
+    String AUTHENTICATION_TAG = "Authentication";
+
     @GET
     @Path("auth")
     @Timed
-    @ApiOperation(value = "Submit an OpenId AuthenticationRequest.", response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+            value = "Submit an OpenId AuthenticationRequest.",
+            response = String.class,
+            tags = AUTHENTICATION_TAG)
     void auth(
             @Context HttpServletRequest request,
             @QueryParam(OpenId.SCOPE) @NotNull String scope,
@@ -48,14 +55,17 @@ public interface OpenIdResource extends RestResource {
     @POST
     @Path("token")
     @Timed
-    @ApiOperation(value = "Get a token from an access code", response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+            value = "Get a token from an access code",
+            response = String.class,
+            tags = AUTHENTICATION_TAG)
     TokenResponse token(@ApiParam("tokenRequest") TokenRequest tokenRequest);
 
     @ApiOperation(
             value = "Provides access to this service's current public key. " +
                     "A client may use these keys to verify JWTs issued by this service.",
             response = String.class,
-            tags = {"ApiKey"})
+            tags = API_KEYS_TAG)
     @GET
     @Path("certs")
     @Timed
@@ -64,7 +74,7 @@ public interface OpenIdResource extends RestResource {
     @ApiOperation(
             value = "Provides discovery for openid configuration",
             response = String.class,
-            tags = {"ApiKey"})
+            tags = API_KEYS_TAG)
     @GET
     @Path(".well-known/openid-configuration")
     @Timed

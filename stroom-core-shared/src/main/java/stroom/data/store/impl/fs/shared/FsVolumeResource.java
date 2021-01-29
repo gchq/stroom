@@ -36,7 +36,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "fsVolume - /v1")
+@Api(tags = "Filesystem Volumes")
 @Path("/fsVolume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

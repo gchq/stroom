@@ -36,7 +36,7 @@ import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 
-@Api(value = "annotations - /v1")
+@Api(tags = "Annotations")
 @Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

@@ -9,7 +9,6 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -364,11 +363,11 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenReturn(node.getNodeName());
 
         return new GlobalConfigResourceImpl(
-                globalConfigService,
-                nodeService,
+                () -> globalConfigService,
+                () -> nodeService,
                 new UiConfig(),
-                nodeInfo,
-                webTargetFactory(),
+                () -> nodeInfo,
+                AbstractMultiNodeResourceTest::webTargetFactory,
                 null);
     }
 }

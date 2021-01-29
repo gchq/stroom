@@ -35,7 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
-@Api(value = "ruleset - /v2")
+@Api(tags = "Rule Set")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

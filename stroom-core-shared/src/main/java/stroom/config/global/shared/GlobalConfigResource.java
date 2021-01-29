@@ -1,7 +1,6 @@
 package stroom.config.global.shared;
 
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -22,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
 
-@Api(value = "config - /v1")
+@Api(tags = "Global Config")
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -52,16 +51,16 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             FIELD_DEF_DESCRIPTION);
 
 
-    // TODO do we need this if the method returns a type?
-    @ApiOperation(
-        value = "TODO",
-        response = ListConfigResponse.class)
     @POST
     @Path(PROPERTIES_SUB_PATH)
+    @ApiOperation(
+            value = "List all properties matching the criteria on the current node.",
+            response = ListConfigResponse.class)
     ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @ApiOperation(value = "List all properties matching the criteria on the requested node.")
     ListConfigResponse listByNode(
             final @PathParam("nodeName") String nodeName,
             final @ApiParam("criteria") GlobalConfigCriteria criteria);
