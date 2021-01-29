@@ -7,13 +7,10 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
-import stroom.node.api.NodeCallUtil;
-import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.AutoLogged;
@@ -22,43 +19,38 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.client.SyncInvoker;
+import javax.ws.rs.core.GenericType;
 import java.util.Objects;
 import java.util.Optional;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigResourceImpl.class);
 
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final UiConfig uiConfig;
-    private final Provider<NodeInfo> nodeInfoProvider;
-    private final Provider<WebTargetFactory> webTargetFactoryProvider;
     private final UriFactory uriFactory;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final UiConfig uiConfig,
-                             final Provider<NodeInfo> nodeInfoProvider,
-                             final Provider<WebTargetFactory> webTargetFactory,
                              final UriFactory uriFactory) {
 
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
-        this.nodeInfoProvider = Objects.requireNonNull(nodeInfoProvider);
-        this.webTargetFactoryProvider = webTargetFactory;
         this.uriFactory = uriFactory;
     }
 
@@ -72,44 +64,17 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
-        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
-
-        ListConfigResponse listConfigResponse;
-
-        final NodeInfo nodeInfo = nodeInfoProvider.get();
-
-        // If this is the node that was contacted then just resolve it locally
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            listConfigResponse = list(criteria);
-
-        } else {
-            // A different node to make a rest call to the required node
-            final String url = NodeCallUtil.getBaseEndpointUrl(
-                    nodeInfo,
-                    nodeServiceProvider.get(),
-                    nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    GlobalConfigResource.BASE_PATH,
-                    GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
-                    nodeName);
-            try {
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(criteria));
-
-                if (response.getStatus() != Status.OK.getStatusCode()) {
-                    throw new WebApplicationException(response);
-                }
-
-                listConfigResponse = response.readEntity(ListConfigResponse.class);
-
-                Objects.requireNonNull(listConfigResponse, "Null listConfigResponse");
-            } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
-        return listConfigResponse;
+        return nodeServiceProvider.get().remoteRestCall(
+                nodeName,
+                ListConfigResponse.class,
+                ResourcePaths.buildAuthenticatedApiPath(
+                        GlobalConfigResource.BASE_PATH,
+                        GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
+                        nodeName),
+                () ->
+                        list(criteria),
+                builder ->
+                        builder.post(Entity.json(criteria)));
     }
 
     @Timed
@@ -138,42 +103,18 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(propertyName, "propertyName not supplied");
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
-        OverrideValue<String> yamlOverride;
-
-        final NodeInfo nodeInfo = nodeInfoProvider.get();
-
-        // If this is the node that was contacted then just resolve it locally
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            yamlOverride = getYamlValueByName(propertyName);
-
-        } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeServiceProvider.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    GlobalConfigResource.BASE_PATH,
-                    GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                    propertyName,
-                    GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                    nodeName);
-            try {
-                // A different node to make a rest call to the required node
-                final Response response = webTargetFactoryProvider.get()
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
-                    throw new NotFoundException(LogUtil.message("Property {} not found", propertyName));
-                } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                    throw new WebApplicationException(response);
-                }
-
-                yamlOverride = response.readEntity(OverrideValue.class);
-
-                Objects.requireNonNull(yamlOverride, "Null yamlOverride");
-            } catch (final Throwable e) {
-                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
-            }
-        }
-        return yamlOverride;
+        return nodeServiceProvider.get().remoteRestCall(
+                nodeName,
+                ResourcePaths.buildAuthenticatedApiPath(
+                        GlobalConfigResource.BASE_PATH,
+                        GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                        propertyName,
+                        GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                        nodeName),
+                () ->
+                        getYamlValueByName(propertyName),
+                SyncInvoker::get,
+                response -> response.readEntity(new GenericType<OverrideValue<String>>() {}));
     }
 
     @Timed

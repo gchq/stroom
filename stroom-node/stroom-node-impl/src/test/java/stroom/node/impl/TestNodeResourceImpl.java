@@ -1,9 +1,5 @@
 package stroom.node.impl;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.FindNodeCriteria;
@@ -18,6 +14,11 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -328,10 +329,10 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
 
         return new NodeResourceImpl(
-                nodeService,
-                nodeInfo,
-                clusterNodeManager,
-                webTargetFactory(),
-                documentEventLog);
+                () -> nodeService,
+                () -> nodeInfo,
+                () -> clusterNodeManager,
+                AbstractMultiNodeResourceTest::webTargetFactory,
+                () -> documentEventLog);
     }
 }
