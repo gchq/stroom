@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-
+* Issue **#2022** : Simplify consistent event logging with POJOs 
 
 ## [v7.0-beta.80] - 2021-01-28
 
