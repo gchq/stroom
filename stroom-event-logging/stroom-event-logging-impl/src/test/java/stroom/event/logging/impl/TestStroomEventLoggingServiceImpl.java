@@ -228,14 +228,17 @@ class TestStroomEventLoggingServiceImpl {
         List<Data> allData = stroomEventLoggingService.getDataItems
                 (new TestSecretObj("test", "xyzzy", "open-sesame"));
 
-        assertThat(allData.size()).isEqualTo(3);
+        assertThat(allData.size()).isEqualTo(4);
         assertThat(allData).anyMatch(data -> data.getName().equals("name"));
         assertThat(allData).anyMatch(data -> data.getName().equals("password"));
         assertThat(allData).anyMatch(data -> data.getName().equals("myNewSecret"));
+        assertThat(allData).anyMatch(data -> data.getName().equals("secret"));
 
         assertThat(allData).noneMatch(data -> data.getValue().equals("xyzzy"));
         assertThat(allData).noneMatch(data -> data.getValue().equals("open-sesame"));
         assertThat(allData.stream().filter(data -> data.getValue().equals("test"))
+                .collect(Collectors.toList()).size()).isEqualTo(1);
+        assertThat(allData.stream().filter(data -> data.getValue().equals("false"))
                 .collect(Collectors.toList()).size()).isEqualTo(1);
     }
 
@@ -307,6 +310,7 @@ class TestStroomEventLoggingServiceImpl {
         private String name;
         private String password;
         private String myNewSecret;
+        private boolean secret;
 
         public TestSecretObj (String name, String password, String myNewSecret){
             this.name = name;
@@ -328,6 +332,10 @@ class TestStroomEventLoggingServiceImpl {
 
         public String getName() {
             return name;
+        }
+
+        public Boolean isSecret() {
+            return secret;
         }
 
         @Override

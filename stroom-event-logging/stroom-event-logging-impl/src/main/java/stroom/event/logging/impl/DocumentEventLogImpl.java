@@ -141,6 +141,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         final String objDesc = eventLoggingService.describe(object);
 
+        if (objDesc == null){
+            return description;
+        }
         return description + " " + objDesc;
     }
 

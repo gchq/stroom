@@ -29,6 +29,13 @@ import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import event.logging.BaseObject;
 import event.logging.Data;
 import event.logging.Device;
@@ -57,6 +64,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -82,6 +90,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
 
+    private ObjectMapper objectMapper;
+
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
@@ -93,6 +103,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         this.objectInfoProviderMap = objectInfoProviderMap;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
+        this.objectMapper = createObjectMapper();
     }
 
     @Override
@@ -384,13 +395,13 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 @Override
                 public BaseObject createBaseObject(final Object object) {
                     return OtherObject.builder()
-                            .withName(object.toString())
+                            .withType(object.toString())
                             .build();
                 }
 
                 @Override
                 public String getObjectType(final Object object) {
-                    return null;
+                    return object.toString();
                 }
             };
         } else {
@@ -416,10 +427,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public String describe(final Object object) {
+        if (object == null){
+            return null;
+        }
         final StringBuilder desc = new StringBuilder();
         final String objectType = getObjectType(object);
         if (objectType != null) {
-            desc.append(" ");
             desc.append(objectType);
         }
 
@@ -470,6 +483,40 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
+    private Map<String, String> findPropsForDataItems (final Object obj){
+        // Construct a Jackson JavaType for your class
+        JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
+
+        // Introspect the given type
+        BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
+
+        // Find properties
+        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
+
+        // Get class level ignored properties
+        Set<String> ignoredProperties = objectMapper.getSerializationConfig().getAnnotationIntrospector()
+                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();// Filter properties removing the class level ignored ones
+
+        List<BeanPropertyDefinition> availableProperties = properties.stream()
+                .filter(property -> !ignoredProperties.contains(property.getName()))
+                .collect(Collectors.toList());
+
+        return availableProperties.stream().collect(Collectors.toMap(
+                BeanPropertyDefinition::getName,
+                p ->{
+                    if (shouldRedact(p.getName().toLowerCase(), p.getRawPrimaryType())) {
+                        return "********";
+                    } else {
+                        Object object = p.getAccessor().getValue(obj);
+                        if (object == null) {
+                            return "<null>";
+                        } else {
+                            return object.toString();
+                        }
+                    }
+                }));
+    }
+
     /**
      * Create {@link Data} items from properties of the supplied POJO
      * @param obj POJO from which to extract properties
@@ -480,7 +527,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return List.of();
         }
         try {
-            final Map<String, Object> allProps = PropertyUtils.describe(obj);
+            Map<String, String> allProps = findPropsForDataItems(obj);
 
             return allProps.keySet().stream().map(propName -> {
                 java.lang.Object val = allProps.get(propName);
@@ -491,12 +538,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
                 Data d = new Data();
                 d.setName(propName);
+                d.setValue(val.toString());
 
-                if (shouldRedact(propName.toLowerCase())) {
-                    d.setValue("********");
-                } else {
-                    d.setValue(val.toString());
-                }
                 return d;
             }).filter(data -> data != null).collect(Collectors.toList());
         } catch (Exception ex) {
@@ -504,10 +547,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
+
     //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
     //itself is logged, e.g. due to configuration settings
     //Assess whether this field should be redacted
-    public boolean shouldRedact(String propNameLowercase) {
+    public boolean shouldRedact(String propNameLowercase, Class<?> type) {
+        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)){
+            return false; //Don't redact boolean types
+        }
+
         //TODO consider replacing or augmenting this hard coding
         // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
         return propNameLowercase.endsWith("password") ||
@@ -516,4 +564,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 propNameLowercase.endsWith("nonce") ||
                 propNameLowercase.endsWith("key");
     }
+
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
 }
