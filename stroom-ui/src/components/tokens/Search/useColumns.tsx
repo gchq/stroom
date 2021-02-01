@@ -3,6 +3,7 @@ import moment from "moment";
 import { Column, ReactTableFunction, RowInfo } from "react-table";
 import { Token } from "../api/types";
 import useConfig from "startup/config/useConfig";
+import useDateUtil from "../../../lib/useDateUtil";
 
 moment.updateLocale("en", {
   invalidDate: "No date",
@@ -55,6 +56,8 @@ const useColumns = (
     [setEnabledStateOnToken],
   );
 
+  const { toDateString } = useDateUtil();
+
   return [
     {
       Header: "",
@@ -86,14 +89,14 @@ const useColumns = (
     {
       Header: "Expires on",
       accessor: "expiresOn",
-      Cell: (row: RowInfo) => moment(row.row.expiresOn).format(dateFormat),
+      Cell: (row: RowInfo) => toDateString(row.row.expiresOn),
       filterable: false,
       maxWidth: 205,
     },
     {
       Header: "Issued on",
       accessor: "issuedOn",
-      Cell: (row: RowInfo) => moment(row.row.issuedOn).format(dateFormat),
+      Cell: (row: RowInfo) => toDateString(row.row.issuedOn),
       filterable: false,
       maxWidth: 205,
     },

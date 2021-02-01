@@ -1,11 +1,9 @@
 import { useAccountResource } from "../api";
 import { Account } from "../types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ResultPage, SearchAccountRequest } from "../api/types";
-import useDateUtil from "../../../lib/useDateUtil";
 
 interface UseAccountManager {
-  columns: any[];
   resultPage: ResultPage<Account>;
   remove: (userId: number) => void;
   request: SearchAccountRequest;
@@ -62,67 +60,7 @@ const useAccountManager = (): UseAccountManager => {
     [removeUserUsingApi, searchApi, request, setResultPage],
   );
 
-  const { toDateString } = useDateUtil();
-
-  const columns = useMemo(
-    () => [
-      {
-        Header: "",
-        accessor: "id",
-        // Cell: IdCell,
-        // filterable: false,
-        show: false,
-      },
-      {
-        id: "userId",
-        Header: "User Id",
-        accessor: "userId",
-        maxWidth: 150,
-        // filterMethod: (filter: any, row: any) => filterRow(row, filter),
-      },
-      {
-        Header: "Email",
-        accessor: "email",
-        maxWidth: 200,
-        // filterMethod: (filter: any, row: any) => filterRow(row, filter),
-      },
-      {
-        Header: "Status",
-        accessor: ({ locked, inactive, enabled }) =>
-          locked
-            ? "Locked"
-            : inactive
-            ? "Inactive"
-            : enabled
-            ? "Enabled"
-            : "Disabled",
-        maxWidth: 100,
-        // Cell: StateCell,
-        // Filter: getStateCellFilter,
-      },
-      {
-        Header: "Last Sign In",
-        accessor: ({ lastLoginMs }) => lastLoginMs && toDateString(lastLoginMs),
-        // Cell: (row: RowInfo) => moment(row.row.value).format(dateFormat),
-        maxWidth: 205,
-        // filterable: false,
-      },
-      {
-        Header: "Sign In Failures",
-        accessor: "loginFailures",
-        maxWidth: 100,
-      },
-      {
-        Header: "Comments",
-        accessor: "comments",
-        // filterMethod: (filter: any, row: any) => filterRow(row, filter),
-      },
-    ],
-    [toDateString],
-  );
-
   return {
-    columns,
     resultPage,
     remove,
     request,

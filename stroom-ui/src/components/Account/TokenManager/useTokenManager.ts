@@ -97,3 +97,5 @@ export const useTokenManager = (): UseTokenManager => {
     // search,
   };
 };
+
+export default useTokenManager;

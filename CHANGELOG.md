@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1767** : Improved column sizes on account management dialog.
 
 
 ## [v7.0-beta.80] - 2021-01-28

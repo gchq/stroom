@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import moment from "moment";
+import useDateUtil from "../../lib/useDateUtil";
 
 export const LoginStatsCopy = ({
   lastLogin,
@@ -27,13 +27,9 @@ export const LoginStatsCopy = ({
   dateFormat: string;
 }) => {
   if (lastLogin !== undefined) {
-    const lastLoginMoment = moment(lastLogin);
     const loginStatsCopy = (
       <div>
-        <div className="copy">
-          Last login: {lastLoginMoment.fromNow()}, at{" "}
-          {lastLoginMoment.format(dateFormat)}{" "}
-        </div>
+        <div className="copy">Last login: {toDateString(lastLogin)}</div>
         <div className="copy">Total logins: {loginCount}</div>
       </div>
     );
@@ -77,16 +73,17 @@ export const OnCopy = ({
   dateFormat,
   fallbackCopy,
 }: {
-  on: string;
+  on: number;
   verb: string;
   dateFormat: string;
   fallbackCopy?: string;
 }) => {
+const { toDateString } = useDateUtil();
+
   if (on !== undefined && on !== null) {
-    const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {toDateString(on)}
       </div>
     );
   } else {
@@ -106,10 +103,9 @@ export const OnCopyMs = ({
   fallbackCopy?: string;
 }) => {
   if (on !== undefined && on !== null) {
-    const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {toDateString(on)}
       </div>
     );
   } else {
