@@ -19,6 +19,8 @@ package stroom.event.logging.api;
 import event.logging.BaseObject;
 import event.logging.Data;
 import event.logging.EventLoggingService;
+import event.logging.MultiObject;
+import event.logging.UpdateEventAction;
 
 import java.util.List;
 
@@ -138,6 +140,19 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * @return BaseObject
      */
     BaseObject convert(final Object object);
+
+    default MultiObject convertToMulti(final Object object) {
+        return MultiObject.builder()
+                .withObjects(convert(object))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final T before, final T after) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(before))
+                .withAfter(convertToMulti(after))
+                .build();
+    }
 
     /**
      * Provide a textual summary of the supplied POJO as a string.
