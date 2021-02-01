@@ -25,7 +25,7 @@ class TestRestResources {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
 
     @TestFactory
-    Stream<DynamicTest> buildTests() {
+    Stream<DynamicTest> buildQualityAssuranceTests() {
         try (ScanResult result = new ClassGraph()
                 .whitelistPackages("stroom")
                 .enableClassInfo()
