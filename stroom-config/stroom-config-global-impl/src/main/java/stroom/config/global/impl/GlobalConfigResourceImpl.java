@@ -7,6 +7,8 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.node.api.NodeService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.ui.config.shared.UiConfig;
@@ -19,6 +21,8 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.UpdateEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,17 +41,20 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigResourceImpl.class);
 
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final UiConfig uiConfig;
     private final UriFactory uriFactory;
 
     @Inject
-    GlobalConfigResourceImpl(final Provider<GlobalConfigService> globalConfigServiceProvider,
+    GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                             final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final UiConfig uiConfig,
                              final UriFactory uriFactory) {
 
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
@@ -130,6 +137,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Manually logged
     @Timed
     @Override
     public ConfigProperty update(final String propertyName, final ConfigProperty configProperty) {
@@ -142,13 +150,32 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
 
         try {
-            return globalConfigServiceProvider.get().update(configProperty);
+            final GlobalConfigService globalConfigService = globalConfigServiceProvider.get();
+            final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
+
+            final Optional<ConfigProperty> optBeforeProp = globalConfigService.fetch(configProperty.getId());
+
+            return stroomEventLoggingService.loggedResult(
+                    StroomEventLoggingUtil.buildTypeId(this, "update"),
+                    "Updating property " + configProperty.getNameAsString(),
+                    UpdateEventAction.builder()
+                            .withAfter(stroomEventLoggingService.convertToMulti(configProperty))
+                            .build(),
+                    eventAction -> {
+                        final ConfigProperty persistedProperty = globalConfigService.update(configProperty);
+                        return ComplexLoggedOutcome.success(
+                                persistedProperty,
+                                stroomEventLoggingService.buildUpdateEventAction(
+                                        optBeforeProp.orElse(null),
+                                        persistedProperty));
+                    },
+                    null);
         } catch (ConfigPropertyValidationException e) {
             throw new BadRequestException(e.getMessage(), e);
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
     @Timed
     @Override
     public UiConfig fetchUiConfig() {

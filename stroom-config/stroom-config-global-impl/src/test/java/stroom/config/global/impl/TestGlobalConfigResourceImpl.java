@@ -5,6 +5,7 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
@@ -296,6 +297,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         // Set up the GlobalConfigResource mock
         final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
+        final StroomEventLoggingService stroomEventLoggingService = createNamedMock(
+                StroomEventLoggingService.class,
+                node);
 
         final FilterFieldMappers<ConfigProperty> fieldMappers = FilterFieldMappers.of(
                 FilterFieldMapper.of(GlobalConfigResource.FIELD_DEF_NAME, ConfigProperty::getNameAsString)
@@ -363,6 +367,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenReturn(node.getNodeName());
 
         return new GlobalConfigResourceImpl(
+                () -> stroomEventLoggingService,
                 () -> globalConfigService,
                 () -> nodeService,
                 new UiConfig(),
