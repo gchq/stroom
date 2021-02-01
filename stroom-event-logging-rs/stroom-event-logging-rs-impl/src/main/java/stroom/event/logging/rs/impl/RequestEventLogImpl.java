@@ -122,6 +122,9 @@ class RequestEventLogImpl implements RequestEventLog {
             if (firstVal.isPresent()){
                 if (firstVal.get().getClass().getSimpleName().endsWith("s")){
                     listContents = firstVal.get().getClass().getSimpleName() + "es";
+                } else if (firstVal.get().getClass().getSimpleName().endsWith("y")){
+                    listContents = firstVal.get().getClass().getSimpleName().substring(0,
+                            firstVal.get().getClass().getSimpleName().length() - 1) + "ies";
                 } else {
                     listContents = firstVal.get().getClass().getSimpleName() + "s";
                 }

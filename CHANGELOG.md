@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2023** : Enable autologger to output multiple path or query parameters
 
+* Issue **#2022** : Simplify consistent event logging with POJOs
+
+* Issue **#2021** : Fix typo when autologger encounters class names ending in 'y'
+
+* Issue **#2020** : Prevent autologger redacting boolean properties
 
 ## [v7.0-beta.80] - 2021-01-28
 

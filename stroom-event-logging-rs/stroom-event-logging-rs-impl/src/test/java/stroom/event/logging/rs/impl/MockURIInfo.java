@@ -99,12 +99,12 @@ public class MockURIInfo implements UriInfo {
 
     @Override
     public MultivaluedMap<String, String> getQueryParameters() {
-        return null;
+        return new MultivaluedHashMap<>();
     }
 
     @Override
     public MultivaluedMap<String, String> getQueryParameters(final boolean decode) {
-        return null;
+        return new MultivaluedHashMap<>();
     }
 
     @Override
