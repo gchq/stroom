@@ -17,23 +17,40 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.docref.DocRef;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasName;
+import stroom.util.shared.HasUuid;
 
-import event.logging.BaseOutcome;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import event.logging.BaseObject;
+import event.logging.Data;
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.EventAction;
 import event.logging.EventDetail;
 import event.logging.EventSource;
 import event.logging.EventTime;
+import event.logging.OtherObject;
 import event.logging.Purpose;
 import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,13 +60,14 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
@@ -69,17 +87,23 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final CurrentActivity currentActivity;
     private final Provider<BuildInfo> buildInfoProvider;
-    private final Map<Class<? extends EventAction>, Optional<Function<EventAction, BaseOutcome>>> outcomeFactoryMap = new ConcurrentHashMap<>();
+
+    private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
+
+    private ObjectMapper objectMapper;
 
     @Inject
     StroomEventLoggingServiceImpl(final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
+                                  final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider) {
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
+        this.objectInfoProviderMap = objectInfoProviderMap;
         this.currentActivity = currentActivity;
         this.buildInfoProvider = buildInfoProvider;
+        this.objectMapper = createObjectMapper();
     }
 
     @Override
@@ -318,6 +342,237 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return httpServletRequestProvider.get();
         }
         return null;
+    }
+
+    @Override
+    public BaseObject convert(final Object object) {
+        final BaseObject baseObj;
+        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
+        if (objectInfoAppender != null){
+            baseObj = objectInfoAppender.createBaseObject(object);
+        } else {
+            final OtherObject.Builder<Void> builder = OtherObject.builder()
+                    .withType(getObjectType(object))
+                    .withId(getObjectId(object))
+                    .withName(getObjectName(object))
+                    .withDescription(describe(object));
+
+            builder.addData(getDataItems(object));
+
+            baseObj = builder.build();
+        }
+
+        return baseObj;
+    }
+
+    private String getObjectType(final java.lang.Object object) {
+        if (object instanceof DocRef) {
+            return String.valueOf(((DocRef) object).getType());
+        }
+
+        final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
+        if (objectInfoProvider == null) {
+            if (object instanceof Collection) {
+                Collection collection = (Collection) object;
+                if (collection.isEmpty()) {
+                    return "Empty collection";
+                } else {
+                    return "Collection containing " + collection.stream().count()
+                            + collection.stream().findFirst().get().getClass().getSimpleName() +
+                            " and possibly other objects";
+                }
+            }
+            return object.getClass().getSimpleName();
+        }
+        return objectInfoProvider.getObjectType(object);
+    }
+
+    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
+        ObjectInfoProvider appender = null;
+
+        if (String.class.equals(type)) {
+            appender = new ObjectInfoProvider() {
+                @Override
+                public BaseObject createBaseObject(final Object object) {
+                    return OtherObject.builder()
+                            .withType(object.toString())
+                            .build();
+                }
+
+                @Override
+                public String getObjectType(final Object object) {
+                    return object.toString();
+                }
+            };
+        } else {
+            // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+            Class<?> currentType = type;
+            Provider<ObjectInfoProvider> provider = null;
+            while (currentType != null && provider == null) {
+                provider = objectInfoProviderMap.get(new ObjectType(currentType));
+                currentType = currentType.getSuperclass();
+            }
+
+            if (provider != null) {
+                appender = provider.get();
+            }
+        }
+
+        if (appender == null) {
+            LOGGER.error("No appender found for " + type.getName());
+        }
+
+        return appender;
+    }
+
+    @Override
+    public String describe(final Object object) {
+        if (object == null){
+            return null;
+        }
+        final StringBuilder desc = new StringBuilder();
+        final String objectType = getObjectType(object);
+        if (objectType != null) {
+            desc.append(objectType);
+        }
+
+        final String objectName = getObjectName(object);
+        if (objectName != null) {
+            desc.append(" \"");
+            desc.append(objectName);
+            desc.append("\"");
+        }
+
+        final String objectId = getObjectId(object);
+        if (objectId != null) {
+            desc.append(" id=");
+            desc.append(objectId);
+        }
+
+        return desc.toString();
+    }
+
+
+    private String getObjectName(final java.lang.Object object) {
+        if (object instanceof DocRef) {
+            return ((DocRef) object).getName();
+        } else if (object instanceof HasName) {
+            return ((HasName) object).getName();
+        }
+
+        return null;
+    }
+
+    private String getObjectId(final java.lang.Object object) {
+        if (object instanceof HasUuid) {
+            return ((HasUuid) object).getUuid();
+        }
+
+        if (object instanceof HasId) {
+            return String.valueOf(((HasId) object).getId());
+        }
+
+        if (object instanceof HasIntegerId) {
+            return String.valueOf(((HasIntegerId) object).getId());
+        }
+
+        if (object instanceof DocRef) {
+            return String.valueOf(((DocRef) object).getUuid());
+        }
+
+        return null;
+    }
+
+    private Map<String, String> findPropsForDataItems (final Object obj){
+        // Construct a Jackson JavaType for your class
+        JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
+
+        // Introspect the given type
+        BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
+
+        // Find properties
+        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
+
+        // Get class level ignored properties
+        Set<String> ignoredProperties = objectMapper.getSerializationConfig().getAnnotationIntrospector()
+                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();// Filter properties removing the class level ignored ones
+
+        List<BeanPropertyDefinition> availableProperties = properties.stream()
+                .filter(property -> !ignoredProperties.contains(property.getName()))
+                .collect(Collectors.toList());
+
+        return availableProperties.stream().collect(Collectors.toMap(
+                BeanPropertyDefinition::getName,
+                p ->{
+                    if (shouldRedact(p.getName().toLowerCase(), p.getRawPrimaryType())) {
+                        return "********";
+                    } else {
+                        Object object = p.getAccessor().getValue(obj);
+                        if (object == null) {
+                            return "<null>";
+                        } else {
+                            return object.toString();
+                        }
+                    }
+                }));
+    }
+
+    /**
+     * Create {@link Data} items from properties of the supplied POJO
+     * @param obj POJO from which to extract properties
+     * @return List of {@link Data} items representing properties of the supplied POJO
+     */
+    public List<Data> getDataItems(java.lang.Object obj) {
+        if (obj == null) {
+            return List.of();
+        }
+        try {
+            Map<String, String> allProps = findPropsForDataItems(obj);
+
+            return allProps.keySet().stream().map(propName -> {
+                java.lang.Object val = allProps.get(propName);
+
+                if (val == null) {
+                    return null;
+                }
+
+                Data d = new Data();
+                d.setName(propName);
+                d.setValue(val.toString());
+
+                return d;
+            }).filter(data -> data != null).collect(Collectors.toList());
+        } catch (Exception ex) {
+            return List.of();
+        }
+    }
+
+
+    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
+    //itself is logged, e.g. due to configuration settings
+    //Assess whether this field should be redacted
+    public boolean shouldRedact(String propNameLowercase, Class<?> type) {
+        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)){
+            return false; //Don't redact boolean types
+        }
+
+        //TODO consider replacing or augmenting this hard coding
+        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
+        return propNameLowercase.endsWith("password") ||
+                propNameLowercase.endsWith("secret") ||
+                propNameLowercase.endsWith("token") ||
+                propNameLowercase.endsWith("nonce") ||
+                propNameLowercase.endsWith("key");
+    }
+
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
     }
 
 }

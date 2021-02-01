@@ -50,7 +50,6 @@ import event.logging.UnknownEventAction;
 import event.logging.UpdateEventAction;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,96 +68,13 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
     private final SecurityContext securityContext;
 
     @Inject
     public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                                final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                 final SecurityContext securityContext) {
         this.eventLoggingService = eventLoggingService;
-        this.objectInfoProviderMap = objectInfoProviderMap;
         this.securityContext = securityContext;
-    }
-
-    static List<Data> getDataItems(java.lang.Object obj) {
-        if (obj == null) {
-            return List.of();
-        }
-        try {
-            final Map<String, java.lang.Object> allProps = PropertyUtils.describe(obj);
-
-            return allProps.keySet().stream().map(propName -> {
-                java.lang.Object val = allProps.get(propName);
-
-                if (val == null) {
-                    return null;
-                }
-
-                Data d = new Data();
-                d.setName(propName);
-
-                if (shouldRedact(propName.toLowerCase())) {
-                    d.setValue("********");
-                } else {
-                    d.setValue(val.toString());
-                }
-                return d;
-            }).filter(data -> data != null).collect(Collectors.toList());
-        } catch (Exception ex) {
-            return List.of();
-        }
-    }
-
-    //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
-    //itself is logged, e.g. due to configuration settings
-    //Assess whether this field should be redacted
-    private static boolean shouldRedact(String propNameLowercase) {
-        //TODO consider replacing or augmenting this hard coding
-        // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
-        return propNameLowercase.endsWith("password") ||
-                propNameLowercase.endsWith("secret") ||
-                propNameLowercase.endsWith("token") ||
-                propNameLowercase.endsWith("nonce") ||
-                propNameLowercase.endsWith("key");
-    }
-
-    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
-        ObjectInfoProvider appender = null;
-
-        if (String.class.equals(type)) {
-            appender = new ObjectInfoProvider() {
-                @Override
-                public BaseObject createBaseObject(final Object object) {
-                    return OtherObject.builder()
-                            .withName(object.toString())
-                            .build();
-                }
-
-                @Override
-                public String getObjectType(final Object object) {
-                    return null;
-                }
-            };
-        } else {
-            // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
-            Class<?> currentType = type;
-            Provider<ObjectInfoProvider> provider = null;
-            while (currentType != null && provider == null) {
-                provider = objectInfoProviderMap.get(new ObjectType(currentType));
-                currentType = currentType.getSuperclass();
-            }
-
-            if (provider != null) {
-                appender = provider.get();
-            }
-        }
-
-        if (appender == null) {
-            LOGGER.error("No appender found for " + type.getName());
-        }
-
-        return appender;
     }
 
     @Override
@@ -201,11 +117,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-//    @Override
-//    public void update(final java.lang.Object before, final java.lang.Object after) {
-//        update(before, after, null);
-//    }
-
     @Override
     public void create(final java.lang.Object object, final String eventTypeId, final String verb, final Throwable ex) {
         securityContext.insecure(() -> {
@@ -225,37 +136,15 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
     private String createEventDescription(final String descriptionVerb,
                                           final String defaultDescription,
-                                          final Object objectOrObjectType) {
+                                          final Object object) {
         final String description = Optional.ofNullable(descriptionVerb).orElse(defaultDescription);
-        final StringBuilder desc = new StringBuilder(description);
-        if (objectOrObjectType != null) {
-            if (objectOrObjectType instanceof String) {
-                //Object type name supplied
-                desc.append(" ");
-                desc.append(objectOrObjectType);
-            } else {
-                //Actual object supplied
-                final String objectType = getObjectType(objectOrObjectType);
-                if (objectType != null) {
-                    desc.append(" ");
-                    desc.append(objectType);
-                }
 
-                final String objectName = getObjectName(objectOrObjectType);
-                if (objectName != null) {
-                    desc.append(" \"");
-                    desc.append(objectName);
-                    desc.append("\"");
-                }
+        final String objDesc = eventLoggingService.describe(object);
 
-                final String objectId = getObjectId(objectOrObjectType);
-                if (objectId != null) {
-                    desc.append(" id=");
-                    desc.append(objectId);
-                }
-            }
+        if (objDesc == null){
+            return description;
         }
-        return desc.toString();
+        return description + " " + objDesc;
     }
 
     @Override
@@ -283,11 +172,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
             }
         });
     }
-
-//    @Override
-//    public void move(final java.lang.Object before, final java.lang.Object after) {
-//        move(before, after, null);
-//    }
 
     @Override
     public void update(final java.lang.Object before, final java.lang.Object after, final String eventTypeId, final Throwable ex) {
@@ -470,7 +354,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
                 eventLoggingService.log(
                         eventTypeId != null ? eventTypeId : "Delete by " + criteria.getClass().getSimpleName(),
-                        createEventDescription(description, "Delete by criteria", getObjectType(criteria)),
+                        createEventDescription(description, "Delete by criteria", criteria),
                         DeleteEventAction.builder()
                                 .withObjects(createBaseObject(criteriaBuilder.build()))
                                 .withOutcome(EventLoggingUtil.createOutcome(ex))
@@ -614,7 +498,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                                  final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                UnknownEventAction.Builder<Void> builder = UnknownEventAction.builder().withData(getDataItems(object));
+                UnknownEventAction.Builder<Void> builder =
+                        UnknownEventAction.builder().withData(eventLoggingService.getDataItems(object));
                 if (ex != null) {
                     builder = builder.withData(Data.builder().withName("Error").withValue(ex.getMessage()).build());
                 }
@@ -667,77 +552,12 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         return resultPage;
     }
 
-    private String getObjectType(final java.lang.Object object) {
-        if (object instanceof DocRef) {
-            return String.valueOf(((DocRef) object).getType());
-        }
-
-        final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
-        if (objectInfoProvider == null) {
-            if (object instanceof Collection) {
-                Collection collection = (Collection) object;
-                if (collection.isEmpty()) {
-                    return "Empty collection";
-                } else {
-                    return "Collection containing " + collection.stream().count()
-                            + collection.stream().findFirst().get().getClass().getSimpleName() +
-                            " and possibly other objects";
-                }
-            }
-            return object.getClass().getSimpleName();
-        }
-        return objectInfoProvider.getObjectType(object);
-    }
-
-    private String getObjectName(final java.lang.Object object) {
-        if (object instanceof DocRef) {
-            return ((DocRef) object).getName();
-        } else if (object instanceof HasName) {
-            return ((HasName) object).getName();
-        }
-
-        return null;
-    }
-
-    private String getObjectId(final java.lang.Object object) {
-        if (object instanceof HasUuid) {
-            return ((HasUuid) object).getUuid();
-        }
-
-        if (object instanceof HasId) {
-            return String.valueOf(((HasId) object).getId());
-        }
-
-        if (object instanceof HasIntegerId) {
-            return String.valueOf(((HasIntegerId) object).getId());
-        }
-
-        if (object instanceof DocRef) {
-            return String.valueOf(((DocRef) object).getUuid());
-        }
-
-        return null;
-    }
-
     private Iterable<BaseObject> createBaseObject(final java.lang.Object object) {
         if (object == null) {
             return List.of();
         }
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender == null) {
-            return List.of(createDefaultBaseObject(object));
-        }
-        return List.of(objectInfoAppender.createBaseObject(object));
+
+        return List.of(eventLoggingService.convert(object));
     }
 
-    private BaseObject createDefaultBaseObject(final java.lang.Object object) {
-        final OtherObject.Builder<Void> builder = OtherObject.builder()
-                .withType(getObjectType(object))
-                .withId(getObjectId(object))
-                .withName(getObjectName(object));
-
-        builder.addData(getDataItems(object));
-
-        return builder.build();
-    }
 }
