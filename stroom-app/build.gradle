@@ -461,21 +461,26 @@ task prepareSwaggerClasses {
                         new SubTypesScanner()
                 );
 
-        // Find all the @Api classes
+        // Find all the @Api/@ApiModel classes
         Reflections reflections = new Reflections(configBuilder);
         Set<Class<?>> restClasses = reflections
                 .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
+        Set<Class<?>> modelClasses = reflections
+                .getTypesAnnotatedWith(io.swagger.annotations.ApiModel.class)
 
         logger.info("Adding API classes to Swagger spec")
 
         // Add them to a list for swagger to scan over
-        restClasses
+
+        def allClasses = [ restClasses, modelClasses ].flatten().unique()
+        allClasses
                 .sort { it.name }
                 .each {
+                    //println "Adding class ${it.name}"
                     restResourceClassNames.add(it.name)
                     logger.info it.name
                 }
-        print "Using swagger directory ${swaggerDir}"
+        println "Using swagger directory ${swaggerDir}"
     }
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses

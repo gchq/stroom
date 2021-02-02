@@ -53,7 +53,7 @@ import static stroom.processor.impl.SearchKeywords.SORT_NEXT;
 import static stroom.processor.impl.SearchKeywords.addFiltering;
 import static stroom.processor.impl.SearchKeywords.addSorting;
 
-@Api(value = "stream task - /v1")
+@Api(tags = "Stream Tasks")
 @Path("/streamtasks" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

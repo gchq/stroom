@@ -1,8 +1,9 @@
 package stroom.security.impl;
 
-import io.swagger.annotations.Api;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -14,9 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "application permissions - /v1",
-        description = "Stroom Application Permissions API")
+@Api(tags = "Application Permissions (New UI)")
 @Path("/appPermissions" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

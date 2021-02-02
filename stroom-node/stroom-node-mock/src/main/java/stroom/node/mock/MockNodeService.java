@@ -21,8 +21,12 @@ import stroom.node.api.NodeService;
 import stroom.node.api.FindNodeCriteria;
 
 import javax.inject.Singleton;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Mock class that manages one node.
@@ -52,5 +56,14 @@ public class MockNodeService implements NodeService {
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
         return Collections.singletonList(nodeInfo.getThisNodeName());
+    }
+
+    @Override
+    public <T_RESP> T_RESP remoteRestCall(final String nodeName,
+                                          final String fullPath,
+                                          final Supplier<T_RESP> localSupplier,
+                                          final Function<Builder, Response> responseBuilderFunc,
+                                          final Function<Response, T_RESP> responseMapper) {
+        return localSupplier.get();
     }
 }

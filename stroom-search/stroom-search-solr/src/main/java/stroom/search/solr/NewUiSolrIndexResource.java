@@ -41,9 +41,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-@Api(
-        value = "solr index - /v1",
-        description = "Solr Index API")
+@Api(tags = "Solr Indices (New UI)")
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

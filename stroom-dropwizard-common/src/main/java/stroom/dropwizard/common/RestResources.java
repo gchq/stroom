@@ -33,7 +33,8 @@ public class RestResources {
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;
 
     @Inject
-    RestResources(final Environment environment, final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap) {
+    RestResources(final Environment environment,
+                  final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap) {
         this.environment = environment;
         this.providerMap = providerMap;
     }
@@ -92,7 +93,9 @@ public class RestResources {
                     StringUtils.rightPad(name, maxNameLength, " "),
                     resourceProvider.getResourcePath(),
                     ConsoleColour.red("**Duplicate path**"));
-            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}", resourceProvider.getResourcePath()));
+            throw new RuntimeException(LogUtil.message(
+                    "Duplicate REST resource path {}",
+                    resourceProvider.getResourcePath()));
         } else {
             LOGGER.info("\t{} => {}",
                     StringUtils.rightPad(name, maxNameLength, " "),

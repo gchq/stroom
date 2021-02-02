@@ -32,11 +32,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 
-@Api(value = "annotations - /v1")
+@Api(tags = "Annotations")
 @Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,60 +45,45 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     List<FilterFieldDefinition> NO_FIELD_DEFINITIONS = Collections.emptyList();
 
     @GET
-    @ApiOperation(
-            value = "Gets an annotation",
-            response = Response.class)
+    @ApiOperation(value = "Gets an annotation")
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
+    @ApiOperation(value = "Gets an annotation")
     AnnotationDetail createEntry(@ApiParam("request") CreateEntryRequest request);
 
     @GET
     @Path("status")
-    @ApiOperation(
-            value = "Gets a list of allowed statuses",
-            response = Response.class)
+    @ApiOperation(value = "Gets a list of allowed statuses")
     List<String> getStatus(@QueryParam("filter") String filter);
 
     @GET
     @Path("comment")
-    @ApiOperation(
-            value = "Gets a list of predefined comments",
-            response = Response.class)
+    @ApiOperation(value = "Gets a list of predefined comments")
     List<String> getComment(@QueryParam("filter") String filter);
 
     @GET
     @Path("linkedEvents")
-    @ApiOperation(
-            value = "Gets a list of events linked to this annotation",
-            response = Response.class)
+    @ApiOperation(value = "Gets a list of events linked to this annotation")
     List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
 
     @POST
     @Path("link")
-    @ApiOperation(
-            value = "Links an annotation to an event",
-            response = Response.class)
+    @ApiOperation(value = "Links an annotation to an event")
     List<EventId> link(@ApiParam("eventLink") EventLink eventLink);
 
     @POST
     @Path("unlink")
-    @ApiOperation(
-            value = "Unlinks an annotation from an event",
-            response = Response.class)
+    @ApiOperation(value = "Unlinks an annotation from an event")
     List<EventId> unlink(@ApiParam("eventLink") EventLink eventLink);
 
     @POST
     @Path("setStatus")
-    @ApiOperation(
-            value = "Bulk action to set the status for several annotations",
-            response = Response.class)
+    @ApiOperation(value = "Bulk action to set the status for several annotations")
     Integer setStatus(@ApiParam("request") SetStatusRequest request);
 
     @POST
     @Path("setAssignedTo")
-    @ApiOperation(
-            value = "Bulk action to set the assignment for several annotations",
-            response = Response.class)
+    @ApiOperation(value = "Bulk action to set the assignment for several annotations")
     Integer setAssignedTo(@ApiParam("request") SetAssignedToRequest request);
 }

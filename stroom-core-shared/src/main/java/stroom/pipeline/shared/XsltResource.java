@@ -34,11 +34,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "xslt - /v1")
+@Api(tags = "XSLTs")
 @Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface XsltResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
     @ApiOperation(

@@ -1,15 +1,18 @@
 package stroom.config.global.shared;
 
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
+import io.swagger.annotations.ApiModel;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
+@ApiModel(description = "List of config properties")
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values) {
         super(values);

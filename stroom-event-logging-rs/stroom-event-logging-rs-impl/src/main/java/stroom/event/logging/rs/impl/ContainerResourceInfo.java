@@ -93,13 +93,10 @@ public class ContainerResourceInfo {
     }
 
     public boolean shouldLog (boolean logByDefault){
-
-        Optional<OperationType> specifiedOperation = getOperationTypeFromAnnotations();
-        if (specifiedOperation.isPresent()){
-            return !specifiedOperation.get().equals(OperationType.UNLOGGED);
-        }
-
-        return logByDefault;
+        return getOperationTypeFromAnnotations()
+                .filter(type ->
+                        !(OperationType.UNLOGGED.equals(type) || OperationType.MANUALLY_LOGGED.equals(type)))
+                .isPresent() || logByDefault;
     }
 
     private OperationType findOperationType(final Method method,

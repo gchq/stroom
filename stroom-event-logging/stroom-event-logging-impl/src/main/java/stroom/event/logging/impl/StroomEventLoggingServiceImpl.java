@@ -357,6 +357,18 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
+    public BaseObject convert(final Supplier<?> objectSupplier) {
+        if (objectSupplier != null) {
+            // Run as proc user in case we are logging a user trying to access a thing they
+            // don't have perms for
+            final Object object = securityContext.asProcessingUserResult(objectSupplier);
+            return convert(object);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public BaseObject convert(final Object object) {
         final BaseObject baseObj;
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());

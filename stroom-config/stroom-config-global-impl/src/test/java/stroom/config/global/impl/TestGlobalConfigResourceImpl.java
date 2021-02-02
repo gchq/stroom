@@ -5,11 +5,11 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -297,6 +297,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         // Set up the GlobalConfigResource mock
         final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
+        final StroomEventLoggingService stroomEventLoggingService = createNamedMock(
+                StroomEventLoggingService.class,
+                node);
 
         final FilterFieldMappers<ConfigProperty> fieldMappers = FilterFieldMappers.of(
                 FilterFieldMapper.of(GlobalConfigResource.FIELD_DEF_NAME, ConfigProperty::getNameAsString)
@@ -364,11 +367,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenReturn(node.getNodeName());
 
         return new GlobalConfigResourceImpl(
-                globalConfigService,
-                nodeService,
+                () -> stroomEventLoggingService,
+                () -> globalConfigService,
+                () -> nodeService,
                 new UiConfig(),
-                nodeInfo,
-                webTargetFactory(),
                 null);
     }
 }

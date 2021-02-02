@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-@Api(value = "dictionary - /v2")
+@Api(tags = "Dictionaries (v2)")
 @Path(NewUiDictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

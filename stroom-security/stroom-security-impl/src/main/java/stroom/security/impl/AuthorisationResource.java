@@ -21,9 +21,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "authorisation - /v1",
-        description = "Stroom Authorisation API")
+@Api(tags = "Authorisation (New UI)")
 @Path("/authorisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

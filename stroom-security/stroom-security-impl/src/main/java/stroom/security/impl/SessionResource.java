@@ -1,12 +1,13 @@
 package stroom.security.impl;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.security.impl.session.SessionDetails;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -25,7 +26,7 @@ import javax.ws.rs.core.Response;
  * needs to ask all relying parties to log out. This is the back-channel resource that allows this to
  * happen.
  */
-@Api(value = "session - /v1")
+@Api(tags = "Sessions")
 @Path(SessionResource.BASE_PATH)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)

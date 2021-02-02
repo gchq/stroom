@@ -1,11 +1,12 @@
 package stroom.pipeline.factory;
 
-import io.swagger.annotations.Api;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -19,7 +20,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Api(value = "elements - /v1")
+@Api(tags = "Elements")
 @Path("/elements" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,7 +42,8 @@ public class ElementResource implements RestResource {
         Set<PipelineElementType> result = new HashSet<>();
 
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get().getPropertyTypes();
+            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get()
+                    .getPropertyTypes();
             result.addAll(pts.keySet());
         });
 
@@ -54,7 +56,8 @@ public class ElementResource implements RestResource {
         Map<PipelineElementType, Map<String, PipelinePropertyType>> result = new HashMap<>();
 
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get().getPropertyTypes();
+            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get()
+                    .getPropertyTypes();
             result.putAll(pts);
         });
 

@@ -1,11 +1,12 @@
 package stroom.index.impl;
 
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
 import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -17,7 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(value = "stroom-index volumes - /v1")
+@Api(tags = "Stroom-Index Volumes")
 @Path("/stroom-index/volume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface NewUIIndexVolumeResource extends RestResource {

@@ -16,9 +16,6 @@
 
 package stroom.index.impl;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -27,13 +24,17 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroom-index query - /v2")
+@Api(tags = "Stroom-Index Queries")
 @Path("/stroom-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

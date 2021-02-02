@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve exception alerts in the UI.
+
 * Issue **#2023** : Enable autologger to output multiple path or query parameters
 
 * Issue **#2022** : Simplify consistent event logging with POJOs

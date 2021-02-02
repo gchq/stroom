@@ -7,6 +7,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 
 import event.logging.AdvancedQuery;
@@ -32,6 +33,12 @@ import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
     private StroomEventLoggingUtil() {
+    }
+
+    public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
+        return String.join(".",
+                restResource.getClass().getSimpleName(),
+                method);
     }
 
     public static OtherObject createOtherObject(final DocRef docRef) {

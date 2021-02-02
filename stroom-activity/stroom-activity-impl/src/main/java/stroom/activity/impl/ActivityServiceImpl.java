@@ -59,90 +59,91 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activity create() {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
+        return securityContext.secureResult(() -> {
+            final String userId = securityContext.getUserId();
 
-        final String userId = securityContext.getUserId();
+            final Activity activity = Activity.create();
+            activity.setUserId(userId);
 
-        final Activity activity = Activity.create();
-        activity.setUserId(userId);
+            AuditUtil.stamp(userId, activity);
 
-        AuditUtil.stamp(userId, activity);
-
-        return dao.create(activity);
+            return dao.create(activity);
+        });
     }
 
     @Override
     public Activity fetch(final int id) {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
+        return securityContext.secureResult(() -> {
+            final Activity result = dao.fetch(id).orElseThrow(() ->
+                    new EntityServiceException("Activity not found with id=" + id));
+            if (!result.getUserId().equals(securityContext.getUserId())) {
+                throw new EntityServiceException("Attempt to read another persons activity");
+            }
 
-        final Activity result = dao.fetch(id).orElseThrow(() ->
-                new EntityServiceException("Activity not found with id=" + id));
-        if (!result.getUserId().equals(securityContext.getUserId())) {
-            throw new EntityServiceException("Attempt to read another persons activity");
-        }
-
-        return dao.fetch(id)
-                .orElse(null);
+            return dao.fetch(id)
+                    .orElse(null);
+        });
     }
 
     @Override
     public Activity update(final Activity activity) {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
-        if (!securityContext.getUserId().equals(activity.getUserId())) {
-            throw new EntityServiceException("Attempt to update another persons activity");
-        }
+        return securityContext.secureResult(() -> {
+            if (!securityContext.getUserId().equals(activity.getUserId())) {
+                throw new EntityServiceException("Attempt to update another persons activity");
+            }
 
-        AuditUtil.stamp(securityContext.getUserId(), activity);
-        return dao.update(activity);
+            AuditUtil.stamp(securityContext.getUserId(), activity);
+            return dao.update(activity);
+        });
     }
 
     @Override
     public boolean delete(final int id) {
-        if (!securityContext.isLoggedIn()) {
-            throw new EntityServiceException("No user is logged in");
-        }
+        return securityContext.secureResult(() -> {
+            if (!securityContext.isLoggedIn()) {
+                throw new EntityServiceException("No user is logged in");
+            }
 
-        return dao.delete(id);
+            return dao.delete(id);
+        });
     }
 
     @Override
     public ResultPage<Activity> find(final String filter) {
 
-        // We have to deser all the activities to be able to search them but hopefully
-        // there are not that many to worry about
-        final List<Activity> allActivities = getAllUserActivities();
+        return securityContext.secureResult(() -> {
+            // We have to deser all the activities to be able to search them but hopefully
+            // there are not that many to worry about
+            final List<Activity> allActivities = getAllUserActivities();
 
-        final List<Activity> filteredActivities;
-        if (!Strings.isNullOrEmpty(filter)) {
+            final List<Activity> filteredActivities;
+            if (!Strings.isNullOrEmpty(filter)) {
 
-            final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
+                final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
 
-            final Predicate<Activity> filterPredicate = buildActivityPredicate(
-                    filter,
-                    fieldDefinitions);
+                final Predicate<Activity> filterPredicate = buildActivityPredicate(
+                        filter,
+                        fieldDefinitions);
 
-            filteredActivities = allActivities.stream()
-                    .filter(filterPredicate)
-                    .collect(Collectors.toList());
-        } else {
-            filteredActivities = allActivities;
-        }
+                filteredActivities = allActivities.stream()
+                        .filter(filterPredicate)
+                        .collect(Collectors.toList());
+            } else {
+                filteredActivities = allActivities;
+            }
 
-        return ResultPage.createCriterialBasedList(filteredActivities, new FindActivityCriteria());
+            return ResultPage.createCriterialBasedList(filteredActivities, new FindActivityCriteria());
+        });
     }
 
     @Override
     public List<FilterFieldDefinition> listFieldDefinitions() {
 
-        final List<Activity> allActivities = getAllUserActivities();
+        return securityContext.secureResult(() -> {
+            final List<Activity> allActivities = getAllUserActivities();
 
-        return buildFieldDefinitions(allActivities);
+            return buildFieldDefinitions(allActivities);
+        });
     }
 
     private List<FilterFieldDefinition> buildFieldDefinitions(final List<Activity> activities) {

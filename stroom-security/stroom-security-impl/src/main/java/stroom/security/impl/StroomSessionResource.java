@@ -7,7 +7,6 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -19,11 +18,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroomSession - /v1")
+@Api(tags = "Stroom Sessions")
 @Path("/stroomSession" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StroomSessionResource extends RestResource, InvalidateSessionResource {
+
     @GET
     @Path("/noauth/validateSession")
     @ApiOperation(
