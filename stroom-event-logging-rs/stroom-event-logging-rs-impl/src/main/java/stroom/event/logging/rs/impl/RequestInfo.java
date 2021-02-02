@@ -98,7 +98,7 @@ class RequestInfo {
 
     }
 
-    private static class ObjectId implements HasId {
+    public static class ObjectId implements HasId {
         private final long id;
 
         public ObjectId(String val){
@@ -118,7 +118,7 @@ class RequestInfo {
         }
     }
 
-    private static class ObjectUuid implements HasUuid {
+    public static class ObjectUuid implements HasUuid {
         private final String uuid;
 
         public ObjectUuid(String uuid){
@@ -131,7 +131,7 @@ class RequestInfo {
         }
     }
 
-    private static class WithParameters implements HasName {
+    public static class WithParameters implements HasName {
         private String name;
 
         public WithParameters (MultivaluedMap<String, String> origParms){
