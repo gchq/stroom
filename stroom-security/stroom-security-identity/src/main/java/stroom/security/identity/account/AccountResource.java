@@ -61,30 +61,21 @@ public interface AccountResource extends RestResource {
             FIELD_DEF_FIRST_NAME,
             FIELD_DEF_LAST_NAME);
 
-    @ApiOperation(
-            value = "Get all accounts.",
-            response = String.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Get all accounts.")
     @GET
     @Path("/")
     @Timed
     @NotNull
     ResultPage<Account> list(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @ApiOperation(
-            value = "Search for an account by email.",
-            response = String.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Search for an account by email.")
     @POST
     @Path("search")
     @Timed
     @NotNull
     ResultPage<Account> search(SearchAccountRequest request);
 
-    @ApiOperation(
-            value = "Create an account.",
-            response = Integer.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Create an account.")
     @POST
     @Path("/")
     @Timed
@@ -93,10 +84,7 @@ public interface AccountResource extends RestResource {
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("account") @NotNull CreateAccountRequest request);
 
-    @ApiOperation(
-            value = "Get an account by ID.",
-            response = String.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Get an account by ID.")
     @GET
     @Path("{id}")
     @Timed
@@ -105,10 +93,7 @@ public interface AccountResource extends RestResource {
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int accountId);
 
-    @ApiOperation(
-            value = "Update an account.",
-            response = String.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Update an account.")
     @PUT
     @Path("{id}")
     @Timed
@@ -118,10 +103,7 @@ public interface AccountResource extends RestResource {
             @ApiParam("account") @NotNull UpdateAccountRequest request,
             @PathParam("id") int accountId);
 
-    @ApiOperation(
-            value = "Delete an account by ID.",
-            response = String.class,
-            tags = {"Account"})
+    @ApiOperation(value = "Delete an account by ID.")
     @DELETE
     @Path("{id}")
     @Timed

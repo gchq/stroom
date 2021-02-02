@@ -43,6 +43,8 @@ class TestRestResources {
                     .sorted(Comparator.comparing(Class::getName))
                     .collect(Collectors.toList());
 
+            LOGGER.info("Found {} classes to test", classes.size());
+
             return classes.stream()
                     .map(resourceClass ->
                             DynamicTest.dynamicTest(resourceClass.getName(),
@@ -173,7 +175,7 @@ class TestRestResources {
                                     .isEqualTo(methodReturnClass);
                         });
                         if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
-                            softAssertions.fail("Method " + method.getName() + "(...) does not " +
+                            softAssertions.fail("Method " + method.getName() + "(...) does not need " +
                                     "to have response set on @ApiOperation, remove it.");
                         }
                     }
