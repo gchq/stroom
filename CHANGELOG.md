@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1766** : Removed comment from token.
 
+* Issue **#1763** : Improved column sizes on API keys dialog.
+
 * Issue **#1767** : Improved column sizes on account management dialog.
 
 
