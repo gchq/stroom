@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1764** : The create API key page now loads users to select on open.
+
 * Issue **#1766** : Removed comment from token.
 
 * Issue **#1763** : Improved column sizes on API keys dialog.
