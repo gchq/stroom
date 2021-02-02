@@ -1,10 +1,10 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { EditTokenFormik } from "./EditToken";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 
 storiesOf("Token", module).add("Edit Token", () => (
-  <Dialog
+  <ResizableDialog
     initWidth={816}
     initHeight={622}
     minWidth={816}
@@ -16,5 +16,5 @@ storiesOf("Token", module).add("Edit Token", () => (
       onSubmit={() => undefined}
       onClose={() => undefined}
     />
-  </Dialog>
+  </ResizableDialog>
 ));

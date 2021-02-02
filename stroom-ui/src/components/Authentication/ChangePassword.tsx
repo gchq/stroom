@@ -7,7 +7,7 @@ import { PasswordPolicyConfig } from "./api/types";
 import * as Yup from "yup";
 import { Form, Modal } from "react-bootstrap";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { FormikHelpers } from "formik/dist/types";
 import FormContainer from "../Layout/FormContainer";
 import { LockFill } from "react-bootstrap-icons";
@@ -191,7 +191,7 @@ export const ChangePasswordDialog: React.FunctionComponent<ChangePasswordProps> 
   props,
 ) => {
   return (
-    <Dialog
+    <ResizableDialog
       initWidth={400}
       initHeight={369}
       minWidth={400}
@@ -199,7 +199,7 @@ export const ChangePasswordDialog: React.FunctionComponent<ChangePasswordProps> 
       disableResize={true}
     >
       <ChangePasswordFormik {...props} />
-    </Dialog>
+    </ResizableDialog>
   );
 };
 

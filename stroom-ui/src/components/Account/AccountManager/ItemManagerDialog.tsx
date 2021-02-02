@@ -1,7 +1,7 @@
 import * as React from "react";
 import { PropsWithChildren, ReactElement, ReactNode } from "react";
 import { ItemManager, ItemManagerProps } from "./ItemManager";
-import { Dialog } from "../../Dialog/Dialog";
+import { ResizableDialog } from "../../Dialog/ResizableDialog";
 import { Modal } from "react-bootstrap";
 import Button from "../../Button/Button";
 
@@ -17,7 +17,7 @@ export const ItemManagerDialog = <T,>(
   const { title, itemManagerProps, onClose } = props;
 
   return (
-    <Dialog minWidth={400} minHeight={400} initWidth={900} initHeight={600}>
+    <ResizableDialog minWidth={400} minHeight={400} initWidth={900} initHeight={600}>
       <Modal.Header closeButton={false}>
         <Modal.Title id="contained-modal-title-vcenter">{title}</Modal.Title>
       </Modal.Header>
@@ -34,6 +34,6 @@ export const ItemManagerDialog = <T,>(
           Close
         </Button>
       </Modal.Footer>
-    </Dialog>
+    </ResizableDialog>
   );
 };

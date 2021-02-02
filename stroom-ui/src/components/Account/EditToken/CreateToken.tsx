@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { OkCancelButtons, OkCancelProps } from "../../Dialog/OkCancelButtons";
 import { Formik, FormikProps } from "formik";
 import { Form, Modal } from "react-bootstrap";
@@ -170,7 +170,7 @@ export const CreateToken: React.FunctionComponent<{
     .valueOf();
 
   return (
-    <Dialog
+    <ResizableDialog
       initWidth={348}
       initHeight={319}
       minWidth={348}
@@ -185,6 +185,6 @@ export const CreateToken: React.FunctionComponent<{
         onSubmit={onSubmit}
         onClose={onClose}
       />
-    </Dialog>
+    </ResizableDialog>
   );
 };

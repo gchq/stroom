@@ -32,7 +32,7 @@ public class UiPreferences extends AbstractConfig {
 
     private void setDefaults() {
         if (dateFormat == null) {
-            dateFormat = "YYYY-MM-DDTHH:mm:ss.SSSZ";
+            dateFormat = "YYYY-MM-DDTHH:mm:ss.SSS";
         }
     }
 

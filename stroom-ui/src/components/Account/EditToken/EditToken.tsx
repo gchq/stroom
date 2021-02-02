@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { Formik, FormikProps } from "formik";
 import { Col, Form, Modal } from "react-bootstrap";
 import { FormikHelpers } from "formik/dist/types";
@@ -161,7 +161,7 @@ export const EditToken: React.FunctionComponent<{
 
   return (
     <React.Fragment>
-      <Dialog
+      <ResizableDialog
         initWidth={816}
         initHeight={622}
         minWidth={816}
@@ -173,7 +173,7 @@ export const EditToken: React.FunctionComponent<{
           onSubmit={onSubmit}
           onClose={onClose}
         />
-      </Dialog>
+      </ResizableDialog>
     </React.Fragment>
   );
 };

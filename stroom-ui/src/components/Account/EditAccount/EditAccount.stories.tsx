@@ -1,10 +1,10 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { EditAccountFormik } from "./EditAccount";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 
 storiesOf("Account", module).add("Edit Account", () => (
-  <Dialog
+  <ResizableDialog
     initWidth={600}
     initHeight={570}
     minWidth={284}
@@ -17,5 +17,5 @@ storiesOf("Account", module).add("Edit Account", () => (
       onClose={() => undefined}
       onPasswordChange={() => undefined}
     />
-  </Dialog>
+  </ResizableDialog>
 ));

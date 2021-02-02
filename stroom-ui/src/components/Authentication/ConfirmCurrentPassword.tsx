@@ -7,7 +7,7 @@ import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
 import { AuthState, ConfirmPasswordRequest } from "./api/types";
 import { Form, Modal } from "react-bootstrap";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
 import { LockFill } from "react-bootstrap-icons";
 
@@ -125,7 +125,7 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = (props) => {
   return (
-    <Dialog
+    <ResizableDialog
       initWidth={400}
       initHeight={224}
       minWidth={400}
@@ -133,6 +133,6 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
       disableResize={true}
     >
       <ConfirmCurrentPasswordFormik {...props} />
-    </Dialog>
+    </ResizableDialog>
   );
 };
