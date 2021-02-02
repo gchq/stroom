@@ -85,6 +85,9 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
+    //todo consider making a config property
+    private static int MAX_LIST_ELEMENT_COUNT = 5;
+
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
     private static final String GENERATOR = "StroomEventLoggingService";
@@ -386,7 +389,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 if (collection.isEmpty()) {
                     return "Empty collection";
                 } else {
-                    return "Collection containing " + (long) collection.size()
+                    return "Collection containing " + (long) collection.size() + " "
                             + collection.stream().findFirst().get().getClass().getSimpleName() +
                             " and possibly other objects";
                 }
@@ -526,8 +529,16 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     final Data.Builder<?> builder = Data.builder().withName(beanPropDef.getName());
                     final Object valObj = extractPropVal(beanPropDef, obj);
                     if (valObj != null) {
-                        //todo handle maps and other collections
-                        if (isLeafPropertyType(valObj.getClass())) {
+                        if (valObj instanceof Collection<?>){
+                            Collection<?> collection = (Collection<?>) valObj;
+                            final String collectionValue = collection.stream().limit(MAX_LIST_ELEMENT_COUNT).
+                                    map(Objects::toString).collect(Collectors.joining(", "));
+                            if (collection.size() > MAX_LIST_ELEMENT_COUNT){
+                                builder.withValue(collectionValue + "...(" + collection.size() + " elements in total).");
+                            } else {
+                                builder.withValue(collectionValue);
+                            }
+                        } else if (isLeafPropertyType(valObj.getClass())) {
                             final String value;
                             if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
                                 value = "********";
