@@ -54,7 +54,6 @@ class TestRestResources {
         final String typeName = isInterface
                         ? "interface"
                         : "class";
-        LOGGER.info("Inspecting {} {}", typeName, resourceClass.getName());
 
         final boolean superImplementsRestResource = Arrays.stream(resourceClass.getInterfaces())
                 .filter(iface ->
@@ -63,22 +62,28 @@ class TestRestResources {
                         Arrays.asList(iface.getInterfaces())
                                 .contains(RestResource.class));
 
+        LOGGER.info("Inspecting {} {}, superImplementsRestResource; {}",
+                typeName, resourceClass.getName(), superImplementsRestResource);
+
         SoftAssertions.assertSoftly(softAssertions -> {
 
             if (isInterface || !superImplementsRestResource) {
                 // This is an iface or a class that implements RestResource with no iface of its own
+                
+                LOGGER.info("Doing @Api... asserts");
 
-                final boolean hasApiAnnotation = resourceClass.isAnnotationPresent(Api.class);
-                final String[] apiAnnotationTags = hasApiAnnotation
+                final boolean classHasApiAnnotation = resourceClass.isAnnotationPresent(Api.class);
+                final String[] apiAnnotationTags = classHasApiAnnotation
                         ? resourceClass.getAnnotation(Api.class).tags()
                         : new String[0];
 
-                softAssertions.assertThat(hasApiAnnotation)
+                softAssertions.assertThat(classHasApiAnnotation)
                         .withFailMessage(() -> typeName + " must have class annotation like " +
                                 "@Api(tags = \"Nodes\")")
                         .isTrue();
 
-                if (hasApiAnnotation) {
+                if (classHasApiAnnotation) {
+                    LOGGER.info("Class has @Api annotation");
                     softAssertions.assertThat(apiAnnotationTags.length)
                             .withFailMessage(() -> "@Api must have tags property set, e.g. @Api(tags = \"Nodes\")")
                             .isGreaterThanOrEqualTo(1);
@@ -87,27 +92,30 @@ class TestRestResources {
                                 .withFailMessage(() -> "@Api must have tags property set, e.g. @Api(tags = \"Nodes\")")
                                 .isNotEmpty();
                     }
+                } else {
+                    LOGGER.info("Class doesn't have @Api annotation");
+                    Arrays.stream(resourceClass.getMethods())
+                            .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                            .forEach(method -> {
+
+                                softAssertions.assertThat(List.of(method.getAnnotations())
+                                        .contains(ApiOperation.class))
+                                        .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
+                                                "with @ApiOperation(value = \"Some description of what the method does\")")
+                                        .isTrue();
+                            });
                 }
 
-                Arrays.stream(resourceClass.getMethods())
-                        .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                        .forEach(method -> {
-
-                            softAssertions.assertThat(List.of(method.getAnnotations())
-                                    .contains(ApiOperation.class))
-                                    .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
-                                            "with @ApiOperation(value = \"Some description of what the method does\")")
-                                    .isTrue();
-                        });
             } else {
-                LOGGER.info("Assertions handled by interface");
+                LOGGER.info("@Api/@ApiOperation assertions handled by interface");
                 // This is a class that implements an iface that extends RestResource so
                 // that will be dealt with when it looks at that iface directly.
             }
 
+            final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+
             if (!isInterface) {
                 // AutoLogged is only used on classes, not interfaces
-                final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
 
                 Arrays.stream(resourceClass.getMethods())
                         .filter(method -> !Modifier.isPrivate(method.getModifiers()))
@@ -119,6 +127,10 @@ class TestRestResources {
                                             "annotated with @AutoLogged")
                                     .isTrue();
                         });
+            } else {
+                softAssertions.assertThat(classIsAutoLogged)
+                        .withFailMessage("@AutoLogged is not support on interfaces, only on impl.")
+                        .isFalse();
             }
         });
     }
