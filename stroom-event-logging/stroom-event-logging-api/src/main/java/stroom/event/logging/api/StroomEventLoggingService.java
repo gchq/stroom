@@ -16,7 +16,11 @@
 
 package stroom.event.logging.api;
 
+import event.logging.BaseObject;
+import event.logging.Data;
 import event.logging.EventLoggingService;
+
+import java.util.List;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -124,5 +128,30 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //            final T_EVENT_ACTION eventAction,
 //            final Function<T_EVENT_ACTION, LoggedResult<T_RESULT, T_EVENT_ACTION>> loggedWork,
 //            final BiFunction<T_EVENT_ACTION, Throwable, T_EVENT_ACTION> exceptionHandler);
+
+    /**
+     * Convert the supplied POJO into a {@link BaseObject} for logging
+     * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
+     * actual conversion.
+     * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     * @param object POJO
+     * @return BaseObject
+     */
+    BaseObject convert(final Object object);
+
+    /**
+     * Provide a textual summary of the supplied POJO as a string.
+     * @param object POJO to describe
+     * @return description
+     */
+    String describe(final Object object);
+
+
+    /**
+     * Create {@link Data} items from properties of the supplied POJO
+     * @param obj POJO from which to extract properties
+     * @return List of {@link Data} items representing properties of the supplied POJO
+     */
+    List<Data> getDataItems(java.lang.Object obj);
 
 }

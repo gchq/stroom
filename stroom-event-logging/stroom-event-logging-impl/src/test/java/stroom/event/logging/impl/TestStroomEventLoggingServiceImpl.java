@@ -1,13 +1,19 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.HasName;
 
 import event.logging.AuthenticateEventAction;
+import event.logging.BaseObject;
+import event.logging.Data;
+import event.logging.OtherObject;
 import event.logging.Outcome;
 import event.logging.Resource;
 import event.logging.User;
@@ -22,10 +28,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,12 +54,18 @@ class TestStroomEventLoggingServiceImpl {
 
     private StroomEventLoggingService stroomEventLoggingService;
 
+    private BaseObject testObj = OtherObject.builder().withDescription("Test").build();
 
     @BeforeEach
     void setup() {
+        final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap =
+                new HashMap<>();
+        objectInfoProviderMap.put(new ObjectType(TestObj.class), () -> new TestObjInfoProvider());
+
         stroomEventLoggingService = new StroomEventLoggingServiceImpl(
                 securityContext,
                 () -> httpServletRequest,
+                objectInfoProviderMap,
                 currentActivity,
                 () -> buildInfo);
 
@@ -207,6 +223,46 @@ class TestStroomEventLoggingServiceImpl {
                 .doesNotContainPattern("<Success>.*</Success>");
     }
 
+    @Test
+    void testDataItemCreationAndRedaction () throws Exception {
+        List<Data> allData = stroomEventLoggingService.getDataItems
+                (new TestSecretObj("test", "xyzzy", "open-sesame"));
+
+        assertThat(allData.size()).isEqualTo(4);
+        assertThat(allData).anyMatch(data -> data.getName().equals("name"));
+        assertThat(allData).anyMatch(data -> data.getName().equals("password"));
+        assertThat(allData).anyMatch(data -> data.getName().equals("myNewSecret"));
+        assertThat(allData).anyMatch(data -> data.getName().equals("secret"));
+
+        assertThat(allData).noneMatch(data -> data.getValue().equals("xyzzy"));
+        assertThat(allData).noneMatch(data -> data.getValue().equals("open-sesame"));
+        assertThat(allData.stream().filter(data -> data.getValue().equals("test"))
+                .collect(Collectors.toList()).size()).isEqualTo(1);
+        assertThat(allData.stream().filter(data -> data.getValue().equals("false"))
+                .collect(Collectors.toList()).size()).isEqualTo(1);
+    }
+
+    @Test
+    void testConvertPojoWithInfoPrvider () throws Exception {
+        BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
+        assertThat(baseObject).isSameAs(testObj);
+    }
+
+    @Test
+    void testConvertPojoWithoutInfoPrvider () throws Exception {
+        String name = "TestSecretObject1";
+        String typeName = TestSecretObj.class.getSimpleName();
+        BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));
+
+        assertThat(baseObject.getType()).isEqualTo(typeName);
+
+        String description = baseObject.getDescription();
+        assertThat(baseObject.getName()).isEqualTo(name);
+
+        assertThat(description).contains(name);
+        assertThat(description).contains(typeName);
+    }
+
     private void assertTagValue(final String xml, final String tag, final String value) {
         assertThat(xml)
                 .contains(LogUtil.message("<{}>{}</{}>", tag, value, tag));
@@ -230,6 +286,61 @@ class TestStroomEventLoggingServiceImpl {
 
         public static List<String> getEvents() {
             return EVENTS;
+        }
+    }
+
+    public static class TestObj {
+
+    }
+
+    public class TestObjInfoProvider implements ObjectInfoProvider {
+
+        @Override
+        public BaseObject createBaseObject(final Object object) {
+            return testObj;
+        }
+
+        @Override
+        public String getObjectType(final Object object) {
+            return "Test Object";
+        }
+    }
+
+    public static class TestSecretObj implements HasName {
+        private String name;
+        private String password;
+        private String myNewSecret;
+        private boolean secret;
+
+        public TestSecretObj (String name, String password, String myNewSecret){
+            this.name = name;
+            this.password = password;
+            this.myNewSecret = myNewSecret;
+        }
+
+        public String getMyNewSecret() {
+            return myNewSecret;
+        }
+
+        public void setMyNewSecret(final String myNewSecret) {
+            this.myNewSecret = myNewSecret;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Boolean isSecret() {
+            return secret;
+        }
+
+        @Override
+        public void setName(final String name) {
+
         }
     }
 }
