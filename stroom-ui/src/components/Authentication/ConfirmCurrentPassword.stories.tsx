@@ -31,7 +31,13 @@ const FormikWrapper: React.FunctionComponent = () => {
 
 export const ConfirmCurrentPasswordDialog: React.FunctionComponent = () => {
   return (
-    <Dialog>
+    <Dialog
+      initWidth={400}
+      initHeight={224}
+      minWidth={400}
+      minHeight={224}
+      disableResize={true}
+    >
       <FormikWrapper />
     </Dialog>
   );

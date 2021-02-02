@@ -4,7 +4,13 @@ import { EditAccountFormik } from "./EditAccount";
 import { Dialog } from "components/Dialog/Dialog";
 
 storiesOf("Account", module).add("Edit Account", () => (
-  <Dialog>
+  <Dialog
+    initWidth={600}
+    initHeight={570}
+    minWidth={284}
+    minHeight={555}
+    disableResize={true}
+  >
     <EditAccountFormik
       initialValues={{}}
       onSubmit={() => undefined}

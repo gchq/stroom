@@ -161,7 +161,13 @@ export const EditToken: React.FunctionComponent<{
 
   return (
     <React.Fragment>
-      <Dialog>
+      <Dialog
+        initWidth={816}
+        initHeight={622}
+        minWidth={816}
+        minHeight={622}
+        disableResize={true}
+      >
         <EditTokenFormik
           initialValues={token}
           onSubmit={onSubmit}

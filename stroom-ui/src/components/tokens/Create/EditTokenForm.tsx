@@ -21,16 +21,12 @@ import { ByCopy, OnCopyMs } from "components/auditCopy";
 import Button from "components/Button";
 import Loader from "components/Loader";
 import { Token } from "../api/types";
-import useConfig from "startup/config/useConfig";
 
 const EditTokenForm: React.FunctionComponent<{
   onBack: () => void;
   onChangeState: (id: number, newState: boolean) => void;
   token: Token;
 }> = ({ onBack, onChangeState, token }) => {
-  const {
-    uiPreferences: { dateFormat },
-  } = useConfig();
   return (
     <form>
       <div className="header">
@@ -66,11 +62,7 @@ const EditTokenForm: React.FunctionComponent<{
                 </div>
               </div>
               <ByCopy by={token.userId} verb="Issued to" />
-              <OnCopyMs
-                on={token.expiresOnMs}
-                verb="Expires"
-                dateFormat={dateFormat}
-              />
+              <OnCopyMs on={token.expiresOnMs} verb="Expires" />
             </div>
           </div>
           <div className="section">
@@ -78,17 +70,9 @@ const EditTokenForm: React.FunctionComponent<{
               <h3>Audit</h3>
             </div>
             <div className="section__fields">
-              <OnCopyMs
-                on={token.createTimeMs}
-                verb="Issued"
-                dateFormat={dateFormat}
-              />
+              <OnCopyMs on={token.createTimeMs} verb="Issued" />
               <ByCopy by={token.createUser} verb="Issued by" />
-              <OnCopyMs
-                on={token.updateTimeMs}
-                verb="Updated"
-                dateFormat={dateFormat}
-              />
+              <OnCopyMs on={token.updateTimeMs} verb="Updated" />
               <ByCopy by={token.updateUser} verb="Updated by" />
             </div>
           </div>

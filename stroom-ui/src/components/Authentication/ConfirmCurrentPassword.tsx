@@ -125,7 +125,13 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = (props) => {
   return (
-    <Dialog>
+    <Dialog
+      initWidth={400}
+      initHeight={224}
+      minWidth={400}
+      minHeight={224}
+      disableResize={true}
+    >
       <ConfirmCurrentPasswordFormik {...props} />
     </Dialog>
   );

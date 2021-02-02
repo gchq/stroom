@@ -20,12 +20,11 @@ import useDateUtil from "../../lib/useDateUtil";
 export const LoginStatsCopy = ({
   lastLogin,
   loginCount,
-  dateFormat,
 }: {
-  lastLogin: string;
+  lastLogin: number;
   loginCount: number;
-  dateFormat: string;
 }) => {
+  const { toDateString } = useDateUtil();
   if (lastLogin !== undefined) {
     const loginStatsCopy = (
       <div>
@@ -44,22 +43,19 @@ export const AuditCopy = ({
   createdOn,
   updatedBy,
   updatedOn,
-  dateFormat,
 }: {
   createdBy: string;
-  createdOn: string;
+  createdOn: number;
   updatedBy: string;
-  updatedOn: string;
-  dateFormat: string;
+  updatedOn: number;
 }) => {
   return (
     <div>
-      <OnCopy on={createdOn} verb="Created" dateFormat={dateFormat} />
+      <OnCopy on={createdOn} verb="Created" />
       <ByCopy by={createdBy} verb="Created by" />
       <OnCopy
         on={updatedOn}
         verb="Updated"
-        dateFormat={dateFormat}
         fallbackCopy="This has never been updated."
       />
       <ByCopy by={updatedBy} verb="Updated by" />
@@ -70,16 +66,13 @@ export const AuditCopy = ({
 export const OnCopy = ({
   on,
   verb,
-  dateFormat,
   fallbackCopy,
 }: {
   on: number;
   verb: string;
-  dateFormat: string;
   fallbackCopy?: string;
 }) => {
-const { toDateString } = useDateUtil();
-
+  const { toDateString } = useDateUtil();
   if (on !== undefined && on !== null) {
     return (
       <div className="copy">
@@ -94,14 +87,13 @@ const { toDateString } = useDateUtil();
 export const OnCopyMs = ({
   on,
   verb,
-  dateFormat,
   fallbackCopy,
 }: {
   on: number;
   verb: string;
-  dateFormat: string;
   fallbackCopy?: string;
 }) => {
+  const { toDateString } = useDateUtil();
   if (on !== undefined && on !== null) {
     return (
       <div className="copy">

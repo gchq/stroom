@@ -18,6 +18,7 @@ import * as React from "react";
 import { FunctionComponent, useCallback, useState } from "react";
 import { TokenListDialog } from "./TokenListDialog";
 import { useTokenManager } from "./useTokenManager";
+import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditToken } from "../EditToken/EditToken";
 import { Token } from "../types";
@@ -37,13 +38,7 @@ const initialToken: Token = {
 const TokenManager: FunctionComponent<{
   onClose: () => void;
 }> = ({ onClose }) => {
-  const {
-    columns,
-    resultPage,
-    remove,
-    request,
-    setRequest,
-  } = useTokenManager();
+  const { resultPage, remove, request, setRequest } = useTokenManager();
   const [editingToken, setEditingToken] = useState<Token>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
@@ -67,7 +62,7 @@ const TokenManager: FunctionComponent<{
     },
   };
   const tableProps: TableProps<Token> = {
-    columns: columns,
+    columns: useColumns(),
     data: resultPage.values,
     initialSortBy: request.sortList,
     onChangeSort: useCallback(

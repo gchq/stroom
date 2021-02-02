@@ -62,6 +62,7 @@ const useColumns = (): Column<Account>[] => {
       {
         Header: "Comments",
         accessor: "comments",
+        maxWidth: 1000,
         // filterMethod: (filter: any, row: any) => filterRow(row, filter),
       },
     ],

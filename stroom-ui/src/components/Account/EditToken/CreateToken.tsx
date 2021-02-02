@@ -170,7 +170,13 @@ export const CreateToken: React.FunctionComponent<{
     .valueOf();
 
   return (
-    <Dialog>
+    <Dialog
+      initWidth={348}
+      initHeight={319}
+      minWidth={348}
+      minHeight={319}
+      disableResize={true}
+    >
       <CreateTokenFormik
         initialValues={{
           expiresOnMs: expiresOnMs,

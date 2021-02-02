@@ -2,7 +2,6 @@ import * as React from "react";
 import moment from "moment";
 import { Column, ReactTableFunction, RowInfo } from "react-table";
 import { Token } from "../api/types";
-import useConfig from "startup/config/useConfig";
 import useDateUtil from "../../../lib/useDateUtil";
 
 moment.updateLocale("en", {
@@ -19,9 +18,6 @@ const useColumns = (
   selectedTokenRowId: string | undefined,
   setEnabledStateOnToken: (tokenId: number, enabled: boolean) => any,
 ): Column<Token>[] => {
-  const {
-    uiPreferences: { dateFormat },
-  } = useConfig();
   const getEnabledCellFilter = React.useCallback(
     ({ filter, onChange }: FilterProps) => {
       return (

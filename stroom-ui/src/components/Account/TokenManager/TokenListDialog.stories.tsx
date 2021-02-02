@@ -3,17 +3,15 @@ import * as React from "react";
 import { TokenListDialog } from "./TokenListDialog";
 
 import fullTestData from "testing/data";
-import useTokenManager from "./useTokenManager";
+import useColumns from "./useColumns";
 
 const stories = storiesOf("Token", module);
 stories.add("List", () => {
-  const { columns } = useTokenManager();
-
   return (
     <TokenListDialog
       itemManagerProps={{
         tableProps: {
-          columns: columns,
+          columns: useColumns(),
           data: fullTestData.tokens,
         },
         actions: {

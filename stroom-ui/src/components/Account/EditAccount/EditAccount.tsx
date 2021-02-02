@@ -273,7 +273,13 @@ export const EditAccount: React.FunctionComponent<{
 
   return (
     <React.Fragment>
-      <Dialog>
+      <Dialog
+        initWidth={600}
+        initHeight={570}
+        minWidth={284}
+        minHeight={555}
+        disableResize={true}
+      >
         <EditAccountFormik
           initialValues={account}
           onSubmit={onSubmit}
