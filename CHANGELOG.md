@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1764** : The create API key page now loads users to select on open.
+
+* Issue **#1766** : Removed comment from token.
+
+* Issue **#1763** : Improved column sizes on API keys dialog.
+
+* Issue **#1767** : Improved column sizes on account management dialog.
+
 * Improve exception alerts in the UI.
 
 * Issue **#2023** : Enable autologger to output multiple path or query parameters
@@ -16,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#2021** : Fix typo when autologger encounters class names ending in 'y'
 
 * Issue **#2020** : Prevent autologger redacting boolean properties
+
 
 ## [v7.0-beta.80] - 2021-01-28
 

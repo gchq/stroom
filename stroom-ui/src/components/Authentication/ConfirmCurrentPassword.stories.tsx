@@ -3,7 +3,7 @@ import * as React from "react";
 import { ConfirmCurrentPasswordForm } from "./ConfirmCurrentPassword";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 
 const FormikWrapper: React.FunctionComponent = () => {
   return (
@@ -31,9 +31,15 @@ const FormikWrapper: React.FunctionComponent = () => {
 
 export const ConfirmCurrentPasswordDialog: React.FunctionComponent = () => {
   return (
-    <Dialog>
+    <ResizableDialog
+      initWidth={400}
+      initHeight={224}
+      minWidth={400}
+      minHeight={224}
+      disableResize={true}
+    >
       <FormikWrapper />
-    </Dialog>
+    </ResizableDialog>
   );
 };
 

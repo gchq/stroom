@@ -1,11 +1,9 @@
 import { Token } from "../types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ResultPage, SearchTokenRequest } from "../api/types";
-import useDateUtil from "../../../lib/useDateUtil";
 import { useTokenResource } from "../api";
 
 interface UseTokenManager {
-  columns: any[];
   resultPage: ResultPage<Token>;
   remove: (userId: number) => void;
   request: SearchTokenRequest;
@@ -53,41 +51,7 @@ export const useTokenManager = (): UseTokenManager => {
     [removeUserUsingApi, searchApi, request, setResultPage],
   );
 
-  const { toDateString } = useDateUtil();
-
-  const columns = useMemo(
-    () => [
-      {
-        Header: "",
-        accessor: "id",
-      },
-      {
-        Header: "User Id",
-        accessor: "userId",
-        maxWidth: 150,
-      },
-      {
-        Header: "Status",
-        accessor: ({ enabled }) => (enabled ? "Enabled" : "Disabled"),
-        maxWidth: 100,
-      },
-      {
-        Header: "Expires on",
-        accessor: ({ expiresOnMs }) => expiresOnMs && toDateString(expiresOnMs),
-        maxWidth: 205,
-      },
-      {
-        Header: "Issued on",
-        accessor: ({ createTimeMs }) =>
-          createTimeMs && toDateString(createTimeMs),
-        maxWidth: 205,
-      },
-    ],
-    [toDateString],
-  );
-
   return {
-    columns,
     resultPage,
     // selectedUser,
     remove,
@@ -97,3 +61,5 @@ export const useTokenManager = (): UseTokenManager => {
     // search,
   };
 };
+
+export default useTokenManager;
