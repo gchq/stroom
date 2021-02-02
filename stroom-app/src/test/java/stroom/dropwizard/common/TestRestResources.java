@@ -94,17 +94,18 @@ class TestRestResources {
                     }
                 } else {
                     LOGGER.info("Class doesn't have @Api annotation");
-                    Arrays.stream(resourceClass.getMethods())
-                            .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                            .forEach(method -> {
-
-                                softAssertions.assertThat(List.of(method.getAnnotations())
-                                        .contains(ApiOperation.class))
-                                        .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
-                                                "with @ApiOperation(value = \"Some description of what the method does\")")
-                                        .isTrue();
-                            });
                 }
+
+                Arrays.stream(resourceClass.getMethods())
+                        .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                        .forEach(method -> {
+
+                            softAssertions.assertThat(List.of(method.getAnnotations())
+                                    .contains(ApiOperation.class))
+                                    .withFailMessage(() -> "Method " + method.getName() + "(...) must be annotated " +
+                                            "with @ApiOperation(value = \"Some description of what the method does\")")
+                                    .isTrue();
+                        });
 
             } else {
                 LOGGER.info("@Api/@ApiOperation assertions handled by interface");
