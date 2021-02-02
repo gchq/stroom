@@ -87,10 +87,19 @@ public @interface AutoLogged {
      *  ALLOCATE_AUTOMATICALLY - the system should determine event type based on resource method name and HTTP method.
      */
     enum OperationType {
-        //Special type - don't log at all
+        /**
+         * Special type - don't log at all
+         */
         UNLOGGED,
 
-        //Special type - system should determine event type based on resource method name and HTTP method
+        /**
+         * Special type - logging will be done via some other means, not the auto logger
+         */
+        MANUALLY_LOGGED,
+
+        /**
+         * Special type - system should determine event type based on resource method name and HTTP method
+         */
         ALLOCATE_AUTOMATICALLY,
 
         //Standard event types follow
