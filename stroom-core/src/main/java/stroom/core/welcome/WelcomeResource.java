@@ -5,6 +5,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -27,6 +28,7 @@ public class WelcomeResource implements RestResource {
     }
 
     @GET
+    @ApiOperation(value = "Get the configured HTML welcome message")
     public Response welcome() {
         Object response = new Object() {
             public String html = uiConfig.getWelcomeHtml();
