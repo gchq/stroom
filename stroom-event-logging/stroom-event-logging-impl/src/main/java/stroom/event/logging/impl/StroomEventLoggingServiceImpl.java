@@ -50,7 +50,6 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,52 +182,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
-
-//    public Event createSkeletonEvent(final String typeId, final String description) {
-//        return createSkeletonEvent(typeId, description, null);
-//    }
-//
-//    @Override
-//    public Event createSkeletonEvent(final String typeId,
-//                                     final String description,
-//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
-//                .withTypeId(typeId)
-//                .withDescription(description)
-//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
-//
-//        if (eventDetailBuilderConsumer != null) {
-//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
-//        }
-//
-//        return buildEvent()
-//                .withEventDetail(eventDetailBuilder.build())
-//                .build();
-//    }
-
-//    @Override
-//    public void log(final String typeId,
-//                    final String description,
-//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//
-//        super.log(typeId, description, eventDetailBuilderConsumer);
-//    }
-
-
-    private Device getDevice(final HttpServletRequest request) {
-        // Get stored device info.
-        final Device storedDevice = obtainStoredDevice(request);
-
-        // We need to copy the stored device as users may make changes to the
-        // returned object that might not be thread safe.
-        Device device = null;
-        if (storedDevice != null) {
-            device = copyDevice(storedDevice, new Device());
-        }
-
-        return device;
-    }
-
     private Device getClient(final HttpServletRequest request) {
         if (request != null) {
             try {
@@ -343,26 +296,42 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
         return null;
     }
+    @Override
+    public BaseObject convert(final Supplier<?> objectSupplier) {
+        if (objectSupplier != null) {
+            // Run as proc user in case we are logging a user trying to access a thing they
+            // don't have perms for
+            final Object object = securityContext.asProcessingUserResult(objectSupplier);
+            return convert(object);
+        } else {
+            return null;
+        }
+    }
 
     @Override
     public BaseObject convert(final Object object) {
-        final BaseObject baseObj;
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender != null){
-            baseObj = objectInfoAppender.createBaseObject(object);
+
+        if (object != null) {
+            final BaseObject baseObj;
+            final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
+            if (objectInfoAppender != null) {
+                baseObj = objectInfoAppender.createBaseObject(object);
+            } else {
+                final OtherObject.Builder<Void> builder = OtherObject.builder()
+                        .withType(getObjectType(object))
+                        .withId(getObjectId(object))
+                        .withName(getObjectName(object))
+                        .withDescription(describe(object));
+
+                builder.addData(getDataItems(object));
+
+                baseObj = builder.build();
+            }
+
+            return baseObj;
         } else {
-            final OtherObject.Builder<Void> builder = OtherObject.builder()
-                    .withType(getObjectType(object))
-                    .withId(getObjectId(object))
-                    .withName(getObjectName(object))
-                    .withDescription(describe(object));
-
-            builder.addData(getDataItems(object));
-
-            baseObj = builder.build();
+            return null;
         }
-
-        return baseObj;
     }
 
     private String getObjectType(final java.lang.Object object) {
@@ -483,7 +452,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private Map<String, String> findPropsForDataItems (final Object obj){
+    private Map<String, String> findPropsForDataItems (final Object obj) {
         // Construct a Jackson JavaType for your class
         JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
 
@@ -501,20 +470,21 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 .filter(property -> !ignoredProperties.contains(property.getName()))
                 .collect(Collectors.toList());
 
-        return availableProperties.stream().collect(Collectors.toMap(
+        return availableProperties.stream()
+                .collect(Collectors.toMap(
                 BeanPropertyDefinition::getName,
                 p ->{
                     if (shouldRedact(p.getName().toLowerCase(), p.getRawPrimaryType())) {
-                        return "********";
-                    } else {
+                                return "********";
+                            } else {
                         Object object = p.getAccessor().getValue(obj);
-                        if (object == null) {
-                            return "<null>";
-                        } else {
-                            return object.toString();
-                        }
-                    }
-                }));
+                                if (object == null) {
+                                    return "<null>";
+                                } else {
+                                    return object.toString();
+                                }
+                            }
+                        }));
     }
 
     /**
@@ -532,15 +502,15 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
             return allProps.keySet().stream().map(propName -> {
                 java.lang.Object val = allProps.get(propName);
 
-                if (val == null) {
-                    return null;
-                }
+                        if (val == null) {
+                            return null;
+                        }
 
                 Data d = new Data();
                 d.setName(propName);
-                d.setValue(val.toString());
+                        d.setValue(val.toString());
 
-                return d;
+                        return d;
             }).filter(data -> data != null).collect(Collectors.toList());
         } catch (Exception ex) {
             return List.of();

@@ -137,7 +137,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED) // Manually logged
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Timed
     @Override
     public ConfigProperty update(final String propertyName, final ConfigProperty configProperty) {
@@ -153,21 +153,22 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             final GlobalConfigService globalConfigService = globalConfigServiceProvider.get();
             final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-            final Optional<ConfigProperty> optBeforeProp = globalConfigService.fetch(configProperty.getId());
-
             return stroomEventLoggingService.loggedResult(
                     StroomEventLoggingUtil.buildTypeId(this, "update"),
                     "Updating property " + configProperty.getNameAsString(),
                     UpdateEventAction.builder()
-                            .withAfter(stroomEventLoggingService.convertToMulti(configProperty))
+                            .withAfter(stroomEventLoggingService.convertToMulti(() -> configProperty))
                             .build(),
                     eventAction -> {
+                        // Do the update
                         final ConfigProperty persistedProperty = globalConfigService.update(configProperty);
+
                         return ComplexLoggedOutcome.success(
                                 persistedProperty,
                                 stroomEventLoggingService.buildUpdateEventAction(
-                                        optBeforeProp.orElse(null),
-                                        persistedProperty));
+                                        () -> globalConfigService.fetch(configProperty.getId())
+                                                .orElse(null),
+                                        () -> globalConfigService.update(configProperty)));
                     },
                     null);
         } catch (ConfigPropertyValidationException e) {

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class MockStroomEventLoggingService implements EventLoggingService, StroomEventLoggingService {
 
@@ -103,6 +104,11 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
 
     @Override
     public BaseObject convert(final Object object) {
+        return null;
+    }
+
+    @Override
+    public BaseObject convert(final Supplier<?> objectSupplier) {
         return null;
     }
 

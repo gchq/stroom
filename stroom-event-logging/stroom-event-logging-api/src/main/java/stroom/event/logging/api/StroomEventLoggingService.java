@@ -23,6 +23,7 @@ import event.logging.MultiObject;
 import event.logging.UpdateEventAction;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -141,13 +142,38 @@ public interface StroomEventLoggingService extends EventLoggingService {
      */
     BaseObject convert(final Object object);
 
+    /**
+     * Convert the supplied POJO into a {@link BaseObject} for logging
+     * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
+     * actual conversion.
+     * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     * @param objectSupplier Supplier of the POJO. get() will be called as the processing user
+     * @return BaseObject
+     */
+    BaseObject convert(final Supplier<?> objectSupplier);
+
+    default MultiObject convertToMulti(final Supplier<?> objectSupplier) {
+        return MultiObject.builder()
+                .withObjects(convert(objectSupplier))
+                .build();
+    }
+
     default MultiObject convertToMulti(final Object object) {
         return MultiObject.builder()
                 .withObjects(convert(object))
                 .build();
     }
 
-    default <T> UpdateEventAction buildUpdateEventAction(final T before, final T after) {
+    default <T> UpdateEventAction buildUpdateEventAction(final Supplier<T> beforeSupplier,
+                                                         final Supplier<T> afterSupplier) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(beforeSupplier))
+                .withAfter(convertToMulti(afterSupplier))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final Object before,
+                                                         final Object after) {
         return UpdateEventAction.builder()
                 .withBefore(convertToMulti(before))
                 .withAfter(convertToMulti(after))
