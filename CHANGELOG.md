@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1766** : Removed comment from token.
+
 * Issue **#1767** : Improved column sizes on account management dialog.
 
 
