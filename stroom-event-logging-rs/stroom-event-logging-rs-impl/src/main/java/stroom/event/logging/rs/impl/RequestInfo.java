@@ -85,7 +85,9 @@ class RequestInfo {
                     ReadWithIntegerId<?> integerReadSupportingResource = (ReadWithIntegerId<?>) resource;
                     if (template instanceof HasIntegerId) {
                         result = integerReadSupportingResource.read(((HasIntegerId) template).getId());
-                    } else {
+                    } else if (template instanceof HasId) {
+                        result = integerReadSupportingResource.read((int)((HasId) template).getId());
+                    } else  {
                         RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
                                 template.getClass().getSimpleName());
                     }
