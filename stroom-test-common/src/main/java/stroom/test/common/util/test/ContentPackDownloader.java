@@ -94,9 +94,9 @@ public class ContentPackDownloader {
         }
     }
 
-    public static void downloadPacks(final Path contentPacksDefinition,
-                                     final Path contentPackDownloadDir,
-                                     final Path contentPackImportDir) {
+    public static synchronized void downloadPacks(final Path contentPacksDefinition,
+                                                  final Path contentPackDownloadDir,
+                                                  final Path contentPackImportDir) {
         try {
             final ObjectMapper mapper = new ObjectMapper();
             final ContentPackCollection contentPacks = mapper.readValue(
