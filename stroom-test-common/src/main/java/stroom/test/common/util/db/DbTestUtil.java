@@ -9,6 +9,7 @@ import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -22,10 +23,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import javax.sql.DataSource;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,12 +56,9 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-
-    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
-
-    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
-
     private static final ThreadLocal<DataSource> THREAD_LOCAL = new ThreadLocal<>();
+    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
+    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
     private DbTestUtil() {
     }
@@ -274,24 +270,19 @@ public class DbTestUtil {
         final Path cacheDir = parentDir.resolve("embedmysql");
 
         EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
-        while (embeddedMysql == null) {
-            // Add file locking to synchronise across JVM processes.
-            try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFile.toFile())) {
-                FileChannel channel = fileOutputStream.getChannel();
-                channel.lock();
-                embeddedMysql = doCreateEmbeddedMysql(cacheDir);
-            } catch (final IOException e) {
-                LOGGER.trace(e.getMessage(), e);
-            }
 
-            try {
-                Thread.sleep(500);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+        if (embeddedMysql == null) {
+            embeddedMysql = FileUtil.getUnderFileLock(lockFile, () -> {
+                try {
+                    return doCreateEmbeddedMysql(cacheDir);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error creating embedded mysql", e);
+                }
+            });
         }
+
         EMBEDDED_MYSQL = embeddedMysql;
+
         return embeddedMysql;
     }
 
