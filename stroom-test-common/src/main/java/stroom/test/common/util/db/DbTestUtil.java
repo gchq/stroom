@@ -22,13 +22,13 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import javax.sql.DataSource;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -57,12 +57,9 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-
-    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
-
-    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
-
     private static final ThreadLocal<DataSource> THREAD_LOCAL = new ThreadLocal<>();
+    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
+    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
     private DbTestUtil() {
     }
@@ -276,9 +273,7 @@ public class DbTestUtil {
         EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
         while (embeddedMysql == null) {
             // Add file locking to synchronise across JVM processes.
-            try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFile.toFile())) {
-                FileChannel channel = fileOutputStream.getChannel();
-                channel.lock();
+            try (final FileChannel channel = FileChannel.open(lockFile, StandardOpenOption.APPEND)) {
                 embeddedMysql = doCreateEmbeddedMysql(cacheDir);
             } catch (final IOException e) {
                 LOGGER.trace(e.getMessage(), e);
