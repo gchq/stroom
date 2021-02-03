@@ -27,7 +27,10 @@ import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
     // These zips are downloaded by the gradle task downloadStroomContent
-    private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get("../build/contentPackDownload");
+    // Ought to be the same as in ContentPackDownloader
+    private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get(
+            System.getProperty("user.home"),
+            "/.stroom/contentPackDownload");
     private static final Path EXPLODED_DIR = CONTENT_PACK_DOWNLOADS_DIR.resolve("exploded");
 
     private static final long TEST_PREFIX = System.currentTimeMillis();
@@ -85,12 +88,11 @@ public abstract class FileSystemTestUtil {
                 .resolve(contentPack.toString());
 
         if (!Files.exists(explodedPackDir)) {
-            final Path packZip = getContentPackDownloadsDir()
-                    .resolve(contentPack.toFileName());
+            final Path downloadsDir = getContentPackDownloadsDir();
+            final Path packZip = downloadsDir.resolve(contentPack.toFileName());
 
             if (!Files.exists(packZip)) {
-                throw new RuntimeException(LogUtil.message(
-                        "Expecting to find {}", packZip.toAbsolutePath().normalize()));
+                ContentPackDownloader.downloadContentPack(contentPack, downloadsDir);
             }
 
             // Unzip the zip file.

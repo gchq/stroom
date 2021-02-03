@@ -834,7 +834,7 @@ appConfig:
       tubeOpacity: "0.6"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
-      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
+      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
     url:
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"

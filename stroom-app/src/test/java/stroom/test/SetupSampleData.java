@@ -20,6 +20,7 @@ import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.PathCreator;
 
 import com.google.inject.Guice;
