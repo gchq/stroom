@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -191,7 +192,7 @@ public class ContentPackDownloader {
         return false;
     }
 
-    static void downloadFile(final URL fileUrl, final Path destFilename) {
+    private static void downloadFile(final URL fileUrl, final Path destFilename) {
         URL effectiveUrl = fileUrl;
         try {
             HttpURLConnection http = (HttpURLConnection) effectiveUrl.openConnection();
@@ -208,8 +209,18 @@ public class ContentPackDownloader {
                 StreamUtil.streamToStream(http.getInputStream(), fos);
             }
 
-            // Atomically move the downloaded file to the destination so that concurrent tests don't overwrite the file.
-            Files.move(tempFile, destFilename);
+            // Atomically move the downloaded file to the destination so that
+            // concurrent tests don't overwrite the file.
+            try {
+                Files.move(tempFile, destFilename);
+            } catch (FileAlreadyExistsException e) {
+                // Don't see why we should get here as the methods are synchronized
+                LOGGER.warn("Unable to move {} to {} as file already exists, ignoring",
+                        tempFile.toAbsolutePath().normalize(),
+                        destFilename.toAbsolutePath().normalize(),
+                        e);
+            }
+
         } catch (final IOException e) {
             throw new UncheckedIOException(String.format("Error downloading url %s to %s",
                     fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);
