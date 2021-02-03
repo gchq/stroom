@@ -1,5 +1,6 @@
 package stroom.test;
 
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.FileUtil;
 
 import java.nio.file.Paths;

@@ -1,4 +1,4 @@
-package stroom.test;
+package stroom.test.common.util.test;
 
 import stroom.content.ContentPack;
 import stroom.content.ContentPackCollection;
@@ -94,9 +94,9 @@ public class ContentPackDownloader {
         }
     }
 
-    public static void downloadPacks(final Path contentPacksDefinition,
-                                     final Path contentPackDownloadDir,
-                                     final Path contentPackImportDir) {
+    public static synchronized void downloadPacks(final Path contentPacksDefinition,
+                                                  final Path contentPackDownloadDir,
+                                                  final Path contentPackImportDir) {
         try {
             final ObjectMapper mapper = new ObjectMapper();
             final ContentPackCollection contentPacks = mapper.readValue(
@@ -113,9 +113,12 @@ public class ContentPackDownloader {
         return downloadContentPack(contentPack, destDir, ConflictMode.KEEP_EXISTING);
     }
 
-    public static Path downloadContentPack(final ContentPack contentPack,
-                                           final Path destDir,
-                                           final ConflictMode conflictMode) {
+    /**
+     * synchronized to avoid multiple test threads downloading the same pack concurrently
+     */
+    public static synchronized Path downloadContentPack(final ContentPack contentPack,
+                                                        final Path destDir,
+                                                        final ConflictMode conflictMode) {
         Preconditions.checkNotNull(contentPack);
         Preconditions.checkNotNull(destDir);
         Preconditions.checkNotNull(conflictMode);
@@ -137,19 +140,26 @@ public class ContentPackDownloader {
                     FileUtil.getCanonicalPath(destFilePath));
             try {
                 Files.delete(destFilePath);
+                destFileExists = false;
             } catch (final IOException e) {
                 throw new UncheckedIOException(String.format("Unable to remove existing content pack %s",
                         FileUtil.getCanonicalPath(destFilePath)), e);
             }
         }
 
-        final URL fileUrl = getUrl(contentPack);
-        LOGGER.info("Downloading contentPack {} from {} to {}",
-                contentPack.getName(),
-                fileUrl.toString(),
-                FileUtil.getCanonicalPath(destFilePath));
+        if (destFileExists) {
+            LOGGER.info("ContentPack {} already exists {}",
+                    contentPack.getName(),
+                    FileUtil.getCanonicalPath(destFilePath));
+        } else {
+            final URL fileUrl = getUrl(contentPack);
+            LOGGER.info("Downloading contentPack {} from {} to {}",
+                    contentPack.getName(),
+                    fileUrl.toString(),
+                    FileUtil.getCanonicalPath(destFilePath));
 
-        downloadFile(fileUrl, destFilePath);
+            downloadFile(fileUrl, destFilePath);
+        }
 
         return destFilePath;
     }
