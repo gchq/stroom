@@ -21,9 +21,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
+import stroom.util.shared.ReadWithIntegerId;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -33,11 +36,12 @@ class RequestInfo {
 
     private final ContainerResourceInfo containerResourceInfo;
     private final Object requestObj;
-
+    private final Object beforeCallObj;
 
     public RequestInfo(final ContainerResourceInfo containerResourceInfo) {
         this.containerResourceInfo = containerResourceInfo;
         this.requestObj = findRequestObj();
+        this.beforeCallObj = findBeforeCallObj(containerResourceInfo.getResource(), requestObj);
     }
 
     public RequestInfo(final ContainerResourceInfo containerResourceInfo, Object requestObj) {
@@ -46,10 +50,15 @@ class RequestInfo {
             requestObj = findRequestObj();
         }
         this.requestObj = requestObj;
+        this.beforeCallObj = findBeforeCallObj(containerResourceInfo.getResource(), requestObj);
     }
 
     public Object getRequestObj() {
         return requestObj;
+    }
+
+    public Object getBeforeCallObj() {
+        return beforeCallObj;
     }
 
     public ContainerResourceInfo getContainerResourceInfo() {
@@ -60,7 +69,41 @@ class RequestInfo {
         return getContainerResourceInfo().shouldLog(logByDefault);
     }
 
+    private Object findBeforeCallObj(Object resource, Object template){
+        if (template == null || resource == null) {
+            return null;
+        }
+        Object result = null;
 
+        //Only required for update and delete operations
+        if (OperationType.UPDATE.equals(containerResourceInfo.getOperationType()) ||
+                OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
+            //TODO execute as processing user to maximise chance of logging the correct object
+            try {
+
+                if (resource instanceof ReadWithIntegerId<?>) {
+                    ReadWithIntegerId<?> integerReadSupportingResource = (ReadWithIntegerId<?>) resource;
+                    if (template instanceof HasIntegerId) {
+                        result = integerReadSupportingResource.read(((HasIntegerId) template).getId());
+                    } else {
+                        RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
+                                template.getClass().getSimpleName());
+                    }
+                } else {
+                    //Need to either implement the interface or switch to MANUALLY_LOGGED
+                    RestResourceAutoLoggerImpl.LOGGER.warn("Remote resource " +
+                            resource.getClass().getSimpleName() + " is not correctly configured for autologging." +
+                                    " Before operation object will not be available.");
+                }
+
+            } catch (Exception ex){
+                RestResourceAutoLoggerImpl.LOGGER.info("Unable to find existing/previous version of object", ex);
+            }
+
+        }
+
+        return result;
+    }
 
     private Object findRequestObj(){
         int numberOfPathParms = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false).keySet().size();

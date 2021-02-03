@@ -64,49 +64,18 @@ class ActivityResourceImpl implements ActivityResource {
         return activityServiceProvider.get().fetch(id);
     }
 
-    @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
     public Activity update(final Integer id, final Activity activity) {
         RestUtil.requireMatchingIds(id, activity);
 
         final ActivityService activityService = activityServiceProvider.get();
-        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
-
-        final Activity beforeActivity = activityService.fetch(activity.getId());
-
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "update"),
-                "Update activity " + id,
-                eventLoggingService.buildUpdateEventAction(
-                        () -> activityService.fetch(activity.getId()),
-                        () -> activity),
-                eventAction -> {
-                    final Activity afterActivity = activityService.update(activity);
-                    return ComplexLoggedOutcome.success(
-                            afterActivity,
-                            eventAction.newCopyBuilder()
-                                    .withAfter(eventLoggingService.convertToMulti(afterActivity))
-                                    .build());
-                },
-                null);
+        return activityService.update(activity);
     }
 
-    @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
     public Boolean delete(final Integer id) {
-        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
-
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "delete"),
-                "Deleting activity " + id,
-                DeleteEventAction.builder()
-                        .withObjects(eventLoggingService.convert(() -> read(id)))
-                        .build(),
-                () -> {
-                    activityServiceProvider.get().delete(id);
-                    return true;
-                }
-        );
+        activityServiceProvider.get().delete(id);
+        return true;
     }
 
     @Override

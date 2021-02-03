@@ -18,7 +18,10 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,7 +61,7 @@ class RequestEventLogImpl implements RequestEventLog {
 
         switch (requestInfo.getContainerResourceInfo().getOperationType()){
             case DELETE:
-                documentEventLog.delete(requestEntity,typeId, descriptionVerb, error);
+                documentEventLog.delete(requestInfo.getBeforeCallObj(),typeId, descriptionVerb, error);
                 break;
             case VIEW:
                 documentEventLog.view(responseEntity,typeId, descriptionVerb,error);
@@ -70,7 +73,7 @@ class RequestEventLogImpl implements RequestEventLog {
                 documentEventLog.copy(requestEntity,typeId, descriptionVerb,error);
                 break;
             case UPDATE:
-                documentEventLog.update(requestEntity,responseEntity,typeId, descriptionVerb, error);
+                documentEventLog.update(requestInfo.getBeforeCallObj(),responseEntity,typeId, descriptionVerb, error);
                 break;
             case SEARCH:
                 logSearch(typeId, requestEntity, responseEntity,  descriptionVerb, error);

@@ -370,6 +370,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public BaseObject convert(final Object object) {
+        if (object == null){
+            return null;
+        }
+
         final BaseObject baseObj;
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender != null){

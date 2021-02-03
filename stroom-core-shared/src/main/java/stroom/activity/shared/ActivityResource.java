@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -42,7 +43,7 @@ import java.util.List;
 @Path("/activity" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ActivityResource extends RestResource, DirectRestService {
+public interface ActivityResource extends RestResource, DirectRestService, ReadWithIntegerId<Activity> {
 
     @GET
     @ApiOperation(
@@ -63,6 +64,7 @@ public interface ActivityResource extends RestResource, DirectRestService {
             response = Activity.class)
     Activity create();
 
+    @Override
     @GET
     @Path("/{id}")
     @ApiOperation(
