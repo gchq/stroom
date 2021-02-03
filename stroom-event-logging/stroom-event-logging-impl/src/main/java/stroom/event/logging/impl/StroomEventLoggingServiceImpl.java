@@ -17,7 +17,6 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
-import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
@@ -61,14 +60,11 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -195,52 +191,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
-
-//    public Event createSkeletonEvent(final String typeId, final String description) {
-//        return createSkeletonEvent(typeId, description, null);
-//    }
-//
-//    @Override
-//    public Event createSkeletonEvent(final String typeId,
-//                                     final String description,
-//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
-//                .withTypeId(typeId)
-//                .withDescription(description)
-//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
-//
-//        if (eventDetailBuilderConsumer != null) {
-//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
-//        }
-//
-//        return buildEvent()
-//                .withEventDetail(eventDetailBuilder.build())
-//                .build();
-//    }
-
-//    @Override
-//    public void log(final String typeId,
-//                    final String description,
-//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//
-//        super.log(typeId, description, eventDetailBuilderConsumer);
-//    }
-
-
-    private Device getDevice(final HttpServletRequest request) {
-        // Get stored device info.
-        final Device storedDevice = obtainStoredDevice(request);
-
-        // We need to copy the stored device as users may make changes to the
-        // returned object that might not be thread safe.
-        Device device = null;
-        if (storedDevice != null) {
-            device = copyDevice(storedDevice, new Device());
-        }
-
-        return device;
-    }
-
     private Device getClient(final HttpServletRequest request) {
         if (request != null) {
             try {
@@ -335,7 +285,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     }
                 }
             }
-
             obtainedDevice = true;
         }
 
@@ -432,7 +381,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }
             };
         } else {
-            // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+            // Some providers exist for superclasses and not subclass types so keep looking through the
+            // class hierarchy to find a provider.
             Class<?> currentType = type;
             Provider<ObjectInfoProvider> provider = null;
             while (currentType != null && provider == null) {

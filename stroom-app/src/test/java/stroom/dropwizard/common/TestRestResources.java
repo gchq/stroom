@@ -13,8 +13,10 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Provider;
 import javax.ws.rs.core.Response;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -86,6 +88,16 @@ class TestRestResources {
 
             if (!isInterface) {
                 // AutoLogged is only used on classes, not interfaces
+
+
+                boolean hasNonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
+                        .map(Field::getType)
+                        .anyMatch(clazz -> !Provider.class.equals(clazz));
+
+                softAssertions.assertThat(hasNonProvidedFields)
+                        .withFailMessage("Resource implementations/classes must inject all objects " +
+                                "via Providers.")
+                        .isFalse();
 
                 Arrays.stream(resourceClass.getMethods())
                         .filter(method -> !Modifier.isPrivate(method.getModifiers()))

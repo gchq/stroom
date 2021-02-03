@@ -43,7 +43,7 @@ import javax.ws.rs.core.MediaType;
 @Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(description = "Stroom Authentication API", tags = {"Authentication"})
+@Api(tags = "Authentication")
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
@@ -64,7 +64,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Handle a login request made using username and password credentials.",
-            response = String.class, tags = {"Authentication"})
+            response = String.class)
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
@@ -83,7 +83,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Confirm an authenticated users current password.",
-            response = String.class, tags = {"Authentication"})
+            response = String.class)
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
@@ -94,7 +94,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Change a user's password.",
-            response = String.class, tags = {"Authentication"})
+            response = String.class)
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
@@ -104,7 +104,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Reset a user account using an email address.",
-            response = String.class, tags = {"Authentication"})
+            response = String.class)
     Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
             @PathParam("email") String emailAddress);
@@ -114,7 +114,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Reset an authenticated user's password.",
-            response = String.class, tags = {"Authentication"})
+            response = String.class)
     ChangePasswordResponse resetPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
@@ -124,7 +124,7 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Check if a user's password needs changing.",
-            response = Boolean.class, tags = {"Authentication"})
+            response = Boolean.class)
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @GET
@@ -132,6 +132,6 @@ public interface AuthenticationResource extends RestResource {
     @Timed
     @NotNull
     @ApiOperation(value = "Get the password policy",
-            response = PasswordPolicyConfig.class, tags = {"Authentication"})
+            response = PasswordPolicyConfig.class)
     PasswordPolicyConfig fetchPasswordPolicy();
 }
