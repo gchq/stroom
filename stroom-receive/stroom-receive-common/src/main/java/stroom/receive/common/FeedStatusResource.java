@@ -52,9 +52,7 @@ public class FeedStatusResource implements RestResource, HasHealthCheck {
     @POST
     @Path("/getFeedStatus")
     @Timed
-    @ApiOperation(
-            value = "Submit a request to get the status of a feed",
-            response = GetFeedStatusResponse.class)
+    @ApiOperation("Submit a request to get the status of a feed")
     // TODO This should really be a GET with the feedName and senderDn as params
     public GetFeedStatusResponse getFeedStatus(@ApiParam("GetFeedStatusRequest") final GetFeedStatusRequest request) {
         return feedStatusService.getFeedStatus(request);

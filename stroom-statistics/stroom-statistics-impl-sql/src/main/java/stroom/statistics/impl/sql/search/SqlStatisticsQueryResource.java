@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,54 +48,48 @@ import javax.ws.rs.core.MediaType;
 public class SqlStatisticsQueryResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
 
-    private final StatisticsQueryService statisticsQueryService;
+    private final Provider<StatisticsQueryService> statisticsQueryServiceProvider;
 
     @Inject
-    public SqlStatisticsQueryResource(final StatisticsQueryService statisticsQueryService) {
-        this.statisticsQueryService = statisticsQueryService;
+    public SqlStatisticsQueryResource(final Provider<StatisticsQueryService> statisticsQueryServiceProvider) {
+        this.statisticsQueryServiceProvider = statisticsQueryServiceProvider;
     }
 
     @POST
     @Path("/dataSource")
     @Timed
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
+    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
 
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
             LOGGER.debug("/dataSource called with docRef:\n{}", json);
         }
-        return statisticsQueryService.getDataSource(docRef);
+        return statisticsQueryServiceProvider.get().getDataSource(docRef);
     }
 
     @POST
     @Path("/search")
     @Timed
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
+    @ApiOperation("Submit a search request")
     public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(request);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
 
-        return statisticsQueryService.search(request);
+        return statisticsQueryServiceProvider.get().search(request);
     }
 
     @POST
     @Path("/destroy")
     @Timed
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
+    @ApiOperation("Destroy a running query")
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
-        return statisticsQueryService.destroy(queryKey);
+        return statisticsQueryServiceProvider.get().destroy(queryKey);
     }
 }

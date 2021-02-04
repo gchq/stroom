@@ -40,15 +40,11 @@ public interface VisualisationResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a visualisation doc",
-            response = VisualisationDoc.class)
+    @ApiOperation("Get a visualisation doc")
     VisualisationDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a visualisation doc",
-            response = VisualisationDoc.class)
+    @ApiOperation("Update a visualisation doc")
     VisualisationDoc update(@ApiParam("visualisationDoc") VisualisationDoc visualisationDoc);
 }

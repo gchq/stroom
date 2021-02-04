@@ -38,8 +38,6 @@ import java.util.List;
 public interface SuggestionsResource extends RestResource, DirectRestService {
 
     @POST
-    @ApiOperation(
-            value = "Fetch some suggestions",
-            response = List.class)
+    @ApiOperation("Fetch some suggestions")
     List<String> fetch(@ApiParam("request") FetchSuggestionsRequest request);
 }

@@ -41,22 +41,16 @@ public interface ScriptResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Get a script doc")
     ScriptDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Update a script doc")
     ScriptDoc update(@ApiParam("xslt") ScriptDoc xslt);
 
     @POST
     @Path("/fetchLinkedScripts")
-    @ApiOperation(
-            value = "Fetch related scripts",
-            response = ScriptDoc.class)
+    @ApiOperation("Fetch related scripts")
     List<ScriptDoc> fetchLinkedScripts(@ApiParam("request") FetchLinkedScriptRequest request);
 }

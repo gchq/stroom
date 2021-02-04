@@ -107,7 +107,7 @@ public class StreamTaskResource implements RestResource {
 
     @GET
     @ApiOperation(
-            value = "Find ",
+            value = "Find stream tasks using the supplied criteria",
             response = StreamTasks.class)
     public Response find(
             @QueryParam("offset") Integer offset,

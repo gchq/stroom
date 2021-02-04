@@ -40,7 +40,6 @@ public interface OpenIdResource extends RestResource {
     @Timed
     @ApiOperation(
             value = "Submit an OpenId AuthenticationRequest.",
-            response = String.class,
             tags = AUTHENTICATION_TAG)
     void auth(
             @Context HttpServletRequest request,
@@ -57,14 +56,12 @@ public interface OpenIdResource extends RestResource {
     @Timed
     @ApiOperation(
             value = "Get a token from an access code",
-            response = String.class,
             tags = AUTHENTICATION_TAG)
     TokenResponse token(@ApiParam("tokenRequest") TokenRequest tokenRequest);
 
     @ApiOperation(
             value = "Provides access to this service's current public key. " +
                     "A client may use these keys to verify JWTs issued by this service.",
-            response = String.class,
             tags = API_KEYS_TAG)
     @GET
     @Path("certs")
@@ -73,7 +70,6 @@ public interface OpenIdResource extends RestResource {
 
     @ApiOperation(
             value = "Provides discovery for openid configuration",
-            response = String.class,
             tags = API_KEYS_TAG)
     @GET
     @Path(".well-known/openid-configuration")

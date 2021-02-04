@@ -21,8 +21,6 @@ public interface InvalidateSessionResource extends RestResource, DirectRestServi
 
     @GET
     @Path("invalidate")
-    @ApiOperation(
-            value = "Invalidate the current session",
-            response = Boolean.class)
+    @ApiOperation("Invalidate the current session")
     Boolean invalidate();
 }

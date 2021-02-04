@@ -21,30 +21,23 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AppPermissionResource extends RestResource, DirectRestService {
+
     @GET
-    @ApiOperation(
-            value = "User and app permissions for the current session",
-            response = UserAndPermissions.class)
+    @ApiOperation("User and app permissions for the current session")
     UserAndPermissions getUserAndPermissions();
 
     @POST
     @Path("fetchUserAppPermissions")
-    @ApiOperation(
-            value = "User and app permissions for the specified user",
-            response = UserAndPermissions.class)
+    @ApiOperation("User and app permissions for the specified user")
     UserAndPermissions fetchUserAppPermissions(@ApiParam("user") User user);
 
     @GET
     @Path("fetchAllPermissions")
-    @ApiOperation(
-            value = "Get all possible permissions",
-            response = List.class)
+    @ApiOperation("Get all possible permissions")
     List<String> fetchAllPermissions();
 
     @POST
     @Path("changeUser")
-    @ApiOperation(
-            value = "User and app permissions for the current session",
-            response = Boolean.class)
+    @ApiOperation("User and app permissions for the current session")
     Boolean changeUser(@ApiParam("changeUserRequest") ChangeUserRequest changeUserRequest);
 }

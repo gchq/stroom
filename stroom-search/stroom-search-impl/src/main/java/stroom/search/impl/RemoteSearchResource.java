@@ -45,21 +45,18 @@ public interface RemoteSearchResource extends RestResource {
     @POST
     @Path(START_PATH_PART)
     @Timed
-    @ApiOperation(
-            value = "Start a search",
-            response = Boolean.class)
+    @ApiOperation("Start a search")
     Boolean start(ClusterSearchTask clusterSearchTask);
 
     @GET
     @Path(POLL_PATH_PART)
     @Produces("application/octet-stream")
+    @ApiOperation("Poll the server for search results for the supplied queryKey")
     StreamingOutput poll(@QueryParam("queryKey") String queryKey);
 
     @GET
     @Path(DESTROY_PATH_PART)
     @Timed
-    @ApiOperation(
-            value = "Destroy search results",
-            response = Boolean.class)
+    @ApiOperation("Destroy search results")
     Boolean destroy(@QueryParam("queryKey") String queryKey);
 }
