@@ -97,8 +97,8 @@ class TestRestResources {
             final Map<Tuple2<String, String>, List<Tuple4<String, String, String, String>>> results = classes.stream()
                     .flatMap(clazz ->
                             Arrays.stream(clazz.getMethods())
-                    .map(method -> Tuple.of(clazz, method)))
-                    .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._2))
+                                    .map(method -> Tuple.of(clazz, method)))
+                    .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._1, clazzMethod._2))
                     .map(clazzMethod-> Tuple.of(
                             clazzMethod._2.getName(),
                             getJaxRsHttpMethod(clazzMethod._2),
@@ -210,6 +210,7 @@ class TestRestResources {
             }
 
             final boolean classIsAutoLogged = resourceClass.isAnnotationPresent(AutoLogged.class);
+            LOGGER.info("classIsAutoLogged: {}", classIsAutoLogged);
 
             if (!isInterface) {
                 // AutoLogged is only used on classes, not interfaces
@@ -218,7 +219,7 @@ class TestRestResources {
 
                 Arrays.stream(resourceClass.getMethods())
                         .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                        .filter(this::hasJaxRsAnnotation)
+                        .filter(method -> hasJaxRsAnnotation(resourceClass, method))
                         .forEach(method -> {
                             final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
 
@@ -256,10 +257,42 @@ class TestRestResources {
         }
     }
 
-    private boolean hasJaxRsAnnotation(final Method method) {
-        return Arrays.stream(method.getAnnotations())
+    private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method) {
+        boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
                 .anyMatch(annotation ->
                         annotation.annotationType().getPackageName().equals("javax.ws.rs"));
+        if (!thisMethodHasJaxRs) {
+            final Class<?> restInterface = Arrays.stream(clazz.getInterfaces())
+                    .filter(iface -> Arrays.asList(iface.getInterfaces()).contains(RestResource.class))
+                    .findAny()
+                    .orElse(null);
+
+            if (restInterface == null) {
+                return false;
+            } else {
+                // now find the same method on the interface
+                final Optional<Method> optIfaceMethod = Arrays.stream(restInterface.getMethods())
+                        .filter(ifaceMethod -> areMethodsEqual(method, ifaceMethod))
+                        .findAny();
+
+                return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface, ifaceMethod))
+                        .orElse(false);
+            }
+        } else {
+            return true;
+        }
+    }
+
+    private boolean areMethodsEqual(final Method method1, final Method method2) {
+        if (method1.equals(method2)) {
+            return true;
+        } else {
+            return method1.getName().equals(method2.getName())
+                    && method1.getReturnType().equals(method2.getReturnType())
+                    && method1.getGenericReturnType().equals(method2.getGenericReturnType())
+                    && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
+                    && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
+        }
     }
 
     private void doSwaggerAnnotationAsserts(final Class<? extends RestResource> resourceClass,
@@ -293,7 +326,7 @@ class TestRestResources {
 
         Arrays.stream(resourceClass.getMethods())
                 .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                .filter(this::hasJaxRsAnnotation)
+                .filter(method -> hasJaxRsAnnotation(resourceClass, method))
                 .forEach(method -> {
 
                     final List<Class<? extends Annotation>> methodAnnotationTypes = Arrays.stream(

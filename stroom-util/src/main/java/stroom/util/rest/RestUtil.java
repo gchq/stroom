@@ -1,9 +1,12 @@
 package stroom.util.rest;
 
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasUuid;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.util.function.Supplier;
 
 public class RestUtil {
@@ -25,7 +28,9 @@ public class RestUtil {
 
     public static void requireNonNull(final Object object, Supplier<String> messageSupplier) throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException(messageSupplier != null ? messageSupplier.get() : null);
+            throw new BadRequestException(messageSupplier != null
+                    ? messageSupplier.get()
+                    : null);
         }
     }
 
@@ -48,5 +53,19 @@ public class RestUtil {
         if (object.getUuid().equals(uuid)) {
             throw new BadRequestException("UUID " + uuid + " doesn't match UUID in object " + object.getUuid());
         }
+    }
+
+    public static Response badRequest(final String msg, final Object... args) {
+        return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity(LogUtil.message(msg, args))
+                .build();
+    }
+
+    public static Response notFound(final String msg, final Object... args) {
+        return Response
+                .status(Status.NOT_FOUND)
+                .entity(LogUtil.message(msg, args))
+                .build();
     }
 }

@@ -26,7 +26,6 @@ import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.Sort;
 
 import com.google.common.base.Strings;
 
@@ -65,7 +64,10 @@ public class SearchKeywords {
                     .collect(joining());
 
             if (!Strings.isNullOrEmpty(plainOldFilter)) {
-                builder.addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
+                builder.addTerm(
+                        ProcessorFields.PIPELINE,
+                        Condition.EQUALS,
+                        new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
             }
         }
     }
