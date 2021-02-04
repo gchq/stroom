@@ -34,6 +34,10 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -70,7 +74,9 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @GET
-    @ApiOperation(value = "Fetch a page of stream metadata, starting from the most recent.")
+    @ApiOperation(
+            value = "Fetch a page of stream metadata, starting from the most recent.",
+            response = SearchResponse.class)
     public Response page(@QueryParam("pageOffset") Long pageOffset,
                          @QueryParam("pageSize") Integer pageSize) {
         return securityContext.get().secureResult(() -> {
@@ -104,17 +110,17 @@ public class StreamAttributeMapResource implements RestResource {
             criteria.setExpression(expressionOperator);
 
             final ResultPage<MetaRow> results = dataMetaService.get().findRows(criteria);
-            final Object response = new Object() {
-                public PageResponse pageResponse = results.getPageResponse();
-                public List<MetaRow> streamAttributeMaps = results.getValues();
-            };
+            // TODO @AT I have no idea why we are not just returning a ResultPage
+            final SearchResponse response = new SearchResponse(results.getPageResponse(), results.getValues());
             return Response.ok(response).build();
         });
     }
 
     @POST
-    @ApiOperation(value = "Search for stream metadata matching the provided expression, " +
-            "starting from the most recent.")
+    @ApiOperation(
+            value = "Search for stream metadata matching the provided expression, " +
+                    "starting from the most recent.",
+            response = SearchResponse.class)
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
                            @ApiParam("expression") final ExpressionOperator expression) {
@@ -145,10 +151,8 @@ public class StreamAttributeMapResource implements RestResource {
             criteria.setExpression(expression);
 
             ResultPage<MetaRow> results = dataMetaService.get().findRows(criteria);
-            Object response = new Object() {
-                public PageResponse pageResponse = results.getPageResponse();
-                public List<MetaRow> streamAttributeMaps = results.getValues();
-            };
+            // TODO @AT I have no idea why we are not just returning a ResultPage
+            final SearchResponse response = new SearchResponse(results.getPageResponse(), results.getValues());
             return Response.ok(response)
                     .build();
         });
@@ -156,7 +160,9 @@ public class StreamAttributeMapResource implements RestResource {
 
     @GET
     @Path("/dataSource")
-    @ApiOperation(value = "Fetch the datasource for stream metadata.")
+    @ApiOperation(
+            value = "Fetch the datasource for stream metadata.",
+            response = DataSource.class)
     public Response dataSource() {
         final DataSource dataSource = new DataSource(
                 ImmutableList.of(new DocRefField(FeedDoc.DOCUMENT_TYPE, "Feed")));
@@ -167,7 +173,10 @@ public class StreamAttributeMapResource implements RestResource {
 
     @GET
     @Path("/{id}/{anyStatus}/relations")
-    @ApiOperation(value = "Fetch meta data related to the stream with the supplied id.")
+    @ApiOperation(
+            value = "Fetch meta data related to the stream with the supplied id.",
+            response = MetaRow.class,
+            responseContainer = "List")
     public Response getRelations(@PathParam("id") Long id,
                                  @PathParam("anyStatus") Boolean anyStatus) {
         return securityContext.get().secureResult(() -> {
@@ -180,7 +189,9 @@ public class StreamAttributeMapResource implements RestResource {
 
     @GET
     @Path("/{id}")
-    @ApiOperation(value = "Fetch the stream meta data for the supplied stream ID.")
+    @ApiOperation(
+            value = "Fetch the stream meta data for the supplied stream ID.",
+            response = ResultPage.class)
     public Response search(@PathParam("id") Long id) {
         return securityContext.get().secureResult(() -> {
             // Configure default criteria
@@ -195,5 +206,27 @@ public class StreamAttributeMapResource implements RestResource {
         });
     }
 
+    @JsonInclude(Include.NON_NULL)
+    static class SearchResponse {
+        @JsonProperty
+        public final PageResponse pageResponse;
+        @JsonProperty
+        public final List<MetaRow> streamAttributeMaps;
+
+        @JsonCreator
+        SearchResponse(@JsonProperty("pageResponse") final PageResponse pageResponse,
+                       @JsonProperty("streamAttributeMaps") final List<MetaRow> streamAttributeMaps) {
+            this.pageResponse = pageResponse;
+            this.streamAttributeMaps = streamAttributeMaps;
+        }
+
+        public PageResponse getPageResponse() {
+            return pageResponse;
+        }
+
+        public List<MetaRow> getStreamAttributeMaps() {
+            return streamAttributeMaps;
+        }
+    }
 
 }
