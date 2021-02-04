@@ -21,11 +21,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
+import stroom.util.shared.HasType;
 import stroom.util.shared.HasUuid;
+import stroom.util.shared.ReadWithDocRef;
 import stroom.util.shared.ReadWithIntegerId;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -95,6 +98,16 @@ class RequestInfo {
                         }
                     } else  {
                         RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract ID from request of type " +
+                                template.getClass().getSimpleName());
+                    }
+                } else if  (resource instanceof ReadWithDocRef<?>) {
+                    ReadWithDocRef<?> docrefReadSupportingResource = (ReadWithDocRef<?>) resource;
+                    if (template instanceof HasUuid && template instanceof HasType) {
+                        String type = ((HasType)template).getType();
+                        String uuid = ((HasUuid) template).getUuid();
+                        result = docrefReadSupportingResource.read(new DocRef(type, uuid));
+                    } else {
+                        RestResourceAutoLoggerImpl.LOGGER.error("Unable to extract uuid and type from request of type " +
                                 template.getClass().getSimpleName());
                     }
                 } else {
