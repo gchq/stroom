@@ -42,22 +42,16 @@ public interface FeedResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Get a feed doc")
     FeedDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Update a feed doc")
     FeedDoc update(@ApiParam("xslt") FeedDoc xslt);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @ApiOperation(
-            value = "Fetch supported encodings",
-            response = List.class)
+    @ApiOperation("Fetch supported encodings")
     List<String> fetchSupportedEncodings();
 }

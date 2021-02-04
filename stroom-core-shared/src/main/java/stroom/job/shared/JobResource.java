@@ -38,10 +38,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
+
     @GET
-    @ApiOperation(
-            value = "Lists jobs",
-            response = ResultPage.class)
+    @ApiOperation("Lists jobs")
     ResultPage<Job> list();
 
     @PUT

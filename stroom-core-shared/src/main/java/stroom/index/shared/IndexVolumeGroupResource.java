@@ -25,37 +25,28 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexVolumeGroupResource extends RestResource, DirectRestService {
+
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Finds index volume groups matching request",
-            response = ResultPage.class)
+    @ApiOperation("Finds index volume groups matching request")
     ResultPage<IndexVolumeGroup> find(@ApiParam("request") ExpressionCriteria request);
 
     @POST
-    @ApiOperation(
-            value = "Creates an index volume group",
-            response = IndexVolumeGroup.class)
+    @ApiOperation("Creates an index volume group")
     IndexVolumeGroup create(@ApiParam("name") String name);
 
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Gets an index volume group",
-            response = IndexVolumeGroup.class)
+    @ApiOperation("Gets an index volume group")
     IndexVolumeGroup read(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Updates an index volume group",
-            response = IndexVolumeGroup.class)
+    @ApiOperation("Updates an index volume group")
     IndexVolumeGroup update(@PathParam("id") Integer id, IndexVolumeGroup indexVolumeGroup);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Deletes an index volume group",
-            response = Boolean.class)
+    @ApiOperation("Deletes an index volume group")
     Boolean delete(@PathParam("id") Integer id);
 }

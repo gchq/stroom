@@ -405,6 +405,7 @@ swagger {
         security = [[ApiKeyAuth: []]]
         swaggerDirectory = "${swaggerDir}"
     }
+
 }
 
 
@@ -483,7 +484,14 @@ task prepareSwaggerClasses {
         println "Using swagger directory ${swaggerDir}"
     }
 }
-generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
+generateSwaggerDocumentation {
+
+    dependsOn prepareSwaggerClasses
+
+    doLast {
+        println "Swagger specs written to ${swaggerDir}"
+    }
+}
 
 task copyJar(type: Copy) {
     dependsOn shadowJar

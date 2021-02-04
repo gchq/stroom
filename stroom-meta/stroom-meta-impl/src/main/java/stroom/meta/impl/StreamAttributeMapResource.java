@@ -69,8 +69,8 @@ public class StreamAttributeMapResource implements RestResource {
         this.securityContext = securityContextProvider;
     }
 
-    @ApiOperation(value = "Fetch a page of stream metadata, starting from the most recent.")
     @GET
+    @ApiOperation(value = "Fetch a page of stream metadata, starting from the most recent.")
     public Response page(@QueryParam("pageOffset") Long pageOffset,
                          @QueryParam("pageSize") Integer pageSize) {
         return securityContext.get().secureResult(() -> {
@@ -112,9 +112,9 @@ public class StreamAttributeMapResource implements RestResource {
         });
     }
 
+    @POST
     @ApiOperation(value = "Search for stream metadata matching the provided expression, " +
             "starting from the most recent.")
-    @POST
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
                            @ApiParam("expression") final ExpressionOperator expression) {
@@ -154,9 +154,9 @@ public class StreamAttributeMapResource implements RestResource {
         });
     }
 
-    @ApiOperation(value = "Fetch the datasource for stream metadata.")
     @GET
     @Path("/dataSource")
+    @ApiOperation(value = "Fetch the datasource for stream metadata.")
     public Response dataSource() {
         final DataSource dataSource = new DataSource(
                 ImmutableList.of(new DocRefField(FeedDoc.DOCUMENT_TYPE, "Feed")));
@@ -165,9 +165,9 @@ public class StreamAttributeMapResource implements RestResource {
                 .build();
     }
 
-    @ApiOperation(value = "Fetch meta data related to the stream with the supplied id.")
     @GET
     @Path("/{id}/{anyStatus}/relations")
+    @ApiOperation(value = "Fetch meta data related to the stream with the supplied id.")
     public Response getRelations(@PathParam("id") Long id,
                                  @PathParam("anyStatus") Boolean anyStatus) {
         return securityContext.get().secureResult(() -> {
@@ -178,9 +178,9 @@ public class StreamAttributeMapResource implements RestResource {
         });
     }
 
-    @ApiOperation(value = "Fetch the stream meta data for the supplied stream ID.")
     @GET
     @Path("/{id}")
+    @ApiOperation(value = "Fetch the stream meta data for the supplied stream ID.")
     public Response search(@PathParam("id") Long id) {
         return securityContext.get().secureResult(() -> {
             // Configure default criteria
@@ -194,4 +194,6 @@ public class StreamAttributeMapResource implements RestResource {
                     .build();
         });
     }
+
+
 }

@@ -32,43 +32,31 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Finds index volumes matching request",
-            response = ResultPage.class)
+    @ApiOperation("Finds index volumes matching request")
     ResultPage<IndexVolume> find(@ApiParam("request") ExpressionCriteria request);
 
     @POST
-    @ApiOperation(
-            value = "Creates an index volume",
-            response = IndexVolume.class)
+    @ApiOperation("Creates an index volume")
     IndexVolume create(@ApiParam("request") IndexVolume request);
 
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Gets an index volume",
-            response = IndexVolume.class)
+    @ApiOperation("Gets an index volume")
     IndexVolume read(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Updates an index volume",
-            response = IndexVolume.class)
+    @ApiOperation("Updates an index volume")
     IndexVolume update(@PathParam("id") Integer id, 
                        @ApiParam("indexVolume") IndexVolume indexVolume);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Deletes an index volume",
-            response = Boolean.class)
+    @ApiOperation("Deletes an index volume")
     Boolean delete(@PathParam("id") Integer id);
 
     @DELETE
     @Path(RESCAN_SUB_PATH)
-    @ApiOperation(
-            value = "Rescans index volumes",
-            response = Boolean.class)
+    @ApiOperation("Rescans index volumes")
     Boolean rescan(@QueryParam("nodeName") String nodeName);
 }
