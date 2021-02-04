@@ -18,6 +18,7 @@
 
 package stroom.security.identity.account;
 
+import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -46,7 +47,7 @@ import java.util.List;
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface AccountResource extends RestResource {
+public interface AccountResource extends RestResource, ReadWithIntegerId<Account> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
     FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField("Email");
@@ -101,9 +102,8 @@ public interface AccountResource extends RestResource {
     @Path("{id}")
     @Timed
     @NotNull
-    Account read(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("id") int accountId);
+    @Override
+    Account read(@PathParam("id") final Integer accountId);
 
     @ApiOperation(
             value = "Update an account.",
@@ -129,5 +129,6 @@ public interface AccountResource extends RestResource {
     Boolean delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int accountId);
+
 }
 
