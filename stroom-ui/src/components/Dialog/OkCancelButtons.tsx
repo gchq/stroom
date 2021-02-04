@@ -18,7 +18,7 @@ export const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
   return (
     <div className="Button__container Dialog__buttons">
       <Button
-        className="Dialog__button Dialog__button--margin"
+        className="Dialog__button"
         appearance="contained"
         action="primary"
         icon="check"

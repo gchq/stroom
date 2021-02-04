@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1765** : Added confirmation dialog when deleting users and API keys.
+
 * Issue **#1764** : The create API key page now loads users to select on open.
 
 * Issue **#1766** : Removed comment from token.

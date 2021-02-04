@@ -25,6 +25,7 @@ import { Account } from "../types";
 import { usePasswordPolicy } from "../../Authentication/usePasswordPolicy";
 import { QuickFilterProps } from "./QuickFilter";
 import { TableProps } from "../../Table/Table";
+import { Confirm, PromptType } from "../../Prompt/Prompt";
 
 const initialAccount: Account = {
   userId: "",
@@ -40,6 +41,7 @@ const AccountManager: FunctionComponent<{
   const { resultPage, remove, request, setRequest } = useAccountManager();
   const passwordPolicyConfig = usePasswordPolicy();
   const [editingAccount, setEditingAccount] = useState<Account>();
+  const [deletingAccount, setDeletingAccount] = useState<Account>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
       setRequest({
@@ -91,7 +93,7 @@ const AccountManager: FunctionComponent<{
           actions: {
             onCreate: () => setEditingAccount(initialAccount),
             onEdit: (account) => setEditingAccount(account),
-            onRemove: (account) => remove(account.id),
+            onRemove: (account) => setDeletingAccount(account),
           },
           quickFilterProps,
           pagerProps,
@@ -106,6 +108,28 @@ const AccountManager: FunctionComponent<{
           onClose={() => {
             setEditingAccount(undefined);
             refresh();
+          }}
+        />
+      )}
+
+      {deletingAccount !== undefined && (
+        <Confirm
+          promptProps={{
+            title: "Confirm Delete",
+            message:
+              "Are you sure you want to delete '" +
+              deletingAccount.userId +
+              "'?",
+            type: PromptType.QUESTION,
+          }}
+          okCancelProps={{
+            onOk: () => {
+              remove(deletingAccount.id);
+              setDeletingAccount(undefined);
+            },
+            onCancel: () => {
+              setDeletingAccount(undefined);
+            },
           }}
         />
       )}

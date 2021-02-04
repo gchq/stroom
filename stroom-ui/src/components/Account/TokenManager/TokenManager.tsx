@@ -25,6 +25,7 @@ import { Token } from "../types";
 import { QuickFilterProps } from "../AccountManager/QuickFilter";
 import { CreateToken } from "../EditToken/CreateToken";
 import { TableProps } from "../../Table/Table";
+import { Confirm, PromptType } from "../../Prompt/Prompt";
 
 const initialToken: Token = {
   userId: "",
@@ -40,6 +41,7 @@ const TokenManager: FunctionComponent<{
 }> = ({ onClose }) => {
   const { resultPage, remove, request, setRequest } = useTokenManager();
   const [editingToken, setEditingToken] = useState<Token>();
+  const [deletingToken, setDeletingToken] = useState<Token>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
       setRequest({
@@ -91,7 +93,7 @@ const TokenManager: FunctionComponent<{
           actions: {
             onCreate: () => setEditingToken(initialToken),
             onEdit: (token) => setEditingToken(token),
-            onRemove: (token) => remove(token.id),
+            onRemove: (token) => setDeletingToken(token),
           },
           quickFilterProps,
           pagerProps,
@@ -113,6 +115,24 @@ const TokenManager: FunctionComponent<{
           onClose={() => {
             setEditingToken(undefined);
             refresh();
+          }}
+        />
+      )}
+      {deletingToken !== undefined && (
+        <Confirm
+          promptProps={{
+            title: "Confirm Delete",
+            message: "Are you sure you want to delete token?",
+            type: PromptType.QUESTION,
+          }}
+          okCancelProps={{
+            onOk: () => {
+              remove(deletingToken.id);
+              setDeletingToken(undefined);
+            },
+            onCancel: () => {
+              setDeletingToken(undefined);
+            },
           }}
         />
       )}
