@@ -1,6 +1,7 @@
 package stroom.util.rest;
 
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasUuid;
 
 import javax.ws.rs.BadRequestException;
 import java.util.function.Supplier;
@@ -34,6 +35,18 @@ public class RestUtil {
         }
         if (object.getId() != id) {
             throw new BadRequestException("Id " + id + " doesn't match id in object " + object.getId());
+        }
+    }
+
+    public static void requireMatchingUuids(final String uuid, final HasUuid object) {
+        if (object == null) {
+            throw new BadRequestException("Object is null");
+        }
+        if (uuid == null) {
+            throw new BadRequestException("uuid is null");
+        }
+        if (object.getUuid().equals(uuid)) {
+            throw new BadRequestException("UUID " + uuid + " doesn't match UUID in object " + object.getUuid());
         }
     }
 }

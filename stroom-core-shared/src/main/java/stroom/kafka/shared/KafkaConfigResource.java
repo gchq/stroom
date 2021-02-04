@@ -41,22 +41,16 @@ public interface KafkaConfigResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a kafkaConfig doc",
-            response = KafkaConfigDoc.class)
+    @ApiOperation("Get a kafkaConfig doc")
     KafkaConfigDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a kafkaConfig doc",
-            response = KafkaConfigDoc.class)
+    @ApiOperation("Update a kafkaConfig doc")
     KafkaConfigDoc update(@ApiParam("updated") KafkaConfigDoc updated);
 
     @POST
     @Path("/download")
-    @ApiOperation(
-            value = "Download a kafkaConfig doc",
-            response = ResourceGeneration.class)
+    @ApiOperation("Download a kafkaConfig doc")
     ResourceGeneration download(@ApiParam("docRef") DocRef docRef);
 }

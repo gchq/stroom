@@ -42,22 +42,16 @@ public interface StroomIndexQueryResource extends RestResource {
 
     @POST
     @Path("/dataSource")
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
+    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
     DataSource getDataSource(@ApiParam("DocRef") DocRef docRef);
 
     @POST
     @Path("/search")
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
+    @ApiOperation("Submit a search request")
     SearchResponse search(@ApiParam("SearchRequest") SearchRequest request);
 
     @POST
     @Path("/destroy")
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
+    @ApiOperation("Destroy a running query")
     Boolean destroy(@ApiParam("QueryKey") QueryKey queryKey);
 }

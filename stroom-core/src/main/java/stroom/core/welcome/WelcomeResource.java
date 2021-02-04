@@ -8,6 +8,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -20,19 +21,22 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class WelcomeResource implements RestResource {
-    private final UiConfig uiConfig;
+    private final Provider<UiConfig> uiConfigProvider;
 
     @Inject
-    WelcomeResource(final UiConfig uiConfig) {
-        this.uiConfig = uiConfig;
+    WelcomeResource(final Provider<UiConfig> uiConfigProvider) {
+        this.uiConfigProvider = uiConfigProvider;
     }
 
     @GET
-    @ApiOperation(value = "Get the configured HTML welcome message")
+    @ApiOperation(
+            value = "Get the configured HTML welcome message",
+            response = Object.class)
     public Response welcome() {
         Object response = new Object() {
-            public String html = uiConfig.getWelcomeHtml();
+            public String html = uiConfigProvider.get().getWelcomeHtml();
         };
-        return Response.ok(response).build();
+        return Response.ok(response)
+                .build();
     }
 }

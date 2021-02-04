@@ -41,43 +41,32 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    @ApiOperation(
-            value = "Find stored queries",
-            response = ResultPage.class)
+    @ApiOperation(value = "Find stored queries")
     ResultPage<StoredQuery> find(@ApiParam("criteria") FindStoredQueryCriteria criteria);
 
     @POST
     @Path("/create")
-    @ApiOperation(
-            value = "Create a stored query",
-            response = StoredQuery.class)
+    @ApiOperation(value = "Create a stored query")
     StoredQuery create(@ApiParam("storedQuery") StoredQuery storedQuery);
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a stored query",
-            response = StoredQuery.class)
+    @ApiOperation(value = "Get a stored query")
     StoredQuery read(@ApiParam("storedQuery") StoredQuery storedQuery);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a stored query",
-            response = StoredQuery.class)
+    @ApiOperation(value = "Update a stored query")
     StoredQuery update(StoredQuery storedQuery);
 
     @DELETE
     @Path("/delete")
-    @ApiOperation(
-            value = "Delete a stored query",
-            response = StoredQuery.class)
+    @ApiOperation(value = "Delete a stored query")
     Boolean delete(StoredQuery storedQuery);
 
 //    @POST
 //    @Path("/fetch")
 //    @ApiOperation(
-//            value = "Fetch a stored query",
-//            response = ResourceGeneration.class)
+//            value = "Fetch a stored query")
 //    StoredQuery fetchStoredQuery(StoredQuery storedQuery);
 }

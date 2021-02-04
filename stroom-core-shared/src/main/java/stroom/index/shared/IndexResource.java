@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource, DirectRestService, ReadWithDocRef<IndexDoc> {
+
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
@@ -47,38 +48,28 @@ public interface IndexResource extends RestResource, DirectRestService, ReadWith
     @Override
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get an index doc",
-            response = IndexDoc.class)
+    @ApiOperation("Get an index doc")
     IndexDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update an index doc",
-            response = IndexDoc.class)
+    @ApiOperation("Update an index doc")
     IndexDoc update(IndexDoc indexDoc);
 
     @POST
     @Path("/shard/find")
-    @ApiOperation(
-            value = "Find matching index shards",
-            response = ResultPage.class)
+    @ApiOperation("Find matching index shards")
     ResultPage<IndexShard> findIndexShards(@ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
-    @ApiOperation(
-            value = "Delete matching index shards",
-            response = Integer.class)
+    @ApiOperation("Delete matching index shards")
     Long deleteIndexShards(@QueryParam("nodeName") String nodeName, 
                            @ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
-    @ApiOperation(
-            value = "Flush matching index shards",
-            response = Integer.class)
+    @ApiOperation("Flush matching index shards")
     Long flushIndexShards(@QueryParam("nodeName") String nodeName, 
                           @ApiParam("criteria") FindIndexShardCriteria criteria);
 }

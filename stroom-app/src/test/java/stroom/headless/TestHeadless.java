@@ -17,7 +17,7 @@
 package stroom.headless;
 
 import stroom.content.ContentPacks;
-import stroom.test.ContentPackDownloader;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;

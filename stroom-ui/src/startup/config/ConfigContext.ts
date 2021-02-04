@@ -7,7 +7,7 @@ export const defaultValue: UiConfig = {
     backgroundColor: "red",
   },
   uiPreferences: {
-    dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ",
+    dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS",
   },
 };
 

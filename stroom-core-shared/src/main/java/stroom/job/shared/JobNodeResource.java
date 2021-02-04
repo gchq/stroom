@@ -39,6 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
     String INFO_PATH_PART = "/info";
     String SCHEDULE_PATH_PART = "/schedule";
@@ -47,17 +48,13 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @ApiOperation(
-            value = "Lists job nodes",
-            response = ResultPage.class)
+    @ApiOperation("Lists job nodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO_PATH_PART)
-    @ApiOperation(
-            value = "Gets current info for a job node",
-            response = JobNodeInfo.class)
+    @ApiOperation("Gets current info for a job node")
     JobNodeInfo info(@QueryParam("jobName") String jobName,
                      @QueryParam("nodeName") String nodeName);
 

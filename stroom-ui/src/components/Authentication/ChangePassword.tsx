@@ -7,7 +7,7 @@ import { PasswordPolicyConfig } from "./api/types";
 import * as Yup from "yup";
 import { Form, Modal } from "react-bootstrap";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { FormikHelpers } from "formik/dist/types";
 import FormContainer from "../Layout/FormContainer";
 import { LockFill } from "react-bootstrap-icons";
@@ -47,7 +47,7 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
   const { onCancel, cancelClicked } = okCancelProps;
 
   return (
-    <Form noValidate={true} onSubmit={handleSubmit} className="ChangePassword">
+    <Form noValidate={true} onSubmit={handleSubmit} className="modal-content">
       <Modal.Header closeButton={false}>
         <Modal.Title id="contained-modal-title-vcenter">
           <LockFill className="mr-3" />
@@ -191,9 +191,15 @@ export const ChangePasswordDialog: React.FunctionComponent<ChangePasswordProps> 
   props,
 ) => {
   return (
-    <Dialog>
+    <ResizableDialog
+      initWidth={400}
+      initHeight={369}
+      minWidth={400}
+      minHeight={369}
+      disableResize={true}
+    >
       <ChangePasswordFormik {...props} />
-    </Dialog>
+    </ResizableDialog>
   );
 };
 
@@ -201,7 +207,7 @@ export const ChangePasswordPage: React.FunctionComponent<ChangePasswordProps> = 
   props,
 ) => {
   return (
-    <FormContainer>
+    <FormContainer className={"ChangePassword"}>
       <ChangePasswordFormik {...props} />
     </FormContainer>
   );

@@ -1,20 +1,18 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { AccountListDialog } from "./AccountListDialog";
+import { TokenListDialog } from "./TokenListDialog";
 
 import fullTestData from "testing/data";
 import useColumns from "./useColumns";
 
-const stories = storiesOf("Account", module);
+const stories = storiesOf("Token", module);
 stories.add("List", () => {
-  const columns = useColumns();
-
   return (
-    <AccountListDialog
+    <TokenListDialog
       itemManagerProps={{
         tableProps: {
-          columns: columns,
-          data: fullTestData.users,
+          columns: useColumns(),
+          data: fullTestData.tokens,
         },
         actions: {
           onCreate: () => undefined,

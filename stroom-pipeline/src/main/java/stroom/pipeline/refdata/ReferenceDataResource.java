@@ -5,6 +5,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -27,20 +28,24 @@ public interface ReferenceDataResource extends RestResource {
 
     String BASE_PATH = "/refData" + ResourcePaths.V1;
 
-
     String ENTRIES_SUB_PATH = "/entries";
     String LOOKUP_SUB_PATH = "/lookup";
     String PURGE_SUB_PATH = "/purge";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
+    @ApiOperation("List entries from the reference data store on the node called. This is primarily intended " +
+            "for small scale debugging in non-production environments. If no limit is set a default limit is applied " +
+            "else the results will be limited to limit entries.")
     List<RefStoreEntry> entries(@QueryParam("limit") final Integer limit);
 
     @POST
     @Path(LOOKUP_SUB_PATH)
+    @ApiOperation("Perform a reference data lookup using the supplied lookup request.")
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
     @DELETE
     @Path(PURGE_SUB_PATH + "/{purgeAge}")
+    @ApiOperation("Explicitly delete all entries that are older than purgeAge.")
     void purge(@NotNull @PathParam("purgeAge") final String purgeAge);
 }

@@ -187,7 +187,6 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         token.setTokenType(tokenType.getText());
         token.setData(data);
         token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
-        token.setComments(INTERNAL_PROCESSING_USER);
         token.setEnabled(true);
 
         return tokenDao.create(account.getId(), token);

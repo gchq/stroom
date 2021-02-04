@@ -20,7 +20,7 @@ import {
   TextAreaFormField,
   CheckBoxFormField,
 } from "components/FormField";
-import { Dialog } from "components/Dialog/Dialog";
+import { ResizableDialog } from "components/Dialog/ResizableDialog";
 import { PersonFill } from "react-bootstrap-icons";
 import { OkCancelButtons, OkCancelProps } from "../../Dialog/OkCancelButtons";
 import { Formik, FormikProps } from "formik";
@@ -273,14 +273,20 @@ export const EditAccount: React.FunctionComponent<{
 
   return (
     <React.Fragment>
-      <Dialog>
+      <ResizableDialog
+        initWidth={600}
+        initHeight={570}
+        minWidth={284}
+        minHeight={555}
+        disableResize={true}
+      >
         <EditAccountFormik
           initialValues={account}
           onSubmit={onSubmit}
           onClose={onClose}
           onPasswordChange={editPassword}
         />
-      </Dialog>
+      </ResizableDialog>
 
       {showPasswordDialog && (
         <ChangePasswordDialog

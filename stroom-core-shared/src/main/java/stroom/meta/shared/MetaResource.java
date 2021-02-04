@@ -16,7 +16,6 @@
 
 package stroom.meta.shared;
 
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -43,36 +42,26 @@ public interface MetaResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("update/status")
-    @ApiOperation(
-            value = "Update status on matching meta data",
-            response = Integer.class)
+    @ApiOperation("Update status on matching meta data")
     Integer updateStatus(UpdateStatusRequest request);
 
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Find matching meta data",
-            response = ResourceGeneration.class)
+    @ApiOperation("Find matching meta data")
     ResultPage<MetaRow> findMetaRow(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @POST
     @Path("getSelectionSummary")
-    @ApiOperation(
-            value = "Get a summary of the selected meta data",
-            response = ResourceGeneration.class)
+    @ApiOperation("Get a summary of the selected meta data")
     SelectionSummary getSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @POST
     @Path("getReprocessSelectionSummary")
-    @ApiOperation(
-            value = "Get a summary of the parent items of the selected meta data",
-            response = ResourceGeneration.class)
+    @ApiOperation("Get a summary of the parent items of the selected meta data")
     SelectionSummary getReprocessSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @GET
     @Path("getTypes")
-    @ApiOperation(
-            value = "Get a list of possible stream types",
-            response = List.class)
+    @ApiOperation("Get a list of possible stream types")
     List<String> getTypes();
 }

@@ -18,6 +18,7 @@ import * as React from "react";
 import { FunctionComponent, useCallback, useState } from "react";
 import { AccountListDialog } from "./AccountListDialog";
 import useAccountManager from "./useAccountManager";
+import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditAccount } from "../EditAccount/EditAccount";
 import { Account } from "../types";
@@ -36,13 +37,7 @@ const initialAccount: Account = {
 const AccountManager: FunctionComponent<{
   onClose: () => void;
 }> = ({ onClose }) => {
-  const {
-    columns,
-    resultPage,
-    remove,
-    request,
-    setRequest,
-  } = useAccountManager();
+  const { resultPage, remove, request, setRequest } = useAccountManager();
   const passwordPolicyConfig = usePasswordPolicy();
   const [editingAccount, setEditingAccount] = useState<Account>();
   const quickFilterProps: QuickFilterProps = {
@@ -67,7 +62,7 @@ const AccountManager: FunctionComponent<{
     },
   };
   const tableProps: TableProps<Account> = {
-    columns: columns,
+    columns: useColumns(),
     data: resultPage.values,
     initialSortBy: request.sortList,
     onChangeSort: useCallback(

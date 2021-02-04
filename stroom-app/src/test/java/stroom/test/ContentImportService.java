@@ -3,6 +3,7 @@ package stroom.test;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;

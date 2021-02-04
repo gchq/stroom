@@ -1,25 +1,46 @@
 package stroom.dropwizard.common;
 
+import stroom.util.ConsoleColour;
 import stroom.util.shared.AutoLogged;
 import stroom.util.shared.RestResource;
 
+import com.google.common.base.Strings;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple4;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Provider;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,12 +64,120 @@ class TestRestResources {
                     .sorted(Comparator.comparing(Class::getName))
                     .collect(Collectors.toList());
 
+            LOGGER.info("Found {} classes to test", classes.size());
+
             return classes.stream()
                     .map(resourceClass ->
                             DynamicTest.dynamicTest(resourceClass.getName(),
                                     () ->
                                             doResourceClassAsserts(resourceClass)));
         }
+    }
+
+    @Disabled // manually run only
+    @Test
+    void listMethods() {
+
+        try (ScanResult result = new ClassGraph()
+                .whitelistPackages("stroom")
+                .enableClassInfo()
+                .ignoreClassVisibility()
+                .enableAnnotationInfo()
+                .scan()) {
+
+            final List<? extends Class<? extends RestResource>> classes = result.getAllClasses()
+                    .stream()
+                    .filter(classInfo -> classInfo.implementsInterface(RestResource.class.getName()))
+                    .map(classInfo -> (Class<? extends RestResource>) classInfo.loadClass())
+                    .sorted(Comparator.comparing(Class::getName))
+                    .collect(Collectors.toList());
+
+            LOGGER.info("Found {} classes to test", classes.size());
+
+            final Map<Tuple2<String, String>, List<Tuple4<String, String, String, String>>> results = classes.stream()
+                    .flatMap(clazz ->
+                            Arrays.stream(clazz.getMethods())
+                    .map(method -> Tuple.of(clazz, method)))
+                    .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._2))
+                    .map(clazzMethod-> Tuple.of(
+                            clazzMethod._2.getName(),
+                            getJaxRsHttpMethod(clazzMethod._2),
+                            getMethodSig(clazzMethod._1, clazzMethod._2),
+                            getJaxRsPath(clazzMethod._2)))
+                    .collect(Collectors.groupingBy(
+                            tuple ->
+                                    Tuple.of(tuple._1, tuple._2),
+                            Collectors.toList()));
+
+            final StringBuilder stringBuilder = new StringBuilder();
+            results.entrySet()
+        .stream()
+        .sorted(Entry.comparingByKey())
+        .forEach(entry -> {
+            final Tuple2<String, String> key = entry.getKey();
+            final List<Tuple4<String, String, String, String>> value = entry.getValue();
+            stringBuilder
+                        .append(key._1)
+                        .append(" (")
+                        .append(ConsoleColour.yellow(key._2))
+                        .append(")\n");
+
+                value.stream()
+                        .sorted()
+                        .forEach(tuple4 -> {
+                            final String path = Strings.padEnd(tuple4._4, 40, ' ');
+                            stringBuilder
+                                    .append("    ")
+                                    .append(ConsoleColour.blue(path))
+                                    .append(" ")
+                                    .append(tuple4._3)
+                                    .append("\n");
+                        });
+            });
+            LOGGER.info("Methods:\n{}", stringBuilder.toString());
+        }
+    }
+
+    private String getMethodSig(final Class<?> clazz,
+                                final Method method) {
+        final String methodeSig = method.getReturnType().getSimpleName() +
+                " " +
+                ConsoleColour.yellow(method.getName()) +
+                "(" +
+                Arrays.stream(method.getParameters())
+                        .map(parameter ->
+                                parameter.getType().getSimpleName())
+                        .collect(Collectors.joining(", ")) +
+                ")";
+
+        return Strings.padEnd(methodeSig, 80, ' ') +
+                " [" +
+                ConsoleColour.cyan(clazz.getSimpleName()) +
+                "]";
+    }
+    private String getJaxRsPath(final Method method) {
+        return Arrays.stream(method.getAnnotations())
+                .filter(anno -> Path.class.equals(anno.annotationType()))
+                .findFirst()
+                .map(annotation -> ((Path) annotation).value())
+                .orElse("/");
+    }
+
+    private String getJaxRsHttpMethod(final Method method) {
+        final Set<Class<? extends Annotation>> httpMethodAnnos = Set.of(
+                GET.class,
+                PUT.class,
+                DELETE.class,
+                HEAD.class,
+                PATCH.class,
+                POST.class,
+                OPTIONS.class);
+
+        return Arrays.stream(method.getAnnotations())
+                .filter(anno -> httpMethodAnnos.contains(anno.annotationType()))
+                .findFirst()
+                .map(annotation -> annotation.annotationType().getSimpleName())
+                .orElseThrow();
     }
 
     private void doResourceClassAsserts(final Class<? extends RestResource> resourceClass) {
@@ -85,8 +214,11 @@ class TestRestResources {
             if (!isInterface) {
                 // AutoLogged is only used on classes, not interfaces
 
+                assertProviders(resourceClass, softAssertions);
+
                 Arrays.stream(resourceClass.getMethods())
                         .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                        .filter(this::hasJaxRsAnnotation)
                         .forEach(method -> {
                             final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
 
@@ -101,6 +233,31 @@ class TestRestResources {
                         .isFalse();
             }
         });
+    }
+
+    private void assertProviders(final Class<? extends RestResource> resourceClass,
+                                 final SoftAssertions softAssertions) {
+        List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
+                .filter(field ->
+                        Modifier.isPrivate(field.getModifiers()) && Modifier.isFinal(field.getModifiers()))
+                .map(Field::getType)
+                .filter(clazz ->
+                        !Provider.class.equals(clazz))
+                .collect(Collectors.toList());
+
+        if (!nonProvidedFields.isEmpty()) {
+            LOGGER.warn("Non provided fields {}", nonProvidedFields);
+            softAssertions.assertThat(nonProvidedFields)
+                    .withFailMessage("Resource implementations/classes must inject all objects " +
+                            "via Providers.")
+                    .isEmpty();
+        }
+    }
+
+    private boolean hasJaxRsAnnotation(final Method method) {
+        return Arrays.stream(method.getAnnotations())
+                .anyMatch(annotation ->
+                        annotation.annotationType().getPackageName().equals("javax.ws.rs"));
     }
 
     private void doSwaggerAnnotationAsserts(final Class<? extends RestResource> resourceClass,
@@ -134,6 +291,7 @@ class TestRestResources {
 
         Arrays.stream(resourceClass.getMethods())
                 .filter(method -> !Modifier.isPrivate(method.getModifiers()))
+                .filter(this::hasJaxRsAnnotation)
                 .forEach(method -> {
 
                     final List<Class<? extends Annotation>> methodAnnotationTypes = Arrays.stream(
@@ -164,17 +322,11 @@ class TestRestResources {
                                             "set in @ApiOperation, e.g. @ApiOperation(value = \"xxx\" " +
                                             "response = Node.class)")
                                     .isPresent();
-                        }
-                        optApiOpResponseClass.ifPresent(apiOpRespClass -> {
-                            softAssertions.assertThat(apiOpRespClass)
-                                    .withFailMessage(() -> "Method " + method.getName() + "(...) response class " +
-                                            apiOpRespClass.getSimpleName() + " must match the method return type " +
-                                            methodReturnClass.getSimpleName())
-                                    .isEqualTo(methodReturnClass);
-                        });
-                        if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
-                            softAssertions.fail("Method " + method.getName() + "(...) does not " +
-                                    "to have response set on @ApiOperation, remove it.");
+                        } else {
+                            if (!Void.class.equals(methodReturnClass) && optApiOpResponseClass.isPresent()) {
+                                softAssertions.fail("Method " + method.getName() + "(...) does not need " +
+                                        "to have response set on @ApiOperation, remove it.");
+                            }
                         }
                     }
                 });

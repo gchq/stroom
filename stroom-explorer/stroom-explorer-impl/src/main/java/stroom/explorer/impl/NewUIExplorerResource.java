@@ -20,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -41,34 +43,39 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Api(tags = "Explorer (v1)")
+@Api(tags = "Explorer (v1) (New UI)")
 @Path("/explorer" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUIExplorerResource implements RestResource {
-    private final ExplorerService explorerService;
-    private final DocRefInfoService docRefInfoService;
-    private final ExplorerTreeModel explorerTreeModel;
-    private final SecurityContext securityContext;
+    private final Provider<ExplorerService> explorerServiceProvider;
+    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<ExplorerTreeModel> explorerTreeModelProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    public NewUIExplorerResource(final ExplorerService explorerService,
-                                 final DocRefInfoService docRefInfoService,
-                                 final ExplorerTreeModel explorerTreeModel,
-                                 final SecurityContext securityContext) {
-        this.explorerService = explorerService;
-        this.docRefInfoService = docRefInfoService;
-        this.explorerTreeModel = explorerTreeModel;
-        this.securityContext = securityContext;
+    public NewUIExplorerResource(final Provider<ExplorerService> explorerServiceProvider,
+                                 final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                                 final Provider<ExplorerTreeModel> explorerTreeModelProvider,
+                                 final Provider<SecurityContext> securityContextProvider) {
+        this.explorerServiceProvider = explorerServiceProvider;
+        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.explorerTreeModelProvider = explorerTreeModelProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @GET
     @Path("/search")
+    @ApiOperation(
+            value = "Search for a subset of the explorer tree",
+            response = DocRef.class,
+            responseContainer = "List")
     public Response search(
             final @QueryParam("searchTerm") String searchTerm,
             final @QueryParam("pageOffset") Long pageOffset,
             final @QueryParam("pageSize") Long pageSize) {
         // For now, just do this every time the whole tree is fetched
+        final ExplorerTreeModel explorerTreeModel = explorerTreeModelProvider.get();
         explorerTreeModel.rebuild();
 
         final TreeModel treeModel = explorerTreeModel.getModel();
@@ -95,8 +102,12 @@ public class NewUIExplorerResource implements RestResource {
 
     @GET
     @Path("/all")
+    @ApiOperation(
+            value = "Get the full explorer tree",
+            response = SimpleDocRefTreeDTO.class)
     public Response getExplorerTree() {
         // For now, just do this every time the whole tree is fetched
+        final ExplorerTreeModel explorerTreeModel = explorerTreeModelProvider.get();
         explorerTreeModel.rebuild();
 
         final TreeModel treeModel = explorerTreeModel.getModel();
@@ -120,9 +131,10 @@ public class NewUIExplorerResource implements RestResource {
 
     @GET
     @Path("/info/{type}/{uuid}")
+    @ApiOperation("Get the document info for a document in the explorer tree.")
     public DocRefInfo getDocInfo(@PathParam("type") final String type,
                                  @PathParam("uuid") final String uuid) {
-        return docRefInfoService.info(DocRef.builder()
+        return docRefInfoServiceProvider.get().info(DocRef.builder()
                 .type(type)
                 .uuid(uuid)
                 .build())
@@ -134,11 +146,16 @@ public class NewUIExplorerResource implements RestResource {
      */
     @GET
     @Path("/docRefTypes")
+    @ApiOperation(
+            value = "Get all document types currently used in the tree.",
+            response = String.class,
+            responseContainer = "List")
     public Response getDocRefTypes() {
+        final ExplorerTreeModel explorerTreeModel = explorerTreeModelProvider.get();
         explorerTreeModel.rebuild();
         final TreeModel treeModel = explorerTreeModel.getModel();
 
-        List<String> docRefTypes = treeModel.values().stream()
+        final List<String> docRefTypes = treeModel.values().stream()
                 .flatMap(List::stream)
                 .map(elementNode -> elementNode == null ? "" : elementNode.getType())
                 .distinct()
@@ -189,8 +206,12 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/create")
+    @ApiOperation(
+            value = "Create a new document in the tree.",
+            response = SimpleDocRefTreeDTO.class)
     public Response createDocument(@ApiParam("op") final CreateOp op) {
-        explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
+        explorerServiceProvider.get()
+                .create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
 
         return getExplorerTree();
     }
@@ -228,8 +249,12 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/copy")
+    @ApiOperation(
+            value = "Copy an item in the tree.",
+            response = SimpleDocRefTreeDTO.class)
     public Response copyDocument(@ApiParam("op") final CopyOp op) {
-        final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+        final BulkActionResult result = explorerServiceProvider.get()
+                .copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
         if (result.getMessage().isEmpty()) {
             return getExplorerTree();
         } else {
@@ -270,8 +295,12 @@ public class NewUIExplorerResource implements RestResource {
 
     @PUT
     @Path("/move")
+    @ApiOperation(
+            value = "Move an item in the tree",
+            response = SimpleDocRefTreeDTO.class)
     public Response moveDocument(final MoveOp op) {
-        final BulkActionResult result = explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+        final BulkActionResult result = explorerServiceProvider.get()
+                .move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
         if (result.getMessage().isEmpty()) {
             return getExplorerTree();
         } else {
@@ -304,16 +333,24 @@ public class NewUIExplorerResource implements RestResource {
 
     @PUT
     @Path("/rename")
+    @ApiOperation(
+            value = "Rename an item in the tree",
+            response = SimpleDocRefTreeDTO.class)
     public Response renameDocument(final RenameOp renameOp) {
-        final DocRef result = explorerService.rename(renameOp.docRef, renameOp.name);
+        final DocRef result = explorerServiceProvider.get()
+                .rename(renameOp.docRef, renameOp.name);
 
         return getExplorerTree();
     }
 
     @DELETE
     @Path("/delete")
+    @ApiOperation(
+            value = "Delete an item in the tree",
+            response = SimpleDocRefTreeDTO.class)
     public Response deleteDocument(final List<DocRef> docRefs) {
-        final BulkActionResult result = explorerService.delete(docRefs);
+        final BulkActionResult result = explorerServiceProvider.get()
+                .delete(docRefs);
         if (result.getMessage().isEmpty()) {
             return getExplorerTree();
         } else {
@@ -360,7 +397,7 @@ public class NewUIExplorerResource implements RestResource {
 
         final String uuid = explorerNode.getDocRef().getUuid();
         for (final String permission : requiredPermissions) {
-            if (!securityContext.hasDocumentPermission(uuid, permission)) {
+            if (!securityContextProvider.get().hasDocumentPermission(uuid, permission)) {
                 return false;
             }
         }

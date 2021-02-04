@@ -44,22 +44,16 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("download")
-    @ApiOperation(
-            value = "Download matching data",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Download matching data")
     ResourceGeneration download(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
-    @ApiOperation(
-            value = "Upload data",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Upload data")
     ResourceKey upload(@ApiParam("request") UploadDataRequest request);
 
     @GET
     @Path("info/{id}")
-    @ApiOperation(
-            value = "Find full info about a data item",
-            response = DataInfoSection.class)
+    @ApiOperation(value = "Find full info about a data item")
     List<DataInfoSection> info(@PathParam("id") long id);
 }
