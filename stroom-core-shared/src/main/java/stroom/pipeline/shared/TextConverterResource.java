@@ -40,15 +40,11 @@ public interface TextConverterResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a text converter doc",
-            response = TextConverterDoc.class)
+    @ApiOperation("Get a text converter doc")
     TextConverterDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a text converter doc",
-            response = TextConverterDoc.class)
+    @ApiOperation("Update a text converter doc")
     TextConverterDoc update(@ApiParam("xslt") TextConverterDoc xslt);
 }

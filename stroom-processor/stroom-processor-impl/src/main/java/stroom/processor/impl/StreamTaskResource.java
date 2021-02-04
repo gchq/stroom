@@ -73,9 +73,7 @@ public class StreamTaskResource implements RestResource {
 
     @PATCH
     @Path("/{filterId}")
-    public Response enable(
-            @PathParam("filterId") int filterId,
-            StreamTaskPatch patch) {
+    public Response enable(@PathParam("filterId") final int filterId, final StreamTaskPatch patch) {
 
         return processorFilterService.fetch(filterId)
                 .map(processorFilter -> {
