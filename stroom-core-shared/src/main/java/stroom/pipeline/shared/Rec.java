@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class Record {
+public class Rec {
     @JsonProperty
     private long streamId;
     @JsonProperty
     private long recordNo;
 
     @JsonCreator
-    public Record(@JsonProperty("streamId") final long streamId,
-                  @JsonProperty("recordNo") final long recordNo) {
+    public Rec(@JsonProperty("streamId") final long streamId,
+               @JsonProperty("recordNo") final long recordNo) {
         this.streamId = streamId;
         this.recordNo = recordNo;
     }

@@ -44,7 +44,11 @@ task removeYarnBuild {
     }
 }
 
-task yarnBuild(dependsOn: removeYarnBuild) {
+task yarnBuild {
+    dependsOn removeYarnBuild
+    // Ensure swagger output is created first as we use it to create the typescript API for the UI.
+    dependsOn ":stroom-app:generateSwaggerDocumentation"
+
     doLast {
         exec {
             executable "./build.sh"
