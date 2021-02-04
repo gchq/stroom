@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.ReadWithDocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -38,12 +39,13 @@ import javax.ws.rs.core.MediaType;
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource, DirectRestService {
+public interface IndexResource extends RestResource, DirectRestService, ReadWithDocRef<IndexDoc> {
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
+    @Override
     @POST
     @Path("/read")
     @ApiOperation("Get an index doc")

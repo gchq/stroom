@@ -18,6 +18,7 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.TokenException;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ReadWithIntegerId;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -35,6 +36,7 @@ import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -56,6 +58,9 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Context
     private ResourceInfo resourceInfo;
+
+    @Context
+    private ResourceContext resourceContext;
 
 
     @Inject
@@ -141,7 +146,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceInfo, context);
+        ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
         if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())){
             if (context.hasEntity()) {

@@ -20,19 +20,26 @@ import stroom.util.shared.AutoLogged.OperationType;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
 public class ContainerResourceInfo {
+    private final ResourceContext resourceContext;
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
 
-    public ContainerResourceInfo(final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
+    public ContainerResourceInfo(final ResourceContext resourceContext, final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
+        this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
         this.operationType = findOperationType(getMethod(), getResourceClass(), requestContext.getMethod());
+    }
+
+    public Object getResource() {
+        return resourceContext.getResource(getResourceClass());
     }
 
     public ContainerRequestContext getRequestContext() {
