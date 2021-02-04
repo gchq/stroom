@@ -76,7 +76,7 @@ public class ActivityServiceImpl implements ActivityService {
         return securityContext.secureResult(() -> {
             final Activity result = dao.fetch(id).orElseThrow(() ->
                     new EntityServiceException("Activity not found with id=" + id));
-            if (!result.getUserId().equals(securityContext.getUserId())) {
+            if (!securityContext.isProcessingUser() && !result.getUserId().equals(securityContext.getUserId())) {
                 throw new EntityServiceException("Attempt to read another persons activity");
             }
 

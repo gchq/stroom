@@ -20,25 +20,31 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.shared.AutoLogged;
+import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import static stroom.util.shared.AutoLogged.OperationType.UNLOGGED;
+
+@AutoLogged(UNLOGGED)
 class ClusterLockResourceImpl implements ClusterLockResource {
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final ClusterLockClusterHandler clusterLockClusterHandler;
+    private final Provider<NodeService> nodeService;
+    private final Provider<NodeInfo> nodeInfo;
+    private final Provider<WebTargetFactory> webTargetFactory;
+    private final Provider<ClusterLockClusterHandler> clusterLockClusterHandler;
 
     @Inject
-    ClusterLockResourceImpl(final NodeService nodeService,
-                            final NodeInfo nodeInfo,
-                            final WebTargetFactory webTargetFactory,
-                            final ClusterLockClusterHandler clusterLockClusterHandler) {
+    ClusterLockResourceImpl(final Provider<NodeService> nodeService,
+                            final Provider<NodeInfo> nodeInfo,
+                            final Provider<WebTargetFactory> webTargetFactory,
+                            final Provider<ClusterLockClusterHandler> clusterLockClusterHandler) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
@@ -48,8 +54,8 @@ class ClusterLockResourceImpl implements ClusterLockResource {
     @Override
     public Boolean tryLock(final String nodeName, final ClusterLockKey key) {
         // If this is the node that was contacted then call the handler.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return clusterLockClusterHandler.tryLock(key);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+            return clusterLockClusterHandler.get().tryLock(key);
         }
         return executeRemotely(ClusterLockResource.TRY_PATH_PART, nodeName, key);
     }
@@ -57,8 +63,8 @@ class ClusterLockResourceImpl implements ClusterLockResource {
     @Override
     public Boolean releaseLock(final String nodeName, final ClusterLockKey key) {
         // If this is the node that was contacted then call the handler.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return clusterLockClusterHandler.release(key);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+            return clusterLockClusterHandler.get().release(key);
         }
         return executeRemotely(ClusterLockResource.RELEASE_PATH_PART, nodeName, key);
     }
@@ -66,21 +72,21 @@ class ClusterLockResourceImpl implements ClusterLockResource {
     @Override
     public Boolean keepLockAlive(final String nodeName, final ClusterLockKey key) {
         // If this is the node that was contacted then call the handler.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            return clusterLockClusterHandler.keepAlive(key);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
+            return clusterLockClusterHandler.get().keepAlive(key);
         }
         return executeRemotely(ClusterLockResource.KEEP_ALIVE_PATH_PART, nodeName, key);
     }
 
     private Boolean executeRemotely(final String subPath, final String nodeName, final ClusterLockKey key) {
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 ClusterLockResource.BASE_PATH,
                 subPath,
                 nodeName);
 
         try {
-            final Response response = webTargetFactory
+            final Response response = webTargetFactory.get()
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
                     .put(Entity.json(key));

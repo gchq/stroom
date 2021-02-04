@@ -44,15 +44,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
-    private final UiConfig uiConfig;
-    private final UriFactory uriFactory;
+    private final Provider<UiConfig> uiConfig;
+    private final Provider<UriFactory> uriFactory;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
-                             final UiConfig uiConfig,
-                             final UriFactory uriFactory) {
+                             final Provider<UiConfig> uiConfig,
+                             final Provider<UriFactory> uriFactory) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -183,12 +183,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         // Temporary code to fix url paths.
         if (this.uriFactory != null) {
             final UrlConfig urlConfig = new UrlConfig(
-                    this.uriFactory.uiUri(AuthenticationService.USERS_URL_PATH).toString(),
-                    this.uriFactory.uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
-                    this.uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
-            uiConfig.setUrl(urlConfig);
+                    this.uriFactory.get().uiUri(AuthenticationService.USERS_URL_PATH).toString(),
+                    this.uriFactory.get().uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
+                    this.uriFactory.get().uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
+            uiConfig.get().setUrl(urlConfig);
         }
 
-        return uiConfig;
+        return uiConfig.get();
     }
 }

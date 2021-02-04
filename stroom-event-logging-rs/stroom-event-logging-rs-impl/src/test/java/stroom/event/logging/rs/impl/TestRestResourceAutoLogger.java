@@ -384,7 +384,7 @@ public class TestRestResourceAutoLogger {
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
 
-        filter = new RestResourceAutoLoggerImpl(requestEventLog, config, resourceInfo, request);
+        filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog, config, resourceInfo, request);
     }
 
     @AfterEach
