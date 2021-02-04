@@ -239,7 +239,9 @@ class TestRestResources {
                                  final SoftAssertions softAssertions) {
         List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field ->
-                        Modifier.isPrivate(field.getModifiers()) && Modifier.isFinal(field.getModifiers()))
+                        Modifier.isPrivate(field.getModifiers())
+                                && Modifier.isFinal(field.getModifiers())
+                                && !Modifier.isStatic(field.getModifiers()))
                 .map(Field::getType)
                 .filter(clazz ->
                         !Provider.class.equals(clazz))

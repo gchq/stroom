@@ -42,24 +42,22 @@ public interface XsltResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get an xslt doc",
-            response = XsltDoc.class)
+    @ApiOperation("Fetch an xslt doc by its doc ref")
     XsltDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update an xslt doc",
-            response = XsltDoc.class)
+    @ApiOperation("Update an xslt doc")
     XsltDoc update(XsltDoc xslt);
 
     @GET
     @Path("/{xsltId}")
+    @ApiOperation("Fetch an xslt doc by its UUID")
     XsltDoc fetch(@PathParam("xsltId") final String xsltId);
 
     @POST
     @Path("/{xsltId}")
+    @ApiOperation("Update an xslt doc")
     void save(@PathParam("xsltId") final String xsltId,
               @ApiParam("xsltDto") final XsltDTO xsltDto);
 }

@@ -15,8 +15,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import event.logging.Banner;
-import event.logging.ComplexLoggedOutcome;
-import event.logging.DeleteEventAction;
 import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -41,16 +41,12 @@ public interface ViewDataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("fetch")
-    @ApiOperation(
-            value = "Fetch matching data",
-            response = AbstractFetchDataResult.class)
+    @ApiOperation("Fetch matching data")
     AbstractFetchDataResult fetch(@ApiParam("request") FetchDataRequest request);
 
     @GET
     @Path("listChildTypes")
-    @ApiOperation(
-            value = "List child types for a stream",
-            response = AbstractFetchDataResult.class)
+    @ApiOperation("List child types for a stream")
     Set<String> getChildStreamTypes(@QueryParam("id") final long id,
                                     @QueryParam("partNo") final long partNo);
 }
