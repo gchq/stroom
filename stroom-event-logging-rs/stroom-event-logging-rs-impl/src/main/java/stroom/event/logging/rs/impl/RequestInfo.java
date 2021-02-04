@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
@@ -41,19 +42,21 @@ class RequestInfo {
     private final Object requestObj;
     private final Object beforeCallObj;
 
-    public RequestInfo(final ContainerResourceInfo containerResourceInfo) {
+    public RequestInfo(final SecurityContext securityContext, final ContainerResourceInfo containerResourceInfo) {
         this.containerResourceInfo = containerResourceInfo;
         this.requestObj = findRequestObj();
-        this.beforeCallObj = findBeforeCallObj(containerResourceInfo.getResource(), requestObj);
+        this.beforeCallObj = securityContext.asProcessingUserResult
+                (()->findBeforeCallObj(containerResourceInfo.getResource(), requestObj));
     }
 
-    public RequestInfo(final ContainerResourceInfo containerResourceInfo, Object requestObj) {
+    public RequestInfo(final SecurityContext securityContext, final ContainerResourceInfo containerResourceInfo, Object requestObj) {
         this.containerResourceInfo = containerResourceInfo;
         if (requestObj == null){
             requestObj = findRequestObj();
         }
         this.requestObj = requestObj;
-        this.beforeCallObj = findBeforeCallObj(containerResourceInfo.getResource(), requestObj);
+        this.beforeCallObj = securityContext.asProcessingUserResult
+                (()->findBeforeCallObj(containerResourceInfo.getResource(), this.requestObj));
     }
 
     public Object getRequestObj() {

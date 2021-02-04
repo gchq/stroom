@@ -16,6 +16,7 @@
 package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.TokenException;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ReadWithIntegerId;
@@ -52,6 +53,8 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
     private final RequestLoggingConfig config;
+    private final SecurityContext securityContext;
+
 
     @Context
     private HttpServletRequest request;
@@ -64,15 +67,19 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
 
     @Inject
-    RestResourceAutoLoggerImpl(RequestEventLog requestEventLog, RequestLoggingConfig config) {
+    RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
+                               final RequestLoggingConfig config) {
+        this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.objectMapper = createObjectMapper();
     }
 
-    RestResourceAutoLoggerImpl(RequestEventLog requestEventLog, RequestLoggingConfig config,
-                               ResourceInfo resourceInfo,
-                               HttpServletRequest request) {
+    RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
+                               final RequestLoggingConfig config,
+                               final ResourceInfo resourceInfo,
+                               final HttpServletRequest request) {
+        this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.resourceInfo = resourceInfo;
@@ -154,9 +161,9 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                         objectMapper, MessageUtils.getCharset(context.getMediaType()));
                 context.setEntityStream(stream);
 
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo, stream.getRequestEntity()));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(securityContext, containerResourceInfo, stream.getRequestEntity()));
             } else {
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(securityContext, containerResourceInfo));
             }
         }
     }
