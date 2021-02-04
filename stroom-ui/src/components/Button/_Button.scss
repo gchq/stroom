@@ -10,6 +10,15 @@
 //  @include focus-ring($themes, "button-default__color")
 //}
 
+:root {
+  --color-btn-text: #24292e;
+  --color-btn-bg: #fafbfc;
+  --color-btn-border: rgba(27, 31, 35, 0.15);
+  --color-btn-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --color-btn-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --color-btn-hover-bg: #f3f4f6;
+  --color-btn-hover-border: rgba(27, 31, 35, 0.15);
+}
 
 ////////////////////
 // Inner elements //
@@ -159,7 +168,7 @@
 
   //border-color: var(--button-default__color);
   outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button-default__color),.6);
+  //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button-default__color),.6);
   //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button-default__color),.6);
 
   border-color: var(--focus-border);
@@ -173,7 +182,7 @@
      show default focus styles */
 
   //border-color: var(--color-btn-border);
-  outline: none;
+  outline: 0;
   box-shadow: none;
 
   //border-color: #2196f3;

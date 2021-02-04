@@ -99,6 +99,7 @@ export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> 
 
   const controlClass = [
     "form-control",
+    "allow-focus",
     "hide-background-image length-indicator-padding",
     touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
