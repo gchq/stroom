@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1414** : A User Id can no longer be changed once a user is created. 
+
 * Issue **#1862** : Email and name fields are no longer required when creating users.
 
 * Issue **#1765** : Added confirmation dialog when deleting users and API keys.

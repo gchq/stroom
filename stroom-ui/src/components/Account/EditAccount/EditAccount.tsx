@@ -79,6 +79,7 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
             label="User Id"
             placeholder="Enter A User Id"
             autoFocus={true}
+            disabled={values.id !== undefined}
             autoComplete="user-id"
             formikProps={formikProps}
           />
