@@ -58,6 +58,8 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.shared.AutoLogged;
+import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -87,63 +89,64 @@ import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@AutoLogged
 class DashboardResourceImpl implements DashboardResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
-    private final DashboardStore dashboardStore;
-    private final StoredQueryService queryService;
-    private final DocumentResourceHelper documentResourceHelper;
-    private final SearchRequestMapper searchRequestMapper;
-    private final ResourceStore resourceStore;
-    private final SearchEventLog searchEventLog;
-    private final ActiveQueriesManager activeQueriesManager;
-    private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
-    private final SecurityContext securityContext;
+    private final Provider<DashboardStore> dashboardStoreProvider;
+    private final Provider<StoredQueryService> storedQueryServiceProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<SearchRequestMapper> searchRequestMapperProvider;
+    private final Provider<ResourceStore> resourceStoreProvider;
+    private final Provider<SearchEventLog> searchEventLogProvider;
+    private final Provider<ActiveQueriesManager> activeQueriesManagerProvider;
+    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
+    private final Provider<SecurityContext> securityContextProvider;
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
-    private final TaskContextFactory taskContextFactory;
+    private final Provider<TaskContextFactory> taskContextFactoryProvider;
     private final Provider<FunctionService> functionServiceProvider;
 
     @Inject
-    DashboardResourceImpl(final DashboardStore dashboardStore,
-                          final StoredQueryService queryService,
-                          final DocumentResourceHelper documentResourceHelper,
-                          final SearchRequestMapper searchRequestMapper,
-                          final ResourceStore resourceStore,
-                          final SearchEventLog searchEventLog,
-                          final ActiveQueriesManager activeQueriesManager,
-                          final DataSourceProviderRegistry searchDataSourceProviderRegistry,
-                          final SecurityContext securityContext,
+    DashboardResourceImpl(final Provider<DashboardStore> dashboardStoreProvider,
+                          final Provider<StoredQueryService> storedQueryServiceProvider,
+                          final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                          final Provider<SearchRequestMapper> searchRequestMapperProvider,
+                          final Provider<ResourceStore> resourceStoreProvider,
+                          final Provider<SearchEventLog> searchEventLogProvider,
+                          final Provider<ActiveQueriesManager> activeQueriesManagerProvider,
+                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
+                          final Provider<SecurityContext> securityContextProvider,
                           final HttpServletRequestHolder httpServletRequestHolder,
                           final ExecutorProvider executorProvider,
-                          final TaskContextFactory taskContextFactory,
+                          final Provider<TaskContextFactory> taskContextFactoryProvider,
                           final Provider<FunctionService> functionServiceProvider) {
-        this.dashboardStore = dashboardStore;
-        this.queryService = queryService;
-        this.documentResourceHelper = documentResourceHelper;
-        this.searchRequestMapper = searchRequestMapper;
-        this.resourceStore = resourceStore;
-        this.searchEventLog = searchEventLog;
-        this.activeQueriesManager = activeQueriesManager;
-        this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
-        this.securityContext = securityContext;
+        this.dashboardStoreProvider = dashboardStoreProvider;
+        this.storedQueryServiceProvider = storedQueryServiceProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.searchRequestMapperProvider = searchRequestMapperProvider;
+        this.resourceStoreProvider = resourceStoreProvider;
+        this.searchEventLogProvider = searchEventLogProvider;
+        this.activeQueriesManagerProvider = activeQueriesManagerProvider;
+        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
+        this.securityContextProvider = securityContextProvider;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContextFactoryProvider = taskContextFactoryProvider;
         this.functionServiceProvider = functionServiceProvider;
     }
 
     @Override
     public DashboardDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(dashboardStore, docRef);
+        return documentResourceHelperProvider.get().read(dashboardStoreProvider.get(), docRef);
     }
 
     @Override
     public DashboardDoc update(final DashboardDoc doc) {
-        return documentResourceHelper.update(dashboardStore, doc);
+        return documentResourceHelperProvider.get().update(dashboardStoreProvider.get(), doc);
     }
 
     @Override
@@ -164,7 +167,7 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     public ResourceGeneration downloadQuery(final DownloadQueryRequest request) {
-        return securityContext.secureResult(() -> {
+        return securityContextProvider.get().secureResult(() -> {
             try {
                 if (request.getSearchRequest() == null) {
                     throw new EntityServiceException("Query is empty");
@@ -203,7 +206,7 @@ class DashboardResourceImpl implements DashboardResource {
                 builder.componentResultRequests(componentResultRequests);
 
                 // Convert our internal model to the model used by the api
-                stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
+                stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapperProvider.get().mapRequest(
                         request.getDashboardQueryKey(),
                         builder.build());
 
@@ -217,8 +220,8 @@ class DashboardResourceImpl implements DashboardResource {
                 fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
                 fileName = fileName + ".json";
 
-                final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
-                final Path outputFile = resourceStore.getTempFile(resourceKey);
+                final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile(fileName);
+                final Path outputFile = resourceStoreProvider.get().getTempFile(resourceKey);
 
                 JsonUtil.writeValue(outputFile, apiSearchRequest);
 
@@ -231,7 +234,7 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
+        return securityContextProvider.get().secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
             final stroom.dashboard.shared.SearchRequest searchRequest = request.getSearchRequest();
@@ -239,7 +242,7 @@ class DashboardResourceImpl implements DashboardResource {
             final Search search = searchRequest.getSearch();
 
             try {
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
+                final ActiveQueries activeQueries = activeQueriesManagerProvider.get().get(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId());
 
                 // Make sure we have active queries for all current UI queries.
                 // Note: This also ensures that the active query cache is kept alive
@@ -256,12 +259,12 @@ class DashboardResourceImpl implements DashboardResource {
                 }
 
                 // Get the data source provider for this query.
-                final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+                final DataSourceProvider dataSourceProvider = dataSourceProviderRegistryProvider.get()
                         .getDataSourceProvider(dataSourceRef)
                         .orElseThrow(() ->
                                 new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
-                stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+                stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapperProvider.get().mapRequest(queryKey, searchRequest);
                 stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
 
                 if (searchResponse == null || searchResponse.getResults() == null) {
@@ -292,6 +295,7 @@ class DashboardResourceImpl implements DashboardResource {
                 fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
                 fileName = fileName + "." + request.getFileType().getExtension();
 
+                ResourceStore resourceStore = resourceStoreProvider.get();
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
@@ -313,9 +317,9 @@ class DashboardResourceImpl implements DashboardResource {
 
                 download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent());
 
-                searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                searchEventLogProvider.get().downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
             } catch (final RuntimeException e) {
-                searchEventLog.downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                searchEventLogProvider.get().downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
                 throw EntityServiceExceptionUtil.create(e);
             }
 
@@ -351,14 +355,15 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public Set<SearchResponse> poll(final SearchBusPollRequest request) {
-        return securityContext.secureResult(() -> {
+        return securityContextProvider.get().secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            return securityContext.useAsReadResult(() -> {
+            return securityContextProvider.get().useAsReadResult(() -> {
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(
                             "Only the following search queries should be active for session '");
-                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(), request.getApplicationInstanceId()));
+                    sb.append(activeQueriesManagerProvider.get().createKey(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId()));
                     sb.append("'\n");
                     for (final SearchRequest searchRequest : request.getSearchRequests()) {
                         sb.append("\t");
@@ -367,7 +372,7 @@ class DashboardResourceImpl implements DashboardResource {
                     LOGGER.debug(sb.toString());
                 }
 
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
+                final ActiveQueries activeQueries = activeQueriesManagerProvider.get().get(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId());
                 final Set<SearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 //            // Fix query keys so they have session and user info.
@@ -387,7 +392,7 @@ class DashboardResourceImpl implements DashboardResource {
                 final Executor executor = executorProvider.get();
                 final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final SearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                    Runnable runnable = taskContextFactoryProvider.get().context("Search", taskContext -> {
                         try {
                             httpServletRequestHolder.set(httpServletRequest);
                             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
@@ -455,7 +460,7 @@ class DashboardResourceImpl implements DashboardResource {
             }
 
             // Get the data source provider for this query.
-            final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+            final DataSourceProvider dataSourceProvider = dataSourceProviderRegistryProvider.get()
                     .getDataSourceProvider(dataSourceRef)
                     .orElseThrow(() ->
                             new RuntimeException(
@@ -468,24 +473,24 @@ class DashboardResourceImpl implements DashboardResource {
             } else {
                 params = new ArrayList<>();
             }
-            params.add(new Param("currentUser()", securityContext.getUserId()));
+            params.add(new Param("currentUser()", securityContextProvider.get().getUserId()));
             search = search.copy().params(params).build();
             updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
 
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
+            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapperProvider.get().mapRequest(queryKey, updatedSearchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
             if (newSearch) {
                 // Log this search request for the current user.
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
+                searchEventLogProvider.get().search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
             }
 
         } catch (final RuntimeException e) {
             LOGGER.debug("Error processing search {}", search, e);
 
             if (newSearch) {
-                searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                searchEventLogProvider.get().search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
             final String errors = e.getMessage() != null
@@ -512,7 +517,7 @@ class DashboardResourceImpl implements DashboardResource {
                 storedQuery.setDashboardUuid(queryKey.getDashboardUuid());
                 storedQuery.setComponentId(queryKey.getComponentId());
                 storedQuery.setQuery(query);
-                queryService.create(storedQuery);
+                storedQueryServiceProvider.get().create(storedQuery);
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -521,6 +526,7 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public List<String> fetchTimeZones() {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         ids.sort(Comparator.naturalOrder());
@@ -528,6 +534,7 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public List<FunctionSignature> fetchFunctions() {
         return functionServiceProvider.get()
                 .getSignatures();

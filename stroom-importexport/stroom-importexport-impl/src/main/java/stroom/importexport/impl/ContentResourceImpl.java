@@ -25,6 +25,8 @@ import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.AutoLogged;
+import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
@@ -44,6 +46,7 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -51,33 +54,35 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@AutoLogged
 class ContentResourceImpl implements ContentResource {
-    private final ImportExportService importExportService;
-    private final StroomEventLoggingService stroomEventLoggingService;
-    private final ResourceStore resourceStore;
-    private final DependencyService dependencyService;
-    private final SecurityContext securityContext;
+    private final Provider<ImportExportService> importExportServiceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<ResourceStore> resourceStoreProvider;
+    private final Provider<DependencyService> dependencyServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    ContentResourceImpl(final ImportExportService importExportService,
-                        final StroomEventLoggingService stroomEventLoggingService,
-                        final ResourceStore resourceStore,
-                        final DependencyService dependencyService,
-                        final SecurityContext securityContext) {
-        this.importExportService = importExportService;
-        this.stroomEventLoggingService = stroomEventLoggingService;
-        this.resourceStore = resourceStore;
-        this.dependencyService = dependencyService;
-        this.securityContext = securityContext;
+    ContentResourceImpl(final Provider<ImportExportService> importExportServiceProvider,
+                        final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                        final Provider<ResourceStore> resourceStoreProvider,
+                        final Provider<DependencyService> dependencyServiceProvider,
+                        final Provider<SecurityContext> securityContextProvider) {
+        this.importExportServiceProvider = importExportServiceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.resourceStoreProvider = resourceStoreProvider;
+        this.dependencyServiceProvider = dependencyServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceKey importContent(final ImportConfigRequest request) {
         if (request.getConfirmList() == null || request.getConfirmList().isEmpty()) {
             throw new BadRequestException("Missing confirm list");
         }
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "ImportConfig",
                 "Importing Configuration",
                 buildImportEventAction(request),
@@ -108,7 +113,8 @@ class ContentResourceImpl implements ContentResource {
     }
 
     private ResourceKey performImport(final ImportConfigRequest request) {
-        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+        return securityContextProvider.get().secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+            ResourceStore resourceStore = resourceStoreProvider.get();
             // Import file.
             final Path file = resourceStore.getTempFile(request.getResourceKey());
 
@@ -123,7 +129,7 @@ class ContentResourceImpl implements ContentResource {
                 return request.getResourceKey();
             }
 
-            importExportService.performImportWithConfirmation(file, request.getConfirmList());
+            importExportServiceProvider.get().performImportWithConfirmation(file, request.getConfirmList());
 
             // Delete the import if it was successful
             resourceStore.deleteTempFile(request.getResourceKey());
@@ -133,24 +139,26 @@ class ContentResourceImpl implements ContentResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.UNKNOWN, verb = "Confirming what to import")
     public List<ImportState> confirmImport(final ResourceKey resourceKey) {
-        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+        return securityContextProvider.get().secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             try {
-                final Path tempPath = resourceStore.getTempFile(resourceKey);
-                return importExportService.createImportConfirmationList(tempPath);
+                final Path tempPath = resourceStoreProvider.get().getTempFile(resourceKey);
+                return importExportServiceProvider.get().createImportConfirmationList(tempPath);
             } catch (final RuntimeException rex) {
                 // In case of error delete the temp file
-                resourceStore.deleteTempFile(resourceKey);
+                resourceStoreProvider.get().deleteTempFile(resourceKey);
                 throw rex;
             }
         });
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public ResourceGeneration exportContent(final DocRefs docRefs) {
         Objects.requireNonNull(docRefs);
 
-        return stroomEventLoggingService.loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedResult(
                 "ExportConfig",
                 "Exporting Configuration",
                 ExportEventAction.builder()
@@ -159,21 +167,22 @@ class ContentResourceImpl implements ContentResource {
                                 .build())
                         .build(),
                 () ->
-                        securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
+                        securityContextProvider.get().secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
                             final List<Message> messageList = new ArrayList<>();
-
+                            ResourceStore resourceStore = resourceStoreProvider.get();
                             final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
                             final Path file = resourceStore.getTempFile(guiKey);
-                            importExportService.exportConfig(docRefs.getDocRefs(), file, messageList);
+                            importExportServiceProvider.get().exportConfig(docRefs.getDocRefs(), file, messageList);
 
                             return new ResourceGeneration(guiKey, messageList);
                         }));
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return securityContext.secureResult(() ->
-                dependencyService.getDependencies(criteria));
+        return securityContextProvider.get().secureResult(() ->
+                dependencyServiceProvider.get().getDependencies(criteria));
     }
 
     private Criteria buildCriteria(final DocRefs docRefs) {
