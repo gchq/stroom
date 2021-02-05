@@ -61,6 +61,7 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
           value={values.userId}
           autoComplete="username"
           hidden={true}
+          readOnly={true}
         />
         <Form.Row>
           <NewPasswordFormField
