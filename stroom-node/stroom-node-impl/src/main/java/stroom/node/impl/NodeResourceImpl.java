@@ -154,7 +154,7 @@ class NodeResourceImpl implements NodeResource {
         try {
             final long now = System.currentTimeMillis();
 
-            clusterNodeInfo = nodeServiceProvider.get().remoteRestCall(
+            clusterNodeInfo = nodeServiceProvider.get().remoteRestResult(
                     nodeName,
                     ClusterNodeInfo.class,
                     path,
@@ -186,7 +186,7 @@ class NodeResourceImpl implements NodeResource {
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
-        final Long ping = nodeServiceProvider.get().remoteRestCall(
+        final Long ping = nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 Long.class,
                 ResourcePaths.buildAuthenticatedApiPath(

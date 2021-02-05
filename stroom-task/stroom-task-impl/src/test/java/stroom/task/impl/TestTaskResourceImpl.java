@@ -1,10 +1,5 @@
 package stroom.task.impl;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -19,6 +14,12 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.List;
@@ -278,12 +279,9 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new TaskResourceImpl(
-                taskManager,
-                sessionIdProvider,
-                nodeService,
-                nodeInfo,
-                webTargetFactory(),
-                documentEventLog);
+                () -> taskManager,
+                () -> sessionIdProvider,
+                () -> nodeService);
     }
 
     private TaskProgress buildTaskProgress(final String taskId, final String nodeName) {

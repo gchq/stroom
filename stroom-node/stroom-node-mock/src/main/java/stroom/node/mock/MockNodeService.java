@@ -59,11 +59,11 @@ public class MockNodeService implements NodeService {
     }
 
     @Override
-    public <T_RESP> T_RESP remoteRestCall(final String nodeName,
-                                          final String fullPath,
-                                          final Supplier<T_RESP> localSupplier,
-                                          final Function<Builder, Response> responseBuilderFunc,
-                                          final Function<Response, T_RESP> responseMapper) {
+    public <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                            final String fullPath,
+                                            final Supplier<T_RESP> localSupplier,
+                                            final Function<Builder, Response> responseBuilderFunc,
+                                            final Function<Response, T_RESP> responseMapper) {
         return localSupplier.get();
     }
 }
