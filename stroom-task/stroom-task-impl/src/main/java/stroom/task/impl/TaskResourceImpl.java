@@ -27,6 +27,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.AutoLogged;
+import stroom.util.shared.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -98,6 +99,9 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
+    @AutoLogged(
+            value = OperationType.PROCESS,
+            verb = "Terminating")
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
 
         final String path = ResourcePaths.buildAuthenticatedApiPath(

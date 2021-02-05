@@ -340,7 +340,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);
-                    configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
+                    configProperty.setVersion(configProperty.getVersion() == null
+                            ? 1
+                            : configProperty.getVersion() + 1);
                     return configProperty;
                 });
 

@@ -68,7 +68,8 @@ class TestRestResources {
 
             return classes.stream()
                     .map(resourceClass ->
-                            DynamicTest.dynamicTest(resourceClass.getName(),
+                            DynamicTest.dynamicTest(
+                                    resourceClass.getSimpleName() + " (" + resourceClass.getPackageName() + ")",
                                     () ->
                                             doResourceClassAsserts(resourceClass)));
         }
@@ -177,7 +178,8 @@ class TestRestResources {
                 .filter(anno -> httpMethodAnnos.contains(anno.annotationType()))
                 .findFirst()
                 .map(annotation -> annotation.annotationType().getSimpleName())
-                .orElseThrow();
+                .orElse("???");
+//                .orElseThrow(() -> new RuntimeException("Method " + method + "has no jaxrs anno, e.g. GET/PUT/etc."));
     }
 
     private void doResourceClassAsserts(final Class<? extends RestResource> resourceClass) {
