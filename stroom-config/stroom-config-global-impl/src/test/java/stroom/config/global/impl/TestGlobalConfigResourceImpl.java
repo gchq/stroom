@@ -370,7 +370,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> stroomEventLoggingService,
                 () -> globalConfigService,
                 () -> nodeService,
-                new UiConfig(),
+                UiConfig::new,
                 null);
     }
 }
