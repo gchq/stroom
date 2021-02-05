@@ -49,7 +49,8 @@ public class RestUtil {
         if (object == null) {
             throw new BadRequestException("Object is null");
         }
-        if (object.getId() != id) {
+        // Allow for the object not having an id in which case the int id wins
+        if (object.getId() != null && object.getId() != id) {
             throw new BadRequestException("Id " + id + " doesn't match id in object " + object.getId());
         }
     }
@@ -61,7 +62,8 @@ public class RestUtil {
         if (uuid == null) {
             throw new BadRequestException("uuid is null");
         }
-        if (object.getUuid().equals(uuid)) {
+        // Allow for the object not having a uuid in which case the string uuid wins
+        if (object.getUuid() != null && !object.getUuid().equals(uuid)) {
             throw new BadRequestException("UUID " + uuid + " doesn't match UUID in object " + object.getUuid());
         }
     }

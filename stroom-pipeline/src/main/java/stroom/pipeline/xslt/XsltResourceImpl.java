@@ -21,51 +21,49 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.XsltDTO;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
-import stroom.security.api.SecurityContext;
+import stroom.util.rest.RestUtil;
+import stroom.util.shared.AutoLogged;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged
 class XsltResourceImpl implements XsltResource {
-    private final XsltStore xsltStore;
-    private final DocumentResourceHelper documentResourceHelper;
-    private final SecurityContext securityContext;
+    private final Provider<XsltStore> xsltStoreProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    XsltResourceImpl(final XsltStore xsltStore,
-                     final DocumentResourceHelper documentResourceHelper,
-                     final SecurityContext securityContext) {
-        this.xsltStore = xsltStore;
-        this.documentResourceHelper = documentResourceHelper;
-        this.securityContext = securityContext;
-    }
-
-    @Override
-    public XsltDoc read(final DocRef docRef) {
-        return documentResourceHelper.read(xsltStore, docRef);
+    XsltResourceImpl(final Provider<XsltStore> xsltStoreProvider,
+                     final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.xsltStoreProvider = xsltStoreProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public XsltDoc update(final XsltDoc doc) {
-        return documentResourceHelper.update(xsltStore, doc);
+        return documentResourceHelperProvider.get()
+                .update(xsltStoreProvider.get(), doc);
     }
 
+    @Override
     public XsltDoc fetch(final String xsltId) {
-        return securityContext.secureResult(() ->
-                xsltStore.readDocument(getDocRef(xsltId)));
+        return documentResourceHelperProvider.get()
+                .read(xsltStoreProvider.get(), getDocRef(xsltId));
     }
 
+    // Used by react UI?
+    @Override
     public void save(final String xsltId,
                      final XsltDTO xsltDto) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-        securityContext.useAsRead(() -> {
-            final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
+        RestUtil.requireMatchingUuids(xsltId, xsltDto);
 
-            if (xsltDoc != null) {
-                xsltDoc.setDescription(xsltDto.getDescription());
-                xsltDoc.setData(xsltDto.getData());
-                xsltStore.writeDocument(xsltDoc);
-            }
-        });
+        final XsltDoc xsltDoc = fetch(xsltId);
+
+        if (xsltDoc != null) {
+            xsltDoc.setDescription(xsltDto.getDescription());
+            xsltDoc.setData(xsltDto.getData());
+            update(xsltDoc);
+        }
     }
 
     private DocRef getDocRef(final String xsltId) {
