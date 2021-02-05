@@ -71,7 +71,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
-        return nodeServiceProvider.get().remoteRestCall(
+        return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
                 ResourcePaths.buildAuthenticatedApiPath(
@@ -110,7 +110,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         RestUtil.requireNonNull(propertyName, "propertyName not supplied");
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
-        return nodeServiceProvider.get().remoteRestCall(
+        return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ResourcePaths.buildAuthenticatedApiPath(
                         GlobalConfigResource.BASE_PATH,

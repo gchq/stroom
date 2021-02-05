@@ -40,15 +40,15 @@ public interface NodeService  {
 
     /**
      * Call out to the specified node using the rest request defined by fullPath and
-     * responseBuilderFunc, of id nodeName is this node then use localSupplier.
+     * responseBuilderFunc, if nodeName is this node then use localSupplier.
      */
-    default <T_RESP> T_RESP remoteRestCall(final String nodeName,
-                                   final Class<T_RESP> responseType,
-                                   final String fullPath,
-                                   final Supplier<T_RESP> localSupplier,
-                                   final Function<Invocation.Builder, Response> responseBuilderFunc) {
+    default <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                             final Class<T_RESP> responseType,
+                                             final String fullPath,
+                                             final Supplier<T_RESP> localSupplier,
+                                             final Function<Invocation.Builder, Response> responseBuilderFunc) {
 
-        return remoteRestCall(
+        return remoteRestResult(
                 nodeName,
                 fullPath,
                 localSupplier,
@@ -58,10 +58,24 @@ public interface NodeService  {
 
     }
 
-    <T_RESP> T_RESP remoteRestCall(final String nodeName,
-                                          final String fullPath,
-                                          final Supplier<T_RESP> localSupplier,
-                                          final Function<Invocation.Builder, Response> responseBuilderFunc,
-                                          final Function<Response, T_RESP> responseMapper);
+
+    /**
+     * Call out to the specified node using the rest request defined by fullPath and
+     * responseBuilderFunc, if nodeName is this node then use localSupplier.
+     */
+    <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                     final String fullPath,
+                                     final Supplier<T_RESP> localSupplier,
+                                     final Function<Invocation.Builder, Response> responseBuilderFunc,
+                                     final Function<Response, T_RESP> responseMapper);
+
+    /**
+     * Call out to the specified node using the rest request defined by fullPath and
+     * responseBuilderFunc, if nodeName is this node then use localRunnable.
+     */
+    void remoteRestCall(final String nodeName,
+                        final String fullPath,
+                        final Runnable localRunnable,
+                        final Function<Invocation.Builder, Response> responseBuilderFunc);
 
 }

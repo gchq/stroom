@@ -68,4 +68,10 @@ public class RestUtil {
                 .entity(LogUtil.message(msg, args))
                 .build();
     }
+
+    public static Response ok(final String msg, final Object... args) {
+        return Response
+                .ok(LogUtil.message(msg, args))
+                .build();
+    }
 }

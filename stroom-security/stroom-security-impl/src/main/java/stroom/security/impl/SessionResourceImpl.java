@@ -5,6 +5,7 @@ import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
+import stroom.util.rest.RestUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class SessionResourceImpl implements SessionResource {
             eventLog.logoff(ui.getId());
         });
 
-        return Response.status(Response.Status.OK).entity("Logout successful").build();
+        return RestUtil.ok("Logout successful");
     }
 
     @Override

@@ -18,7 +18,6 @@ package stroom.processor.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -44,42 +43,32 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Finds processors and filters matching request",
-            response = ResultPage.class)
+    @ApiOperation("Finds processors and filters matching request")
     ProcessorListRowResultPage find(@ApiParam("request") FetchProcessorRequest request);
 
     @POST
-    @ApiOperation(
-            value = "Creates a filter",
-            response = ProcessorFilter.class)
+    @ApiOperation("Creates a filter")
     ProcessorFilter create(@ApiParam("request") CreateProcessFilterRequest request);
 
 
     @POST
     @Path("/reprocess")
-    @ApiOperation(value = "Create filters to reprocess data")
+    @ApiOperation("Create filters to reprocess data")
     List<ReprocessDataInfo> reprocess(@ApiParam("criteria") CreateReprocessFilterRequest request);
 
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Gets a filter",
-            response = ProcessorFilter.class)
+    @ApiOperation("Gets a filter")
     ProcessorFilter read(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Updates a filter",
-            response = ProcessorFilter.class)
+    @ApiOperation("Updates a filter")
     ProcessorFilter update(@PathParam("id") Integer id, ProcessorFilter processorFilter);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Deletes a filter",
-            response = ProcessorFilter.class)
+    @ApiOperation("Deletes a filter")
     void delete(@PathParam("id") Integer id);
 
     @PUT

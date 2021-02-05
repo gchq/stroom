@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -41,15 +40,11 @@ public interface StatsStoreResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a stats store doc",
-            response = DictionaryDoc.class)
+    @ApiOperation("Get a stats store doc")
     StroomStatsStoreDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a stats store doc",
-            response = StroomStatsStoreDoc.class)
+    @ApiOperation("Update a stats store doc")
     StroomStatsStoreDoc update(@ApiParam("stroomStatsStoreDoc") StroomStatsStoreDoc stroomStatsStoreDoc);
 }

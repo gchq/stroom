@@ -140,11 +140,11 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return -1;
     }
 
-    public <T_RESP> T_RESP remoteRestCall(final String nodeName,
-                                          final String fullPath,
-                                          final Supplier<T_RESP> localSupplier,
-                                          final Function<Invocation.Builder, Response> responseBuilderFunc,
-                                          final Function<Response, T_RESP> responseMapper) {
+    public <T_RESP> T_RESP remoteRestResult(final String nodeName,
+                                            final String fullPath,
+                                            final Supplier<T_RESP> localSupplier,
+                                            final Function<Invocation.Builder, Response> responseBuilderFunc,
+                                            final Function<Response, T_RESP> responseMapper) {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         final T_RESP resp;
@@ -175,12 +175,49 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 }
                 resp = responseMapper.apply(response);
 
-                Objects.requireNonNull(resp, "Null listConfigResponse");
+                Objects.requireNonNull(resp, "Null response calling url " + url);
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
         return resp;
+    }
+
+    @Override
+    public void remoteRestCall(final String nodeName,
+                               final String fullPath,
+                               final Runnable localRunnable,
+                               final Function<Builder, Response> responseBuilderFunc) {
+
+        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+
+        // If this is the node that was contacted then just resolve it locally
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+
+            LOGGER.debug("Executing locally");
+            localRunnable.run();
+        } else {
+            // A different node to make a rest call to the required node
+            final String url = NodeCallUtil.getBaseEndpointUrl(
+                    nodeInfo,
+                    this,
+                    nodeName) + fullPath;
+            LOGGER.debug("Calling remote node at {}", url);
+            try {
+                final Builder builder = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON);
+
+                final Response response = responseBuilderFunc.apply(builder);
+
+                LOGGER.debug("Response status {}", response.getStatus());
+                if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+            }
+        }
     }
 
     Node getNode(final String nodeName) {
