@@ -25,7 +25,7 @@ public class MockRSLoggingModule extends AbstractModule {
     protected void configure() {
         bind(RequestLoggingConfig.class).toInstance(new RequestLoggingConfig());
         bind(HttpServletRequest.class).to(MockHttpServletRequest.class);
-        bind(ResourceInfo.class).to(MockResourceInfo.class);
+//        bind(ResourceInfo.class).to(MockResourceInfo.class);
     }
 }
 

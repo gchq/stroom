@@ -39,6 +39,9 @@ public class ContainerResourceInfo {
     }
 
     public Object getResource() {
+        if (resourceContext == null) {
+            return null; //Possible in some unit tests
+        }
         return resourceContext.getResource(getResourceClass());
     }
 

@@ -19,11 +19,14 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 
+import stroom.event.logging.rs.api.EventActionDecorator;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.HasId;
+import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ResultPage;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
@@ -34,6 +37,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import event.logging.ExportEventAction;
+import event.logging.ProcessAction;
+import event.logging.ProcessEventAction;
 import event.logging.Query;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +52,7 @@ import org.mockito.MockitoAnnotations;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayInputStream;
@@ -58,6 +65,7 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRestResourceAutoLogger {
+    private static final Integer BEFORE_ID = 78910;
     private HttpServletRequest request = new MockHttpServletRequest();
 
     private MockContainerRequestContext requestContext = new MockContainerRequestContext();
@@ -75,9 +83,14 @@ public class TestRestResourceAutoLogger {
     private ResourceInfo resourceInfo;
 
     @Mock
+    private ResourceContext resourceContext;
+
+    @Mock
     private WriterInterceptorContext writerInterceptorContext;
 
     private RequestLoggingConfig config = new RequestLoggingConfig();
+
+    private TestResource testResource = new TestResource();
 
     @Captor
     private ArgumentCaptor<Object> objectCaptor;
@@ -177,9 +190,9 @@ public class TestRestResourceAutoLogger {
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
         Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
-        int run = random.nextInt();
-        String requestId = "request-" + run;
-        String responseId = "response-" + run;
+        int run = random.nextInt(1000);
+        Integer requestId = run;
+        Integer responseId = - run;
 
         TestObj requestTestObj = new TestObj(requestId);
         TestObj responseTestObj = new TestObj(responseId);
@@ -221,20 +234,22 @@ public class TestRestResourceAutoLogger {
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
         Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
-        int run = random.nextInt();
-        String requestId = "request-" + run;
-        String responseId = "response-" + run;
+        int run = random.nextInt(1000);
+        Integer requestId =  run;
+        Integer responseId = - run;
 
-        TestObj requestTestObj = new TestObj(requestId);
         TestObj responseTestObj = new TestObj(responseId);
         //Set up Stream containing serialized object
 
+        //Set up Stream containing serialized object
+        String idAsStr = Integer.toString(run);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        objectMapper.writeValue(bos, requestTestObj);
+        bos.write(idAsStr.getBytes());
         bos.flush();
 
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
+
         Mockito.when(writerInterceptorContext.getEntity()).thenReturn(responseTestObj);
 
         filter.filter(requestContext);
@@ -244,19 +259,20 @@ public class TestRestResourceAutoLogger {
                 eventTypeIdCaptor.capture(), verbCaptor.capture(),
                 throwableCaptor.capture());
 
-        Object loggedObject = objectCaptor.getValue();
+        Object beforeLoggedObject = objectCaptor.getValue();
+        assertThat(beforeLoggedObject).isInstanceOf(TestObj.class);
+
+        TestObj testObj = (TestObj) beforeLoggedObject;
+        assertThat(testObj.getId()).isEqualTo(BEFORE_ID);
+
+
         Object afterLoggedObject = outcomeObjectCaptor.getValue();
         String eventTypeId = eventTypeIdCaptor.getValue();
         String descriptionVerb = verbCaptor.getValue();
         Throwable exception = throwableCaptor.getValue();
 
-        assertThat(loggedObject).isInstanceOf(TestObj.class);
-
-        TestObj entity = (TestObj) loggedObject;
-        assertThat(entity.getId()).isEqualTo(requestId);
-
         assertThat(afterLoggedObject).isInstanceOf(TestObj.class);
-        entity = (TestObj) afterLoggedObject;
+        TestObj entity = (TestObj) afterLoggedObject;
         assertThat(entity.getId()).isEqualTo(responseId);
 
         assertThat(eventTypeId).isEqualTo("TestingUpdate");
@@ -318,9 +334,9 @@ public class TestRestResourceAutoLogger {
         Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
         Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
-        int run = random.nextInt();
-        String requestId = "request-" + run;
-        String responseId = "response-" + run;
+        int run = random.nextInt(1000);
+        Integer requestId = run;
+        Integer responseId = - run;
 
         TestObj requestTestObj = new TestObj(requestId);
         TestObj responseTestObj = new TestObj(responseId);
@@ -383,8 +399,9 @@ public class TestRestResourceAutoLogger {
         objectMapper = createObjectMapper();
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
-
+        Mockito.when(resourceContext.getResource(Mockito.any())).thenReturn(testResource);
         filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog, config, resourceInfo, request);
+        filter.setResourceContext(resourceContext);
     }
 
     @AfterEach
@@ -404,29 +421,28 @@ public class TestRestResourceAutoLogger {
         return mapper;
     }
 
-    public static class TestObj implements Serializable {
+    public static class TestObj implements Serializable, HasIntegerId {
         @JsonProperty
-        private String id;
+        private Integer id;
 
-        public TestObj(String id){
+        public TestObj(final Integer id){
             this.id = id;
         }
 
         public TestObj(){
         }
 
-        public String getId() {
+        public Integer getId() {
             return id;
         }
 
-        public void setId(final String id) {
+        public void setId(final Integer id) {
             this.id = id;
         }
     }
 
-
     @AutoLogged
-    public static class TestResource {
+    public static class TestResource implements ReadWithIntegerId<TestObj> {
 
         public String find(@PathParam("id") Integer id, TestObj query) {
             return null;
@@ -440,15 +456,28 @@ public class TestRestResourceAutoLogger {
             return null;
         }
 
-        public String read(final Integer id) {
-            return null;
+        public TestObj read(final Integer id) {
+            return new TestObj(BEFORE_ID);
         }
 
+        @AutoLogged(value = OperationType.PROCESS, verb = "Shutting down", decorator = TestShutdownEventActionDecorator.class)
+        public String shutdown(final String uuid) { return null; }
+
         @AutoLogged(typeId = "TestingUpdate", verb = "Testing")
-        public String update(TestObj testObj) {return null;}
+        public String update(TestObj orig) {return null;}
 
         @AutoLogged(value = OperationType.DELETE)
         public void findAndDestroy() {}
+
+        static class TestShutdownEventActionDecorator implements EventActionDecorator<ProcessEventAction> {
+
+            @Override
+            public ProcessEventAction decorate(final ProcessEventAction eventAction) {
+                return eventAction.newCopyBuilder()
+                        .withAction(ProcessAction.SHUTDOWN)
+                        .build();
+            }
+        }
     }
 
 }

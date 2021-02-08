@@ -177,4 +177,9 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         return mapper;
     }
 
+    //Needed for some unit tests
+    void setResourceContext(final ResourceContext resourceContext){
+        this.resourceContext = resourceContext;
+    }
+
 }
