@@ -3620,24 +3620,18 @@
     },
     "OffsetRange" : {
       "type" : "object",
-      "required" : [ "length", "offset" ],
       "properties" : {
         "length" : {
-          "description" : "The length in records of the sub-set of results",
-          "example" : 100,
-          "format" : "int64",
-          "readOnly" : true,
-          "type" : "integer"
+          "$ref" : "#/definitions/Number",
+          "originalRef" : "Number",
+          "readOnly" : true
         },
         "offset" : {
-          "description" : "The start offset for this sub-set of data, where zero is the offset of the first record in the full result set",
-          "example" : 0,
-          "format" : "int64",
-          "readOnly" : true,
-          "type" : "integer"
+          "$ref" : "#/definitions/Number",
+          "originalRef" : "Number",
+          "readOnly" : true
         }
-      },
-      "description" : "The offset and length of a range of data in a sub-set of a query result set"
+      }
     },
     "OffsetRangeLong" : {
       "type" : "object",
@@ -3769,6 +3763,10 @@
         },
         "passwordComplexityRegex" : {
           "description" : "A regex pattern that new passwords must match",
+          "type" : "string"
+        },
+        "passwordPolicyMessage" : {
+          "description" : "A message informing users of the password policy",
           "type" : "string"
         },
         "unusedAccountDeactivationThreshold" : {
@@ -5256,6 +5254,27 @@
         }
       }
     },
+    "SearchAccountRequest" : {
+      "type" : "object",
+      "properties" : {
+        "pageRequest" : {
+          "$ref" : "#/definitions/PageRequest",
+          "originalRef" : "PageRequest"
+        },
+        "quickFilter" : {
+          "readOnly" : true,
+          "type" : "string"
+        },
+        "sortList" : {
+          "items" : {
+            "$ref" : "#/definitions/Sort",
+            "originalRef" : "Sort"
+          },
+          "readOnly" : true,
+          "type" : "array"
+        }
+      }
+    },
     "SearchBusPollRequest" : {
       "type" : "object",
       "properties" : {
@@ -5822,24 +5841,20 @@
     },
     "Sort" : {
       "type" : "object",
-      "required" : [ "direction", "order" ],
       "properties" : {
-        "direction" : {
-          "description" : "The direction to sort in, ASCENDING or DESCENDING",
-          "enum" : [ "ASCENDING", "DESCENDING" ],
-          "example" : "ASCENDING",
+        "desc" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        },
+        "id" : {
           "readOnly" : true,
           "type" : "string"
         },
-        "order" : {
-          "description" : "Where multiple fields are sorted this value describes the sort order, with 0 being the first field to sort on",
-          "example" : 0,
-          "format" : "int32",
+        "ignoreCase" : {
           "readOnly" : true,
-          "type" : "integer"
+          "type" : "boolean"
         }
-      },
-      "description" : "Describes the sorting applied to a field"
+      }
     },
     "SourceConfig" : {
       "type" : "object",
@@ -6137,27 +6152,32 @@
       }
     },
     "StoredError" : {
-      "type" : "object",
-      "properties" : {
-        "elementId" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "location" : {
-          "$ref" : "#/definitions/Location",
-          "originalRef" : "Location",
-          "readOnly" : true
-        },
-        "message" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "severity" : {
-          "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
-          "readOnly" : true,
-          "type" : "string"
+      "allOf" : [ {
+        "$ref" : "#/definitions/Marker",
+        "originalRef" : "Marker"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "elementId" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/definitions/Location",
+            "originalRef" : "Location",
+            "readOnly" : true
+          },
+          "message" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "severity" : {
+            "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
+            "readOnly" : true,
+            "type" : "string"
+          }
         }
-      }
+      } ]
     },
     "StoredQuery" : {
       "type" : "object",
@@ -7610,6 +7630,16 @@
         "consumes" : [ "application/json" ],
         "description" : "Stroom Account API",
         "operationId" : "search",
+        "parameters" : [ {
+          "description" : "account",
+          "in" : "body",
+          "name" : "body",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/definitions/SearchAccountRequest",
+            "originalRef" : "SearchAccountRequest"
+          }
+        } ],
         "produces" : [ "application/json" ],
         "responses" : {
           "200" : {
