@@ -81,6 +81,12 @@ public @interface AutoLogged {
     String verb() default ALLOCATE_AUTOMATICALLY;
 
     /**
+     * An optional {@link EventActionDecorator} that should be used to decorate the automatically generated {@link EventAction}
+     * @return the decorated {@link EventAction}
+     */
+    Class<? extends EventActionDecorator> decorator() default EventActionDecorator.class;
+
+    /**
      * Enumeration of all recognised event types.
      *
      * Most values relate to types of event defeined in event-logging XML schema (refer to event-logging schema).

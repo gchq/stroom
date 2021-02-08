@@ -25,6 +25,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.ResultPage;
@@ -242,7 +243,7 @@ public class TestRestResourceAutoLogger {
         //Set up Stream containing serialized object
 
         //Set up Stream containing serialized object
-        String idAsStr = Integer.toString(run);
+        String idAsStr = Integer.toString(requestId);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bos.write(idAsStr.getBytes());
         bos.flush();
@@ -279,6 +280,57 @@ public class TestRestResourceAutoLogger {
         assertThat(descriptionVerb).isEqualTo("Testing");
         assertThat(exception).isNull();
     }
+
+
+    @Test
+    public void testLogWithActionDecorator() throws Exception {
+        Method method = TestResource.class.getMethod("shutdown", String.class);
+
+        //Set up resource and method
+        Mockito.doReturn(TestResource.class).when(resourceInfo).getResourceClass();
+        Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
+
+        String uuid = "ABC-175-3454-A5-123";
+
+        String response = "Simulated shutdown complete";
+        //Set up Stream containing serialized object
+
+        //Set up Stream containing serialized object
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bos.write(uuid.getBytes());
+        bos.flush();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
+        requestContext.setEntityStream(byteArrayInputStream);
+
+
+        ((MockURIInfo) requestContext.getUriInfo()).setUuid(uuid);
+
+        Mockito.when(writerInterceptorContext.getEntity()).thenReturn(response);
+
+        filter.filter(requestContext);
+        filter.aroundWriteTo(writerInterceptorContext);
+
+        Mockito.verify(documentEventLog).process(objectCaptor.capture(),
+                eventTypeIdCaptor.capture(), verbCaptor.capture(),
+                throwableCaptor.capture());
+
+        Object loggedObject = objectCaptor.getValue();
+
+        String eventTypeId = eventTypeIdCaptor.getValue();
+        String descriptionVerb = verbCaptor.getValue();
+        Throwable exception = throwableCaptor.getValue();
+
+       assertThat(loggedObject).isInstanceOf(HasUuid.class);
+       assertThat(uuid).isEqualTo(((HasUuid)loggedObject).getUuid());
+
+       assertThat(exception).isNull();
+       assertThat(descriptionVerb).isEqualTo("Shutting down");
+
+       assertThat(eventTypeId).isEqualTo("TestResource.shutdown");
+
+    }
+
 
     @Test
     public void testLogWithException() throws Exception {
@@ -461,7 +513,7 @@ public class TestRestResourceAutoLogger {
         }
 
         @AutoLogged(value = OperationType.PROCESS, verb = "Shutting down", decorator = TestShutdownEventActionDecorator.class)
-        public String shutdown(final String uuid) { return null; }
+        public String shutdown(@PathParam("uuid") final String uuid) { return null; }
 
         @AutoLogged(typeId = "TestingUpdate", verb = "Testing")
         public String update(TestObj orig) {return null;}
