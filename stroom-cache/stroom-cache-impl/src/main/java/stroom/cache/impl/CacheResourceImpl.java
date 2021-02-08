@@ -28,12 +28,10 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
-
-import org.checkerframework.checker.units.qual.A;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

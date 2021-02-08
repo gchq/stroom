@@ -20,7 +20,7 @@ package stroom.core.db;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;

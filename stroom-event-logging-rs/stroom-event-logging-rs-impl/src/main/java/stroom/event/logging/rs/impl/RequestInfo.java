@@ -15,15 +15,13 @@
  */
 package stroom.event.logging.rs.impl;
 
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;

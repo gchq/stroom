@@ -15,8 +15,8 @@
  */
 package stroom.event.logging.rs.impl;
 
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;

@@ -21,11 +21,11 @@ import stroom.event.logging.mock.MockStroomEventLoggingService;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.HasId;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;

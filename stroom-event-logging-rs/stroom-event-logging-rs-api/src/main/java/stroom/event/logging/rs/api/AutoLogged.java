@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.util.shared;
+package stroom.event.logging.rs.api;
+
+import event.logging.EventAction;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;

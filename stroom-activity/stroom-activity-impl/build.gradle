@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-activity:stroom-activity-api')
     compile project(':stroom-core-shared')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')

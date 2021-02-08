@@ -20,8 +20,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
@@ -31,7 +30,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static stroom.util.shared.AutoLogged.OperationType.UNLOGGED;
+import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 
 @AutoLogged(UNLOGGED)
 class ClusterLockResourceImpl implements ClusterLockResource {

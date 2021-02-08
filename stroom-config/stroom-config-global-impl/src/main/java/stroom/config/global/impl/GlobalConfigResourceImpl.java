@@ -15,8 +15,8 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 

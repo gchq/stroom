@@ -26,7 +26,7 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 

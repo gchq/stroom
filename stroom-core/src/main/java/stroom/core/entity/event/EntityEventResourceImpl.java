@@ -21,8 +21,8 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;

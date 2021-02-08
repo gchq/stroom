@@ -11,7 +11,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 

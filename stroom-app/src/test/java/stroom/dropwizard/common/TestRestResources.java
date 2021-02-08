@@ -1,7 +1,7 @@
 package stroom.dropwizard.common;
 
 import stroom.util.ConsoleColour;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.RestResource;
 
 import com.google.common.base.Strings;
