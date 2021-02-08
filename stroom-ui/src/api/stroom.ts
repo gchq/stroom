@@ -43,26 +43,47 @@ export interface AbstractField {
 
 export interface Account {
   comments?: string;
+
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   email?: string;
   enabled?: boolean;
   firstName?: string;
   forcePasswordChange?: boolean;
+
+  /** @format int32 */
   id?: number;
   inactive?: boolean;
+
+  /** @format int64 */
   lastLoginMs?: number;
   lastName?: string;
   locked?: boolean;
+
+  /** @format int32 */
   loginCount?: number;
+
+  /** @format int32 */
   loginFailures?: number;
   neverExpires?: boolean;
   processingAccount?: boolean;
+
+  /** @format int64 */
   reactivatedMs?: number;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   userId?: string;
+
+  /** @format int32 */
   version?: number;
+}
+
+export interface AccountResultPage {
+  pageResponse?: PageResponse;
+  values?: Account[];
 }
 
 export interface AcknowledgeSplashRequest {
@@ -71,14 +92,21 @@ export interface AcknowledgeSplashRequest {
 }
 
 export interface Activity {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   details?: ActivityDetails;
+
+  /** @format int32 */
   id?: number;
   json?: string;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   userId?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -117,15 +145,23 @@ export type AddPermissionEvent = PermissionChangeEvent & {
 export interface Annotation {
   assignedTo?: string;
   comment?: string;
+
+  /** @format int64 */
   createTime?: number;
   createUser?: string;
   history?: string;
+
+  /** @format int64 */
   id?: number;
   status?: string;
   subject?: string;
   title?: string;
+
+  /** @format int64 */
   updateTime?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -135,17 +171,25 @@ export interface AnnotationDetail {
 }
 
 export interface AnnotationEntry {
+  /** @format int64 */
   createTime?: number;
   createUser?: string;
   data?: string;
   entryType?: string;
+
+  /** @format int64 */
   id?: number;
+
+  /** @format int64 */
   updateTime?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
 export interface AssignTasksRequest {
+  /** @format int32 */
   count?: number;
   nodeName?: string;
 }
@@ -163,6 +207,8 @@ export interface Automate {
 
 export interface Base64EncodedDocumentData {
   dataMap?: Record<string, string>;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -188,6 +234,8 @@ export interface CacheInfo {
 export interface ChangeDocumentPermissionsRequest {
   cascade?: "NO" | "CHANGES_ONLY" | "ALL";
   changes?: Changes;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -232,6 +280,7 @@ export interface CheckDocumentPermissionRequest {
 export type ClearDocumentPermissionsEvent = PermissionChangeEvent & { documentUuid?: string };
 
 export interface ClusterLockKey {
+  /** @format int64 */
   creationTime?: number;
   name?: string;
   nodeName?: string;
@@ -255,6 +304,8 @@ export type ComponentSettings = object;
 export interface ConditionalFormattingRule {
   backgroundColor?: string;
   enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   hide?: boolean;
   id?: string;
@@ -262,6 +313,7 @@ export interface ConditionalFormattingRule {
 }
 
 export interface ConfigProperty {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   dataTypeName?: string;
@@ -269,13 +321,19 @@ export interface ConfigProperty {
   defaultValue?: string;
   description?: string;
   editable?: boolean;
+
+  /** @format int32 */
   id?: number;
   name?: PropertyPath;
   password?: boolean;
   requireRestart?: boolean;
   requireUiRestart?: boolean;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
   yamlOverrideValue?: OverrideValueString;
 }
@@ -285,12 +343,14 @@ export interface ConfirmPasswordRequest {
 }
 
 export interface CopyOp {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefs?: DocRef[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface CopyPermissionsFromParentRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -300,6 +360,7 @@ export interface Count {
 }
 
 export interface CountLong {
+  /** @format int64 */
   count?: number;
   exact?: boolean;
 }
@@ -324,6 +385,7 @@ export interface CreateEntryRequest {
 }
 
 export interface CreateOp {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefName?: string;
   docRefType?: string;
@@ -333,7 +395,11 @@ export interface CreateOp {
 export interface CreateProcessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
+
+  /** @format int32 */
   priority?: number;
   queryData?: QueryData;
 }
@@ -341,6 +407,8 @@ export interface CreateProcessFilterRequest {
 export interface CreateReprocessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
+
+  /** @format int32 */
   priority?: number;
   queryData?: QueryData;
 }
@@ -348,7 +416,11 @@ export interface CreateReprocessFilterRequest {
 export interface CreateTokenRequest {
   comments?: string;
   enabled?: boolean;
+
+  /** @format int64 */
   expiresOnMs?: number;
+
+  /** @pattern ^user$|^api$|^email_reset$ */
   tokenType: string;
   userId: string;
 }
@@ -358,9 +430,14 @@ export interface CustomRollUpMask {
 }
 
 export interface DBTableStatus {
+  /** @format int64 */
   count?: number;
+
+  /** @format int64 */
   dataSize?: number;
   db?: string;
+
+  /** @format int64 */
   indexSize?: number;
   table?: string;
 }
@@ -373,13 +450,20 @@ export interface DashboardConfig {
 }
 
 export interface DashboardDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -398,20 +482,32 @@ export interface DataInfoSection {
 }
 
 export interface DataRange {
+  /** @format int64 */
   byteOffsetFrom?: number;
+
+  /** @format int64 */
   byteOffsetTo?: number;
+
+  /** @format int64 */
   charOffsetFrom?: number;
+
+  /** @format int64 */
   charOffsetTo?: number;
+
+  /** @format int64 */
   length?: number;
   locationFrom?: Location;
   locationTo?: Location;
 }
 
 export interface DataRetentionDeleteSummary {
+  /** @format int32 */
   count?: number;
   feedName?: string;
   metaType?: string;
   ruleName?: string;
+
+  /** @format int32 */
   ruleNumber?: number;
 }
 
@@ -422,24 +518,38 @@ export interface DataRetentionDeleteSummaryRequest {
 }
 
 export interface DataRetentionRule {
+  /** @format int32 */
   age?: number;
+
+  /** @format int64 */
   creationTime?: number;
   enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   forever?: boolean;
   name?: string;
+
+  /** @format int32 */
   ruleNumber?: number;
   timeUnit?: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
 }
 
 export interface DataRetentionRules {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   name?: string;
   rules?: DataRetentionRule[];
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -470,18 +580,30 @@ export interface DictionaryDTO {
   description?: string;
   imports?: DocRef[];
 
-  /** The name for the data source */
+  /**
+   * The name for the data source
+   * @example MyStatistic
+   */
   name: string;
 
-  /** The type of the 'document' that this DocRef refers to */
+  /**
+   * The type of the 'document' that this DocRef refers to
+   * @example StroomStatsStore
+   */
   type: string;
 
-  /** The unique identifier for this 'document' */
+  /**
+   * The unique identifier for this 'document'
+   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
+   */
   uuid: string;
 }
 
 export interface DictionaryDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
@@ -489,7 +611,11 @@ export interface DictionaryDoc {
   imports?: DocRef[];
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -497,12 +623,19 @@ export interface DictionaryDoc {
 }
 
 export interface Doc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -513,23 +646,37 @@ export interface Doc {
  * A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.
  */
 export interface DocRef {
-  /** The name for the data source */
+  /**
+   * The name for the data source
+   * @example MyStatistic
+   */
   name: string;
 
-  /** The type of the 'document' that this DocRef refers to */
+  /**
+   * The type of the 'document' that this DocRef refers to
+   * @example StroomStatsStore
+   */
   type: string;
 
-  /** The unique identifier for this 'document' */
+  /**
+   * The unique identifier for this 'document'
+   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
+   */
   uuid: string;
 }
 
 export type DocRefField = AbstractField & { docRefType?: string };
 
 export interface DocRefInfo {
+  /** @format int64 */
   createTime?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
   otherInfo?: string;
+
+  /** @format int64 */
   updateTime?: number;
   updateUser?: string;
 }
@@ -548,6 +695,8 @@ export interface DocumentPermissions {
 export interface DocumentType {
   displayType?: string;
   iconUrl?: string;
+
+  /** @format int32 */
   priority?: number;
   type?: string;
 }
@@ -561,6 +710,8 @@ export type DoubleField = AbstractField & object;
 
 export interface DownloadQueryRequest {
   dashboardQueryKey?: DashboardQueryKey;
+
+  /** A request for new search or a follow up request for more data for an existing iterative search */
   searchRequest?: SearchRequest;
 }
 
@@ -569,13 +720,19 @@ export interface DownloadSearchResultsRequest {
   componentId?: string;
   dateTimeLocale?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
+
+  /** @format int32 */
   percent?: number;
   sample?: boolean;
+
+  /** A request for new search or a follow up request for more data for an existing iterative search */
   searchRequest?: SearchRequest;
 }
 
 export interface EntityEvent {
   action?: "CREATE" | "UPDATE" | "DELETE" | "CLEAR_CACHE";
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -585,16 +742,21 @@ export interface Entry {
 }
 
 export interface EventId {
+  /** @format int64 */
   eventId?: number;
+
+  /** @format int64 */
   streamId?: number;
 }
 
 export interface EventLink {
+  /** @format int64 */
   annotationId?: number;
   eventId?: EventId;
 }
 
 export interface Expander {
+  /** @format int32 */
   depth?: number;
   expanded?: boolean;
   leaf?: boolean;
@@ -602,6 +764,8 @@ export interface Expander {
 
 export interface ExplorerNode {
   children?: ExplorerNode[];
+
+  /** @format int32 */
   depth?: number;
   iconUrl?: string;
   name?: string;
@@ -612,12 +776,14 @@ export interface ExplorerNode {
 }
 
 export interface ExplorerServiceCopyRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefs?: DocRef[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceCreateRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docName?: string;
   docType?: string;
@@ -629,6 +795,7 @@ export interface ExplorerServiceDeleteRequest {
 }
 
 export interface ExplorerServiceMoveRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
   docRefs?: DocRef[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
@@ -636,6 +803,8 @@ export interface ExplorerServiceMoveRequest {
 
 export interface ExplorerServiceRenameRequest {
   docName?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
@@ -648,6 +817,7 @@ export interface ExplorerTreeFilter {
 }
 
 export interface ExpressionCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sortList?: Sort[];
@@ -657,7 +827,10 @@ export interface ExpressionCriteria {
  * Base type for an item in an expression tree
  */
 export interface ExpressionItem {
-  /** Whether this item in the expression tree is enabled or not */
+  /**
+   * Whether this item in the expression tree is enabled or not
+   * @example true
+   */
   enabled?: boolean;
 }
 
@@ -667,7 +840,10 @@ export interface ExpressionItem {
 export interface ExpressionOperator {
   children?: ExpressionItem[];
 
-  /** Whether this item in the expression tree is enabled or not */
+  /**
+   * Whether this item in the expression tree is enabled or not
+   * @example true
+   */
   enabled?: boolean;
 
   /** The logical addOperator type */
@@ -697,18 +873,28 @@ export type ExpressionTerm = ExpressionItem & {
 export interface FeedDoc {
   classification?: string;
   contextEncoding?: string;
+
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
   encoding?: string;
   name?: string;
   reference?: boolean;
+
+  /** @format int32 */
   retentionDayAge?: number;
   status?: "RECEIVE" | "REJECT" | "DROP";
   streamType?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -716,13 +902,18 @@ export interface FeedDoc {
 }
 
 export interface FetchAllDocumentPermissionsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
 }
 
 export interface FetchDataRequest {
   expandedSeverities?: ("INFO" | "WARNING" | "ERROR" | "FATAL_ERROR")[];
   markerMode?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
+
+  /** @format int64 */
   segmentCount?: number;
   showAsHtml?: boolean;
   sourceLocation?: SourceLocation;
@@ -743,6 +934,8 @@ export interface FetchExplorerNodeResult {
 
 export interface FetchLinkedScriptRequest {
   loadedScripts?: DocRef[];
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   script?: DocRef;
 }
 
@@ -754,16 +947,20 @@ export interface FetchNodeStatusResponse {
 }
 
 export interface FetchPipelineXmlResponse {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   xml?: string;
 }
 
 export interface FetchProcessorRequest {
   expandedRows?: ProcessorListRow[];
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
 }
 
 export interface FetchSuggestionsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
   field: AbstractField;
   text?: string;
@@ -773,12 +970,22 @@ export interface FetchSuggestionsRequest {
  * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
  */
 export interface Field {
-  /** The expression to use to generate the value for this field */
+  /**
+   * The expression to use to generate the value for this field
+   * @example SUM(${count})
+   */
   expression: string;
+
+  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
   filter?: Filter;
+
+  /** Describes the formatting that will be applied to values in a field */
   format?: Format;
 
-  /** If this field is to be grouped then this defines the level of grouping, with 0 being the top level of grouping, 1 being the next level down, etc. */
+  /**
+   * If this field is to be grouped then this defines the level of grouping, with 0 being the top level of grouping, 1 being the next level down, etc.
+   * @format int32
+   */
   group?: number;
 
   /** The internal id of the field for equality purposes */
@@ -789,6 +996,8 @@ export interface Field {
   sort?: Sort;
   special: boolean;
   visible: boolean;
+
+  /** @format int32 */
   width: number;
 }
 
@@ -796,10 +1005,16 @@ export interface Field {
  * A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied
  */
 export interface Filter {
-  /** Only results NOT matching this filter will be included */
+  /**
+   * Only results NOT matching this filter will be included
+   * @example ^[0-9]{3}$
+   */
   excludes?: string;
 
-  /** Only results matching this filter will be included */
+  /**
+   * Only results matching this filter will be included
+   * @example ^[0-9]{3}$
+   */
   includes?: string;
 }
 
@@ -809,6 +1024,7 @@ export interface FindDBTableCriteria {
 }
 
 export interface FindDataRetentionImpactCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sortList?: Sort[];
@@ -817,6 +1033,8 @@ export interface FindDataRetentionImpactCriteria {
 export interface FindExplorerNodeCriteria {
   ensureVisible?: string[];
   filter?: ExplorerTreeFilter;
+
+  /** @format int32 */
   minDepth?: number;
   openItems?: string[];
   temporaryOpenedItems?: string[];
@@ -841,6 +1059,7 @@ export interface FindIndexShardCriteria {
 }
 
 export interface FindMetaCriteria {
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
   pageRequest?: PageRequest;
@@ -894,7 +1113,10 @@ export type FloatField = AbstractField & object;
 export interface Format {
   settings?: FormatSettings;
 
-  /** The formatting type to apply */
+  /**
+   * The formatting type to apply
+   * @example NUMBER
+   */
   type: "GENERAL" | "NUMBER" | "DATE_TIME" | "TEXT";
   wrap?: boolean;
 }
@@ -904,24 +1126,44 @@ export interface FormatSettings {
 }
 
 export interface FsVolume {
+  /** @format int64 */
   byteLimit?: number;
+
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** @format int32 */
   id?: number;
   path?: string;
   status?: "ACTIVE" | "INACTIVE" | "CLOSED";
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
   volumeState?: FsVolumeState;
 }
 
 export interface FsVolumeState {
+  /** @format int64 */
   bytesFree?: number;
+
+  /** @format int64 */
   bytesTotal?: number;
+
+  /** @format int64 */
   bytesUsed?: number;
+
+  /** @format int32 */
   id?: number;
+
+  /** @format int64 */
   updateTimeMs?: number;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -947,14 +1189,21 @@ export interface GetFeedStatusResponse {
 }
 
 export interface GetPipelineForMetaRequest {
+  /** @format int64 */
   childMetaId?: number;
+
+  /** @format int64 */
   metaId?: number;
 }
 
 export interface GetScheduledTimesRequest {
   jobType?: "UNKNOWN" | "CRON" | "FREQUENCY" | "DISTRIBUTED";
+
+  /** @format int64 */
   lastExecutedTime?: number;
   schedule?: string;
+
+  /** @format int64 */
   scheduleReferenceTime?: number;
 }
 
@@ -974,8 +1223,12 @@ export interface ImportConfigRequest {
 export interface ImportState {
   action?: boolean;
   destPath?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
   enable?: boolean;
+
+  /** @format int64 */
   enableTime?: number;
   messageList?: Message[];
   sourcePath?: string;
@@ -984,19 +1237,34 @@ export interface ImportState {
 }
 
 export interface IndexDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
   fields?: IndexField[];
+
+  /** @format int32 */
   maxDocsPerShard?: number;
   name?: string;
   partitionBy?: "DAY" | "WEEK" | "MONTH" | "YEAR";
+
+  /** @format int32 */
   partitionSize?: number;
+
+  /** @format int32 */
   retentionDayAge?: number;
+
+  /** @format int32 */
   shardsPerPartition?: number;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1024,30 +1292,56 @@ export interface IndexField {
 }
 
 export interface IndexVolume {
+  /** @format int64 */
   bytesFree?: number;
+
+  /** @format int64 */
   bytesLimit?: number;
+
+  /** @format int64 */
   bytesTotal?: number;
+
+  /** @format int64 */
   bytesUsed?: number;
+
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** @format int32 */
   id?: number;
+
+  /** @format int32 */
   indexVolumeGroupId?: number;
   nodeName?: string;
   path?: string;
   state?: "ACTIVE" | "INACTIVE" | "CLOSED";
+
+  /** @format int64 */
   statusMs?: number;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
 export interface IndexVolumeGroup {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** @format int32 */
   id?: number;
   name?: string;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -1071,20 +1365,32 @@ export interface InfoPopupConfig {
 export type IntegerField = AbstractField & object;
 
 export interface JobNodeInfo {
+  /** @format int32 */
   currentTaskCount?: number;
+
+  /** @format int64 */
   lastExecutedTime?: number;
+
+  /** @format int64 */
   scheduleReferenceTime?: number;
 }
 
 export interface KafkaConfigDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1096,8 +1402,13 @@ export interface LayoutConfig {
 }
 
 export interface Limits {
+  /** @format int64 */
   durationMs?: number;
+
+  /** @format int64 */
   eventCount?: number;
+
+  /** @format int64 */
   streamCount?: number;
 }
 
@@ -1107,7 +1418,10 @@ export interface ListConfigResponse {
 }
 
 export interface Location {
+  /** @format int32 */
   colNo: number;
+
+  /** @format int32 */
   lineNo: number;
 }
 
@@ -1133,15 +1447,24 @@ export interface Message {
 }
 
 export interface Node {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   enabled?: boolean;
+
+  /** @format int32 */
   id?: number;
   name?: string;
+
+  /** @format int32 */
   priority?: number;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   url?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -1158,15 +1481,26 @@ export type NumberFormatSettings = FormatSettings & { decimalPlaces: number; use
  * The offset and length of a range of data in a sub-set of a query result set
  */
 export interface OffsetRange {
-  /** The length in records of the sub-set of results */
+  /**
+   * The length in records of the sub-set of results
+   * @format int64
+   * @example 100
+   */
   length: number;
 
-  /** The start offset for this sub-set of data, where zero is the offset of the first record in the full result set */
+  /**
+   * The start offset for this sub-set of data, where zero is the offset of the first record in the full result set
+   * @format int64
+   * @example 0
+   */
   offset: number;
 }
 
 export interface OffsetRangeLong {
+  /** @format int64 */
   length?: number;
+
+  /** @format int64 */
   offset?: number;
 }
 
@@ -1181,14 +1515,23 @@ export interface OverrideValueString {
 }
 
 export interface PageRequest {
+  /** @format int32 */
   length?: number;
+
+  /** @format int64 */
   offset?: number;
 }
 
 export interface PageResponse {
   exact?: boolean;
+
+  /** @format int32 */
   length?: number;
+
+  /** @format int64 */
   offset?: number;
+
+  /** @format int64 */
   total?: number;
 }
 
@@ -1213,10 +1556,19 @@ export interface PasswordPolicyConfig {
   /** The age after which a password will have to be changed. The frequency of checks is controlled by the job 'Account Maintenance'. */
   mandatoryPasswordChangeDuration: StroomDuration;
 
-  /** The minimum number of characters that new passwords need to contain. */
+  /**
+   * The minimum number of characters that new passwords need to contain.
+   * @format int32
+   * @min 0
+   */
   minimumPasswordLength: number;
 
-  /** The minimum strength password that is allowed. */
+  /**
+   * The minimum strength password that is allowed.
+   * @format int32
+   * @min 0
+   * @max 5
+   */
   minimumPasswordStrength: number;
 
   /** Unused user accounts with a duration since account creation greater than this value will be locked. The frequency of checks is controlled by the job 'Account Maintenance'. */
@@ -1224,6 +1576,9 @@ export interface PasswordPolicyConfig {
 
   /** A regex pattern that new passwords must match */
   passwordComplexityRegex?: string;
+
+  /** A message informing users of the password policy */
+  passwordPolicyMessage?: string;
 
   /** User accounts with a duration since last login greater than this value will be locked. The frequency of checks is controlled by the job 'Account Maintenance'. */
   unusedAccountDeactivationThreshold: StroomDuration;
@@ -1238,8 +1593,12 @@ export interface PermissionChangeRequest {
 export interface PipelineDTO {
   configStack?: PipelineData[];
   description?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
   merged?: PipelineData;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   parentPipeline?: DocRef;
 }
 
@@ -1252,15 +1611,24 @@ export interface PipelineData {
 }
 
 export interface PipelineDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
   name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   parentPipeline?: DocRef;
   pipelineData?: PipelineData;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1287,6 +1655,8 @@ export interface PipelineElements {
 
 export interface PipelineLink {
   from: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   to: string;
 }
@@ -1305,6 +1675,8 @@ export interface PipelineProperty {
   element: string;
   name: string;
   propertyType?: PipelinePropertyType;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   value?: PipelinePropertyValue;
 }
@@ -1312,6 +1684,8 @@ export interface PipelineProperty {
 export interface PipelinePropertyType {
   defaultValue?: string;
   description?: string;
+
+  /** @format int32 */
   displayPriority?: number;
   docRefTypes?: string[];
   elementType?: PipelineElementType;
@@ -1322,17 +1696,29 @@ export interface PipelinePropertyType {
 
 export interface PipelinePropertyValue {
   boolean?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   entity?: DocRef;
+
+  /** @format int32 */
   integer?: number;
+
+  /** @format int64 */
   long?: number;
   string?: string;
 }
 
 export interface PipelineReference {
   element: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   feed: DocRef;
   name: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   sourcePipeline?: DocRef;
   streamType: string;
 }
@@ -1346,71 +1732,118 @@ export interface PipelineStepRequest {
   childStreamType?: string;
   code?: Record<string, string>;
   criteria?: FindMetaCriteria;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   stepFilterMap?: Record<string, SteppingFilterSettings>;
   stepLocation?: StepLocation;
+
+  /** @format int32 */
   stepSize?: number;
   stepType?: "FIRST" | "FORWARD" | "BACKWARD" | "LAST" | "REFRESH";
 }
 
 export interface ProcessConfig {
-  /** The default number of records that batch search processing will be limited by. */
+  /**
+   * The default number of records that batch search processing will be limited by.
+   * @format int64
+   */
   defaultRecordLimit?: number;
 
-  /** The default number of minutes that batch search processing will be limited by. */
+  /**
+   * The default number of minutes that batch search processing will be limited by.
+   * @format int64
+   */
   defaultTimeLimit?: number;
 }
 
 export interface Processor {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   deleted?: boolean;
   enabled?: boolean;
+
+  /** @format int32 */
   id?: number;
   pipelineName?: string;
   pipelineUuid?: string;
   taskType?: string;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
 export interface ProcessorFilter {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   deleted?: boolean;
   enabled?: boolean;
+
+  /** @format int32 */
   id?: number;
   pipelineName?: string;
   pipelineUuid?: string;
+
+  /** @format int32 */
   priority?: number;
   processor?: Processor;
   processorFilterTracker?: ProcessorFilterTracker;
   processorUuid?: string;
   queryData?: QueryData;
   reprocess?: boolean;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
 export type ProcessorFilterRow = ProcessorListRow & { processorFilter?: ProcessorFilter };
 
 export interface ProcessorFilterTracker {
+  /** @format int64 */
   eventCount?: number;
+
+  /** @format int32 */
   id?: number;
+
+  /** @format int64 */
   lastPollMs?: number;
+
+  /** @format int32 */
   lastPollTaskCount?: number;
+
+  /** @format int64 */
   maxMetaCreateMs?: number;
+
+  /** @format int64 */
   metaCount?: number;
+
+  /** @format int64 */
   metaCreateMs?: number;
+
+  /** @format int64 */
   minEventId?: number;
+
+  /** @format int64 */
   minMetaCreateMs?: number;
+
+  /** @format int64 */
   minMetaId?: number;
   status?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -1421,17 +1854,30 @@ export interface ProcessorListRow {
 export type ProcessorRow = ProcessorListRow & { expander?: Expander; processor?: Processor };
 
 export interface ProcessorTask {
+  /** @format int64 */
   createTimeMs?: number;
   data?: string;
+
+  /** @format int64 */
   endTimeMs?: number;
   feedName?: string;
+
+  /** @format int64 */
   id?: number;
+
+  /** @format int64 */
   metaId?: number;
   nodeName?: string;
   processorFilter?: ProcessorFilter;
+
+  /** @format int64 */
   startTimeMs?: number;
   status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+
+  /** @format int64 */
   statusTimeMs?: number;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -1458,6 +1904,7 @@ export interface PropertyPath {
  * The query terms for the search
  */
 export interface Query {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
 
   /** The root logical operator in the query expression tree */
@@ -1478,7 +1925,10 @@ export interface QueryConfig {
 }
 
 export interface QueryData {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
 }
@@ -1487,7 +1937,10 @@ export interface QueryData {
  * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
  */
 export interface QueryKey {
-  /** The UUID that makes up the query key */
+  /**
+   * The UUID that makes up the query key
+   * @example 7740bcd0-a49e-4c22-8540-044f85770716
+   */
   uuid: string;
 }
 
@@ -1498,34 +1951,53 @@ export interface Range {
 }
 
 export interface RangeInteger {
+  /** @format int32 */
   from?: number;
   matchNull?: boolean;
+
+  /** @format int32 */
   to?: number;
 }
 
 export interface Rec {
+  /** @format int64 */
   recordNo?: number;
+
+  /** @format int64 */
   streamId?: number;
 }
 
 export interface ReceiveDataRule {
   action?: "RECEIVE" | "REJECT" | "DROP";
+
+  /** @format int64 */
   creationTime?: number;
   enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   name?: string;
+
+  /** @format int32 */
   ruleNumber?: number;
 }
 
 export interface ReceiveDataRules {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   fields?: AbstractField[];
   name?: string;
   rules?: ReceiveDataRule[];
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1533,8 +2005,13 @@ export interface ReceiveDataRules {
 }
 
 export interface RefDataProcessingInfo {
+  /** @format int64 */
   createTimeEpochMs?: number;
+
+  /** @format int64 */
   effectiveTimeEpochMs?: number;
+
+  /** @format int64 */
   lastAccessedTimeEpochMs?: number;
   processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE";
 }
@@ -1544,13 +2021,20 @@ export interface RefStoreEntry {
   mapDefinition?: MapDefinition;
   refDataProcessingInfo?: RefDataProcessingInfo;
   value?: string;
+
+  /** @format int32 */
   valueReferenceCount?: number;
 }
 
 export interface RefStreamDefinition {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipelineDocRef?: DocRef;
   pipelineVersion?: string;
+
+  /** @format int64 */
   streamId?: number;
+
+  /** @format int64 */
   streamNo?: number;
 }
 
@@ -1620,6 +2104,8 @@ export interface ResultRequest {
 
   /** TODO */
   openGroups: string[];
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
   requestedRange: OffsetRange;
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
@@ -1632,7 +2118,11 @@ export interface ResultRequest {
 export interface Row {
   backgroundColor?: string;
 
-  /** The grouping depth, where 0 is the top level of grouping, or where there is no grouping */
+  /**
+   * The grouping depth, where 0 is the top level of grouping, or where there is no grouping
+   * @format int32
+   * @example 0
+   */
   depth: number;
 
   /** TODO */
@@ -1644,6 +2134,7 @@ export interface Row {
 }
 
 export interface SavePipelineXmlRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   xml?: string;
 }
@@ -1654,7 +2145,10 @@ export interface ScheduledTimes {
 }
 
 export interface ScriptDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
@@ -1662,7 +2156,11 @@ export interface ScriptDoc {
   description?: string;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1671,12 +2169,22 @@ export interface ScriptDoc {
 
 export interface Search {
   componentSettingsMap?: Record<string, ComponentSettings>;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
+
+  /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
   storeHistory?: boolean;
+}
+
+export interface SearchAccountRequest {
+  pageRequest?: PageRequest;
+  quickFilter?: string;
+  sortList?: Sort[];
 }
 
 export interface SearchBusPollRequest {
@@ -1693,11 +2201,18 @@ export interface SearchRequest {
 
   /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
   incremental: boolean;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key: QueryKey;
+
+  /** The query terms for the search */
   query: Query;
   resultRequests: ResultRequest[];
 
-  /** Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field */
+  /**
+   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
+   * @format int64
+   */
   timeout?: number;
 }
 
@@ -1753,8 +2268,11 @@ export interface SelectionVolumeUseStatus {
 }
 
 export interface SessionDetails {
+  /** @format int64 */
   createMs?: number;
   lastAccessedAgent?: string;
+
+  /** @format int64 */
   lastAccessedMs?: number;
   nodeName?: string;
   userName?: string;
@@ -1791,7 +2309,10 @@ export interface SharedStepData {
 }
 
 export interface Size {
+  /** @format int32 */
   height?: number;
+
+  /** @format int32 */
   width?: number;
 }
 
@@ -1805,18 +2326,28 @@ export interface SolrConnectionConfig {
 
 export interface SolrIndexDoc {
   collection?: string;
+
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   deletedFields?: SolrIndexField[];
   description?: string;
   fields?: SolrIndexField[];
   name?: string;
+
+  /** A logical addOperator term in a query expression tree */
   retentionExpression?: ExpressionOperator;
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1870,29 +2401,37 @@ export interface SolrIndexField {
 }
 
 export interface SolrSynchState {
+  /** @format int64 */
   lastSynchronized?: number;
   messages?: string[];
 }
 
-/**
- * Describes the sorting applied to a field
- */
 export interface Sort {
-  /** The direction to sort in, ASCENDING or DESCENDING */
-  direction: "ASCENDING" | "DESCENDING";
-
-  /** Where multiple fields are sorted this value describes the sort order, with 0 being the first field to sort on */
-  order: number;
+  desc?: boolean;
+  id?: string;
+  ignoreCase?: boolean;
 }
 
 export interface SourceConfig {
-  /** The maximum number of characters of data to display in the Data Preview pane. */
+  /**
+   * The maximum number of characters of data to display in the Data Preview pane.
+   * @format int64
+   * @min 1
+   */
   maxCharactersInPreviewFetch?: number;
 
-  /** The maximum number of characters of data to display in the Source View editor at at time. */
+  /**
+   * The maximum number of characters of data to display in the Source View editor at at time.
+   * @format int64
+   * @min 1
+   */
   maxCharactersPerFetch?: number;
 
-  /** When displaying multi-line data in the Data Preview or Source views, the viewer will attempt to always show complete lines. It will go past the requested range by up to this many characters in order to complete the line. */
+  /**
+   * When displaying multi-line data in the Data Preview or Source views, the viewer will attempt to always show complete lines. It will go past the requested range by up to this many characters in order to complete the line.
+   * @format int64
+   * @min 0
+   */
   maxCharactersToCompleteLine?: number;
 }
 
@@ -1900,8 +2439,14 @@ export interface SourceLocation {
   childType?: string;
   dataRange?: DataRange;
   highlight?: TextRange;
+
+  /** @format int64 */
   id?: number;
+
+  /** @format int64 */
   partNo?: number;
+
+  /** @format int64 */
   segmentNo?: number;
   truncateToWholeLines?: boolean;
 }
@@ -1928,17 +2473,27 @@ export interface StatisticField {
 
 export interface StatisticStoreDoc {
   config?: StatisticsDataSourceData;
+
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
   enabled?: boolean;
   name?: string;
+
+  /** @format int64 */
   precision?: number;
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -1956,8 +2511,13 @@ export interface StatisticsDataSourceFieldChangeRequest {
 }
 
 export interface StepLocation {
+  /** @format int64 */
   id?: number;
+
+  /** @format int64 */
   partNo?: number;
+
+  /** @format int64 */
   recordNo?: number;
 }
 
@@ -1968,6 +2528,7 @@ export interface SteppingFilterSettings {
 }
 
 export interface SteppingResult {
+  /** @format int32 */
   currentStreamOffset?: number;
   foundRecord?: boolean;
   generalErrors?: string[];
@@ -1976,25 +2537,35 @@ export interface SteppingResult {
   stepLocation?: StepLocation;
 }
 
-export interface StoredError {
+export type StoredError = Marker & {
   elementId?: string;
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-}
+};
 
 export interface StoredQuery {
   componentId?: string;
+
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   dashboardUuid?: string;
   data?: string;
   favourite?: boolean;
+
+  /** @format int32 */
   id?: number;
   name?: string;
+
+  /** The query terms for the search */
   query?: Query;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -2014,7 +2585,11 @@ export type StroomDuration = object;
 
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
+
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
@@ -2024,7 +2599,11 @@ export interface StroomStatsStoreDoc {
   rollUpType?: "NONE" | "ALL" | "CUSTOM";
   statisticType?: "COUNT" | "VALUE";
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -2088,10 +2667,15 @@ export interface TableSettings {
 
   /** TODO */
   extractValues?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
   fields: Field[];
 
-  /** Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply */
+  /**
+   * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
+   * @example 1000,10,1
+   */
   maxResults?: number[];
   modelVersion: string;
 
@@ -2112,10 +2696,14 @@ export interface TaskProgress {
   filterMatchState?: "MATCHED" | "NOT_MATCHED";
   id?: TaskId;
   nodeName?: string;
+
+  /** @format int64 */
   submitTimeMs?: number;
   taskInfo?: string;
   taskName?: string;
   threadName?: string;
+
+  /** @format int64 */
   timeNowMs?: number;
   userName?: string;
 }
@@ -2147,14 +2735,22 @@ export type TextComponentSettings = ComponentSettings & {
 
 export interface TextConverterDoc {
   converterType?: "NONE" | "DATA_SPLITTER" | "XML_FRAGMENT";
+
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -2201,13 +2797,24 @@ export interface ThemeConfig {
  * The timezone to apply to a date time value
  */
 export interface TimeZone {
-  /** The id of the time zone, conforming to java.time.ZoneId */
+  /**
+   * The id of the time zone, conforming to java.time.ZoneId
+   * @example GMT
+   */
   id?: string;
 
-  /** The number of hours this timezone is offset from UTC */
+  /**
+   * The number of hours this timezone is offset from UTC
+   * @format int32
+   * @example -1
+   */
   offsetHours?: number;
 
-  /** The number of minutes this timezone is offset from UTC */
+  /**
+   * The number of minutes this timezone is offset from UTC
+   * @format int32
+   * @example -30
+   */
   offsetMinutes?: number;
 
   /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
@@ -2216,17 +2823,27 @@ export interface TimeZone {
 
 export interface Token {
   comments?: string;
+
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   data?: string;
   enabled?: boolean;
+
+  /** @format int64 */
   expiresOnMs?: number;
+
+  /** @format int32 */
   id?: number;
   tokenType?: string;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   userEmail?: string;
   userId?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -2234,7 +2851,10 @@ export interface TokenConfig {
   /** The cryptographic algorithm used in the Json Web Signatures. Valid values can be found at https://openid.net/specs/draft-jones-json-web-signature-04.html#Signing */
   algorithm: string;
 
-  /** The default API key expiry time */
+  /**
+   * The default API key expiry time
+   * @format int64
+   */
   defaultApiKeyExpiryInMinutes?: number;
 
   /** The Issuer value used in Json Web Tokens. */
@@ -2275,7 +2895,10 @@ export interface UiConfig {
   /** The regex pattern for entity names. */
   namePattern?: string;
 
-  /** Determines the behaviour of the browser built-in context menu. This property is for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard browser menu. */
+  /**
+   * Determines the behaviour of the browser built-in context menu. This property is for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard browser menu.
+   * @pattern ^return (true|false);$
+   */
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
@@ -2301,6 +2924,7 @@ export interface UpdateAccountRequest {
 }
 
 export interface UploadDataRequest {
+  /** @format int64 */
   effectiveMs?: number;
   feedName?: string;
   fileName?: string;
@@ -2321,15 +2945,22 @@ export interface UrlConfig {
 }
 
 export interface User {
+  /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   enabled?: boolean;
   group?: boolean;
+
+  /** @format int32 */
   id?: number;
   name?: string;
+
+  /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
+
+  /** @format int32 */
   version?: number;
 }
 
@@ -2358,16 +2989,25 @@ export type VisResultRequest = ComponentResultRequest & {
 };
 
 export interface VisualisationDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   description?: string;
   functionName?: string;
   name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   scriptRef?: DocRef;
   settings?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -2383,7 +3023,10 @@ export interface XPathFilter {
 }
 
 export interface XmlSchemaDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
@@ -2394,7 +3037,11 @@ export interface XmlSchemaDoc {
   schemaGroup?: string;
   systemId?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -2408,25 +3055,41 @@ export interface XsltDTO {
   data?: string;
   description?: string;
 
-  /** The name for the data source */
+  /**
+   * The name for the data source
+   * @example MyStatistic
+   */
   name: string;
 
-  /** The type of the 'document' that this DocRef refers to */
+  /**
+   * The type of the 'document' that this DocRef refers to
+   * @example StroomStatsStore
+   */
   type: string;
 
-  /** The unique identifier for this 'document' */
+  /**
+   * The unique identifier for this 'document'
+   * @example 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
+   */
   uuid: string;
 }
 
 export interface XsltDoc {
+  /** @format int64 */
   createTime?: number;
+
+  /** @format int64 */
   createTimeMs: number;
   createUser?: string;
   data?: string;
   description?: string;
   name?: string;
   type?: string;
+
+  /** @format int64 */
   updateTime?: number;
+
+  /** @format int64 */
   updateTimeMs: number;
   updateUser?: string;
   uuid?: string;
@@ -2574,7 +3237,7 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
   account = {
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name List
@@ -2583,10 +3246,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     list: (params?: RequestParams) =>
-      this.request<string, any>(`/account/v1`, "GET", params, null, BodyType.Json, true),
+      this.request<AccountResultPage, any>(`/account/v1`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name Create
@@ -2598,19 +3261,19 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<number, any>(`/account/v1`, "POST", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name Search
-     * @summary Search for an account by email.
+     * @summary Search for an account by email address.
      * @request POST:/account/v1/search
      * @secure
      */
-    search: (params?: RequestParams) =>
-      this.request<string, any>(`/account/v1/search`, "POST", params, null, BodyType.Json, true),
+    search: (body: SearchAccountRequest, params?: RequestParams) =>
+      this.request<AccountResultPage, any>(`/account/v1/search`, "POST", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name Read
@@ -2619,10 +3282,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     read: (id: number, params?: RequestParams) =>
-      this.request<string, any>(`/account/v1/${id}`, "GET", params, null, BodyType.Json, true),
+      this.request<Account, any>(`/account/v1/${id}`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name Update
@@ -2631,10 +3294,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     update: (id: number, body: UpdateAccountRequest, params?: RequestParams) =>
-      this.request<string, any>(`/account/v1/${id}`, "PUT", params, body, BodyType.Json, true),
+      this.request<boolean, any>(`/account/v1/${id}`, "PUT", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom Account API
+     * No description
      *
      * @tags Account
      * @name Delete
@@ -2643,7 +3306,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     delete: (id: number, params?: RequestParams) =>
-      this.request<string, any>(`/account/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+      this.request<boolean, any>(`/account/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
   };
   activity = {
     /**

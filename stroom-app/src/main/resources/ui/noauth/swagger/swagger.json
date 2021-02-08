@@ -149,6 +149,24 @@
         }
       }
     },
+    "AccountResultPage" : {
+      "type" : "object",
+      "properties" : {
+        "pageResponse" : {
+          "$ref" : "#/definitions/PageResponse",
+          "originalRef" : "PageResponse",
+          "readOnly" : true
+        },
+        "values" : {
+          "items" : {
+            "$ref" : "#/definitions/Account",
+            "originalRef" : "Account"
+          },
+          "readOnly" : true,
+          "type" : "array"
+        }
+      }
+    },
     "AcknowledgeSplashRequest" : {
       "type" : "object",
       "properties" : {
@@ -3620,18 +3638,24 @@
     },
     "OffsetRange" : {
       "type" : "object",
+      "required" : [ "length", "offset" ],
       "properties" : {
         "length" : {
-          "$ref" : "#/definitions/Number",
-          "originalRef" : "Number",
-          "readOnly" : true
+          "description" : "The length in records of the sub-set of results",
+          "example" : 100,
+          "format" : "int64",
+          "readOnly" : true,
+          "type" : "integer"
         },
         "offset" : {
-          "$ref" : "#/definitions/Number",
-          "originalRef" : "Number",
-          "readOnly" : true
+          "description" : "The start offset for this sub-set of data, where zero is the offset of the first record in the full result set",
+          "example" : 0,
+          "format" : "int64",
+          "readOnly" : true,
+          "type" : "integer"
         }
-      }
+      },
+      "description" : "The offset and length of a range of data in a sub-set of a query result set"
     },
     "OffsetRangeLong" : {
       "type" : "object",
@@ -7576,17 +7600,19 @@
     "/account/v1" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "list",
         "produces" : [ "application/json" ],
         "responses" : {
           "200" : {
             "description" : "successful operation",
             "responseSchema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/AccountResultPage",
+              "originalRef" : "#/definitions/AccountResultPage"
             },
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/AccountResultPage",
+              "originalRef" : "#/definitions/AccountResultPage"
             }
           }
         },
@@ -7595,7 +7621,7 @@
       },
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "create",
         "parameters" : [ {
           "description" : "account",
@@ -7628,7 +7654,7 @@
     "/account/v1/search" : {
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "search",
         "parameters" : [ {
           "description" : "account",
@@ -7645,21 +7671,23 @@
           "200" : {
             "description" : "successful operation",
             "responseSchema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/AccountResultPage",
+              "originalRef" : "#/definitions/AccountResultPage"
             },
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/AccountResultPage",
+              "originalRef" : "#/definitions/AccountResultPage"
             }
           }
         },
-        "summary" : "Search for an account by email.",
+        "summary" : "Search for an account by email address.",
         "tags" : [ "Account" ]
       }
     },
     "/account/v1/{id}" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "read",
         "parameters" : [ {
           "name" : "id",
@@ -7673,10 +7701,12 @@
           "200" : {
             "description" : "successful operation",
             "responseSchema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/Account",
+              "originalRef" : "#/definitions/Account"
             },
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/Account",
+              "originalRef" : "#/definitions/Account"
             }
           }
         },
@@ -7685,7 +7715,7 @@
       },
       "put" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "update",
         "parameters" : [ {
           "description" : "account",
@@ -7708,10 +7738,10 @@
           "200" : {
             "description" : "successful operation",
             "responseSchema" : {
-              "type" : "string"
+              "type" : "boolean"
             },
             "schema" : {
-              "type" : "string"
+              "type" : "boolean"
             }
           }
         },
@@ -7720,7 +7750,7 @@
       },
       "delete" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Account API",
+        "description" : "",
         "operationId" : "delete",
         "parameters" : [ {
           "name" : "id",
@@ -7734,10 +7764,10 @@
           "200" : {
             "description" : "successful operation",
             "responseSchema" : {
-              "type" : "string"
+              "type" : "boolean"
             },
             "schema" : {
-              "type" : "string"
+              "type" : "boolean"
             }
           }
         },

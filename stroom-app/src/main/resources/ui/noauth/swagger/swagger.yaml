@@ -96,7 +96,7 @@ paths:
       tags:
       - "Account"
       summary: "Get all accounts."
-      description: "Stroom Account API"
+      description: ""
       operationId: "list"
       consumes:
       - "application/json"
@@ -107,12 +107,12 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/AccountResultPage"
     post:
       tags:
       - "Account"
       summary: "Create an account."
-      description: "Stroom Account API"
+      description: ""
       operationId: "create"
       consumes:
       - "application/json"
@@ -135,8 +135,8 @@ paths:
     post:
       tags:
       - "Account"
-      summary: "Search for an account by email."
-      description: "Stroom Account API"
+      summary: "Search for an account by email address."
+      description: ""
       operationId: "search"
       consumes:
       - "application/json"
@@ -153,13 +153,13 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/AccountResultPage"
   /account/v1/{id}:
     get:
       tags:
       - "Account"
       summary: "Get an account by ID."
-      description: "Stroom Account API"
+      description: ""
       operationId: "read"
       consumes:
       - "application/json"
@@ -175,12 +175,12 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/Account"
     put:
       tags:
       - "Account"
       summary: "Update an account."
-      description: "Stroom Account API"
+      description: ""
       operationId: "update"
       consumes:
       - "application/json"
@@ -202,12 +202,12 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            type: "boolean"
     delete:
       tags:
       - "Account"
       summary: "Delete an account by ID."
-      description: "Stroom Account API"
+      description: ""
       operationId: "delete"
       consumes:
       - "application/json"
@@ -223,7 +223,7 @@ paths:
         200:
           description: "successful operation"
           schema:
-            type: "string"
+            type: "boolean"
   /activity/v1:
     get:
       tags:
@@ -7250,6 +7250,17 @@ definitions:
         type: "boolean"
       processingAccount:
         type: "boolean"
+  AccountResultPage:
+    type: "object"
+    properties:
+      values:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Account"
+      pageResponse:
+        readOnly: true
+        $ref: "#/definitions/PageResponse"
   AcknowledgeSplashRequest:
     type: "object"
     properties:
@@ -7878,13 +7889,13 @@ definitions:
       tokenType:
         type: "string"
         pattern: "^user$|^api$|^email_reset$"
-      enabled:
-        type: "boolean"
-      comments:
-        type: "string"
       expiresOnMs:
         type: "integer"
         format: "int64"
+      comments:
+        type: "string"
+      enabled:
+        type: "boolean"
   CustomRollUpMask:
     type: "object"
     properties:
@@ -9780,13 +9791,25 @@ definitions:
       description: "The definition of a format to apply to numeric data"
   OffsetRange:
     type: "object"
+    required:
+    - "length"
+    - "offset"
     properties:
       offset:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "The start offset for this sub-set of data, where zero is the\
+          \ offset of the first record in the full result set"
         readOnly: true
-        $ref: "#/definitions/Number"
       length:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "The length in records of the sub-set of results"
         readOnly: true
-        $ref: "#/definitions/Number"
+    description: "The offset and length of a range of data in a sub-set of a query\
+      \ result set"
   OffsetRangeLong:
     type: "object"
     properties:
