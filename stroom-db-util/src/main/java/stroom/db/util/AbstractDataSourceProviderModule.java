@@ -12,17 +12,15 @@ import com.google.inject.Provides;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @param <T_Config>       A config class that implements {@link HasDbConfig}
  * @param <T_ConnProvider> A class that extends {@link DataSource}
  */
-public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource> extends AbstractModule {
+public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource>
+        extends AbstractModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
     protected abstract String getModuleName();
@@ -49,9 +47,11 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
      */
     @Provides
     @Singleton
-    public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final DataSourceFactory dataSourceFactory,
-                                                @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
+    public T_ConnProvider getConnectionProvider(
+            final Provider<T_Config> configProvider,
+            final DataSourceFactory dataSourceFactory,
+            @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
+
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());

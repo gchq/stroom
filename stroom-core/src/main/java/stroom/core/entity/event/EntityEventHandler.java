@@ -143,7 +143,8 @@ class EntityEventHandler {
         if (!initialised) {
             try {
                 for (final Handler handler : entityEventHandlerProvider.get()) {
-                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass().getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
+                    final stroom.util.entityevent.EntityEventHandler annotation = handler.getClass()
+                            .getAnnotation(stroom.util.entityevent.EntityEventHandler.class);
                     if (annotation != null) {
                         final String type = annotation.type();
                         addHandler(handler, type, annotation.action());

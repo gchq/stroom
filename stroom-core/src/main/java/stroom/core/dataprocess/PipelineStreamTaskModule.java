@@ -16,9 +16,10 @@
 
 package stroom.core.dataprocess;
 
-import com.google.inject.AbstractModule;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.DataProcessorBinder;
+
+import com.google.inject.AbstractModule;
 
 public class PipelineStreamTaskModule extends AbstractModule {
     @Override

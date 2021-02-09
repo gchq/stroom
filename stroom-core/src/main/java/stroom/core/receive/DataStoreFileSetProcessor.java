@@ -152,9 +152,17 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         }
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName, final String typeName, final boolean oneByOne) {
-        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(store,
-                feedProperties, metaStatistics, feedName, typeName, oneByOne);
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers( final String feedName,
+                                                                      final String typeName,
+                                                                      final boolean oneByOne) {
+
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
+                store,
+                feedProperties,
+                metaStatistics,
+                feedName,
+                typeName,
+                oneByOne);
 
         final AttributeMap globalMetaMap = new AttributeMap();
         globalMetaMap.put(StandardHeaderArguments.FEED, feedName);
@@ -168,7 +176,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         return list;
     }
 
-    private List<StreamTargetStroomStreamHandler> closeStreamHandlers(final List<StreamTargetStroomStreamHandler> handlers) {
+    private List<StreamTargetStroomStreamHandler> closeStreamHandlers(
+            final List<StreamTargetStroomStreamHandler> handlers) {
         if (handlers != null) {
             handlers.forEach(StreamTargetStroomStreamHandler::close);
         }

@@ -16,13 +16,12 @@
 
 package stroom.processor.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.util.xml.XMLMarshallerUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 
 abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshaller<T_Entity, T_Object> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
@@ -49,7 +48,8 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
             setData(entity, data);
         } catch (final RuntimeException e) {
             LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity}, e);
-            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)", entity.getClass(), entity, String.valueOf(e));
+            LOGGER.warn("Problem marshaling {} {} - {} (enable debug for full trace)",
+                    entity.getClass(), entity, String.valueOf(e));
         }
         return entity;
     }

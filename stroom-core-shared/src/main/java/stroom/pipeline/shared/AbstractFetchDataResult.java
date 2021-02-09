@@ -58,14 +58,16 @@ public abstract class AbstractFetchDataResult {
     private final Set<String> availableChildStreamTypes;
 
     @JsonCreator
-    public AbstractFetchDataResult(@JsonProperty("feedName") final String feedName,
-                                   @JsonProperty("streamTypeName") final String streamTypeName,
-                                   @JsonProperty("classification") final String classification,
-                                   @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                                   @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
-                                   @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
-                                   @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
-                                   @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+    public AbstractFetchDataResult(
+            @JsonProperty("feedName") final String feedName,
+            @JsonProperty("streamTypeName") final String streamTypeName,
+            @JsonProperty("classification") final String classification,
+            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+            @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+            @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
+            @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
+            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.classification = classification;

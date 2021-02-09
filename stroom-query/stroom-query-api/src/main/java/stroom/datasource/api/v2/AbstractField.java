@@ -16,6 +16,9 @@
 
 package stroom.datasource.api.v2;
 
+import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,8 +27,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.io.Serializable;
 import java.util.List;

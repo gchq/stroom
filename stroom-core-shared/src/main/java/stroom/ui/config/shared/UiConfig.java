@@ -50,7 +50,8 @@ public class UiConfig extends AbstractConfig {
     private String maintenanceMessage;
 
     @JsonProperty
-    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values.")
+    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the " +
+            "user requests lower values.")
     private String defaultMaxResults;
 
     @JsonProperty
@@ -77,8 +78,9 @@ public class UiConfig extends AbstractConfig {
 
     @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
-    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is for developer " +
-            "use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard " +
+    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is " +
+            "for developer use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' " +
+            "to see the standard " +
             "browser menu.")
     private String oncontextmenu;
 

@@ -88,13 +88,15 @@ public final class ManageGlobalPropertyEditPresenter
     private final ButtonView dataTypeHelpButton;
 
     @Inject
-    public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
-                                             final GlobalPropertyEditView view,
-                                             final RestFactory restFactory,
-                                             final NodeCache nodeCache,
-                                             final ClientSecurityContext securityContext,
-                                             final UiConfigCache clientPropertyCache,
-                                             final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
+    public ManageGlobalPropertyEditPresenter(
+            final EventBus eventBus,
+            final GlobalPropertyEditView view,
+            final RestFactory restFactory,
+            final NodeCache nodeCache,
+            final ClientSecurityContext securityContext,
+            final UiConfigCache clientPropertyCache,
+            final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
+
         super(eventBus, view);
         this.restFactory = restFactory;
         this.nodeCache = nodeCache;
@@ -102,8 +104,10 @@ public final class ManageGlobalPropertyEditPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
-        this.effectiveValueWarningsButton = view.addEffectiveValueIcon(SvgPresets.ALERT.title("Click to see cluster values"));
-        this.effectiveValueInfoButton = view.addEffectiveValueIcon(SvgPresets.INFO.title("All nodes have the same effective value"));
+        this.effectiveValueWarningsButton = view.addEffectiveValueIcon(
+                SvgPresets.ALERT.title("Click to see cluster values"));
+        this.effectiveValueInfoButton = view.addEffectiveValueIcon(
+                SvgPresets.INFO.title("All nodes have the same effective value"));
         this.dataTypeHelpButton = view.addDataTypeHelpIcon(SvgPresets.HELP);
 
         this.effectiveValueWarningsButton.setVisible(false);

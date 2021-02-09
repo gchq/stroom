@@ -37,6 +37,8 @@ plugins {
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
+    //id 'checkstyle' apply false
+
 //    id 'java-library'
 
 //    id 'nebula.lint' version '10.4.2'
@@ -319,6 +321,7 @@ subprojects {
     //println "Configuring subproject ${project.name}"
 
     apply plugin: 'java'
+    apply plugin: 'checkstyle'
     apply plugin: 'idea'
     apply plugin: 'ca.cutterslade.analyze'
 //    apply plugin: 'java-library'
@@ -544,7 +547,16 @@ subprojects {
         justWarn = true
     }
 
+    checkstyle {
+        ignoreFailures false
+        showViolations true
+        toolVersion = "8.29"
+    }
 
+    tasks.withType(Checkstyle) {
+        include("**/stroom/**/*.java")
+        exclude("**/db/jooq/**/*.java")
+    }
 }
 
 // configures only those projects in publishedProjectsPaths

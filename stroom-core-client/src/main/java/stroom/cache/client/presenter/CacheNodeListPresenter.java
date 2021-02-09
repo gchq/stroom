@@ -177,7 +177,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             if (dataProvider == null) {
                 dataProvider = new RestDataProvider<CacheInfo, CacheInfoResponse>(getEventBus()) {
                     @Override
-                    protected void exec(final Consumer<CacheInfoResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    protected void exec(final Consumer<CacheInfoResponse> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
                         nodeCache.listAllNodes(nodeNames -> {
                             fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames);
                         }, throwableConsumer);

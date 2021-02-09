@@ -16,15 +16,16 @@
 
 package stroom.core.tools;
 
-import com.google.common.base.Strings;
-import org.apache.commons.lang3.mutable.MutableInt;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.util.DatabaseTool;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
+
+import com.google.common.base.Strings;
+import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -56,21 +57,28 @@ public class StreamRestoreTool extends DatabaseTool {
     private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String DATE_PATH = "DatePath";
     private static final String DEPTH = "Depth";
+
     private final BufferedReader inputReader = new BufferedReader(
             new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
-    private final SimpleConcurrentMap<String, KeyCount> streamTypeStreamCount = new SimpleConcurrentMap<String, KeyCount>() {
-        @Override
-        protected KeyCount initialValue(final String key) {
-            return new KeyCount(key);
-        }
-    };
-    private final SimpleConcurrentMap<List<String>, KeyCount> streamTypeFeedStreamCount = new SimpleConcurrentMap<List<String>, KeyCount>() {
-        @Override
-        protected KeyCount initialValue(final List<String> key) {
-            return new KeyCount(key);
-        }
-    };
-    private final SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>> streamTypeFeedDateStreamCount = new SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>>() {
+    private final SimpleConcurrentMap<String, KeyCount> streamTypeStreamCount =
+            new SimpleConcurrentMap<String, KeyCount>() {
+                @Override
+                protected KeyCount initialValue(final String key) {
+                    return new KeyCount(key);
+                }
+            };
+
+    private final SimpleConcurrentMap<List<String>, KeyCount> streamTypeFeedStreamCount =
+            new SimpleConcurrentMap<List<String>, KeyCount>() {
+                @Override
+                protected KeyCount initialValue(final List<String> key) {
+                    return new KeyCount(key);
+                }
+            };
+
+    private final SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>>
+            streamTypeFeedDateStreamCount =
+            new SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>>() {
         @Override
         protected SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>> initialValue(final String key) {
             return new SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>() {
@@ -118,7 +126,8 @@ public class StreamRestoreTool extends DatabaseTool {
             pathStreamTypeMap = new HashMap<>();
 
             // TODO : @66 FIX THIS
-//            final String sql = "select " + StreamTypeEntity.NAME + "," + StreamTypeEntity.ID + " from " + StreamTypeEntity.TABLE_NAME;
+//            final String sql = "select " + StreamTypeEntity.NAME + "," + StreamTypeEntity.ID +
+//            " from " + StreamTypeEntity.TABLE_NAME;
 //            try (final Connection connection = getConnection()) {
 //                try (final Statement statement = connection.createStatement()) {
 //                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
@@ -138,7 +147,8 @@ public class StreamRestoreTool extends DatabaseTool {
 //    private Map<String, Long> getPathVolumeMap() throws SQLException {
 //        if (pathVolumeMap == null) {
 //            pathVolumeMap = new HashMap<>();
-//            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID + " from " + VolumeEntity.TABLE_NAME;
+//            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID +
+//            " from " + VolumeEntity.TABLE_NAME;
 //            try (final Connection connection = getConnection()) {
 //                try (final Statement statement = connection.createStatement()) {
 //                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
@@ -157,7 +167,8 @@ public class StreamRestoreTool extends DatabaseTool {
 //            feedIdNameMap = new HashMap<>();
 //            try (final Connection connection = getConnection()) {
 //                try (final Statement statement = connection.createStatement()) {
-//                    try (final ResultSet resultSet = statement.executeQuery("select " + FeedEntity.ID + "," + SQLNameConstants.NAME + " from " + FeedEntity.TABLE_NAME)) {
+//                    try (final ResultSet resultSet = statement.executeQuery("select " +
+//                    FeedEntity.ID + "," + SQLNameConstants.NAME + " from " + FeedEntity.TABLE_NAME)) {
 //                        while (resultSet.next()) {
 //                            feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
 //                        }
@@ -173,7 +184,8 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     private char readQuestion(final String question, final char[] options, final char def) {
-        final String result = readLine(question + " " + Arrays.toString(options) + " " + def + "*").toLowerCase()
+        final String result = readLine(question + " " + Arrays.toString(options) + " " + def + "*")
+                .toLowerCase()
                 .trim();
 
         if (result.length() == 0) {
@@ -209,8 +221,11 @@ public class StreamRestoreTool extends DatabaseTool {
                         }
                     }
                     final String type = stringTokenizer.nextToken();
-                    final String date = stringTokenizer.nextToken() + "/" + stringTokenizer.nextToken() + "/"
-                            + stringTokenizer.nextToken();
+                    final String date = stringTokenizer.nextToken() +
+                            "/" +
+                            stringTokenizer.nextToken() +
+                            "/" +
+                            stringTokenizer.nextToken();
 
                     final String file = line.substring(line.lastIndexOf("/"));
                     final String feed = file.substring(1, file.indexOf("="));
@@ -234,8 +249,10 @@ public class StreamRestoreTool extends DatabaseTool {
 
             if (!inspect) {
                 for (final KeyCount keyCount : sortedList) {
-                    final char response = readQuestion(keyCount.toString() + " (D)elete, (R)estore, (I)nspect, (S)kip",
-                            new char[]{'d', 'r', 'i', 's'}, 's');
+                    final char response = readQuestion(
+                            keyCount.toString() + " (D)elete, (R)estore, (I)nspect, (S)kip",
+                            new char[]{'d', 'r', 'i', 's'},
+                            's');
 
                     streamTypeResponse.put(keyCount.getKey().get(0), response);
 
@@ -328,7 +345,8 @@ public class StreamRestoreTool extends DatabaseTool {
         }
         rtnMap.put(VOLUME_PATH, volumePath.toString());
         rtnMap.put(STREAM_TYPE_PATH, stringTokenizer.nextToken());
-        rtnMap.put(DATE_PATH,
+        rtnMap.put(
+                DATE_PATH,
                 stringTokenizer.nextToken() + "-" + stringTokenizer.nextToken() + "-" + stringTokenizer.nextToken());
 
         final String datePart = "YYYY-MM-DD";
@@ -363,7 +381,9 @@ public class StreamRestoreTool extends DatabaseTool {
         String time = "T00:00:00.000Z";
         try {
             if (Files.exists(file)) {
-                final String fileLastModified = DateUtil.createNormalDateTimeString(Files.getLastModifiedTime(file).toMillis());
+                final String fileLastModified = DateUtil.createNormalDateTimeString(
+                        Files.getLastModifiedTime(file)
+                                .toMillis());
                 time = fileLastModified.substring(datePart.length());
             }
         } catch (final IOException e) {
@@ -386,7 +406,9 @@ public class StreamRestoreTool extends DatabaseTool {
         return rtnMap;
     }
 
-    private void processStreamTypeFeed(final String fileName, final String processStreamType, final String processFeedId,
+    private void processStreamTypeFeed(final String fileName,
+                                       final String processStreamType,
+                                       final String processFeedId,
                                        final char action) throws IOException, SQLException {
         try (final BufferedReader reader = Files.newBufferedReader(Paths.get(fileName), StreamUtil.DEFAULT_CHARSET)) {
             String line = null;
@@ -434,8 +456,10 @@ public class StreamRestoreTool extends DatabaseTool {
                         final long feedId = Long.valueOf(streamAttributes.get(FEED_ID));
                         final long streamTypeId = getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH));
 
-                        final String logInfo = Strings.padStart(String.valueOf(streamId), 10, ' ') + " "
-                                + DateUtil.createNormalDateTimeString(createMs);
+                        final String logInfo = Strings.padStart(
+                                String.valueOf(streamId),
+                                10,
+                                ' ') + " " + DateUtil.createNormalDateTimeString(createMs);
 
                         writeLine("Restore " + logInfo + " for file " + line);
 
@@ -443,7 +467,8 @@ public class StreamRestoreTool extends DatabaseTool {
 //                        if (!mock) {
 //                            try (final Connection connection = getConnection()) {
 //                                try (final PreparedStatement statement1 = connection.prepareStatement(
-//                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
+//                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, " +
+//                                        "fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
 //                                                + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
 //                                    int s1i = 1;
 //                                    statement1.setLong(s1i++, streamId);
@@ -465,7 +490,9 @@ public class StreamRestoreTool extends DatabaseTool {
 //                                        "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
 //                                    int s2i = 1;
 //                                    statement2.setLong(s2i++, streamId);
-//                                    statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
+//                                    statement2.setLong(
+//                                      s2i++,
+//                                      getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
 //                                    statement2.executeUpdate();
 //                                }
 //                            } catch (final RuntimeException e) {
@@ -489,8 +516,14 @@ public class StreamRestoreTool extends DatabaseTool {
         sort(list);
 
         for (final KeyCount keyCount : list) {
-            writeLine(Strings.padEnd(keyCount.getKey().toString(), KEY_PAD, ' ')
-                    + Strings.padStart(ModelStringUtil.formatCsv(keyCount.getCount()), COUNT_PAD, ' '));
+            writeLine(Strings.padEnd(
+                    keyCount.getKey().toString(),
+                    KEY_PAD,
+                    ' ') +
+                    Strings.padStart(
+                            ModelStringUtil.formatCsv(keyCount.getCount()),
+                            COUNT_PAD,
+                            ' '));
         }
         writeLine("========================");
         return list;
@@ -521,8 +554,8 @@ public class StreamRestoreTool extends DatabaseTool {
 
         @Override
         public String toString() {
-            return Strings.padEnd(getKey().toString(), KEY_PAD, ' ')
-                    + Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
+            return Strings.padEnd(getKey().toString(), KEY_PAD, ' ') +
+                    Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
         }
     }
 

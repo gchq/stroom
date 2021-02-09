@@ -16,11 +16,12 @@
 
 package stroom.core.receive;
 
-import com.google.inject.AbstractModule;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RequestHandler;
 import stroom.util.io.BufferFactory;
+
+import com.google.inject.AbstractModule;
 
 public class ReceiveDataModule extends AbstractModule {
     @Override

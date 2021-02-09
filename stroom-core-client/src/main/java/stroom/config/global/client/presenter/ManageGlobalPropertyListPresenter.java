@@ -146,8 +146,12 @@ public class ManageGlobalPropertyListPresenter
     private void refreshPropertiesForAllNodes() {
         // Only care about enable nodes
         nodeCache.listEnabledNodes(
-                nodeNames -> nodeNames.forEach(this::refreshPropertiesForNode),
-                throwable -> showError(throwable, "Error getting list of all nodes. Only properties for one node will be shown"));
+                nodeNames ->
+                        nodeNames.forEach(this::refreshPropertiesForNode),
+                throwable ->
+                        showError(
+                                throwable,
+                                "Error getting list of all nodes. Only properties for one node will be shown"));
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
@@ -305,49 +309,6 @@ public class ManageGlobalPropertyListPresenter
         DataGridUtil.addEndColumn(getView());
         DataGridUtil.addColumnSortHandler(getView(), criteria, this::refresh);
     }
-
-//    private Column<ConfigPropertyRow, String> buildDescriptionColumn() {
-//        return new Column<ConfigPropertyRow, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ConfigPropertyRow row) {
-//                if (row == null) {
-//                    return null;
-//                }
-//                return row.getDescription();
-//            }
-//
-//            @Override
-//            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
-//                return super.getCellStyleNames(context, object) + " "
-//                        + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
-//                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
-//            }
-//        };
-//    }
-//
-//    private Column<ConfigPropertyRow, SafeHtml> buildSafeHtmlColumn(final Function<ConfigPropertyRow, SafeHtml> valueFunc) {
-//        // TODO use OrderByColumn
-//        return new Column<ConfigPropertyRow, SafeHtml>(new SafeHtmlCell()) {
-//            @Override
-//            public SafeHtml getValue(final ConfigPropertyRow row) {
-//                if (row == null) {
-//                    return null;
-//                }
-//                return valueFunc.apply(row);
-//            }
-//
-//            @Override
-//            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
-//                return super.getCellStyleNames(context, object) + " "
-//                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
-//            }
-//        };
-//    }
-//
-//    private void addColumn(Column<ConfigPropertyRow, ?> column, String name, int width) {
-//        column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-//        getView().addResizableColumn(column, name, width);
-//    }
 
     public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);
