@@ -9,6 +9,7 @@ import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -24,11 +25,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -271,22 +270,19 @@ public class DbTestUtil {
         final Path cacheDir = parentDir.resolve("embedmysql");
 
         EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
-        while (embeddedMysql == null) {
-            // Add file locking to synchronise across JVM processes.
-            try (final FileChannel channel = FileChannel.open(lockFile, StandardOpenOption.APPEND)) {
-                embeddedMysql = doCreateEmbeddedMysql(cacheDir);
-            } catch (final IOException e) {
-                LOGGER.trace(e.getMessage(), e);
-            }
 
-            try {
-                Thread.sleep(500);
-            } catch (final InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+        if (embeddedMysql == null) {
+            embeddedMysql = FileUtil.getUnderFileLock(lockFile, () -> {
+                try {
+                    return doCreateEmbeddedMysql(cacheDir);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error creating embedded mysql", e);
+                }
+            });
         }
+
         EMBEDDED_MYSQL = embeddedMysql;
+
         return embeddedMysql;
     }
 
