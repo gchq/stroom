@@ -145,6 +145,7 @@ public class Version implements Serializable, Comparable<Version> {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Version)) {

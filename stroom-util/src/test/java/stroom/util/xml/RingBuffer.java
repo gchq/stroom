@@ -347,6 +347,7 @@ public class RingBuffer implements CharSequence, Serializable {
         }
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object other) {
         if (other instanceof RingBuffer) {

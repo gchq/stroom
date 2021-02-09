@@ -62,6 +62,7 @@ public class OffsetRange<T extends Number> {
         return length;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -104,6 +104,7 @@ public class DocRefInfo {
         this.otherInfo = otherInfo;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

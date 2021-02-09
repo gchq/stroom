@@ -58,6 +58,7 @@ public class Key implements Iterable<KeyPart> {
         return last == null || last.isGrouped();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -66,6 +66,7 @@ public final class OffsetRange {
         return length;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

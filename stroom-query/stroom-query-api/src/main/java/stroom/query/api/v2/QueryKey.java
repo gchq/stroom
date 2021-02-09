@@ -64,6 +64,7 @@ public final class QueryKey implements Serializable {
         this.uuid = uuid;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

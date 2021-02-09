@@ -103,6 +103,7 @@ public final class ExpressionOperator extends ExpressionItem {
         return children;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

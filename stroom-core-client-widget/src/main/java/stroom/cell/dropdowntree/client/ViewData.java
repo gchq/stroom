@@ -46,7 +46,7 @@ public class ViewData<E> {
      * Return true if the last and current values of this ViewData object are
      * equal to those of the other object.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "checkstyle:needbraces"})
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ViewData)) {

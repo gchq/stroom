@@ -65,6 +65,7 @@ public class SimpleThreadPool implements ThreadPool {
         return name.hashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (obj == this) {

@@ -19,6 +19,7 @@ package stroom.pipeline.reader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import java.util.Set;
  * characters being interpreted as XML syntax.
  */
 public class BadTextXMLFilterReader extends TransformReader {
+
     private static final int MAX_CAPACITY = 1024 * 1024; // 1 million characters
     // should be larger
     // than any single
@@ -47,8 +49,7 @@ public class BadTextXMLFilterReader extends TransformReader {
         m_cbufUsed = 0;
         m_cachedCP = -1;
         m_forceLeafElements = new HashSet<>();
-        for (final String le : forceLeafEntities)
-            m_forceLeafElements.add(le);
+        m_forceLeafElements.addAll(Arrays.asList(forceLeafEntities));
         m_xmlState = XMLstate.Initial;
     }
 
@@ -68,8 +69,9 @@ public class BadTextXMLFilterReader extends TransformReader {
     @Override
     public int read() throws IOException {
         if (m_cbufUsed - m_cbuf.position() <= 0) {
-            if (!readFromBadXML())
+            if (!readFromBadXML()) {
                 return -1;
+            }
         }
         return m_cbuf.get();
     }
@@ -81,12 +83,14 @@ public class BadTextXMLFilterReader extends TransformReader {
         while (len > 0) {
             cpysize = m_cbufUsed - m_cbuf.position();
             if (cpysize <= 0) {
-                if (!readFromBadXML())
+                if (!readFromBadXML()) {
                     break;
+                }
                 cpysize = m_cbufUsed - m_cbuf.position();
             }
-            if (cpysize > len)
+            if (cpysize > len) {
                 cpysize = len;
+            }
             m_cbuf.get(cbuf, off, cpysize);
             off += cpysize;
             len -= cpysize;
@@ -151,8 +155,9 @@ public class BadTextXMLFilterReader extends TransformReader {
             if (m_cachedCP == qChar) {
                 m_cachedCP = readCP();
                 writeCP(qChar);
-                if (m_cachedCP != qChar)
+                if (m_cachedCP != qChar) {
                     break;
+                }
             }
         }
     }
@@ -163,8 +168,9 @@ public class BadTextXMLFilterReader extends TransformReader {
         String m_entityName = null;
         m_cbuf.rewind();
 
-        if (m_cachedCP == -1)
+        if (m_cachedCP == -1) {
             m_cachedCP = readCP();
+        }
         while (m_cachedCP != -1) {
             switch (m_xmlState) {
                 case Initial:
@@ -200,8 +206,9 @@ public class BadTextXMLFilterReader extends TransformReader {
                     }
                 case InTagName:
                     // Just seen '</?[-NameStartChar-]'
-                    if (isNameChar(m_cachedCP))
+                    if (isNameChar(m_cachedCP)) {
                         break;
+                    }
                     m_entityName = String.copyValueOf(m_cbuf.array(), entityNameidx, m_cbuf.position() - entityNameidx);
                     m_xmlState = XMLstate.InTagTail;
                     // Intended to fall through...
@@ -212,8 +219,9 @@ public class BadTextXMLFilterReader extends TransformReader {
                         case '"':
                         case '\'':
                             copyQuotedString();
-                            if (m_cachedCP != '>')
+                            if (m_cachedCP != '>') {
                                 break;
+                            }
                             // Intended to fall through...
                         case '>':
                             if (m_forceLeafElements.contains(m_entityName)) {
@@ -225,8 +233,9 @@ public class BadTextXMLFilterReader extends TransformReader {
                     }
                     break;
                 case InTextValid:
-                    if (m_cachedCP == '<')
+                    if (m_cachedCP == '<') {
                         return foundXMLChunk(false);
+                    }
                     break;
                 case InLeaf:
                     if (m_cachedCP == '<') {
@@ -238,22 +247,27 @@ public class BadTextXMLFilterReader extends TransformReader {
                     if (m_cachedCP == '/') {
                         m_xmlState = XMLstate.InLeafCheckName;
                         entityNameidx = 0;
-                    } else
+                    } else {
                         m_xmlState = XMLstate.InLeaf;
+                    }
                     break;
                 case InLeafCheckName:
                     if (m_cachedCP == m_entityName.charAt(entityNameidx)) {
                         ++entityNameidx;
-                        if (entityNameidx == m_entityName.length())
+                        if (entityNameidx == m_entityName.length()) {
                             m_xmlState = XMLstate.InLeafClose;
-                    } else
+                        }
+                    } else {
                         m_xmlState = XMLstate.InLeaf;
+                    }
                     break;
                 case InLeafClose:
-                    if (Character.isWhitespace(m_cachedCP))
+                    if (Character.isWhitespace(m_cachedCP)) {
                         break;
-                    if (m_cachedCP == '>')
+                    }
+                    if (m_cachedCP == '>') {
                         return foundXMLChunk(true);
+                    }
                     break;
                 default:
                     assert (false);
@@ -280,8 +294,20 @@ public class BadTextXMLFilterReader extends TransformReader {
         assert (cp >= 0 && cp <= 0x10ffff);
         m_cbuf.put(Character.toChars(cp));
     }
+
     private enum XMLstate {
-        Initial, InTagPreName, InTagCloseName, InTagName, InTagSpecial, InTagTail, InTextValid, InTextInvalid, InLeaf, InLeafOpenAngle, InLeafCheckName, InLeafClose
+        Initial,
+        InTagPreName,
+        InTagCloseName,
+        InTagName,
+        InTagSpecial,
+        InTagTail,
+        InTextValid,
+        InTextInvalid,
+        InLeaf,
+        InLeafOpenAngle,
+        InLeafCheckName,
+        InLeafClose
     }
 
 }

@@ -68,6 +68,7 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
         this.length = maxLength;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

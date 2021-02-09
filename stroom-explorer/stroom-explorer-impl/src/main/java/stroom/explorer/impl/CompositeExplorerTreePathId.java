@@ -40,6 +40,7 @@ class CompositeExplorerTreePathId implements Serializable {
         this.descendant = descendantId;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

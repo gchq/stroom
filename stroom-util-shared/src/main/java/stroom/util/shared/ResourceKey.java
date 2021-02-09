@@ -63,6 +63,7 @@ public class ResourceKey {
         return key.hashCode();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object other) {
         if (other == null) {
