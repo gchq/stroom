@@ -16,13 +16,14 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.processor.shared.Processor;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.processor.shared.Processor;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -38,6 +39,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"elements", "properties", "pipelineReferences", "links", "processors"})
 public class PipelineData {
+
     @XmlElement(name = "elements")
     @JsonProperty
     private PipelineElements elements = new PipelineElements();
@@ -224,5 +226,7 @@ public class PipelineData {
     }
 
     @JsonIgnore
-    public List<Processor> getProcessors(){return processors;}
+    public List<Processor> getProcessors() {
+        return processors;
+    }
 }

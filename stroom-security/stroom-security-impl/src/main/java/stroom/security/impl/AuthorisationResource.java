@@ -28,6 +28,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthorisationResource implements RestResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationResource.class);
 
     private final SecurityContext securityContext;
@@ -47,8 +48,8 @@ public class AuthorisationResource implements RestResource {
     @POST
     @Path("isAuthorised")
     @ApiOperation(
-        value = "Submit a request to verify if the user has the requested permission on a 'document'",
-        response = Response.class)
+            value = "Submit a request to verify if the user has the requested permission on a 'document'",
+            response = Response.class)
     public Response isAuthorised(@ApiParam("permission") final String permission) {
 
         boolean result = securityContext.hasAppPermission(permission);
@@ -74,14 +75,13 @@ public class AuthorisationResource implements RestResource {
     @POST
     @Path("createUser")
     public Response createUser(@QueryParam("id") String userId) {
-        try{
+        try {
             // Why are we not returning the user?
             User existingUser = userService.getUserByName(userId)
                     .orElseGet(() ->
                             userService.createUser(userId));
             return Response.ok().build();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             LOGGER.error("Unable to create user: {}", e.getMessage());
             return Response.serverError().build();
         }
@@ -93,7 +93,7 @@ public class AuthorisationResource implements RestResource {
     @GET
     @Path("setUserStatus")
     public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
-        try{
+        try {
             boolean isEnabled = status.equals("active") || status.equals("enabled");
             return userService.getUserByName(userId)
                     .map(user -> {
@@ -103,8 +103,7 @@ public class AuthorisationResource implements RestResource {
                     })
                     .orElseGet(() ->
                             Response.status(Response.Status.NOT_FOUND).build());
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             LOGGER.error("Unable to change user's status: {}", e.getMessage());
             return Response.serverError().build();
         }

@@ -16,7 +16,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 
 class TestReaderRecorder {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReaderRecorder.class);
 
     /**
@@ -57,7 +57,7 @@ class TestReaderRecorder {
                 byte b = myByteBuffer.getByte(byteOffset++);
                 LOGGER.info("byteOffset: {}, byte: {}",
                         byteOffset,
-                        ByteArrayUtils.byteArrayToString(new byte[] {b}));
+                        ByteArrayUtils.byteArrayToString(new byte[]{b}));
 
                 LOGGER.info("Putting");
                 inputBuffer.put(b);

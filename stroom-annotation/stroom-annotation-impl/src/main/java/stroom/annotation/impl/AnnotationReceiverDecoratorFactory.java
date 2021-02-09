@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
@@ -225,7 +226,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             } else {
                 if (value instanceof String) {
                     return ValString.create((String) value);
-                } if (value instanceof Long) {
+                }
+                if (value instanceof Long) {
                     return ValLong.create((Long) value);
                 } else {
                     throw new RuntimeException("Unexpected type " + value.getClass().getName());

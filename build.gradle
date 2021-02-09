@@ -548,9 +548,9 @@ subprojects {
     }
 
     checkstyle {
-        ignoreFailures true
+        ignoreFailures false
         showViolations true
-        toolVersion = "8.29"
+        toolVersion = "8.40"
     }
 
     tasks.withType(Checkstyle) {

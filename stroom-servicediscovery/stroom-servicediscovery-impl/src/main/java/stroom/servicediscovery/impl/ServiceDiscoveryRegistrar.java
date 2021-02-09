@@ -1,5 +1,9 @@
 package stroom.servicediscovery.impl;
 
+import stroom.servicediscovery.api.RegisteredService;
+import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.common.base.Preconditions;
@@ -9,9 +13,6 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.servicediscovery.api.RegisteredService;
-import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,6 +27,7 @@ import java.util.TreeMap;
  */
 @Singleton
 public class ServiceDiscoveryRegistrar implements HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
     private final ServiceDiscoveryManager serviceDiscoveryManager;
@@ -40,11 +42,10 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
         this.hostNameOrIpAddress = getHostOrIp(serviceDiscoveryConfig);
         this.servicePort = serviceDiscoveryConfig.getServicesPort();
 
-        if(serviceDiscoveryConfig.isEnabled()) {
+        if (serviceDiscoveryConfig.isEnabled()) {
             health = HealthCheck.Result.unhealthy("Not yet initialised...");
             this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
-        }
-        else {
+        } else {
             health = HealthCheck.Result.healthy("Service discovery is disabled.");
         }
     }
@@ -98,7 +99,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                                                      final ServiceDiscovery<String> serviceDiscovery) {
         try {
             final UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
-                ResourcePaths.buildAuthenticatedApiPath(registeredService.getVersionedPath()));
+                    ResourcePaths.buildAuthenticatedApiPath(registeredService.getVersionedPath()));
 
             final ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
                     .serviceType(ServiceType.DYNAMIC) //==ephemeral zk nodes so instance will disappear if we lose zk conn

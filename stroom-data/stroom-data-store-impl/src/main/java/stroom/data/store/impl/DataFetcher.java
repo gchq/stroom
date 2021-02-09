@@ -90,6 +90,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class DataFetcher {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFetcher.class);
 
     // TODO @AT Need to implement showing the data has been truncated, either
@@ -163,15 +164,6 @@ public class DataFetcher {
         this.sourceConfig = sourceConfig;
     }
 
-    //    public void reset() {
-//        index = 0L;
-//        count = 0L;
-//        pageOffset = 0L;
-//        pageLength = 0L;
-//        pageTotal = 0L;
-//        pageTotalIsExact = false;
-//    }
-
     public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
 
         return securityContext.useAsReadResult(() -> {
@@ -187,19 +179,8 @@ public class DataFetcher {
                 throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
             }
         });
-    };
+    }
 
-    //
-//    }
-//
-//    public AbstractFetchDataResult getData(final long streamId,
-//                                           final String childStreamTypeName,
-//                                           final OffsetRange<Long> streamsRange,
-//                                           final OffsetRange<Long> pageRange,
-//                                           final boolean markerMode,
-//                                           final DocRef pipeline,
-//                                           final boolean showAsHtml,
-//                                           final Severity... expandedSeverities) {
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
@@ -595,9 +576,9 @@ public class DataFetcher {
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
-                                                 final InputStream inputStream,
-                                                 final String encoding,
-                                                 final long streamSizeBytes) throws IOException {
+                                       final InputStream inputStream,
+                                       final String encoding,
+                                       final long streamSizeBytes) throws IOException {
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
@@ -798,7 +779,7 @@ public class DataFetcher {
         // At this point currByteOffset is the offset of the first byte of the char outside our range
         // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
         // in our range
-        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset -1 : currByteOffset;
+        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset - 1 : currByteOffset;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()
@@ -1066,6 +1047,7 @@ public class DataFetcher {
     }
 
     private static class RawResult {
+
         private final SourceLocation sourceLocation;
         private final String rawData;
         private final int byteOrderMarkLength;

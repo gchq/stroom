@@ -15,17 +15,14 @@
  */
 package stroom.event.logging.rs.impl;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
 
 import javax.ws.rs.core.MultivaluedMap;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 
@@ -42,7 +39,7 @@ class RequestInfo {
 
     public RequestInfo(final ContainerResourceInfo containerResourceInfo, Object requestObj) {
         this.containerResourceInfo = containerResourceInfo;
-        if (requestObj == null){
+        if (requestObj == null) {
             requestObj = findRequestObj();
         }
         this.requestObj = requestObj;
@@ -56,13 +53,12 @@ class RequestInfo {
         return containerResourceInfo;
     }
 
-    public boolean shouldLog (boolean logByDefault){
+    public boolean shouldLog(boolean logByDefault) {
         return getContainerResourceInfo().shouldLog(logByDefault);
     }
 
 
-
-    private Object findRequestObj(){
+    private Object findRequestObj() {
         int numberOfPathParms = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false).keySet().size();
         int numberOfQueryParams = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false).keySet().size();
         int numberOfPathAndQueryParms = numberOfPathParms + numberOfQueryParams;
@@ -71,20 +67,19 @@ class RequestInfo {
             return null;
         }
 
-        if (numberOfPathAndQueryParms > 1){
+        if (numberOfPathAndQueryParms > 1) {
             WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
             obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
             return obj;
-        }
-        else {
+        } else {
             final MultivaluedMap<String, String> paramMap;
-            if (numberOfPathParms == 1){
+            if (numberOfPathParms == 1) {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false);
             } else {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false);
             }
             String paramName = paramMap.keySet().stream().findFirst().get();
-            String paramValue = paramMap.get(paramName).stream().collect(Collectors.joining(", "));
+            String paramValue = String.join(", ", paramMap.get(paramName));
             if ("id".equals(paramName)) {
                 return new ObjectId(paramValue);
             } else if ("uuid".equals(paramName)) {
@@ -99,9 +94,10 @@ class RequestInfo {
     }
 
     private static class ObjectId implements HasId {
+
         private final long id;
 
-        public ObjectId(String val){
+        public ObjectId(String val) {
             long id = 0;
             try {
                 id = Long.parseLong(val);
@@ -119,9 +115,10 @@ class RequestInfo {
     }
 
     private static class ObjectUuid implements HasUuid {
+
         private final String uuid;
 
-        public ObjectUuid(String uuid){
+        public ObjectUuid(String uuid) {
             this.uuid = uuid;
         }
 
@@ -132,39 +129,49 @@ class RequestInfo {
     }
 
     private static class WithParameters implements HasName {
+
         private String name;
 
-        public WithParameters (MultivaluedMap<String, String> origParms){
+        public WithParameters(MultivaluedMap<String, String> origParms) {
             Set<Entry<String, String>> parms = createParms(origParms);
 
-            name = parms.stream().map(e ->
-            {return e.getKey() + " = " + e.getValue();}).collect(Collectors.joining(", "));
+            name = parms.stream()
+                    .map(e ->
+                            e.getKey() + " = " + e.getValue())
+                    .collect(Collectors.joining(", "));
         }
 
-        private Set<Entry<String, String>> createParms (MultivaluedMap<String, String> origParms){
-            return  origParms.keySet().stream().map(k -> {return new Entry<String, String>() {
-                @Override
-                public String getKey() {
-                    return k;
-                }
+        private Set<Entry<String, String>> createParms(MultivaluedMap<String, String> origParms) {
+            return origParms.keySet().stream().map(k -> {
+                return new Entry<String, String>() {
+                    @Override
+                    public String getKey() {
+                        return k;
+                    }
 
-                @Override
-                public String getValue() {
-                    return origParms.get(k).stream().collect(Collectors.joining(", "));
-                }
+                    @Override
+                    public String getValue() {
+                        return origParms.get(k)
+                                .stream()
+                                .collect(Collectors.joining(", "));
+                    }
 
-                @Override
-                public String setValue(final String value) {
-                    return null;
-                }
-            };}).collect(Collectors.toSet());
+                    @Override
+                    public String setValue(final String value) {
+                        return null;
+                    }
+                };
+            }).collect(Collectors.toSet());
         }
 
-        public void addParams (MultivaluedMap<String, String> origParms){
+        public void addParams(MultivaluedMap<String, String> origParms) {
             name = name.length() > 0 ? name + ", " : "" +
-                    createParms(origParms).stream().map(e ->
-                    {return e.getKey() + " = " + e.getValue();}).collect(Collectors.joining(", "));
+                    createParms(origParms).stream()
+                            .map(e ->
+                                    e.getKey() + " = " + e.getValue())
+                            .collect(Collectors.joining(", "));
         }
+
         @Override
         public String getName() {
             return name;

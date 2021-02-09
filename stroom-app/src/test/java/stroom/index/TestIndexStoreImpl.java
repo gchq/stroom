@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -75,7 +76,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
         final IndexDoc index = indexStore.readDocument(list.stream().
                 filter(docRef -> docRef.getName().equals("Test index")).findFirst().get());
-        
+
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 

@@ -200,10 +200,10 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
 
-        if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals (state.lastElement) && !state.inHeader) {
+        if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals(state.lastElement) && !state.inHeader) {
             //This is an XML value element
-            if (xmlValueDepth == -1){
-                final ErrorListener errorListener = new ErrorListener(){
+            if (xmlValueDepth == -1) {
+                final ErrorListener errorListener = new ErrorListener() {
                     @Override
                     public void warning(TransformerException exception) throws TransformerException {
                         errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
@@ -229,17 +229,16 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                     xmlValueHandler.setResult(new StreamResult(outputStream));
                     xmlValueHandler.startDocument();
                     xmlValueDepth = 0;
-                }catch (final TransformerConfigurationException e) {
+                } catch (final TransformerConfigurationException e) {
                     errorReceiverProxy.log(Severity.FATAL_ERROR,
                             locationFactory.create(e.getLocator().getLineNumber(), e.getLocator().getColumnNumber()),
                             getElementId(), e.getMessage(), e);
-                    log(Severity.ERROR, "Unable to create XML value handler ", null );
+                    log(Severity.ERROR, "Unable to create XML value handler ", null);
                 }
             }
-            xmlValueHandler.startElement(uri,localName,qName,atts);
+            xmlValueHandler.startElement(uri, localName, qName, atts);
             xmlValueDepth++;
-        }
-        else {
+        } else {
             if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
                 state = new KafkaMessageState();
 
@@ -280,7 +279,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        String val = new String (ch, start, length);
+        String val = new String(ch, start, length);
         String element = state.lastElement;
         if (KEY_ELEMENT_LOCAL_NAME.equals(element)) {
             if (state.inHeader) {
@@ -288,7 +287,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             } else {
                 state.key = val;
             }
-        } else if (VALUE_ELEMENT_LOCAL_NAME.equals (element)) {
+        } else if (VALUE_ELEMENT_LOCAL_NAME.equals(element)) {
             if (state.inHeader) {
                 state.headerVals.add(val);
             } else if (xmlValueDepth >= 0) {
@@ -305,7 +304,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
 
         if (xmlValueDepth == 0) {
-            if (VALUE_ELEMENT_LOCAL_NAME.equals (localName)){
+            if (VALUE_ELEMENT_LOCAL_NAME.equals(localName)) {
                 //Create the val from the contents of XML handler buffer
                 xmlValueHandler.endDocument();
                 state.messageValue = outputStream.toByteArray();
@@ -313,13 +312,11 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             } else {
                 throw new SAXException("Unexpected tag " + localName + " in kafka message value.");
             }
-        }
-        else if (xmlValueDepth > 0) {
+        } else if (xmlValueDepth > 0) {
             //Closing an XML value element
             xmlValueHandler.endElement(uri, localName, qName);
-            xmlValueDepth --;
-        }
-        else {
+            xmlValueDepth--;
+        } else {
             if (state != null) {
                 state.lastElement = null;
             }
@@ -337,7 +334,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private void createKafkaMessage(KafkaMessageState state) {
 
         if (state.isInvalid()) {
-            log(Severity.ERROR,"Badly formed Kafka message " + state.whyInvalid(), null);
+            log(Severity.ERROR, "Badly formed Kafka message " + state.whyInvalid(), null);
         } else {
             // We need to serialise to byte[] with the same encoding as kafka's
             // StringSerializer which also uses. By default kafka will use UTF8
@@ -382,7 +379,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 .append(" Value: ")
                 .append(state.messageValue);
 
-            log(Severity.INFO, stringBuilder.toString(), null);
+        log(Severity.INFO, stringBuilder.toString(), null);
     }
 
     @PipelineProperty(
@@ -416,12 +413,13 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 LOGGER.warn(message, e);
                 break;
             case INFO:
-                LOGGER.info(message,e);
+                LOGGER.info(message, e);
                 break;
         }
     }
 
-    private static class KafkaMessageState{
+    private static class KafkaMessageState {
+
         public Integer partition = null;
         public String topic = null;
         public String key = null;

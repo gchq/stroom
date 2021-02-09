@@ -287,6 +287,7 @@ class TestFieldMapper {
     }
 
     private static class MyObject {
+
         private String string;
 
         public String getString() {
@@ -297,7 +298,9 @@ class TestFieldMapper {
             this.string = string;
         }
     }
+
     private static class MyParent {
+
         private String myString = "abc";
         private int myInt = 1;
         private MyChild child = new MyChild();
@@ -336,6 +339,7 @@ class TestFieldMapper {
                     '}';
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;
@@ -353,6 +357,7 @@ class TestFieldMapper {
     }
 
     private static class MyChild {
+
         private String myString = "xyz";
         private int myInt = 2;
 
@@ -380,6 +385,7 @@ class TestFieldMapper {
                     '}';
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;

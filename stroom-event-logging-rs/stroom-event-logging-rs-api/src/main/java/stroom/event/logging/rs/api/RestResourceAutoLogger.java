@@ -21,8 +21,9 @@ import javax.ws.rs.ext.WriterInterceptor;
 
 /**
  * Interface implemented in order to support Automatic logging for Java RS Remote resource method calls.
+ *
  * @see stroom.util.shared.AutoLogged
  */
-public interface RestResourceAutoLogger extends ContainerRequestFilter, WriterInterceptor, ExceptionMapper<Exception>
-{
+public interface RestResourceAutoLogger extends ContainerRequestFilter, WriterInterceptor, ExceptionMapper<Exception> {
+
 }

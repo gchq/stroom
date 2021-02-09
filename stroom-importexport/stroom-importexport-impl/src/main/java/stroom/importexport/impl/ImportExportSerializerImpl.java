@@ -65,6 +65,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class ImportExportSerializerImpl implements ImportExportSerializer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportSerializerImpl.class);
 
     public static final String FOLDER = ExplorerConstants.FOLDER;
@@ -91,6 +92,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * IMPORT
+     *
      * @return
      */
     @Override
@@ -125,7 +127,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     /**
-     *
      * @param dir
      * @param confirmMap
      * @param importMode
@@ -213,19 +214,19 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 //Find the appropriate handler
                 final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
                 boolean docExists = existingNode.isPresent();
-                if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
                     nonExplorerDocRef = docRef;
                     docExists = ((NonExplorerDocRefProvider) importExportActionHandler).docExists(docRef);
                 }
                 DocRef explorerDocRef = docRef;
-                if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
                     explorerDocRef = ((NonExplorerDocRefProvider) importExportActionHandler).findNearestExplorerDocRef(docRef);
                 }
                 if (nonExplorerDocRef != null) {
                     //Use dest path to indicate to user the associated explorer entity for any imported non-explorer ones
                     final Optional<ExplorerNode> existingAltNode = explorerNodeService.getNode(explorerDocRef);
                     if (existingAltNode.isPresent()) {
-                        importState.setDestPath(existingAltNode.get().getName() + "(Existing "+ explorerDocRef.getType() + ")");
+                        importState.setDestPath(existingAltNode.get().getName() + "(Existing " + explorerDocRef.getType() + ")");
                     }
                 }
                 // This is a pre existing item so make sure we are allowed to update it.
@@ -243,7 +244,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Create a parent folder for the new node.
                     // Get the root node.
                     // TODO : Allow the user to specify what the parent folder should be for the import.
-
 
 
                 } else {
@@ -276,16 +276,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Import the item via the appropriate handler.
                     if (importExportActionHandler != null && (
                             ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
-                            ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
-                            importState.isAction())) {
+                                    ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
+                                    importState.isAction())) {
 
                         final ImportExportActionHandler.ImpexDetails importDetails = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         if (importDetails.isIgnore()) {
                             // Should skip this item so remove it from the map.
                             confirmMap.remove(docRef);
-                        }
-                        else {
+                        } else {
                             final DocRef imported;
                             if (importDetails != null) {
                                 imported = importDetails.getDocRef();
@@ -439,7 +438,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             final DocRef explorerDocRef;
             final ExplorerNode explorerNode;
             final DocRef docRef;
-            if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+            if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
                 //Find the closest docref to this one to give a location to export it.
                 NonExplorerDocRefProvider docRefProvider = (NonExplorerDocRefProvider) importExportActionHandler;
                 explorerDocRef = docRefProvider.findNearestExplorerDocRef(initialDocRef);
@@ -450,7 +449,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 final String docRefName = docRefProvider.findNameOfDocRef(initialDocRef);
                 docRef = new DocRef(initialDocRef.getType(), initialDocRef.getUuid(), docRefName);
-                    explorerNode = new ExplorerNode (docRef.getType(), docRef.getUuid(), docRefName, null);
+                explorerNode = new ExplorerNode(docRef.getType(), docRef.getUuid(), docRefName, null);
 
             } else {
                 docRef = initialDocRef;

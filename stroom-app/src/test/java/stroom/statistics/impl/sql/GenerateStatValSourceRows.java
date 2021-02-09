@@ -49,7 +49,7 @@ public class GenerateStatValSourceRows {
     }
 
     private void run(final String[] args) throws SQLException {
-        
+
         try (final Connection connection = statisticsDbConnProvider.getConnection()) {
             LOGGER.info("Clearing SQL_STAT_VAL_SRC");
             final PreparedStatement stmt = connection.prepareStatement("delete from SQL_STAT_VAL_SRC");

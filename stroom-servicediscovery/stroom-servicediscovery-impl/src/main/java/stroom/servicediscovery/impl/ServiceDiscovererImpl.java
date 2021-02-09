@@ -1,5 +1,8 @@
 package stroom.servicediscovery.impl;
 
+import stroom.servicediscovery.api.ExternalService;
+import stroom.servicediscovery.api.ServiceDiscoverer;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import io.vavr.Tuple2;
@@ -8,8 +11,6 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.servicediscovery.api.ExternalService;
-import stroom.servicediscovery.api.ServiceDiscoverer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -104,7 +105,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
 
     @Override
     public Result getHealth() {
-        if(serviceDiscoveryConfig.isEnabled()) {
+        if (serviceDiscoveryConfig.isEnabled()) {
             if (serviceProviders.isEmpty()) {
                 return HealthCheck.Result.unhealthy("No service providers found");
             } else {
@@ -148,8 +149,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                             e.getCause().getMessage());
                 }
             }
-        }
-        else {
+        } else {
+
             return HealthCheck.Result.healthy("Service discovery is disabled");
         }
     }

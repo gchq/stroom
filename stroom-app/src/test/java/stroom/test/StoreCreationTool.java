@@ -94,6 +94,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 public final class StoreCreationTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreCreationTool.class);
 
     private static final int OLD_YEAR = 2006;
@@ -867,7 +868,7 @@ public final class StoreCreationTool {
         }
     }
 
-    public DocRef createFeed(final String feedName, 
+    public DocRef createFeed(final String feedName,
                              final DocRef folder,
                              final String streamType,
                              final String encoding,
@@ -875,8 +876,8 @@ public final class StoreCreationTool {
         LOGGER.info("Creating feed {} in {} with type {} encoding {}");
         DocRef docRef;
         docRef = explorerService.create(
-                FeedDoc.DOCUMENT_TYPE, feedName, 
-                ExplorerConstants.ROOT_DOC_REF, 
+                FeedDoc.DOCUMENT_TYPE, feedName,
+                ExplorerConstants.ROOT_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service

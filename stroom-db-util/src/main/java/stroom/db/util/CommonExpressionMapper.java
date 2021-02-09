@@ -33,6 +33,7 @@ import static org.jooq.impl.DSL.and;
 import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Condition> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonExpressionMapper.class);
 
     private static final String LIST_DELIMITER = ",";
@@ -44,9 +45,10 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     private final Set<String> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
-    public CommonExpressionMapper(){
+    public CommonExpressionMapper() {
         this.delegateItemHandler = null;
     }
+
     public CommonExpressionMapper(final Function<ExpressionItem, Condition> delegateItemHandler) {
         this.delegateItemHandler = delegateItemHandler;
     }
@@ -82,10 +84,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (termHandler != null) {
                     result = termHandler.apply(term);
 
-                } else if (delegateItemHandler != null){
+                } else if (delegateItemHandler != null) {
                     result = delegateItemHandler.apply(term);
-                }
-                else if (!ignoredFields.contains(term.getField())) {
+                } else if (!ignoredFields.contains(term.getField())) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 
@@ -215,6 +216,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     }
 
     public static final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
+
         private final AbstractField dataSourceField;
         private final Field<T> field;
         private final ExpressionMapper.MultiConverter<T> converter;

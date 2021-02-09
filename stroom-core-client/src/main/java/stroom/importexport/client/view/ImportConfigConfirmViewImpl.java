@@ -16,6 +16,9 @@
 
 package stroom.importexport.client.view;
 
+import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
+import stroom.widget.customdatebox.client.MyDateBox;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -26,10 +29,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
-import stroom.widget.customdatebox.client.MyDateBox;
 
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
+
     private final Widget widget;
     @UiField
     Grid grid;
@@ -67,11 +69,16 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
-    public boolean isEnableFilters () {return  enableFilters.getValue();}
+    public boolean isEnableFilters() {
+        return enableFilters.getValue();
+    }
 
     @Override
-    public void setEnableFilters (boolean enableFilters) {this.enableFilters.setValue(enableFilters);}
+    public void setEnableFilters(boolean enableFilters) {
+        this.enableFilters.setValue(enableFilters);
+    }
 
     public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {
+
     }
 }

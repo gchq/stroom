@@ -16,15 +16,16 @@
 
 package stroom.importexport.shared;
 
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class ImportState {
+
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
@@ -133,15 +135,19 @@ public class ImportState {
         return updatedFieldList;
     }
 
-    public Long getEnableTime(){
+    public Long getEnableTime() {
         return enableTime;
     }
 
-    public Boolean getEnable() { return enable; }
+    public Boolean getEnable() {
+        return enable;
+    }
 
-    public void setEnable(Boolean enable) {this.enable = enable;}
+    public void setEnable(Boolean enable) {
+        this.enable = enable;
+    }
 
-    public void setEnableTime(Long enableTime){
+    public void setEnableTime(Long enableTime) {
         this.enableTime = enableTime;
     }
 

@@ -204,7 +204,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             try {
                 entries = refDataStore.list(limit);
             } catch (Exception e) {
-                LOGGER.error("Error listing reference data",e);
+                LOGGER.error("Error listing reference data", e);
                 throw e;
             }
             return entries;
@@ -290,9 +290,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         refDataLookupRequest.getMapName(),
                         refDataLookupRequest.getKey(),
                         refDataLookupRequest.getOptEffectiveTimeAsEpochMs()
-                        .map(Instant::ofEpochMilli)
-                        .map(Objects::toString)
-                        .orElse("null")));
+                                .map(Instant::ofEpochMilli)
+                                .map(Objects::toString)
+                                .orElse("null")));
             }
 
             return stringWriter.toString();
@@ -415,7 +415,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                             if (field != null) {
                                 final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
                                         .apply(refStoreEntry);
-                                valArr[i] = convertToVal(value, fields[i]);;
+                                valArr[i] = convertToVal(value, fields[i]);
+                                ;
                             }
                         }
                         consumer.accept(valArr);
@@ -695,9 +696,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private boolean docRefsEqualOnUuid(final DocRef docRef1, final DocRef docRef2) {
         if (docRef1 == null && docRef2 == null) {
             return false;
-        } if (docRef1 == null) {
+        }
+        if (docRef1 == null) {
             return false;
-        } if (docRef2 == null) {
+        }
+        if (docRef2 == null) {
             return false;
         } else {
             return Objects.equals(docRef1.getUuid(), docRef2.getUuid());
@@ -707,9 +710,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private boolean docRefsEqualOnName(final DocRef docRef1, final DocRef docRef2) {
         if (docRef1 == null && docRef2 == null) {
             return false;
-        } if (docRef1 == null) {
+        }
+        if (docRef1 == null) {
             return false;
-        } if (docRef2 == null) {
+        }
+        if (docRef2 == null) {
             return false;
         } else {
             return Objects.equals(docRef1.getName(), docRef2.getName());

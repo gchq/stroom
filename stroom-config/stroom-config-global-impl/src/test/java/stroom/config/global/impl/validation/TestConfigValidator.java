@@ -33,11 +33,10 @@ public class TestConfigValidator {
         var myPojo = new MyPojoErrors();
 
         ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
-        
+
         LOGGER.info(result.toString());
-        result.handleViolations((constraintViolation, validationSeverity) -> {
-            LOGGER.info("{}, {}", validationSeverity, constraintViolation);
-        });
+        result.handleViolations((constraintViolation, validationSeverity) ->
+                LOGGER.info("{}, {}", validationSeverity, constraintViolation));
 
         Assertions.assertThat(result.getErrorCount())
                 .isEqualTo(0);
@@ -126,6 +125,7 @@ public class TestConfigValidator {
 
 
     public static class MyPojoErrors extends AbstractConfig {
+
         private boolean booleanValue = true;
         private String regexValue = "^.*$";
         private String cronValue = "* * *";
@@ -153,7 +153,7 @@ public class TestConfigValidator {
         }
 
         @AssertTrue(
-            message = "Value should be true")
+                message = "Value should be true")
         @JsonProperty("booleanValue")
         boolean isBooleanValue() {
             return booleanValue;
@@ -196,22 +196,23 @@ public class TestConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                "booleanValue=" + booleanValue +
-                ", regexValue='" + regexValue + '\'' +
-                ", intValue=" + intValue +
-                '}';
+                    "booleanValue=" + booleanValue +
+                    ", regexValue='" + regexValue + '\'' +
+                    ", intValue=" + intValue +
+                    '}';
         }
     }
 
     public static class MyPojoWarnings extends AbstractConfig {
+
         private boolean booleanValue = true;
         private String regexValue = "^.*$";
         private String cronValue = "* * *";
         private int intValue = 100;
 
         @AssertTrue(
-            message = "Value should be true",
-            payload = ValidationSeverity.Warning.class)
+                message = "Value should be true",
+                payload = ValidationSeverity.Warning.class)
         @JsonProperty("booleanValue")
         boolean isBooleanValue() {
             return booleanValue;
@@ -222,8 +223,8 @@ public class TestConfigValidator {
         }
 
         @ValidRegex(
-            message = "Valid regex required",
-            payload = ValidationSeverity.Warning.class)
+                message = "Valid regex required",
+                payload = ValidationSeverity.Warning.class)
         @JsonProperty
         String getRegexValue() {
             return regexValue;
@@ -234,8 +235,8 @@ public class TestConfigValidator {
         }
 
         @ValidSimpleCron(
-            message = "Valid cron required",
-            payload = ValidationSeverity.Warning.class)
+                message = "Valid cron required",
+                payload = ValidationSeverity.Warning.class)
         @JsonProperty
         public String getCronValue() {
             return cronValue;
@@ -246,9 +247,9 @@ public class TestConfigValidator {
         }
 
         @Min(
-            value = 100,
-            message = "Value should be >= 100",
-            payload = ValidationSeverity.Warning.class)
+                value = 100,
+                message = "Value should be >= 100",
+                payload = ValidationSeverity.Warning.class)
         @JsonProperty
         int getIntValue() {
             return intValue;
@@ -261,15 +262,16 @@ public class TestConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                "booleanValue=" + booleanValue +
-                ", regexValue='" + regexValue + '\'' +
-                ", intValue=" + intValue +
-                '}';
+                    "booleanValue=" + booleanValue +
+                    ", regexValue='" + regexValue + '\'' +
+                    ", intValue=" + intValue +
+                    '}';
         }
     }
 
 
     public static class NoddyPojo {
+
         private String value;
 
         @JsonProperty
