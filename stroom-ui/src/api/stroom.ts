@@ -38,7 +38,7 @@ export interface AbstractField {
   )[];
   name?: string;
   queryable?: boolean;
-  type: string;
+  type?: string;
 }
 
 export interface Account {
@@ -454,7 +454,7 @@ export interface DashboardDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
   name?: string;
@@ -464,7 +464,7 @@ export interface DashboardDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -540,7 +540,7 @@ export interface DataRetentionRules {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   name?: string;
   rules?: DataRetentionRule[];
@@ -550,7 +550,7 @@ export interface DataRetentionRules {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -604,7 +604,7 @@ export interface DictionaryDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
@@ -616,7 +616,7 @@ export interface DictionaryDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -627,7 +627,7 @@ export interface Doc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   name?: string;
   type?: string;
@@ -636,7 +636,7 @@ export interface Doc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -878,7 +878,7 @@ export interface FeedDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   encoding?: string;
@@ -895,7 +895,7 @@ export interface FeedDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -994,11 +994,11 @@ export interface Field {
   /** The name of the field for display purposes */
   name?: string;
   sort?: Sort;
-  special: boolean;
-  visible: boolean;
+  special?: boolean;
+  visible?: boolean;
 
   /** @format int32 */
-  width: number;
+  width?: number;
 }
 
 /**
@@ -1122,7 +1122,7 @@ export interface Format {
 }
 
 export interface FormatSettings {
-  default: boolean;
+  default?: boolean;
 }
 
 export interface FsVolume {
@@ -1241,7 +1241,7 @@ export interface IndexDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   fields?: IndexField[];
@@ -1265,7 +1265,7 @@ export interface IndexDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -1380,7 +1380,7 @@ export interface KafkaConfigDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
@@ -1391,14 +1391,14 @@ export interface KafkaConfigDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
 }
 
 export interface LayoutConfig {
-  preferredSize: Size;
+  preferredSize?: Size;
 }
 
 export interface Limits {
@@ -1419,10 +1419,10 @@ export interface ListConfigResponse {
 
 export interface Location {
   /** @format int32 */
-  colNo: number;
+  colNo?: number;
 
   /** @format int32 */
-  lineNo: number;
+  lineNo?: number;
 }
 
 export interface LoginRequest {
@@ -1438,7 +1438,7 @@ export interface MapDefinition {
 }
 
 export interface Marker {
-  severity: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
+  severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
 }
 
 export interface Message {
@@ -1615,7 +1615,7 @@ export interface PipelineDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   name?: string;
@@ -1629,7 +1629,7 @@ export interface PipelineDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -1848,7 +1848,7 @@ export interface ProcessorFilterTracker {
 }
 
 export interface ProcessorListRow {
-  expander: Expander;
+  expander?: Expander;
 }
 
 export type ProcessorRow = ProcessorListRow & { expander?: Expander; processor?: Processor };
@@ -1987,7 +1987,7 @@ export interface ReceiveDataRules {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   fields?: AbstractField[];
   name?: string;
@@ -1998,7 +1998,7 @@ export interface ReceiveDataRules {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2149,7 +2149,7 @@ export interface ScriptDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   dependencies?: DocRef[];
@@ -2161,7 +2161,7 @@ export interface ScriptDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2331,7 +2331,7 @@ export interface SolrIndexDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   deletedFields?: SolrIndexField[];
   description?: string;
@@ -2348,7 +2348,7 @@ export interface SolrIndexDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2478,7 +2478,7 @@ export interface StatisticStoreDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   enabled?: boolean;
@@ -2494,7 +2494,7 @@ export interface StatisticStoreDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2537,12 +2537,12 @@ export interface SteppingResult {
   stepLocation?: StepLocation;
 }
 
-export type StoredError = Marker & {
+export interface StoredError {
   elementId?: string;
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-};
+}
 
 export interface StoredQuery {
   componentId?: string;
@@ -2590,7 +2590,7 @@ export interface StroomStatsStoreDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   enabled?: boolean;
@@ -2604,7 +2604,7 @@ export interface StroomStatsStoreDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2641,12 +2641,12 @@ export interface TabConfig {
 export type TabLayoutConfig = LayoutConfig & { preferredSize?: Size; selected?: number; tabs?: TabConfig[] };
 
 export type TableComponentSettings = ComponentSettings & {
-  conditionalFormattingRules: ConditionalFormattingRule[];
+  conditionalFormattingRules?: ConditionalFormattingRule[];
   extractValues?: boolean;
   extractionPipeline?: DocRef;
   fields: Field[];
   maxResults?: number[];
-  modelVersion: string;
+  modelVersion?: string;
   queryId: string;
   showDetail?: boolean;
 };
@@ -2663,7 +2663,7 @@ export type TableResultRequest = ComponentResultRequest & {
  * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
  */
 export interface TableSettings {
-  conditionalFormattingRules: ConditionalFormattingRule[];
+  conditionalFormattingRules?: ConditionalFormattingRule[];
 
   /** TODO */
   extractValues?: boolean;
@@ -2677,7 +2677,7 @@ export interface TableSettings {
    * @example 1000,10,1
    */
   maxResults?: number[];
-  modelVersion: string;
+  modelVersion?: string;
 
   /** TODO */
   queryId: string;
@@ -2740,7 +2740,7 @@ export interface TextConverterDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
@@ -2751,7 +2751,7 @@ export interface TextConverterDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -2875,6 +2875,11 @@ export interface TokenRequest {
   redirect_uri?: string;
 }
 
+export interface TokenResultPage {
+  pageResponse?: PageResponse;
+  values?: Token[];
+}
+
 export interface UiConfig {
   /** The about message that is displayed when selecting Help -> About. The about message is in HTML format. */
   aboutHtml?: string;
@@ -2993,7 +2998,7 @@ export interface VisualisationDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   description?: string;
   functionName?: string;
@@ -3008,7 +3013,7 @@ export interface VisualisationDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -3027,7 +3032,7 @@ export interface XmlSchemaDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   deprecated?: boolean;
@@ -3042,7 +3047,7 @@ export interface XmlSchemaDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -3079,7 +3084,7 @@ export interface XsltDoc {
   createTime?: number;
 
   /** @format int64 */
-  createTimeMs: number;
+  createTimeMs?: number;
   createUser?: string;
   data?: string;
   description?: string;
@@ -3090,7 +3095,7 @@ export interface XsltDoc {
   updateTime?: number;
 
   /** @format int64 */
-  updateTimeMs: number;
+  updateTimeMs?: number;
   updateUser?: string;
   uuid?: string;
   version?: string;
@@ -3265,7 +3270,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      *
      * @tags Account
      * @name Search
-     * @summary Search for an account by email address.
+     * @summary Search for an account by email.
      * @request POST:/account/v1/search
      * @secure
      */
@@ -7255,18 +7260,19 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
   };
   token = {
     /**
-     * @description Stroom API Key API
+     * No description
      *
-     * @tags Token
+     * @tags ApiKey
      * @name List
      * @summary Get all tokens.
      * @request GET:/token/v1
      * @secure
      */
-    list: (params?: RequestParams) => this.request<string, any>(`/token/v1`, "GET", params, null, BodyType.Json, true),
+    list: (params?: RequestParams) =>
+      this.request<TokenResultPage, any>(`/token/v1`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name Create
@@ -7278,7 +7284,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<Token, any>(`/token/v1`, "POST", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name DeleteAll
@@ -7287,10 +7293,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     deleteAll: (params?: RequestParams) =>
-      this.request<string, any>(`/token/v1`, "DELETE", params, null, BodyType.Json, true),
+      this.request<number, any>(`/token/v1`, "DELETE", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name Read
@@ -7302,21 +7308,21 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<Token, any>(`/token/v1/byToken/${token}`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
-     * @name Delete
+     * @name DeleteByToken
      * @summary Delete a token by the token string itself.
      * @request DELETE:/token/v1/byToken/{token}
      * @secure
      */
-    delete: (token: string, params?: RequestParams) =>
-      this.request<string, any>(`/token/v1/byToken/${token}`, "DELETE", params, null, BodyType.Json, true),
+    deleteByToken: (token: string, params?: RequestParams) =>
+      this.request<number, any>(`/token/v1/byToken/${token}`, "DELETE", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
-     * @tags Authentication
+     * @tags ApiKey
      * @name FetchTokenConfig
      * @summary Get the token configuration
      * @request GET:/token/v1/noauth/fetchTokenConfig
@@ -7326,7 +7332,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<TokenConfig, any>(`/token/v1/noauth/fetchTokenConfig`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name GetPublicKey
@@ -7338,7 +7344,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<string, any>(`/token/v1/publickey`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name Search
@@ -7347,10 +7353,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     search: (body: SearchTokenRequest, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/token/v1/search`, "POST", params, body, BodyType.Json, true),
+      this.request<TokenResultPage, any>(`/token/v1/search`, "POST", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name Read2
@@ -7364,21 +7370,19 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       this.request<Token, any>(`/token/v1/${id}`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
-     * @name Delete2
+     * @name Delete
      * @summary Delete a token by ID.
      * @request DELETE:/token/v1/{id}
-     * @originalName delete
-     * @duplicate
      * @secure
      */
-    delete2: (id: number, params?: RequestParams) =>
-      this.request<string, any>(`/token/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params?: RequestParams) =>
+      this.request<number, any>(`/token/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom API Key API
+     * No description
      *
      * @tags ApiKey
      * @name ToggleEnabled
@@ -7387,7 +7391,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     toggleEnabled: (id: number, query: { enabled: boolean }, params?: RequestParams) =>
-      this.request<string, any>(
+      this.request<number, any>(
         `/token/v1/${id}/enabled${this.addQueryParams(query)}`,
         "GET",
         params,
