@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.Reader;
 
 public class IgnoreCloseReader extends WrappedReader {
+
     public IgnoreCloseReader(final Reader reader) {
         super(reader);
     }

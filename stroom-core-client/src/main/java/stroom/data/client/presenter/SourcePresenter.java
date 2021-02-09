@@ -64,7 +64,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
     private TextRange currentHighlight = null;
-    private int highlightDelta = 0;
+    private final int highlightDelta = 0;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
@@ -124,11 +124,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
                 PermissionNames.STEPPING_PERMISSION);
 
-        if (hasStepPermission && !isSteppingSource) {
-            textPresenter.setControlsVisible(true);
-        } else {
-            textPresenter.setControlsVisible(false);
-        }
+        textPresenter.setControlsVisible(hasStepPermission && !isSteppingSource);
     }
 
     /**

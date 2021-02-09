@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Locale;
 
 public class MockHttpServletResponse implements HttpServletResponse {
+
     private int resposeCode;
     private String sendErrorMessage;
 

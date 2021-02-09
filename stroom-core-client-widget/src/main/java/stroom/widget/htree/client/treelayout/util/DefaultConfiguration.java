@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.Configuration;
@@ -40,13 +41,14 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * @author Udo Borkowski (ub@abego.org)
  */
 public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
+
     private final double gapBetweenLevels;
     private final double gapBetweenNodes;
     private final Location location;
 
     // -----------------------------------------------------------------------
     // gapBetweenLevels
-    private AlignmentInLevel alignmentInLevel;
+    private final AlignmentInLevel alignmentInLevel;
 
     /**
      * Specifies the constants to be used for this Configuration.

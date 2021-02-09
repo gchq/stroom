@@ -58,17 +58,17 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
         response = ListConfigResponse.class)
     @POST
     @Path(PROPERTIES_SUB_PATH)
-    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
+    ListConfigResponse list(@ApiParam("criteria") final GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
     ListConfigResponse listByNode(
-            final @PathParam("nodeName") String nodeName,
-            final @ApiParam("criteria") GlobalConfigCriteria criteria);
+            @PathParam("nodeName") final String nodeName,
+            @ApiParam("criteria") final GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
-    ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
+    ConfigProperty getPropertyByName(@PathParam("propertyName") final String propertyName);
 
 //    @GET
 //    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
@@ -76,8 +76,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
-    OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
-                                                    final @PathParam("nodeName") String nodeName);
+    OverrideValue<String> getYamlValueByNodeAndName(@PathParam("propertyName") final String propertyName,
+                                                    @PathParam("nodeName") final String nodeName);
 
 //    @POST
 //    @Path("/find")
@@ -97,8 +97,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Update a ConfigProperty",
             response = ConfigProperty.class)
-    ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final @ApiParam("configProperty") ConfigProperty configProperty);
+    ConfigProperty update(@PathParam("propertyName") final String propertyName,
+                          @ApiParam("configProperty") final ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)

@@ -19,6 +19,7 @@ import java.util.List;
  * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
+
     private ImportExportService importExportService;
 
     @Inject

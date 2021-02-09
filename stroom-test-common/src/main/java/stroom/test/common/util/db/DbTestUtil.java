@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class DbTestUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbTestUtil.class);
 
     private static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
@@ -173,7 +174,7 @@ public class DbTestUtil {
         // This is useful when debugging a test that needs to access the DB as the embedded DB has to
         // migrate the DB from scratch on each run which is very time consuming
         boolean useEmbeddedDb = (useTestContainersEnvVarVal == null
-                || !useTestContainersEnvVarVal.toLowerCase().equals("false"));
+                || !useTestContainersEnvVarVal.equalsIgnoreCase("false"));
 
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {

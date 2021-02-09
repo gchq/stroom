@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 @Singleton
 public class HomeDirProviderImpl implements HomeDirProvider {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HomeDirProviderImpl.class);
 
     private final PathConfig pathConfig;

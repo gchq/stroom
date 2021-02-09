@@ -70,6 +70,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
 class TestMetaService extends StroomIntegrationTest {
+
     private static final String TEST_USER = "test_user";
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";
     private static final String FEED_USE_PERMISSION = "FEED_USE_PERMISSION";

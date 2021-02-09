@@ -2,8 +2,8 @@ package stroom.config;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.config.app.ConfigHolder;
 import stroom.config.app.Config;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
@@ -40,9 +40,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class TestAppConfigModule {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigModule.class);
     private static final String MODIFIED_JDBC_DRIVER = "modified.jdbc.driver";
-    private final static String STROOM_PACKAGE_PREFIX = "stroom.";
+    private static final String STROOM_PACKAGE_PREFIX = "stroom.";
 
     @AfterEach
     void afterEach() {
@@ -153,8 +154,8 @@ class TestAppConfigModule {
         Predicate<Class<?>> classFilter = clazz -> {
 
             return clazz.getSimpleName().endsWith("Config")
-                && !clazz.equals(AbstractConfig.class)
-                && !clazz.equals(AppConfig.class);
+                    && !clazz.equals(AbstractConfig.class)
+                    && !clazz.equals(AppConfig.class);
         };
 
         LOGGER.info("Finding all AbstractConfig classes");

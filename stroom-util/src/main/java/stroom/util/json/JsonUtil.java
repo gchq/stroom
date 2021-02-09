@@ -31,6 +31,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 public final class JsonUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
 
     public static String writeValueAsString(final Object object) {

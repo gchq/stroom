@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BasicStreamCloser implements StreamCloser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStreamCloser.class);
     private final List<Closeable> list = new ArrayList<>();
 

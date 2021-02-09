@@ -347,6 +347,8 @@ public class DataRetentionImpactPresenter
                     case 1:
                         countCellText.appendHtmlConstant(singleIndent);
                         break;
+                    default:
+                        throw new RuntimeException("Not expecting depth > 1, depth: " + row.getExpander().getDepth());
                 }
             }
             return countCellText.toSafeHtml();

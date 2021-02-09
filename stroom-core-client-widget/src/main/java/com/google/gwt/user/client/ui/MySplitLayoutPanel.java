@@ -29,6 +29,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
@@ -66,6 +67,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.SplitLayoutPanelExample} </p>
  */
 public class MySplitLayoutPanel extends DockLayoutPanel {
+
     private static final int SPLITTER_SIZE = 4;
     /**
      * The element that masks the screen so we can catch mouse events over
@@ -358,6 +360,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     class HSplitter extends Splitter {
+
         public HSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, false);
             getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
@@ -386,6 +389,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     abstract class Splitter extends Widget {
+
         protected final Widget target;
         private final boolean reverse;
         private final boolean vertical;
@@ -507,6 +511,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     class VSplitter extends Splitter {
+
         public VSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, true);
             getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);

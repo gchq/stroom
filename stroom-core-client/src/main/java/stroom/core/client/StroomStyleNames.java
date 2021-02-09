@@ -17,6 +17,7 @@
 package stroom.core.client;
 
 public final class StroomStyleNames {
+
     public static final String STROOM_CONTENT = "stroom-content";
 
     private StroomStyleNames() {

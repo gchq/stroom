@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout;
 
 import java.util.List;
@@ -46,6 +47,7 @@ import java.util.List;
  * Also see <a href="package-summary.html">this overview</a>.
  */
 public interface TreeForTreeLayout<TreeNode> {
+
     /**
      * Returns the the root of the tree.
      * <p>

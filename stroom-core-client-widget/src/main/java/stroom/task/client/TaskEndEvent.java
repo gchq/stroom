@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
+
     private static Type<TaskEndHandler> TYPE;
     private final int taskCount;
 
@@ -55,6 +56,7 @@ public class TaskEndEvent extends GwtEvent<TaskEndEvent.TaskEndHandler> {
     }
 
     public interface TaskEndHandler extends EventHandler {
+
         void onTaskEnd(TaskEndEvent event);
     }
 }

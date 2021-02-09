@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
+
     // These zips are downloaded by the gradle task downloadStroomContent
     // Ought to be the same as in ContentPackDownloader
     private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get(

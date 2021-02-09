@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ActivityServiceImpl implements ActivityService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityServiceImpl.class);
 
     private final SecurityContext securityContext;

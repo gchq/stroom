@@ -16,10 +16,6 @@
 
 package stroom.core.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
@@ -27,7 +23,13 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends ContentPlugin<P> {
+
     private final ClientSecurityContext securityContext;
 
     @Inject

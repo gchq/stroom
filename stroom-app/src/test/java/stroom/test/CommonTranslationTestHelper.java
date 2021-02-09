@@ -45,6 +45,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CommonTranslationTestHelper {
+
     public static final String FEED_NAME = "TEST_FEED";
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTestHelper.class);
     private static final String DIR = "CommonTranslationTest/";

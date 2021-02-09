@@ -17,7 +17,6 @@
 package stroom.cell.tickbox.shared;
 
 
-
 public enum TickBoxState {
     TICK, HALF_TICK, UNTICK;
 

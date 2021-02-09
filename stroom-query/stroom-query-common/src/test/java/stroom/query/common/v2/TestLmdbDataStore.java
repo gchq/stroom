@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
+
     private Path tempDir;
 
     @BeforeEach

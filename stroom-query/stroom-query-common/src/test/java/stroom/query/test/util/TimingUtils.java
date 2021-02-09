@@ -14,7 +14,7 @@ public class TimingUtils {
     /**
      * Execute resultSupplier, time how long it takes, then return its result and the duration
      */
-    public static <T> TimedResult<T>  timeIt(Supplier<T> resultSupplier) {
+    public static <T> TimedResult<T> timeIt(Supplier<T> resultSupplier) {
         Instant startTime = Instant.now();
 
         T result = resultSupplier.get();
@@ -54,6 +54,7 @@ public class TimingUtils {
     }
 
     public static class TimedResult<T> {
+
         private final Duration duration;
         private final T result;
 

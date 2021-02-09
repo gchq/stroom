@@ -1,10 +1,11 @@
 package stroom.docstore.impl.db;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDBPersistence extends AbstractCoreIntegrationTest {
+
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Inject

@@ -23,6 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestKVMapUtil {
+
     @Test
     void testSimpleParse() {
         final Map<String, String> map = KVMapUtil.parse("param1=value1");

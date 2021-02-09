@@ -19,6 +19,7 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 
 public class MockTestControlModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(CommonTestControl.class).to(MockCommonTestControl.class);

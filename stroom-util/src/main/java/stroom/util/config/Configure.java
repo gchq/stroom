@@ -41,12 +41,13 @@ import java.util.StringTokenizer;
  * <pre><code>{@code <parameter file> <files to process>}</code></pre>
  */
 public class Configure extends AbstractCommandLineTool {
+
     private String parameterFilePath = null;
     private String processFilePath = null;
     private boolean readParameter = true;
     private boolean exitOnError = true;
 
-    private List<Path> processFile = new ArrayList<>();
+    private final List<Path> processFile = new ArrayList<>();
     private ParameterFile parameterFile;
     private final JAXBContext jaxbContext;
 

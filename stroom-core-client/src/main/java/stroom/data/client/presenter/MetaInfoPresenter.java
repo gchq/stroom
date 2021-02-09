@@ -62,7 +62,7 @@ public class MetaInfoPresenter extends MyPresenterWidget<MetaInfoView> {
         getView().setContent(toolTipBuilder.build());
     }
 
-    public static interface MetaInfoView extends View {
+    public interface MetaInfoView extends View {
 
         void setContent(final SafeHtml safeHtml);
     }

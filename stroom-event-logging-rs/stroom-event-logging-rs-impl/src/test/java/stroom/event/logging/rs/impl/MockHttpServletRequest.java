@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import javax.servlet.AsyncContext;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.Vector;
 
 public class MockHttpServletRequest implements HttpServletRequest {
+
     private Map<String, String> headers = new HashMap<>();
     private Map<String, Object> attributes = new HashMap<>();
     private byte[] inputStreamData;
@@ -437,6 +439,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     public static class ServletInputStreamImpl extends ServletInputStream {
+
         private final InputStream inputStream;
 
         public ServletInputStreamImpl(final InputStream inputStream) {

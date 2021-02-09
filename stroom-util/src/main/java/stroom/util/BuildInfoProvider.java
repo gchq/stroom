@@ -16,10 +16,11 @@
 
 package stroom.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -28,6 +29,7 @@ import java.util.Properties;
 
 @Singleton
 public class BuildInfoProvider implements Provider<BuildInfo> {
+
     private static final String upDate = DateUtil.createNormalDateTimeString();
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";

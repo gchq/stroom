@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseTool extends AbstractCommandLineTool {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseTool.class);
 
     private String jdbcDriverClassName;

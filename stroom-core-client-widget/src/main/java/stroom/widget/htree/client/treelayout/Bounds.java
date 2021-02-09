@@ -17,6 +17,7 @@
 package stroom.widget.htree.client.treelayout;
 
 public class Bounds {
+
     private final double x;
     private final double y;
     private final double width;

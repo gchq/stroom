@@ -413,7 +413,8 @@ public class TestDataGenerator {
      * Holder class for the static class names list to allow for lazy initialisation
      */
     private static class ClassNamesListHolder {
-        private static List<String> classNames;
+
+        private static final List<String> classNames;
 
         public static final List<String> NOT_FOUND_LIST = Collections.singletonList("ERROR_NO_CLASS_NAMES_FOUND");
 
@@ -453,7 +454,7 @@ public class TestDataGenerator {
 
     public static class DefinitionBuilder {
 
-        private List<Field> fieldDefinitions = new ArrayList<>();
+        private final List<Field> fieldDefinitions = new ArrayList<>();
         private Consumer<Stream<String>> rowStreamConsumer;
         private int rowCount = 1;
         private DataWriter dataWriter;

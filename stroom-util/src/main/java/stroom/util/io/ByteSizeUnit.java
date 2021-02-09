@@ -86,7 +86,7 @@ public enum ByteSizeUnit {
      * @return The number of bytes in this byte size unit
      */
     public long longBytes() {
-        return (long) bytes;
+        return bytes;
     }
 
     /**

@@ -33,6 +33,7 @@ import java.util.Objects;
  * This class should be common to all component and integration tests.
  */
 public abstract class StroomIntegrationTest implements StroomTest {
+
     private Path testTempDir;
 
     @Inject

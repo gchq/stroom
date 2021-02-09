@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -39,11 +41,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class Dialog extends AbstractPopupPanel {
+
     private static final Resources RESOURCES = GWT.create(Resources.class);
-    private static Binder binder = GWT.create(Binder.class);
+    private static final Binder binder = GWT.create(Binder.class);
     private final int clientLeft;
     private final int clientTop;
     private final PopupUiHandlers popupUiHandlers;
@@ -52,7 +54,8 @@ public class Dialog extends AbstractPopupPanel {
     @UiField
     SimplePanel content;
     private boolean dragging;
-    private int dragStartX, dragStartY;
+    private int dragStartX;
+    private int dragStartY;
     private int windowWidth;
     private HandlerRegistration resizeHandlerRegistration;
 
@@ -63,6 +66,7 @@ public class Dialog extends AbstractPopupPanel {
     public Dialog(final PopupUiHandlers popupUiHandlers) {
         this(popupUiHandlers, false);
     }
+
     /**
      * Creates an empty dialog box specifying its "auto-hide" property. It
      * should not be shown until its child widget has been added using
@@ -159,6 +163,9 @@ public class Dialog extends AbstractPopupPanel {
                 if (!dragging && !isCaptionEvent(event)) {
                     return;
                 }
+                break;
+            default:
+                // Don't care about all mouse events
         }
 
         super.onBrowserEvent(event);
@@ -240,9 +247,11 @@ public class Dialog extends AbstractPopupPanel {
     }
 
     public interface Binder extends UiBinder<Widget, Dialog> {
+
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_STYLE = "Dialog.css";
 
         String popup();
@@ -259,11 +268,13 @@ public class Dialog extends AbstractPopupPanel {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_STYLE)
         Style style();
     }
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
+
         @Override
         public void onMouseDown(final MouseDownEvent event) {
             if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {

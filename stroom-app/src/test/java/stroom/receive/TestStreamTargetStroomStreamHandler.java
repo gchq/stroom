@@ -18,7 +18,6 @@
 package stroom.receive;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.data.zip.StroomZipEntry;
@@ -33,12 +32,15 @@ import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
+
     @Inject
     private MockStore streamStore;
     @Inject

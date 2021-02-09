@@ -27,8 +27,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 
 public class CurveTabSelector extends AbstractTabSelector {
-    private static Binder binder = GWT.create(Binder.class);
-    private static Resources resources = GWT.create(Resources.class);
+
+    private static final Binder binder = GWT.create(Binder.class);
+    private static final Resources resources = GWT.create(Resources.class);
     @UiField
     DivElement text;
 
@@ -55,9 +56,11 @@ public class CurveTabSelector extends AbstractTabSelector {
     }
 
     interface Binder extends UiBinder<DivElement, CurveTabSelector> {
+
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "CurveTabSelector.css";
 
         /**
@@ -92,6 +95,7 @@ public class CurveTabSelector extends AbstractTabSelector {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("tabSelectorLeft.png")
         ImageResource left();
 

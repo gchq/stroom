@@ -35,7 +35,7 @@ public final class DataRetentionAgeUtil {
             return null;
         }
 
-        LocalDateTime age = null;
+        final LocalDateTime age;
         switch (rule.getTimeUnit()) {
             case MINUTES:
                 age = now.minusMinutes(rule.getAge());
@@ -55,6 +55,8 @@ public final class DataRetentionAgeUtil {
             case YEARS:
                 age = now.minusYears(rule.getAge());
                 break;
+            default:
+                age = null;
         }
 
         if (age == null) {
@@ -69,7 +71,7 @@ public final class DataRetentionAgeUtil {
             return null;
         }
 
-        LocalDateTime age = null;
+        final LocalDateTime age;
         switch (rule.getTimeUnit()) {
             case MINUTES:
                 age = now.plusMinutes(rule.getAge());
@@ -89,6 +91,8 @@ public final class DataRetentionAgeUtil {
             case YEARS:
                 age = now.plusYears(rule.getAge());
                 break;
+            default:
+                age = null;
         }
 
         if (age == null) {

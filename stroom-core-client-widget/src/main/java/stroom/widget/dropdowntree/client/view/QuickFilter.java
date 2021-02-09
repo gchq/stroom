@@ -172,6 +172,7 @@ public class QuickFilter extends FlowPanel
 
     @ImportedWithPrefix("stroom-quickfilter")
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "QuickFilter.css";
 
         String quickFilter();
@@ -188,6 +189,7 @@ public class QuickFilter extends FlowPanel
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_CSS)
         Style style();
     }

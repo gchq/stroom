@@ -17,12 +17,13 @@
 package stroom.pipeline.xml.converter.datasplitter;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.xml.F2XTestUtil;
 import stroom.pipeline.xml.XMLValidator;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataSplitter2 extends AbstractProcessIntegrationTest {
+
     @Inject
     private Provider<F2XTestUtil> f2XTestUtilProvider;
     @Inject

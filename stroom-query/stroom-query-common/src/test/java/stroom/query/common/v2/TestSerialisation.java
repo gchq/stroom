@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSerialisation {
+
     private static DataSource getDataSource() {
         return DataSource
                 .builder()
@@ -406,7 +407,8 @@ class TestSerialisation {
             @JsonSubTypes.Type(value = Sub1.class, name = "sub1"),
             @JsonSubTypes.Type(value = Sub2.class, name = "sub2")
     })
-    public static abstract class Base {
+    public abstract static class Base {
+
         @XmlElement
         private int num;
 
@@ -441,6 +443,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub1", propOrder = {"num2"})
     public static class Sub1 extends Base {
+
         @XmlElement
         private int num2;
 
@@ -479,6 +482,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub2", propOrder = {"str"})
     public static class Sub2 extends Base {
+
         @XmlElement
         private String str;
 
@@ -517,6 +521,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "lst")
     public static class Lst {
+
         @XmlElementWrapper(name = "list")
         @XmlElements({@XmlElement(name = "sub1", type = Sub1.class),
                 @XmlElement(name = "sub2", type = Sub2.class)})
@@ -553,6 +558,7 @@ class TestSerialisation {
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "multi")
     public static class Multi {
+
         @XmlElementWrapper(name = "list")
         @XmlElements({@XmlElement(name = "double", type = Double.class),
                 @XmlElement(name = "int", type = Integer.class),

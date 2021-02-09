@@ -8,6 +8,7 @@ import java.util.Map;
  * Ace command's argument could be either string or string-to-string map.
  */
 public class AceCommandArgs {
+
     private final Object value;
 
     /**

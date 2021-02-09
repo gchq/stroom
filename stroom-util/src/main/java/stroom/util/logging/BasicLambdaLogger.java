@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class BasicLambdaLogger implements LambdaLogger {
+
     private final Logger logger;
 
     // Use a private constructor as this is only made via the static factory.

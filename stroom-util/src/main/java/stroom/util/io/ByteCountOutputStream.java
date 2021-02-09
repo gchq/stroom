@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ByteCountOutputStream extends WrappedOutputStream {
+
     private final AtomicLong count = new AtomicLong();
 
     public ByteCountOutputStream(final OutputStream outputStream) {

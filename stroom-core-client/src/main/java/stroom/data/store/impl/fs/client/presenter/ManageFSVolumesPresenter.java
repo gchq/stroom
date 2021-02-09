@@ -17,13 +17,6 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
@@ -36,9 +29,18 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.List;
 
 public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSVolumesPresenter.ManageVolumesProxy> {
+
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final FSVolumeStatusListPresenter volumeStatusListPresenter;
@@ -154,5 +156,6 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
 
     @ProxyCodeSplit
     public interface ManageVolumesProxy extends Proxy<ManageFSVolumesPresenter> {
+
     }
 }

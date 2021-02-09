@@ -19,6 +19,7 @@ package stroom.core.client;
 import stroom.widget.menu.client.presenter.MenuKey;
 
 public class MenuKeys {
+
     public static final MenuKey MAIN_MENU = new MenuKey("Main Menu");
     public static final MenuKey TOOLS_MENU = new MenuKey("Tools Menu");
     public static final MenuKey MONITORING_MENU = new MenuKey("Monitoring Menu");

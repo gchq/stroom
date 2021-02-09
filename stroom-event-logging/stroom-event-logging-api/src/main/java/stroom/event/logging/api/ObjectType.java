@@ -3,6 +3,7 @@ package stroom.event.logging.api;
 import java.util.Objects;
 
 public class ObjectType {
+
     private final Class<?> objectClass;
 
     public ObjectType(final Class<?> objectClass) {

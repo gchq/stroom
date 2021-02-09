@@ -218,7 +218,7 @@ public class ProcessorTaskListPresenter
 
         final TooltipUtil.Builder builder = TooltipUtil.builder()
                 .addTwoColTable(tableBuilder -> {
-                tableBuilder.addHeaderRow("Stream Task")
+                    tableBuilder.addHeaderRow("Stream Task")
                             .addRow("Stream Task Id", processorTask.getId())
                             .addRow("Status", processorTask.getStatus().getDisplayValue());
 
@@ -259,7 +259,7 @@ public class ProcessorTaskListPresenter
                             }
                         }
                     }
-                   return tableBuilder.build();
+                    return tableBuilder.build();
                 });
 
         tooltipPresenter.setHTML(builder.build());

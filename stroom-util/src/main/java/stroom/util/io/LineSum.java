@@ -24,6 +24,7 @@ import java.io.LineNumberReader;
  * Utility to sum lines in a file
  */
 public class LineSum {
+
     public static void main(String[] args) throws IOException {
         LineNumberReader lineNumberReader = new LineNumberReader(
                 new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));

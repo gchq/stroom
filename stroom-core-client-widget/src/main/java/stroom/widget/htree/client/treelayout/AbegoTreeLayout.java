@@ -309,7 +309,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private TreeNode getThread(final TreeNode node) {
         final TreeNode n = thread.get(node);
-        return n != null ? n : null;
+        return n;
     }
 
     private void setThread(final TreeNode node, final TreeNode thread) {
@@ -670,6 +670,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
      * = 0.
      */
     private class NormalizedPosition extends Point {
+
         public NormalizedPosition(final double x_relativeToRoot, final double y_relativeToRoot) {
             super(x_relativeToRoot, y_relativeToRoot);
         }

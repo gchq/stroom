@@ -16,9 +16,6 @@
 
 package stroom.data.store.impl.fs.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.data.store.impl.fs.client.presenter.ManageFSVolumesPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -31,7 +28,12 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class ManageFSVolumesPlugin extends NodeToolsPlugin {
+
     private final Provider<ManageFSVolumesPresenter> manageVolumesPresenter;
 
     @Inject

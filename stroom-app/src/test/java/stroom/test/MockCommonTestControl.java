@@ -26,6 +26,7 @@ import java.util.Set;
  * Version of the test control used with the mocks.
  */
 public class MockCommonTestControl implements CommonTestControl {
+
     private final Set<Clearable> clearables;
 
     @Inject

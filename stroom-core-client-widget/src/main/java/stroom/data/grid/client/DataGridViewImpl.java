@@ -69,6 +69,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, NativePreviewHandler {
+
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
     private static volatile DefaultResources resources;
@@ -92,7 +93,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private MultiSelectionModel<R> selectionModel;
     // Required for multiple selection using shift and control key modifiers.
     private R multiSelectStart;
-    private Widget widget;
+    private final Widget widget;
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
     private ResizeHandle<R> resizeHandle;
@@ -104,25 +105,25 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public DataGridViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, false, DEFAULT_LIST_PAGE_SIZE, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, false, DEFAULT_LIST_PAGE_SIZE, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final boolean allowMultiSelect) {
-        this(supportsSelection, allowMultiSelect, DEFAULT_LIST_PAGE_SIZE, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, allowMultiSelect, DEFAULT_LIST_PAGE_SIZE, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final int size) {
-        this(supportsSelection, size, (Binder) GWT.create(Binder.class));
+        this(supportsSelection, size, GWT.create(Binder.class));
     }
 
     public DataGridViewImpl(final boolean supportsSelection, final int size, final Binder binder) {
         this(supportsSelection, false, size, binder);
     }
 
-    public DataGridViewImpl( final boolean supportsSelection,
-                             final boolean allowMultiSelect,
-                             final int size,
-                             final Binder binder) {
+    public DataGridViewImpl(final boolean supportsSelection,
+                            final boolean allowMultiSelect,
+                            final int size,
+                            final Binder binder) {
         this.allowMultiSelect = allowMultiSelect;
 
         if (resources == null) {
@@ -671,9 +672,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {
+
     }
 
     public interface DefaultStyle extends Style {
+
         String dataGridHeaderBackground();
 
         String dataGridHeaderSelected();
@@ -698,6 +701,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface HeadingListener {
+
         void onMouseDown(NativeEvent event, Heading heading);
 
         void onMouseUp(NativeEvent event, Heading heading);
@@ -710,6 +714,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface DefaultResources extends Resources {
+
         String DEFAULT_CSS = "stroom/data/grid/client/DataGrid.css";
 
         /**
@@ -730,6 +735,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public static class ColSettings {
+
         private final boolean resizable;
         private final boolean movable;
 
@@ -748,6 +754,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public static class Heading {
+
         private final Element tableElement;
         private final Element element;
         private final int colIndex;
@@ -778,6 +785,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
+
         MySelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }

@@ -33,6 +33,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import java.util.List;
 
 public class Editor extends Composite implements HasValueChangeHandlers<String> {
+
     private final AceEditor editor;
     private String text = "";
     private boolean textDirty;
@@ -308,7 +309,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     /**
      * @param lineNo One based
-     * @param colNo One based
+     * @param colNo  One based
      */
     public void gotoLocation(final int lineNo, final int colNo) {
         gotoLocation(DefaultLocation.of(lineNo, colNo));
@@ -506,6 +507,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     }
 
     private static class Rect {
+
         private final int top;
         private final int bottom;
         private final int left;

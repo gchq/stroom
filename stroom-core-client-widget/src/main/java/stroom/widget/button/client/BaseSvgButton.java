@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
+
     private final Element face;
     private final SvgPreset preset;
     /**

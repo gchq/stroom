@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import java.util.List;
 
 public interface MultiSelectionModel<T> {
+
     Selection<T> getSelection();
 
     void setSelection(Selection<T> selection, SelectionType selectionType);
@@ -44,7 +45,7 @@ public interface MultiSelectionModel<T> {
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a
      * single item selected.
      */
-    void setSelected( T item);
+    void setSelected(T item);
 
     /**
      * Sets the selected state of the specified item.
@@ -55,7 +56,7 @@ public interface MultiSelectionModel<T> {
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a
      * single item selected.
      */
-    void setSelected( T item, SelectionType selectionType);
+    void setSelected(T item, SelectionType selectionType);
 
     /**
      * Sets the selected state of the specified item.

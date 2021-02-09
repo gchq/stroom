@@ -20,6 +20,7 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
@@ -50,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // TODO: Create test data or recreate with large test
 @Disabled("Create test data or recreate with large test")
 class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
+
     private static final String DIR = "GenericTestTranslationTaskFactory/";
 
     private static final Path FORMAT_DEFINITION = StroomPipelineTestFileUtil

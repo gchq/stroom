@@ -18,9 +18,6 @@
 package stroom.data.store.impl.fs;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -33,6 +30,10 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,6 +45,7 @@ import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
+
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 

@@ -16,11 +16,6 @@
 
 package stroom.widget.popup.client.view;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
@@ -29,10 +24,17 @@ import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PopupSupportImpl implements PopupSupport {
+
     private static final int POPUP_SHADOW_WIDTH = 9;
     private Popup popup;
     private String caption;

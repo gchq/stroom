@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout;
 
 /**
@@ -35,6 +36,7 @@ package stroom.widget.htree.client.treelayout;
  * @param <TreeNode>
  */
 public interface NodeExtentProvider<TreeNode> {
+
     /**
      * Returns the extends for the given treeNode.
      *

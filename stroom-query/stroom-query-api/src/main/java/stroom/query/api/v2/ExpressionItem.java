@@ -108,7 +108,7 @@ public abstract class ExpressionItem implements Serializable {
      * Builder for constructing a {@link ExpressionItem}. This is an abstract type, each subclass
      * of ExpressionItem should provide a builder that extends this one.
      */
-    public static abstract class Builder<T extends ExpressionItem, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends ExpressionItem, CHILD_CLASS extends Builder<T, ?>> {
         Boolean enabled;
 
         Builder() {

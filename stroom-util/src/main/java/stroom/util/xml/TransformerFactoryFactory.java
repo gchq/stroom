@@ -29,6 +29,7 @@ import javax.xml.transform.TransformerFactory;
 import java.util.Properties;
 
 public final class TransformerFactoryFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactoryFactory.class);
 
     private static final String SAXON_TRANSFORMER_FACTORY = "net.sf.saxon.TransformerFactoryImpl";
@@ -80,6 +81,7 @@ public final class TransformerFactoryFactory {
     }
 
     private static class MySerializerFactory extends SerializerFactory {
+
         public MySerializerFactory(final Configuration config) {
             super(config);
         }

@@ -35,7 +35,7 @@ public class TimePeriod {
 
     /**
      * @param from Is inclusive. Will be truncated to millisecond precision.
-     * @param to Is exclusive. Will be truncated to millisecond precision.
+     * @param to   Is exclusive. Will be truncated to millisecond precision.
      */
     public static TimePeriod between(final Instant from, final Instant to) {
         return new TimePeriod(

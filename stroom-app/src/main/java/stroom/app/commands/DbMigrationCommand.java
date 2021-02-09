@@ -1,5 +1,9 @@
 package stroom.app.commands;
 
+import stroom.app.guice.AppModule;
+import stroom.config.app.Config;
+import stroom.util.guice.GuiceUtil;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -8,9 +12,6 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.app.guice.AppModule;
-import stroom.config.app.Config;
-import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;

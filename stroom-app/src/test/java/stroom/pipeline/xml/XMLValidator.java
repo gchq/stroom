@@ -38,6 +38,7 @@ import java.io.InputStream;
  * Helper class to validate XML based resources are valid.
  */
 public class XMLValidator {
+
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
 
     private final Provider<PipelineFactory> pipelineFactoryProvider;

@@ -17,6 +17,7 @@
 package stroom.svg.client;
 
 public class SvgPreset extends SvgIcon {
+
     private final String title;
     private final boolean enabled;
 

@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Vector;
 
 public class MockHttpServletRequest implements HttpServletRequest {
+
     private Map<String, String> headers = new HashMap<>();
     private byte[] inputStreamData;
     private InputStream inputStream;
@@ -434,6 +435,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     public static class ServletInputStreamImpl extends ServletInputStream {
+
         private final InputStream inputStream;
 
         public ServletInputStreamImpl(final InputStream inputStream) {

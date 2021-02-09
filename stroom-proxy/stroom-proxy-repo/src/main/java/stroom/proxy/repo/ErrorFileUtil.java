@@ -1,8 +1,9 @@
 package stroom.proxy.repo;
 
+import stroom.data.zip.CharsetConstants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.zip.CharsetConstants;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,19 +11,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ErrorFileUtil {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ErrorFileUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ErrorFileUtil.class);
 
-    private final static String ZIP_EXTENSION = ".zip";
-    private final static String ERROR_EXTENSION = ".err";
-    private final static String BAD_EXTENSION = ".bad";
+    private static final String ZIP_EXTENSION = ".zip";
+    private static final String ERROR_EXTENSION = ".err";
+    private static final String BAD_EXTENSION = ".bad";
 
     public static Path getErrorFile(final Path file) {
         final String fileName = file.getFileName().toString();
         if (fileName.endsWith(BAD_EXTENSION)) {
-            return file.getParent().resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length() - BAD_EXTENSION.length())
+            return file.getParent()
+                    .resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length() - BAD_EXTENSION.length())
                     + ERROR_EXTENSION + BAD_EXTENSION);
         } else {
-            return file.getParent().resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);
+            return file.getParent()
+                    .resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);
         }
     }
 
@@ -43,7 +46,8 @@ public class ErrorFileUtil {
                     LOGGER.warn("Failed to rename zip file to " + renamedFile);
                 }
                 if (Files.isRegularFile(errorFile)) {
-                    final Path renamedErrorFile = errorFile.getParent().resolve(errorFile.getFileName().toString() + BAD_EXTENSION);
+                    final Path renamedErrorFile = errorFile.getParent()
+                            .resolve(errorFile.getFileName().toString() + BAD_EXTENSION);
                     Files.move(errorFile, renamedErrorFile);
                     errorFile = renamedErrorFile;
                 }

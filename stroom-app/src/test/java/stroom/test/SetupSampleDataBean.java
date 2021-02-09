@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
  * Script to create some base data for testing.
  */
 public final class SetupSampleDataBean {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SetupSampleDataBean.class);
 
     public static final String ROOT_DIR_NAME = "samples";
@@ -176,7 +177,7 @@ public final class SetupSampleDataBean {
         final Path statisticsSamplesDir = Paths.get("./stroom-statistics/stroom-statistics-impl/src/test/resources")
                 .resolve(ROOT_DIR_NAME);
 
-        final Path[] rootDirs = new Path[] {
+        final Path[] rootDirs = new Path[]{
                 coreServerSamplesDir,
                 statisticsSamplesDir};
 
@@ -280,14 +281,14 @@ public final class SetupSampleDataBean {
 
     private void checkVolumesExist() {
         final List<IndexVolume> indexVolumes = indexVolumeGroupService.getNames()
-                        .stream()
+                .stream()
                 .flatMap(groupName -> indexVolumeService.find(new ExpressionCriteria()).stream())
                 .collect(Collectors.toList());
 
         LOGGER.info("Checking available index volumes, found:\n{}",
                 indexVolumes.stream()
-                .map(IndexVolume::getPath)
-                .collect(Collectors.joining("\n")));
+                        .map(IndexVolume::getPath)
+                        .collect(Collectors.joining("\n")));
 
         final List<FsVolume> dataVolumes = fsVolumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         LOGGER.info("Checking available data volumes, found:\n{}",

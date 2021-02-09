@@ -6,6 +6,7 @@ import com.google.inject.multibindings.MapBinder;
 import javax.servlet.Filter;
 
 public class FilterBinder {
+
     private final MapBinder<FilterInfo, Filter> mapBinder;
 
     private FilterBinder(final Binder binder) {

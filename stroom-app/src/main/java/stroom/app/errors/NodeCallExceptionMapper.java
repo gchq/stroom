@@ -18,12 +18,14 @@
  * limitations under the License.
  *
  */
+
 package stroom.app.errors;
+
+import stroom.node.api.NodeCallException;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.api.NodeCallException;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -46,8 +48,8 @@ public class NodeCallExceptionMapper implements ExceptionMapper<NodeCallExceptio
         LOGGER.error(msg + " Enable DEBUG for stacktrace");
 
         return Response.status(Response.Status.SERVICE_UNAVAILABLE.getStatusCode())
-            .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(new ErrorMessage(msg))
-            .build();
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(new ErrorMessage(msg))
+                .build();
     }
 }

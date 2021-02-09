@@ -43,6 +43,7 @@ import java.util.Set;
  * </p>
  */
 public class DatabaseCommonTestControl implements CommonTestControl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private final ContentImportService contentImportService;

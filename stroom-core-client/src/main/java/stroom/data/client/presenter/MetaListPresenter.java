@@ -32,6 +32,7 @@ import javax.inject.Provider;
 import java.util.function.Function;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
+
     @Inject
     public MetaListPresenter(final EventBus eventBus,
                              final RestFactory restFactory,

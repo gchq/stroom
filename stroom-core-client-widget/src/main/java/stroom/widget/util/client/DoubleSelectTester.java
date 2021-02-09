@@ -24,9 +24,10 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.Timer;
 
 public class DoubleSelectTester implements HasHandlers {
+
     public static final int DOUBLE_SELECT_DELAY = 1000;
 
-    private Timer doubleSelectTimer;
+    private final Timer doubleSelectTimer;
     private Object lastSelection;
     private boolean inDoubleSelectPeriod;
 

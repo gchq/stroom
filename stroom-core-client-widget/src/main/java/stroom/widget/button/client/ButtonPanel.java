@@ -25,6 +25,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 public class ButtonPanel extends FlowPanel {
+
     private static volatile Resources resources;
     private boolean vertical;
 
@@ -95,10 +96,12 @@ public class ButtonPanel extends FlowPanel {
 //    }
 
     public interface Style extends CssResource {
+
         String layout();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("ButtonPanel.css")
         Style style();
     }

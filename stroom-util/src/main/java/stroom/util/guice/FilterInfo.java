@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class FilterInfo {
+
     private final String name;
     private final String urlPattern;
     private final Map<String, String> initParameters = new HashMap<>();

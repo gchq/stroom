@@ -18,12 +18,14 @@
 package stroom.job.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
 class TestJobBootstrap extends AbstractCoreIntegrationTest {
+
     @Inject
     private JobBootstrap jobBootstrap;
 

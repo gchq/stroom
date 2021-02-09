@@ -31,7 +31,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -48,6 +47,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
 
     private static final int RETENTION_PERIOD_DAYS = 1;

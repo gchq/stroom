@@ -149,6 +149,8 @@ public class DateExpressionParser {
                     case YEAR:
                         time = ZonedDateTime.of(now.getYear(), 1, 1, 0, 0, 0, 0, now.getZone());
                         break;
+                    default:
+                        throw new RuntimeException("Unexpected datePoint " + datePoint);
                 }
 
                 parts[start] = new Part(function, time);
@@ -277,7 +279,14 @@ public class DateExpressionParser {
     }
 
     private enum DatePoint {
-        NOW("now()"), SECOND("second()"), MINUTE("minute()"), HOUR("hour()"), DAY("day()"), WEEK("week()"), MONTH("month()"), YEAR("year()");
+        NOW("now()"),
+        SECOND("second()"),
+        MINUTE("minute()"),
+        HOUR("hour()"),
+        DAY("day()"),
+        WEEK("week()"),
+        MONTH("month()"),
+        YEAR("year()");
 
         private final String function;
 

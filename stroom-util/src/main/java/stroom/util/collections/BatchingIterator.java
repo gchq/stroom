@@ -47,9 +47,9 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
     }
 
-    private int batchSize;
+    private final int batchSize;
     private List<T> currentBatch;
-    private Iterator<T> sourceIterator;
+    private final Iterator<T> sourceIterator;
 
     private BatchingIterator(Iterator<T> sourceIterator, int batchSize) {
         this.batchSize = batchSize;

@@ -23,6 +23,7 @@ import java.nio.file.Path;
  * tests run.
  */
 public interface CommonTestControl {
+
     void setup(Path tempDir);
 
     void cleanup();

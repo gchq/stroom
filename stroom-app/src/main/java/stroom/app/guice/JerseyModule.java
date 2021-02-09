@@ -1,10 +1,5 @@
 package stroom.app.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.security.api.ClientSecurityUtil;
@@ -12,6 +7,12 @@ import stroom.security.api.SecurityContext;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.logging.LoggingFeature;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;

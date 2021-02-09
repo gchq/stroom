@@ -30,6 +30,7 @@ import java.util.Set;
 
 @Singleton
 public class MenuItems {
+
     private final Map<MenuKey, Set<Item>> menuItems = new HashMap<>();
     private final Map<MenuKey, List<Item>> compressedMenuItems = new HashMap<>();
     private boolean needsCompression = true;
@@ -137,6 +138,7 @@ public class MenuItems {
     }
 
     public static class ItemComparator implements Comparator<Item> {
+
         @Override
         public int compare(final Item o1, final Item o2) {
             if (o1.getPriority() == o2.getPriority()) {
@@ -156,6 +158,7 @@ public class MenuItems {
     }
 
     private static class MenuKeyComparator implements Comparator<MenuKey> {
+
         @Override
         public int compare(final MenuKey o1, final MenuKey o2) {
             if (o1.toString() == null && o2.toString() == null) {

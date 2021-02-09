@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class AppConfigTestModule extends AppConfigModule {
+
     public AppConfigTestModule() {
         super(new ConfigHolderImpl());
     }
@@ -24,6 +25,7 @@ public class AppConfigTestModule extends AppConfigModule {
     }
 
     private static class ConfigHolderImpl implements ConfigHolder {
+
         private final Config config;
         private final AppConfig appConfig;
         private final Path path;

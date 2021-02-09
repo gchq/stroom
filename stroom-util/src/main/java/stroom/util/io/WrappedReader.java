@@ -21,6 +21,7 @@ import java.io.Reader;
 import java.nio.CharBuffer;
 
 public class WrappedReader extends Reader {
+
     private final Reader reader;
 
     public WrappedReader(final Reader reader) {

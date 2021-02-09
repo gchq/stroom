@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
+
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
     private static volatile Resources resources;
     private static volatile Template template;
@@ -129,17 +130,20 @@ public class ExpanderCell extends AbstractCell<Expander> {
     }
 
     interface Resources extends ClientBundle {
+
         @Source("expander.css")
         Style style();
     }
 
     interface Style extends CssResource {
+
         String expanderIcon();
 
         String active();
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
 

@@ -16,6 +16,8 @@
 
 package stroom.welcome.client.view;
 
+import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
@@ -24,9 +26,9 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 
 public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
+
     private final Widget widget;
     @UiField
     SimplePanel html;
@@ -42,6 +44,7 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     Label upDate;
     @UiField
     Label nodeName;
+
     @Inject
     public WelcomeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -88,5 +91,6 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     }
 
     public interface Binder extends UiBinder<Widget, WelcomeViewImpl> {
+
     }
 }

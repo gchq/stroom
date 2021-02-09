@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
@@ -35,6 +36,7 @@ import java.util.Set;
 
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
+
     private final Store<KafkaConfigDoc> store;
     private final KafkaConfig kafkaConfig;
 

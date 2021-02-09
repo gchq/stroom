@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 public class Item {
+
     private final int priority;
 
     public Item(final int priority) {

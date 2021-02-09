@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -63,6 +64,7 @@ import java.util.Set;
  * @param <T> the data type of items in the list
  */
 class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardPagingPolicy {
+
     /**
      * The number of rows to jump when PAGE_UP or PAGE_DOWN is pressed and the
      * {@link HasKeyboardPagingPolicy.KeyboardPagingPolicy} is
@@ -1192,6 +1194,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param <T> the data type
      */
     interface View<T> {
+
         /**
          * Add a handler to the view.
          *
@@ -1251,6 +1254,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param <T> the data type of the presenter
      */
     private interface State<T> {
+
         /**
          * Get the current keyboard selected row relative to page start. This
          * value should never be negative.
@@ -1325,6 +1329,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param <T> the data type of the presenter
      */
     private static class DefaultState<T> implements State<T> {
+
         final List<T> rowData = new ArrayList<>();
         final Set<Integer> selectedRows = new HashSet<>();
         int keyboardSelectedRow = 0;
@@ -1415,6 +1420,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param <T> the data type of the presenter
      */
     private static class PendingState<T> extends DefaultState<T> {
+
         /**
          * The list of ranges that have been replaced.
          */

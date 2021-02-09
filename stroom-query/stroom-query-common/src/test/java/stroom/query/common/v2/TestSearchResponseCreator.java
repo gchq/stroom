@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestSearchResponseCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSearchResponseCreator.class);
     private static final Duration TOLLERANCE = Duration.ofMillis(100);
 

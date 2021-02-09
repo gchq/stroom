@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class DateFormatterCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DateFormatterCache.class);
 
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
@@ -157,6 +158,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedFormatterKey {
+
         private final String pattern;
         private final ZonedDateTime defaultTime;
         private final int hashCode;
@@ -189,6 +191,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedFormatterValue {
+
         private final DateTimeFormatter formatter;
         private final RuntimeException exception;
 
@@ -204,6 +207,7 @@ public final class DateFormatterCache {
     }
 
     private static class CachedZoneIdValue {
+
         private final ZoneId zoneId;
         private final RuntimeException exception;
 

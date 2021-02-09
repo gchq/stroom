@@ -38,7 +38,7 @@ class HeapHistogramService {
     static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
     static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
 
-    private final static String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
+    private static final String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
 
     private static final String ACTION_NAME = "gcClassHistogram";
     private static String ID_REPLACEMENT = "--ID-REMOVED--";

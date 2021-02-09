@@ -16,15 +16,17 @@
 
 package stroom.job.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.job.shared.Job;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
+
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
+
     public static final String JOB_LIST = "JOB_LIST";
     public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
     private final JobListPresenter jobListPresenter;
@@ -64,5 +66,6 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     }
 
     public interface JobView extends View {
+
     }
 }

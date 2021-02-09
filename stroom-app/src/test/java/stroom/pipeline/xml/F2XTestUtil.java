@@ -55,6 +55,7 @@ import static org.assertj.core.api.Assertions.fail;
  */
 
 public class F2XTestUtil {
+
     private final PipelineFactory pipelineFactory;
     private final FeedHolder feedHolder;
     private final TextConverterStore textConverterStore;

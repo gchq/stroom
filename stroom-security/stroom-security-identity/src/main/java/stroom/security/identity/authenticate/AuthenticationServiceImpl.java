@@ -46,7 +46,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Inject
     public AuthenticationServiceImpl(
             final UriFactory uriFactory,
-            final @NotNull IdentityConfig config,
+            @NotNull final IdentityConfig config,
             final TokenService tokenService,
             final EmailSender emailSender,
             final AccountDao accountDao,

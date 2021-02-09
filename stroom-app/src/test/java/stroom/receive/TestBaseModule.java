@@ -1,8 +1,5 @@
 package stroom.receive;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.util.Providers;
 import stroom.cache.impl.CacheModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
@@ -21,7 +18,12 @@ import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.util.Providers;
+
 public class TestBaseModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new CacheModule());

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import com.google.inject.AbstractModule;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ResourceInfo;
 
 public class MockRSLoggingModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(RequestLoggingConfig.class).toInstance(new RequestLoggingConfig());

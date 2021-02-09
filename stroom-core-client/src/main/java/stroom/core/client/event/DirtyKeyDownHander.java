@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 
 public abstract class DirtyKeyDownHander implements KeyDownHandler {
+
     private static boolean isCut(final KeyDownEvent event) {
         return event.isControlKeyDown() && (event.getNativeKeyCode() == 'X' || event.getNativeKeyCode() == 'x');
     }

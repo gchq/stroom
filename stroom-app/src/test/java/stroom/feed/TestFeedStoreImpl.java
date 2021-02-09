@@ -17,7 +17,6 @@
 package stroom.feed;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
@@ -25,12 +24,15 @@ import stroom.feed.shared.FeedDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
+
     private static final int TEST_SIZE = 10;
     private static final int TEST_PAGE = 2;
 

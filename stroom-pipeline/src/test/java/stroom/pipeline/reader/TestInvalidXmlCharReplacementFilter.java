@@ -32,16 +32,23 @@ public class TestInvalidXmlCharReplacementFilter {
     public static final char REPLACE_CHAR = 0xfffd;
 
     private final int[] testChunkSizes = {1, 2, 3, 5, 7, 11, 13, 16};
-    private char[] bmpRepTwice, brokenUTF16Str;
+    private char[] bmpRepTwice;
+    private char[] brokenUTF16Str;
 
     private static boolean isValidXmlCP(final int ch, final XmlChars mode) {
         if (mode.getClass().equals(Xml10Chars.class)) {
-            return ch == 0x9 || ch == 0xa || ch == 0xd || (ch >= 0x20 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd)
+            return ch == 0x9
+                    || ch == 0xa
+                    || ch == 0xd
+                    || (ch >= 0x20 && ch <= 0xd7ff)
+                    || (ch >= 0xe000 && ch <= 0xfffd)
                     || (ch >= 0x10000 && ch <= 0x10ffff);
         }
 
         if (mode.getClass().equals(Xml11Chars.class)) {
-            return (ch >= 0x1 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd) || (ch >= 0x10000 && ch <= 0x10ffff);
+            return (ch >= 0x1 && ch <= 0xd7ff)
+                    || (ch >= 0xe000 && ch <= 0xfffd)
+                    || (ch >= 0x10000 && ch <= 0x10ffff);
         }
 
         return false;

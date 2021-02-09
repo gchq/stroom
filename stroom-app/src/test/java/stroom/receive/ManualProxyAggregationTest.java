@@ -55,7 +55,7 @@ public class ManualProxyAggregationTest {
     // and manually kill it part way through and then run it again to ensure
     // it recovers correctly.
 
-    private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
+    private static final long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestProxyAggregationTask.class);
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProxyAggregationTask.class);

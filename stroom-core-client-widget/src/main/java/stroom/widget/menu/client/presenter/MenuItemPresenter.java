@@ -27,8 +27,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuItemView> {
+
     private String html;
     private boolean enabled;
+
     public MenuItemPresenter(final EventBus eventBus, final MenuItemView view, final ImageResource enabledImage,
                              final ImageResource disabledImage, final String html, final String shortcut, final boolean enabled) {
         super(eventBus, view);
@@ -66,6 +68,7 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
     }
 
     public interface MenuItemView extends View, HasMouseOverHandlers, HasMouseOutHandlers, HasClickHandlers {
+
         void setHTML(String html);
 
         void setEnabledImage(ImageResource resource);

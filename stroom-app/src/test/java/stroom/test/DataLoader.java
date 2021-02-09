@@ -53,6 +53,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 public class DataLoader {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
 
     private static final String INPUT_EXTENSION = ".in";

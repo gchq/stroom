@@ -339,6 +339,8 @@ class DashboardResourceImpl implements DashboardResource {
                 case EXCEL:
                     target = new ExcelTarget(outputStream);
                     break;
+                default:
+                    throw new RuntimeException("Unknown fileType " + fileType);
             }
 
             final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);

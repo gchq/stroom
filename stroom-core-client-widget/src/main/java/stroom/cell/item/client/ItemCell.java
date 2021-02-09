@@ -16,6 +16,8 @@
 
 package stroom.cell.item.client;
 
+import stroom.docref.HasDisplayValue;
+
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.SelectionCell;
@@ -28,7 +30,6 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,9 +39,10 @@ import java.util.List;
  * A {@link Cell} used to render a drop-down list.
  */
 public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V> {
+
     private static Template template;
     private final List<V> options;
-    private HashMap<V, Integer> indexForOption = new HashMap<>();
+    private final HashMap<V, Integer> indexForOption = new HashMap<>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.
@@ -108,6 +110,7 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<option value=\"{0}\">{0}</option>")
         SafeHtml deselected(String option);
 

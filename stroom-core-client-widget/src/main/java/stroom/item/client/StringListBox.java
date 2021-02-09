@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import java.util.List;
 
 public class StringListBox extends ListBox {
+
     public String getSelected() {
         if (getSelectedIndex() < 0) {
             return null;

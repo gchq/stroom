@@ -51,6 +51,7 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
+
     @Inject
     private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
 

@@ -16,14 +16,15 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.lib.ExtensionFunctionCall;
-import net.sf.saxon.lib.ExtensionFunctionDefinition;
-import net.sf.saxon.om.StructuredQName;
-import net.sf.saxon.value.SequenceType;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xml.NamespaceConstants;
+
+import net.sf.saxon.lib.ExtensionFunctionCall;
+import net.sf.saxon.lib.ExtensionFunctionDefinition;
+import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.value.SequenceType;
 
 import javax.inject.Provider;
 import java.util.List;
@@ -34,7 +35,7 @@ class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> e
     private final int maxArgs;
     private final SequenceType[] argTypes;
     private final SequenceType resultType;
-    private transient final StructuredQName qName;
+    private final transient StructuredQName qName;
     private final Provider<T> functionCallProvider;
 
     private ExtensionFunctionCallProxy proxy;

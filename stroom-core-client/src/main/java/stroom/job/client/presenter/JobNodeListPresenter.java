@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode>> {
+
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
 
     private final RestFactory restFactory;

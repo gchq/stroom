@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class SSLUtil {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SSLUtil.class);
     public static final HostnameVerifier PERMISSIVE_HOSTNAME_VERIFIER = (s, sslSession) -> true;
 

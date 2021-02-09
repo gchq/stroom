@@ -17,6 +17,7 @@ public class QuickFilterTooltipUtil {
     public static SafeHtml createTooltip(final String header) {
         return createTooltip(header, Collections.emptyList());
     }
+
     public static SafeHtml createTooltip(final String header,
                                          final List<FilterFieldDefinition> fieldDefinitions) {
 
@@ -30,8 +31,8 @@ public class QuickFilterTooltipUtil {
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
         final String description = "By default matches on " +
-                (defaultFieldNames != null ?  defaultFieldNames  + " " : "") +
-        "with the characters input appearing anywhere (in order) in the matches.";
+                (defaultFieldNames != null ? defaultFieldNames + " " : "") +
+                "with the characters input appearing anywhere (in order) in the matches.";
         // All this help content needs to match what happens in QuickFilterPredicateFactory
         final Builder builder = TooltipUtil.builder()
                 .addHeading(header)

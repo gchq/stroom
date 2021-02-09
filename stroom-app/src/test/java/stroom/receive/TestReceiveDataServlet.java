@@ -18,10 +18,6 @@
 package stroom.receive;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.mock.MockStore;
@@ -30,6 +26,11 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -50,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * context.
  */
 class TestReceiveDataServlet {
+
     @Inject
     private ReceiveDataServlet receiveDataServlet;
     @Inject

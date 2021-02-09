@@ -107,6 +107,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                             break;
                         case NOT:
                             result = buildNotConditions(simplifyConditions, children);
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown operator " + operator.op());
                     }
                 }
 

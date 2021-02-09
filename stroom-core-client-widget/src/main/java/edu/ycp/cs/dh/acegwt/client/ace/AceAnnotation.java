@@ -6,6 +6,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * Represents an AceAnnotation object
  */
 class AceAnnotation extends JavaScriptObject {
+
     protected AceAnnotation() {
     }
 

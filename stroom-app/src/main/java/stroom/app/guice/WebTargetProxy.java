@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.Map;
 
 class WebTargetProxy implements WebTarget {
+
     private WebTarget webTarget;
 
     WebTargetProxy(final WebTarget webTarget) {

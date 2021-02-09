@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FlatDataWriterBuilder {
+
     private boolean isHeaderIncluded = true;
     private String delimiter = ",";
     private Optional<String> optEnclosingChars = Optional.empty();
@@ -17,9 +18,9 @@ public class FlatDataWriterBuilder {
 
     public static DataWriter defaultCsvFormat() {
         return FlatDataWriterBuilder.builder()
-                        .outputHeaderRow(true)
-                        .delimitedBy(",")
-                        .build();
+                .outputHeaderRow(true)
+                .delimitedBy(",")
+                .build();
     }
 
     public FlatDataWriterBuilder outputHeaderRow(final boolean isHeaderIncluded) {

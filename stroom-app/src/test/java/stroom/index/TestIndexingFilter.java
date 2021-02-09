@@ -16,12 +16,6 @@
 
 package stroom.index;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableFieldType;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardWriter;
@@ -50,6 +44,13 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableFieldType;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.InputStream;
@@ -58,6 +59,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexingFilter extends AbstractProcessIntegrationTest {
+
     private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
 
     @Inject

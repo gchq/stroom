@@ -16,13 +16,6 @@
 
 package stroom.ui.config.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.Timer;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -31,11 +24,20 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Timer;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class UiConfigCache implements HasHandlers {
+
     private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
     private static final int ONE_MINUTE = 1000 * 60;
 

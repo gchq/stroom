@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 
 @Singleton
 public class TempDirProviderImpl implements TempDirProvider {
+
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
 

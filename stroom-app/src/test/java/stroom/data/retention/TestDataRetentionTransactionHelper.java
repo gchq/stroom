@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
 

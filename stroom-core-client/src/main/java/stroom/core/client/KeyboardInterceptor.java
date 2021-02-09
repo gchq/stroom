@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 
 @Singleton
 public class KeyboardInterceptor {
+
     private final Map<KeyTest, Command> keyTests = new HashMap<>();
 
     @Inject
@@ -61,6 +62,7 @@ public class KeyboardInterceptor {
     }
 
     public interface KeyTest {
+
         boolean match(NativeEvent event);
     }
 }

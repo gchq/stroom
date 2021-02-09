@@ -19,6 +19,7 @@ package stroom.widget.htree.client.treelayout;
 import java.util.Map;
 
 public interface TreeLayout<TreeNode> {
+
     /**
      * Calculate the layout for the tree model.
      */

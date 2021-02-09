@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Event;
 
 public final class MouseHelper {
+
     private MouseHelper() {
         // Utility class.
     }

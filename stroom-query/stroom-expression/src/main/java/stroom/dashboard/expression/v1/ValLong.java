@@ -84,7 +84,7 @@ public final class ValLong implements ValNumber {
     }
 
     private static class ValLongCache {
-        static final ValLong cache[] = new ValLong[-(-128) + 127 + 1];
+        static final ValLong[] cache = new ValLong[-(-128) + 127 + 1];
 
         static {
             for (int i = 0; i < cache.length; i++) {

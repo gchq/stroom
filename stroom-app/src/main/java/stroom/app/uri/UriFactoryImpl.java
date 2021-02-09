@@ -1,16 +1,17 @@
 package stroom.app.uri;
 
+import stroom.config.app.AppConfig;
+import stroom.config.app.Config;
+import stroom.config.common.NodeUriConfig;
+import stroom.config.common.UriConfig;
+import stroom.config.common.UriFactory;
+
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.jetty.HttpsConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.app.AppConfig;
-import stroom.config.app.Config;
-import stroom.config.common.NodeUriConfig;
-import stroom.config.common.UriConfig;
-import stroom.config.common.UriFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -19,6 +20,7 @@ import java.net.URISyntaxException;
 
 @Singleton
 class UriFactoryImpl implements UriFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(UriFactoryImpl.class);
 
     private final AppConfig appConfig;

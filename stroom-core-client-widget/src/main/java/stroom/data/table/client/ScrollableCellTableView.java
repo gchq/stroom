@@ -17,4 +17,5 @@
 package stroom.data.table.client;
 
 public interface ScrollableCellTableView<R> extends CellTableView<R> {
+
 }

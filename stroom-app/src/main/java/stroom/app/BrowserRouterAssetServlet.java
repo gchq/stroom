@@ -26,10 +26,12 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class BrowserRouterAssetServlet extends HttpServlet {
+
     private static final long serialVersionUID = 6393345594784987908L;
     private static final CharMatcher SLASHES = CharMatcher.is('/');
 
     private static class CachedAsset {
+
         private final byte[] resource;
         private final String eTag;
         private final long lastModifiedTime;
@@ -67,8 +69,8 @@ public class BrowserRouterAssetServlet extends HttpServlet {
 
     public BrowserRouterAssetServlet(final String resourcePath,
                                      final String uriPath,
-                                     final @Nullable String indexFile,
-                                     final @Nullable Charset defaultCharset,
+                                     @Nullable final String indexFile,
+                                     @Nullable final Charset defaultCharset,
                                      final String singlePagePrefix) {
         final String trimmedPath = SLASHES.trimFrom(resourcePath);
         this.resourcePath = trimmedPath.isEmpty() ? trimmedPath : trimmedPath + '/';

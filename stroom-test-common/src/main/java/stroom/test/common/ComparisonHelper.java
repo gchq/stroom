@@ -50,6 +50,7 @@ import static org.assertj.core.api.Assertions.fail;
  */
 
 public final class ComparisonHelper {
+
     public static final String OUTPUT_EXTENSION = ".out";
     private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
 
@@ -104,6 +105,7 @@ public final class ComparisonHelper {
 
         return -1;
     }
+
     public static boolean unifiedDiff(final Path expectedFile, final Path actualFile) {
         return unifiedDiff(expectedFile, actualFile, 3);
     }
@@ -112,7 +114,7 @@ public final class ComparisonHelper {
 
         boolean areFilesTheSame = true;
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
-                final Stream<String> actualStream = Files.lines(actualFile)) {
+             final Stream<String> actualStream = Files.lines(actualFile)) {
 
             final List<String> expectedLines = expectedStream.collect(Collectors.toList());
             final List<String> actualLines = actualStream.collect(Collectors.toList());
@@ -133,7 +135,7 @@ public final class ComparisonHelper {
                         FileUtil.getCanonicalPath(expectedFile),
                         FileUtil.getCanonicalPath(actualFile));
 
-                System.out.println("");
+                System.out.println();
                 unifiedDiff.forEach(diffLine -> {
 
                     final ConsoleColour lineColour;
@@ -196,7 +198,7 @@ public final class ComparisonHelper {
 
             // Make sure we found the file.
             assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
-                + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
+                    + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
 
             LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
 

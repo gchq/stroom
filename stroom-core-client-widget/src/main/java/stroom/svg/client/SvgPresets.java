@@ -18,6 +18,7 @@
 package stroom.svg.client;
 
 public final class SvgPresets {
+
     private static final String IMAGES_PATH = "images/";
 
     public static final SvgPreset ABOUT = enabled("oo.svg", "About");

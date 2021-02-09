@@ -39,6 +39,7 @@ import java.util.Map;
  * @see <a href="http://ace.ajax.org/">Ajax.org Code Editor</a>
  */
 public class AceEditor extends Composite implements RequiresResize, HasText, TakesValue<String> {
+
     // Used to generate unique element ids for Ace widgets.
     private static int nextId = 0;
 
@@ -48,9 +49,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
 
-    private Element divElement;
+    private final Element divElement;
 
-    private HashMap<Integer, AceRange> markers = new HashMap<>();
+    private final HashMap<Integer, AceRange> markers = new HashMap<>();
 
     private AceSelection selection = null;
 
@@ -216,7 +217,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * Go to given line.
      *
      * @param line the line to go to, one based
-     * @param col the col to go to, one based
+     * @param col  the col to go to, one based
      */
     public native void gotoPosition(final int line, final int col) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
@@ -268,7 +269,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * when completers are used on very large files (as the local completer tokenizes every word to put in the selected list).<br><br>
      * <strong>NOTE:</strong> This method may be removed, and replaced with another solution. It works at point of check-in, but treat this as unstable for now.
      */
-    public native static void removeAllExistingCompleters() /*-{
+    public static native void removeAllExistingCompleters() /*-{
 		var langTools = $wnd.ace.require("ace/ext/language_tools");
 		langTools.setCompleters([]);
     }-*/;
@@ -283,7 +284,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      *
      * @param provider the {@link AceCompletionProvider}
      */
-    public native static void addCompletionProvider(AceCompletionProvider provider) /*-{
+    public static native void addCompletionProvider(AceCompletionProvider provider) /*-{
 		var langTools = $wnd.ace.require("ace/ext/language_tools");
 		var completer = {
 			getCompletions: function(editor, session, pos, prefix, callback) {
@@ -744,7 +745,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * Execute a command with arguments (in case args is not null).
      *
      * @param command one word command
-     * @param arg    command argument
+     * @param arg     command argument
      */
     public void execCommand(String command, String arg) {
         execCommandHidden(command, arg);
@@ -866,10 +867,6 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.getSession().setUseWrapMode(useWrapMode);
 	}-*/;
-
-
-
-
 
 
     /* (non-Javadoc)

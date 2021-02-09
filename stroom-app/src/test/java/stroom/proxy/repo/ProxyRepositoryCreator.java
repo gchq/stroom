@@ -17,21 +17,22 @@
 
 package stroom.proxy.repo;
 
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 
 public class ProxyRepositoryCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);
 
     private static final String INPUT_EXTENSION = ".in";

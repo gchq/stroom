@@ -1,29 +1,30 @@
 package stroom.legacy.db.migration;
 
+import stroom.config.app.AppConfig;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.util.shared.PropertyPath;
+
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import stroom.config.app.AppConfig;
-import stroom.config.global.impl.ConfigMapper;
-import stroom.util.shared.PropertyPath;
-
 import java.time.Duration;
 import java.util.function.Function;
 
 class TestV07_00_00_1202__property_rename {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestV07_00_00_1202__property_rename.class);
 
     /**
      * Ensures that all destination keys in the the property key migration script are valid with the
      * java config object model. It should ensure we are migrating to valid keys.
-     *
+     * <p>
      * **IMPORTANT**
      * This test is only useful until we have formally released v7. Once that is released this test will
      * need to be removed, or used to test future property migrations, otherwise it will fail when
-     *
+     * <p>
      * If it fails it is probably because the config model has changed so you need to look in
      * {@link V07_00_00_1202__property_rename} and change to TO mapping, or remove a mapping.
      */
@@ -46,13 +47,13 @@ class TestV07_00_00_1202__property_rename {
     @Test
     void testModuleStringDurationToDurationConversion1() {
         doConversionTest(
-            V07_00_00_1202__property_rename::modelStringDurationToStroomDuration,
-            "30d",
-            "P30D");
+                V07_00_00_1202__property_rename::modelStringDurationToStroomDuration,
+                "30d",
+                "P30D");
         doConversionTest(
-            V07_00_00_1202__property_rename::modelStringDurationToStroomDuration,
-            "1H",
-            "PT1H");
+                V07_00_00_1202__property_rename::modelStringDurationToStroomDuration,
+                "1H",
+                "PT1H");
     }
 
     @Test

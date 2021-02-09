@@ -87,6 +87,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
+
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
@@ -690,6 +691,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
     }
+
     /**
      * Make entryCount very big for manual performance testing or profiling
      * 50_000 takes about 4mins and makes a 250Mb db file.
@@ -789,6 +791,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         LOGGER.info(systemInfo.toString());
     }
+
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
@@ -804,6 +807,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         doBigLoadGetAndPurgeForPerfTesting(5, true, true, false, true);
 
     }
+
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
@@ -1391,6 +1395,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     private interface MapNamFunc {
+
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
     }

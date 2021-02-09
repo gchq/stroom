@@ -139,6 +139,7 @@ import com.google.gwt.user.client.Event;
  * </pre>
  */
 public abstract class MyCustomButton extends ButtonBase {
+
     private static final String STYLENAME_DEFAULT = "gwt-CustomButton";
     /**
      * Pressed Attribute bit.
@@ -898,6 +899,7 @@ public abstract class MyCustomButton extends ButtonBase {
      * modifier and, optionally, its own contents html, text, or image.
      */
     public abstract class Face implements HasHTML, HasSafeHtml {
+
         private static final String STYLENAME_HTML_FACE = "html-face";
         private final Face delegateTo;
         private Element face;

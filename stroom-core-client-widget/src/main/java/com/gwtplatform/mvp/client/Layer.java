@@ -19,6 +19,7 @@ package com.gwtplatform.mvp.client;
 import com.google.gwt.user.client.ui.RequiresResize;
 
 public interface Layer extends RequiresResize {
+
     double getOpacity();
 
     void setOpacity(double opacity);

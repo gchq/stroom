@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMultiNodeResourceTest.class);
 
     private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
@@ -447,6 +448,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
     public static class TestNode {
+
         private final String nodeName;
         private final int port;
         private final boolean isEnabled;

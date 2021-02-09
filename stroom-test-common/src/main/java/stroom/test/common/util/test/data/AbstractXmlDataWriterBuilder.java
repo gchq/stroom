@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractXmlDataWriterBuilder {
+
     private Optional<String> namespace = Optional.empty();
     private String rootElementName = "records";
     String recordElementName = "record";

@@ -42,6 +42,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 
 public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresenter.VolumeEditView> {
+
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final RestFactory restFactory;
@@ -133,6 +134,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
     }
 
     public interface VolumeEditView extends View {
+
         HasText getPath();
 
         ItemListBox<VolumeUseStatus> getStatus();

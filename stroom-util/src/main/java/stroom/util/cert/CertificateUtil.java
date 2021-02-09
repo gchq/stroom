@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CertificateUtil {
+
     /**
      * API into the request for the certificate details.
      */

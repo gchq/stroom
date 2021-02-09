@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 class PartsPathUtil {
-    private final static Logger LOGGER = LoggerFactory.getLogger(PartsPathUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PartsPathUtil.class);
 
     private static final String PART = "__part";
     private static final String PARTS = "__parts";

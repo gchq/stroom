@@ -48,6 +48,7 @@ public class ProxyYamlUtil {
 
     /**
      * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
+     *
      * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
@@ -82,6 +83,7 @@ public class ProxyYamlUtil {
         mapper.writeValue(outputStream, config);
 
     }
+
     public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
         config.setProxyConfig(proxyConfig);

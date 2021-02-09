@@ -7,6 +7,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class ActivityModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ActivityService.class).to(ActivityServiceImpl.class);

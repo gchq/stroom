@@ -14,6 +14,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * A bundle for serving static asset files from the classpath.
  */
 public class BrowserRouterAssetsBundle implements Bundle {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowserRouterAssetsBundle.class);
 
     private final String singlePagePrefix;

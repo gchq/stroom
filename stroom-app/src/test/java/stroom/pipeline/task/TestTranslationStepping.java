@@ -16,16 +16,18 @@
 
 package stroom.pipeline.task;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.Store;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StoreCreationTool;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 
 class TestTranslationStepping extends AbstractCoreIntegrationTest {
+
     private static final String DIR = "TestTranslationStepping/";
 
     private static final String DATASPLITTER_FORMAT_DEFINITION = DIR + "SimpleCSVSplitter.ds";

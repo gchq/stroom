@@ -1,9 +1,7 @@
 package stroom.pipeline.writer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -19,6 +17,9 @@ import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
@@ -48,6 +49,7 @@ import java.util.zip.ZipOutputStream;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class HTTPAppender extends AbstractAppender {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HTTPAppender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
@@ -288,13 +290,14 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     @PipelineProperty(description = "How long to wait for data to be available before closing the connection",
-        displayPriority = 7)
+            displayPriority = 7)
     public void setReadTimeout(final String string) {
         readTimeout = null;
         if (string != null && !string.isEmpty()) {
             readTimeout = ModelStringUtil.parseDurationString(string);
         }
     }
+
     @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be",
             displayPriority = 8)
     public void setForwardChunkSize(final String string) {

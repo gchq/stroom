@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
@@ -52,9 +53,11 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  * {@link #addChildren(Object, Object...)}).
  */
 public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayout<TreeNode> {
+
     private final Map<TreeNode, List<TreeNode>> childrenMap = new HashMap<>();
     private final Map<TreeNode, TreeNode> parents = new HashMap<>();
     private List<TreeNode> emptyList;
+
     /**
      * Creates a new instance with a given node as the root
      *

@@ -21,10 +21,12 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
+
     public static GwtEvent.Type<Handler> TYPE;
     private final String message;
     private final String initialValue;
     private final PromptCallback callback;
+
     private PromptEvent(final String message, final String initialValue, final PromptCallback callback) {
         this.message = message;
         this.initialValue = initialValue;
@@ -66,6 +68,7 @@ public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onPrompt(PromptEvent event);
     }
 }

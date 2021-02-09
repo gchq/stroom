@@ -23,14 +23,14 @@ import java.util.stream.Stream;
  * matching files etc.
  */
 public class StroomZipNameSet {
-    private final static Set<String> CONTEXT_FILE_EXT = Collections
+    private static final Set<String> CONTEXT_FILE_EXT = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(".ctx", ".context")));
-    private final static Set<String> META_FILE_EXT = Collections
+    private static final Set<String> META_FILE_EXT = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(".hdr", ".header", ".meta", ".met")));
-    private final static Set<String> MANIFEST_FILE_EXT = Collections
+    private static final Set<String> MANIFEST_FILE_EXT = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(".mf", ".manifest")));
 
-    private final static Map<StroomZipFileType, Set<String>> FILE_EXT_MAP;
+    private static final Map<StroomZipFileType, Set<String>> FILE_EXT_MAP;
 
     static {
         HashMap<StroomZipFileType, Set<String>> map = new HashMap<>();

@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype.ImagePrototypeElemen
 
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
+
     private static volatile Template template;
     private static volatile AbstractImagePrototype arrowDown;
     private static volatile AbstractImagePrototype arrowDownHover;
@@ -55,6 +56,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
      * The currently focused value key. Only one key can be focused at any time.
      */
     private Object focusedKey;
+
     public ValueSpinnerCell() {
         this(0, 100, 1, 99);
     }
@@ -413,6 +415,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     interface Resources extends ClientBundle {
+
         ImageResource arrowDown();
 
         ImageResource arrowDownHover();
@@ -427,6 +430,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<div class=\"valueSpinner\">" +
                 "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>" +
                 "<div class=\"arrows\">{1}{2}</div>" +
@@ -438,6 +442,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
      * The {@code ViewData} for this cell.
      */
     public static class ViewData {
+
         /**
          * The last value that was updated.
          */

@@ -222,7 +222,7 @@ public class FindReplaceFilter extends FilterReader {
      * @throws IOException If an I/O error occurs
      */
     public int read() throws IOException {
-        final char cb[] = new char[1];
+        final char[] cb = new char[1];
         if (read(cb, 0, 1) == -1) {
             return -1;
         } else {
@@ -240,7 +240,7 @@ public class FindReplaceFilter extends FilterReader {
      * has been reached
      * @throws IOException If an I/O error occurs
      */
-    public int read(char cbuf[]) throws IOException {
+    public int read(char[] cbuf) throws IOException {
         return read(cbuf, 0, cbuf.length);
     }
 
@@ -444,7 +444,7 @@ public class FindReplaceFilter extends FilterReader {
 
                     // Now fill any remaining capacity.
                     int maxLength = capacity - offset;
-                    final char cb[] = new char[1];
+                    final char[] cb = new char[1];
                     while (maxLength > length && (len = reader.read(cb, 0, 1)) != -1) {
                         if (len > 0) {
                             // If we have filled the buffer then double the size of

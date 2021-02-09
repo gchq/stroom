@@ -29,6 +29,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindActivityCriteria extends BaseCriteria {
+
     @JsonProperty
     private String userId;
     @JsonProperty

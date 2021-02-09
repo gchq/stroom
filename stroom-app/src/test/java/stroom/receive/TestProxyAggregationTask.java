@@ -76,7 +76,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 //@Disabled
 class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
-    private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
+
+    private static final long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyAggregationTask.class);
 

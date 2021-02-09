@@ -8,6 +8,7 @@ import stroom.data.store.impl.fs.FsVolumeJobsModule;
 import com.google.inject.AbstractModule;
 
 public class JobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
 

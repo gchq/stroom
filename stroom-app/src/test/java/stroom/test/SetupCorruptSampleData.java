@@ -34,7 +34,8 @@ public final class SetupCorruptSampleData extends AbstractCommandLineTool {
 //        final SetupCorruptSampleData setupSampleData = new SetupCorruptSampleData();
 //        setupSampleData.doMain(args);
     }
-//
+
+    //
 //    public ApplicationContext getAppContext() {
 //        return appContext;
 //    }

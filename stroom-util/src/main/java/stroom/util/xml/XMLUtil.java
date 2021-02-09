@@ -16,10 +16,11 @@
 
 package stroom.util.xml;
 
+import stroom.util.io.StreamUtil;
+
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.util.io.StreamUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -42,6 +43,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 public final class XMLUtil {
+
     public static final SAXParserFactory PARSER_FACTORY;
     private static final String XML = "xml";
     private static final String UTF_8 = "UTF-8";

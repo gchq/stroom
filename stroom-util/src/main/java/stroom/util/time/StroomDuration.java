@@ -28,6 +28,7 @@ import java.util.Objects;
  * Delegates most methods of {@link Duration} so can be used anywhere a Duration can.
  */
 public class StroomDuration implements Comparable<StroomDuration>, TemporalAmount {
+
     @Nullable
     // Allows us to hold the original serialised form of the duration as a duration can have more
     // than one serialised form. Can be null.

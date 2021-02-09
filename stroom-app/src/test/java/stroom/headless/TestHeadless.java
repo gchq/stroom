@@ -17,8 +17,8 @@
 package stroom.headless;
 
 import stroom.content.ContentPacks;
-import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.ComparisonHelper;
+import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
@@ -44,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 class TestHeadless {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);

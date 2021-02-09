@@ -21,6 +21,7 @@ import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
 public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> implements ScrollableCellTableView<R> {
+
     public ScrollableCellTableViewImpl(final boolean supportsSelection, final Resources resources) {
         super(supportsSelection, resources);
 

@@ -42,6 +42,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.function.Consumer;
 
 public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
+
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;

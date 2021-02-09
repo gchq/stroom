@@ -35,11 +35,13 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.util.shared.HasBooleanValue;
 
 public class TickBox extends Composite
         implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue {
+
     private static volatile Binder binder;
     private static volatile Resources resources;
     @UiField
@@ -57,6 +59,7 @@ public class TickBox extends Composite
     public TickBox(final String text) {
         this(TickBoxState.UNTICK, text);
     }
+
     public TickBox(final TickBoxState state, final String text) {
         if (binder == null) {
             synchronized (TickBox.class) {
@@ -204,9 +207,11 @@ public class TickBox extends Composite
     }
 
     public interface Binder extends UiBinder<Widget, TickBox> {
+
     }
 
     public interface Style extends CssResource {
+
         String outer();
 
         String tickBox();
@@ -215,6 +220,7 @@ public class TickBox extends Composite
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource tick();
 
         ImageResource halfTick();

@@ -16,11 +16,13 @@
 
 package stroom.pipeline.filter;
 
+import stroom.util.CharBuffer;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.util.CharBuffer;
+
 public class SafeXMLFilter extends AbstractXMLFilter {
 
     private SafeBuffer safeBuffer = new SafeBuffer(500);
@@ -49,6 +51,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
     private static class SafeBuffer extends CharBuffer {
+
         private static final long serialVersionUID = 7457435229363903797L;
 
         private static final char ZERO = '0';
@@ -198,6 +201,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
     private static class OutputBuffer extends CharBuffer {
+
         private static final long serialVersionUID = 5324120855707144530L;
 
         OutputBuffer(final int initialSize) {
@@ -210,6 +214,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
     private class SafeAttributes extends AttributesImpl {
+
         private final SafeBuffer safeBuffer;
 
         SafeAttributes(final SafeBuffer safeBuffer) {

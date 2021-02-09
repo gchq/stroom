@@ -53,6 +53,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject

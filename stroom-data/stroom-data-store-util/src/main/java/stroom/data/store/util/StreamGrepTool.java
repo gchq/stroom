@@ -16,22 +16,22 @@
 
 package stroom.data.store.util;
 
-import com.google.inject.Injector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.StreamUtil;
+
+import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +44,7 @@ import java.util.List;
  * Handy tool to grep out content.
  */
 public class StreamGrepTool extends AbstractCommandLineTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamGrepTool.class);
 
     private final ToolInjector toolInjector;
@@ -173,7 +174,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
                     String aline;
                     while ((aline = lineNumberReader.readLine()) != null) {
-                        String lines[] = new String[]{aline};
+                        String[] lines = {aline};
                         if (addLineBreak != null) {
                             lines = aline.split(addLineBreak);
                         }

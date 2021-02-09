@@ -16,20 +16,19 @@
 
 package stroom.security.shared;
 
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docref.HasDisplayValue;
-
-import java.util.Map;
-import java.util.Set;
 
 @JsonPropertyOrder({"docRef", "changeSet", "cascade"})
 @JsonInclude(Include.NON_NULL)
 public class ChangeDocumentPermissionsRequest {
+
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
@@ -59,7 +58,9 @@ public class ChangeDocumentPermissionsRequest {
     }
 
     public enum Cascade implements HasDisplayValue {
-        NO("No"), CHANGES_ONLY("Changes only"), ALL("All");
+        NO("No"),
+        CHANGES_ONLY("Changes only"),
+        ALL("All");
 
         private final String displayValue;
 

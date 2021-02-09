@@ -42,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 public class CommonIndexingTestHelper {
+
     private static final int N1 = 1;
 
     private static final String DIR = "CommonIndexingTest/";

@@ -74,6 +74,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 public class App extends Application<Config> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";

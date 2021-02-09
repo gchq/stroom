@@ -22,6 +22,8 @@
 
 package stroom.widget.util.client;
 
+import stroom.data.grid.client.DoubleClickEvent;
+
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
@@ -29,7 +31,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 import com.google.gwt.view.client.SetSelectionModel;
-import stroom.data.grid.client.DoubleClickEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +39,7 @@ import java.util.Set;
  * A simple selection model that allows only one item to be selected a a time.
  */
 public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> implements SetSelectionModel<T> {
+
     private Object curKey;
     private T curSelection;
 

@@ -17,6 +17,7 @@
 package stroom.task.client;
 
 public final class TaskCount {
+
     private static int count;
 
     private TaskCount() {

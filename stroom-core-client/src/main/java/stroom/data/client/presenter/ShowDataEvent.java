@@ -7,6 +7,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class ShowDataEvent extends GwtEvent<ShowDataEvent.Handler> {
+
     private static Type<ShowDataEvent.Handler> TYPE;
 
     private final SourceLocation sourceLocation;
@@ -69,6 +70,7 @@ public class ShowDataEvent extends GwtEvent<ShowDataEvent.Handler> {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public interface Handler extends EventHandler {
+
         void onShow(ShowDataEvent event);
     }
 }

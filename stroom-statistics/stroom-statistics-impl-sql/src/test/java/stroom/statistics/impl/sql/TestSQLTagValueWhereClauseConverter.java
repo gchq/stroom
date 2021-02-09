@@ -16,13 +16,14 @@
 
 package stroom.statistics.impl.sql;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import stroom.statistics.impl.sql.search.FilterOperationMode;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
 import stroom.statistics.impl.sql.search.PrintableNode;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -116,7 +117,8 @@ class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
 
     private int getNumOfOccurrences(final String source, final String search) {
         int count = 0;
-        int prevIndex = 0, curIndex = 0;
+        int prevIndex = 0;
+        int curIndex = 0;
         if (source.length() > 0 && search.length() > 0) {
             count = -1;
             while (curIndex >= 0) {

@@ -172,6 +172,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
      * The appearance used to render this Cell.
      */
     public interface Appearance {
+
         /**
          * Render the button and its contents.
          *
@@ -192,6 +193,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class DefaultAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -261,18 +263,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBox.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tick();
 
             ImageResource halfTick();
@@ -285,6 +290,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class NoBorderAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -354,18 +360,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBoxWithMargin.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tickNB();
 
             ImageResource halfTickNB();
@@ -378,6 +387,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
     public static class MarginAppearance implements Appearance {
+
         private final Resources resources;
         private final Template template;
         private final SafeHtml imgTick;
@@ -447,18 +457,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outerDiv(String outerClass, SafeHtml icon);
         }
 
         @ImportedWithPrefix("stroom-tickbox")
         public interface Style extends CssResource {
+
             String DEFAULT_CSS = "TickBoxWithMargin.css";
 
             String outer();
         }
 
         public interface Resources extends ClientBundle {
+
             ImageResource tick();
 
             ImageResource halfTick();

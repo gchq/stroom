@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import java.util.function.Supplier;
 
 public class PipelineScopeRunnable {
+
     private final PipelineScope scope;
 
     @Inject

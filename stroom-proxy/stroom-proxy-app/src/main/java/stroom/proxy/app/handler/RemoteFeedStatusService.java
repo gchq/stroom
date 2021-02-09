@@ -28,11 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck {
+
     private static Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
 
     private static final long ONE_MINUTE = 60000;
 
-    private final static String GET_FEED_STATUS_PATH = "/getFeedStatus";
+    private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
     private final String url;
     private final String apiKey;
@@ -79,10 +80,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 LOGGER.info("Checking feed status for {} using url '{}'", request.getFeedName(), url);
                 effectiveFeedStatusResponse = sendRequest(request, response -> {
                     GetFeedStatusResponse feedStatusResponse = null;
-                if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                    LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                } else {
-                    feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+                    if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                        LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                    } else {
+                        feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
                     }
                     if (feedStatusResponse == null) {
                         // If we can't get a feed status response then we will assume ok.
@@ -112,7 +113,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
 
         return effectiveFeedStatusResponse;
-        }
+    }
 
     private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
                                               final Function<Response, GetFeedStatusResponse> responseConsumer) {
@@ -170,16 +171,17 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                                 .unhealthy()
                                 .withDetail("response", HealthCheckUtils.beanToMap(feedStatusResponse));
                     }
-        return feedStatusResponse;
+                    return feedStatusResponse;
                 });
             } catch (Exception e) {
                 resultBuilder.unhealthy(e);
-    }
+            }
         }
         return resultBuilder.build();
     }
 
     private static class CachedResponse {
+
         private final long creationTime;
         private final GetFeedStatusResponse response;
 

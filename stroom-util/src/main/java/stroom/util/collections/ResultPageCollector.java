@@ -10,6 +10,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 
 public class ResultPageCollector<T> {
+
     private final int offset;
     private final int limit;
     private long count = 0;

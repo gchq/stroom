@@ -85,7 +85,7 @@ public final class ValInteger implements ValNumber {
     }
 
     private static class ValIntegerCache {
-        static final ValInteger cache[] = new ValInteger[-(-128) + 127 + 1];
+        static final ValInteger[] cache = new ValInteger[-(-128) + 127 + 1];
 
         static {
             for (int i = 0; i < cache.length; i++) {

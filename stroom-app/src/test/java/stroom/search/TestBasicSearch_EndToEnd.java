@@ -18,8 +18,6 @@
 package stroom.search;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -36,6 +34,9 @@ import stroom.search.impl.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ResultPage;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import java.util.Map;
 import java.util.function.Function;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
+
     @Inject
     private IndexStore indexStore;
     @Inject

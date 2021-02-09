@@ -16,8 +16,9 @@
 
 package stroom.util.xml;
 
-import javassist.Modifier;
 import stroom.util.io.StreamUtil;
+
+import javassist.Modifier;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -38,6 +39,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 public final class XMLMarshallerUtil {
+
     private XMLMarshallerUtil() {
         // Utility class.
     }

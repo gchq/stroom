@@ -13,7 +13,7 @@ import java.util.Arrays;
  * So file 1 is 001 and file 1000 is 001/000 etc...
  */
 public final class StroomFileNameUtil {
-    private final static int MAX_PART_LENGTH = 255;
+    private static final int MAX_PART_LENGTH = 255;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomFileNameUtil.class);
 

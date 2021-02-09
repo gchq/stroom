@@ -20,6 +20,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView> {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;

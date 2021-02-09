@@ -26,6 +26,7 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDateExpressionParser {
+
     private final Instant instant = Instant.parse("2015-02-03T01:22:33.056Z");
     private final long nowEpochMilli = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).toInstant().toEpochMilli();
 

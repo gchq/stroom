@@ -23,7 +23,7 @@ class TestBackupConfig {
     @Test
     void testLine() {
         final String line = "user1 \tuser2";
-        final String parts[] = line.split("\\s+");
+        final String[] parts = line.split("\\s+");
         for (final String part : parts) {
             System.out.println(part);
         }

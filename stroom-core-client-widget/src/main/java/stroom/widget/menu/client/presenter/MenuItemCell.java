@@ -41,6 +41,7 @@ import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.ui.Image;
 
 public class MenuItemCell extends AbstractCell<Item> {
+
     private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
     private final MenuPresenter menuPresenter;
 
@@ -133,6 +134,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
     @ImportedWithPrefix("stroom-menu")
     public interface Style extends CssResource {
+
         String DEFAULT_CSS = "MenuItem.css";
 
         String separator();
@@ -155,17 +157,21 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_CSS)
         Style style();
     }
 
     public interface Appearance<I extends Item> {
+
         void render(MenuItemCell cell, Context context, I value, SafeHtmlBuilder sb);
     }
 
     public static class SeparatorAppearance implements Appearance<Separator> {
+
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final Resources RESOURCES = GWT.create(Resources.class);
+
         public SeparatorAppearance() {
             // Make sure the CSS is injected.
             RESOURCES.style().ensureInjected();
@@ -178,12 +184,14 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\"></div>")
             SafeHtml separator(String className);
         }
     }
 
     public static class MenuItemAppearance implements Appearance<MenuItem> {
+
         @Override
         public void render(final MenuItemCell cell, final Context context, final MenuItem value,
                            final SafeHtmlBuilder sb) {
@@ -194,6 +202,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
     public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
+
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
@@ -270,6 +279,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
             SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
 
@@ -285,6 +295,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
     public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
+
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
@@ -331,6 +342,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
             SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
 
@@ -343,14 +355,15 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
+
         private static final Template TEMPLATE = GWT.create(Template.class);
 
         // Styled to look like the Ace Editor auto completion popups
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString(
-            "cursor:default;" +
-                "color:#212121;" +
-                "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
-                "border: 1px solid gray;");
+                "cursor:default;" +
+                        "color:#212121;" +
+                        "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
+                        "border: 1px solid gray;");
         private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
 
@@ -372,8 +385,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
-                                RESOURCES.style().simpleText(),
-                                value.getSafeHtml()));
+                        RESOURCES.style().simpleText(),
+                        value.getSafeHtml()));
 
                 sb.append(TEMPLATE.outer(
                         RESOURCES.style().outer(),
@@ -383,6 +396,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
             SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
 

@@ -21,14 +21,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the completer is visible to ALL editor instances. While the AceCompletionProvider
  * allows us to only provide completions if it matches our editorId, if we keep adding
  * a completion provider for each new editor instance then we will end up with loads of them.
-
+ * <p>
  * Thus the idea of this class is to provide a single completion provider instance that is added once
  * but then delegates getting the actual completions to currently registered providers.
- *
+ * <p>
  * Each user of an EditorPresenter can register one or more AceCompletionProviders for its
  * editor instance.  When completions are required this class will consult all currently registered
  * providers for the editor instance requesting completions.
- *
+ * <p>
  * This class should be a singleton to ensure it only supplies one completion provider.
  */
 // See this jsfiddle for an example of how the completers array changes on multiple editors
@@ -165,6 +165,7 @@ public class DelegatingAceCompleter {
     }
 
     private static class MapKey {
+
         private final String editorId;
         private final String modeName;
 

@@ -21,6 +21,7 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.cellview.client.CellList;
 
 public class CustomCellList<T> extends CellList<T> {
+
     private static Resources resources;
 
     public CustomCellList(final Cell<T> cell) {
@@ -39,6 +40,7 @@ public class CustomCellList<T> extends CellList<T> {
      * A ClientBundle that provides images for this widget.
      */
     public interface Resources extends CellList.Resources {
+
         /**
          * The styles used in this widget.
          */

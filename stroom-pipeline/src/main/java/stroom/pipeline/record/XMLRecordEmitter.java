@@ -16,10 +16,6 @@
 
 package stroom.pipeline.record;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -34,6 +30,11 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;
@@ -52,6 +53,7 @@ import java.util.List;
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
+
     private final SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactoryFactory
             .newInstance();
     private final MyWriter outputStreamWriter = new MyWriter(1000);
@@ -71,6 +73,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     private String header;
     private String footer;
     private String body;
+
     public XMLRecordEmitter(final List<DestinationProvider> appenders) {
         this.appenders = appenders;
     }
@@ -309,6 +312,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
     }
 
     private static class MyWriter extends CharArrayWriter {
+
         public MyWriter(final int initialSize) {
             super(initialSize);
         }

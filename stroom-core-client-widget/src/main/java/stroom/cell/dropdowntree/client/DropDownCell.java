@@ -16,6 +16,8 @@
 
 package stroom.cell.dropdowntree.client;
 
+import stroom.docref.HasDisplayValue;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -30,12 +32,12 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import stroom.docref.HasDisplayValue;
 
 import static com.google.gwt.dom.client.BrowserEvents.CLICK;
 import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 
 public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
+
     private static volatile Resources resources;
     private static volatile Template template;
     private static volatile SafeHtml button;
@@ -45,6 +47,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     private int lastColumn;
     private E lastValue;
     private ValueUpdater<E> valueUpdater;
+
     public DropDownCell() {
         super(CLICK, KEYDOWN);
 
@@ -168,6 +171,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
     @ImportedWithPrefix("dropDownTreeCell")
     public interface Styles extends CssResource {
+
         String dropDownTree();
 
         String label();
@@ -176,6 +180,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource popup();
 
         @Source("dropdowntree.css")
@@ -183,6 +188,7 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     }
 
     public interface Template extends SafeHtmlTemplates {
+
         @Template("<div class=\"{0}\"><div class=\"{1}\" title=\"{3}\">{3}</div><div class=\"{2}\">{4}</div></div>")
         SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, SafeHtml icon);
     }

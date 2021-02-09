@@ -63,7 +63,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     private ClickHandler labelClickHandler;
 
-    private Widget widget;
+    private final Widget widget;
 
     @Inject
     public CharacterNavigatorViewImpl(final EventBus eventBus,

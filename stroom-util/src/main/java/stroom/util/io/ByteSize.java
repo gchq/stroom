@@ -1,8 +1,9 @@
 package stroom.util.io;
 
+import stroom.util.shared.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
@@ -10,6 +11,7 @@ import java.util.Objects;
  * Class to represent a size in bytes. It can be parsed from IEC byte units, e.g. 5Kib, 10MiB, etc.
  */
 public class ByteSize {
+
     private final String valueAsStr;
     private final long bytes;
 
@@ -90,8 +92,8 @@ public class ByteSize {
     @JsonValue
     public String getValueAsStr() {
         return valueAsStr == null
-            ? formatBytes(bytes)
-            : valueAsStr;
+                ? formatBytes(bytes)
+                : valueAsStr;
     }
 
     @SuppressWarnings("checkstyle:needbraces")

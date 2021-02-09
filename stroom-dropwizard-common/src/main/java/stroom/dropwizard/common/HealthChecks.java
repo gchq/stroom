@@ -1,16 +1,18 @@
 package stroom.dropwizard.common;
 
+import stroom.util.HasHealthCheck;
+
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.Set;
 
 public class HealthChecks {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HealthChecks.class);
 
     private final Environment environment;
@@ -30,9 +32,9 @@ public class HealthChecks {
                 .sorted(Comparator.comparing(hasHealthCheck ->
                         hasHealthCheck.getClass().getSimpleName()))
                 .forEach(hasHealthCheck -> {
-            final String name = hasHealthCheck.getClass().getName();
-            LOGGER.info("\t{}", name);
-            healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
-        });
+                    final String name = hasHealthCheck.getClass().getName();
+                    LOGGER.info("\t{}", name);
+                    healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
+                });
     }
 }

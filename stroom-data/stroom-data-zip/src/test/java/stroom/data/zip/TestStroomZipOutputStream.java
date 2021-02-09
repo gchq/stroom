@@ -12,7 +12,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStroomZipOutputStream {
-    private final static int TEST_SIZE = 100;
+    private static final int TEST_SIZE = 100;
 
     @Test
     void testBigFile() throws IOException {

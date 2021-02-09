@@ -65,9 +65,9 @@ public class NewUIExplorerResource implements RestResource {
     @GET
     @Path("/search")
     public Response search(
-            final @QueryParam("searchTerm") String searchTerm,
-            final @QueryParam("pageOffset") Long pageOffset,
-            final @QueryParam("pageSize") Long pageSize) {
+            @QueryParam("searchTerm") final String searchTerm,
+            @QueryParam("pageOffset") final Long pageOffset,
+            @QueryParam("pageSize") final Long pageSize) {
         // For now, just do this every time the whole tree is fetched
         explorerTreeModel.rebuild();
 

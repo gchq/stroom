@@ -22,6 +22,7 @@ import com.google.gwt.cell.client.ValueUpdater;
  * The {@code ViewData} for this cell.
  */
 public class ViewData<E> {
+
     /**
      * The last value that was updated.
      */

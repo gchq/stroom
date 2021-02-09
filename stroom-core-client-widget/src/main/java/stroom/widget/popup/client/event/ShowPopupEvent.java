@@ -28,6 +28,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
     private final PopupType popupType;
@@ -37,6 +38,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final PopupUiHandlers popupUiHandlers;
     private final Boolean modal;
     private final Element[] autoHidePartners;
+
     private ShowPopupEvent(final PresenterWidget<?> presenterWidget,
                            final PopupType popupType,
                            final PopupPosition popupPosition,
@@ -252,6 +254,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     }
 
     public interface Handler extends EventHandler {
+
         void onShow(ShowPopupEvent event);
     }
 }

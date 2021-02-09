@@ -17,10 +17,11 @@
 package stroom.headless;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.ComparisonHelper;
 import stroom.util.io.FileUtil;
 import stroom.util.zip.ZipUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

@@ -18,7 +18,6 @@
 package stroom.data.store.impl.fs;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
@@ -31,6 +30,8 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -52,6 +53,7 @@ import java.util.zip.ZipOutputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
+
     @Inject
     private Store streamStore;
     @Inject

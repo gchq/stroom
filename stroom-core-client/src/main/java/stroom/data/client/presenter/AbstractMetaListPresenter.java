@@ -159,11 +159,7 @@ public abstract class AbstractMetaListPresenter
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();
             }
         });
@@ -405,11 +401,7 @@ public abstract class AbstractMetaListPresenter
 
         final Function<MetaRow, String> extractor = metaRow -> {
             final String value = metaRow.getAttributeValue(attribute.getName());
-            if (value == null) {
-                return null;
-            } else {
-                return value;
-            }
+            return value;
         };
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
@@ -428,11 +420,7 @@ public abstract class AbstractMetaListPresenter
 
         final Function<MetaRow, String> extractor = metaRow -> {
             final String value = metaRow.getAttributeValue(attribute.getName());
-            if (value == null) {
-                return null;
-            } else {
-                return value;
-            }
+            return value;
         };
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)

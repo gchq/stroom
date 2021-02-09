@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 public class XMLWriter implements ContentHandler {
+
     public static final char SURROGATE1_MIN = 0xD800;
     public static final char SURROGATE1_MAX = 0xDBFF;
     // Lookup table for special characters in text
@@ -105,6 +106,7 @@ public class XMLWriter implements ContentHandler {
     // Line and column measure the number of lines and columns
     private int line = 0;
     private int column = 0; // .. in whitespace text nodes between tags
+
     public XMLWriter(final Writer writer) {
         this.writer = writer;
     }
@@ -537,6 +539,7 @@ public class XMLWriter implements ContentHandler {
     }
 
     private static class AttributeNameComparator implements Comparator<String>, Serializable {
+
         private static final long serialVersionUID = -9219753718768871842L;
 
         @Override

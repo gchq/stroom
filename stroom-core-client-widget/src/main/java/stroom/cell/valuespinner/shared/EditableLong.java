@@ -17,6 +17,7 @@
 package stroom.cell.valuespinner.shared;
 
 public class EditableLong extends Number implements Comparable<EditableLong>, Editable {
+
     private static final long serialVersionUID = 2999109513859666073L;
 
     private Long _long;

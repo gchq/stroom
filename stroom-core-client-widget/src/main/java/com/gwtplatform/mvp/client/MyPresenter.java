@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public abstract class MyPresenter<V extends View, Proxy_ extends Proxy<?>> extends Presenter<V, Proxy_>
         implements Layer {
+
     private double opacity;
     private boolean firstReveal = true;
 

@@ -64,6 +64,7 @@ import java.util.Set;
  * to be different we must throw an exception.
  */
 public class StreamTargetStroomStreamHandler implements StroomStreamHandler, StroomHeaderStreamHandler, Closeable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
     private final Store store;
@@ -181,6 +182,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     /**
      * Layers are used to synchronise writing context, meta and actual data to the current output stream provider.
+     *
      * @param type The type that needs to be added to the current layer.
      */
     private void checkLayer(final StroomZipFileType type) {
@@ -389,7 +391,9 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     private static class Layer {
+
         final Set<StroomZipFileType> types = new HashSet<>();
+
         boolean hasType(final StroomZipFileType type) {
             return !types.add(type);
         }

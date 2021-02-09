@@ -278,6 +278,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 case NO:
                     // Do nothing.
                     break;
+                default:
+                    throw new RuntimeException("Unexpected cascade " + cascade);
             }
         }
     }

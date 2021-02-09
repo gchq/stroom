@@ -17,4 +17,5 @@
 package stroom.util.io;
 
 public interface SeekableInputStream extends IInputStream, Seekable {
+
 }

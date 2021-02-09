@@ -16,14 +16,16 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class CurveTabBar extends AbstractTabBar {
+
     private static Resources resources;
     private final Element element;
 
@@ -55,10 +57,12 @@ public class CurveTabBar extends AbstractTabBar {
     }
 
     public interface Style extends CssResource {
+
         String curveTabBar();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("CurveTabBar.css")
         Style style();
     }

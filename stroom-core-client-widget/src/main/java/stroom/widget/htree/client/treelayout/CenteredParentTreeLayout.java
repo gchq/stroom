@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CenteredParentTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
+
     private final NodeExtentProvider<TreeNode> nodeExtentProvider;
     private final Configuration<TreeNode> configuration;
     private TreeForTreeLayout<TreeNode> tree;

@@ -23,6 +23,7 @@ import java.io.Closeable;
 import java.io.IOException;
 
 public class CloseableUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CloseableUtil.class);
 
     public static void closeLogAndIgnoreException(Closeable... closeableList) {

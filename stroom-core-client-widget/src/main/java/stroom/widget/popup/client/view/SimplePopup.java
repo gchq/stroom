@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -23,11 +25,11 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class SimplePopup extends AbstractPopupPanel {
+
     private static final Resources RESOURCES = GWT.create(Resources.class);
-    private static Binder binder = GWT.create(Binder.class);
+    private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
     @UiField
     SimplePanel content;
@@ -101,9 +103,11 @@ public class SimplePopup extends AbstractPopupPanel {
     }
 
     public interface Binder extends UiBinder<Widget, SimplePopup> {
+
     }
 
     public interface Style extends CssResource {
+
         String DEFAULT_STYLE = "SimplePopup.css";
 
         String popup();
@@ -116,6 +120,7 @@ public class SimplePopup extends AbstractPopupPanel {
     }
 
     public interface Resources extends ClientBundle {
+
         @Source(Style.DEFAULT_STYLE)
         Style style();
     }

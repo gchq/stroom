@@ -30,6 +30,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class PathCreator {
+
     private static final String STROOM_TEMP = "stroom.temp";
     private static final String STROOM_HOME = "stroom.home";
     private static final String[] NON_ENV_VARS = {
@@ -164,9 +165,9 @@ public class PathCreator {
     }
 
     protected String replace(final String path,
-                   final String type,
-                   final LongSupplier replacementSupplier,
-                   final int pad) {
+                             final String type,
+                             final LongSupplier replacementSupplier,
+                             final int pad) {
 
         //convert the long supplier into a string supplier to prevent the
         //evaluation of the long supplier

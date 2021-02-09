@@ -28,6 +28,7 @@ public abstract class NestedInputStream extends InputStream {
      * @return number of nested entries
      */
     public abstract long getEntryCount() throws IOException;
+
     /**
      * Tries to get a specific entry number.
      *

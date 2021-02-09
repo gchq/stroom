@@ -3,6 +3,7 @@ package stroom.util.guice;
 import java.util.Objects;
 
 public class ServletInfo {
+
     private final String url;
 
     public ServletInfo(final String url) {

@@ -22,7 +22,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
@@ -52,6 +51,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaServiceImpl {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaServiceImpl.class);
 
     private static final String FEED_1 = "FEED1";
@@ -94,6 +94,7 @@ class TestMetaServiceImpl {
         // Delete everything
         cleanup.cleanup();
     }
+
     @Test
     void testSummary() {
         final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));

@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public final class PropertyUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertyUtil.class);
 
     private PropertyUtil() {
@@ -174,6 +175,7 @@ public final class PropertyUtil {
      * Class to define a config property in the config object tree
      */
     public static class Prop {
+
         // The unqualified name of the property, e.g. 'node'
         private final String name;
         // The config object that the property exists in
@@ -183,8 +185,8 @@ public final class PropertyUtil {
         // The getter method to set the value of the property
         private Method setter;
 
-        private Map<Class<? extends Annotation>, Annotation> fieldAnnotationsMap = new HashMap<>();
-        private Map<Class<? extends Annotation>, Annotation> getterAnnotationsMap = new HashMap<>();
+        private final Map<Class<? extends Annotation>, Annotation> fieldAnnotationsMap = new HashMap<>();
+        private final Map<Class<? extends Annotation>, Annotation> getterAnnotationsMap = new HashMap<>();
 
         Prop(final String name, final Object parentObject) {
             this.name = name;
@@ -310,9 +312,9 @@ public final class PropertyUtil {
             if (o == null || getClass() != o.getClass()) return false;
             final Prop prop = (Prop) o;
             return Objects.equals(name, prop.name) &&
-                Objects.equals(parentObject, prop.parentObject) &&
-                Objects.equals(getter, prop.getter) &&
-                Objects.equals(setter, prop.setter);
+                    Objects.equals(parentObject, prop.parentObject) &&
+                    Objects.equals(getter, prop.getter) &&
+                    Objects.equals(setter, prop.setter);
         }
 
         @Override

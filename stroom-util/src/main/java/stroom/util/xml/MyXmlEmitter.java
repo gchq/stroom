@@ -17,42 +17,42 @@ import net.sf.saxon.tree.tiny.CompressedWhitespace;
  */
 public class MyXmlEmitter extends XMLEmitter {
 
-    private static boolean[] specialInText;         // lookup table for special characters in text
-    private static boolean[] specialInAtt;          // lookup table for special characters in attributes
-    // create look-up table for ASCII characters that need special treatment
+    private static final boolean[] IS_SPECIAL_IN_TEXT;         // lookup table for special characters in text
+    private static final boolean[] IS_SPECIAL_IN_ATT;          // lookup table for special characters in attributes
 
     static {
-        specialInText = new boolean[128];
+        // create look-up table for ASCII characters that need special treatment
+        IS_SPECIAL_IN_TEXT = new boolean[128];
         for (int i = 0; i <= 31; i++) {
-            specialInText[i] = true;  // allowed in XML 1.1 as character references
+            IS_SPECIAL_IN_TEXT[i] = true;  // allowed in XML 1.1 as character references
         }
         for (int i = 32; i <= 127; i++) {
-            specialInText[i] = false;
+            IS_SPECIAL_IN_TEXT[i] = false;
         }
         //    note, 0 is used to switch escaping on and off for mapped characters
-        specialInText['\n'] = false;
-        specialInText['\t'] = false;
-        specialInText['\r'] = true;
-        specialInText['<'] = true;
-        specialInText['>'] = true;
-        specialInText['&'] = true;
+        IS_SPECIAL_IN_TEXT['\n'] = false;
+        IS_SPECIAL_IN_TEXT['\t'] = false;
+        IS_SPECIAL_IN_TEXT['\r'] = true;
+        IS_SPECIAL_IN_TEXT['<'] = true;
+        IS_SPECIAL_IN_TEXT['>'] = true;
+        IS_SPECIAL_IN_TEXT['&'] = true;
 
-        specialInAtt = new boolean[128];
+        IS_SPECIAL_IN_ATT = new boolean[128];
         for (int i = 0; i <= 31; i++) {
-            specialInAtt[i] = true; // allowed in XML 1.1 as character references
+            IS_SPECIAL_IN_ATT[i] = true; // allowed in XML 1.1 as character references
         }
         for (int i = 32; i <= 127; i++) {
-            specialInAtt[i] = false;
+            IS_SPECIAL_IN_ATT[i] = false;
         }
-        specialInAtt[(char) 0] = true;
+        IS_SPECIAL_IN_ATT[(char) 0] = true;
         // used to switch escaping on and off for mapped characters
-        specialInAtt['\r'] = true;
-        specialInAtt['\n'] = true;
-        specialInAtt['\t'] = true;
-        specialInAtt['<'] = true;
-        specialInAtt['>'] = true;
-        specialInAtt['&'] = true;
-        specialInAtt['\"'] = true;
+        IS_SPECIAL_IN_ATT['\r'] = true;
+        IS_SPECIAL_IN_ATT['\n'] = true;
+        IS_SPECIAL_IN_ATT['\t'] = true;
+        IS_SPECIAL_IN_ATT['<'] = true;
+        IS_SPECIAL_IN_ATT['>'] = true;
+        IS_SPECIAL_IN_ATT['&'] = true;
+        IS_SPECIAL_IN_ATT['\"'] = true;
     }
 
     /**
@@ -68,7 +68,7 @@ public class MyXmlEmitter extends XMLEmitter {
             throws java.io.IOException, XPathException {
         int segstart = 0;
         boolean disabled = false;
-        final boolean[] specialChars = (inAttribute ? specialInAtt : specialInText);
+        final boolean[] specialChars = (inAttribute ? IS_SPECIAL_IN_ATT : IS_SPECIAL_IN_TEXT);
 
         if (chars instanceof CompressedWhitespace) {
             ((CompressedWhitespace) chars).writeEscape(specialChars, writer);
@@ -133,7 +133,7 @@ public class MyXmlEmitter extends XMLEmitter {
                             throw de;
                         }
                     } else if (!characterSet.inCharset(c)) {
-                        XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString((int) c) +
+                        XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString(c) +
                                 ") is not available in the chosen encoding");
                         de.setErrorCode("SERE0008");
                         throw de;

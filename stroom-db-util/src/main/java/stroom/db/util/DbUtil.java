@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DbUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
@@ -27,13 +28,13 @@ public class DbUtil {
 
     public static void validate(final ConnectionConfig connectionConfig) {
         Preconditions.checkNotNull(connectionConfig.getClassName(),
-            "The JDBC driver class has not been supplied");
+                "The JDBC driver class has not been supplied");
         Preconditions.checkNotNull(connectionConfig.getUrl(),
-            "The JDBC URL has not been supplied");
+                "The JDBC URL has not been supplied");
         Preconditions.checkNotNull(connectionConfig.getUser(),
-            "The JDBC username has not been supplied");
+                "The JDBC username has not been supplied");
         Preconditions.checkNotNull(connectionConfig.getPassword(),
-            "The JDBC password has not been supplied");
+                "The JDBC password has not been supplied");
 
         try {
             Class.forName(connectionConfig.getClassName());
@@ -145,9 +146,10 @@ public class DbUtil {
             }
         } catch (SQLException e) {
             throw new RuntimeException(
-                LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
+                    LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
         }
     }
+
     public static void renameTable(final Connection connection,
                                    final String oldTableName,
                                    final String newTableName) {
@@ -167,7 +169,7 @@ public class DbUtil {
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(
-                    LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
+                        LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
             }
         } else {
             if (!isIdempotent) {

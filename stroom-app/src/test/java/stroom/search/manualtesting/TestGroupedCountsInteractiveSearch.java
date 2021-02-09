@@ -25,9 +25,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
@@ -60,6 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // This junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
 class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
     private static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";

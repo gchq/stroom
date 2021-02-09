@@ -21,9 +21,11 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class IndicatorEvent extends GwtEvent<IndicatorEvent.IndicatorHandler> {
+
     public static final GwtEvent.Type<IndicatorHandler> TYPE = new GwtEvent.Type<>();
     private final int lineNo;
     private final Element target;
+
     protected IndicatorEvent(final Element target, final int lineNo) {
         this.lineNo = lineNo;
         this.target = target;
@@ -54,6 +56,7 @@ public class IndicatorEvent extends GwtEvent<IndicatorEvent.IndicatorHandler> {
     }
 
     public interface IndicatorHandler extends EventHandler {
+
         void onIndicator(IndicatorEvent event);
     }
 }

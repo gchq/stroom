@@ -3,6 +3,7 @@ package stroom.test.common.util.test.data;
 import java.util.List;
 
 public class Record {
+
     final List<Field> fieldDefinitions;
     final List<String> values;
 

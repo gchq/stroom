@@ -19,7 +19,7 @@ import java.util.Set;
 class TestAppConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
 
-    private final static String STROOM_PACKAGE_PREFIX = "stroom.";
+    private static final String STROOM_PACKAGE_PREFIX = "stroom.";
 
     private static final Set<Class<?>> WHITE_LISTED_CLASSES = Set.of(
         Logger.class,

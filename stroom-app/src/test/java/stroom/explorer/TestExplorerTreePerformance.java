@@ -16,11 +16,6 @@
 
 package stroom.explorer;
 
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
 import stroom.cluster.impl.MockClusterModule;
 import stroom.explorer.api.ExplorerService;
@@ -41,6 +36,12 @@ import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.HashSet;
@@ -60,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Disabled
         // manual testing only
 class TestExplorerTreePerformance {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;
     private static final int MAX_TREE_DEPTH = 2;

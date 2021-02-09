@@ -19,6 +19,7 @@ package stroom.widget.util.client;
 import com.google.gwt.user.client.Timer;
 
 public class DoubleClickTester {
+
     private final int DOUBLE_CLICK_PERIOD = 500;
     private final Timer doubleClickTimer;
     private Object object;

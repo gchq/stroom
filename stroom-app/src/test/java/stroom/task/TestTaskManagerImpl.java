@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
     @Inject

@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 class ActivityResourceImpl implements ActivityResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResourceImpl.class);
 
     private final ActivityService activityService;

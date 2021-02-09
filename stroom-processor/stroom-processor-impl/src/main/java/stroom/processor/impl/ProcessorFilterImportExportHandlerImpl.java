@@ -14,6 +14,7 @@
  * limitations under the License.
  *
  */
+
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;

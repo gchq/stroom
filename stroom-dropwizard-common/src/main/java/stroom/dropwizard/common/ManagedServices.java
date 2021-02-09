@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Set;
 
 public class ManagedServices {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedServices.class);
 
     private final Environment environment;

@@ -15,6 +15,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder(alphabetic = true)
 public class SystemInfoResult {
+
     @NotNull
     @JsonProperty("name")
     private final String name;
@@ -80,6 +81,7 @@ public class SystemInfoResult {
     }
 
     public static final class Builder {
+
         private String name;
         private String description = null;
         private Map<String, Object> details = new HashMap<>();

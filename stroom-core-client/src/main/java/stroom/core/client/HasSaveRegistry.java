@@ -6,6 +6,7 @@ import java.util.Set;
 
 @Singleton
 public class HasSaveRegistry implements HasSave {
+
     private final Set<HasSave> set = new HashSet<>();
 
     public void register(final HasSave hasSave) {

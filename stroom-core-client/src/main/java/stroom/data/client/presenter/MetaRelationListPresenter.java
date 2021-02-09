@@ -26,7 +26,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
@@ -47,6 +46,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
+
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 

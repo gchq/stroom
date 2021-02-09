@@ -6,6 +6,7 @@ import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;
 
 public class ServletBinder {
+
     private final Multibinder<IsServlet> multibinder;
 
     private ServletBinder(final Binder binder) {

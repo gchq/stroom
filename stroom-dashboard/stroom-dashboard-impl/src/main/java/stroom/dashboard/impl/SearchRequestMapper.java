@@ -58,7 +58,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchRequestMapper {
-    public final static String EXPRESSION_JSON_PARAM_KEY = "expressionJson";
+    public static final String EXPRESSION_JSON_PARAM_KEY = "expressionJson";
 
     private final VisualisationStore visualisationStore;
 

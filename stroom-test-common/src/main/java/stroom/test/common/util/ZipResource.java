@@ -43,6 +43,7 @@ import java.util.zip.ZipInputStream;
  * </pre>
  */
 public class ZipResource {
+
     private static final String RESOURCES = "src/test/resources/";
     private static final String ZIP_EXTENSION = ".zip";
 

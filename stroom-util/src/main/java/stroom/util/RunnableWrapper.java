@@ -7,6 +7,7 @@ import java.util.Objects;
  * can be lazily injected by Guice.
  */
 public abstract class RunnableWrapper implements Runnable {
+
     private final Runnable runnable;
 
     public RunnableWrapper(final Runnable runnable) {

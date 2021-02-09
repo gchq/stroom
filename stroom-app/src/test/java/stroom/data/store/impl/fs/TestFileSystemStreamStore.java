@@ -17,10 +17,6 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
@@ -34,26 +30,30 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.PageRequest;
-import stroom.util.Period;
+import stroom.util.shared.ResultPage;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -75,6 +75,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
+
     private static final int N1 = 1;
     private static final int N13 = 13;
 

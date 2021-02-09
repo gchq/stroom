@@ -51,21 +51,21 @@ import java.util.function.BiConsumer;
  * each 3 part as a dir separator.
  */
 public class StroomZipRepository {
-    final static String LOCK_EXTENSION = ".lock";
-    public final static String ZIP_EXTENSION = ".zip";
+    static final String LOCK_EXTENSION = ".lock";
+    public static final String ZIP_EXTENSION = ".zip";
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(StroomZipRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StroomZipRepository.class);
 
     private static final String DEFAULT_REPOSITORY_FORMAT = "${pathId}/${id}";
     private static final String ID_VAR = "${id}";
     private static final String EXECUTION_UUID_PARAM = "${" + StroomFileNameUtil.EXECUTION_UUID + "}";
 
     // 1 hour
-    private final static int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
+    private static final int DEFAULT_LOCK_AGE_MS = 1000 * 60 * 60;
 
     // A somewhat hacky way of preventing a directory from being deleted before data can be written to it
     // which assumes the data is written within 10s.
-    private final static int DEFAULT_CLEAN_DELAY = 1000 * 10; // Ten seconds
+    private static final int DEFAULT_CLEAN_DELAY = 1000 * 10; // Ten seconds
 
     private final AtomicLong fileCount = new AtomicLong(0);
     private final int lockDeleteAgeMs;

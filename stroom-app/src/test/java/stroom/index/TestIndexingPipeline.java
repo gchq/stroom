@@ -17,9 +17,6 @@
 package stroom.index;
 
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
@@ -49,6 +46,10 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.InputStream;
@@ -60,6 +61,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestIndexingPipeline extends AbstractProcessIntegrationTest {
+
     private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.data.xml";
     private static final String SAMPLE_INDEX_INPUT = "TestIndexingPipeline/TestIndexes.out";
 

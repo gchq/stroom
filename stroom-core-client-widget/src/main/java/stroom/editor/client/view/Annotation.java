@@ -3,6 +3,7 @@ package stroom.editor.client.view;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
 
 public class Annotation {
+
     private final int row;
     private final int column;
     private final String text;

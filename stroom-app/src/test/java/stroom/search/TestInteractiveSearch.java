@@ -28,13 +28,13 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
-import stroom.query.api.v2.ParamUtil;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
@@ -61,6 +61,7 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInteractiveSearch extends AbstractSearchTest {
+
     private static boolean doneSetup;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;

@@ -23,6 +23,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public interface PopupView extends View, HasUiHandlers<PopupUiHandlers> {
+
     void setCaption(String caption);
 
     void setModal(boolean modal);

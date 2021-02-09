@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class FieldMapper {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldMapper.class);
 
     private enum CopyOption {
@@ -25,10 +26,11 @@ public class FieldMapper {
          * If the source is a default value (i.e. the value a newly instantiated object would have)
          * then don't copy it to the dest.
          */
-        DONT_COPY_DEFAULTS;
+        DONT_COPY_DEFAULTS
     }
 
     public interface UpdateAction {
+
         void accept(final Object destParent,
                     final Prop prop,
                     final Object sourcePropValue,
@@ -86,10 +88,10 @@ public class FieldMapper {
     }
 
     private static <T> void copy(final T source,
-                                final T dest,
-                                final T vanillaObject,
-                                final UpdateAction updateAction,
-                                final CopyOption... copyOptions) {
+                                 final T dest,
+                                 final T vanillaObject,
+                                 final UpdateAction updateAction,
+                                 final CopyOption... copyOptions) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(dest);
 
@@ -115,7 +117,7 @@ public class FieldMapper {
 //                            LOGGER.info("Updating config value of {} from [{}] to [{}]",
 //                                    prop.getName(), destPropValue, sourcePropValue);
 //                            prop.getSetter().invoke(dest, sourcePropValue);
-                            updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
+                        updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
                     } else if (destPropValue == null) {
                         // Create a new object to copy into
                         final Object newInstance = prop.getValueClass().getConstructor().newInstance();

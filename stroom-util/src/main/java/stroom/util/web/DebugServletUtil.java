@@ -28,6 +28,7 @@ import java.util.Enumeration;
  * Utility between Stroom and Stroom PROXY
  */
 public final class DebugServletUtil {
+
     public static void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         final StringBuilder debugResponse = new StringBuilder();
 

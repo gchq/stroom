@@ -182,6 +182,8 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                     return " with destination permissions";
                 case COMBINED:
                     return " with combined permissions";
+                default:
+                    throw new RuntimeException("Unexpected permissionInheritance " + permissionInheritance);
             }
         }
         return "";

@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RestResources {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResources.class);
 
     private final Environment environment;
@@ -104,6 +105,7 @@ public class RestResources {
     }
 
     private static class HK2toGuiceModule extends AbstractBinder {
+
         private final List<ResourceProvider> resourceProviders;
 
         public HK2toGuiceModule(final List<ResourceProvider> resourceProviders) {
@@ -118,6 +120,7 @@ public class RestResources {
         }
 
         private static class ServiceFactory<T> implements Factory<T> {
+
             private final Provider<T> provider;
 
             ServiceFactory(final Provider<T> provider) {
@@ -136,6 +139,7 @@ public class RestResources {
     }
 
     private static class ResourceProvider {
+
         private final Class<?> resourceClass;
         private final Provider<RestResource> provider;
         private final String resourcePath;

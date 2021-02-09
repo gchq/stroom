@@ -1,6 +1,5 @@
 package stroom.search;
 
-import org.junit.jupiter.api.Test;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -14,12 +13,15 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.Test;
+
 import javax.inject.Inject;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTest {
+
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject

@@ -164,7 +164,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
                                             IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0l));
+                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
                                             indexVolume.setNodeName(nodes.get(i++));
                                             indexVolume.setPath(resolvedPath.toString());
                                             indexVolume.setCreateTimeMs(System.currentTimeMillis());

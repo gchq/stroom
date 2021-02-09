@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,7 @@ import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 
 class RequestEntityCapturingInputStream extends BufferedInputStream {
 
-    private final static int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
+    private static final int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
     private final Class<?> requestParamClass;
     private final boolean constructed;

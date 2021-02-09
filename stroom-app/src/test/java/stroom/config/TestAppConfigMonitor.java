@@ -28,6 +28,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
 class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
     @Inject
