@@ -15,6 +15,9 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.AutoLogged;
 import stroom.util.shared.AutoLogged.OperationType;
 
@@ -26,16 +29,23 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 public class ContainerResourceInfo {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContainerResourceInfo.class);
+
     private final ResourceContext resourceContext;
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
 
-    public ContainerResourceInfo(final ResourceContext resourceContext, final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
+    public ContainerResourceInfo(final ResourceContext resourceContext,
+                                 final ResourceInfo resourceInfo,
+                                 final ContainerRequestContext requestContext) {
         this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
-        this.operationType = findOperationType(getMethod(), getResourceClass(), requestContext.getMethod());
+        this.operationType = findOperationType(
+                getMethod(),
+                getResourceClass(),
+                requestContext.getMethod());
     }
 
     public Object getResource() {
@@ -106,48 +116,71 @@ public class ContainerResourceInfo {
                 .isPresent() || logByDefault;
     }
 
+    /**
+     * "lowerCamel" => "lower"
+     * "UpperCamel" => ""
+     */
+    private String getFirstCamelCasePart(final String camelCaseWord) {
+        final int len = camelCaseWord.length();
+        int firstUpperIdx = -1;
+        for (int i = 0; i < len; i++) {
+            if (Character.isUpperCase(camelCaseWord.charAt(i))) {
+                firstUpperIdx = i;
+                break;
+            }
+        }
+        if (firstUpperIdx != -1) {
+            return camelCaseWord.substring(0, firstUpperIdx);
+        } else {
+            return "";
+        }
+    }
+
     private OperationType findOperationType(final Method method,
                                             final Class<?> resourceClass,
                                             final String httpMethod) {
-        Optional<OperationType> type = getOperationTypeFromAnnotations(method, resourceClass);
-        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())){
-            return type.get();
-        } else if (HttpMethod.DELETE.equals(httpMethod)){
-            return OperationType.DELETE;
-        } else if (method.getName().startsWith("get")){
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("fetch")) {
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("read")){
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("create")){
-            return OperationType.CREATE;
-        } else if (method.getName().startsWith("delete")){
-            return OperationType.DELETE;
-        } else if (method.getName().startsWith("update")){
-            return OperationType.UPDATE;
-        }  else if (method.getName().startsWith("save")){
-            return OperationType.UPDATE;
-        } else if (method.getName().startsWith("find")){
-            return OperationType.SEARCH;
-        } else if (method.getName().startsWith("search")){
-            return OperationType.SEARCH;
-        }  else if (method.getName().startsWith("list")){
-            return OperationType.SEARCH;
-        } else if (method.getName().startsWith("import")){
-            return OperationType.IMPORT;
-        } else if (method.getName().startsWith("export")){
-            return OperationType.EXPORT;
-        } else if (method.getName().startsWith("upload")){
-            return OperationType.IMPORT;
-        } else if (method.getName().startsWith("download")){
-            return OperationType.EXPORT;
-        } else if (method.getName().startsWith("set")){
-            return OperationType.UPDATE;
-        } else if (method.getName().startsWith("copy")){
-            return OperationType.COPY;
-        }
-        return OperationType.UNKNOWN;
-    }
 
+        final Optional<OperationType> type = getOperationTypeFromAnnotations(
+                method, resourceClass);
+
+        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
+            return type.get();
+        } else if (HttpMethod.DELETE.equals(httpMethod)) {
+            return OperationType.DELETE;
+        } else {
+            final String firstCamelCasePart = getFirstCamelCasePart(method.getName());
+
+            LOGGER.debug(() -> LogUtil.message("methodName: {}, firstCamelCasePart: {}",
+                    method.getName(), firstCamelCasePart));
+
+            if ("get".equals(firstCamelCasePart)
+                    || "fetch".equals(firstCamelCasePart)
+                    || "read".equals(firstCamelCasePart)
+                    || "view".equals(firstCamelCasePart)) {
+                return OperationType.VIEW;
+            } else if ("create".equals(firstCamelCasePart)) {
+                return OperationType.CREATE;
+            } else if ("delete".equals(firstCamelCasePart)) {
+                return OperationType.DELETE;
+            } else if ("update".equals(firstCamelCasePart)
+                    || "save".equals(firstCamelCasePart)
+                    || "set".equals(firstCamelCasePart)) {
+                return OperationType.UPDATE;
+            } else if ("find".equals(firstCamelCasePart)
+                    || "search".equals(firstCamelCasePart)
+                    || "list".equals(firstCamelCasePart)) {
+                return OperationType.SEARCH;
+            } else if ("import".equals(firstCamelCasePart)
+                    || "upload".equals(firstCamelCasePart)) {
+                return OperationType.IMPORT;
+            } else if ("export".equals(firstCamelCasePart)
+                    || "download".equals(firstCamelCasePart)) {
+                return OperationType.EXPORT;
+            } else if ("copy".equals(firstCamelCasePart)) {
+                return OperationType.COPY;
+            } else {
+                return OperationType.UNKNOWN;
+            }
+        }
+    }
 }

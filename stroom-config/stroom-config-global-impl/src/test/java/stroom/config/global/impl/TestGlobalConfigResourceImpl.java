@@ -361,6 +361,20 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation ->
                         baseEndPointUrls.get((String) invocation.getArgument(0)));
 
+//        when(nodeService.remoteRestResult(
+//                Mockito.anyString(),
+//                Mockito.anyString(),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any())).thenCallRealMethod();
+//
+//        when(nodeService.remoteRestResult(
+//                Mockito.anyString(),
+//                Mockito.any(Class.class),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any())).thenCallRealMethod();
+
         // Set up the NodeInfo mock
 
         final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);

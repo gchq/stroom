@@ -17,10 +17,6 @@
 
 package stroom.visualisation.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -32,6 +28,11 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
@@ -64,7 +65,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override

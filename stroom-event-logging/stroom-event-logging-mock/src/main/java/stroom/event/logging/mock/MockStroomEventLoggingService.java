@@ -1,10 +1,12 @@
 package stroom.event.logging.mock;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.StroomEventLoggingService;
 
 import event.logging.BaseObject;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.ComplexLoggedSupplier;
+import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Event;
 import event.logging.EventAction;
@@ -103,12 +105,27 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
     }
 
     @Override
+    public BaseObject convert(final Object object, final boolean useInfoProviders) {
+        return null;
+    }
+
+    @Override
     public BaseObject convert(final Object object) {
         return null;
     }
 
     @Override
+    public BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders) {
+        return null;
+    }
+
+    @Override
     public BaseObject convert(final Supplier<?> objectSupplier) {
+        return null;
+    }
+
+    @Override
+    public Criteria convertExpressionCriteria(final String type, final ExpressionCriteria expressionCriteria) {
         return null;
     }
 

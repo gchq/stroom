@@ -18,10 +18,12 @@ package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.BuildInfo;
@@ -40,6 +42,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import event.logging.BaseObject;
+import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Device;
 import event.logging.Event;
@@ -306,26 +309,28 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
-    public BaseObject convert(final Supplier<?> objectSupplier) {
+    public BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders) {
         if (objectSupplier != null) {
             // Run as proc user in case we are logging a user trying to access a thing they
             // don't have perms for
             final Object object = securityContext.asProcessingUserResult(objectSupplier);
-            return convert(object);
+            return convert(object, useInfoProviders);
         } else {
             return null;
         }
     }
 
     @Override
-    public BaseObject convert(final Object object) {
+    public BaseObject convert(final Object object, final boolean useInfoProviders) {
         if (object == null){
             return null;
         }
 
         final BaseObject baseObj;
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender != null){
+        final ObjectInfoProvider objectInfoAppender = useInfoProviders
+                ? getInfoAppender(object.getClass())
+                : null;
+        if (objectInfoAppender != null) {
             baseObj = objectInfoAppender.createBaseObject(object);
         } else {
             final OtherObject.Builder<Void> builder = OtherObject.builder()
@@ -342,7 +347,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return baseObj;
     }
 
-    private String getObjectType(final java.lang.Object object) {
+    private String getObjectType(final Object object) {
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getType());
         }
@@ -434,7 +439,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
 
-    private String getObjectName(final java.lang.Object object) {
+    private String getObjectName(final Object object) {
         if (object instanceof DocRef) {
             return ((DocRef) object).getName();
         } else if (object instanceof HasName) {
@@ -444,7 +449,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private String getObjectId(final java.lang.Object object) {
+    private String getObjectId(final Object object) {
         if (object instanceof HasUuid) {
             return ((HasUuid) object).getUuid();
         }
@@ -464,12 +469,29 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
+    @Override
+    public Criteria convertExpressionCriteria(final String type,
+                                              final ExpressionCriteria expressionCriteria) {
+        return Criteria.builder()
+                .withType(type)
+                .withQuery(StroomEventLoggingUtil.convertExpression(expressionCriteria.getExpression()))
+                .withData(Data.builder()
+                        .withName("pageRequest")
+                        .addData(getDataItems(expressionCriteria.getPageRequest()))
+                        .build())
+                .withData(Data.builder()
+                        .withName("sortList")
+                        .addData(getDataItems(expressionCriteria.getSortList()))
+                        .build())
+                .build();
+    }
+
     /**
      * Create {@link Data} items from properties of the supplied POJO
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
-    public List<Data> getDataItems(java.lang.Object obj) {
+    public List<Data> getDataItems(Object obj) {
         if (obj == null){
             return null;
         }

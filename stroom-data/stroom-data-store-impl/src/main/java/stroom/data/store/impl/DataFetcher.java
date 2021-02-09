@@ -117,7 +117,6 @@ public class DataFetcher {
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
-    private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SourceConfig sourceConfig;
@@ -143,7 +142,6 @@ public class DataFetcher {
                 final Provider<PipelineFactory> pipelineFactoryProvider,
                 final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                 final PipelineDataCache pipelineDataCache,
-                final StreamEventLog streamEventLog,
                 final SecurityContext securityContext,
                 final PipelineScopeRunnable pipelineScopeRunnable,
                 final SourceConfig sourceConfig) {
@@ -157,7 +155,6 @@ public class DataFetcher {
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
-        this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.sourceConfig = sourceConfig;
@@ -223,14 +220,6 @@ public class DataFetcher {
                     final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
                     final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
 
-                    writeEventLog(
-                            eventId,
-                            feedName,
-                            streamTypeName,
-                            fetchDataRequest.getSourceLocation().getOptChildType().orElse(null),
-                            fetchDataRequest.getPipeline(),
-                            new IOException(msg));
-
                     return new FetchDataResult(
                             feedName,
                             null,
@@ -277,17 +266,6 @@ public class DataFetcher {
                             eventId = ":" + sourceLocation.getOptSegmentNo().getAsLong();
                         }
 
-//                        if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
-//                            eventId += ":" + (pageRange.getOffset() + 1);
-//                        }
-
-                        writeEventLog(eventId,
-                                feedName,
-                                streamTypeName,
-                                requestedChildStreamType,
-                                fetchDataRequest.getPipeline(),
-                                null);
-
                         // If this is an error stream and the UI is requesting markers then
                         // create a list of markers.
                         if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
@@ -315,26 +293,19 @@ public class DataFetcher {
                 }
 
             } catch (final IOException | RuntimeException e) {
-                writeEventLog(
-                        eventId,
-                        feedName,
-                        streamTypeName,
-                        fetchDataRequest.getSourceLocation().getChildType(),
-                        fetchDataRequest.getPipeline(),
-                        e);
 
                 if (meta != null) {
                     if (Status.LOCKED.equals(meta.getStatus())) {
-                        return createErrorResult(sourceLocation, "You cannot view locked streams.");
+                        throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
                     }
                     if (Status.DELETED.equals(meta.getStatus())) {
-                        return createErrorResult(sourceLocation, "This data may no longer exist.");
+                        throw new ViewDataException(sourceLocation, "This data may no longer exist.");
                     }
                 }
 
                 LOGGER.error("Error fetching data", e);
 
-                return createErrorResult(sourceLocation, e.getMessage());
+                throw new ViewDataException(sourceLocation, e.getMessage());
             }
         });
     }
@@ -516,19 +487,6 @@ public class DataFetcher {
     private Count<Long> estimateCharCount(final long totalBytes, final Charset charset) {
         return Count.approximately((long) Math.floor(
                 charset.newDecoder().averageCharsPerByte() * totalBytes));
-    }
-
-    private void writeEventLog(final String eventId,
-                               final String feedName,
-                               final String streamTypeName,
-                               final String childStreamType,
-                               final DocRef pipelineRef,
-                               final Exception e) {
-        try {
-            streamEventLog.viewStream(eventId, feedName, streamTypeName, childStreamType, pipelineRef, e);
-        } catch (final Exception ex) {
-            LOGGER.debug(ex.getMessage(), ex);
-        }
     }
 
     private RawResult getSegmentedData(final SourceLocation sourceLocation,

@@ -16,7 +16,10 @@
 
 package stroom.event.logging.api;
 
+import stroom.entity.shared.ExpressionCriteria;
+
 import event.logging.BaseObject;
+import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.EventLoggingService;
 import event.logging.MultiObject;
@@ -138,9 +141,14 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
      * @param object POJO
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
      */
-    BaseObject convert(final Object object);
+    BaseObject convert(final Object object, final boolean useInfoProviders);
+
+    default BaseObject convert(final Object object) {
+        return convert(object, true);
+    }
 
     /**
      * Convert the supplied POJO into a {@link BaseObject} for logging
@@ -148,9 +156,14 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
      * @param objectSupplier Supplier of the POJO. get() will be called as the processing user
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
      */
-    BaseObject convert(final Supplier<?> objectSupplier);
+    BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders);
+
+    default BaseObject convert(final Supplier<?> objectSupplier) {
+        return convert(objectSupplier, true);
+    }
 
     default MultiObject convertToMulti(final Supplier<?> objectSupplier) {
         return MultiObject.builder()
@@ -179,6 +192,9 @@ public interface StroomEventLoggingService extends EventLoggingService {
                 .withAfter(convertToMulti(after))
                 .build();
     }
+
+    Criteria convertExpressionCriteria(final String type,
+                                       final ExpressionCriteria expressionCriteria);
 
     /**
      * Provide a textual summary of the supplied POJO as a string.
