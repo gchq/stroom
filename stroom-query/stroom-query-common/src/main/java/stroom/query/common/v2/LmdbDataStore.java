@@ -21,7 +21,6 @@ import stroom.dashboard.expression.v1.Any.AnySelector;
 import stroom.dashboard.expression.v1.Bottom.BottomSelector;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.First.FirstSelector;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Last.LastSelector;
 import stroom.dashboard.expression.v1.Nth.NthSelector;
@@ -817,7 +816,7 @@ public class LmdbDataStore implements DataStore {
 
                     if (generator instanceof AnySelector) {
                         sort = false;
-                    } else if (generator instanceof FirstSelector) {
+//                    } else if (generator instanceof FirstSelector) {
                     } else if (generator instanceof LastSelector) {
                         trimTop = true;
                     } else if (generator instanceof TopSelector) {

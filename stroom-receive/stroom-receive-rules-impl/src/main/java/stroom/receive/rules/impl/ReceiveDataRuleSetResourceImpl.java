@@ -69,10 +69,11 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
                 documentData.getDataMap(),
                 importState,
                 ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @Override

@@ -16,11 +16,6 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.StringValue;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -28,6 +23,12 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
+
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.StringValue;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -396,6 +397,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             this.timeZone = timeZone;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;

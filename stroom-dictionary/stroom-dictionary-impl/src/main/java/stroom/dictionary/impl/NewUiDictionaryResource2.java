@@ -76,10 +76,11 @@ public class NewUiDictionaryResource2 implements RestResource {
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
 
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @POST

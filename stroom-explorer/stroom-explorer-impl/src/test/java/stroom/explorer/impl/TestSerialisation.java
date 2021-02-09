@@ -1,13 +1,14 @@
 package stroom.explorer.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.util.json.JsonUtil;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -20,7 +21,12 @@ public class TestSerialisation {
     void testFetchRequest() throws Exception {
         final ExplorerNode explorerNode = new ExplorerNode("test", "test", "test", "test");
 
-        final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(Set.of("t1", "t2"), Set.of("t1", "t2"), Set.of("p1", "p2"), "blah", true);
+        final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(
+                Set.of("t1", "t2"),
+                Set.of("t1", "t2"),
+                Set.of("p1", "p2"),
+                "blah",
+                true);
 
         final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria(
                 Set.of(explorerNode.getUuid()),
@@ -42,10 +48,18 @@ public class TestSerialisation {
 
     @Test
     void testFetchResponse() throws Exception {
-        final ExplorerNode child = new ExplorerNode("test-type", "child-uuid", "child-name", "test-tags");
+        final ExplorerNode child = new ExplorerNode(
+                "test-type",
+                "child-uuid",
+                "child-name",
+                "test-tags");
         child.setNodeState(NodeState.LEAF);
 
-        final ExplorerNode parent = new ExplorerNode("test-type", "parent-uuid", "parent-name", "test-tags");
+        final ExplorerNode parent = new ExplorerNode(
+                "test-type",
+                "parent-uuid",
+                "parent-name",
+                "test-tags");
         parent.setNodeState(NodeState.OPEN);
         parent.setChildren(List.of(child));
 

@@ -73,6 +73,7 @@ public final class NumberFormatSettings implements FormatSettings {
                 && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

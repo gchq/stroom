@@ -16,12 +16,13 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -188,6 +189,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return fieldName;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -71,7 +71,9 @@
 
   <!-- Checks for Size Violations.                    -->
   <!-- See https://checkstyle.org/config_sizes.html -->
-  <module name="FileLength"/>
+  <module name="FileLength">
+    <property name="severity" value="warning"/>
+  </module>
   <!--<module name="LineLength">-->
     <!--<property name="max" value="120"/>-->
     <!--<property name="fileExtensions" value="java"/>-->
@@ -111,6 +113,7 @@
       <property name="allowEscapesForControlCharacters" value="true"/>
       <property name="allowByTailComment" value="true"/>
       <property name="allowNonPrintableEscapes" value="true"/>
+      <property name="severity" value="warning"/>
     </module>
 
     <module name="AvoidStarImport"/>

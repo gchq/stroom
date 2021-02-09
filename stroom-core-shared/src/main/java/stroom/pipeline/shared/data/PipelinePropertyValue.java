@@ -149,6 +149,7 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         this.entity = value;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

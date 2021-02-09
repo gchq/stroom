@@ -164,8 +164,9 @@ public class FilterTermsTree {
                 sb.append(",");
             }
             // remove the trailing comma
-            if (sb.charAt(sb.length() - 1) == ',')
+            if (sb.charAt(sb.length() - 1) == ',') {
                 sb.deleteCharAt(sb.length() - 1);
+            }
 
             sb.append(")");
         }

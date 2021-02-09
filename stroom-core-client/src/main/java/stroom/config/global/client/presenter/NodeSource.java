@@ -20,6 +20,7 @@ public class NodeSource {
         return source;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

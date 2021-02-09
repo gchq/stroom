@@ -22,8 +22,12 @@ public class MyXmlEmitter extends XMLEmitter {
 
     static {
         specialInText = new boolean[128];
-        for (int i = 0; i <= 31; i++) specialInText[i] = true;  // allowed in XML 1.1 as character references
-        for (int i = 32; i <= 127; i++) specialInText[i] = false;
+        for (int i = 0; i <= 31; i++) {
+            specialInText[i] = true;  // allowed in XML 1.1 as character references
+        }
+        for (int i = 32; i <= 127; i++) {
+            specialInText[i] = false;
+        }
         //    note, 0 is used to switch escaping on and off for mapped characters
         specialInText['\n'] = false;
         specialInText['\t'] = false;
@@ -33,8 +37,12 @@ public class MyXmlEmitter extends XMLEmitter {
         specialInText['&'] = true;
 
         specialInAtt = new boolean[128];
-        for (int i = 0; i <= 31; i++) specialInAtt[i] = true; // allowed in XML 1.1 as character references
-        for (int i = 32; i <= 127; i++) specialInAtt[i] = false;
+        for (int i = 0; i <= 31; i++) {
+            specialInAtt[i] = true; // allowed in XML 1.1 as character references
+        }
+        for (int i = 32; i <= 127; i++) {
+            specialInAtt[i] = false;
+        }
         specialInAtt[(char) 0] = true;
         // used to switch escaping on and off for mapped characters
         specialInAtt['\r'] = true;

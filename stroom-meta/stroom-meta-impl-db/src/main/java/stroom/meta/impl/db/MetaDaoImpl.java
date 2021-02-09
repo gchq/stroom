@@ -35,7 +35,6 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
@@ -463,8 +462,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     private boolean containsPipelineCondition(final ExpressionOperator expr) {
-        if (expr == null || expr.getChildren() == null)
+        if (expr == null || expr.getChildren() == null) {
             return false;
+        }
         for (ExpressionItem child : expr.getChildren()) {
             if (child instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) child;
@@ -1016,8 +1016,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr, final Set<Integer> identified) {
 
-        if (expr == null || expr.getChildren() == null)
+        if (expr == null || expr.getChildren() == null) {
             return identified;
+        }
         for (ExpressionItem child : expr.getChildren()) {
             if (child instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) child;

@@ -56,7 +56,8 @@ public class OnHeapRefDataValueProxyConsumer
             final Map<ValueConsumerId, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap) {
 
         super(pipelineConfiguration, receiver);
-        this.fastInfosetByteBufferConsumer = fastInfosetByteBufferConsumerFactory.create(receiver, pipelineConfiguration);
+        this.fastInfosetByteBufferConsumer = fastInfosetByteBufferConsumerFactory.create(
+                receiver, pipelineConfiguration);
         this.typeToRefDataValueConsumerFactoryMap = typeToRefDataValueConsumerFactoryMap;
     }
 
@@ -71,15 +72,18 @@ public class OnHeapRefDataValueProxyConsumer
                     final int typeId = refDataValue.getTypeId();
 
                     // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-                    final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(new ValueConsumerId(typeId));
+                    final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap
+                            .get(new ValueConsumerId(typeId));
 
-                    Objects.requireNonNull(consumerFactory, () -> LogUtil.message("No factory found for typeId {}", typeId));
+                    Objects.requireNonNull(consumerFactory, () ->
+                            LogUtil.message("No factory found for typeId {}", typeId));
                     final RefDataValueConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
 
                     consumer.consume(refDataValue);
 
                     if (refDataValue.getTypeId() == StringValue.TYPE_ID) {
-
+                        LOGGER.trace("String value");
+                        // Do nothing
                     } else if (refDataValue.getTypeId() == FastInfosetValue.TYPE_ID) {
 
                         ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();

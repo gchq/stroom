@@ -116,10 +116,11 @@ class DictionaryResourceImpl implements DictionaryResource {
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
 
         final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {

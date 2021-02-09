@@ -142,8 +142,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         final String fileName = file.getFileName().toString();
                         if (fileName.endsWith(".node") && !fileName.startsWith(".")) {
                             DocRef nonExplorerDocRef = performImport(file, confirmMap, importMode);
-                            if (nonExplorerDocRef != null)
+                            if (nonExplorerDocRef != null) {
                                 result.add(nonExplorerDocRef);
+                            }
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
@@ -223,8 +224,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 if (nonExplorerDocRef != null) {
                     //Use dest path to indicate to user the associated explorer entity for any imported non-explorer ones
                     final Optional<ExplorerNode> existingAltNode = explorerNodeService.getNode(explorerDocRef);
-                    if (existingAltNode.isPresent())
+                    if (existingAltNode.isPresent()) {
                         importState.setDestPath(existingAltNode.get().getName() + "(Existing "+ explorerDocRef.getType() + ")");
+                    }
                 }
                 // This is a pre existing item so make sure we are allowed to update it.
                 if (docExists
@@ -285,16 +287,19 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         }
                         else {
                             final DocRef imported;
-                            if (importDetails != null)
+                            if (importDetails != null) {
                                 imported = importDetails.getDocRef();
-                            else
+                            } else {
                                 imported = null;
-                            if (imported == null)
+                            }
+                            if (imported == null) {
                                 throw new RuntimeException("Import failed - no docref returned");
+                            }
 
                             final String altDestPath = importDetails.getLocationRef();
-                            if (altDestPath != null)
+                            if (altDestPath != null) {
                                 importState.setDestPath(altDestPath);
+                            }
 
                             // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                             if (importState.ok(importMode)) {
@@ -414,8 +419,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     docRefs.add(docRef);
 
                     Set<DocRef> associatedNonExplorerDocRefs = importExportActionHandler.findAssociatedNonExplorerDocRefs(docRef);
-                    if (associatedNonExplorerDocRefs != null)
+                    if (associatedNonExplorerDocRefs != null) {
                         docRefs.addAll(associatedNonExplorerDocRefs);
+                    }
                 }
             }
         } catch (final RuntimeException e) {
@@ -438,8 +444,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 NonExplorerDocRefProvider docRefProvider = (NonExplorerDocRefProvider) importExportActionHandler;
                 explorerDocRef = docRefProvider.findNearestExplorerDocRef(initialDocRef);
 
-                if (explorerDocRef == null)
+                if (explorerDocRef == null) {
                     throw new RuntimeException("Unable to locate suitable location for export, whilst exporting " + initialDocRef);
+                }
 
                 final String docRefName = docRefProvider.findNameOfDocRef(initialDocRef);
                 docRef = new DocRef(initialDocRef.getType(), initialDocRef.getUuid(), docRefName);

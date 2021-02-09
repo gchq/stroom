@@ -28,6 +28,7 @@ public class SessionListResponse extends ResultPage<SessionDetails> {
                 SessionListResponse.createPageResponse(Collections.emptyList()));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         return super.equals(o);

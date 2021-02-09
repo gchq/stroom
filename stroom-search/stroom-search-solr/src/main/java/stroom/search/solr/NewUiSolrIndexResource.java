@@ -77,10 +77,11 @@ public class NewUiSolrIndexResource implements RestResource {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(base64EncodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         final ImportExportActionHandler.ImpexDetails result = solrIndexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
-        if (result != null)
+        if (result != null) {
             return result.getDocRef();
-        else
+        } else {
             return null;
+        }
     }
 
     @POST

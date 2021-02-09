@@ -22,7 +22,7 @@ public class ProxyConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        // Bind the application config.        
+        // Bind the application config.
         bind(ProxyConfig.class).toInstance(proxyConfig);
 
         // AppConfig will instantiate all of its child config objects so

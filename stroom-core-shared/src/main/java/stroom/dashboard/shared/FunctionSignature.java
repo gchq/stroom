@@ -236,12 +236,20 @@ public class FunctionSignature {
             return defaultValue;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final Arg arg = (Arg) o;
-            return optional == arg.optional && varargs == arg.varargs && minVarargsCount == arg.minVarargsCount && Objects.equals(name, arg.name) && argType == arg.argType && Objects.equals(description, arg.description) && Objects.equals(allowedValues, arg.allowedValues) && Objects.equals(defaultValue, arg.defaultValue);
+            return optional == arg.optional
+                    && varargs == arg.varargs
+                    && minVarargsCount == arg.minVarargsCount
+                    && Objects.equals(name, arg.name)
+                    && argType == arg.argType
+                    && Objects.equals(description, arg.description)
+                    && Objects.equals(allowedValues, arg.allowedValues)
+                    && Objects.equals(defaultValue, arg.defaultValue);
         }
 
         @Override

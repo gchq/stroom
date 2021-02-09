@@ -16,11 +16,12 @@
 
 package stroom.node.shared;
 
+import stroom.util.shared.BuildInfo;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.BuildInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +137,7 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -198,6 +200,7 @@ public class ClusterNodeInfo {
             return master;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;

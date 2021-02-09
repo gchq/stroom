@@ -38,7 +38,6 @@ import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
@@ -962,8 +961,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .addOperator(expression)
                     .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
-            if (pipelineDocRef != null)
+            if (pipelineDocRef != null) {
                 builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+            }
 
             if (minMetaCreateMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(minMetaCreateMs));

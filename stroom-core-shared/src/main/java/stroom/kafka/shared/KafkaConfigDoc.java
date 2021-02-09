@@ -16,13 +16,14 @@
 
 package stroom.kafka.shared;
 
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.HasData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
-import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
@@ -83,6 +84,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
         this.data = data;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

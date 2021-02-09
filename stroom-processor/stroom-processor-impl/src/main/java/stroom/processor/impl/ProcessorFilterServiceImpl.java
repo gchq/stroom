@@ -358,8 +358,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
                 .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
-        if (processorResultPage.size() == 0)
+        if (processorResultPage.size() == 0) {
             return new ResultPage<>(new ArrayList<>());
+        }
 
         final ArrayList<ProcessorFilter> filters = new ArrayList<>();
         // Now find all the processor filters

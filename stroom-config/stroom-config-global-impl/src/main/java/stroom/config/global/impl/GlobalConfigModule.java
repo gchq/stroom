@@ -37,6 +37,7 @@ public class GlobalConfigModule extends AbstractModule {
                         .schedule(PERIODIC, "1m"));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

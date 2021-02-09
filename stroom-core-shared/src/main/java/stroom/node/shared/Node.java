@@ -17,13 +17,14 @@
 package stroom.node.shared;
 
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
 
 import java.util.Objects;
 
@@ -210,6 +211,7 @@ public class Node implements HasAuditInfo, HasIntegerId {
 //    }
 
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

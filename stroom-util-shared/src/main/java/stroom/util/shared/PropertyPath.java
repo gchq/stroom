@@ -143,8 +143,12 @@ public class PropertyPath implements Comparable<PropertyPath> {
     }
 
     public boolean equalsIgnoreCase(final PropertyPath o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         if (parts.size() != o.parts.size()) {
             return false;
         }

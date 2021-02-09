@@ -119,10 +119,11 @@ public class CharBufferWriter extends Writer {
      */
     @Override
     public CharBufferWriter append(final CharSequence csq) {
-        if (csq == null)
+        if (csq == null) {
             write("null");
-        else
+        } else {
             write(csq.toString());
+        }
         return this;
     }
 

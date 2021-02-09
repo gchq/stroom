@@ -16,17 +16,18 @@
 
 package stroom.index.shared;
 
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
+import stroom.util.shared.Selection;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.Selection;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Range;
-import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 import java.util.Objects;
@@ -137,6 +138,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return sb.toString();
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

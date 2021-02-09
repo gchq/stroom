@@ -76,8 +76,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, Map<String, byte[]> dataMap, ImportState importState, ImportState.ImportMode importMode) {
-        if (dataMap.get(META) == null)
+        if (dataMap.get(META) == null) {
             throw new IllegalArgumentException("Unable to import Processor with no meta file.  Docref is " + docRef);
+        }
 
         final ProcessorFilter processorFilter;
         try {
@@ -88,8 +89,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
         boolean ignore = !ProcessorFilterUtil.shouldImport(processorFilter);
 
-        if (ignore)
+        if (ignore) {
             LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+        }
 
         if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
@@ -141,8 +143,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {
-        if (docRef == null || docRef.getUuid() == null)
+        if (docRef == null || docRef.getUuid() == null) {
             return null;
+        }
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
@@ -170,8 +173,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef, boolean omitAuditFields, List<Message> messageList) {
-        if (docRef == null)
+        if (docRef == null) {
             return null;
+        }
 
         //Don't export certain fields
         ProcessorFilter processorFilter = findProcessorFilter(docRef);
@@ -182,8 +186,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         processorFilter.setProcessor(null);
         processorFilter.setData(null);
 
-        if (omitAuditFields)
+        if (omitAuditFields) {
             processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
+        }
 
         Map<String, byte[]> data;
         try {
@@ -232,10 +237,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             final String name = docRef.getUuid().substring(0, 7);
 
             final String pipelineName = processorFilter.getPipelineName();
-            if (pipelineName != null)
+            if (pipelineName != null) {
                 return pipelineName + " Pipeline-" + "Filter " + name;
-            else
+            } else {
                 return "Unknown Pipeline-Filter " + name;
+            }
         }
         return null;
     }
@@ -243,10 +249,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     @Override
     public boolean docExists(final DocRef docRef) {
         DocRef associatedExplorerDocRef = findNearestExplorerDocRef(docRef);
-        if (associatedExplorerDocRef != null)
+        if (associatedExplorerDocRef != null) {
             return true;
-        else
+        } else {
             return findProcessorFilter(docRef) != null;
+        }
     }
 
     private Processor findProcessorForFilter(final ProcessorFilter filter) {

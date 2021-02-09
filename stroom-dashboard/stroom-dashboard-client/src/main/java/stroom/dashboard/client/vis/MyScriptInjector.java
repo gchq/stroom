@@ -47,16 +47,17 @@ import com.google.gwt.core.client.JavaScriptObject;
  * <p>
  * <pre>
  * ScriptInjector.fromUrl("http://example.com/foo.js").setCallback(new Callback<Void, Exception>() {
- * 	public void onFailure(RuntimeException e) {
- * 		Window.alert("Script load failed.");
- *    }
+ *   public void onFailure(RuntimeException e) {
+ *     Window.alert("Script load failed.");
+ *   }
  *
- * 	public void onSuccess(Void result) {
- * 		Window.alert("Script load success.");
- *    }
+ *   public void onSuccess(Void result) {
+ *     Window.alert("Script load success.");
+ *   }
  * }).inject();
  * </pre>
  */
+@SuppressWarnings("checkstyle:filetabcharacter")
 public class MyScriptInjector {
 
     /**

@@ -1,10 +1,11 @@
 package stroom.node.impl;
 
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import com.sun.management.DiagnosticCommandMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -215,6 +216,7 @@ class HeapHistogramService {
             return bytes;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;

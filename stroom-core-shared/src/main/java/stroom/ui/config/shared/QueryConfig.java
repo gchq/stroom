@@ -1,11 +1,12 @@
 package stroom.ui.config.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,6 +41,7 @@ public class QueryConfig extends AbstractConfig {
         this.infoPopup = infoPopup;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

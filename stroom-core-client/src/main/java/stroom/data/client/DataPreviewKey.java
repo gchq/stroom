@@ -19,6 +19,7 @@ public class DataPreviewKey {
         return metaId;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
 

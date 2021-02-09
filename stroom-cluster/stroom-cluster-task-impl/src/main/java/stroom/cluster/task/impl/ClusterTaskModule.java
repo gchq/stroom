@@ -28,6 +28,7 @@ public class ClusterTaskModule extends AbstractModule {
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

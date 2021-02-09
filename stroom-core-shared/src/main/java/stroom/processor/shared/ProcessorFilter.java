@@ -233,16 +233,18 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     }
 
     public String getProcessorUuid() {
-        if (processorUuid == null && processor != null)
+        if (processorUuid == null && processor != null) {
             processorUuid = getProcessor().getUuid();
+        }
         return processorUuid;
     }
 
     public String getPipelineUuid() {
         if (pipelineUuid == null) {
             Processor processor = getProcessor();
-            if (processor != null)
+            if (processor != null) {
                 pipelineUuid = processor.getPipelineUuid();
+            }
         }
         return pipelineUuid;
     }
@@ -335,6 +337,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 '}';
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
