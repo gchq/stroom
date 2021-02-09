@@ -2,6 +2,7 @@
 import { Api, RequestParams } from "api/stroom";
 import * as React from "react";
 import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
+import { HttpError } from "../ErrorTypes";
 // import { useCallback } from "react";
 // import {HttpResponse} from "@pollyjs/adapter-fetch";
 // import * as React from "react";
@@ -51,8 +52,13 @@ type Exec<T> = (
   apiConsumer: ApiConsumer<T>,
   consumer: Consumer<T>,
 ) => void;
+type ExecPromise<T> = (
+  // promise: Promise<HttpResponse<T>>,
+  apiConsumer: ApiConsumer<T>,
+) => Promise<T>;
 type StroomApi<T> = {
   exec: Exec<T>;
+  execPromise: ExecPromise<T>;
 };
 
 // interface StroomApi<T> {
@@ -61,6 +67,38 @@ type StroomApi<T> = {
 
 export const useStroomApi = <T>(): StroomApi<T> => {
   const { showError } = usePrompt();
+
+  const checkStatus = React.useCallback((response: Response): Promise<any> => {
+    //       console.log(response.headers.get("Content-Type"));
+    //       console.log(response.headers.get("Date"));
+    //       console.log(response.status);
+    //       console.log(response.statusText);
+
+    // if (response.status === status) {
+    //     return Promise.resolve(response);
+    // }
+
+    if (response.ok) {
+      return Promise.resolve(response);
+    }
+
+    return response.text().then((text) => {
+      console.log(
+        "Error " + response.status + " - " + response.statusText,
+        " (" + response.url + ") " + text,
+      );
+
+      let message = text;
+      if (!message) {
+        message = response.statusText;
+      }
+      if (!message) {
+        message = "Incorrect HTTP Response Code";
+      }
+
+      return Promise.reject(new HttpError(response.status, message));
+    });
+  }, []);
 
   const catchImpl = React.useCallback(
     (error: any) => {
@@ -96,27 +134,41 @@ export const useStroomApi = <T>(): StroomApi<T> => {
   //     .catch(catchImpl);
   // }
 
-  const exec = React.useCallback(
-    <T>(apiConsumer: ApiConsumer<T>, consumer: Consumer<T>): void => {
+  const execPromise = React.useCallback(
+    <T>(apiConsumer: ApiConsumer<T>): Promise<T | any> => {
       const api = new Api(apiConfig);
-      apiConsumer(api)
-        .then((r) => {
-          if (!r.ok) {
-            console.log(
-              "Error " + r.status + " - " + r.statusText,
-              " (" + r.url + ")",
-            );
-          } else {
-            consumer(r.data);
-          }
-        })
+      return apiConsumer(api)
+        .then(checkStatus)
+        .then((r) => r.data)
         .catch(catchImpl);
     },
-    [showError, catchImpl],
+    [checkStatus, catchImpl],
+  );
+
+  const exec = React.useCallback(
+    <T>(apiConsumer: ApiConsumer<T>, consumer: Consumer<T>): void => {
+      execPromise(apiConsumer).then(consumer);
+
+      // const api = new Api(apiConfig);
+      // apiConsumer(api)
+      //   .then((r) => {
+      //     if (!r.ok) {
+      //       console.log(
+      //         "Error " + r.status + " - " + r.statusText,
+      //         " (" + r.url + ")",
+      //       );
+      //     } else {
+      //       consumer(r.data);
+      //     }
+      //   })
+      //   .catch(catchImpl);
+    },
+    [execPromise],
   );
 
   return {
     exec,
+    execPromise,
   };
 };
 

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 
 @JsonInclude(Include.NON_NULL)
-public class Sort implements Serializable {
+public class CriteriaFieldSort implements Serializable {
     private static final long serialVersionUID = -5994197736743037915L;
 
     @JsonProperty
@@ -35,9 +35,9 @@ public class Sort implements Serializable {
     private final boolean ignoreCase;
 
     @JsonCreator
-    public Sort(@JsonProperty("id") final String id,
-                @JsonProperty("desc") final boolean desc,
-                @JsonProperty("ignoreCase") final boolean ignoreCase) {
+    public CriteriaFieldSort(@JsonProperty("id") final String id,
+                             @JsonProperty("desc") final boolean desc,
+                             @JsonProperty("ignoreCase") final boolean ignoreCase) {
         this.id = id;
         this.desc = desc;
         this.ignoreCase = ignoreCase;

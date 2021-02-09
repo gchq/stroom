@@ -2,11 +2,12 @@ import { FormikBag } from "formik";
 import { useCallback } from "react";
 import { useRouter } from "lib/useRouter";
 import * as queryString from "query-string";
+import { useStroomApi } from "lib/useStroomApi";
 import {
+  ChangePasswordRequest,
   ChangePasswordResponse,
   ResetPasswordRequest,
-} from "../../Authentication/api/types";
-import { useAuthenticationResource } from "../../Authentication/api";
+} from "api/stroom";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (
@@ -16,26 +17,25 @@ const useResetPassword = (): {
   resetPassword: (resetPasswordRequest: ResetPasswordRequest) => void;
 } => {
   const { history } = useRouter();
-  const {
-    changePassword: submitPasswordChangeRequestUsingApi,
-    resetPassword: resetPasswordUsingApi,
-  } = useAuthenticationResource();
-  const submitPasswordChangeRequest = useCallback(
-    (formData: any, formikBag: FormikBag<any, any>) => {
-      submitPasswordChangeRequestUsingApi({
-        userId: "sf",
-        currentPassword: "sdf",
-        newPassword: "szdf",
-        confirmNewPassword: "\fe",
-      }).then(() => history.push("/s/confirmPasswordResetEmail"));
-    },
-    [history, submitPasswordChangeRequestUsingApi],
-  );
+  const { exec } = useStroomApi();
+  const submitPasswordChangeRequest = useCallback(() => {
+    const request: ChangePasswordRequest = {
+      userId: "sf",
+      currentPassword: "sdf",
+      newPassword: "szdf",
+      confirmNewPassword: "\fe",
+    };
+    exec(
+      (api) => api.authentication.changePassword(request),
+      () => history.push("/s/confirmPasswordResetEmail"),
+    );
+  }, [history, exec]);
 
   const { router } = useRouter();
   const resetPassword = useCallback(
     (resetPasswordRequest: ResetPasswordRequest) => {
-      resetPasswordUsingApi(resetPasswordRequest).then(
+      exec(
+        (api) => api.authentication.resetPassword(resetPasswordRequest),
         (response: ChangePasswordResponse) => {
           if (response.changeSucceeded) {
             let redirectUri: string;
@@ -66,7 +66,7 @@ const useResetPassword = (): {
         },
       );
     },
-    [resetPasswordUsingApi, router],
+    [exec, router],
   );
 
   return { submitPasswordChangeRequest, resetPassword };

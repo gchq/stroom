@@ -9,13 +9,13 @@ import {
   useSortBy,
 } from "react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Sort } from "api/stroom";
+import { CriteriaFieldSort } from "api/stroom";
 
 export interface TableProps<T> {
   columns: any[];
   data: T[];
-  initialSortBy?: Sort[];
-  onChangeSort?: (sort: Sort[]) => void;
+  initialSortBy?: CriteriaFieldSort[];
+  onChangeSort?: (sort: CriteriaFieldSort[]) => void;
   onSelect?: (selected: T[]) => void;
   onDoubleSelect?: (selected: T[]) => void;
 }

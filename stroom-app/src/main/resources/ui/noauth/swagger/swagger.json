@@ -1064,6 +1064,23 @@
         }
       }
     },
+    "CriteriaFieldSort" : {
+      "type" : "object",
+      "properties" : {
+        "desc" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        },
+        "id" : {
+          "readOnly" : true,
+          "type" : "string"
+        },
+        "ignoreCase" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        }
+      }
+    },
     "CustomRollUpMask" : {
       "type" : "object",
       "properties" : {
@@ -1445,7 +1462,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2026,7 +2043,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2432,7 +2449,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2450,7 +2467,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2507,7 +2524,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2545,7 +2562,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2570,7 +2587,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2600,7 +2617,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2653,7 +2670,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2686,7 +2703,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -2915,7 +2932,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -5080,7 +5097,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -5106,43 +5123,26 @@
     },
     "SearchRequest" : {
       "type" : "object",
-      "required" : [ "dateTimeLocale", "incremental", "key", "query", "resultRequests" ],
       "properties" : {
+        "componentResultRequests" : {
+          "items" : {
+            "$ref" : "#/definitions/ComponentResultRequest"
+          },
+          "readOnly" : true,
+          "type" : "array"
+        },
+        "dashboardQueryKey" : {
+          "$ref" : "#/definitions/DashboardQueryKey",
+          "readOnly" : true
+        },
         "dateTimeLocale" : {
-          "description" : "The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId",
+          "readOnly" : true,
           "type" : "string"
         },
-        "incremental" : {
-          "description" : "If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set.",
-          "type" : "boolean"
-        },
-        "key" : {
-          "$ref" : "#/definitions/QueryKey"
-        },
-        "query" : {
-          "$ref" : "#/definitions/Query"
-        },
-        "resultRequests" : {
-          "items" : {
-            "$ref" : "#/definitions/ResultRequest",
-            "xml" : {
-              "name" : "resultRequest"
-            }
-          },
-          "type" : "array",
-          "xml" : {
-            "wrapped" : true
-          }
-        },
-        "timeout" : {
-          "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field",
-          "format" : "int64",
-          "type" : "integer"
+        "search" : {
+          "$ref" : "#/definitions/Search",
+          "readOnly" : true
         }
-      },
-      "description" : "A request for new search or a follow up request for more data for an existing iterative search",
-      "xml" : {
-        "name" : "searchRequest"
       }
     },
     "SearchResponse" : {
@@ -5210,7 +5210,7 @@
         },
         "sortList" : {
           "items" : {
-            "$ref" : "#/definitions/Sort"
+            "$ref" : "#/definitions/CriteriaFieldSort"
           },
           "readOnly" : true,
           "type" : "array"
@@ -5635,20 +5635,24 @@
     },
     "Sort" : {
       "type" : "object",
+      "required" : [ "direction", "order" ],
       "properties" : {
-        "desc" : {
-          "readOnly" : true,
-          "type" : "boolean"
-        },
-        "id" : {
+        "direction" : {
+          "description" : "The direction to sort in, ASCENDING or DESCENDING",
+          "enum" : [ "ASCENDING", "DESCENDING" ],
+          "example" : "ASCENDING",
           "readOnly" : true,
           "type" : "string"
         },
-        "ignoreCase" : {
+        "order" : {
+          "description" : "Where multiple fields are sorted this value describes the sort order, with 0 being the first field to sort on",
+          "example" : 0,
+          "format" : "int32",
           "readOnly" : true,
-          "type" : "boolean"
+          "type" : "integer"
         }
-      }
+      },
+      "description" : "Describes the sorting applied to a field"
     },
     "SourceConfig" : {
       "type" : "object",

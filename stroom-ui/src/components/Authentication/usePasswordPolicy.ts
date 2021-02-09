@@ -1,7 +1,7 @@
 // Get token config
 import { useEffect, useState } from "react";
 import { PasswordPolicyConfig } from "api/stroom";
-import { useStroomApi } from "../../lib/useStroomApi/useStroomApi";
+import { useStroomApi } from "lib/useStroomApi";
 
 export const usePasswordPolicy = (): PasswordPolicyConfig => {
   const [passwordPolicyConfig, setPasswordPolicyConfig] = useState<

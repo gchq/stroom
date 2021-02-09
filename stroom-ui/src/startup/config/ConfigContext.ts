@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { UiConfig } from "./types";
+import { UiConfig } from "api/stroom";
 
 export const defaultValue: UiConfig = {
   theme: {

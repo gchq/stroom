@@ -436,6 +436,12 @@ export interface CreateTokenRequest {
   userId: string;
 }
 
+export interface CriteriaFieldSort {
+  desc?: boolean;
+  id?: string;
+  ignoreCase?: boolean;
+}
+
 export interface CustomRollUpMask {
   rolledUpTagPosition?: number[];
 }
@@ -580,7 +586,7 @@ export type DefaultLocation = Location & { colNo?: number; lineNo?: number };
 export interface DependencyCriteria {
   pageRequest?: PageRequest;
   partialName?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 /**
@@ -721,8 +727,6 @@ export type DoubleField = AbstractField & object;
 
 export interface DownloadQueryRequest {
   dashboardQueryKey?: DashboardQueryKey;
-
-  /** A request for new search or a follow up request for more data for an existing iterative search */
   searchRequest?: SearchRequest;
 }
 
@@ -735,8 +739,6 @@ export interface DownloadSearchResultsRequest {
   /** @format int32 */
   percent?: number;
   sample?: boolean;
-
-  /** A request for new search or a follow up request for more data for an existing iterative search */
   searchRequest?: SearchRequest;
 }
 
@@ -831,7 +833,7 @@ export interface ExpressionCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 /**
@@ -1004,6 +1006,8 @@ export interface Field {
 
   /** The name of the field for display purposes */
   name?: string;
+
+  /** Describes the sorting applied to a field */
   sort?: Sort;
   special?: boolean;
   visible?: boolean;
@@ -1031,14 +1035,14 @@ export interface Filter {
 
 export interface FindDBTableCriteria {
   pageRequest?: PageRequest;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindDataRetentionImpactCriteria {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindExplorerNodeCriteria {
@@ -1054,7 +1058,7 @@ export interface FindExplorerNodeCriteria {
 export interface FindFsVolumeCriteria {
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindIndexShardCriteria {
@@ -1065,7 +1069,7 @@ export interface FindIndexShardCriteria {
   nodeNameSet?: SelectionString;
   pageRequest?: PageRequest;
   partition?: StringCriteria;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
   volumeIdSet?: SelectionInteger;
 }
 
@@ -1074,7 +1078,7 @@ export interface FindMetaCriteria {
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
   pageRequest?: PageRequest;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindStoredQueryCriteria {
@@ -1084,7 +1088,7 @@ export interface FindStoredQueryCriteria {
   name?: StringCriteria;
   pageRequest?: PageRequest;
   requiredPermission?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
   userId?: string;
 }
 
@@ -1099,7 +1103,7 @@ export interface FindTaskProgressCriteria {
   nameFilter?: string;
   pageRequest?: PageRequest;
   sessionId?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindTaskProgressRequest {
@@ -1111,7 +1115,7 @@ export interface FindUserCriteria {
   pageRequest?: PageRequest;
   quickFilterInput?: string;
   relatedUser?: User;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
@@ -1221,7 +1225,7 @@ export interface GetScheduledTimesRequest {
 export interface GlobalConfigCriteria {
   pageRequest?: PageRequest;
   quickFilterInput?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export type IdField = AbstractField & object;
@@ -2201,7 +2205,7 @@ export interface Search {
 export interface SearchAccountRequest {
   pageRequest?: PageRequest;
   quickFilter?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface SearchBusPollRequest {
@@ -2209,28 +2213,11 @@ export interface SearchBusPollRequest {
   searchRequests?: SearchRequest[];
 }
 
-/**
- * A request for new search or a follow up request for more data for an existing iterative search
- */
 export interface SearchRequest {
-  /** The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
-  dateTimeLocale: string;
-
-  /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
-  incremental: boolean;
-
-  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  key: QueryKey;
-
-  /** The query terms for the search */
-  query: Query;
-  resultRequests: ResultRequest[];
-
-  /**
-   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
-   * @format int64
-   */
-  timeout?: number;
+  componentResultRequests?: ComponentResultRequest[];
+  dashboardQueryKey?: DashboardQueryKey;
+  dateTimeLocale?: string;
+  search?: Search;
 }
 
 /**
@@ -2251,7 +2238,7 @@ export interface SearchResponse {
 export interface SearchTokenRequest {
   pageRequest?: PageRequest;
   quickFilter?: string;
-  sortList?: Sort[];
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface Selection {
@@ -2423,10 +2410,22 @@ export interface SolrSynchState {
   messages?: string[];
 }
 
+/**
+ * Describes the sorting applied to a field
+ */
 export interface Sort {
-  desc?: boolean;
-  id?: string;
-  ignoreCase?: boolean;
+  /**
+   * The direction to sort in, ASCENDING or DESCENDING
+   * @example ASCENDING
+   */
+  direction: "ASCENDING" | "DESCENDING";
+
+  /**
+   * Where multiple fields are sorted this value describes the sort order, with 0 being the first field to sort on
+   * @format int32
+   * @example 0
+   */
+  order: number;
 }
 
 export interface SourceConfig {

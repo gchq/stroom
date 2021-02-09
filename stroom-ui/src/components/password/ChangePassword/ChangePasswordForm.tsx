@@ -16,8 +16,8 @@
 
 import * as React from "react";
 import BackgroundLogo from "../../Layout/BackgroundLogo";
-import { ChangePasswordRequest } from "../../Authentication/api/types";
 import FormContainer from "../../Layout/FormContainer";
+import { ChangePasswordRequest } from "api/stroom";
 
 const ChangePasswordForm: React.FunctionComponent<{
   email: string;

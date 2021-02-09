@@ -18,13 +18,10 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import * as React from "react";
 import { JoinForm } from "./JoinForm";
-import { useAuthenticationResource } from "./api";
 import { useState } from "react";
 import zxcvbn from "zxcvbn";
 
 export const JoinFormContainer: React.FunctionComponent = () => {
-  const { login } = useAuthenticationResource();
-
   const [strength, setStrength] = useState(0);
   let currentStrength = strength;
 
