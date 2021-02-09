@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.event.logging.rs.impl;
 
 import java.lang.annotation.Annotation;
@@ -27,7 +28,7 @@ import java.util.OptionalInt;
  * <p>
  * Credit for initial implementation goes to the author of this answer on Stack Overflow: https://stackoverflow.com/a/17281097
  */
-final public class AnnotationUtil {
+public final class AnnotationUtil {
 
     private AnnotationUtil() {
 

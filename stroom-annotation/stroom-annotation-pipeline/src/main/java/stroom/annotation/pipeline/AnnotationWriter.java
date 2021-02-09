@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.annotation.pipeline;
 
 import stroom.annotation.api.AnnotationCreator;
@@ -204,6 +205,8 @@ class AnnotationWriter extends AbstractXMLFilter {
             case INFO:
                 LOGGER.info(message, e);
                 break;
+            default:
+                throw new RuntimeException("Unknown severity " + severity);
         }
     }
 }

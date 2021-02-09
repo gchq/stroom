@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package stroom.cache.api;
 
 import stroom.util.cache.CacheConfig;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface CacheManager extends AutoCloseable {
+
     <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier);
 
     <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction);

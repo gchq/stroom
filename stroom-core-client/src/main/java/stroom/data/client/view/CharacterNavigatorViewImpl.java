@@ -184,6 +184,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private String getLongValueForLabel(final Count<Long> value) {
         return getLongValueForLabel(value, 0);
     }
+
     private String getLongValueForLabel(final Count<Long> value, final int increment) {
         // Increment allows for switching from zero to one based
         if (value != null && value.getCount() != null) {
@@ -289,5 +290,6 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     }
 
     public interface Binder extends UiBinder<Widget, CharacterNavigatorViewImpl> {
+
     }
 }

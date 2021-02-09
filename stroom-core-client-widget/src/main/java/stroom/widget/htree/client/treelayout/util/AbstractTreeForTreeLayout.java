@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package stroom.widget.htree.client.treelayout.util;
 
 import stroom.widget.htree.client.treelayout.TreeForTreeLayout;
@@ -46,7 +47,8 @@ import java.util.List;
  * <p>
  * See also {@link DefaultTreeForTreeLayout}.
  */
-abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTreeLayout<TreeNode> {
+public abstract class AbstractTreeForTreeLayout<TreeNode> implements TreeForTreeLayout<TreeNode> {
+
     private final TreeNode root;
 
     public AbstractTreeForTreeLayout(TreeNode root) {
@@ -62,7 +64,7 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * @return [nullable] the parent of the node, or null when the node is a
      * root.
      */
-    abstract public TreeNode getParent(TreeNode node);
+    public abstract TreeNode getParent(TreeNode node);
 
     /**
      * Return the children of a node as a {@link List}.
@@ -77,7 +79,7 @@ abstract public class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * @return the children of the given node. When node is a leaf the list is
      * empty.
      */
-    abstract public List<TreeNode> getChildrenList(TreeNode node);
+    public abstract List<TreeNode> getChildrenList(TreeNode node);
 
     @Override
     public TreeNode getRoot() {

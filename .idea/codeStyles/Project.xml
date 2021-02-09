@@ -22,6 +22,7 @@
       </option>
     </JavaCodeStyleSettings>
     <codeStyleSettings language="JAVA">
+      <option name="BLANK_LINES_BEFORE_PACKAGE" value="1" />
       <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
     </codeStyleSettings>
   </code_scheme>

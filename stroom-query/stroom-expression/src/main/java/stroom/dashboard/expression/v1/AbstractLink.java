@@ -21,7 +21,7 @@ abstract class AbstractLink extends AbstractManyChildFunction {
         super(name, minParams, maxParams);
     }
 
-    static abstract class AbstractLinkGen extends AbstractManyChildGenerator {
+    abstract static class AbstractLinkGen extends AbstractManyChildGenerator {
         private static final long serialVersionUID = 217968020285584214L;
 
         AbstractLinkGen(final Generator[] childGenerators) {

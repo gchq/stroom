@@ -33,7 +33,7 @@ public class AsyncSearchTask {
     private final String dateTimeLocale;
     private final long now;
 
-    private volatile transient ClusterSearchResultCollector resultCollector;
+    private transient volatile ClusterSearchResultCollector resultCollector;
 
     public AsyncSearchTask(final QueryKey key,
                            final String searchName,

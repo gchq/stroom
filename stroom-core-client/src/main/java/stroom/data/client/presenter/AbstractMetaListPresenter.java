@@ -731,6 +731,8 @@ public abstract class AbstractMetaListPresenter
                                             sb.toString().trim(),
                                             null);
                                     break;
+                                default:
+                                    throw new RuntimeException("Unknown severity " + maxSeverity);
                             }
                         }
                     }

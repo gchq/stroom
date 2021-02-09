@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import javax.xml.bind.DatatypeConverter;
 
 public class ByteArrayUtils {
+
     /**
      * Private constructor to prevent instantiation
      */
@@ -55,6 +56,7 @@ public class ByteArrayUtils {
         }
         return sb.toString().replaceAll(" $", "");
     }
+
     public static String byteArrayToHex(final byte b) {
         return byteArrayToHex(new byte[]{b}, 0, 1);
     }

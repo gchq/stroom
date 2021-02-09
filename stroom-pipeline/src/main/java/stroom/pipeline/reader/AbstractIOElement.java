@@ -16,8 +16,6 @@
 
 package stroom.pipeline.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -29,6 +27,9 @@ import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -208,7 +209,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
         }
     }
 
-    private static abstract class DestinationProcessor implements Processor {
+    private abstract static class DestinationProcessor implements Processor {
         private final List<DestinationProvider> destinationProviders;
         private Map<DestinationProvider, Destination> destinationMap;
 

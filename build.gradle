@@ -547,12 +547,16 @@ subprojects {
         justWarn = true
     }
 
+    // Check style plugin configuration
+    // config files in config/checkstyle
+
     checkstyle {
         ignoreFailures false
         showViolations true
         toolVersion = "8.40"
     }
 
+    // These work in tandem with the suppression.xml
     tasks.withType(Checkstyle) {
         include("**/stroom/**/*.java")
         exclude("**/db/jooq/**/*.java")

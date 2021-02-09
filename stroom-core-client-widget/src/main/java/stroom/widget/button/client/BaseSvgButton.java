@@ -173,6 +173,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                     onClickCancel();
                 }
                 break;
+            default:
+                // Ignore events we don't care about
         }
 
         super.onBrowserEvent(event);
@@ -200,6 +202,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                         onClick();
                     }
                     break;
+                default:
+                    // Ignore events we don't care about
             }
         }
     }

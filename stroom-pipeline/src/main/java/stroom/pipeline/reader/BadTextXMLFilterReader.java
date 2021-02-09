@@ -40,7 +40,8 @@ public class BadTextXMLFilterReader extends TransformReader {
     private final Set<String> m_forceLeafElements;
     private XMLstate m_xmlState;
     private int m_cbufUsed;
-    private int m_leafBeginText, m_leafEndText;
+    private int m_leafBeginText;
+    private int m_leafEndText;
     private int m_cachedCP;
 
     public BadTextXMLFilterReader(final Reader in, final String[] forceLeafEntities) {
@@ -77,7 +78,7 @@ public class BadTextXMLFilterReader extends TransformReader {
     }
 
     @Override
-    public int read(final char cbuf[], int off, int len) throws IOException {
+    public int read(final char[] cbuf, int off, int len) throws IOException {
         final int initialOff = off;
         int cpysize;
         while (len > 0) {
@@ -162,6 +163,7 @@ public class BadTextXMLFilterReader extends TransformReader {
         }
     }
 
+    @SuppressWarnings({"checkstyle:missingswitchdefault", "checkstyle:fallthrough"})
     private boolean readFromBadXML() throws IOException {
         int entityNameidx = -1;
         m_leafBeginText = m_leafEndText = -1;
