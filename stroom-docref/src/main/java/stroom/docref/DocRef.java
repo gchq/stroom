@@ -232,8 +232,8 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue {
         }
 
         /**
-         * @param value The type of the 'document' that this docRef points to an instance of. Supported types are defined
-         *              outside of this documentation.
+         * @param value The type of the 'document' that this docRef points to an instance of. Supported types
+         *              are defined outside of this documentation.
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder type(final String value) {
