@@ -2553,12 +2553,12 @@ export interface SteppingResult {
   stepLocation?: StepLocation;
 }
 
-export interface StoredError {
+export type StoredError = Marker & {
   elementId?: string;
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-}
+};
 
 export interface StoredQuery {
   componentId?: string;

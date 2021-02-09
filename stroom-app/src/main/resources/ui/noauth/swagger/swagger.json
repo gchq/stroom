@@ -5935,26 +5935,30 @@
       }
     },
     "StoredError" : {
-      "type" : "object",
-      "properties" : {
-        "elementId" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "location" : {
-          "$ref" : "#/definitions/Location",
-          "readOnly" : true
-        },
-        "message" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "severity" : {
-          "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
-          "readOnly" : true,
-          "type" : "string"
+      "allOf" : [ {
+        "$ref" : "#/definitions/Marker"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "elementId" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/definitions/Location",
+            "readOnly" : true
+          },
+          "message" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "severity" : {
+            "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
+            "readOnly" : true,
+            "type" : "string"
+          }
         }
-      }
+      } ]
     },
     "StoredQuery" : {
       "type" : "object",
