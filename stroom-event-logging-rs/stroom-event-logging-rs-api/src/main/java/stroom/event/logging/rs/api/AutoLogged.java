@@ -15,6 +15,8 @@
  */
 package stroom.event.logging.rs.api;
 
+import stroom.event.logging.api.EventActionDecorator;
+
 import event.logging.EventAction;
 
 import java.lang.annotation.Inherited;
@@ -82,6 +84,7 @@ public @interface AutoLogged {
 
     /**
      * An optional {@link EventActionDecorator} that should be used to decorate the automatically generated {@link EventAction}
+     * The default value is {@link EventActionDecorator} itself (the baseclass) which is taken to mean "no decorator".
      * @return the decorated {@link EventAction}
      */
     Class<? extends EventActionDecorator> decorator() default EventActionDecorator.class;

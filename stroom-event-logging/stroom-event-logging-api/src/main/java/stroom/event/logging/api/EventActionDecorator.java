@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.event.logging.rs.api;
+package stroom.event.logging.api;
 
 import event.logging.EventAction;
 

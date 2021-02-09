@@ -15,8 +15,12 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+
+import com.google.inject.Injector;
+import event.logging.EventAction;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -30,12 +34,14 @@ public class ContainerResourceInfo {
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
+    private final Class<? extends EventActionDecorator> eventActionDecoratorClass;
 
     public ContainerResourceInfo(final ResourceContext resourceContext, final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
         this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
         this.operationType = findOperationType(getMethod(), getResourceClass(), requestContext.getMethod());
+        this.eventActionDecoratorClass = findEventActionDecorator(getMethod(), getResourceClass());
     }
 
     public Object getResource() {
@@ -65,6 +71,10 @@ public class ContainerResourceInfo {
         return operationType;
     }
 
+    public Class<? extends EventActionDecorator> getEventActionDecoratorClass() {
+        return eventActionDecoratorClass;
+    }
+
     public String getTypeId(){
         //If method annotation provided use that on its own
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
@@ -86,6 +96,23 @@ public class ContainerResourceInfo {
             return getMethod().getAnnotation(AutoLogged.class).verb();
         }
         return null;
+    }
+
+    private static Class <? extends EventActionDecorator> findEventActionDecorator(final Method method, final Class<?> resourceClass){
+        final Class<? extends EventActionDecorator> decoratorClass;
+        if (method.getAnnotation(AutoLogged.class) != null){
+            decoratorClass = method.getAnnotation(AutoLogged.class).decorator();
+        } else if (resourceClass.getAnnotation(AutoLogged.class) != null){
+            decoratorClass = resourceClass.getAnnotation(AutoLogged.class).decorator();
+        } else {
+            decoratorClass = EventActionDecorator.class;
+        }
+
+        if (decoratorClass.equals(EventActionDecorator.class)){
+            return null; // Default is no implementation
+        }
+
+        return decoratorClass;
     }
 
     private static Optional<OperationType> getOperationTypeFromAnnotations(final Method method,

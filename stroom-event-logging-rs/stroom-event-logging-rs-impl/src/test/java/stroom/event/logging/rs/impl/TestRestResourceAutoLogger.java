@@ -19,7 +19,7 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 
-import stroom.event.logging.rs.api.EventActionDecorator;
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -38,10 +38,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import event.logging.ExportEventAction;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.Query;
+import event.logging.SearchEventAction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,6 +116,9 @@ public class TestRestResourceAutoLogger {
 
     @Captor
     private ArgumentCaptor<PageResponse> pageResponseCaptor;
+
+    @Captor
+    private ArgumentCaptor<EventActionDecorator<?>> eventActionDecoratorArgumentCaptor;
 
     RestResourceAutoLoggerImpl filter;
 
@@ -283,7 +286,7 @@ public class TestRestResourceAutoLogger {
 
 
     @Test
-    public void testLogWithActionDecorator() throws Exception {
+    public void testLogWithUuidAndActionDecorator() throws Exception {
         Method method = TestResource.class.getMethod("shutdown", String.class);
 
         //Set up resource and method
@@ -311,16 +314,20 @@ public class TestRestResourceAutoLogger {
         filter.filter(requestContext);
         filter.aroundWriteTo(writerInterceptorContext);
 
-        Mockito.verify(documentEventLog).process(objectCaptor.capture(),
+        Mockito.verify(documentEventLog).process(
+                objectCaptor.capture(),
                 eventTypeIdCaptor.capture(), verbCaptor.capture(),
-                throwableCaptor.capture());
+                throwableCaptor.capture(),
+                (EventActionDecorator<ProcessEventAction>) eventActionDecoratorArgumentCaptor.capture());
 
         Object loggedObject = objectCaptor.getValue();
 
         String eventTypeId = eventTypeIdCaptor.getValue();
         String descriptionVerb = verbCaptor.getValue();
         Throwable exception = throwableCaptor.getValue();
+        EventActionDecorator<?> eventActionDecorator = eventActionDecoratorArgumentCaptor.getValue();
 
+        assertThat(eventActionDecorator).isInstanceOf(TestResource.TestShutdownEventActionDecorator.class);
        assertThat(loggedObject).isInstanceOf(HasUuid.class);
        assertThat(uuid).isEqualTo(((HasUuid)loggedObject).getUuid());
 
@@ -410,7 +417,8 @@ public class TestRestResourceAutoLogger {
 
         Mockito.verify(documentEventLog).search (eventTypeIdCaptor.capture(), queryCaptor.capture(),
                 listContentCaptor.capture(),
-                pageResponseCaptor.capture(), verbCaptor.capture(), throwableCaptor.capture());
+                pageResponseCaptor.capture(), verbCaptor.capture(), throwableCaptor.capture(),
+                (EventActionDecorator<SearchEventAction>) eventActionDecoratorArgumentCaptor.capture());
 
 
 //        search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String verb, final Throwable ex);
@@ -425,6 +433,7 @@ public class TestRestResourceAutoLogger {
         String descriptionVerb = verbCaptor.getValue();
         Throwable exception = throwableCaptor.getValue();
 
+        assertThat(eventActionDecoratorArgumentCaptor.getValue()).isNull();
         assertThat(pageResponse).isNotNull();
         assertThat(pageResponse.getLength()).isEqualTo(1);
 
@@ -450,7 +459,7 @@ public class TestRestResourceAutoLogger {
     void setup(){
         objectMapper = createObjectMapper();
         closeable = MockitoAnnotations.openMocks(this);
-        requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
+        requestEventLog = new RequestEventLogImpl(injector, config, documentEventLog, securityContext, eventLoggingService);
         Mockito.when(resourceContext.getResource(Mockito.any())).thenReturn(testResource);
         filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog, config, resourceInfo, request);
         filter.setResourceContext(resourceContext);
