@@ -26,6 +26,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class SearchRequest {
+
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty
@@ -38,7 +39,8 @@ public class SearchRequest {
     @JsonCreator
     public SearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
                          @JsonProperty("search") final Search search,
-                         @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
+                         @JsonProperty("componentResultRequests") final
+                         List<ComponentResultRequest> componentResultRequests,
                          @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
@@ -97,6 +99,7 @@ public class SearchRequest {
     }
 
     public static final class Builder {
+
         private DashboardQueryKey dashboardQueryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;

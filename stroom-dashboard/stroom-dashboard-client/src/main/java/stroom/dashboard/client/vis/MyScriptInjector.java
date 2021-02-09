@@ -58,6 +58,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * </pre>
  */
 public class MyScriptInjector {
+
     /**
      * Returns the top level window object. Use this to inject a script so that
      * global variable references are available under <code>$wnd</code> in JSNI
@@ -196,6 +197,7 @@ public class MyScriptInjector {
      * Builder for directly injecting a script body into the DOM.
      */
     public static class FromString {
+
         private final String scriptBody;
         private boolean removeTag = true;
         private JavaScriptObject window;
@@ -259,6 +261,7 @@ public class MyScriptInjector {
      * Build an injection call for adding a script by URL.
      */
     public static class FromUrl {
+
         private final String scriptUrl;
         private Callback<Void, Exception> callback;
         private boolean removeTag = false;

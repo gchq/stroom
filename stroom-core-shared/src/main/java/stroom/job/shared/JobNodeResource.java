@@ -16,13 +16,14 @@
 
 package stroom.job.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -38,6 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
     String INFO_PATH_PART = "/info";
     String SCHEDULE_PATH_PART = "/schedule";
@@ -63,18 +65,18 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
     @ApiOperation(value = "Sets the task limit for the job node")
-    void setTaskLimit(@PathParam("id") Integer id, 
+    void setTaskLimit(@PathParam("id") Integer id,
                       @ApiParam("taskLimit") Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
     @ApiOperation(value = "Sets the schedule job node")
-    void setSchedule(@PathParam("id") Integer id, 
+    void setSchedule(@PathParam("id") Integer id,
                      @ApiParam("schedule") String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
     @ApiOperation(value = "Sets the enabled status of the job node")
-    void setEnabled(@PathParam("id") Integer id, 
+    void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }

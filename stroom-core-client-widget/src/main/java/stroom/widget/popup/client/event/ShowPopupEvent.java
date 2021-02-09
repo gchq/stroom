@@ -16,15 +16,16 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private static Type<Handler> TYPE;
@@ -36,9 +37,14 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final PopupUiHandlers popupUiHandlers;
     private final Boolean modal;
     private final Element[] autoHidePartners;
-    private ShowPopupEvent(final PresenterWidget<?> presenterWidget, final PopupType popupType,
-                           final PopupPosition popupPosition, final PopupSize popupSize, final String caption,
-                           final PopupUiHandlers popupUiHandlers, final Boolean modal, final Element... autoHidePartners) {
+    private ShowPopupEvent(final PresenterWidget<?> presenterWidget,
+                           final PopupType popupType,
+                           final PopupPosition popupPosition,
+                           final PopupSize popupSize,
+                           final String caption,
+                           final PopupUiHandlers popupUiHandlers,
+                           final Boolean modal,
+                           final Element... autoHidePartners) {
         this.presenterWidget = presenterWidget;
         this.popupType = popupType;
         this.popupPosition = popupPosition;
@@ -53,9 +59,21 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
      * Show a popup center of the screen and sized to it's content without a
      * handler.
      */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final String caption, final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, null, null, caption, null, null, autoHidePartner);
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final String caption,
+                            final Element... autoHidePartner) {
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                null,
+                null,
+                caption,
+                null,
+                null,
+                autoHidePartner);
     }
 
     /**
@@ -64,7 +82,16 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
                             final PopupType popupType, final PopupSize popupSize, final String caption,
                             final PopupUiHandlers popupUiHandlers, final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, null, popupSize, caption, popupUiHandlers, null, autoHidePartner);
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                null,
+                popupSize,
+                caption,
+                popupUiHandlers,
+                null,
+                autoHidePartner);
     }
 
     public static void fire(final HasHandlers handlers,
@@ -75,46 +102,104 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                             final String caption,
                             final PopupUiHandlers popupUiHandlers,
                             final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, popupPosition, popupSize, caption, popupUiHandlers, null, autoHidePartner);
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                popupPosition,
+                popupSize,
+                caption,
+                popupUiHandlers,
+                null,
+                autoHidePartner);
     }
 
     /**
      * Show a popup center of the screen and sized to it's content with optional
      * modality.
      */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final String caption,
+                            final PopupUiHandlers popupUiHandlers,
+                            final Boolean modal,
                             final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, null, null, caption, popupUiHandlers, modal, autoHidePartner);
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                null,
+                null,
+                caption,
+                popupUiHandlers,
+                modal,
+                autoHidePartner);
     }
 
     /**
      * Show a popup center of the screen and sized to it's content.
      */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final String caption, final PopupUiHandlers popupUiHandlers,
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final String caption,
+                            final PopupUiHandlers popupUiHandlers,
                             final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, null, null, caption, popupUiHandlers, null, autoHidePartner);
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                null,
+                null,
+                caption,
+                popupUiHandlers,
+                null,
+                autoHidePartner);
     }
 
     /**
      * Show a popup in the specified position and sized to it's content.
      */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final PopupPosition popupPosition, final PopupUiHandlers popupUiHandlers,
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final PopupPosition popupPosition,
+                            final PopupUiHandlers popupUiHandlers,
                             final Element... autoHidePartner) {
-        fire(handlers, presenterWidget, popupType, popupPosition, null, null, popupUiHandlers, null, autoHidePartner);
+        fire(
+                handlers,
+                presenterWidget,
+                popupType,
+                popupPosition,
+                null,
+                null,
+                popupUiHandlers,
+                null,
+                autoHidePartner);
     }
 
     /**
      * Show a popup in the specified position and the specified size.
      */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
-                            final String caption, final PopupUiHandlers popupUiHandlers, final Boolean modal,
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final PopupPosition popupPosition,
+                            final PopupSize popupSize,
+                            final String caption,
+                            final PopupUiHandlers popupUiHandlers,
+                            final Boolean modal,
                             final Element... autoHidePartners) {
-        handlers.fireEvent(new ShowPopupEvent(presenterWidget, popupType, popupPosition, popupSize, caption,
-                popupUiHandlers, modal, autoHidePartners));
+        handlers.fireEvent(new ShowPopupEvent(
+                presenterWidget,
+                popupType,
+                popupPosition,
+                popupSize,
+                caption,
+                popupUiHandlers,
+                modal,
+                autoHidePartners));
     }
 
     public static Type<Handler> getType() {

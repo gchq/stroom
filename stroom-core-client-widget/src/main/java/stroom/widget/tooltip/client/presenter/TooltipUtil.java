@@ -71,7 +71,8 @@ public final class TooltipUtil {
                 SPAN_CLOSE);
     }
 
-    public static SafeHtml styledParagraph(final Object value, final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
+    public static SafeHtml styledParagraph(final Object value,
+                                           final Consumer<SafeStylesBuilder> stylesBuilderConsumer) {
 
         SafeStylesBuilder builder = new SafeStylesBuilder();
         if (stylesBuilderConsumer != null) {

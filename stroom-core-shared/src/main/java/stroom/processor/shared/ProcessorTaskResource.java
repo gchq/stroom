@@ -16,14 +16,15 @@
 
 package stroom.processor.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ProcessorTaskResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/processorTask" + ResourcePaths.V1;
     String ASSIGN_TASKS_PATH_PART = "/assign";
     String ABANDON_TASKS_PATH_PART = "/abandon";
@@ -60,13 +62,13 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Assign some tasks",
             response = ProcessorTaskList.class)
-    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName, 
+    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
                                   @ApiParam("request") AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Abandon some tasks",
             response = Boolean.class)
-    Boolean abandonTasks(@PathParam("nodeName") String nodeName, 
+    Boolean abandonTasks(@PathParam("nodeName") String nodeName,
                          @ApiParam("request") ProcessorTaskList request);
 }

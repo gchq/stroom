@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.SearchRequest.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.Field;
@@ -46,6 +45,7 @@ import java.util.Objects;
         "modelVersion"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
+
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
 
     @ApiModelProperty(
@@ -67,17 +67,17 @@ public class TableComponentSettings implements ComponentSettings {
     private final DocRef extractionPipeline;
 
     @ApiModelProperty(
-            value = "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means " +
-                    "1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field " +
-                    "system defaults will apply",
+            value = "Defines the maximum number of results to return at each grouping level, e.g. " +
+                    "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
+                    "In the absence of this field system defaults will apply",
             example = "1000,10,1")
     @JsonProperty
     private final List<Integer> maxResults;
 
     @ApiModelProperty(
-            value = "When grouping is used a value of true indicates that the results will include the full detail of " +
-                    "any results aggregated into a group as well as their aggregates. A value of false will only " +
-                    "include the aggregated values for each group. Defaults to false.")
+            value = "When grouping is used a value of true indicates that the results will include the full " +
+                    "detail of any results aggregated into a group as well as their aggregates. A value of " +
+                    "false will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
@@ -93,14 +93,17 @@ public class TableComponentSettings implements ComponentSettings {
     private final String modelVersion;
 
     @JsonCreator
-    public TableComponentSettings(@JsonProperty("queryId") final String queryId,
-                                  @JsonProperty("fields") final List<Field> fields,
-                                  @JsonProperty("extractValues") final Boolean extractValues,
-                                  @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-                                  @JsonProperty("maxResults") final List<Integer> maxResults,
-                                  @JsonProperty("showDetail") final Boolean showDetail,
-                                  @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-                                  @JsonProperty("modelVersion") final String modelVersion) {
+    public TableComponentSettings(
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("extractValues") final Boolean extractValues,
+            @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
+            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("showDetail") final Boolean showDetail,
+            @JsonProperty("conditionalFormattingRules") final
+            List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion) {
+
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
@@ -174,7 +177,15 @@ public class TableComponentSettings implements ComponentSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryId, fields, extractValues, extractionPipeline, maxResults, showDetail, conditionalFormattingRules, modelVersion);
+        return Objects.hash(
+                queryId,
+                fields,
+                extractValues,
+                extractionPipeline,
+                maxResults,
+                showDetail,
+                conditionalFormattingRules,
+                modelVersion);
     }
 
     @Override
@@ -203,6 +214,7 @@ public class TableComponentSettings implements ComponentSettings {
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static final class Builder {
+
         protected String queryId;
         protected List<Field> fields;
         protected Boolean extractValues;

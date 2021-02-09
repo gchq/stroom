@@ -16,15 +16,16 @@
 
 package stroom.config.global.shared;
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.PropertyPath;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.PropertyPath;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -487,7 +488,23 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, defaultValue, databaseOverrideValue, yamlOverrideValue, description, editable, password, requireRestart, requireUiRestart, dataTypeName);
+        return Objects.hash(
+                id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                name,
+                defaultValue,
+                databaseOverrideValue,
+                yamlOverrideValue,
+                description,
+                editable,
+                password,
+                requireRestart,
+                requireUiRestart,
+                dataTypeName);
     }
 
     /**

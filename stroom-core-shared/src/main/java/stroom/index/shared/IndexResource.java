@@ -39,6 +39,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
@@ -69,7 +70,7 @@ public interface IndexResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Delete matching index shards",
             response = Integer.class)
-    Long deleteIndexShards(@QueryParam("nodeName") String nodeName, 
+    Long deleteIndexShards(@QueryParam("nodeName") String nodeName,
                            @ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
@@ -77,6 +78,6 @@ public interface IndexResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Flush matching index shards",
             response = Integer.class)
-    Long flushIndexShards(@QueryParam("nodeName") String nodeName, 
+    Long flushIndexShards(@QueryParam("nodeName") String nodeName,
                           @ApiParam("criteria") FindIndexShardCriteria criteria);
 }

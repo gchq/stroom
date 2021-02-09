@@ -22,6 +22,7 @@ package stroom.editor.client.model;
  * structure.
  */
 public class XmlFormatter {
+
     private static final String DOCTYPE_START = "<!DOCTYPE";
     private static final String EMPTY_ELEMENT_END = "/>";
     private static final String END_ELEMENT_START = "</";
@@ -135,7 +136,10 @@ public class XmlFormatter {
                         if (commentState == CommentState.START && pos > elementStartPos + 3) {
                             commentState = CommentState.CONTENT;
                         }
-                        if (commentState == CommentState.CONTENT && c == '-' && forward(1) == '-' && forward(2) == '>') {
+                        if (commentState == CommentState.CONTENT
+                                && c == '-'
+                                && forward(1) == '-'
+                                && forward(2) == '>') {
                             commentState = CommentState.END;
                         }
                     }

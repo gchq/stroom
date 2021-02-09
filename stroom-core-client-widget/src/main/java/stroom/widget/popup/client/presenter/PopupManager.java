@@ -16,9 +16,6 @@
 
 package stroom.widget.popup.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -26,19 +23,29 @@ import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.PopupSupportImpl;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.PresenterWidget;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class PopupManager {
+
     private Map<PresenterWidget<?>, PopupSupport> popupMap;
 
     @Inject
     public PopupManager(final EventBus eventBus) {
-        eventBus.addHandler(ShowPopupEvent.getType(), event -> show(event));
-        eventBus.addHandler(HidePopupEvent.getType(), event -> hide(event.getPresenterWidget(), event.isAutoClose(), event.isOk()));
-        eventBus.addHandler(DisablePopupEvent.getType(), event -> disable(event.getPresenterWidget()));
-        eventBus.addHandler(EnablePopupEvent.getType(), event -> enable(event.getPresenterWidget()));
-        eventBus.addHandler(RenamePopupEvent.getType(), event -> rename(event.getPresenterWidget(), event.getCaption()));
+        eventBus.addHandler(ShowPopupEvent.getType(), event ->
+                show(event));
+        eventBus.addHandler(HidePopupEvent.getType(), event ->
+                hide(event.getPresenterWidget(), event.isAutoClose(), event.isOk()));
+        eventBus.addHandler(DisablePopupEvent.getType(), event ->
+                disable(event.getPresenterWidget()));
+        eventBus.addHandler(EnablePopupEvent.getType(), event ->
+                enable(event.getPresenterWidget()));
+        eventBus.addHandler(RenamePopupEvent.getType(), event ->
+                rename(event.getPresenterWidget(), event.getCaption()));
     }
 
     private void show(final ShowPopupEvent event) {

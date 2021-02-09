@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexVolumeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/index/volume" + ResourcePaths.V2;
     String RESCAN_SUB_PATH = "/rescan";
 
@@ -54,7 +55,7 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Updates an index volume",
             response = IndexVolume.class)
-    IndexVolume update(@PathParam("id") Integer id, 
+    IndexVolume update(@PathParam("id") Integer id,
                        @ApiParam("indexVolume") IndexVolume indexVolume);
 
     @DELETE

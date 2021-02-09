@@ -81,7 +81,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         // until it is attached.
         editor.addAttachHandler(event -> {
             if (event.isAttached()) {
-//                GWT.log("RThe fix is simply to force the listeners to be active for those elements.unning attach handler");
                 if (!started) {
                     // Can only be started once attached
                     editor.startEditor();
@@ -195,7 +194,11 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             editor.clearAnnotations();
             if (annotations != null) {
                 for (final Annotation annotation : annotations) {
-                    editor.addAnnotation(annotation.getRow(), annotation.getColumn(), annotation.getText(), annotation.getType());
+                    editor.addAnnotation(
+                            annotation.getRow(),
+                            annotation.getColumn(),
+                            annotation.getText(),
+                            annotation.getType());
                 }
                 editor.setAnnotations();
             }
@@ -246,7 +249,10 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 try {
                     editor.setMode(mode);
                 } catch (final RuntimeException e) {
-                    throw new RuntimeException("Unable to set mode '" + mode.getName() + "' perhaps the javascript for this mode is missing");
+                    throw new RuntimeException(
+                            "Unable to set mode '" +
+                                    mode.getName() +
+                                    "' perhaps the javascript for this mode is missing");
                 }
             }
             modeDirty = false;
@@ -265,7 +271,9 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 try {
                     editor.setTheme(theme);
                 } catch (final RuntimeException e) {
-                    throw new RuntimeException("Unable to set theme '" + theme.getName() + "' perhaps the javascript for this theme is missing");
+                    throw new RuntimeException("Unable to set theme '" +
+                            theme.getName() +
+                            "' perhaps the javascript for this theme is missing");
                 }
             }
             themeDirty = false;

@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 @NotThreadSafe
 public class ByteStreamDecoder {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
 
     private final Charset charset;
@@ -58,7 +59,7 @@ public class ByteStreamDecoder {
 
         // Start trying to decode a char from this position
 //            int byteOffset = startOffset;
-        
+
         while (!charDecoded && loopCnt++ < MAX_BYTES_PER_CHAR) {
             byte b = 0;
             try {
@@ -139,18 +140,19 @@ public class ByteStreamDecoder {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static interface ByteSupplier {
+
         /**
          * @return The byte represented as an unsigned value 0-255 or -1 if there are
          * no more bytes to supply. This is equivalent to {@link InputStream#read()}.
-         *
+         * <p>
          * Care need to be taken when comparing signed byte values to the result of this
          * method. Testing for -1 should be done before any kind of conversion/comparison
          * to another value.
-         *
+         * <p>
          * e.g.
          * int b = supplyUnsignedByte();
          * if (b == -1) {
-         *     break;
+         * break;
          * }
          * if (arr[i] == (byte)
          */
@@ -166,6 +168,7 @@ public class ByteStreamDecoder {
      * along with the number of bytes used to represent that char.
      */
     public static class DecodedChar {
+
         private final String str;
         private final int byteCount;
         private static final char BYTE_ORDER_MARK = '\ufeff';

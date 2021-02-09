@@ -20,11 +20,17 @@ public class SvgPreset extends SvgIcon {
     private final String title;
     private final boolean enabled;
 
-    public SvgPreset(final String url, final String title, final boolean enabled) {
+    public SvgPreset(final String url,
+                     final String title,
+                     final boolean enabled) {
         this(url, 16, 16, title, enabled);
     }
 
-    public SvgPreset(final String url, final int width, final int height, final String title, final boolean enabled) {
+    public SvgPreset(final String url,
+                     final int width,
+                     final int height,
+                     final String title,
+                     final boolean enabled) {
         super(url, width, height);
         this.title = title;
         this.enabled = enabled;

@@ -1,12 +1,13 @@
 package stroom.security.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -28,6 +29,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface UserResource extends RestResource, DirectRestService {
+
     @GET
     List<User> get(@QueryParam("name") String name,
                    @QueryParam("isGroup") Boolean isGroup,
@@ -64,7 +66,7 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{userName}/status")
-    Boolean setStatus(@PathParam("userName") String userName, 
+    Boolean setStatus(@PathParam("userName") String userName,
                       @QueryParam("enabled") boolean status);
 
     @PUT

@@ -21,5 +21,8 @@
         </value>
       </option>
     </JavaCodeStyleSettings>
+    <codeStyleSettings language="JAVA">
+      <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
+    </codeStyleSettings>
   </code_scheme>
 </component>

@@ -9,7 +9,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.QueryComponentSettings.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
@@ -110,7 +109,14 @@ public class Search {
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSourceRef, expression, componentSettingsMap, params, incremental, storeHistory, queryInfo);
+        return Objects.hash(
+                dataSourceRef,
+                expression,
+                componentSettingsMap,
+                params,
+                incremental,
+                storeHistory,
+                queryInfo);
     }
 
     @Override

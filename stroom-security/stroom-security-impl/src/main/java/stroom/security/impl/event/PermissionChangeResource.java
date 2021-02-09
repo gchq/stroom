@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface PermissionChangeResource extends RestResource {
+
     String BASE_PATH = "/permission/changeEvent" + ResourcePaths.V1;
     String FIRE_CHANGE_PATH_PART = "/fireChange";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -27,6 +28,6 @@ public interface PermissionChangeResource extends RestResource {
     @Path(FIRE_CHANGE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Fires a permission change event")
-    Boolean fireChange(@PathParam("nodeName") String nodeName, 
+    Boolean fireChange(@PathParam("nodeName") String nodeName,
                        @ApiParam("request") PermissionChangeRequest request);
 }

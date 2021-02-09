@@ -16,12 +16,13 @@
 
 package stroom.core.entity.event;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
@@ -35,12 +36,13 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface EntityEventResource extends RestResource {
+
     String BASE_PATH = "/entityEvent" + ResourcePaths.V1;
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @PUT
     @Path(NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sends an entity event")
-    Boolean fireEvent(@PathParam("nodeName") String nodeName, 
+    Boolean fireEvent(@PathParam("nodeName") String nodeName,
                       @ApiParam("entityevent") EntityEvent entityEvent);
 }

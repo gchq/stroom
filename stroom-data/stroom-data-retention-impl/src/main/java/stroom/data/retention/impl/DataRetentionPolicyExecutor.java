@@ -81,6 +81,7 @@ import java.util.stream.Collectors;
  * 1yr+1d ago => 1yr ago
  */
 public class DataRetentionPolicyExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
@@ -268,7 +269,7 @@ public class DataRetentionPolicyExecutor {
 
             return LogUtil.message(
                     "Considering streams created " +
-                    "between {}, {} rule actions:\n{}",
+                            "between {}, {} rule actions:\n{}",
                     getPeriodInfo(period, now),
                     sortedRuleActions.size(),
                     sortedRuleActions.stream()
@@ -351,7 +352,7 @@ public class DataRetentionPolicyExecutor {
                                                 final DataRetentionRule rule,
                                                 final Instant now) {
         final Instant ruleMinCreateTime = getMinCreateTime(rule, now);
-        
+
         // Work out if this rule should delete or retain data in this period
         return period.getFrom().isBefore(ruleMinCreateTime)
                 ? RetentionRuleOutcome.DELETE

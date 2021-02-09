@@ -119,7 +119,10 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         this(supportsSelection, false, size, binder);
     }
 
-    public DataGridViewImpl(final boolean supportsSelection, final boolean allowMultiSelect, final int size, final Binder binder) {
+    public DataGridViewImpl( final boolean supportsSelection,
+                             final boolean allowMultiSelect,
+                             final int size,
+                             final Binder binder) {
         this.allowMultiSelect = allowMultiSelect;
 
         if (resources == null) {
@@ -256,7 +259,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                         headingListener.onMouseDown(event, heading);
                     }
 
-                    if (!resizeHandle.isResizing() && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                    if (!resizeHandle.isResizing()
+                            && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                         resizeHandle.startResize(event);
 
                     } else {
@@ -807,12 +811,15 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
 
                 if (!consumed) {
-                    // Since all of the controls we care about will not have interactive elements that are direct children
-                    // of the td we can assume that the cell will not consume the event if the parent of the target is the td.
+                    // Since all of the controls we care about will not have interactive elements that are
+                    // direct children of the td we can assume that the cell will not consume the event if
+                    // the parent of the target is the td.
                     if (!"td".equalsIgnoreCase(parentTag)) {
                         final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
                         if (cell != null && cell.getConsumedEvents() != null) {
-                            if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                            if (cell.getConsumedEvents().contains("click")
+                                    || cell.getConsumedEvents().contains("mousedown")
+                                    || cell.getConsumedEvents().contains("mouseup")) {
                                 consumed = true;
                             }
                         }
@@ -826,7 +833,12 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                     final R row = event.getValue();
                     if (row != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                         final boolean doubleClick = doubleClickTest.test(row);
-                        doSelect(row, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                        doSelect(row, new SelectionType(
+                                doubleClick,
+                                false,
+                                allowMultiSelect,
+                                event.getNativeEvent().getCtrlKey(),
+                                event.getNativeEvent().getShiftKey()));
                     }
                 }
             }

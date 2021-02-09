@@ -1,14 +1,10 @@
 <?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
 <suppressions>
-    <!-- suppress certain checks on all files in a package -->
-    <!--<suppress files="my[\\/]super[\\/]package[\\/]name" checks="ModifierOrderCheck|NeedBracesCheck|MagicNumberCheck"/>-->
-    <!-- suppress all checks on all files in a package -->
-    <!--<suppress files="/edu/ycp/cs/dh/acegwt" checks=".*"/>-->
-    <!--<suppress files="acegwt" checks=".*"/>-->
-    <!-- suppress certain checks on all files -->
-    <!--<suppress files="." checks="IndentationCheck"/>-->
-    <!--<suppress files="." checks="LineLengthCheck"/>-->
-    <!--<suppress files="." checks="ExplicitInitializationCheck"/>-->
-    <!--<suppress files="." checks="MemberNameCheck"/>-->
-    <!--<suppress files="." checks="FinalClassCheck"/>-->
+    <suppress files="[\\/]edu[\\/]ycp[\\/]cs[\\/]dh[\\/]acegwt" checks=".*"/>
+    <suppress files="[\\/]db[\\/]jooq[\\/]" checks=".*"/>
 </suppressions>

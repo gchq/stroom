@@ -26,21 +26,21 @@ import java.util.function.Function;
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class AbstractResourceTest<R extends RestResource> {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResourceTest.class);
 
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
     @Rule
     private final ResourceExtension resources = ResourceExtension.builder()
-        .addResource(() -> {
-            LOGGER.info("Calling getRestResource()");
-            return getRestResource();
-        })
-        .build();
+            .addResource(() -> {
+                LOGGER.info("Calling getRestResource()");
+                return getRestResource();
+            })
+            .build();
 
     private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
-        new ClientConfig().register(LoggingFeature.class))
-        .target(url);
+            new ClientConfig().register(LoggingFeature.class))
+            .target(url);
 
     public abstract R getRestResource();
 
@@ -71,26 +71,26 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 //        return response;
 //    }
 
-    public  <T_RESP> T_RESP doGetTest(final String subPath,
-                            final Class<T_RESP> responseType,
-                            final T_RESP expectedResponse,
-                            final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_RESP> T_RESP doGetTest(final String subPath,
+                                     final Class<T_RESP> responseType,
+                                     final T_RESP expectedResponse,
+                                     final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling GET on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         return doTest(
-            Invocation.Builder::get,
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+                Invocation.Builder::get,
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
-    public  <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
-                                              final T_REQ request,
-                                              final Class<T_RESP> responseType,
-                                              final T_RESP expectedResponse,
-                                              final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
+                                             final T_REQ request,
+                                             final Class<T_RESP> responseType,
+                                             final T_RESP expectedResponse,
+                                             final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
@@ -109,7 +109,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         final Response response = builder.post(entity);
 
-        if (! isSuccessful(response.getStatus())) {
+        if (!isSuccessful(response.getStatus())) {
 //            String json = response.readEntity(String.class);
 //            LOGGER.info("json:\n{}", json);
 //            System.out.println(json);
@@ -132,59 +132,59 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         return responseEntity;
     }
 
-    public  <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
-                                             final T_REQ requestEntity,
-                                             final Class<T_RESP> responseType,
-                                             final T_RESP expectedResponse,
-                                             final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
+                                            final T_REQ requestEntity,
+                                            final Class<T_RESP> responseType,
+                                            final T_RESP expectedResponse,
+                                            final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling PUT on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         return doTest(builder -> builder.put(Entity.json(requestEntity)),
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
-    public  <T_REQ> void doPutTest(final String subPath,
-                                   final T_REQ requestEntity,
-                                   final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_REQ> void doPutTest(final String subPath,
+                                  final T_REQ requestEntity,
+                                  final Function<WebTarget, WebTarget>... builderMethods) {
 
         LOGGER.info("Calling PUT on {}{}, passing {}",
-            getResourceBasePath(), subPath, requestEntity);
+                getResourceBasePath(), subPath, requestEntity);
 
         WebTarget webTarget = resources
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
         Invocation.Builder builder = webTarget
-            .request();
+                .request();
 
         Response response = builder.put(Entity.json(requestEntity));
 
-        if (! isSuccessful(response.getStatus())) {
+        if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
-                response.getStatus(), response));
+                    response.getStatus(), response));
         }
     }
 
-    public  <T_RESP> T_RESP doDeleteTest(final String subPath,
-                                         final Class<T_RESP> responseType,
-                                         final T_RESP expectedResponse,
-                                         final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_RESP> T_RESP doDeleteTest(final String subPath,
+                                        final Class<T_RESP> responseType,
+                                        final T_RESP expectedResponse,
+                                        final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling DELETE on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         return doTest(Invocation.Builder::delete,
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
     private <T_RESP> T_RESP doTest(final Function<Invocation.Builder, Response> operation,
@@ -193,24 +193,24 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                                    final T_RESP expectedResponse,
                                    final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling GET on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         WebTarget webTarget = resources
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
         Invocation.Builder builder = webTarget
-            .request();
+                .request();
 
         final Response response = operation.apply(builder);
 
-        if (! isSuccessful(response.getStatus())) {
+        if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
-                response.getStatus(), response));
+                    response.getStatus(), response));
         }
 
 //        String json = response.readEntity(String.class);
@@ -221,17 +221,17 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         if (expectedResponse != null) {
             Assertions.assertThat(entity)
-                .isEqualTo(expectedResponse);
+                    .isEqualTo(expectedResponse);
         }
 
         return entity;
     }
 
-    public  WebTarget getWebTarget(final String subPath) {
+    public WebTarget getWebTarget(final String subPath) {
 
         return resources
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
     }
 
     private boolean isSuccessful(final int statusCode) {

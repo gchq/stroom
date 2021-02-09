@@ -1,9 +1,5 @@
 package stroom.index.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -16,9 +12,15 @@ import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class IndexPlugin extends DocumentPlugin<IndexDoc> {
+
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
     private final Provider<IndexPresenter> editorProvider;
@@ -59,7 +61,7 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
                 .call(INDEX_RESOURCE)
                 .update(document);
     }
-    
+
     @Override
     public String getType() {
         return IndexDoc.DOCUMENT_TYPE;

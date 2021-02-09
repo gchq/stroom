@@ -16,6 +16,9 @@
 
 package stroom.cell.valuespinner.client;
 
+import stroom.cell.valuespinner.shared.Editable;
+import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -31,8 +34,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.AbstractImagePrototype.ImagePrototypeElement;
-import stroom.cell.valuespinner.shared.Editable;
-import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
@@ -426,7 +427,10 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     interface Template extends SafeHtmlTemplates {
-        @Template("<div class=\"valueSpinner\"><input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input><div class=\"arrows\">{1}{2}</div></div>")
+        @Template("<div class=\"valueSpinner\">" +
+                "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>" +
+                "<div class=\"arrows\">{1}{2}</div>" +
+                "</div>")
         SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
     }
 

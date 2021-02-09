@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FunctionSignature {
+
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -147,7 +148,13 @@ public class FunctionSignature {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final FunctionSignature that = (FunctionSignature) o;
-        return Objects.equals(name, that.name) && Objects.equals(aliases, that.aliases) && Objects.equals(categoryPath, that.categoryPath) && Objects.equals(args, that.args) && returnType == that.returnType && Objects.equals(returnDescription, that.returnDescription) && Objects.equals(description, that.description);
+        return Objects.equals(name, that.name)
+                && Objects.equals(aliases, that.aliases)
+                && Objects.equals(categoryPath, that.categoryPath)
+                && Objects.equals(args, that.args)
+                && returnType == that.returnType
+                && Objects.equals(returnDescription, that.returnDescription)
+                && Objects.equals(description, that.description);
     }
 
     @Override
@@ -159,6 +166,7 @@ public class FunctionSignature {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Arg {
+
         @JsonProperty
         private final String name;
         @JsonProperty

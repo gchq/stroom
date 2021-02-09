@@ -16,12 +16,13 @@
 
 package stroom.node.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -37,6 +38,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/node" + ResourcePaths.V1;
     String PING_PATH_PART = "/ping";
     String INFO_PATH_PART = "/info";
@@ -81,12 +83,12 @@ public interface NodeResource extends RestResource, DirectRestService {
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets the priority of a node")
-    void setPriority(@PathParam("nodeName") String nodeName, 
+    void setPriority(@PathParam("nodeName") String nodeName,
                      @ApiParam("nodeName") Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets whether a node is enabled")
-    void setEnabled(@PathParam("nodeName") String nodeName, 
+    void setEnabled(@PathParam("nodeName") String nodeName,
                     @ApiParam("enabled") Boolean enabled);
 }

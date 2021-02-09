@@ -16,12 +16,13 @@
 
 package stroom.processor.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -47,6 +48,6 @@ public interface ProcessorResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}/enabled")
     @ApiOperation(value = "Sets the enabled/disabled state for a processor")
-    void setEnabled(@PathParam("id") Integer id, 
+    void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }
