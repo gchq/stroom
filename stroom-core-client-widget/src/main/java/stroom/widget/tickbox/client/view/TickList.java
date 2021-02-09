@@ -112,10 +112,11 @@ public class TickList<T extends TickBox> extends Composite implements HasSelecti
         } else {
             for (final T tickBox : items) {
                 tickBox.setBooleanValue(false);
-                for (final T t : selectedItems)
+                for (final T t : selectedItems) {
                     if (tickBox.equals(t)) {
                         tickBox.setBooleanValue(true);
                     }
+                }
             }
         }
     }

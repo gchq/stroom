@@ -130,6 +130,7 @@ public final class SearchResponse {
         return complete != null && complete;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

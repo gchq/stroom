@@ -59,8 +59,9 @@ final public class AnnotationUtil {
             if (superclass != null)
             {
                 annotation = getInheritedClassAnnotation(annotationClass, superclass);
-                if (annotation != null)
+                if (annotation != null) {
                     return annotation;
+                }
             }
 
             //Check interfaces
@@ -68,8 +69,9 @@ final public class AnnotationUtil {
             {
                 annotation = getInheritedClassAnnotation(annotationClass, interfaze);
 
-                if (annotation != null)
+                if (annotation != null) {
                     return annotation;
+                }
             }
         }
 
@@ -121,8 +123,9 @@ final public class AnnotationUtil {
         {
             final A annotation =
                     getOverriddenAnnotationFrom(annotationClass, superclass, name, params, annotatedParamNumber);
-            if (annotation != null)
+            if (annotation != null) {
                 return annotation;
+            }
         }
 
         // Check interfaces
@@ -130,8 +133,9 @@ final public class AnnotationUtil {
         {
             final A annotation =
                     getOverriddenAnnotationFrom(annotationClass, interfaze, name, params, annotatedParamNumber);
-            if (annotation != null)
+            if (annotation != null) {
                 return annotation;
+            }
         }
 
         return null;
@@ -151,12 +155,14 @@ final public class AnnotationUtil {
                     + searchClass.getName() + " method " + name);
                 }
                 final A annotation = method.getParameters()[param].getAnnotation(annotationClass);
-                if (annotation != null)
+                if (annotation != null) {
                     return annotation;
+                }
             } else {
                 final A annotation = method.getAnnotation(annotationClass);
-                if (annotation != null)
+                if (annotation != null) {
                     return annotation;
+                }
             }
             return getOverriddenAnnotation(annotationClass, Optional.of(method), paramNumber);
         }

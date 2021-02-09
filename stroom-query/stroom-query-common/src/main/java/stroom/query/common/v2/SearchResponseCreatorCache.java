@@ -51,6 +51,7 @@ public interface SearchResponseCreatorCache {
             return searchRequest;
         }
 
+        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;

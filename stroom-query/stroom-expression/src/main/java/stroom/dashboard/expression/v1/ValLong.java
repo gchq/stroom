@@ -69,6 +69,7 @@ public final class ValLong implements ValNumber {
         return TYPE;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -86,8 +87,9 @@ public final class ValLong implements ValNumber {
         static final ValLong cache[] = new ValLong[-(-128) + 127 + 1];
 
         static {
-            for (int i = 0; i < cache.length; i++)
+            for (int i = 0; i < cache.length; i++) {
                 cache[i] = new ValLong(i - 128);
+            }
         }
 
         private ValLongCache() {

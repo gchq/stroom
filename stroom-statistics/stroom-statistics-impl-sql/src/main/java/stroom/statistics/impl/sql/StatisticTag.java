@@ -57,6 +57,7 @@ public class StatisticTag implements Serializable, Comparable<StatisticTag> {
         return result;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj)

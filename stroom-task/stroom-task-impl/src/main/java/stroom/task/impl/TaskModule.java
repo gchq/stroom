@@ -58,6 +58,7 @@ public class TaskModule extends AbstractModule {
                 .bindShutdownTaskTo(TaskManagerShutdown.class, Integer.MAX_VALUE);
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -16,10 +16,11 @@
 
 package stroom.dashboard.impl;
 
+import stroom.query.api.v2.Sort;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v2.Sort;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
@@ -64,6 +65,7 @@ public class VisField implements Serializable {
         this.sort = sort;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

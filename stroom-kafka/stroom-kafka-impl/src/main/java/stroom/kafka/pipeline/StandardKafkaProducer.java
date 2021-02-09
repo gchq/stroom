@@ -16,20 +16,11 @@
 
 package stroom.kafka.pipeline;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.header.Headers;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -39,12 +30,19 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.io.ByteArrayBufferedOutputStream;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.header.Headers;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
@@ -53,7 +51,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -323,8 +320,9 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             xmlValueDepth --;
         }
         else {
-            if (state != null)
+            if (state != null) {
                 state.lastElement = null;
+            }
 
             if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
                 state.inHeader = false;
@@ -439,12 +437,15 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         }
 
         public String whyInvalid() {
-            if (topic == null)
+            if (topic == null) {
                 return "Topic is not defined.";
-            if (key == null && messageValue == null)
+            }
+            if (key == null && messageValue == null) {
                 return "Neither the key or the value of the message are defined.";
-            if (headerNames.size() != headerVals.size())
+            }
+            if (headerNames.size() != headerVals.size()) {
                 return "Incomplete header information.";
+            }
 
             return null;
         }

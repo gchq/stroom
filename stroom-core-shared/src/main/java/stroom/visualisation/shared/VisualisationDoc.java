@@ -16,13 +16,14 @@
 
 package stroom.visualisation.shared;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
 
 import java.util.Objects;
 
@@ -95,6 +96,7 @@ public class VisualisationDoc extends Doc {
         this.settings = settings;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

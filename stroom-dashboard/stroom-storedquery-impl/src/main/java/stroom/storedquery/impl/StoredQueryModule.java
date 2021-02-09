@@ -27,6 +27,7 @@ public class StoredQueryModule extends AbstractModule {
                         .advanced(false));
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

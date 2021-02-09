@@ -5,6 +5,14 @@
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
+    <!-- Code copied from elsewhere --> 
     <suppress files="[\\/]edu[\\/]ycp[\\/]cs[\\/]dh[\\/]acegwt" checks=".*"/>
+    <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XML11Char.java" checks=".*"/>
+    <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XMLChar.java" checks=".*"/>
+
+    <!-- Generated code --> 
     <suppress files="[\\/]db[\\/]jooq[\\/]" checks=".*"/>
+
+    <!-- Legacy code so best left alone --> 
+    <suppress files="[\\/]stroom[\\/]legacy[\\/]" checks=".*"/>
 </suppressions>

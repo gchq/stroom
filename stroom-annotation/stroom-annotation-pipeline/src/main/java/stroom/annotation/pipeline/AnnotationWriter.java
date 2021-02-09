@@ -134,14 +134,15 @@ class AnnotationWriter extends AbstractXMLFilter {
     public void characters(char[] ch, int start, int length) throws SAXException {
         String val = new String (ch, start, length);
 
-        if (TITLE_TAG.equals(lastTag))
+        if (TITLE_TAG.equals(lastTag)) {
             currentAnnotation.setTitle(val);
-        else if (DESCRIPTION_TAG.equals(lastTag))
+        } else if (DESCRIPTION_TAG.equals(lastTag)) {
             currentAnnotation.setSubject(val);
-        else if (EVENTID_TAG.equals(lastTag))
+        } else if (EVENTID_TAG.equals(lastTag)) {
             lastEventId = val;
-        else if (STREAMID_TAG.equals(lastTag))
+        } else if (STREAMID_TAG.equals(lastTag)) {
             lastStreamId = val;
+        }
 
         super.characters(ch, start, length);
     }

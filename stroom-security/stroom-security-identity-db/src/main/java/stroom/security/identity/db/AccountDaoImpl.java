@@ -510,7 +510,9 @@ class AccountDaoImpl implements AccountDao {
                 || user.getForcePasswordChange()) {
             LOGGER.debug("User {} needs a password change.", userId);
             return true;
-        } else return false;
+        } else {
+            return false;
+        }
     }
 
     @Override

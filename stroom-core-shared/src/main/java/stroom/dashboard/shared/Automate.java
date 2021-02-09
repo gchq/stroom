@@ -16,9 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.Builder;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -58,6 +55,7 @@ public class Automate {
         return refreshInterval;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

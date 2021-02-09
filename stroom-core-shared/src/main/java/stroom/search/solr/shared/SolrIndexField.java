@@ -416,6 +416,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         return fieldName;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -77,6 +77,7 @@ public final class ValDouble implements ValNumber {
         return TYPE;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

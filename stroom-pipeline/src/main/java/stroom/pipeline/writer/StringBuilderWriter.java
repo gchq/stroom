@@ -117,10 +117,11 @@ public class StringBuilderWriter extends Writer {
      */
     @Override
     public StringBuilderWriter append(final CharSequence csq) {
-        if (csq == null)
+        if (csq == null) {
             write("null");
-        else
+        } else {
             write(csq.toString());
+        }
         return this;
     }
 

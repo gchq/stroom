@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Search.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Field;
 
@@ -144,6 +143,7 @@ public class TextComponentSettings implements ComponentSettings {
         return modelVersion;
     }
 
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
