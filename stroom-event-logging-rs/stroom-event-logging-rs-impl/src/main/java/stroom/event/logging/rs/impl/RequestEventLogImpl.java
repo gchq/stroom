@@ -18,6 +18,8 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -54,7 +56,7 @@ class RequestEventLogImpl implements RequestEventLog {
 
     @Override
     public void log (final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error){
-        if (!requestInfo.shouldLog(config.isGlobalLoggingEnabled())){
+        if (!requestInfo.getContainerResourceInfo().shouldLog(config)) {
             return;
         }
 
@@ -102,7 +104,6 @@ class RequestEventLogImpl implements RequestEventLog {
     public void log (RequestInfo info, Object responseEntity){
       log (info, responseEntity, null);
     }
-
 
     private <T extends EventAction> EventActionDecorator<T>
         createDecorator(Class <? extends EventActionDecorator> decoratorClass){

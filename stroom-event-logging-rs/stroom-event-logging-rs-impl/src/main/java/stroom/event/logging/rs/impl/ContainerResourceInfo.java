@@ -35,12 +35,15 @@ public class ContainerResourceInfo {
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
     private final Class<? extends EventActionDecorator> eventActionDecoratorClass;
+    private final boolean autologgerAnnotationPresent;
 
     public ContainerResourceInfo(final ResourceContext resourceContext, final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
         this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
-        this.operationType = findOperationType(getMethod(), getResourceClass(), requestContext.getMethod());
+        final Optional<OperationType> operationType = getOperationTypeFromAnnotations(getMethod(), getResourceClass());
+        this.autologgerAnnotationPresent = operationType.isPresent();
+        this.operationType = findOperationType (operationType, getMethod().getName(), requestContext.getMethod());
         this.eventActionDecoratorClass = findEventActionDecorator(getMethod(), getResourceClass());
     }
 
@@ -69,6 +72,10 @@ public class ContainerResourceInfo {
 
     public OperationType getOperationType(){
         return operationType;
+    }
+
+    public boolean isAutologgerAnnotationPresent() {
+        return autologgerAnnotationPresent;
     }
 
     public Class<? extends EventActionDecorator> getEventActionDecoratorClass() {
@@ -129,55 +136,63 @@ public class ContainerResourceInfo {
         return getOperationTypeFromAnnotations(getMethod(), getResourceClass());
     }
 
-    public boolean shouldLog (boolean logByDefault){
-        return getOperationTypeFromAnnotations()
-                .filter(type ->
-                        !(OperationType.UNLOGGED.equals(type) || OperationType.MANUALLY_LOGGED.equals(type)))
-                .isPresent() || logByDefault;
-    }
 
-    private OperationType findOperationType(final Method method,
-                                            final Class<?> resourceClass,
+    private OperationType findOperationType(final Optional<OperationType> type,
+                                            final String methodName,
                                             final String httpMethod) {
-        Optional<OperationType> type = getOperationTypeFromAnnotations(method, resourceClass);
+
         if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())){
             return type.get();
         } else if (HttpMethod.DELETE.equals(httpMethod)){
             return OperationType.DELETE;
-        } else if (method.getName().startsWith("get")){
+        } else if (methodName.startsWith("get")){
             return OperationType.VIEW;
-        } else if (method.getName().startsWith("fetch")) {
+        } else if (methodName.startsWith("fetch")) {
             return OperationType.VIEW;
-        } else if (method.getName().startsWith("read")){
+        } else if (methodName.startsWith("read")){
             return OperationType.VIEW;
-        } else if (method.getName().startsWith("create")){
+        } else if (methodName.startsWith("create")){
             return OperationType.CREATE;
-        } else if (method.getName().startsWith("delete")){
+        } else if (methodName.startsWith("delete")){
             return OperationType.DELETE;
-        } else if (method.getName().startsWith("update")){
+        } else if (methodName.startsWith("update")){
             return OperationType.UPDATE;
-        }  else if (method.getName().startsWith("save")){
+        }  else if (methodName.startsWith("save")){
             return OperationType.UPDATE;
-        } else if (method.getName().startsWith("find")){
+        } else if (methodName.startsWith("find")){
             return OperationType.SEARCH;
-        } else if (method.getName().startsWith("search")){
+        } else if (methodName.startsWith("search")){
             return OperationType.SEARCH;
-        }  else if (method.getName().startsWith("list")){
+        }  else if (methodName.startsWith("list")){
             return OperationType.SEARCH;
-        } else if (method.getName().startsWith("import")){
+        } else if (methodName.startsWith("import")){
             return OperationType.IMPORT;
-        } else if (method.getName().startsWith("export")){
+        } else if (methodName.startsWith("export")){
             return OperationType.EXPORT;
-        } else if (method.getName().startsWith("upload")){
+        } else if (methodName.startsWith("upload")){
             return OperationType.IMPORT;
-        } else if (method.getName().startsWith("download")){
+        } else if (methodName.startsWith("download")){
             return OperationType.EXPORT;
-        } else if (method.getName().startsWith("set")){
+        } else if (methodName.startsWith("set")){
             return OperationType.UPDATE;
-        } else if (method.getName().startsWith("copy")){
+        } else if (methodName.startsWith("copy")){
             return OperationType.COPY;
         }
         return OperationType.UNKNOWN;
     }
 
+    public boolean shouldLog (RequestLoggingConfig config){
+        OperationType op = getOperationType();
+        if (OperationType.MANUALLY_LOGGED.equals(op)){
+            return false;
+        }
+        if (OperationType.UNLOGGED.equals(op)){
+            return config.isLogEveryRestCallEnabled();
+        }
+        if (isAutologgerAnnotationPresent()){
+            return true;
+        } else {
+            return config.isGlobalLoggingEnabled();
+        }
+    }
 }

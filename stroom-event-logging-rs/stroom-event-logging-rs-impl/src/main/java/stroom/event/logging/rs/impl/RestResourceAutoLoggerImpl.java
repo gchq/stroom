@@ -155,7 +155,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     public void filter(final ContainerRequestContext context) throws IOException {
         ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
-        if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())){
+        if (containerResourceInfo.shouldLog(config)){
             if (context.hasEntity()) {
                 final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo, context.getEntityStream(),
                         objectMapper, MessageUtils.getCharset(context.getMediaType()));

@@ -69,10 +69,6 @@ class RequestInfo {
         return containerResourceInfo;
     }
 
-    public boolean shouldLog (boolean logByDefault){
-        return getContainerResourceInfo().shouldLog(logByDefault);
-    }
-
     private Object findBeforeCallObj(Object resource, Object template){
         if (template == null || resource == null) {
             return null;

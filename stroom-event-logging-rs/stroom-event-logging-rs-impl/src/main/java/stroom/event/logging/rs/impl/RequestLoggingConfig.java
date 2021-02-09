@@ -28,8 +28,21 @@ public class RequestLoggingConfig extends AbstractConfig {
 
     private boolean globalLoggingEnabled = false;
 
+    private boolean logEveryRestCallEnabled = false;
+
+
+    @JsonProperty("logEveryRestCallEnabled")
+    @JsonPropertyDescription("Ensure that every RESTful service calls is logged, not only user initiated ones.")
+    public boolean isLogEveryRestCallEnabled() {
+        return logEveryRestCallEnabled;
+    }
+
+    public void setLogEveryRestCallEnabled(final boolean logEveryRestCallEnabled) {
+        this.logEveryRestCallEnabled = logEveryRestCallEnabled;
+    }
+
     @JsonProperty("globalLoggingEnabled")
-    @JsonPropertyDescription("Log additional RESTful service calls. N.B. This will result in some events being recorded twice.")
+    @JsonPropertyDescription("Log additional RESTful service calls.")
     public boolean isGlobalLoggingEnabled() {
         return globalLoggingEnabled;
     }
@@ -42,6 +55,8 @@ public class RequestLoggingConfig extends AbstractConfig {
     public String toString() {
         return "RequestLoggingConfig{" +
                 "globalLoggingEnabled=" + globalLoggingEnabled +
+                "," +
+                "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
                 '}';
     }
 
