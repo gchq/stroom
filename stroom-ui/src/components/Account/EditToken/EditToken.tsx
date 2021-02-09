@@ -21,14 +21,14 @@ import { Col, Form, Modal } from "react-bootstrap";
 import { FormikHelpers } from "formik/dist/types";
 import { newTokenValidationSchema } from "./validation";
 import { FunctionComponent } from "react";
-import { Token } from "../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useTokenResource } from "../api";
 import CopyToClipboard from "react-copy-to-clipboard";
 import Button from "../../Button/Button";
 import { FormField } from "../../FormField/FormField";
 import { CloseButton, CloseProps } from "../../Dialog/CloseButton";
-import useDateUtil from "../../../lib/useDateUtil";
+import useDateUtil from "lib/useDateUtil";
+import { useStroomApi } from "lib/useStroomApi";
+import { Token } from "api/stroom";
 
 export interface EditTokenProps {
   initialValues: Token;
@@ -48,8 +48,8 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
   const { values, handleSubmit } = formikProps;
   const { onClose } = closeProps;
 
-  const { toggleEnabled } = useTokenResource();
   const { toDateString } = useDateUtil();
+  const { exec } = useStroomApi();
 
   return (
     <Form noValidate={true} onSubmit={handleSubmit} className="EditToken">
@@ -67,9 +67,15 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
               type="checkbox"
               label="Enabled"
               onChange={() => {
-                toggleEnabled(values.id, !values.enabled).then(() => {
-                  formikProps.setFieldValue("enabled", !values.enabled, true);
-                });
+                exec(
+                  (api) =>
+                    api.token.toggleEnabled(values.id, {
+                      enabled: !values.enabled,
+                    }),
+                  () => {
+                    formikProps.setFieldValue("enabled", !values.enabled, true);
+                  },
+                );
               }}
               checked={values.enabled}
             />

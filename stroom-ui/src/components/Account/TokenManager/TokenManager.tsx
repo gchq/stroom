@@ -21,7 +21,7 @@ import { useTokenManager } from "./useTokenManager";
 import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditToken } from "../EditToken/EditToken";
-import { Token } from "../types";
+import { Token } from "api/stroom";
 import { QuickFilterProps } from "../AccountManager/QuickFilter";
 import { CreateToken } from "../EditToken/CreateToken";
 import { TableProps } from "../../Table/Table";

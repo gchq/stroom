@@ -26,8 +26,6 @@ import { OkCancelButtons, OkCancelProps } from "../../Dialog/OkCancelButtons";
 import { Formik, FormikProps } from "formik";
 import { Col, Form, Modal } from "react-bootstrap";
 import { newAccountValidationSchema } from "./validation";
-import { CreateAccountRequest, UpdateAccountRequest } from "../api/types";
-import { Account } from "components/Account/types";
 import Button from "../../Button/Button";
 import { useState } from "react";
 import {
@@ -35,8 +33,13 @@ import {
   ChangePasswordFormValues,
 } from "../../Authentication/ChangePassword";
 import { FormikHelpers } from "formik/dist/types";
-import { PasswordPolicyConfig } from "../../Authentication/api/types";
-import { useAccountResource } from "../api";
+import {
+  PasswordPolicyConfig,
+  CreateAccountRequest,
+  UpdateAccountRequest,
+  Account,
+} from "api/stroom";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 interface ChangePasswordProps {
   onPasswordChange: () => void;
@@ -209,8 +212,6 @@ export const EditAccount: React.FunctionComponent<{
     ChangePasswordFormValues
   >();
 
-  const { create, update } = useAccountResource();
-
   const editPassword = () => {
     setShowPasswordDialog(true);
   };
@@ -227,6 +228,8 @@ export const EditAccount: React.FunctionComponent<{
     actions.setSubmitting(false);
     setShowPasswordDialog(false);
   };
+
+  const { exec } = useStroomApi();
 
   const onSubmit = (values, actions) => {
     const handleResponse = (response: any) => {
@@ -249,7 +252,8 @@ export const EditAccount: React.FunctionComponent<{
         forcePasswordChange: true,
         neverExpires: values.neverExpires,
       };
-      create(request).then(handleResponse);
+
+      exec((api) => api.account.create(request), handleResponse);
     } else {
       const request: UpdateAccountRequest = {
         account: {
@@ -268,7 +272,8 @@ export const EditAccount: React.FunctionComponent<{
         password: passwordState && passwordState.password,
         confirmPassword: passwordState && passwordState.confirmPassword,
       };
-      update(request, account.id).then(handleResponse);
+
+      exec((api) => api.account.update(account.id, request), handleResponse);
     }
   };
 

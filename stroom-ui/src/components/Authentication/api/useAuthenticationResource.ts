@@ -7,7 +7,6 @@ import {
   ConfirmPasswordResponse,
   LoginRequest,
   LoginResponse,
-  PasswordPolicyConfig,
   ResetPasswordRequest,
   ServerAuthenticationState,
 } from "./types";
@@ -25,7 +24,6 @@ interface AuthenticationResource {
   resetPassword: (
     request: ResetPasswordRequest,
   ) => Promise<ChangePasswordResponse>;
-  fetchPasswordPolicyConfig: () => Promise<PasswordPolicyConfig>;
 }
 
 export const useAuthenticationResource = (): AuthenticationResource => {
@@ -65,17 +63,11 @@ export const useAuthenticationResource = (): AuthenticationResource => {
     [resource, httpPost],
   );
 
-  const fetchPasswordPolicyConfig = useCallback(
-    () => httpGet(`${resource}/noauth/fetchPasswordPolicy/`),
-    [resource, httpGet],
-  );
-
   return {
     getAuthenticationState,
     login,
     confirmPassword,
     resetPassword,
     changePassword,
-    fetchPasswordPolicyConfig,
   };
 };

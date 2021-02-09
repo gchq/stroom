@@ -1,65 +1,22 @@
-/*
- * Copyright 2016 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package stroom.util;
 
-package stroom.util.shared;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
 
-/**
- * List that knows how big the whole set is.
- */
-@JsonInclude(Include.NON_NULL)
-public class ResultPage<T> implements Serializable {
-    @JsonProperty
-    private final List<T> values;
-    @JsonProperty
-    private final PageResponse pageResponse;
-
-    public ResultPage(final List<T> values) {
-        this.values = values;
-        this.pageResponse = createPageResponse(values);
-    }
-
-    @JsonCreator
-    public ResultPage(@JsonProperty("values") final List<T> values,
-                      @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        this.values = values;
-        this.pageResponse = pageResponse;
-    }
-
+public class ResultPageFactory {
     /**
      * Creates a list limited to a result page from a full list of results.
      *
@@ -68,7 +25,9 @@ public class ResultPage<T> implements Serializable {
      * @param <T>         The type of list item.
      * @return A list limited to a result page from a full list of results.
      */
-    public static <T> ResultPage<T> createPageLimitedList(final List<T> fullList, final PageRequest pageRequest) {
+    public static <T, RESULT_PAGE> RESULT_PAGE createPageLimitedList(final List<T> fullList,
+                                                                     final PageRequest pageRequest,
+                                                                     final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
@@ -90,33 +49,34 @@ public class ResultPage<T> implements Serializable {
                 }
 
                 final PageResponse pageResponse = new PageResponse(offset, limited.size(), (long) fullList.size(), true);
-                return new ResultPage<>(limited, pageResponse);
+                return function.apply(limited, pageResponse);
             }
         }
 
         final PageResponse pageResponse = new PageResponse(0L, fullList.size(), (long) fullList.size(), true);
-        return new ResultPage<>(fullList, pageResponse);
+        return function.apply(fullList, pageResponse);
     }
 
     /**
      * Used for full queries (not bounded).
      */
-    public static <T> ResultPage<T> createUnboundedList(final List<T> realList) {
+    public static <T, RESULT_PAGE> RESULT_PAGE createUnboundedList(final List<T> realList,
+                                                                   final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
         if (realList != null) {
-            return new ResultPage<>(realList, createPageResponse(realList));
+            return function.apply(realList, createPageResponse(realList));
         } else {
-            return new ResultPage<>(Collections.emptyList());
+            return function.apply(Collections.emptyList(), createPageResponse(Collections.emptyList()));
         }
     }
 
-    public static PageResponse createPageResponse(final List<?> values) {
+    private static PageResponse createPageResponse(final List<?> values) {
         if (values != null) {
             return new PageResponse(0L, values.size(), (long) values.size(), true);
         }
         return new PageResponse(0L, 0, 0L, true);
     }
 
-    public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
+    private static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
         if (values != null) {
             return new PageResponse(pageResponse.getOffset(), values.size(), pageResponse.getTotal(), pageResponse.isExact());
         }
@@ -126,25 +86,28 @@ public class ResultPage<T> implements Serializable {
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
-                                                             final BaseCriteria baseCriteria) {
-        return createPageResultList(realList, baseCriteria.getPageRequest(), null);
+    public static <T, RESULT_PAGE> RESULT_PAGE createCriterialBasedList(final List<T> realList,
+                                                                        final BaseCriteria baseCriteria,
+                                                                        final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+        return createPageResultList(realList, baseCriteria.getPageRequest(), null, function);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
-                                                             final BaseCriteria baseCriteria, final Long totalSize) {
-        return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize);
+    public static <T, RESULT_PAGE> RESULT_PAGE createCriterialBasedList(final List<T> realList,
+                                                                        final BaseCriteria baseCriteria, final Long totalSize,
+                                                                        final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
+        return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize, function);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    private static <T> ResultPage<T> createPageResultList(final List<T> realList,
-                                                          final PageRequest pageRequest,
-                                                          final Long totalSize) {
+    private static <T, RESULT_PAGE> RESULT_PAGE createPageResultList(final List<T> realList,
+                                                                     final PageRequest pageRequest,
+                                                                     final Long totalSize,
+                                                                     final BiFunction<List<T>, PageResponse, RESULT_PAGE> function) {
         final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
@@ -181,8 +144,9 @@ public class ResultPage<T> implements Serializable {
         }
 
         final PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
-        return new ResultPage<>(realList, pageResponse);
+        return function.apply(realList, pageResponse);
     }
+
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
             final PageRequest pageRequest,
@@ -273,79 +237,4 @@ public class ResultPage<T> implements Serializable {
         };
     }
 
-    public PageResponse getPageResponse() {
-        return pageResponse;
-    }
-
-    public List<T> getValues() {
-        return values;
-    }
-
-    public int size() {
-        return values.size();
-    }
-
-    /**
-     * @return the first item or null if the list is empty
-     */
-    @JsonIgnore
-    public T getFirst() {
-        if (values.size() > 0) {
-            return values.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    @JsonIgnore
-    public int getPageStart() {
-        return (int) pageResponse.getOffset();
-    }
-
-    @JsonIgnore
-    public int getPageSize() {
-        if (pageResponse.getTotal() == null) {
-            return getPageStart() + values.size();
-        }
-        return pageResponse.getTotal().intValue();
-    }
-
-    @JsonIgnore
-    public boolean isExact() {
-        return pageResponse.isExact();
-    }
-
-    public Stream<T> stream() {
-        return values.stream();
-    }
-
-    public Stream<T> parallelStream() {
-        return values.parallelStream();
-    }
-
-    public void forEach(final Consumer<? super T> action) {
-        values.forEach(action);
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final ResultPage<?> that = (ResultPage<?>) o;
-        return Objects.equals(values, that.values) &&
-                Objects.equals(pageResponse, that.pageResponse);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(values, pageResponse);
-    }
-
-    @Override
-    public String toString() {
-        return "ResultPage{" +
-                "values=" + values +
-                ", pageResponse=" + pageResponse +
-                '}';
-    }
 }

@@ -17,7 +17,7 @@
 import * as React from "react";
 import { useState } from "react";
 import AsyncSelect from "react-select/async";
-import { Account } from "../types";
+import { Account } from "api/stroom";
 
 const loadOptions = (
   inputValue: string,

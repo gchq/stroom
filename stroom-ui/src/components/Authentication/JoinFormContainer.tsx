@@ -28,8 +28,13 @@ export const JoinFormContainer: React.FunctionComponent = () => {
   const [strength, setStrength] = useState(0);
   let currentStrength = strength;
 
-  const minStrength = 3;
-  const thresholdLength = 7;
+  const passwordPolicy = {
+    minimumPasswordLength: 7,
+    minimumPasswordStrength: 3,
+    mandatoryPasswordChangeDuration: undefined,
+    neverUsedAccountDeactivationThreshold: undefined,
+    unusedAccountDeactivationThreshold: undefined,
+  };
 
   const fullNameSchema = Yup.string()
     .required("Full name is required")
@@ -40,11 +45,11 @@ export const JoinFormContainer: React.FunctionComponent = () => {
   const passwordSchema = Yup.string()
     .label("Password")
     .required("Password is required")
-    .min(thresholdLength, "Password is short")
+    .min(passwordPolicy.minimumPasswordLength, "Password is short")
     .test(
       "password-strength",
       "Password is weak",
-      () => currentStrength > minStrength,
+      () => currentStrength > passwordPolicy.minimumPasswordStrength,
     );
   const validationSchema = Yup.object().shape({
     fullname: fullNameSchema,
@@ -76,7 +81,7 @@ export const JoinFormContainer: React.FunctionComponent = () => {
         return (
           <JoinForm
             formikProps={{ ...formikProps, handleChange: handler }}
-            passwordStrengthProps={{ strength, minStrength, thresholdLength }}
+            passwordStrengthProps={{ strength, passwordPolicy }}
           />
         );
       }}

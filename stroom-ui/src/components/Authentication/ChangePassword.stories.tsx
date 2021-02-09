@@ -17,6 +17,9 @@ storiesOf("Authentication", module)
           passwordPolicyConfig={{
             minimumPasswordLength: 7,
             minimumPasswordStrength: 3,
+            mandatoryPasswordChangeDuration: undefined,
+            neverUsedAccountDeactivationThreshold: undefined,
+            unusedAccountDeactivationThreshold: undefined,
           }}
           onSubmit={() => undefined}
           onClose={() => undefined}
@@ -36,6 +39,9 @@ storiesOf("Authentication", module)
           passwordPolicyConfig={{
             minimumPasswordLength: 7,
             minimumPasswordStrength: 3,
+            mandatoryPasswordChangeDuration: undefined,
+            neverUsedAccountDeactivationThreshold: undefined,
+            unusedAccountDeactivationThreshold: undefined,
           }}
           onSubmit={() => undefined}
           onClose={() => undefined}

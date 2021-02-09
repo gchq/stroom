@@ -36,17 +36,6 @@ export interface ResetPasswordRequest {
   confirmNewPassword: string;
 }
 
-export interface PasswordPolicyConfig {
-  allowPasswordResets?: boolean;
-  neverUsedAccountDeactivationThreshold?: string;
-  unusedAccountDeactivationThreshold?: string;
-  mandatoryPasswordChangeDuration?: string;
-  forcePasswordChangeOnFirstLogin?: boolean;
-  passwordComplexityRegex?: string;
-  minimumPasswordStrength?: number;
-  minimumPasswordLength?: number;
-}
-
 /**
  * This interface holds the clients current authentication state.
  */

@@ -7,11 +7,11 @@ import { FormikProps } from "formik";
 import { createFormFieldState } from "./util";
 import zxcvbn from "zxcvbn";
 import { FormFieldState } from "./FormField";
+import { PasswordPolicyConfig } from "api/stroom";
 
 export interface PasswordStrengthProps {
+  passwordPolicy: PasswordPolicyConfig;
   strength?: number;
-  minStrength?: number;
-  thresholdLength?: number;
   onStrengthChanged?: (strength: number) => void;
 }
 
@@ -60,11 +60,13 @@ export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> 
   };
 
   const { value, error, touched } = formFieldState;
+  const { strength, passwordPolicy } = passwordStrengthProps;
+
   const {
-    strength,
-    minStrength = 3,
-    thresholdLength = 7,
-  } = passwordStrengthProps;
+    minimumPasswordStrength = 3,
+    minimumPasswordLength = 7,
+    passwordPolicyMessage = "To conform with our Strong Password policy, you are required to use a sufficiently strong password. Password must be more than 7characters.",
+  } = passwordPolicy;
 
   // initialize internal component state
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
@@ -74,8 +76,8 @@ export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> 
   };
 
   const passwordLength = value.length;
-  const passwordStrong = strength >= minStrength;
-  const passwordLong = passwordLength > thresholdLength;
+  const passwordStrong = strength >= minimumPasswordStrength;
+  const passwordLong = passwordLength > minimumPasswordLength;
 
   // dynamically set the password length counter class
   const counterClass = [
@@ -110,10 +112,7 @@ export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> 
     <Form.Group as={Col} controlId={controlId}>
       <Form.Label>{label}</Form.Label>
       {/** Render the children nodes passed to component **/}
-      <Form.Text className="my-0 text-muted">
-        {`To conform with our Strong Password policy, you are required to use a
-          sufficiently strong password. Password must be more than ${thresholdLength} characters.`}
-      </Form.Text>
+      <Form.Text className="my-0 text-muted">{passwordPolicyMessage}</Form.Text>
       {/** Render the password strength meter **/}
       <div className={strengthClass}>
         <div className="strength-meter-fill" data-strength={strength} />
@@ -136,7 +135,7 @@ export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> 
           <span className={counterClass}>
             {passwordLength
               ? passwordLong
-                ? `${thresholdLength}+`
+                ? `${minimumPasswordLength}+`
                 : passwordLength
               : ""}
           </span>

@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Column } from "react-table";
-import { Account } from "../types";
 import moment from "moment";
 import useDateUtil from "../../../lib/useDateUtil";
+import { Account } from "api/stroom";
 
 moment.updateLocale("en", {
   invalidDate: "No date",

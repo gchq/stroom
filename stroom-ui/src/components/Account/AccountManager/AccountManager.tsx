@@ -21,11 +21,11 @@ import useAccountManager from "./useAccountManager";
 import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditAccount } from "../EditAccount/EditAccount";
-import { Account } from "../types";
 import { usePasswordPolicy } from "../../Authentication/usePasswordPolicy";
 import { QuickFilterProps } from "./QuickFilter";
 import { TableProps } from "../../Table/Table";
 import { Confirm, PromptType } from "../../Prompt/Prompt";
+import { Account } from "api/stroom";
 
 const initialAccount: Account = {
   userId: "",

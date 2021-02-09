@@ -1,22 +1,22 @@
 // Get token config
 import { useEffect, useState } from "react";
-import { PasswordPolicyConfig } from "./api/types";
-import { useAuthenticationResource } from "./api";
+import { PasswordPolicyConfig } from "api/stroom";
+import { useStroomApi } from "../../lib/useStroomApi/useStroomApi";
 
-export const usePasswordPolicy = () => {
+export const usePasswordPolicy = (): PasswordPolicyConfig => {
   const [passwordPolicyConfig, setPasswordPolicyConfig] = useState<
     PasswordPolicyConfig
   >(undefined);
-  const { fetchPasswordPolicyConfig } = useAuthenticationResource();
 
+  const { exec } = useStroomApi();
   useEffect(() => {
     console.log("Fetching password policy config");
-    fetchPasswordPolicyConfig().then(
-      (passwordPolicyConfig: PasswordPolicyConfig) => {
-        setPasswordPolicyConfig(passwordPolicyConfig);
-      },
-    );
-  }, [fetchPasswordPolicyConfig]);
 
+    exec(
+      (api) => api.authentication.fetchPasswordPolicy(),
+      (passwordPolicyConfig: PasswordPolicyConfig) =>
+        setPasswordPolicyConfig(passwordPolicyConfig),
+    );
+  }, [exec]);
   return passwordPolicyConfig;
 };

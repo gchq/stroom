@@ -8,8 +8,8 @@ import {
   useRowSelect,
   useSortBy,
 } from "react-table";
-import { Sort } from "../Account/api/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Sort } from "api/stroom";
 
 export interface TableProps<T> {
   columns: any[];

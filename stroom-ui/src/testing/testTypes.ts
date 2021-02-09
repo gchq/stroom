@@ -13,7 +13,7 @@ import { DataSourceType } from "components/ExpressionBuilder/types";
 import { IndexVolumeGroup } from "components/IndexVolumes/indexVolumeGroupApi";
 import { IndexVolume } from "components/IndexVolumes/indexVolumeApi";
 import { StreamTaskType } from "components/Processing/types";
-import { Account, Token } from "components/Account/types";
+import { Account, Token } from "api/stroom";
 
 export interface UserGroupMembership {
   userUuid: string;
