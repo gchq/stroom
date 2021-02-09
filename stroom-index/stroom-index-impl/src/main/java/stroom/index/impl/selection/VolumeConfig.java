@@ -10,6 +10,7 @@ import java.util.List;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
+
     public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
@@ -65,7 +66,7 @@ public class VolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("The name of the default index volume group that is created if none exist on " +
             "application start. Use properties defaultIndexVolumeGroupLimit, defaultIndexVolumeGroupPaths " +
             "and defaultIndexVolumeGroupNodes to specify details.")
-    public String getDefaultIndexVolumeGroupName(){
+    public String getDefaultIndexVolumeGroupName() {
         return defaultIndexVolumeGroupName;
     }
 
@@ -79,7 +80,7 @@ public class VolumeConfig extends AbstractConfig {
             "nodes but there must always be the same number of elements in this list as in property " +
             "defaultIndexVolumeGroupNodes. If a path is a relative path then it will be treated as being " +
             "relative to stroom.path.home.")
-    public List<String> getDefaultIndexVolumeGroupPaths(){
+    public List<String> getDefaultIndexVolumeGroupPaths() {
         return defaultIndexVolumeGroupPaths;
     }
 
@@ -116,9 +117,9 @@ public class VolumeConfig extends AbstractConfig {
                 ", preferLocalVolumes=" + preferLocalVolumes +
                 ", volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
-                ", defaultIndexVolumeGroupName=" + "\"" +defaultIndexVolumeGroupName + "\"" +
+                ", defaultIndexVolumeGroupName=" + "\"" + defaultIndexVolumeGroupName + "\"" +
                 ", defaultIndexVolumeFilesystemUtilisation=" + defaultIndexVolumeFilesystemUtilisation +
-                ", defaultIndexVolumeGroupNodes=" + "\"" +defaultIndexVolumeGroupNodes + "\"" +
+                ", defaultIndexVolumeGroupNodes=" + "\"" + defaultIndexVolumeGroupNodes + "\"" +
                 ", defaultIndexVolumeGroupPaths=" + "\"" + defaultIndexVolumeGroupPaths + "\"" +
                 '}';
     }

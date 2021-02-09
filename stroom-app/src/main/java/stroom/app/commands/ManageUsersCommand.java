@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 /**
  * Creates an account in the internal identity provider
- *
+ * <p>
  * e.g manage_users ../local.yml --createUser admin --createGroup Administrators --addToGroup admin Administrators --grantPermission Administrators Administrator
  */
 public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
@@ -170,9 +170,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .sorted()
                     .collect(Collectors.joining("\n"));
             LOGGER.info("Valid application permission names:\n" +
-                    "--------------------\n" +
-                    "  {}\n" +
-                    "--------------------",
+                            "--------------------\n" +
+                            "  {}\n" +
+                            "--------------------",
                     perms);
         }
     }
@@ -305,7 +305,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
     private void grantPermissions(final Namespace namespace) {
         final List<PermissionArgs> permissionArgsList = extractPermissionArgs(namespace, GRANT_PERMISSION_ARG_NAME);
-        permissionArgsList.forEach(permissionArgs-> {
+        permissionArgsList.forEach(permissionArgs -> {
             final String msg = LogUtil.message("Granting application permission '{}' to '{}'",
                     permissionArgs.permissionName, permissionArgs.userOrGroupId);
 
@@ -358,7 +358,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 namespace,
                 REVOKE_PERMISSION_ARG_NAME);
 
-        permissionArgsList.forEach(permissionArgs-> {
+        permissionArgsList.forEach(permissionArgs -> {
             final String msg = LogUtil.message("Revoking application permission from '{}' to '{}'",
                     permissionArgs.permissionName, permissionArgs.userOrGroupId);
 
@@ -512,6 +512,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private static class GroupArgs {
+
         private final String userOrGroupId;
         private final String targetGroupId;
 
@@ -530,6 +531,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private static class PermissionArgs {
+
         private final String userOrGroupId;
         private final String permissionName;
 

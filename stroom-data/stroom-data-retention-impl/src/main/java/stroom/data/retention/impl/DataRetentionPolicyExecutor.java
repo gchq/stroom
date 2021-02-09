@@ -219,7 +219,8 @@ public class DataRetentionPolicyExecutor {
     }
 
     private List<DataRetentionRule> getActiveRules(final List<DataRetentionRule> rules) {
-        final List<DataRetentionRule> activeRules;// make sure we create a list of rules that are enabled and have at least one enabled term.
+        // make sure we create a list of rules that are enabled and have at least one enabled term.
+        final List<DataRetentionRule> activeRules;
         if (rules != null) {
             activeRules = rules.stream()
                     .filter(rule -> rule.isEnabled()

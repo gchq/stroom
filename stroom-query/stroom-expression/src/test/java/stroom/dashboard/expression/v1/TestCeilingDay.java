@@ -15,7 +15,7 @@ class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        final Instant time = LocalDateTime.of(2021, 1,20,6,30, 55)
+        final Instant time = LocalDateTime.of(2021, 1, 20, 6, 30, 55)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncated = time.truncatedTo(ChronoUnit.DAYS)

@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
@@ -71,7 +72,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     public List<String> listAllNodes() {
         FetchNodeStatusResponse response = find();
-        if (response != null && response.getValues() != null){
+        if (response != null && response.getValues() != null) {
             return response.getValues()
                     .stream()
                     .map(NodeStatusResult::getNode)

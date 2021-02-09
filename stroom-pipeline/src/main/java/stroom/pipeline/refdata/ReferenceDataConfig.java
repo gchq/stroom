@@ -15,6 +15,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
+
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
@@ -31,7 +32,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
-            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. "+
+            "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "The directory will be created if it doesn't exist." +
             "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
     public String getLocalDir() {

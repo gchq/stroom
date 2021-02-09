@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DataDownloadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
@@ -161,7 +162,7 @@ public class DataDownloadTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
-                        result.addMessage(new Message(Severity.WARNING,e.getMessage()));
+                        result.addMessage(new Message(Severity.WARNING, e.getMessage()));
                     }
                 }
 

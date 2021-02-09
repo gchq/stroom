@@ -7,17 +7,18 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestResultPage {
+
     @Test
     void testCollector1() {
 
-        PageRequest pageRequest = new PageRequest(10L,10);
+        PageRequest pageRequest = new PageRequest(10L, 10);
         ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
-            .boxed()
-            .map(WrappedInt::new)
-            .collect(ResultPage.collector(pageRequest));
+                .boxed()
+                .map(WrappedInt::new)
+                .collect(ResultPage.collector(pageRequest));
 
         assertThat(resultPage.size())
-            .isEqualTo(pageRequest.getLength());
+                .isEqualTo(pageRequest.getLength());
         assertThat(resultPage.getFirst().getValue()).isEqualTo(10);
     }
 
@@ -38,16 +39,17 @@ class TestResultPage {
     void testCollector3() {
 
         ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
-            .boxed()
-            .map(WrappedInt::new)
-            .collect(ResultPage.collector((PageRequest) null));
+                .boxed()
+                .map(WrappedInt::new)
+                .collect(ResultPage.collector((PageRequest) null));
 
         assertThat(resultPage.size())
-            .isEqualTo(100);
+                .isEqualTo(100);
         assertThat(resultPage.getFirst().getValue()).isEqualTo(0);
     }
 
     private static class WrappedInt {
+
         private final int value;
 
         WrappedInt(final int value) {

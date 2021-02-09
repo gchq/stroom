@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
+
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRef.builder().uuid("").name("None").type("").build());
 
@@ -139,10 +140,11 @@ public class ExplorerTreeModel {
 
                         // Check if the filter settings have changed
                         // since we were asked to fetch.
-                        if (criteria != currentCriteria) {//!explorerTreeFilter.equals(currentFilter) || !openItems.equals(currentOpenItems)) {
+                        if (criteria != currentCriteria) {
+                            //!explorerTreeFilter.equals(currentFilter) || !openItems.equals(currentOpenItems)) {
+
                             // Some settings have changed so try again with the new settings.
                             refresh();
-
                         } else {
                             onDataChanged(result);
 
@@ -299,6 +301,7 @@ public class ExplorerTreeModel {
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

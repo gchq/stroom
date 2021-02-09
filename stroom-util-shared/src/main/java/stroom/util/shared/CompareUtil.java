@@ -17,13 +17,13 @@
 package stroom.util.shared;
 
 import java.math.BigDecimal;
-
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
 public final class CompareUtil {
+
     private CompareUtil() {
     }
 
@@ -94,7 +94,7 @@ public final class CompareUtil {
 
     /**
      * Convert a BaseCriteria into a Comparator
-     *
+     * <p>
      * e.g. of fieldComparatorsMap
      *
      * <pre>
@@ -111,8 +111,8 @@ public final class CompareUtil {
      * </pre>
      */
     public static <T> Comparator<T> buildCriteriaComparator(
-        final Map<String, Comparator<T>> fieldComparatorsMap,
-        final BaseCriteria criteria) {
+            final Map<String, Comparator<T>> fieldComparatorsMap,
+            final BaseCriteria criteria) {
 
         Objects.requireNonNull(fieldComparatorsMap);
         Objects.requireNonNull(criteria);
@@ -125,8 +125,8 @@ public final class CompareUtil {
 
             Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
 
-            Objects.requireNonNull(fieldComparator,() ->
-                "Missing comparator for field " + field);
+            Objects.requireNonNull(fieldComparator, () ->
+                    "Missing comparator for field " + field);
 
             if (sort.isDesc()) {
                 fieldComparator = fieldComparator.reversed();

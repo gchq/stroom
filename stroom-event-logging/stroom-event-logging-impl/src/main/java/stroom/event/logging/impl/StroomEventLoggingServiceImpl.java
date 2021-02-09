@@ -50,7 +50,6 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +70,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
+
     /**
      * Logger - should not be used for event logs
      */
@@ -348,7 +348,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     public BaseObject convert(final Object object) {
         final BaseObject baseObj;
         final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
-        if (objectInfoAppender != null){
+        if (objectInfoAppender != null) {
             baseObj = objectInfoAppender.createBaseObject(object);
         } else {
             final OtherObject.Builder<Void> builder = OtherObject.builder()
@@ -427,7 +427,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     @Override
     public String describe(final Object object) {
-        if (object == null){
+        if (object == null) {
             return null;
         }
         final StringBuilder desc = new StringBuilder();
@@ -483,7 +483,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private Map<String, String> findPropsForDataItems (final Object obj){
+    private Map<String, String> findPropsForDataItems(final Object obj) {
         // Construct a Jackson JavaType for your class
         JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
 
@@ -494,16 +494,16 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         List<BeanPropertyDefinition> properties = beanDescription.findProperties();
 
         // Get class level ignored properties
+        // Filter properties removing the class level ignored ones
         Set<String> ignoredProperties = objectMapper.getSerializationConfig().getAnnotationIntrospector()
-                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();// Filter properties removing the class level ignored ones
+                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();
 
         List<BeanPropertyDefinition> availableProperties = properties.stream()
                 .filter(property -> !ignoredProperties.contains(property.getName()))
                 .collect(Collectors.toList());
 
         return availableProperties.stream().collect(Collectors.toMap(
-                BeanPropertyDefinition::getName,
-                p ->{
+                BeanPropertyDefinition::getName, p -> {
                     if (shouldRedact(p.getName().toLowerCase(), p.getRawPrimaryType())) {
                         return "********";
                     } else {
@@ -519,6 +519,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     /**
      * Create {@link Data} items from properties of the supplied POJO
+     *
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
@@ -552,7 +553,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     //itself is logged, e.g. due to configuration settings
     //Assess whether this field should be redacted
     public boolean shouldRedact(String propNameLowercase, Class<?> type) {
-        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)){
+        if (Boolean.class.isAssignableFrom(type) || boolean.class.isAssignableFrom(type)) {
             return false; //Don't redact boolean types
         }
 

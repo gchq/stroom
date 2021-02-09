@@ -93,6 +93,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
@@ -299,18 +300,18 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             final String finishedInfo;
             //Calling isSuperceded() now always ensures that it is called, even in cases when there is no output.
-            if (supersededOutputHelper.isSuperseded()){
-             finishedInfo =
+            if (supersededOutputHelper.isSuperseded()) {
+                finishedInfo =
                         SUPERCEDED +
-                        info +
-                        ", finished in " +
-                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+                                info +
+                                ", finished in " +
+                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
             } else {
                 finishedInfo =
                         FINISHED +
-                        info +
-                        ", finished in  " +
-                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+                                info +
+                                ", finished in  " +
+                                ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
             }
 
             // Log that we have finished processing.
@@ -524,6 +525,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
             implements DestinationProvider, Destination, AutoCloseable {
+
         private final Store streamStore;
         private final MetaData metaData;
         private final Meta meta;

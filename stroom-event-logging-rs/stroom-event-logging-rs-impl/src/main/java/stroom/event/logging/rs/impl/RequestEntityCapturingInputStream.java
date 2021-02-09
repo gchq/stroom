@@ -34,25 +34,29 @@ import java.util.stream.Collectors;
 import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 
 class RequestEntityCapturingInputStream extends BufferedInputStream {
+
     private final static int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
     private final Class<?> requestParamClass;
     private final boolean constructed;
 
-    public RequestEntityCapturingInputStream(final ResourceInfo resourceInfo, final InputStream original, final ObjectMapper objectMapper, final Charset charset) throws IOException {
+    public RequestEntityCapturingInputStream(final ResourceInfo resourceInfo,
+                                             final InputStream original,
+                                             final ObjectMapper objectMapper,
+                                             final Charset charset) throws IOException {
         super(original);
         this.requestParamClass = findRequestParamClass(resourceInfo);
         readEntity(objectMapper, charset);
         constructed = true;
     }
 
-    private void readEntity(final ObjectMapper objectMapper, final Charset charset)  {
+    private void readEntity(final ObjectMapper objectMapper, final Charset charset) {
 
         if (requestParamClass != null) {
             try {
                 mark(MAX_ENTITY_SIZE + 1);
                 requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 //Indicates that this request type cannot be constructed in this way.
                 requestEntity = null;
             } finally {
@@ -66,8 +70,8 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
 
     }
 
-    private Class<?> findRequestParamClass(final ResourceInfo resourceInfo){
-        if (resourceInfo.getResourceMethod().getParameterCount() == 0){
+    private Class<?> findRequestParamClass(final ResourceInfo resourceInfo) {
+        if (resourceInfo.getResourceMethod().getParameterCount() == 0) {
             return null;
         }
 
@@ -80,11 +84,14 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
                 filter(p -> AnnotationUtil.getInheritedParameterAnnotation(QueryParam.class,
                         resourceInfo.getResourceMethod(), p) == null).
                 map(Parameter::getType).collect(Collectors.toList());
-        if (suppliedParams.isEmpty()){
+        if (suppliedParams.isEmpty()) {
             return null;
         }
-        if (suppliedParams.size() > 1){
-            LOGGER.error("Multiple parameters to resource method " + resourceInfo.getResourceMethod().getName() + " on " + resourceInfo.getResourceClass().getSimpleName());
+        if (suppliedParams.size() > 1) {
+            LOGGER.error("Multiple parameters to resource method " +
+                    resourceInfo.getResourceMethod().getName() +
+                    " on " +
+                    resourceInfo.getResourceClass().getSimpleName());
         }
         return suppliedParams.get(0);
     }

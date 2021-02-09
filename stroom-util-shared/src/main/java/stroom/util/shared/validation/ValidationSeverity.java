@@ -35,7 +35,7 @@ public enum ValidationSeverity {
             if (payloads.contains(Error.class)) {
                 // ERROR trumps WARNING
                 result = ERROR;
-            } else if(payloads.contains(Warning.class)) {
+            } else if (payloads.contains(Warning.class)) {
                 // No errors but a warning
                 result = WARNING;
             } else {
@@ -52,9 +52,13 @@ public enum ValidationSeverity {
 
     public class Error implements ValidationSeverityPayload {
 
-    };
+    }
+
+    ;
 
     public class Warning implements ValidationSeverityPayload {
 
-    };
+    }
+
+    ;
 }

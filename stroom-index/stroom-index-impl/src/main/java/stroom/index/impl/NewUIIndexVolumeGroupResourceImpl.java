@@ -48,7 +48,7 @@ public class NewUIIndexVolumeGroupResourceImpl implements NewUIIndexVolumeGroupR
     }
 
     @Override
-    public Response update(IndexVolumeGroup indexVolumeGroup){
+    public Response update(IndexVolumeGroup indexVolumeGroup) {
         final var group = indexVolumeGroupService.update(indexVolumeGroup);
         return Response.ok(group).build();
     }

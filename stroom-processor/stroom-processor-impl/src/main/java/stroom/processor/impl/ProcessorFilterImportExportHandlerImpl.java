@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ProcessorFilterImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterImportExportHandlerImpl.class);
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private final ProcessorFilterService processorFilterService;
@@ -125,7 +126,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                                 trackerStartMs);
                     } else {
                         LOGGER.error("Processor not found on pipeline " + processorFilter.getPipelineName() +
-                        "(" +  processorFilter.getPipelineUuid() + ")" +
+                                "(" + processorFilter.getPipelineUuid() + ")" +
                                 " and failed to create");
                     }
                 }
@@ -291,7 +292,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         } else if (page.size() > 1) {
             ex = new IllegalStateException("Multiple processors with DocRef " + filterUuid + " found.");
             result = null;
-        } else if (page.size() == 1){
+        } else if (page.size() == 1) {
             result = page.getFirst();
             ex = null;
         } else {

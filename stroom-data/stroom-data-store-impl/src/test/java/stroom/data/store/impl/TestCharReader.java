@@ -87,7 +87,7 @@ class TestCharReader {
         //                   01234567890123456789
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(text.getBytes(utf8));
 
-        CharReader charReader = new CharReader(inputStream,false,  utf8.name());
+        CharReader charReader = new CharReader(inputStream, false, utf8.name());
 
         readNTimesAndAssert(
                 charReader,
@@ -212,7 +212,7 @@ class TestCharReader {
 
                         // Check right number of 'characters'
                         Assertions.assertThat(decodedChars)
-                                .hasSize(inputStr.length() -1); // -1 to account for 2 char emoji
+                                .hasSize(inputStr.length() - 1); // -1 to account for 2 char emoji
                     });
                 });
     }
@@ -297,7 +297,7 @@ class TestCharReader {
             }
         }
         // now the last read
-        readAndAssert(charReader,expectedString, expectedByteOffset, expectedCharOffset);
+        readAndAssert(charReader, expectedString, expectedByteOffset, expectedCharOffset);
     }
 
     private void readAndAssert(final CharReader charReader,

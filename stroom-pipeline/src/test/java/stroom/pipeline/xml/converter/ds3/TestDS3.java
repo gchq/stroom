@@ -36,9 +36,9 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.TextRange;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
+import stroom.util.shared.TextRange;
 import stroom.util.xml.XMLUtil;
 
 import org.assertj.core.api.Assertions;
@@ -80,6 +80,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 // TODO : Need to try and migrate tests from v4 code base to give better coverage
 class TestDS3 extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
     private static final String CONFIG_EXTENSION = ".ds3.xml";
 
@@ -173,10 +174,10 @@ class TestDS3 extends StroomUnitTest {
                 root,
                 inputStr,
                 List.of(
-                        makeRange(1,1, 1, 5),
-                        makeRange(2,1, 2, 5),
-                        makeRange(3,1, 3, 7),
-                        makeRange(4,1, 4, 5)));
+                        makeRange(1, 1, 1, 5),
+                        makeRange(2, 1, 2, 5),
+                        makeRange(3, 1, 3, 7),
+                        makeRange(4, 1, 4, 5)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -207,10 +208,10 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler loggingContentHandler = doLocationTest(
                 root,
                 inputStr,
-                List.of(makeRange(1,1, 1, 6),
-                        makeRange(1,7, 1, 12),
-                        makeRange(1,13, 1, 20),
-                        makeRange(1,21, 1, 25)));
+                List.of(makeRange(1, 1, 1, 6),
+                        makeRange(1, 7, 1, 12),
+                        makeRange(1, 13, 1, 20),
+                        makeRange(1, 21, 1, 25)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -247,10 +248,10 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler loggingContentHandler = doLocationTest(
                 root,
                 inputStr,
-                List.of(makeRange(1,1, 1, 8),
-                        makeRange(1,9, 1, 16),
-                        makeRange(1,17, 1, 26),
-                        makeRange(1,27, 1, 33)));
+                List.of(makeRange(1, 1, 1, 8),
+                        makeRange(1, 9, 1, 16),
+                        makeRange(1, 17, 1, 26),
+                        makeRange(1, 27, 1, 33)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -287,10 +288,10 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler loggingContentHandler = doLocationTest(
                 root,
                 inputStr,
-                List.of(makeRange(1,1, 1, 9),
-                        makeRange(1,10, 1, 18),
-                        makeRange(1,19, 1, 29),
-                        makeRange(1,30, 1, 36)));
+                List.of(makeRange(1, 1, 1, 9),
+                        makeRange(1, 10, 1, 18),
+                        makeRange(1, 19, 1, 29),
+                        makeRange(1, 30, 1, 36)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -320,10 +321,10 @@ class TestDS3 extends StroomUnitTest {
                 root,
                 inputStr,
                 List.of(
-                        makeRange(1,1, 1, 7),
-                        makeRange(1,8, 1, 14),
-                        makeRange(1,15, 1, 23),
-                        makeRange(1,24, 1, 28)));
+                        makeRange(1, 1, 1, 7),
+                        makeRange(1, 8, 1, 14),
+                        makeRange(1, 15, 1, 23),
+                        makeRange(1, 24, 1, 28)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -355,10 +356,10 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler loggingContentHandler = doLocationTest(
                 root,
                 inputStr,
-                List.of(makeRange(1,1, 1, 3),
-                        makeRange(1,4, 1, 6),
-                        makeRange(1,7, 1, 9),
-                        makeRange(1,10, 1, 11)));
+                List.of(makeRange(1, 1, 1, 3),
+                        makeRange(1, 4, 1, 6),
+                        makeRange(1, 7, 1, 9),
+                        makeRange(1, 10, 1, 11)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -390,10 +391,10 @@ class TestDS3 extends StroomUnitTest {
         final LoggingContentHandler loggingContentHandler = doLocationTest(
                 root,
                 inputStr,
-                List.of(makeRange(1,1, 1, 3),
-                        makeRange(1,4, 1, 6),
-                        makeRange(1,7, 1, 9),
-                        makeRange(1,10, 1, 12)));
+                List.of(makeRange(1, 1, 1, 3),
+                        makeRange(1, 4, 1, 6),
+                        makeRange(1, 7, 1, 9),
+                        makeRange(1, 10, 1, 12)));
 
         Assertions.assertThat(loggingContentHandler.getValues())
                 .containsExactly(
@@ -438,7 +439,7 @@ class TestDS3 extends StroomUnitTest {
     private String rangesToString(final List<TextRange> ranges, final String inputStr) {
 
         return AsciiTable.builder(ranges)
-                .withColumn(Column.of( "Source", (TextRange range) ->
+                .withColumn(Column.of("Source", (TextRange range) ->
                         "[" + extractRange(inputStr, range.getFrom(), range.getTo()) + "]"))
                 .withColumn(Column.of("From", range ->
                         range.getFrom().toString()))
@@ -670,8 +671,8 @@ class TestDS3 extends StroomUnitTest {
 
     /**
      * @param input The string to extract the range from
-     * @param from Inclusive
-     * @param to Inclusive
+     * @param from  Inclusive
+     * @param to    Inclusive
      * @return The extracted string
      */
     public String extractRange(final String input, final Location from, final Location to) {

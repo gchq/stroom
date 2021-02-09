@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
+
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
@@ -343,8 +344,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         }
 
                         final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-                                .withPartNo(currentPartNo != null ? currentPartNo - 1: 0) // make zero based
-                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1: 0) // make zero based
+                                .withPartNo(currentPartNo != null ? currentPartNo - 1 : 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1 : 0) // make zero based
                                 .withDataRange(dataRange)
                                 .withHighlight(highlight)
                                 .build();
@@ -642,6 +643,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
+
         void setContent(View view);
 
         void setClassification(String classification);

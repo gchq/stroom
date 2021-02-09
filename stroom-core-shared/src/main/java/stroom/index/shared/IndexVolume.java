@@ -16,17 +16,18 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.PrimitiveValueConverter;
 
 /**
  * Some path on the network where we can store stuff.
@@ -50,6 +51,7 @@ import stroom.util.shared.PrimitiveValueConverter;
 })
 @JsonInclude(Include.NON_NULL)
 public class IndexVolume implements HasAuditInfo, HasIntegerId {
+
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;
@@ -122,7 +124,7 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
     }
 
     @Override
-    public Integer getId(){
+    public Integer getId() {
         return id;
     }
 
@@ -318,6 +320,7 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
     }
 
     public static final class Builder {
+
         private Integer id;
         private Integer version;
         private Long createTimeMs;

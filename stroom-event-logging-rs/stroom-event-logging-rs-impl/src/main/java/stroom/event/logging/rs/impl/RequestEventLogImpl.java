@@ -37,8 +37,10 @@ class RequestEventLogImpl implements RequestEventLog {
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject
-    RequestEventLogImpl (final RequestLoggingConfig config, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
-                         final StroomEventLoggingService eventLoggingService){
+    RequestEventLogImpl(final RequestLoggingConfig config,
+                        final DocumentEventLog documentEventLog,
+                        final SecurityContext securityContext,
+                        final StroomEventLoggingService eventLoggingService) {
         this.config = config;
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
@@ -46,8 +48,10 @@ class RequestEventLogImpl implements RequestEventLog {
     }
 
     @Override
-    public void log (final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error){
-        if (!requestInfo.shouldLog(config.isGlobalLoggingEnabled())){
+    public void log(final RequestInfo requestInfo,
+                    @Nullable final Object responseEntity,
+                    final Throwable error) {
+        if (!requestInfo.shouldLog(config.isGlobalLoggingEnabled())) {
             return;
         }
 
@@ -56,47 +60,52 @@ class RequestEventLogImpl implements RequestEventLog {
         final String typeId = requestInfo.getContainerResourceInfo().getTypeId();
         final String descriptionVerb = requestInfo.getContainerResourceInfo().getVerbFromAnnotations();
 
-        switch (requestInfo.getContainerResourceInfo().getOperationType()){
+        switch (requestInfo.getContainerResourceInfo().getOperationType()) {
             case DELETE:
-                documentEventLog.delete(requestEntity,typeId, descriptionVerb, error);
+                documentEventLog.delete(requestEntity, typeId, descriptionVerb, error);
                 break;
             case VIEW:
-                documentEventLog.view(responseEntity,typeId, descriptionVerb,error);
+                documentEventLog.view(responseEntity, typeId, descriptionVerb, error);
                 break;
             case CREATE:
-                documentEventLog.create(responseEntity,typeId, descriptionVerb,error);
+                documentEventLog.create(responseEntity, typeId, descriptionVerb, error);
                 break;
             case COPY:
-                documentEventLog.copy(requestEntity,typeId, descriptionVerb,error);
+                documentEventLog.copy(requestEntity, typeId, descriptionVerb, error);
                 break;
             case UPDATE:
-                documentEventLog.update(requestEntity,responseEntity,typeId, descriptionVerb, error);
+                documentEventLog.update(requestEntity, responseEntity, typeId, descriptionVerb, error);
                 break;
             case SEARCH:
-                logSearch(typeId, requestEntity, responseEntity,  descriptionVerb, error);
+                logSearch(typeId, requestEntity, responseEntity, descriptionVerb, error);
                 break;
             case EXPORT:
-                documentEventLog.download(requestEntity,typeId, descriptionVerb, error);
+                documentEventLog.download(requestEntity, typeId, descriptionVerb, error);
                 break;
             case IMPORT:
-                documentEventLog.upload(requestEntity,typeId, descriptionVerb, error);
+                documentEventLog.upload(requestEntity, typeId, descriptionVerb, error);
                 break;
             case PROCESS:
-                documentEventLog.process(requestEntity,typeId, descriptionVerb, error);
+                documentEventLog.process(requestEntity, typeId, descriptionVerb, error);
                 break;
             case UNKNOWN:
-                documentEventLog.unknownOperation(requestEntity,typeId, "Uncategorised remote API call invoked", error);
+                documentEventLog.unknownOperation(
+                        requestEntity, typeId, "Uncategorised remote API call invoked", error);
                 break;
         }
     }
 
     @Override
-    public void log (RequestInfo info, Object responseEntity){
-      log (info, responseEntity, null);
+    public void log(final RequestInfo info, final Object responseEntity) {
+        log(info, responseEntity, null);
     }
 
 
-    private void logSearch (String typeId, Object requestEntity, Object responseEntity, String descriptionVerb, Throwable error){
+    private void logSearch(final String typeId,
+                           final Object requestEntity,
+                           final Object responseEntity,
+                           final String descriptionVerb,
+                           final Throwable error) {
         Query query = new Query();
 
         if (requestEntity != null) {
@@ -113,16 +122,16 @@ class RequestEventLogImpl implements RequestEventLog {
         PageResponse pageResponse = null;
 
         String listContents = "Objects";
-        if (responseEntity instanceof PageResponse){
+        if (responseEntity instanceof PageResponse) {
             pageResponse = (PageResponse) responseEntity;
-        } else if (responseEntity instanceof ResultPage){
+        } else if (responseEntity instanceof ResultPage) {
             ResultPage<?> resultPage = (ResultPage) responseEntity;
             pageResponse = resultPage.getPageResponse();
             Optional<?> firstVal = resultPage.getValues().stream().findFirst();
-            if (firstVal.isPresent()){
-                if (firstVal.get().getClass().getSimpleName().endsWith("s")){
+            if (firstVal.isPresent()) {
+                if (firstVal.get().getClass().getSimpleName().endsWith("s")) {
                     listContents = firstVal.get().getClass().getSimpleName() + "es";
-                } else if (firstVal.get().getClass().getSimpleName().endsWith("y")){
+                } else if (firstVal.get().getClass().getSimpleName().endsWith("y")) {
                     listContents = firstVal.get().getClass().getSimpleName().substring(0,
                             firstVal.get().getClass().getSimpleName().length() - 1) + "ies";
                 } else {

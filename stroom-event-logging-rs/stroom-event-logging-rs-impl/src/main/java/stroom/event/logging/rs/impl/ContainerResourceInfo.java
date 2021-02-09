@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 public class ContainerResourceInfo {
+
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
@@ -47,55 +48,55 @@ public class ContainerResourceInfo {
         return resourceInfo.getResourceClass();
     }
 
-    public Method getMethod(){
+    public Method getMethod() {
         return resourceInfo.getResourceMethod();
     }
 
-    public OperationType getOperationType(){
+    public OperationType getOperationType() {
         return operationType;
     }
 
-    public String getTypeId(){
+    public String getTypeId() {
         //If method annotation provided use that on its own
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).typeId();
         }
         String resourcePrefix = getResourceClass().getSimpleName();
         if ((getResourceClass().getAnnotation(AutoLogged.class) != null) &&
-                (!getResourceClass().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getResourceClass().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             resourcePrefix = getResourceClass().getAnnotation(AutoLogged.class).typeId();
         }
 
         return resourcePrefix + "." + getMethod().getName();
     }
 
-    public String getVerbFromAnnotations(){
+    public String getVerbFromAnnotations() {
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))){
+                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).verb();
         }
         return null;
     }
 
     private static Optional<OperationType> getOperationTypeFromAnnotations(final Method method,
-                                                                           final Class<?> resourceClass){
-        if (method.getAnnotation(AutoLogged.class) != null){
+                                                                           final Class<?> resourceClass) {
+        if (method.getAnnotation(AutoLogged.class) != null) {
             return Optional.of(method.getAnnotation(AutoLogged.class).value());
-        } else if (resourceClass.getAnnotation(AutoLogged.class) != null){
+        } else if (resourceClass.getAnnotation(AutoLogged.class) != null) {
             return Optional.of(resourceClass.getAnnotation(AutoLogged.class).value());
         }
         return Optional.empty();
     }
 
-    public Optional<OperationType> getOperationTypeFromAnnotations(){
+    public Optional<OperationType> getOperationTypeFromAnnotations() {
         return getOperationTypeFromAnnotations(getMethod(), getResourceClass());
     }
 
-    public boolean shouldLog (boolean logByDefault){
+    public boolean shouldLog(boolean logByDefault) {
 
         Optional<OperationType> specifiedOperation = getOperationTypeFromAnnotations();
-        if (specifiedOperation.isPresent()){
+        if (specifiedOperation.isPresent()) {
             return !specifiedOperation.get().equals(OperationType.UNLOGGED);
         }
 
@@ -106,41 +107,41 @@ public class ContainerResourceInfo {
                                             final Class<?> resourceClass,
                                             final String httpMethod) {
         Optional<OperationType> type = getOperationTypeFromAnnotations(method, resourceClass);
-        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())){
+        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
             return type.get();
-        } else if (HttpMethod.DELETE.equals(httpMethod)){
+        } else if (HttpMethod.DELETE.equals(httpMethod)) {
             return OperationType.DELETE;
-        } else if (method.getName().startsWith("get")){
+        } else if (method.getName().startsWith("get")) {
             return OperationType.VIEW;
         } else if (method.getName().startsWith("fetch")) {
             return OperationType.VIEW;
-        } else if (method.getName().startsWith("read")){
+        } else if (method.getName().startsWith("read")) {
             return OperationType.VIEW;
-        } else if (method.getName().startsWith("create")){
+        } else if (method.getName().startsWith("create")) {
             return OperationType.CREATE;
-        } else if (method.getName().startsWith("delete")){
+        } else if (method.getName().startsWith("delete")) {
             return OperationType.DELETE;
-        } else if (method.getName().startsWith("update")){
+        } else if (method.getName().startsWith("update")) {
             return OperationType.UPDATE;
-        }  else if (method.getName().startsWith("save")){
+        } else if (method.getName().startsWith("save")) {
             return OperationType.UPDATE;
-        } else if (method.getName().startsWith("find")){
+        } else if (method.getName().startsWith("find")) {
             return OperationType.SEARCH;
-        } else if (method.getName().startsWith("search")){
+        } else if (method.getName().startsWith("search")) {
             return OperationType.SEARCH;
-        }  else if (method.getName().startsWith("list")){
+        } else if (method.getName().startsWith("list")) {
             return OperationType.SEARCH;
-        } else if (method.getName().startsWith("import")){
+        } else if (method.getName().startsWith("import")) {
             return OperationType.IMPORT;
-        } else if (method.getName().startsWith("export")){
+        } else if (method.getName().startsWith("export")) {
             return OperationType.EXPORT;
-        } else if (method.getName().startsWith("upload")){
+        } else if (method.getName().startsWith("upload")) {
             return OperationType.IMPORT;
-        } else if (method.getName().startsWith("download")){
+        } else if (method.getName().startsWith("download")) {
             return OperationType.EXPORT;
-        } else if (method.getName().startsWith("set")){
+        } else if (method.getName().startsWith("set")) {
             return OperationType.UPDATE;
-        } else if (method.getName().startsWith("copy")){
+        } else if (method.getName().startsWith("copy")) {
             return OperationType.COPY;
         }
         return OperationType.UNKNOWN;

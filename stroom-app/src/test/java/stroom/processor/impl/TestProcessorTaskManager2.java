@@ -27,7 +27,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -45,6 +44,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorTaskManager2.class);
 
     @Inject
@@ -79,13 +79,13 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(0);
 
         expression = ExpressionOperator.builder().addTerm(MetaFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(0);
 
         // Check DB cleanup.
         expression = ExpressionOperator.builder().build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
     }
 
 //    @Test

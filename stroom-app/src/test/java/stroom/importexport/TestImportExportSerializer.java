@@ -18,9 +18,6 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -54,6 +51,10 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +69,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportSerializer extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestImportExportSerializer.class);
 
     @Inject
@@ -176,33 +178,32 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
 
 
-
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED_NAME,ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
-                .addTerm(MetaFields.FIELD_TYPE,ExpressionTerm.Condition.EQUALS, "Raw Events")
+                .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
+                .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, "Raw Events")
                 .build();
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
         Processor processor = processorService.create(pipelineRef, true);
 
-        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, false, true);
+        ProcessorFilter filter = processorFilterService.create(processor, filterConstraints, 10, false, true);
 
         HashSet<DocRef> forExport = new HashSet<DocRef>();
 
 //        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
-        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
+        forExport.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
 
-        System.err.println ("Exporting to " + testDataDir);
+        System.err.println("Exporting to " + testDataDir);
         importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
 
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        System.out.println ("Exported to " + testDataDir);
+        System.out.println("Exported to " + testDataDir);
     }
 
     @Test
@@ -239,7 +240,6 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
     }
-
 
 
     @Test

@@ -224,7 +224,7 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     @Test
-    void testDataItemCreationAndRedaction () throws Exception {
+    void testDataItemCreationAndRedaction() throws Exception {
         List<Data> allData = stroomEventLoggingService.getDataItems
                 (new TestSecretObj("test", "xyzzy", "open-sesame"));
 
@@ -243,13 +243,13 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     @Test
-    void testConvertPojoWithInfoPrvider () throws Exception {
+    void testConvertPojoWithInfoPrvider() throws Exception {
         BaseObject baseObject = stroomEventLoggingService.convert(new TestObj());
         assertThat(baseObject).isSameAs(testObj);
     }
 
     @Test
-    void testConvertPojoWithoutInfoPrvider () throws Exception {
+    void testConvertPojoWithoutInfoPrvider() throws Exception {
         String name = "TestSecretObject1";
         String typeName = TestSecretObj.class.getSimpleName();
         BaseObject baseObject = stroomEventLoggingService.convert(new TestSecretObj(name, "b", "x"));
@@ -307,12 +307,13 @@ class TestStroomEventLoggingServiceImpl {
     }
 
     public static class TestSecretObj implements HasName {
+
         private String name;
         private String password;
         private String myNewSecret;
         private boolean secret;
 
-        public TestSecretObj (String name, String password, String myNewSecret){
+        public TestSecretObj(String name, String password, String myNewSecret) {
             this.name = name;
             this.password = password;
             this.myNewSecret = myNewSecret;

@@ -145,7 +145,8 @@ public class LmdbDataStore implements DataStore {
 
         // Start transfer loop.
         addedData = new CountDownLatch(1);
-        final Executor executor = Executors.newSingleThreadExecutor();// TODO : Use provided executor but don't allow it to be terminated by search termination.
+        // TODO : Use provided executor but don't allow it to be terminated by search termination.
+        final Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(this::transfer);
     }
 

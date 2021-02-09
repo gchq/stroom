@@ -98,7 +98,7 @@ public class StringPredicateFactory {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
-        }else {
+        } else {
             if (modifiedInput.startsWith(NOT_OPERATOR_STR)) {
                 modifiedInput = modifiedInput.substring(1);
                 LOGGER.debug("Input after NOT operator removal [{}]", modifiedInput);

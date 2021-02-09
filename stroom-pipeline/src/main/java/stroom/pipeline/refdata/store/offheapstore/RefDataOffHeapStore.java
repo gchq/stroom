@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.docstore.shared.DocRefUtil;
+import stroom.lmdb.LmdbDb;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -37,16 +39,14 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
-import stroom.lmdb.LmdbDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
-import stroom.util.io.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -97,7 +97,7 @@ import java.util.stream.Stream;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.
- *
+ * <p>
  * Essentially each ref stream (a {@link RefStreamDefinition}) contains 1-* map names.
  * Multiple ref streams can contain the same map name.
  * Within a ref stream + map combo (a {@link MapDefinition}) there are 1-* entries.
@@ -106,6 +106,7 @@ import java.util.stream.Stream;
  */
 @Singleton
 public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
@@ -874,7 +875,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     KeyRange.all(),
                     entryStream -> entryStream
                             .limit(rangeEntriesLimit)
-                            .map(entry-> {
+                            .map(entry -> {
                                 final RangeStoreKey rangeStoreKey = entry._1();
                                 final ValueStoreKey valueStoreKey = entry._2();
                                 final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
@@ -1031,6 +1032,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private static final class PurgeCounts {
+
         final int refStreamDefsDeletedCount;
         final RefStreamPurgeCounts refStreamPurgeCounts;
 
@@ -1053,6 +1055,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private static final class RefStreamPurgeCounts {
+
         final int mapsDeletedCount;
         final int valuesDeletedCount;
         final int valuesDeReferencedCount;
@@ -1071,6 +1074,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     0,
                     0);
         }
+
         public RefStreamPurgeCounts add(final RefStreamPurgeCounts other) {
             return increment(
                     other.mapsDeletedCount,

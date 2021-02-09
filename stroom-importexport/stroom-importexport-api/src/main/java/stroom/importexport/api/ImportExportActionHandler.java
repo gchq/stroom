@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ImportExportActionHandler extends HasDependencies {
+
     /**
-     *
      * @param docRef
      * @param dataMap
      * @param importState
@@ -38,22 +38,24 @@ public interface ImportExportActionHandler extends HasDependencies {
      * Class used to represent the result of operations of ImportExportActionHandler
      */
     class ImpexDetails {
+
         private String locationRef;
         private DocRef docRef;
         private boolean ignore;
 
-        public ImpexDetails(){}
+        public ImpexDetails() {
+        }
 
-        public ImpexDetails(DocRef docRef){
+        public ImpexDetails(DocRef docRef) {
             this.docRef = docRef;
         }
 
-        public ImpexDetails(final DocRef docRef, final String locationRef){
+        public ImpexDetails(final DocRef docRef, final String locationRef) {
             this.docRef = docRef;
             this.locationRef = locationRef;
         }
 
-        public ImpexDetails(final DocRef docRef, final String locationRef, final boolean ignore){
+        public ImpexDetails(final DocRef docRef, final String locationRef, final boolean ignore) {
             this.docRef = docRef;
             this.locationRef = locationRef;
             this.ignore = ignore;
@@ -79,7 +81,7 @@ public interface ImportExportActionHandler extends HasDependencies {
             return docRef;
         }
 
-        public boolean isIgnore () {
+        public boolean isIgnore() {
             return ignore;
         }
     }

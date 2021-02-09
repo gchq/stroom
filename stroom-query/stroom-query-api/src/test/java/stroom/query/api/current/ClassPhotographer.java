@@ -11,10 +11,11 @@ import java.util.stream.Collectors;
 
 /**
  * Creates a text representation (a 'portrait') of a class's public methods.
- *
+ * <p>
  * Only recurses over those classes that match a base package.
  */
 public class ClassPhotographer {
+
     private static final String newLine = System.getProperty("line.separator");
 
     public static String takePortraitOf(Class clazz, String basePackage) {
@@ -33,9 +34,9 @@ public class ClassPhotographer {
         // We don't need to filter by 'public' because `getMethods()` only gets public methods.
         Arrays.stream(clazz.getMethods())
                 .forEach(method -> {
-                            methodSignatures.add(method.toGenericString());
-                            classesForRecursion.addAll(getClassesForRecursion(basePackage, method));
-                        });
+                    methodSignatures.add(method.toGenericString());
+                    classesForRecursion.addAll(getClassesForRecursion(basePackage, method));
+                });
 
         portrait.put(clazz, methodSignatures);
 
@@ -58,7 +59,7 @@ public class ClassPhotographer {
     /**
      * Looks at a method and gets any return or parameter types that match the basePackage.
      */
-    private static List<Class> getClassesForRecursion(String basePackage, Method method){
+    private static List<Class> getClassesForRecursion(String basePackage, Method method) {
         List<Class> classesForRecursion = new ArrayList<>();
 
         // Check regular return types

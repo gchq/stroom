@@ -328,7 +328,7 @@ public abstract class AbstractMetaListPresenter
                         ClientDateUtil.toISOString(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build()
-                ,"Created",
+                , "Created",
                 ColumnSizeConstants.DATE_COL);
     }
 

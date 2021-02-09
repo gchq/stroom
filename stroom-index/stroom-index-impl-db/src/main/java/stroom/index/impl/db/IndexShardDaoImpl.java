@@ -29,12 +29,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 class IndexShardDaoImpl implements IndexShardDao {
+
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
         indexShard.setId(record.get(INDEX_SHARD.ID));
@@ -195,14 +195,14 @@ class IndexShardDaoImpl implements IndexShardDao {
         List<IndexVolume> indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
         if (indexVolumes == null || indexVolumes.size() == 0) {
             //Could be due to default volume groups not having been created - but this will force as side effect
-            List <String> groupNames = indexVolumeGroupService.getNames();
+            List<String> groupNames = indexVolumeGroupService.getNames();
             indexVolumes = indexVolumeDao.getVolumesInGroupOnNode(volumeGroupName, ownerNodeName);
 
             //Check again.
             if (indexVolumes == null || indexVolumes.size() == 0) {
                 throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-                        ((groupNames == null || groupNames.size() == 0)? " No index groups defined." :
-                        " Available index volume groups: " + groupNames.stream().collect(Collectors.joining(", "))));
+                        ((groupNames == null || groupNames.size() == 0) ? " No index groups defined." :
+                                " Available index volume groups: " + String.join(", ", groupNames)));
             }
         }
 

@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 
 public class MockURIInfo implements UriInfo {
+
     @Override
     public String getPath() {
         return null;
@@ -77,7 +78,7 @@ public class MockURIInfo implements UriInfo {
 
     private Integer id;
 
-    public void setId (Integer id){
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -85,7 +86,7 @@ public class MockURIInfo implements UriInfo {
     public MultivaluedMap<String, String> getPathParameters() {
         MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
 
-        if (id != null){
+        if (id != null) {
             pathParameterMap.putSingle("id", id.toString());
         }
 

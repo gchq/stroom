@@ -16,10 +16,11 @@
 
 package stroom.core.servlet;
 
+import stroom.util.shared.ResourcePaths;
+
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.ResourcePaths;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class CacheControlFilter implements Filter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheControlFilter.class);
 
     public static String INIT_PARAM_KEY_SECONDS = "seconds";
@@ -49,7 +51,7 @@ public class CacheControlFilter implements Filter {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
             .ofPattern("EEE, d MMM yyyy HH:mm:ss zzz");
     private static final Set<String> CACHEABLE_FILE_TYPES = new HashSet<>(Arrays.asList(
-            "js", "css", "png", "jpg", "gif", "svg", "ico","gif","jpeg","woff","woff2","eot","ttf","webp"));
+            "js", "css", "png", "jpg", "gif", "svg", "ico", "gif", "jpeg", "woff", "woff2", "eot", "ttf", "webp"));
     private static final String GWT_NO_CACHE = ".nocache.";
     private static final long DEFAULT_EXPIRES = 600; // Ten minutes
 

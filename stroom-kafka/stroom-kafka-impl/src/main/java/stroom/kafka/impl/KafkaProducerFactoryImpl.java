@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
     private final KafkaConfigDocCache kafkaConfigDocCache;
@@ -231,7 +232,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     @Override
     public SystemInfoResult getSystemInfo() {
 
-        final List<Map<String,Object>> producerInfo = allSharedProducersMap.values().stream()
+        final List<Map<String, Object>> producerInfo = allSharedProducersMap.values().stream()
                 .map(sharedKafkaProducer -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("docName", sharedKafkaProducer.getConfigName());
@@ -250,10 +251,10 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                     final String groupName = entry.getKey().group()
                                             + " ("
                                             + entry.getKey().tags().entrySet()
-                                                .stream()
-                                                .filter(entry2 -> !entry2.getKey().equals("client-id"))
-                                                .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
-                                                .collect(Collectors.joining(","))
+                                            .stream()
+                                            .filter(entry2 -> !entry2.getKey().equals("client-id"))
+                                            .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
+                                            .collect(Collectors.joining(","))
                                             + ")";
 
                                     return Tuple.of(

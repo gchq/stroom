@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public class ProxyLifecycle implements Managed {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyLifecycle.class);
 
     private final ProxyRepositoryManager proxyRepositoryManager;
@@ -36,7 +37,7 @@ public class ProxyLifecycle implements Managed {
             proxyRepositoryReader.stop();
             proxyRepositoryManager.stop();
         } catch (Exception e) {
-            LOGGER.error("error",e);
+            LOGGER.error("error", e);
         }
 
         // This method is part of DW  Managed which is managed by Jersey so we need to ensure any interrupts

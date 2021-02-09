@@ -38,6 +38,7 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 @Singleton
 public class AppConfigMonitor implements Managed, HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
     private final AppConfig appConfig;
@@ -192,13 +193,13 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         if (isFileReadScheduled.compareAndSet(false, true)) {
             LOGGER.info("Scheduling update of application config from file in {}ms", DELAY_BEFORE_FILE_READ_MS);
             CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
-                .execute(() -> {
-                    try {
-                        updateAppConfigFromFile();
-                    } finally {
-                        isFileReadScheduled.set(false);
-                    }
-                });
+                    .execute(() -> {
+                        try {
+                            updateAppConfigFromFile();
+                        } finally {
+                            isFileReadScheduled.set(false);
+                        }
+                    });
         }
     }
 
@@ -212,19 +213,20 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
             if (result.hasErrors()) {
                 LOGGER.error("Unable to update application config from file {} because it failed validation. " +
-                    "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
+                        "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
                     // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
                     // as that doesn't mutate the config objects
 
                     final AtomicInteger updateCount = new AtomicInteger(0);
-                    final FieldMapper.UpdateAction updateAction = (destParent, prop, sourcePropValue, destPropValue) -> {
-                        final String fullPath = ((AbstractConfig)destParent).getFullPath(prop.getName());
-                        LOGGER.info("  Updating config value of {} from [{}] to [{}]",
-                            fullPath, destPropValue, sourcePropValue);
-                        updateCount.incrementAndGet();
-                    };
+                    final FieldMapper.UpdateAction updateAction =
+                            (destParent, prop, sourcePropValue, destPropValue) -> {
+                                final String fullPath = ((AbstractConfig) destParent).getFullPath(prop.getName());
+                                LOGGER.info("  Updating config value of {} from [{}] to [{}]",
+                                        fullPath, destPropValue, sourcePropValue);
+                                updateCount.incrementAndGet();
+                            };
 
                     LOGGER.info("Updating application config from file.");
                     // Copy changed values from the newly modified appConfig into the guice bound one
@@ -239,13 +241,13 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",
-                        configFile.toAbsolutePath().normalize(), e);
+                            configFile.toAbsolutePath().normalize(), e);
                 }
             }
         } catch (Throwable e) {
             // Swallow error as we don't want to break the app because the file is bad.
             LOGGER.error("Error parsing configuration from file {}",
-                configFile.toAbsolutePath().normalize(), e);
+                    configFile.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -260,8 +262,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
-            result.getErrorCount(),
-            result.getWarningCount());
+                result.getErrorCount(),
+                result.getWarningCount());
         return result;
     }
 
@@ -309,8 +311,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
         return resultBuilder
                 .withDetail("configFilePath", configFile != null
-                    ? configFile.toAbsolutePath().normalize().toString()
-                    : null)
+                        ? configFile.toAbsolutePath().normalize().toString()
+                        : null)
                 .withDetail("isRunning", isRunning)
                 .withDetail("isValidFile", isValidFile)
                 .build();

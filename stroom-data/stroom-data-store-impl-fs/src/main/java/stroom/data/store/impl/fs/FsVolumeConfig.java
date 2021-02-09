@@ -13,7 +13,8 @@ import java.util.List;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
-//    private int resilientReplicationCount = 1;
+
+    //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
 
@@ -22,15 +23,15 @@ public class FsVolumeConfig extends AbstractConfig {
     private boolean createDefaultStreamVolumesOnStart = true;
 
     private static final String VOLUME_SELECTOR_PATTERN = "^(" +
-        RoundRobinVolumeSelector.NAME + "|" +
-        MostFreePercentVolumeSelector.NAME + "|" +
-        MostFreeVolumeSelector.NAME + "|" +
-        RandomVolumeSelector.NAME + "|" +
-        RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
-        RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
-        RoundRobinVolumeSelector.NAME + "|" +
-        WeightedFreePercentRandomVolumeSelector.NAME + "|" +
-        WeightedFreeRandomVolumeSelector.NAME + ")$";
+            RoundRobinVolumeSelector.NAME + "|" +
+            MostFreePercentVolumeSelector.NAME + "|" +
+            MostFreeVolumeSelector.NAME + "|" +
+            RandomVolumeSelector.NAME + "|" +
+            RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
+            RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
+            RoundRobinVolumeSelector.NAME + "|" +
+            WeightedFreePercentRandomVolumeSelector.NAME + "|" +
+            WeightedFreeRandomVolumeSelector.NAME + ")$";
 
     private CacheConfig feedPathCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -126,8 +127,8 @@ public class FsVolumeConfig extends AbstractConfig {
         return "VolumeConfig{" +
                 "volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
-                ", defaultStreamVolumePaths=" + "\"" +defaultStreamVolumePaths + "\"" +
-                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" +defaultStreamVolumeFilesystemUtilisation + "\"" +
+                ", defaultStreamVolumePaths=" + "\"" + defaultStreamVolumePaths + "\"" +
+                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" + defaultStreamVolumeFilesystemUtilisation + "\"" +
                 '}';
     }
 }

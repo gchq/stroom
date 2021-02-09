@@ -36,6 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Message;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 class DataServiceImpl implements DataService {
+
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;
     private final DataDownloadTaskHandler dataDownloadTaskHandlerProvider;
@@ -93,13 +95,15 @@ class DataServiceImpl implements DataService {
             }
 
             final DataDownloadSettings settings = new DataDownloadSettings();
-            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria, file.getParent(), fileName, settings);
+            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(
+                    criteria, file.getParent(), fileName, settings);
 
             if (result.getRecordsWritten() == 0) {
-                if (result.getMessageList() != null && result.getMessageList().size() > 0){
+                if (result.getMessageList() != null && result.getMessageList().size() > 0) {
                     throw new RuntimeException("Download failed with errors: " +
-                            result.getMessageList().stream().map(m -> m.getMessage()).
-                                    collect(Collectors.joining(", ")));
+                            result.getMessageList().stream()
+                                    .map(Message::getMessage)
+                                    .collect(Collectors.joining(", ")));
                 }
             }
             return new ResourceGeneration(resourceKey, result.getMessageList());

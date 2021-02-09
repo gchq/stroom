@@ -37,7 +37,7 @@ public class MockContainerRequestContext implements ContainerRequestContext {
 
     private MockURIInfo uriInfo = new MockURIInfo();
 
-    public void reset (){
+    public void reset() {
         uriInfo.setId(null);
     }
 

@@ -201,7 +201,7 @@ public class TestKafkaProducerFactoryImpl {
 
         final SystemInfoResult systemInfoResult = kafkaProducerFactory.getSystemInfo();
         LOGGER.info(systemInfoResult.toString());
-        assertThat((List<?>) ( systemInfoResult.getDetails().get("sharedProducers") )).isEmpty();
+        assertThat((List<?>) (systemInfoResult.getDetails().get("sharedProducers"))).isEmpty();
 
 
         // Now get both so the factory should be holding both
@@ -210,14 +210,14 @@ public class TestKafkaProducerFactoryImpl {
 
                 final SystemInfoResult systemInfoResult2 = kafkaProducerFactory.getSystemInfo();
                 LOGGER.info(systemInfoResult2.toString());
-                assertThat((List<?>)( systemInfoResult2.getDetails().get("sharedProducers") )).hasSize(2);
+                assertThat((List<?>) (systemInfoResult2.getDetails().get("sharedProducers"))).hasSize(2);
             }
         }
 
         // having released the KPSs they should still be in the factory
         final SystemInfoResult systemInfoResult3 = kafkaProducerFactory.getSystemInfo();
         LOGGER.info(systemInfoResult3.toString());
-        assertThat((List<?>)( systemInfoResult3.getDetails().get("sharedProducers") )).hasSize(2);
+        assertThat((List<?>) (systemInfoResult3.getDetails().get("sharedProducers"))).hasSize(2);
     }
 
     @NotNull

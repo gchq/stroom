@@ -17,17 +17,10 @@
 
 package stroom.event.logging.impl;
 
-import stroom.docref.DocRef;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.HasId;
-import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.HasName;
-import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
 
 import event.logging.BaseObject;
@@ -54,17 +47,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -141,7 +131,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         final String objDesc = eventLoggingService.describe(object);
 
-        if (objDesc == null){
+        if (objDesc == null) {
             return description;
         }
         return description + " " + objDesc;

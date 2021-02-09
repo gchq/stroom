@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Random;
 
 public class GenerateSampleStatisticsDataForBulk {
+
     private static final String START_DATE = "2015-05-01T00:00:00.000Z";
 
     // 52,000 is just over 3 days at 5000ms intervals
@@ -44,7 +45,7 @@ public class GenerateSampleStatisticsDataForBulk {
 
     private static final List<String> STATES = Arrays.asList("IN", "OUT");
 
-    private static final String[] users = new String[]{"user1", "user2", "user3", "user4", "user5",};
+    private static final String[] users = new String[]{"user1", "user2", "user3", "user4", "user5"};
 
     public static void main(final String[] args) throws IOException {
         System.out.println("Writing value data...");

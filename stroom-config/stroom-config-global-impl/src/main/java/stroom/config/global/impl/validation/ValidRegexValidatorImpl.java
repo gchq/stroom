@@ -45,16 +45,16 @@ public class ValidRegexValidatorImpl implements ValidRegexValidator {
                 Pattern.compile(value);
             } catch (PatternSyntaxException e) {
                 final String msgTemplate =
-                    context.getDefaultConstraintMessageTemplate() +
-                        ". caused by: " +
-                        e.getMessage().replaceAll("\\n"," ");
+                        context.getDefaultConstraintMessageTemplate() +
+                                ". caused by: " +
+                                e.getMessage().replaceAll("\\n", " ");
 
                 // We want the exception details in the message so bin the default constraint
                 // violation and make a new one.
                 context.disableDefaultConstraintViolation();
                 context
-                    .buildConstraintViolationWithTemplate(msgTemplate)
-                    .addConstraintViolation();
+                        .buildConstraintViolationWithTemplate(msgTemplate)
+                        .addConstraintViolation();
                 result = false;
             }
         }

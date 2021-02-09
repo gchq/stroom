@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
+
     private StroomEventLoggingUtil() {
     }
 
@@ -142,7 +143,7 @@ public class StroomEventLoggingUtil {
                 final AdvancedQueryItem operator;
                 if (expressionOperator.op().equals(Op.AND)) {
                     operator = And.builder()
-                            .withQueryItems(expressionOperator.getChildren()== null
+                            .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren().stream()
                                     .map(StroomEventLoggingUtil::convertItem)

@@ -78,10 +78,10 @@ public class SampleDataGenerator {
         long randomSeed = 0;
 
         final DataWriter csvDataWriter = FlatDataWriterBuilder.builder()
-                        .delimitedBy(",")
-                        .enclosedBy("\"")
-                        .outputHeaderRow(true)
-                        .build();
+                .delimitedBy(",")
+                .enclosedBy("\"")
+                .outputHeaderRow(true)
+                .build();
 
         final DataWriter xmlDataWriter = XmlAttributesDataWriterBuilder.builder()
                 .namespace("records:2")
@@ -99,7 +99,7 @@ public class SampleDataGenerator {
                 "\n",
                 csvDataWriter,
                 shortLoremText,
-                LocalDateTime.of(2020,6,1,0,0),
+                LocalDateTime.of(2020, 6, 1, 0, 0),
                 randomSeed++);
 
         generateDataViewRawData(
@@ -109,7 +109,7 @@ public class SampleDataGenerator {
                 "\n",
                 csvDataWriter,
                 longLoremText,
-                LocalDateTime.of(2020,7,1,0,0),
+                LocalDateTime.of(2020, 7, 1, 0, 0),
                 randomSeed++);
 
         // Data that is all on one massive single line
@@ -120,7 +120,7 @@ public class SampleDataGenerator {
                 "|",
                 csvDataWriter,
                 shortLoremText,
-                LocalDateTime.of(2020,8,1,0,0),
+                LocalDateTime.of(2020, 8, 1, 0, 0),
                 randomSeed++);
 
         // XML data that is all on one massive single line
@@ -131,7 +131,7 @@ public class SampleDataGenerator {
                 "",
                 xmlDataWriter,
                 shortLoremText,
-                LocalDateTime.of(2020,9,1,0,0),
+                LocalDateTime.of(2020, 9, 1, 0, 0),
                 randomSeed++);
 
         // Data that has one record per line
@@ -143,7 +143,7 @@ public class SampleDataGenerator {
                 "\n",
                 xmlDataWriter,
                 shortLoremText,
-                LocalDateTime.of(2020,10,1,0,0),
+                LocalDateTime.of(2020, 10, 1, 0, 0),
                 randomSeed++);
 
         generateDataViewRawData(
@@ -153,7 +153,7 @@ public class SampleDataGenerator {
                 "\n",
                 xmlDataWriter,
                 longLoremText,
-                LocalDateTime.of(2020,11,1,0,0),
+                LocalDateTime.of(2020, 11, 1, 0, 0),
                 randomSeed++);
     }
 
@@ -329,7 +329,7 @@ public class SampleDataGenerator {
         final Path file = makeInputFilePath(
                 dir,
                 1,
-                LocalDateTime.of(2020, 1 ,1, 0, 0, 0)
+                LocalDateTime.of(2020, 1, 1, 0, 0, 0)
                         .plusMonths(iteration),
                 feedName);
 
