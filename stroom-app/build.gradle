@@ -10,7 +10,7 @@ buildscript {
 }
 
 plugins {
-    id "com.benjaminsproule.swagger" version "1.0.8"
+    id "com.benjaminsproule.swagger" version "1.0.14"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
