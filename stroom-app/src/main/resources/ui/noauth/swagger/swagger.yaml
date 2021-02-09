@@ -392,6 +392,18 @@ definitions:
       userId:
         readOnly: true
         type: "string"
+  ChangePasswordResponse:
+    type: "object"
+    properties:
+      changeSucceeded:
+        readOnly: true
+        type: "boolean"
+      forceSignIn:
+        readOnly: true
+        type: "boolean"
+      message:
+        readOnly: true
+        type: "string"
   ChangeSet:
     type: "object"
     properties:
@@ -600,6 +612,15 @@ definitions:
       password:
         readOnly: true
         type: "string"
+  ConfirmPasswordResponse:
+    type: "object"
+    properties:
+      message:
+        readOnly: true
+        type: "string"
+      valid:
+        readOnly: true
+        type: "boolean"
   CopyOp:
     type: "object"
     properties:
@@ -2519,6 +2540,18 @@ definitions:
       userId:
         readOnly: true
         type: "string"
+  LoginResponse:
+    type: "object"
+    properties:
+      loginSuccessful:
+        readOnly: true
+        type: "boolean"
+      message:
+        readOnly: true
+        type: "string"
+      requirePasswordChange:
+        readOnly: true
+        type: "boolean"
   LongField:
     allOf:
     - $ref: "#/definitions/AbstractField"
@@ -4442,25 +4475,27 @@ definitions:
       stepLocation:
         $ref: "#/definitions/StepLocation"
   StoredError:
-    type: "object"
-    properties:
-      elementId:
-        readOnly: true
-        type: "string"
-      location:
-        $ref: "#/definitions/Location"
-        readOnly: true
-      message:
-        readOnly: true
-        type: "string"
-      severity:
-        enum:
-        - "INFO"
-        - "WARNING"
-        - "ERROR"
-        - "FATAL_ERROR"
-        readOnly: true
-        type: "string"
+    allOf:
+    - $ref: "#/definitions/Marker"
+    - type: "object"
+      properties:
+        elementId:
+          readOnly: true
+          type: "string"
+        location:
+          $ref: "#/definitions/Location"
+          readOnly: true
+        message:
+          readOnly: true
+          type: "string"
+        severity:
+          enum:
+          - "INFO"
+          - "WARNING"
+          - "ERROR"
+          - "FATAL_ERROR"
+          readOnly: true
+          type: "string"
   StoredQuery:
     type: "object"
     properties:
@@ -6084,7 +6119,7 @@ paths:
     get:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "logout"
       parameters:
       - name: "redirect_uri"
@@ -6105,7 +6140,7 @@ paths:
     get:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "needsPasswordChange"
       parameters:
       - name: "email"
@@ -6126,7 +6161,7 @@ paths:
     post:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "changePassword"
       parameters:
       - description: "changePasswordRequest"
@@ -6141,7 +6176,7 @@ paths:
         "200":
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/ChangePasswordResponse"
       summary: "Change a user's password."
       tags:
       - "Authentication"
@@ -6149,7 +6184,7 @@ paths:
     post:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "confirmPassword"
       parameters:
       - description: "confirmPasswordRequest"
@@ -6164,7 +6199,7 @@ paths:
         "200":
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/ConfirmPasswordResponse"
       summary: "Confirm an authenticated users current password."
       tags:
       - "Authentication"
@@ -6172,7 +6207,7 @@ paths:
     get:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "fetchPasswordPolicy"
       produces:
       - "application/json"
@@ -6188,7 +6223,7 @@ paths:
     get:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "getAuthenticationState"
       produces:
       - "application/json"
@@ -6204,7 +6239,7 @@ paths:
     post:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "login"
       parameters:
       - description: "Credentials"
@@ -6219,7 +6254,7 @@ paths:
         "200":
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/LoginResponse"
       summary: "Handle a login request made using username and password credentials."
       tags:
       - "Authentication"
@@ -6227,7 +6262,7 @@ paths:
     get:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "resetEmail"
       parameters:
       - name: "email"
@@ -6240,7 +6275,7 @@ paths:
         "200":
           description: "successful operation"
           schema:
-            type: "string"
+            type: "boolean"
       summary: "Reset a user account using an email address."
       tags:
       - "Authentication"
@@ -6248,7 +6283,7 @@ paths:
     post:
       consumes:
       - "application/json"
-      description: "Stroom Authentication API"
+      description: ""
       operationId: "resetPassword"
       parameters:
       - description: "changePasswordRequest"
@@ -6263,7 +6298,7 @@ paths:
         "200":
           description: "successful operation"
           schema:
-            type: "string"
+            $ref: "#/definitions/ChangePasswordResponse"
       summary: "Reset an authenticated user's password."
       tags:
       - "Authentication"

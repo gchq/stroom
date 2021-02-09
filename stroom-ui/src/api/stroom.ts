@@ -246,6 +246,12 @@ export interface ChangePasswordRequest {
   userId?: string;
 }
 
+export interface ChangePasswordResponse {
+  changeSucceeded?: boolean;
+  forceSignIn?: boolean;
+  message?: string;
+}
+
 export interface ChangeSet {
   addSet?: object[];
   removeSet?: object[];
@@ -340,6 +346,11 @@ export interface ConfigProperty {
 
 export interface ConfirmPasswordRequest {
   password?: string;
+}
+
+export interface ConfirmPasswordResponse {
+  message?: string;
+  valid?: boolean;
 }
 
 export interface CopyOp {
@@ -1424,6 +1435,12 @@ export interface Location {
 export interface LoginRequest {
   password?: string;
   userId?: string;
+}
+
+export interface LoginResponse {
+  loginSuccessful?: boolean;
+  message?: string;
+  requirePasswordChange?: boolean;
 }
 
 export type LongField = AbstractField & object;
@@ -2516,12 +2533,12 @@ export interface SteppingResult {
   stepLocation?: StepLocation;
 }
 
-export interface StoredError {
+export type StoredError = Marker & {
   elementId?: string;
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARNING" | "ERROR" | "FATAL_ERROR";
-}
+};
 
 export interface StoredQuery {
   componentId?: string;
@@ -3614,7 +3631,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
   };
   authentication = {
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name Logout
@@ -3633,7 +3650,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name NeedsPasswordChange
@@ -3652,7 +3669,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name ChangePassword
@@ -3661,10 +3678,17 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     changePassword: (body: ChangePasswordRequest, params?: RequestParams) =>
-      this.request<string, any>(`/authentication/v1/noauth/changePassword`, "POST", params, body, BodyType.Json, true),
+      this.request<ChangePasswordResponse, any>(
+        `/authentication/v1/noauth/changePassword`,
+        "POST",
+        params,
+        body,
+        BodyType.Json,
+        true,
+      ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name ConfirmPassword
@@ -3673,10 +3697,17 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     confirmPassword: (body: ConfirmPasswordRequest, params?: RequestParams) =>
-      this.request<string, any>(`/authentication/v1/noauth/confirmPassword`, "POST", params, body, BodyType.Json, true),
+      this.request<ConfirmPasswordResponse, any>(
+        `/authentication/v1/noauth/confirmPassword`,
+        "POST",
+        params,
+        body,
+        BodyType.Json,
+        true,
+      ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name FetchPasswordPolicy
@@ -3695,7 +3726,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name GetAuthenticationState
@@ -3714,7 +3745,7 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
       ),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name Login
@@ -3723,10 +3754,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     login: (body: LoginRequest, params?: RequestParams) =>
-      this.request<string, any>(`/authentication/v1/noauth/login`, "POST", params, body, BodyType.Json, true),
+      this.request<LoginResponse, any>(`/authentication/v1/noauth/login`, "POST", params, body, BodyType.Json, true),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name ResetEmail
@@ -3735,10 +3766,10 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     resetEmail: (email: string, params?: RequestParams) =>
-      this.request<string, any>(`/authentication/v1/noauth/reset/${email}`, "GET", params, null, BodyType.Json, true),
+      this.request<boolean, any>(`/authentication/v1/noauth/reset/${email}`, "GET", params, null, BodyType.Json, true),
 
     /**
-     * @description Stroom Authentication API
+     * No description
      *
      * @tags Authentication
      * @name ResetPassword
@@ -3747,7 +3778,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @secure
      */
     resetPassword: (body: ResetPasswordRequest, params?: RequestParams) =>
-      this.request<string, any>(`/authentication/v1/resetPassword`, "POST", params, body, BodyType.Json, true),
+      this.request<ChangePasswordResponse, any>(
+        `/authentication/v1/resetPassword`,
+        "POST",
+        params,
+        body,
+        BodyType.Json,
+        true,
+      ),
   };
   authorisation = {
     /**

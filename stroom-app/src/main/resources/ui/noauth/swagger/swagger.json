@@ -534,6 +534,23 @@
         }
       }
     },
+    "ChangePasswordResponse" : {
+      "type" : "object",
+      "properties" : {
+        "changeSucceeded" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        },
+        "forceSignIn" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        },
+        "message" : {
+          "readOnly" : true,
+          "type" : "string"
+        }
+      }
+    },
     "ChangeSet" : {
       "type" : "object",
       "properties" : {
@@ -819,6 +836,19 @@
         "password" : {
           "readOnly" : true,
           "type" : "string"
+        }
+      }
+    },
+    "ConfirmPasswordResponse" : {
+      "type" : "object",
+      "properties" : {
+        "message" : {
+          "readOnly" : true,
+          "type" : "string"
+        },
+        "valid" : {
+          "readOnly" : true,
+          "type" : "boolean"
         }
       }
     },
@@ -3339,6 +3369,23 @@
         "userId" : {
           "readOnly" : true,
           "type" : "string"
+        }
+      }
+    },
+    "LoginResponse" : {
+      "type" : "object",
+      "properties" : {
+        "loginSuccessful" : {
+          "readOnly" : true,
+          "type" : "boolean"
+        },
+        "message" : {
+          "readOnly" : true,
+          "type" : "string"
+        },
+        "requirePasswordChange" : {
+          "readOnly" : true,
+          "type" : "boolean"
         }
       }
     },
@@ -5867,26 +5914,30 @@
       }
     },
     "StoredError" : {
-      "type" : "object",
-      "properties" : {
-        "elementId" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "location" : {
-          "$ref" : "#/definitions/Location",
-          "readOnly" : true
-        },
-        "message" : {
-          "readOnly" : true,
-          "type" : "string"
-        },
-        "severity" : {
-          "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
-          "readOnly" : true,
-          "type" : "string"
+      "allOf" : [ {
+        "$ref" : "#/definitions/Marker"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "elementId" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/definitions/Location",
+            "readOnly" : true
+          },
+          "message" : {
+            "readOnly" : true,
+            "type" : "string"
+          },
+          "severity" : {
+            "enum" : [ "INFO", "WARNING", "ERROR", "FATAL_ERROR" ],
+            "readOnly" : true,
+            "type" : "string"
+          }
         }
-      }
+      } ]
     },
     "StoredQuery" : {
       "type" : "object",
@@ -7908,7 +7959,7 @@
     "/authentication/v1/logout" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "logout",
         "parameters" : [ {
           "name" : "redirect_uri",
@@ -7932,7 +7983,7 @@
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "needsPasswordChange",
         "parameters" : [ {
           "name" : "email",
@@ -7956,7 +8007,7 @@
     "/authentication/v1/noauth/changePassword" : {
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "changePassword",
         "parameters" : [ {
           "description" : "changePasswordRequest",
@@ -7972,7 +8023,7 @@
           "200" : {
             "description" : "successful operation",
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/ChangePasswordResponse"
             }
           }
         },
@@ -7983,7 +8034,7 @@
     "/authentication/v1/noauth/confirmPassword" : {
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "confirmPassword",
         "parameters" : [ {
           "description" : "confirmPasswordRequest",
@@ -7999,7 +8050,7 @@
           "200" : {
             "description" : "successful operation",
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/ConfirmPasswordResponse"
             }
           }
         },
@@ -8010,7 +8061,7 @@
     "/authentication/v1/noauth/fetchPasswordPolicy" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "fetchPasswordPolicy",
         "produces" : [ "application/json" ],
         "responses" : {
@@ -8028,7 +8079,7 @@
     "/authentication/v1/noauth/getAuthenticationState" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "getAuthenticationState",
         "produces" : [ "application/json" ],
         "responses" : {
@@ -8046,7 +8097,7 @@
     "/authentication/v1/noauth/login" : {
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "login",
         "parameters" : [ {
           "description" : "Credentials",
@@ -8062,7 +8113,7 @@
           "200" : {
             "description" : "successful operation",
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/LoginResponse"
             }
           }
         },
@@ -8073,7 +8124,7 @@
     "/authentication/v1/noauth/reset/{email}" : {
       "get" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "resetEmail",
         "parameters" : [ {
           "name" : "email",
@@ -8086,7 +8137,7 @@
           "200" : {
             "description" : "successful operation",
             "schema" : {
-              "type" : "string"
+              "type" : "boolean"
             }
           }
         },
@@ -8097,7 +8148,7 @@
     "/authentication/v1/resetPassword" : {
       "post" : {
         "consumes" : [ "application/json" ],
-        "description" : "Stroom Authentication API",
+        "description" : "",
         "operationId" : "resetPassword",
         "parameters" : [ {
           "description" : "changePasswordRequest",
@@ -8113,7 +8164,7 @@
           "200" : {
             "description" : "successful operation",
             "schema" : {
-              "type" : "string"
+              "$ref" : "#/definitions/ChangePasswordResponse"
             }
           }
         },
