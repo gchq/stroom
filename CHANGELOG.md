@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2038** : Allow autologger action to be modified (search and process)
+
 * Issue **#2027** : Fix autologger update operation
 
 * Issue **#1764** : The create API key page now loads users to select on open.
