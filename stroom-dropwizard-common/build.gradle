@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.dropwizard.common'
 
 dependencies {
     compile project(':stroom-util')
-
+    compile project(':stroom-security:stroom-security-api')
     compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }

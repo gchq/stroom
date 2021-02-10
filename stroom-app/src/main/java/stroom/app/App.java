@@ -91,8 +91,6 @@ public class App extends Application<Config> {
     @Inject
     private SessionListeners sessionListeners;
     @Inject
-    private DelegatingExceptionMapper delegatingExceptionMapper;
-    @Inject
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
@@ -223,7 +221,10 @@ public class App extends Application<Config> {
         Guice.createInjector(appModule).injectMembers(this);
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
+        //Note that if autologger is not required, and the next line removed, then it will be necessary to
+        //register a DelegatingExceptionMapper directly instead.
         environment.jersey().register(resourceAutoLogger);
+
 
         // Add health checks
         healthChecks.register();
@@ -239,9 +240,6 @@ public class App extends Application<Config> {
 
         // Add all injectable rest resources.
         restResources.register();
-
-        // Add jersey exception mappers.
-        environment.jersey().register(delegatingExceptionMapper);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();

@@ -15,6 +15,7 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.impl.LoggingConfig;
@@ -90,6 +91,9 @@ public class TestRestResourceAutoLogger {
     @Mock
     private WriterInterceptorContext writerInterceptorContext;
 
+    @Mock
+    private DelegatingExceptionMapper delegatingExceptionMapper;
+
     private LoggingConfig config = new LoggingConfig();
 
     private TestResource testResource = new TestResource();
@@ -111,6 +115,9 @@ public class TestRestResourceAutoLogger {
 
     @Captor
     private ArgumentCaptor<Throwable> throwableCaptor;
+
+    @Captor
+    private ArgumentCaptor<Throwable> delgatedThrowableCaptor;
 
     @Captor
     private ArgumentCaptor<Query> queryCaptor;
@@ -370,6 +377,10 @@ public class TestRestResourceAutoLogger {
         Mockito.verify(documentEventLog).unknownOperation(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
                 throwableCaptor.capture());
 
+        Mockito.verify(delegatingExceptionMapper).toResponse(delgatedThrowableCaptor.capture());
+
+        assertThat(delgatedThrowableCaptor.getValue()).hasMessage(message);
+
         Object loggedObject = objectCaptor.getValue();
         String eventTypeId = eventTypeIdCaptor.getValue();
         String descriptionVerb = verbCaptor.getValue();
@@ -462,7 +473,8 @@ public class TestRestResourceAutoLogger {
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(injector, config, documentEventLog, securityContext, eventLoggingService);
         Mockito.when(resourceContext.getResource(Mockito.any())).thenReturn(testResource);
-        filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog, config, resourceInfo, request);
+        filter = new RestResourceAutoLoggerImpl(securityContext, requestEventLog,
+                config, resourceInfo, request, delegatingExceptionMapper);
         filter.setResourceContext(resourceContext);
     }
 

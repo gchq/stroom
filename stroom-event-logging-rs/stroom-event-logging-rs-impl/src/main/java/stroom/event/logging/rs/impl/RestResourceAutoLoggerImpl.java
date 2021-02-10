@@ -15,25 +15,20 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.TokenException;
-import stroom.util.shared.PermissionException;
-
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.gwt.thirdparty.json.JSONException;
-import com.google.gwt.thirdparty.json.JSONObject;
 import org.glassfish.jersey.message.MessageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -41,7 +36,6 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.IOException;
 
@@ -55,6 +49,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     private final LoggingConfig config;
     private final SecurityContext securityContext;
 
+    private final DelegatingExceptionMapper delegatingExceptionMapper;
 
     @Context
     private HttpServletRequest request;
@@ -68,27 +63,31 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Inject
     RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
-                               final LoggingConfig config) {
+                               final LoggingConfig config, final DelegatingExceptionMapper delegatingExceptionMapper) {
         this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.objectMapper = createObjectMapper();
+        this.delegatingExceptionMapper = delegatingExceptionMapper;
     }
 
+    //For unit test use
     RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
                                final LoggingConfig config,
                                final ResourceInfo resourceInfo,
-                               final HttpServletRequest request) {
+                               final HttpServletRequest request,
+                               final DelegatingExceptionMapper delegatingExceptionMapper) {
         this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.resourceInfo = resourceInfo;
         this.request = request;
         this.objectMapper = createObjectMapper();
+        this.delegatingExceptionMapper = delegatingExceptionMapper;
     }
 
     @Override
-    public Response toResponse(final Exception exception) {
+    public Response toResponse(final Throwable exception) {
         if (request != null) {
             final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (object != null) {
@@ -99,43 +98,12 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);
         }
 
-        //Could register these Exception types separately, but this seems easier to maintain at present
-        if (exception instanceof WebApplicationException){
+        if (exception instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) exception;
             return wae.getResponse();
-        } else if (exception instanceof PermissionException) {
-            return createExceptionResponse(Status.FORBIDDEN, exception);
-        } else if (exception instanceof TokenException) {
-            return createExceptionResponse(Status.FORBIDDEN, exception);
-        } else if (exception instanceof AuthenticationException) {
-            return createExceptionResponse(Status.FORBIDDEN, exception);
-        } else if (exception instanceof javax.naming.AuthenticationException) {
-            return createExceptionResponse(Status.FORBIDDEN, exception);
-        }else {
-            return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
+        } else {
+            return delegatingExceptionMapper.toResponse(exception);
         }
-    }
-
-    private Response createExceptionResponse (Response.Status status, Exception ex) {
-        try {
-            String json = createExceptionJSON(status, ex);
-            return Response.status(status).
-                    entity(json).
-                    type("application/json").
-                    build();
-        } catch (Exception internal) {
-            LOGGER.error("Unable to create response for exception " + ex.getMessage(), internal);
-            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    private static String createExceptionJSON(Response.Status status, Exception ex) throws JSONException {
-        JSONObject json = new JSONObject();
-        json.put("code", status.ordinal());
-        json.put("message", ex.getMessage());
-        json.put("details", status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
-                + ((ex.getCause() != null ) ? " cause: " + ex.getCause().getMessage() : ""));
-        return json.toString();
     }
 
     @Override

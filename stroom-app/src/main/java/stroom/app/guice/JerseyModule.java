@@ -7,6 +7,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
+import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.guice.GuiceUtil;
@@ -41,7 +42,8 @@ public class JerseyModule extends AbstractModule {
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(NodeCallExceptionMapper.class)
-                .addBinding(PermissionExceptionMapper.class);
+                .addBinding(PermissionExceptionMapper.class)
+                .addBinding(TokenExceptionMapper.class);
     }
 
     @Provides

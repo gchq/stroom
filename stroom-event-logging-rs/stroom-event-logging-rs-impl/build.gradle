@@ -17,6 +17,7 @@ ext.moduleName = 'stroom.event.logging.rs.impl'
 
 dependencies {
 
+    compile project(':stroom-dropwizard-common')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-event-logging:stroom-event-logging-impl')
     compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')

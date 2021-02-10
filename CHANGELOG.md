@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2036** : Autologger now delegates exception handling.
+
 * Issue **#2039** : Limit the amount of text data output by autologger.
 
 * Issue **#2037** : Add config prop to ensure every REST call is logged
