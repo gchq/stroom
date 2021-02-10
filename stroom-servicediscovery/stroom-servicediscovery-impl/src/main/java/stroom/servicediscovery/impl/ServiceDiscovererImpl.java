@@ -26,7 +26,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
-    private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
 

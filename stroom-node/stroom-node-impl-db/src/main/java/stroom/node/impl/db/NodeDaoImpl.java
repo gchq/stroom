@@ -16,15 +16,16 @@
 
 package stroom.node.impl.db;
 
+import stroom.db.util.JooqUtil;
+import stroom.node.api.FindNodeCriteria;
+import stroom.node.impl.NodeDao;
+import stroom.node.impl.db.jooq.tables.records.NodeRecord;
+import stroom.node.shared.Node;
+import stroom.util.shared.ResultPage;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import stroom.db.util.JooqUtil;
-import stroom.node.impl.NodeDao;
-import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-import stroom.node.api.FindNodeCriteria;
-import stroom.node.shared.Node;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -35,7 +36,7 @@ import java.util.Optional;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
-    private final Map<String, Field<?>> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
         FindNodeCriteria.FIELD_ID, NODE.ID,
         FindNodeCriteria.FIELD_NAME, NODE.NAME);
 

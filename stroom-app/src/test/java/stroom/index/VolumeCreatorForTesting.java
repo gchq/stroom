@@ -40,8 +40,8 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCreatorForTesting.class);
 
-    private final String NODE1 = "node1a";
-    private final String NODE2 = "node2a";
+    private static final String NODE1 = "node1a";
+    private static final String NODE2 = "node2a";
 
     private final NodeConfig nodeConfig;
     private final IndexVolumeService volumeService;

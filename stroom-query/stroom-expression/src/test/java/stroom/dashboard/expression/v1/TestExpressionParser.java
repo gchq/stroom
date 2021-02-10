@@ -41,7 +41,13 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// TODO @AT This really ought to be refactored to split it up into more manageable chunks.
+//   See related tests that extend stroom.dashboard.expression.v1.AbstractFunctionTest
+//   Currently the whole class it suppressed in checkstyle in suppressions.xml
+// TODO variable names need fixing
+@SuppressWarnings("checkstyle:localvariablename")
 class TestExpressionParser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestExpressionParser.class);
 
     private final ExpressionParser parser = new ExpressionParser(new ParamFactory());

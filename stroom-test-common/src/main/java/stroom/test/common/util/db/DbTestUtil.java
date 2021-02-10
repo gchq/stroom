@@ -67,9 +67,9 @@ public class DbTestUtil {
     /**
      * Gets an embedded DB datasource for use in tests that don't use guice injection
      */
-    public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
-            final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
-            final T_Config config) {
+    public static <T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
+            final AbstractFlyWayDbModule<T_CONFIG, T_CONN_PROV> dbModule,
+            final T_CONFIG config) {
 
         // We are only running one module so just pass in any empty ForceCoreMigration
         return dbModule.getConnectionProvider(

@@ -54,9 +54,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
 
-    private final String SELECT_ALL_OR_NONE_TEXT = "All/none";
-    private final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
-    private final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
+    private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
+    private static final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
+    private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             1, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
     @Inject

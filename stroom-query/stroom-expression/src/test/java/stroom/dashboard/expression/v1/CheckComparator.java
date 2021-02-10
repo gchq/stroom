@@ -58,12 +58,12 @@ class CheckComparator {
     /**
      * @param keyMapValues
      * @param key
-     * @param <Key>
-     * @param <Value>
+     * @param <K>
+     * @param <V>
      * @return List<Value>
      */
-    private static <Key, Value> List<Value> getListSafely(Map<Key, List<Value>> keyMapValues, Key key) {
-        List<Value> values = keyMapValues.get(key);
+    private static <K, V> List<V> getListSafely(Map<K, List<V>> keyMapValues, K key) {
+        List<V> values = keyMapValues.get(key);
 
         if (values == null) {
             keyMapValues.put(key, values = new LinkedList<>());

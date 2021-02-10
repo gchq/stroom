@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
         //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
@@ -63,14 +64,14 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     );
 
     //defines how the entity fields relate to the table columns
-    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
+    private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
+    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider,
                                 final SearchConfig searchConfig) {
-        this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
+        this.sqlStatisticsDbConnProvider = sqlStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
     }
 
@@ -391,7 +392,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                          final Receiver receiver) {
         long count = 0;
 
-        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             //settings ot prevent mysql from reading the whole resultset into memory
             //see https://github.com/ontop/ontop/wiki/WorkingWithMySQL
             //Also needs 'useCursorFetch=true' on the jdbc connect string
@@ -481,6 +482,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @FunctionalInterface
     private interface ValueExtractor {
+
         /**
          * Function for extracting values from a {@link ResultSet} and placing them into the passed String[]
          *

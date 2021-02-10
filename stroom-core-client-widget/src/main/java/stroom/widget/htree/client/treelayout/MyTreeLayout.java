@@ -20,19 +20,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
+public class MyTreeLayout<T_TREE_NODE> implements TreeLayout<T_TREE_NODE> {
 
-    private final NodeExtentProvider<TreeNode> nodeExtentProvider;
-    private final Configuration<TreeNode> configuration;
-    private TreeForTreeLayout<TreeNode> tree;
-    private Map<TreeNode, Bounds> boundsMap;
+    private final NodeExtentProvider<T_TREE_NODE> nodeExtentProvider;
+    private final Configuration<T_TREE_NODE> configuration;
+    private TreeForTreeLayout<T_TREE_NODE> tree;
+    private Map<T_TREE_NODE, Bounds> boundsMap;
     private double boundsX;
     private double boundsY;
     private double boundsWidth;
     private double boundsHeight;
 
-    public MyTreeLayout(final NodeExtentProvider<TreeNode> nodeExtentProvider,
-                        final Configuration<TreeNode> configuration) {
+    public MyTreeLayout(final NodeExtentProvider<T_TREE_NODE> nodeExtentProvider,
+                        final Configuration<T_TREE_NODE> configuration) {
         this.nodeExtentProvider = nodeExtentProvider;
         this.configuration = configuration;
     }
@@ -49,7 +49,7 @@ public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         }
     }
 
-    private double calculate(final TreeNode node, final double x, final double y, final int depth) {
+    private double calculate(final T_TREE_NODE node, final double x, final double y, final int depth) {
         double totalHeight = 0;
 
         if (node != null) {
@@ -58,15 +58,15 @@ public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
             final double height = dimension.getHeight();
             totalHeight = height;
 
-            final List<TreeNode> children = tree.getChildren(node);
+            final List<T_TREE_NODE> children = tree.getChildren(node);
             if (children != null && children.size() > 0) {
                 final double xOffset = width + configuration.getGapBetweenLevels(depth);
                 double yOffset = 0;
                 final double childX = x + xOffset;
                 double childY = y + yOffset;
 
-                TreeNode lastChild = null;
-                for (final TreeNode child : children) {
+                T_TREE_NODE lastChild = null;
+                for (final T_TREE_NODE child : children) {
                     if (lastChild != null) {
                         final double space = configuration.getGapBetweenNodes(child, lastChild);
                         yOffset += space;
@@ -107,17 +107,17 @@ public class MyTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     @Override
-    public Map<TreeNode, Bounds> getNodeBounds() {
+    public Map<T_TREE_NODE, Bounds> getNodeBounds() {
         return boundsMap;
     }
 
     @Override
-    public TreeForTreeLayout<TreeNode> getTree() {
+    public TreeForTreeLayout<T_TREE_NODE> getTree() {
         return tree;
     }
 
     @Override
-    public void setTree(final TreeForTreeLayout<TreeNode> tree) {
+    public void setTree(final TreeForTreeLayout<T_TREE_NODE> tree) {
         this.tree = tree;
     }
 }

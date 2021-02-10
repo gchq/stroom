@@ -24,13 +24,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public abstract class MyPresenter<V extends View, Proxy_ extends Proxy<?>> extends Presenter<V, Proxy_>
+public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>> extends Presenter<T_VIEW, T_PROXY>
         implements Layer {
 
     private double opacity;
     private boolean firstReveal = true;
 
-    public MyPresenter(final EventBus eventBus, final V view, final Proxy_ proxy) {
+    public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
         super(eventBus, view, proxy);
     }
 

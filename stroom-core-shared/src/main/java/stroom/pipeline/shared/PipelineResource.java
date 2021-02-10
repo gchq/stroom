@@ -16,14 +16,15 @@
 
 package stroom.pipeline.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -52,7 +53,7 @@ public interface PipelineResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Update a pipeline doc",
             response = PipelineDoc.class)
-    PipelineDoc update(@ApiParam("PipelineDoc") PipelineDoc PipelineDoc);
+    PipelineDoc update(@ApiParam("PipelineDoc") PipelineDoc pipelineDoc);
 
     @PUT
     @Path("/savePipelineXml")

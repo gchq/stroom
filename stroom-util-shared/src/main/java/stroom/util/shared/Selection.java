@@ -76,12 +76,12 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
         return set.contains(item);
     }
 
-    public static <IN, OUT> Selection<OUT> convert(final Selection<IN> in, final Function<IN, OUT> converter) {
+    public static <T_IN, T_OUT> Selection<T_OUT> convert(final Selection<T_IN> in, final Function<T_IN, T_OUT> converter) {
         if (in == null) {
             return null;
         }
 
-        final Selection<OUT> out = Selection.selectNone();
+        final Selection<T_OUT> out = Selection.selectNone();
         out.matchAll = in.matchAll;
         if (in.set != null) {
             out.set = in.set.stream().map(converter).collect(Collectors.toSet());

@@ -1,9 +1,5 @@
 package stroom.security.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
@@ -11,15 +7,20 @@ import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DocPermissionDaoImplTest {
+
     private static UserDao userDao;
     private static DocumentPermissionDao documentPermissionDao;
 
@@ -68,13 +69,15 @@ class DocPermissionDaoImplTest {
         final User user3 = createUser(userName3);
 
         // Create permissions for multiple documents to check that document selection is working correctly
-        Stream.of(docRef1, docRef2).map(DocRef::getUuid).forEach(dUuid -> {
-            documentPermissionDao.addPermission(dUuid, user1.getUuid(), PERMISSION_READ);
-            documentPermissionDao.addPermission(dUuid, user1.getUuid(), PERMISSION_USE);
-            documentPermissionDao.addPermission(dUuid, user2.getUuid(), PERMISSION_USE);
-            documentPermissionDao.addPermission(dUuid, user3.getUuid(), PERMISSION_USE);
-            documentPermissionDao.addPermission(dUuid, user3.getUuid(), PERMISSION_UPDATE);
-        });
+        Stream.of(docRef1, docRef2)
+                .map(DocRef::getUuid)
+                .forEach(docRefUuid -> {
+                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_READ);
+                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_USE);
+                    documentPermissionDao.addPermission(docRefUuid, user2.getUuid(), PERMISSION_USE);
+                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_USE);
+                    documentPermissionDao.addPermission(docRefUuid, user3.getUuid(), PERMISSION_UPDATE);
+                });
 
         // Get the permissions for all users to this document
         final Map<String, Set<String>> permissionsFound1 = documentPermissionDao.getPermissionsForDocument(docRef1.getUuid());
@@ -128,10 +131,12 @@ class DocPermissionDaoImplTest {
         final User user1 = createUser(userName1);
 
         // Create permissions for multiple documents to check that document selection is working correctly
-        Stream.of(docRef1, docRef2).map(DocRef::getUuid).forEach(dUuid -> {
-            documentPermissionDao.addPermission(dUuid, user1.getUuid(), PERMISSION_READ);
-            documentPermissionDao.addPermission(dUuid, user1.getUuid(), PERMISSION_USE);
-        });
+        Stream.of(docRef1, docRef2)
+                .map(DocRef::getUuid)
+                .forEach(docRefUuid -> {
+                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_READ);
+                    documentPermissionDao.addPermission(docRefUuid, user1.getUuid(), PERMISSION_USE);
+                });
 
         Stream.of(docRef1, docRef2).forEach(d -> {
             final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(docRef1.getUuid(), user1.getUuid());

@@ -35,10 +35,10 @@ package stroom.widget.htree.client.treelayout;
  * <p>
  * Also see <a href="package-summary.html">this overview</a>.
  *
- * @param <TreeNode>
+ * @param <T_TREE_NODE>
  * @author Udo Borkowski (ub@abego.org)
  */
-public interface Configuration<TreeNode> {
+public interface Configuration<T_TREE_NODE> {
     // ------------------------------------------------------------------------
     // rootLocation
 
@@ -151,7 +151,7 @@ public interface Configuration<TreeNode> {
      * @param node2
      * @return the minimal size of the gap between node1 and node2 [result >= 0]
      */
-    double getGapBetweenNodes(TreeNode node1, TreeNode node2);
+    double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2);
 
     // ------------------------------------------------------------------------
     // gapBetweenLevels/Nodes

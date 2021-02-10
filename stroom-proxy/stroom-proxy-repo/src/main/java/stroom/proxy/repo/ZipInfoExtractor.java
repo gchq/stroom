@@ -16,14 +16,15 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.FileUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
 class ZipInfoExtractor {
-    private final Logger LOGGER = LoggerFactory.getLogger(ZipInfoExtractor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZipInfoExtractor.class);
 
     private final ErrorReceiver errorReceiver;
 

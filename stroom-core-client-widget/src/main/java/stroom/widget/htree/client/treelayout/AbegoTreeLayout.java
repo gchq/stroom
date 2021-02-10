@@ -51,6 +51,7 @@ import java.util.Map.Entry;
  *
  * @param <TreeNode>
  */
+@SuppressWarnings("checkstyle:all") // 3rd part code
 public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     /*
      * Differences between this implementation and original algorithm

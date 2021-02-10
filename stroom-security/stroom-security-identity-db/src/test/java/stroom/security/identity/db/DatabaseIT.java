@@ -1,10 +1,10 @@
 package stroom.security.identity.db;
 
+import stroom.test.common.util.db.DbTestUtil;
+
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.test.common.util.db.DbTestUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -14,8 +14,8 @@ import java.sql.SQLException;
  * A belt and braces approach to cleaning the database. It's not an expensive operation and doing it before
  * and after a test guarantees we won't run into issues with existing data.
  */
-public abstract class Database_IT {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Database_IT.class);
+public abstract class DatabaseIT {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseIT.class);
 
     public static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
     public static final String DATABASE_NAME = "auth";

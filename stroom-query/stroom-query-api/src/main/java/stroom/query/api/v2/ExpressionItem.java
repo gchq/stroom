@@ -108,7 +108,7 @@ public abstract class ExpressionItem implements Serializable {
      * Builder for constructing a {@link ExpressionItem}. This is an abstract type, each subclass
      * of ExpressionItem should provide a builder that extends this one.
      */
-    public abstract static class Builder<T extends ExpressionItem, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends ExpressionItem, T_CHILD_CLASS extends Builder<T, ?>> {
         Boolean enabled;
 
         Builder() {
@@ -130,7 +130,7 @@ public abstract class ExpressionItem implements Serializable {
          * @param enabled Sets the terms state to enabled if true or null, disabled if false
          * @return The Builder Builder, enabling method chaining
          */
-        public CHILD_CLASS enabled(final Boolean enabled) {
+        public T_CHILD_CLASS enabled(final Boolean enabled) {
             if (Boolean.TRUE.equals(enabled)) {
                 this.enabled = null;
             } else {
@@ -139,7 +139,7 @@ public abstract class ExpressionItem implements Serializable {
             return self();
         }
 
-        abstract CHILD_CLASS self();
+        abstract T_CHILD_CLASS self();
 
         public abstract T build();
     }

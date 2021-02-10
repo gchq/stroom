@@ -20,14 +20,14 @@ public class EditableLong extends Number implements Comparable<EditableLong>, Ed
 
     private static final long serialVersionUID = 2999109513859666073L;
 
-    private Long _long;
+    private Long value;
     private boolean editable = true;
 
     public EditableLong() {
     }
 
-    public EditableLong(final Long _long) {
-        this._long = _long;
+    public EditableLong(final Long value) {
+        this.value = value;
     }
 
     public boolean isEditable() {
@@ -39,36 +39,36 @@ public class EditableLong extends Number implements Comparable<EditableLong>, Ed
     }
 
     public Long getLong() {
-        return _long;
+        return value;
     }
 
-    public void setLong(final Long _long) {
-        this._long = _long;
+    public void setLong(final Long value) {
+        this.value = value;
     }
 
     @Override
     public int intValue() {
-        return _long.intValue();
+        return value.intValue();
     }
 
     @Override
     public long longValue() {
-        return _long.longValue();
+        return value.longValue();
     }
 
     @Override
     public float floatValue() {
-        return _long.floatValue();
+        return value.floatValue();
     }
 
     @Override
     public double doubleValue() {
-        return _long.doubleValue();
+        return value.doubleValue();
     }
 
     @Override
     public int hashCode() {
-        return _long.hashCode();
+        return value.hashCode();
     }
 
     @Override
@@ -78,7 +78,7 @@ public class EditableLong extends Number implements Comparable<EditableLong>, Ed
         }
 
         if (obj instanceof EditableLong) {
-            return ((EditableLong) obj)._long.equals(_long);
+            return ((EditableLong) obj).value.equals(value);
         }
 
         return false;
@@ -86,11 +86,11 @@ public class EditableLong extends Number implements Comparable<EditableLong>, Ed
 
     @Override
     public int compareTo(final EditableLong sharedLong) {
-        return _long.compareTo(sharedLong._long);
+        return value.compareTo(sharedLong.value);
     }
 
     @Override
     public String toString() {
-        return String.valueOf(_long);
+        return String.valueOf(value);
     }
 }

@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBContext;
 
-abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshaller<T_Entity, T_Object> {
+abstract class AbstractEntityMarshaller<T_ENTITY, T_OBJECT> implements Marshaller<T_ENTITY, T_OBJECT> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
     private final JAXBContext jaxbContext;
@@ -33,7 +33,7 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
     }
 
     @Override
-    public T_Entity marshal(final T_Entity entity) {
+    public T_ENTITY marshal(final T_ENTITY entity) {
         try {
             Object object = getObject(entity);
 
@@ -55,10 +55,10 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
     }
 
     @Override
-    public T_Entity unmarshal(final T_Entity entity) {
+    public T_ENTITY unmarshal(final T_ENTITY entity) {
         try {
             final String data = getData(entity);
-            final T_Object object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
+            final T_OBJECT object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to unmarshal entity!", e);
@@ -67,11 +67,11 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
         return entity;
     }
 
-    protected abstract String getData(T_Entity entity);
+    protected abstract String getData(T_ENTITY entity);
 
-    protected abstract void setData(T_Entity entity, String data);
+    protected abstract void setData(T_ENTITY entity, String data);
 
-    protected abstract Class<T_Object> getObjectType();
+    protected abstract Class<T_OBJECT> getObjectType();
 
     protected abstract String getEntityType();
 }

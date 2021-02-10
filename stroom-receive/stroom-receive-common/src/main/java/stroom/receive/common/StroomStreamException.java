@@ -16,10 +16,11 @@
 
 package stroom.receive.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -116,10 +117,10 @@ public class StroomStreamException extends RuntimeException {
     }
 
     private static void readAndCloseStream(final InputStream inputStream) {
-        byte[] BUFFER = new byte[1024];
+        final byte[] buffer = new byte[1024];
         try {
             if (inputStream != null) {
-                while (inputStream.read(BUFFER) > 0) {
+                while (inputStream.read(buffer) > 0) {
                 }
                 inputStream.close();
             }

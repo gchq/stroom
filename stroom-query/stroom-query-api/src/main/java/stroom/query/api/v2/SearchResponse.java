@@ -175,11 +175,11 @@ public final class SearchResponse {
     /**
      * Builder for constructing a {@link SearchResponse}
      *
-     * @param <ResultClass> The class of the popToWhenComplete builder, allows nested building
+     * @param <T_RESULT_CLASS> The class of the popToWhenComplete builder, allows nested building
      */
     private abstract static class Builder<
-            ResultClass extends Result,
-            CHILD_CLASS extends Builder<ResultClass, ?>> {
+            T_RESULT_CLASS extends Result,
+            T_CHILD_CLASS extends Builder<T_RESULT_CLASS, ?>> {
         // Mandatory parameters
         Boolean complete;
 
@@ -202,7 +202,7 @@ public final class SearchResponse {
          * @param value are the results considered complete
          * @return The {@link Builder}, enabling method chaining
          */
-        public final CHILD_CLASS complete(final Boolean value) {
+        public final T_CHILD_CLASS complete(final Boolean value) {
             this.complete = value;
             return self();
         }
@@ -241,17 +241,17 @@ public final class SearchResponse {
 //            return self();
 //        }
 
-        public CHILD_CLASS highlights(final List<String> highlights) {
+        public T_CHILD_CLASS highlights(final List<String> highlights) {
             this.highlights = highlights;
             return self();
         }
 
-        public CHILD_CLASS results(final List<Result> results) {
+        public T_CHILD_CLASS results(final List<Result> results) {
             this.results = results;
             return self();
         }
 
-        public CHILD_CLASS errors(final List<String> errors) {
+        public T_CHILD_CLASS errors(final List<String> errors) {
             this.errors = errors;
             return self();
         }
@@ -265,7 +265,7 @@ public final class SearchResponse {
             return new SearchResponse(highlights, results, errors, complete);
         }
 
-        protected abstract CHILD_CLASS self();
+        protected abstract T_CHILD_CLASS self();
     }
 
 }

@@ -72,9 +72,9 @@
 
   <!-- Checks for Size Violations.                    -->
   <!-- See https://checkstyle.org/config_sizes.html -->
-  <module name="FileLength">
-    <property name="severity" value="warning"/>
-  </module>
+  <module name="FileLength"/>
+    <!--<property name="severity" value="error"/>-->
+  <!--</module>-->
   <!--<module name="LineLength">-->
     <!--<property name="max" value="120"/>-->
     <!--<property name="fileExtensions" value="java"/>-->
@@ -231,6 +231,115 @@
       <property name="id" value="SeparatorWrapMethodRef"/>
       <property name="tokens" value="METHOD_REF"/>
       <property name="option" value="nl"/>
+    </module>
+
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+      <message key="name.invalidPattern"
+             value="Package name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="TypeName">
+      <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF,
+                    ANNOTATION_DEF, RECORD_DEF"/>
+
+      <!-- Stroom allow _ in Test... class names -->
+      <property name="format" value="^([A-Z][a-zA-Z0-9]*|Test[A-Z][a-zA-Z0-9_]*)$"/>
+
+      <message key="name.invalidPattern"
+             value="Type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="MemberName">
+      <!--<property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+      <message key="name.invalidPattern"
+             value="Member name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="ParameterName">
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+
+      <message key="name.invalidPattern"
+             value="Parameter name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="LambdaParameterName">
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+
+      <message key="name.invalidPattern"
+             value="Lambda parameter name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="CatchParameterName">
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+
+      <message key="name.invalidPattern"
+             value="Catch parameter name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="LocalVariableName">
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+
+      <message key="name.invalidPattern"
+             value="Local variable name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="PatternVariableName">
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+
+      <!-- Change to allow single letter variables and stuff like qName -->
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
+
+      <message key="name.invalidPattern"
+             value="Pattern variable name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="ClassTypeParameterName">
+      <!-- This is google's pattern K, T1, ConProvT, RowT -->
+      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
+
+      <!-- This is our stroom pattern that allows K, T1, T_CON_PROV, T_ROW, etc. -->
+      <property name="format" value="(^[A-Z][0-9]?)$|(^T_[A-Z_0-9]+$)"/>
+
+      <message key="name.invalidPattern"
+             value="Class type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <!--<module name="RecordComponentName">-->
+      <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
+      <!--<message key="name.invalidPattern"-->
+               <!--value="Record component name ''{0}'' must match pattern ''{1}''."/>-->
+    <!--</module>-->
+    <!--<module name="RecordTypeParameterName">-->
+      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
+      <!--<message key="name.invalidPattern"-->
+               <!--value="Record type name ''{0}'' must match pattern ''{1}''."/>-->
+    <!--</module>-->
+    <module name="MethodTypeParameterName">
+      <!-- This is google's pattern K, T1, ConProvT, RowT -->
+      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
+
+      <!-- This is our stroom pattern that allows K, T1, T_CON_PROV, T_ROW, etc. -->
+      <property name="format" value="(^[A-Z][0-9]?)$|(^T_[A-Z_0-9]+$)"/>
+
+      <message key="name.invalidPattern"
+             value="Method type name ''{0}'' must match pattern ''{1}''."/>
+    </module>
+    <module name="InterfaceTypeParameterName">
+      <!-- This is google's pattern K, T1, ConProvT, RowT -->
+      <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
+
+      <!-- This is our stroom pattern that allows K, T1, T_CON_PROV, T_ROW, etc. -->
+      <property name="format" value="(^[A-Z][0-9]?)$|(^T_[A-Z_0-9]+$)"/>
+
+      <message key="name.invalidPattern"
+             value="Interface type name ''{0}'' must match pattern ''{1}''."/>
     </module>
 
   </module>

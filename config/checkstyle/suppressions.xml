@@ -10,6 +10,10 @@
     <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XML11Char.java" checks=".*"/>
     <suppress files="[\\/]stroom[\\/]util[\\/]xml[\\/]XMLChar.java" checks=".*"/>
 
+    <!-- Massive file so breaks file length check -->
+    <!-- Not ideal as it means we can't test any of this class -->
+    <suppress files="[\\/]stroom[\\/].*[\\/]TestExpressionParser.java" checks=".*"/>
+
     <!-- Generated code --> 
     <suppress files="[\\/]db[\\/]jooq[\\/]" checks=".*"/>
 

@@ -40,7 +40,7 @@ import static stroom.widget.htree.client.treelayout.internal.util.Contract.check
  *
  * @author Udo Borkowski (ub@abego.org)
  */
-public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
+public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_NODE> {
 
     private final double gapBetweenLevels;
     private final double gapBetweenNodes;
@@ -106,7 +106,7 @@ public class DefaultConfiguration<TreeNode> implements Configuration<TreeNode> {
     }
 
     @Override
-    public double getGapBetweenNodes(TreeNode node1, TreeNode node2) {
+    public double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2) {
         return gapBetweenNodes;
     }
 

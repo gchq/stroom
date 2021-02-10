@@ -147,7 +147,6 @@ class AnnotationWriter extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
 

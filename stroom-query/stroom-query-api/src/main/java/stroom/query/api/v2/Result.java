@@ -96,9 +96,9 @@ public abstract class Result {
      * each known Result implementation class.
      *
      * @param <T>           The result class type, either Flat or Table
-     * @param <CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
+     * @param <T_CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
-    public abstract static class Builder<T extends Result, CHILD_CLASS extends Builder<T, ?>> {
+    public abstract static class Builder<T extends Result, T_CHILD_CLASS extends Builder<T, ?>> {
         String componentId;
         String error;
 
@@ -114,7 +114,7 @@ public abstract class Result {
          * @param value The ID of the component that this result set was requested for. See ResultRequest in SearchRequest
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS componentId(final String componentId) {
+        public T_CHILD_CLASS componentId(final String componentId) {
             this.componentId = componentId;
             return self();
         }
@@ -123,12 +123,12 @@ public abstract class Result {
          * @param value If an error has occurred producing this result set then this will have details
          * @return The {@link Builder}, enabling method chaining
          */
-        public CHILD_CLASS error(final String error) {
+        public T_CHILD_CLASS error(final String error) {
             this.error = error;
             return self();
         }
 
-        abstract CHILD_CLASS self();
+        abstract T_CHILD_CLASS self();
 
         public abstract T build();
     }

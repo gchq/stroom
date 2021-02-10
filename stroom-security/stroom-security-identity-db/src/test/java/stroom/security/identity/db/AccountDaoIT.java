@@ -1,15 +1,15 @@
 package stroom.security.identity.db;
 
+import stroom.config.common.CommonDbConfig;
+import stroom.security.identity.account.Account;
+import stroom.security.identity.account.AccountDao;
+import stroom.test.common.util.db.DbTestUtil;
+
 import junit.framework.TestCase;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.security.identity.account.Account;
-import stroom.security.identity.account.AccountDao;
-import stroom.config.common.CommonDbConfig;
-import stroom.test.common.util.db.DbTestUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -23,9 +23,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore("Temporarily ignore for auth migration")
-public class AccountDao_IT extends Database_IT {
+public class AccountDaoIT extends DatabaseIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountDao_IT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountDaoIT.class);
 
     @Test
     public void testNewButInactiveUserIsDisabled() {

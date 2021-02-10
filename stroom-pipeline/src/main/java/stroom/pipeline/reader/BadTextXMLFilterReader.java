@@ -30,6 +30,7 @@ import java.util.Set;
  * by the start and end tags should have been escaped to avoid '<'; '>' and '&'
  * characters being interpreted as XML syntax.
  */
+@SuppressWarnings("checkstyle:membername")
 public class BadTextXMLFilterReader extends TransformReader {
 
     private static final int MAX_CAPACITY = 1024 * 1024; // 1 million characters
@@ -55,16 +56,32 @@ public class BadTextXMLFilterReader extends TransformReader {
     }
 
     private static boolean isNameStartChar(final int cp) {
-        return (cp >= 'A' && cp <= 'Z') || (cp >= 'a' && cp <= 'z') || cp == ':' || cp == '_'
-                || (cp >= 0xc0 && cp <= 0xd6) || (cp >= 0xd8 && cp <= 0xf6) || (cp >= 0xf8 && cp <= 0x2ff)
-                || (cp >= 0x370 && cp <= 0x37d) || (cp >= 0x37f && cp <= 0x1fff) || (cp >= 0x200c && cp <= 0x200d)
-                || (cp >= 0x2070 && cp <= 0x218f) || (cp >= 0x2c00 && cp <= 0x2fef) || (cp >= 0x3001 && cp <= 0xD7ff)
-                || (cp >= 0xf900 && cp <= 0xfdcf) || (cp >= 0xfdf0 && cp <= 0xfffd) || (cp >= 0x10000 && cp <= 0xeffff);
+        return (cp >= 'A' && cp <= 'Z')
+                || (cp >= 'a' && cp <= 'z')
+                || cp == ':'
+                || cp == '_'
+                || (cp >= 0xc0 && cp <= 0xd6)
+                || (cp >= 0xd8 && cp <= 0xf6)
+                || (cp >= 0xf8 && cp <= 0x2ff)
+                || (cp >= 0x370 && cp <= 0x37d)
+                || (cp >= 0x37f && cp <= 0x1fff)
+                || (cp >= 0x200c && cp <= 0x200d)
+                || (cp >= 0x2070 && cp <= 0x218f)
+                || (cp >= 0x2c00 && cp <= 0x2fef)
+                || (cp >= 0x3001 && cp <= 0xD7ff)
+                || (cp >= 0xf900 && cp <= 0xfdcf)
+                || (cp >= 0xfdf0 && cp <= 0xfffd)
+                || (cp >= 0x10000 && cp <= 0xeffff);
     }
 
     private static boolean isNameChar(final int cp) {
-        return isNameStartChar(cp) || cp == '-' || cp == '.' || Character.isDigit(cp) || cp == 0x87
-                || (cp >= 0x300 && cp <= 0x36f) || (cp >= 0x203f && cp <= 0x2040);
+        return isNameStartChar(cp)
+                || cp == '-'
+                || cp == '.'
+                || Character.isDigit(cp)
+                || cp == 0x87
+                || (cp >= 0x300 && cp <= 0x36f)
+                || (cp >= 0x203f && cp <= 0x2040);
     }
 
     @Override
@@ -163,7 +180,7 @@ public class BadTextXMLFilterReader extends TransformReader {
         }
     }
 
-    @SuppressWarnings({"checkstyle:missingswitchdefault", "checkstyle:fallthrough"})
+    @SuppressWarnings({"checkstyle:missingswitchdefault", "checkstyle:fallthrough", "localvariablename"})
     private boolean readFromBadXML() throws IOException {
         int entityNameidx = -1;
         m_leafBeginText = m_leafEndText = -1;

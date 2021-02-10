@@ -47,11 +47,11 @@ import java.util.List;
  * <p>
  * See also {@link DefaultTreeForTreeLayout}.
  */
-public abstract class AbstractTreeForTreeLayout<TreeNode> implements TreeForTreeLayout<TreeNode> {
+public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForTreeLayout<T_TREE_NODE> {
 
-    private final TreeNode root;
+    private final T_TREE_NODE root;
 
-    public AbstractTreeForTreeLayout(TreeNode root) {
+    public AbstractTreeForTreeLayout(T_TREE_NODE root) {
         this.root = root;
     }
 
@@ -64,7 +64,7 @@ public abstract class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * @return [nullable] the parent of the node, or null when the node is a
      * root.
      */
-    public abstract TreeNode getParent(TreeNode node);
+    public abstract T_TREE_NODE getParent(T_TREE_NODE node);
 
     /**
      * Return the children of a node as a {@link List}.
@@ -79,40 +79,40 @@ public abstract class AbstractTreeForTreeLayout<TreeNode> implements TreeForTree
      * @return the children of the given node. When node is a leaf the list is
      * empty.
      */
-    public abstract List<TreeNode> getChildrenList(TreeNode node);
+    public abstract List<T_TREE_NODE> getChildrenList(T_TREE_NODE node);
 
     @Override
-    public TreeNode getRoot() {
+    public T_TREE_NODE getRoot() {
         return root;
     }
 
     @Override
-    public boolean isLeaf(TreeNode node) {
+    public boolean isLeaf(T_TREE_NODE node) {
         return getChildrenList(node).isEmpty();
     }
 
     @Override
-    public boolean isChildOfParent(TreeNode node, TreeNode parentNode) {
+    public boolean isChildOfParent(T_TREE_NODE node, T_TREE_NODE parentNode) {
         return getParent(node) == parentNode;
     }
 
     @Override
-    public List<TreeNode> getChildren(TreeNode node) {
+    public List<T_TREE_NODE> getChildren(T_TREE_NODE node) {
         return getChildrenList(node);
     }
 
     @Override
-    public Iterable<TreeNode> getChildrenReverse(TreeNode node) {
+    public Iterable<T_TREE_NODE> getChildrenReverse(T_TREE_NODE node) {
         return IterableUtil.createReverseIterable(getChildrenList(node));
     }
 
     @Override
-    public TreeNode getFirstChild(TreeNode parentNode) {
+    public T_TREE_NODE getFirstChild(T_TREE_NODE parentNode) {
         return getChildrenList(parentNode).get(0);
     }
 
     @Override
-    public TreeNode getLastChild(TreeNode parentNode) {
+    public T_TREE_NODE getLastChild(T_TREE_NODE parentNode) {
         return ListUtil.getLast(getChildrenList(parentNode));
     }
 }

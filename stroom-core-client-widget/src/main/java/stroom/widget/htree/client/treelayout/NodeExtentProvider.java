@@ -33,9 +33,9 @@ package stroom.widget.htree.client.treelayout;
 /**
  * Provides the extent (width and height) of a tree node.
  *
- * @param <TreeNode>
+ * @param <T_TREE_NODE>
  */
-public interface NodeExtentProvider<TreeNode> {
+public interface NodeExtentProvider<T_TREE_NODE> {
 
     /**
      * Returns the extends for the given treeNode.
@@ -43,5 +43,5 @@ public interface NodeExtentProvider<TreeNode> {
      * @param treeNode
      * @return [result >= 0]
      */
-    Dimension getExtents(TreeNode treeNode);
+    Dimension getExtents(T_TREE_NODE treeNode);
 }

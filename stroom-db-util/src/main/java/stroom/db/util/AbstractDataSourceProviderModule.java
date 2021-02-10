@@ -16,18 +16,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @param <T_Config>       A config class that implements {@link HasDbConfig}
- * @param <T_ConnProvider> A class that extends {@link DataSource}
+ * @param <T_CONFIG>       A config class that implements {@link HasDbConfig}
+ * @param <T_CONN_PROV> A class that extends {@link DataSource}
  */
-public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource>
+public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
         extends AbstractModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
     protected abstract String getModuleName();
 
-    protected abstract Class<T_ConnProvider> getConnectionProviderType();
+    protected abstract Class<T_CONN_PROV> getConnectionProviderType();
 
-    protected abstract T_ConnProvider createConnectionProvider(DataSource dataSource);
+    protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
     private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
@@ -47,8 +47,8 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
      */
     @Provides
     @Singleton
-    public T_ConnProvider getConnectionProvider(
-            final Provider<T_Config> configProvider,
+    public T_CONN_PROV getConnectionProvider(
+            final Provider<T_CONFIG> configProvider,
             final DataSourceFactory dataSourceFactory,
             @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
 

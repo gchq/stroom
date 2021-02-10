@@ -71,8 +71,8 @@ class PipelineResourceImpl implements PipelineResource {
     }
 
     @Override
-    public PipelineDoc update(final PipelineDoc doc) {
-        return documentResourceHelper.update(pipelineStore, doc);
+    public PipelineDoc update(final PipelineDoc pipelineDoc) {
+        return documentResourceHelper.update(pipelineStore, pipelineDoc);
     }
 
     @Override
