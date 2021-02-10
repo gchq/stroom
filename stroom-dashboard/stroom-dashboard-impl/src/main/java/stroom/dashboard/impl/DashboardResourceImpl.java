@@ -93,451 +93,56 @@ import java.util.stream.Collectors;
 class DashboardResourceImpl implements DashboardResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
 
-    private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
-    private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
-
-    private final Provider<DashboardStore> dashboardStoreProvider;
-    private final Provider<StoredQueryService> storedQueryServiceProvider;
-    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
-    private final Provider<SearchRequestMapper> searchRequestMapperProvider;
-    private final Provider<ResourceStore> resourceStoreProvider;
-    private final Provider<SearchEventLog> searchEventLogProvider;
-    private final Provider<ActiveQueriesManager> activeQueriesManagerProvider;
-    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final Provider<SecurityContext> securityContextProvider;
-    private final HttpServletRequestHolder httpServletRequestHolder;
-    private final ExecutorProvider executorProvider;
-    private final Provider<TaskContextFactory> taskContextFactoryProvider;
-    private final Provider<FunctionService> functionServiceProvider;
+    private final Provider<DashboardService> dashboardServiceProvider;
 
     @Inject
-    DashboardResourceImpl(final Provider<DashboardStore> dashboardStoreProvider,
-                          final Provider<StoredQueryService> storedQueryServiceProvider,
-                          final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-                          final Provider<SearchRequestMapper> searchRequestMapperProvider,
-                          final Provider<ResourceStore> resourceStoreProvider,
-                          final Provider<SearchEventLog> searchEventLogProvider,
-                          final Provider<ActiveQueriesManager> activeQueriesManagerProvider,
-                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                          final Provider<SecurityContext> securityContextProvider,
-                          final HttpServletRequestHolder httpServletRequestHolder,
-                          final ExecutorProvider executorProvider,
-                          final Provider<TaskContextFactory> taskContextFactoryProvider,
-                          final Provider<FunctionService> functionServiceProvider) {
-        this.dashboardStoreProvider = dashboardStoreProvider;
-        this.storedQueryServiceProvider = storedQueryServiceProvider;
-        this.documentResourceHelperProvider = documentResourceHelperProvider;
-        this.searchRequestMapperProvider = searchRequestMapperProvider;
-        this.resourceStoreProvider = resourceStoreProvider;
-        this.searchEventLogProvider = searchEventLogProvider;
-        this.activeQueriesManagerProvider = activeQueriesManagerProvider;
-        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.securityContextProvider = securityContextProvider;
-        this.httpServletRequestHolder = httpServletRequestHolder;
-        this.executorProvider = executorProvider;
-        this.taskContextFactoryProvider = taskContextFactoryProvider;
-        this.functionServiceProvider = functionServiceProvider;
+    DashboardResourceImpl(final Provider<DashboardService> dashboardServiceProvider) {
+        this.dashboardServiceProvider = dashboardServiceProvider;
     }
 
     @Override
     public DashboardDoc read(final DocRef docRef) {
-        return documentResourceHelperProvider.get().read(dashboardStoreProvider.get(), docRef);
+        return dashboardServiceProvider.get().read(docRef);
     }
 
     @Override
     public DashboardDoc update(final DashboardDoc doc) {
-        return documentResourceHelperProvider.get().update(dashboardStoreProvider.get(), doc);
+        return dashboardServiceProvider.get().update(doc);
     }
 
     @Override
     public ValidateExpressionResult validateExpression(final String expressionString) {
-        try {
-            final FieldIndex fieldIndex = new FieldIndex();
-            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
-            final Expression expression = expressionParser.parse(fieldIndex, expressionString);
-            String correctedExpression = "";
-            if (expression != null) {
-                correctedExpression = expression.toString();
-            }
-            return new ValidateExpressionResult(true, correctedExpression);
-        } catch (final ParseException e) {
-            return new ValidateExpressionResult(false, e.getMessage());
-        }
+       return dashboardServiceProvider.get().validateExpression(expressionString);
     }
 
     @Override
     public ResourceGeneration downloadQuery(final DownloadQueryRequest request) {
-        return securityContextProvider.get().secureResult(() -> {
-            try {
-                if (request.getSearchRequest() == null) {
-                    throw new EntityServiceException("Query is empty");
-                }
-
-                final SearchRequest searchRequest = request.getSearchRequest();
-                final SearchRequest.Builder builder = searchRequest.copy();
-                final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
-
-                // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
-                if (searchRequest.getComponentResultRequests() != null) {
-                    searchRequest.getComponentResultRequests()
-                            .forEach(componentResultRequest -> {
-
-                                ComponentResultRequest newRequest = null;
-                                if (componentResultRequest instanceof TableResultRequest) {
-                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-                                    // Remove special fields.
-                                    tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
-                                    newRequest = tableResultRequest
-                                            .copy()
-                                            .fetch(Fetch.ALL)
-                                            .build();
-                                } else if (componentResultRequest instanceof VisResultRequest) {
-                                    final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-                                    newRequest = visResultRequest
-                                            .copy()
-                                            .fetch(Fetch.ALL)
-                                            .build();
-                                }
-
-                                componentResultRequests.add(newRequest);
-                            });
-                }
-
-                builder.componentResultRequests(componentResultRequests);
-
-                // Convert our internal model to the model used by the api
-                stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapperProvider.get().mapRequest(
-                        request.getDashboardQueryKey(),
-                        builder.build());
-
-                if (apiSearchRequest == null) {
-                    throw new EntityServiceException("Query could not be mapped to a SearchRequest");
-                }
-
-                // Generate the export file
-                String fileName = request.getDashboardQueryKey().toString();
-                fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-                fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-                fileName = fileName + ".json";
-
-                final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile(fileName);
-                final Path outputFile = resourceStoreProvider.get().getTempFile(resourceKey);
-
-                JsonUtil.writeValue(outputFile, apiSearchRequest);
-
-                return new ResourceGeneration(resourceKey, new ArrayList<>());
-            } catch (final RuntimeException e) {
-                throw EntityServiceExceptionUtil.create(e);
-            }
-        });
+        return dashboardServiceProvider.get().downloadQuery(request);
     }
 
     @Override
     public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return securityContextProvider.get().secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
-            ResourceKey resourceKey;
-
-            final stroom.dashboard.shared.SearchRequest searchRequest = request.getSearchRequest();
-            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
-            final Search search = searchRequest.getSearch();
-
-            try {
-                final ActiveQueries activeQueries = activeQueriesManagerProvider.get().get(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId());
-
-                // Make sure we have active queries for all current UI queries.
-                // Note: This also ensures that the active query cache is kept alive
-                // for all open UI components.
-                final ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
-                if (activeQuery == null) {
-                    throw new EntityServiceException("The requested search data is not available");
-                }
-
-                // Perform the search or update results.
-                final DocRef dataSourceRef = search.getDataSourceRef();
-                if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-                    throw new RuntimeException("No search data source has been specified");
-                }
-
-                // Get the data source provider for this query.
-                final DataSourceProvider dataSourceProvider = dataSourceProviderRegistryProvider.get()
-                        .getDataSourceProvider(dataSourceRef)
-                        .orElseThrow(() ->
-                                new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
-
-                stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapperProvider.get().mapRequest(queryKey, searchRequest);
-                stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
-
-                if (searchResponse == null || searchResponse.getResults() == null) {
-                    throw new EntityServiceException("No results can be found");
-                }
-
-                stroom.query.api.v2.Result result = null;
-                for (final stroom.query.api.v2.Result res : searchResponse.getResults()) {
-                    if (res.getComponentId().equals(request.getComponentId())) {
-                        result = res;
-                        break;
-                    }
-                }
-
-                if (result == null) {
-                    throw new EntityServiceException("No result for component can be found");
-                }
-
-                if (!(result instanceof stroom.query.api.v2.TableResult)) {
-                    throw new EntityServiceException("Result is not a table");
-                }
-
-                final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
-
-                // Import file.
-                String fileName = queryKey.toString();
-                fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
-                fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-                fileName = fileName + "." + request.getFileType().getExtension();
-
-                ResourceStore resourceStore = resourceStoreProvider.get();
-                resourceKey = resourceStore.createTempFile(fileName);
-                final Path file = resourceStore.getTempFile(resourceKey);
-
-                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
-                        .stream()
-                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
-                        .findFirst();
-                if (optional.isEmpty()) {
-                    throw new EntityServiceException("No component result request found");
-                }
-
-                if (!(optional.get() instanceof TableResultRequest)) {
-                    throw new EntityServiceException("Component result request is not a table");
-                }
-
-                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
-                final List<Field> fields = tableResultRequest.getTableSettings().getFields();
-                final List<Row> rows = tableResult.getRows();
-
-                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent());
-
-                searchEventLogProvider.get().downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
-            } catch (final RuntimeException e) {
-                searchEventLogProvider.get().downloadResults(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
-                throw EntityServiceExceptionUtil.create(e);
-            }
-
-            return new ResourceGeneration(resourceKey, new ArrayList<>());
-        });
-    }
-
-    private void download(final List<Field> fields, final List<Row> rows, final Path file,
-                          final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
-        try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-            SearchResultWriter.Target target = null;
-
-            // Write delimited file.
-            switch (fileType) {
-                case CSV:
-                    target = new DelimitedTarget(outputStream, ",");
-                    break;
-                case TSV:
-                    target = new DelimitedTarget(outputStream, "\t");
-                    break;
-                case EXCEL:
-                    target = new ExcelTarget(outputStream);
-                    break;
-            }
-
-            final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);
-            final SearchResultWriter searchResultWriter = new SearchResultWriter(fields, rows, sampleGenerator);
-            searchResultWriter.write(target);
-
-        } catch (final IOException e) {
-            throw EntityServiceExceptionUtil.create(e);
-        }
+        return dashboardServiceProvider.get().downloadSearchResults(request);
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Set<SearchResponse> poll(final SearchBusPollRequest request) {
-        return securityContextProvider.get().secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
-            return securityContextProvider.get().useAsReadResult(() -> {
-                if (LOGGER.isDebugEnabled()) {
-                    final StringBuilder sb = new StringBuilder(
-                            "Only the following search queries should be active for session '");
-                    sb.append(activeQueriesManagerProvider.get().createKey(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId()));
-                    sb.append("'\n");
-                    for (final SearchRequest searchRequest : request.getSearchRequests()) {
-                        sb.append("\t");
-                        sb.append(searchRequest.getDashboardQueryKey().toString());
-                    }
-                    LOGGER.debug(sb.toString());
-                }
-
-                final ActiveQueries activeQueries = activeQueriesManagerProvider.get().get(securityContextProvider.get().getUserIdentity(), request.getApplicationInstanceId());
-                final Set<SearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-//            // Fix query keys so they have session and user info.
-//            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
-//                final QueryKey queryKey = entry.getValues().getQueryKey();
-//                queryKey.setSessionId(request.getSessionId());
-//                queryKey.setUserId(request.getUserId());
-//            }
-
-                // Kill off any queries that are no longer required by the UI.
-                final Set<DashboardQueryKey> keys = request.getSearchRequests().stream()
-                        .map(SearchRequest::getDashboardQueryKey).collect(Collectors.toSet());
-                activeQueries.destroyUnusedQueries(keys);
-
-                // Get query results for every active query.
-                final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
-                final Executor executor = executorProvider.get();
-                final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
-                for (final SearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactoryProvider.get().context("Search", taskContext -> {
-                        try {
-                            httpServletRequestHolder.set(httpServletRequest);
-                            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
-                            if (searchRequest.getSearch() != null) {
-                                final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
-                                if (searchResponse != null) {
-                                    searchResults.add(searchResponse);
-                                }
-                            }
-                        } finally {
-                            countDownLatch.countDown();
-                            httpServletRequestHolder.set(null);
-                        }
-                    });
-                    executor.execute(runnable);
-                }
-
-                // Wait for all results to come back.
-                try {
-                    countDownLatch.await();
-                } catch (final InterruptedException e) {
-                    // Keep interrupting.
-                    Thread.currentThread().interrupt();
-                }
-
-                return searchResults;
-            });
-        });
+        return dashboardServiceProvider.get().poll(request);
     }
 
-    private SearchResponse processRequest(final ActiveQueries activeQueries,
-                                          final DashboardQueryKey queryKey,
-                                          final SearchRequest searchRequest) {
-        SearchResponse result;
 
-        boolean newSearch = false;
-        SearchRequest updatedSearchRequest = searchRequest;
-        Search search = updatedSearchRequest.getSearch();
-
-        try {
-            synchronized (DashboardResourceImpl.class) {
-                // Make sure we have active queries for all current UI queries.
-                // Note: This also ensures that the active query cache is kept alive
-                // for all open UI components.
-                final ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
-
-                // If the query doesn't have an active query for this query key then
-                // this is new.
-                if (activeQuery == null) {
-                    newSearch = true;
-
-                    // Store the new active query for this query.
-                    activeQueries.addNewQuery(queryKey, search.getDataSourceRef());
-
-                    // Add this search to the history so the user can get back to this
-                    // search again.
-                    storeSearchHistory(queryKey, search);
-                }
-            }
-
-            // Perform the search or update results.
-            final DocRef dataSourceRef = search.getDataSourceRef();
-            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-                throw new RuntimeException("No search data source has been specified");
-            }
-
-            // Get the data source provider for this query.
-            final DataSourceProvider dataSourceProvider = dataSourceProviderRegistryProvider.get()
-                    .getDataSourceProvider(dataSourceRef)
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "No search provider found for '" + dataSourceRef.getType() + "' data source"));
-
-            // Add a param for `currentUser()`
-            List<Param> params = search.getParams();
-            if (params != null) {
-                params = new ArrayList<>(params);
-            } else {
-                params = new ArrayList<>();
-            }
-            params.add(new Param("currentUser()", securityContextProvider.get().getUserId()));
-            search = search.copy().params(params).build();
-            updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
-
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapperProvider.get().mapRequest(queryKey, updatedSearchRequest);
-            stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
-            result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
-
-            if (newSearch) {
-                // Log this search request for the current user.
-                searchEventLogProvider.get().search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
-            }
-
-        } catch (final RuntimeException e) {
-            LOGGER.debug("Error processing search {}", search, e);
-
-            if (newSearch) {
-                searchEventLogProvider.get().search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
-            }
-
-            final String errors = e.getMessage() != null
-                    ? e.getMessage()
-                    : e.getClass().getName();
-
-            result = new SearchResponse(queryKey, null, errors, true, null);
-        }
-
-        return result;
-    }
-
-    private void storeSearchHistory(final DashboardQueryKey queryKey, final Search search) {
-        // We only want to record search history for user initiated searches.
-        if (search.isStoreHistory()) {
-            try {
-                // Add this search to the history so the user can get back to
-                // this search again.
-                final List<Param> params = search.getParams();
-                final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
-
-                final StoredQuery storedQuery = new StoredQuery();
-                storedQuery.setName("History");
-                storedQuery.setDashboardUuid(queryKey.getDashboardUuid());
-                storedQuery.setComponentId(queryKey.getComponentId());
-                storedQuery.setQuery(query);
-                storedQueryServiceProvider.get().create(storedQuery);
-
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-    }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public List<String> fetchTimeZones() {
-        final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
-        ids.sort(Comparator.naturalOrder());
-        return ids;
+        return dashboardServiceProvider.get().fetchTimeZones();
     }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public List<FunctionSignature> fetchFunctions() {
-        return functionServiceProvider.get()
-                .getSignatures();
+        return dashboardServiceProvider.get().fetchFunctions();
     }
 
 }
