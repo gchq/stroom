@@ -18,8 +18,6 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -39,13 +37,13 @@ import java.util.Optional;
 class RequestEventLogImpl implements RequestEventLog {
 
     private final Injector injector;
-    private final RequestLoggingConfig config;
+    private final LoggingConfig config;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
     private final StroomEventLoggingService eventLoggingService;
 
     @Inject
-    RequestEventLogImpl (final Injector injector, final RequestLoggingConfig config, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
+    RequestEventLogImpl (final Injector injector, final LoggingConfig config, final DocumentEventLog documentEventLog, final SecurityContext securityContext,
                          final StroomEventLoggingService eventLoggingService){
         this.injector = injector;
         this.config = config;

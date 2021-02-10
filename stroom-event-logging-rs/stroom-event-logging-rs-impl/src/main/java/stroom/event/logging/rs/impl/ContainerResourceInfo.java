@@ -19,9 +19,6 @@ import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
-import com.google.inject.Injector;
-import event.logging.EventAction;
-
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceContext;
@@ -181,7 +178,7 @@ public class ContainerResourceInfo {
         return OperationType.UNKNOWN;
     }
 
-    public boolean shouldLog (RequestLoggingConfig config){
+    public boolean shouldLog (LoggingConfig config){
         OperationType op = getOperationType();
         if (OperationType.MANUALLY_LOGGED.equals(op)){
             return false;

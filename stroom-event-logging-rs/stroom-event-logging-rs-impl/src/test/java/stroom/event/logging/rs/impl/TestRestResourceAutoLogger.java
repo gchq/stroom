@@ -89,7 +89,7 @@ public class TestRestResourceAutoLogger {
     @Mock
     private WriterInterceptorContext writerInterceptorContext;
 
-    private RequestLoggingConfig config = new RequestLoggingConfig();
+    private LoggingConfig config = new LoggingConfig();
 
     private TestResource testResource = new TestResource();
 

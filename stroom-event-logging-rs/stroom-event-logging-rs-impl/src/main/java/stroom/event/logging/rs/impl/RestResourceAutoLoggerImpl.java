@@ -19,7 +19,6 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.TokenException;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.ReadWithIntegerId;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -52,7 +51,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
-    private final RequestLoggingConfig config;
+    private final LoggingConfig config;
     private final SecurityContext securityContext;
 
 
@@ -68,7 +67,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Inject
     RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
-                               final RequestLoggingConfig config) {
+                               final LoggingConfig config) {
         this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
@@ -76,7 +75,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     }
 
     RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
-                               final RequestLoggingConfig config,
+                               final LoggingConfig config,
                                final ResourceInfo resourceInfo,
                                final HttpServletRequest request) {
         this.securityContext = securityContext;

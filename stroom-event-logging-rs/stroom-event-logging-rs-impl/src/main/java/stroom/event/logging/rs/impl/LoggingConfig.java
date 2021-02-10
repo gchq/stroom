@@ -24,7 +24,7 @@ import stroom.util.shared.AbstractConfig;
 
 
 @Singleton
-public class RequestLoggingConfig extends AbstractConfig {
+public class LoggingConfig extends AbstractConfig {
     private boolean logEveryRestCallEnabled = false;
 
     @JsonProperty("logEveryRestCallEnabled")
@@ -40,7 +40,7 @@ public class RequestLoggingConfig extends AbstractConfig {
 
     @Override
     public String toString() {
-        return "RequestLoggingConfig{" +
+        return "LoggingConfig{" +
                 "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
                 '}';
     }
