@@ -20,6 +20,7 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Query;
@@ -78,7 +79,7 @@ class TestSearchRequestMapper {
     @Test
     void testSearchRequestMapper() {
         // Given
-        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
+        SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
         stroom.query.api.v2.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey("test", "ttest", "test"), dashboardSearchRequest);

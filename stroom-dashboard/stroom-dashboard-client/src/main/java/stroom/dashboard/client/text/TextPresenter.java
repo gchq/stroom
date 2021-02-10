@@ -351,7 +351,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                         currentHighlightStrings = tablePresenter.getHighlights();
 
-//                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
+//                        OffsetRange currentStreamRange = new OffsetRange(sourceLocation.getPartNo() - 1, 1L);
 
 //                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
 //                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
@@ -366,11 +366,11 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
 //                            // -1 to offset to make zero based
 //                            // +1 to length to make inclusive
-//                            currentPageRange = new OffsetRange<>(
+//                            currentPageRange = new OffsetRange(
 //                                    highlight.getFrom().getLineNo() - 1L,
 //                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
 //                        } else {
-//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+//                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L);
 //                        }
 
                         // TODO @AT Fix/implement
@@ -381,8 +381,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 ////                                    .toLocation(highlight.getTo());
 //                        } else {
 ////                            // TODO assume this is segmented data
-//////                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
-//////                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
+//////                            currentPageRange = new OffsetRange(sourceLocation.getRecordNo() - 0L, 1L);
+//////                            request.setPageRange(new OffsetRange(sourceLocation.getRecordNo() - 1L, 1L));
 ////
 ////                            // Convert it to zero based
 ////                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);

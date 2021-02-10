@@ -25,6 +25,7 @@ import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
@@ -36,7 +37,6 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -68,12 +68,12 @@ public class SearchRequestMapper {
     }
 
     public stroom.query.api.v2.SearchRequest mapRequest(final DashboardQueryKey queryKey,
-                                                        final stroom.dashboard.shared.SearchRequest searchRequest) {
+                                                        final SearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
-        return SearchRequest.builder()
+        return stroom.query.api.v2.SearchRequest.builder()
                 .key(new QueryKey(queryKey.getUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
@@ -82,7 +82,7 @@ public class SearchRequestMapper {
                 .build();
     }
 
-    private Query mapQuery(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private Query mapQuery(final SearchRequest searchRequest) {
         if (searchRequest.getSearch() == null) {
             return null;
         }
@@ -124,7 +124,7 @@ public class SearchRequestMapper {
         }
     }
 
-    private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private List<ResultRequest> mapResultRequests(final SearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }

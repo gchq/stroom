@@ -234,7 +234,7 @@ class DashboardResourceImpl implements DashboardResource {
         return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
-            final stroom.dashboard.shared.SearchRequest searchRequest = request.getSearchRequest();
+            final SearchRequest searchRequest = request.getSearchRequest();
             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
             final Search search = searchRequest.getSearch();
 
