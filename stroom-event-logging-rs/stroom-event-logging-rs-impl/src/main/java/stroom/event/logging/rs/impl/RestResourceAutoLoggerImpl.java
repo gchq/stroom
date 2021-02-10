@@ -15,6 +15,7 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.TokenException;

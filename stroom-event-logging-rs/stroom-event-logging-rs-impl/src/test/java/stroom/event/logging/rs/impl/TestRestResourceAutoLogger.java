@@ -17,6 +17,7 @@ package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 
 import stroom.event.logging.api.EventActionDecorator;

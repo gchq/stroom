@@ -18,6 +18,7 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;

@@ -38,7 +38,7 @@ import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.event.logging.rs.impl.LoggingConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.query.common.v2.LmdbConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;

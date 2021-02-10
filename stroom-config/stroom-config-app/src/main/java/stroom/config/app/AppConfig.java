@@ -13,7 +13,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.event.logging.rs.impl.LoggingConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -81,7 +81,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
-    public static final String PROP_NAME_REQUEST_LOGGING = "requestLogging";
+    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -452,7 +452,7 @@ public class AppConfig extends AbstractConfig {
         this.receiveDataConfig = receiveDataConfig;
     }
 
-    @JsonProperty(PROP_NAME_REQUEST_LOGGING)
+    @JsonProperty(PROP_NAME_LOGGING)
     public LoggingConfig getRequestLoggingConfig() {
         return loggingConfig;
     }
