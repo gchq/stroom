@@ -13,7 +13,9 @@ export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
   feedName?: string;
-  itemRange?: OffsetRangeLong;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  itemRange?: OffsetRange;
   sourceLocation?: SourceLocation;
   streamTypeName?: string;
   totalCharacterCount?: CountLong;
@@ -493,6 +495,13 @@ export interface DashboardQueryKey {
   uuid?: string;
 }
 
+export interface DashboardSearchRequest {
+  componentResultRequests?: ComponentResultRequest[];
+  dashboardQueryKey?: DashboardQueryKey;
+  dateTimeLocale?: string;
+  search?: Search;
+}
+
 export interface DataInfoSection {
   entries?: Entry[];
   title?: string;
@@ -727,7 +736,7 @@ export type DoubleField = AbstractField & object;
 
 export interface DownloadQueryRequest {
   dashboardQueryKey?: DashboardQueryKey;
-  searchRequest?: SearchRequest;
+  searchRequest?: DashboardSearchRequest;
 }
 
 export interface DownloadSearchResultsRequest {
@@ -739,7 +748,7 @@ export interface DownloadSearchResultsRequest {
   /** @format int32 */
   percent?: number;
   sample?: boolean;
-  searchRequest?: SearchRequest;
+  searchRequest?: DashboardSearchRequest;
 }
 
 export interface EntityEvent {
@@ -1517,14 +1526,6 @@ export interface OffsetRange {
   offset: number;
 }
 
-export interface OffsetRangeLong {
-  /** @format int64 */
-  length?: number;
-
-  /** @format int64 */
-  offset?: number;
-}
-
 export interface OverrideValue {
   hasOverride?: boolean;
   value?: object;
@@ -2210,14 +2211,31 @@ export interface SearchAccountRequest {
 
 export interface SearchBusPollRequest {
   applicationInstanceId?: string;
-  searchRequests?: SearchRequest[];
+  searchRequests?: DashboardSearchRequest[];
 }
 
+/**
+ * A request for new search or a follow up request for more data for an existing iterative search
+ */
 export interface SearchRequest {
-  componentResultRequests?: ComponentResultRequest[];
-  dashboardQueryKey?: DashboardQueryKey;
-  dateTimeLocale?: string;
-  search?: Search;
+  /** The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
+  dateTimeLocale: string;
+
+  /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
+  incremental: boolean;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  key: QueryKey;
+
+  /** The query terms for the search */
+  query: Query;
+  resultRequests: ResultRequest[];
+
+  /**
+   * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
+   * @format int64
+   */
+  timeout?: number;
 }
 
 /**
@@ -3143,6 +3161,7 @@ interface HttpResponse<D extends unknown, E extends unknown = unknown> extends R
 enum BodyType {
   Json,
   FormData,
+  UrlEncoded,
 }
 
 export class HttpClient<SecurityDataType = unknown> {
@@ -3173,18 +3192,21 @@ export class HttpClient<SecurityDataType = unknown> {
     );
   }
 
-  protected addQueryParams(rawQuery?: RequestQueryParamsType): string {
+  protected toQueryString(rawQuery?: RequestQueryParamsType): string {
     const query = rawQuery || {};
     const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
-    return keys.length
-      ? `?${keys
-          .map((key) =>
-            typeof query[key] === "object" && !Array.isArray(query[key])
-              ? this.addQueryParams(query[key] as object).substring(1)
-              : this.addQueryParam(query, key),
-          )
-          .join("&")}`
-      : "";
+    return keys
+      .map((key) =>
+        typeof query[key] === "object" && !Array.isArray(query[key])
+          ? this.toQueryString(query[key] as object)
+          : this.addQueryParam(query, key),
+      )
+      .join("&");
+  }
+
+  protected addQueryParams(rawQuery?: RequestQueryParamsType): string {
+    const queryString = this.toQueryString(rawQuery);
+    return queryString ? `?${queryString}` : "";
   }
 
   private bodyFormatters: Record<BodyType, (input: any) => any> = {
@@ -3194,6 +3216,7 @@ export class HttpClient<SecurityDataType = unknown> {
         data.append(key, input[key]);
         return data;
       }, new FormData()),
+    [BodyType.UrlEncoded]: (input: any) => this.toQueryString(input),
   };
 
   private mergeRequestOptions(params: RequestParams, securityParams?: RequestParams): RequestParams {
