@@ -77,19 +77,25 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
         }
 
         //Select the first param that isn't provided by the context itself (or parameters)
-        List<Class<?>> suppliedParams = Arrays.stream(resourceInfo.getResourceMethod().getParameters()).sequential().
-                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(Context.class,
-                        resourceInfo.getResourceMethod(), p) == null).
-                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(PathParam.class,
-                        resourceInfo.getResourceMethod(), p) == null).
-                filter(p -> AnnotationUtil.getInheritedParameterAnnotation(QueryParam.class,
-                        resourceInfo.getResourceMethod(), p) == null).
-                map(Parameter::getType).collect(Collectors.toList());
+        final List<Class<?>> suppliedParams = Arrays.stream(resourceInfo.getResourceMethod().getParameters())
+                .sequential()
+                .filter(p ->
+                        AnnotationUtil.getInheritedParameterAnnotation(
+                                Context.class, resourceInfo.getResourceMethod(), p) == null)
+                .filter(p ->
+                        AnnotationUtil.getInheritedParameterAnnotation(
+                                PathParam.class, resourceInfo.getResourceMethod(), p) == null)
+                .filter(p ->
+                        AnnotationUtil.getInheritedParameterAnnotation(
+                                QueryParam.class, resourceInfo.getResourceMethod(), p) == null)
+                .map(Parameter::getType)
+                .collect(Collectors.toList());
+
         if (suppliedParams.isEmpty()) {
             return null;
         }
         if (suppliedParams.size() > 1) {
-            LOGGER.error("Multiple parameters to resource method " +
+            LOGGER.error(() -> "Multiple parameters to resource method " +
                     resourceInfo.getResourceMethod().getName() +
                     " on " +
                     resourceInfo.getResourceClass().getSimpleName());

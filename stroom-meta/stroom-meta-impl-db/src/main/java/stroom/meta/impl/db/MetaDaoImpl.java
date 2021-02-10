@@ -97,6 +97,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaDaoImpl implements MetaDao, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
     // This is currently only used for testing so no need to put it in config,
@@ -442,8 +443,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 .execute());
             } else {
                 Select ids = metaExpressionMapper.addJoins(
-                        DSL.select(meta.ID).
-                                from(meta).leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        DSL
+                                .select(meta.ID)
+                                .from(meta)
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
                         usedValKeys)
                         .where(conditions);

@@ -323,8 +323,8 @@ public abstract class AbstractMetaListPresenter
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
                         ClientDateUtil.toISOString(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
-                        .build()
-                , "Created",
+                        .build(),
+                "Created",
                 ColumnSizeConstants.DATE_COL);
     }
 

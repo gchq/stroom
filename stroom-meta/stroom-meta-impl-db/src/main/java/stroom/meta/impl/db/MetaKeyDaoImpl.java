@@ -91,15 +91,23 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     @Override
     public Integer getMinId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context.select(DSL.min(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(Record1::value1)).orElse(1);
+                context
+                        .select(DSL.min(META_KEY.ID))
+                        .from(META_KEY)
+                        .fetchOptional()
+                        .map(Record1::value1))
+                .orElse(1);
     }
 
     @Override
     public Integer getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                context.select(DSL.max(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(Record1::value1)).orElse(MetaFields.getExtendedFields().size());
+                context
+                        .select(DSL.max(META_KEY.ID))
+                        .from(META_KEY)
+                        .fetchOptional()
+                        .map(Record1::value1))
+                .orElse(MetaFields.getExtendedFields().size());
     }
 
     private void setup() {

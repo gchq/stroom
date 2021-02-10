@@ -90,10 +90,9 @@ public class AsciiTable {
     }
 
     private static String convertToColumnName(final String methodName) {
-        return CaseFormat.LOWER_CAMEL.to(
-                CaseFormat.UPPER_CAMEL,
-                methodName.replaceAll("^(get|is)", "")).
-                replaceAll("(?<!^)([A-Z])", " $1");
+        String result = methodName.replaceAll("^(get|is)", "");
+        result = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, result);
+        return result.replaceAll("(?<!^)([A-Z])", " $1");
     }
 
 

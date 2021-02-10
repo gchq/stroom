@@ -18,6 +18,8 @@ package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.TokenException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,8 +29,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gwt.thirdparty.json.JSONException;
 import com.google.gwt.thirdparty.json.JSONObject;
 import org.glassfish.jersey.message.MessageUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.security.sasl.AuthenticationException;
@@ -44,7 +44,7 @@ import java.io.IOException;
 
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
+    static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
