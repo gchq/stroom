@@ -16,15 +16,16 @@
 
 package stroom.core.servlet;
 
-import com.google.inject.AbstractModule;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.shared.ResourcePaths;
+
+import com.google.inject.AbstractModule;
 
 import javax.servlet.http.HttpServletRequest;
 

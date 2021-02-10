@@ -43,7 +43,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.resource.api.ResourceStore;
@@ -55,11 +54,11 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

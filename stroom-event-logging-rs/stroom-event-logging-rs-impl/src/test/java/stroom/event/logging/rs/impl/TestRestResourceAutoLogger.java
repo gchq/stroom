@@ -44,16 +44,16 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Random;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.ext.WriterInterceptorContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -115,7 +115,7 @@ public class TestRestResourceAutoLogger {
     private AutoCloseable closeable;
 
     TestRestResourceAutoLogger() {
-        injector = Guice.createInjector(new MockRSLoggingModule());
+        injector = Guice.createInjector(new MockRsLoggingModule());
     }
 
     @Test
@@ -190,8 +190,8 @@ public class TestRestResourceAutoLogger {
         String requestId = "request-" + run;
         String responseId = "response-" + run;
 
-        TestObj requestTestObj = new TestObj(requestId);
-        TestObj responseTestObj = new TestObj(responseId);
+        final TestObj requestTestObj = new TestObj(requestId);
+        final TestObj responseTestObj = new TestObj(responseId);
         //Set up Stream containing serialized object
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -234,8 +234,8 @@ public class TestRestResourceAutoLogger {
         String requestId = "request-" + run;
         String responseId = "response-" + run;
 
-        TestObj requestTestObj = new TestObj(requestId);
-        TestObj responseTestObj = new TestObj(responseId);
+        final TestObj requestTestObj = new TestObj(requestId);
+        final TestObj responseTestObj = new TestObj(responseId);
         //Set up Stream containing serialized object
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -255,9 +255,9 @@ public class TestRestResourceAutoLogger {
 
         Object loggedObject = objectCaptor.getValue();
         Object afterLoggedObject = outcomeObjectCaptor.getValue();
-        String eventTypeId = eventTypeIdCaptor.getValue();
-        String descriptionVerb = verbCaptor.getValue();
-        Throwable exception = throwableCaptor.getValue();
+        final String eventTypeId = eventTypeIdCaptor.getValue();
+        final String descriptionVerb = verbCaptor.getValue();
+        final Throwable exception = throwableCaptor.getValue();
 
         assertThat(loggedObject).isInstanceOf(TestObj.class);
 
@@ -292,7 +292,7 @@ public class TestRestResourceAutoLogger {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bos.toByteArray());
         requestContext.setEntityStream(byteArrayInputStream);
 
-        ((MockURIInfo) requestContext.getUriInfo()).setId(pathId);
+        ((MockUriInfo) requestContext.getUriInfo()).setId(pathId);
 
         String message = "Testing exception handling";
         Exception testException = new Exception(message);
@@ -334,7 +334,7 @@ public class TestRestResourceAutoLogger {
         TestObj requestTestObj = new TestObj(requestId);
         TestObj responseTestObj = new TestObj(responseId);
 
-        ResultPage<TestObj> resultPage = new ResultPage<>(List.of(responseTestObj));
+        final ResultPage<TestObj> resultPage = new ResultPage<>(List.of(responseTestObj));
 
         //Set up Stream containing serialized object
 

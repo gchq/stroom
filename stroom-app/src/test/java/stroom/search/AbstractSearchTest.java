@@ -37,7 +37,6 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.impl.LuceneSearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

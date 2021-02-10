@@ -16,13 +16,14 @@
 
 package stroom.dashboard.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 class ActiveQueries {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ActiveQueries.class);
 
     private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();

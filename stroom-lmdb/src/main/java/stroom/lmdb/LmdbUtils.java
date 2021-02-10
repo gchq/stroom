@@ -33,7 +33,6 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * Class of static utility methods for working with lmdbjava

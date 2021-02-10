@@ -51,8 +51,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,10 +61,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAppenderTest.class);
 
     @Inject

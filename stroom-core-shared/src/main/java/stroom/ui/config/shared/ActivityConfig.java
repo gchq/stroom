@@ -9,13 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig {
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
     private boolean enabled;
@@ -110,12 +111,12 @@ public class ActivityConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "ActivityConfig{" +
-            "enabled=" + enabled +
-            ", chooseOnStartup=" + chooseOnStartup +
-            ", managerTitle='" + managerTitle + '\'' +
-            ", editorTitle='" + editorTitle + '\'' +
-            ", editorBody='" + editorBody + '\'' +
-            '}';
+                "enabled=" + enabled +
+                ", chooseOnStartup=" + chooseOnStartup +
+                ", managerTitle='" + managerTitle + '\'' +
+                ", editorTitle='" + editorTitle + '\'' +
+                ", editorBody='" + editorBody + '\'' +
+                '}';
     }
 
     @SuppressWarnings("checkstyle:needbraces")
@@ -125,10 +126,10 @@ public class ActivityConfig extends AbstractConfig {
         if (o == null || getClass() != o.getClass()) return false;
         final ActivityConfig that = (ActivityConfig) o;
         return enabled == that.enabled &&
-            chooseOnStartup == that.chooseOnStartup &&
-            Objects.equals(managerTitle, that.managerTitle) &&
-            Objects.equals(editorTitle, that.editorTitle) &&
-            Objects.equals(editorBody, that.editorBody);
+                chooseOnStartup == that.chooseOnStartup &&
+                Objects.equals(managerTitle, that.managerTitle) &&
+                Objects.equals(editorTitle, that.editorTitle) &&
+                Objects.equals(editorBody, that.editorBody);
     }
 
     @Override

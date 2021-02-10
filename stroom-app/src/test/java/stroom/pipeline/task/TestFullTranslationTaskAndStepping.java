@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 
 class TestFullTranslationTaskAndStepping extends TranslationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     private static boolean doneSetup;

@@ -50,9 +50,9 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

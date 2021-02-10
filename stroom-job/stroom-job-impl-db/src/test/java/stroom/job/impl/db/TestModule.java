@@ -1,7 +1,8 @@
 package stroom.job.impl.db;
 
-import com.google.inject.AbstractModule;
 import stroom.util.db.ForceCoreMigration;
+
+import com.google.inject.AbstractModule;
 
 public class TestModule extends AbstractModule {
     @Override

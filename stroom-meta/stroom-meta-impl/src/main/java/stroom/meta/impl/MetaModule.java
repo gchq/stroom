@@ -1,13 +1,13 @@
 package stroom.meta.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.Meta;
 import stroom.searchable.api.Searchable;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 

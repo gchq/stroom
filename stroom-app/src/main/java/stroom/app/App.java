@@ -62,16 +62,16 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.validation.ValidatorFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.inject.Inject;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.SessionCookieConfig;
+import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 

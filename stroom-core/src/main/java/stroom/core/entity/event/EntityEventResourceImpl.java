@@ -23,13 +23,13 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
 
 class EntityEventResourceImpl implements EntityEventResource {
     private final Provider<NodeService> nodeServiceProvider;

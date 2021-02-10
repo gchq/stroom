@@ -16,10 +16,6 @@
 
 package stroom.statistics.impl.hbase.pipeline;
 
-import com.google.common.base.Preconditions;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
@@ -37,6 +33,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
+import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayDeque;
@@ -45,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -124,7 +126,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                             }
                         }
                     },
-            "Wait for futures to complete");
+                    "Wait for futures to complete");
         }
 
         // Vital this happens or we leak resources

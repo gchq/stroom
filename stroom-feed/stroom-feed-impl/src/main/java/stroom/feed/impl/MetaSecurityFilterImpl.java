@@ -5,16 +5,15 @@ import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class MetaSecurityFilterImpl implements MetaSecurityFilter {

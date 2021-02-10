@@ -33,11 +33,11 @@ import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.function.Consumer;
 
 class JobNodeResourceImpl implements JobNodeResource {
     private final JobNodeService jobNodeService;

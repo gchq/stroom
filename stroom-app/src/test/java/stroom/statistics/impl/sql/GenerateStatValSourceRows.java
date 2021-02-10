@@ -11,7 +11,6 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -20,6 +19,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.stream.LongStream;
+import javax.inject.Inject;
 
 /**
  * Useful for injecting stats into SQL_STAT_VAL_SRC, either to manually test aggregation

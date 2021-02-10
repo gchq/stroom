@@ -1,8 +1,9 @@
 package stroom.data.zip;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.meta.api.AttributeMap;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

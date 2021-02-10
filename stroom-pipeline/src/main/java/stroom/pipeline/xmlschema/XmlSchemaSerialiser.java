@@ -6,11 +6,12 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
+
     private static final String XSD = "xsd";
 
     private final Serialiser2<XmlSchemaDoc> delegate;

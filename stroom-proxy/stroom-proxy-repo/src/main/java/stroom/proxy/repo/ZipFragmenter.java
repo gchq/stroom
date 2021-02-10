@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.BufferSizeUtil;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
@@ -27,6 +25,9 @@ import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -39,6 +40,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
 class ZipFragmenter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipFragmenter.class);
 
     private final ErrorReceiver errorReceiver;

@@ -23,8 +23,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.UUID;
+import javax.inject.Inject;
 
 class TestExplorerTree extends AbstractCoreIntegrationTest {
 

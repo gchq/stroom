@@ -36,11 +36,12 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private DashboardStore dashboardStore;
     @Inject

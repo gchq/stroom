@@ -1,5 +1,11 @@
 package stroom.job.impl.db;
 
+import stroom.job.impl.FindJobCriteria;
+import stroom.job.shared.Job;
+import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestModule;
+import stroom.util.AuditUtil;
+
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -7,11 +13,6 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.job.impl.FindJobCriteria;
-import stroom.job.shared.Job;
-import stroom.security.mock.MockSecurityContextModule;
-import stroom.test.common.util.db.DbTestModule;
-import stroom.util.AuditUtil;
 
 import java.util.List;
 import java.util.Optional;

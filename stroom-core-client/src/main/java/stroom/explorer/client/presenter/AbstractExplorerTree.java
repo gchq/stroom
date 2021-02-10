@@ -16,12 +16,14 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.user.client.ui.Composite;
 import stroom.explorer.shared.ExplorerNode;
+
+import com.google.gwt.user.client.ui.Composite;
 
 import java.util.List;
 
 public abstract class AbstractExplorerTree extends Composite {
+
     /**
      * Called by the model after refresh to select the initial item.
      *

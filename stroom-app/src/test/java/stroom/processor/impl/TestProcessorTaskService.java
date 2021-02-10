@@ -17,7 +17,6 @@
 
 package stroom.processor.impl;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
@@ -25,8 +24,8 @@ import stroom.meta.shared.Meta;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -34,13 +33,16 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskService extends AbstractCoreIntegrationTest {
+
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject

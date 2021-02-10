@@ -20,12 +20,12 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public abstract class AppServlet extends HttpServlet {
     private static final String TITLE = "@TITLE@";

@@ -37,10 +37,10 @@ import stroom.util.shared.ResultPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

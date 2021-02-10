@@ -50,11 +50,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

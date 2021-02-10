@@ -41,15 +41,16 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
     private static final String TEST_FEED_1 = "TEST_FEED_1";
     private static final String TEST_FEED_2 = "TEST_FEED_2";

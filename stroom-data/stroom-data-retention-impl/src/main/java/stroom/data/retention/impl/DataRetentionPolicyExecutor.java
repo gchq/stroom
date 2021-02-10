@@ -35,8 +35,6 @@ import stroom.util.time.TimeUtils;
 
 import com.google.common.collect.Ordering;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
@@ -53,6 +51,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * This class is concerned with logically deleting meta records according to a set of data

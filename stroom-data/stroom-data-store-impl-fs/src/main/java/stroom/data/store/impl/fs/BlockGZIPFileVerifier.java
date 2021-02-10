@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.io.FileUtil;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
+import javax.annotation.Nonnull;
 
 /**
  * Class used to check a Block GZIP file.

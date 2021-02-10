@@ -24,10 +24,10 @@ import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class FeedDocCache implements Clearable {

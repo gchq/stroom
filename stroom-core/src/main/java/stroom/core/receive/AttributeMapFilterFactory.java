@@ -22,10 +22,10 @@ import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {

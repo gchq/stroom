@@ -74,8 +74,6 @@ import stroom.util.shared.TextRange;
 import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Provider;
-import javax.xml.transform.TransformerException;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -88,6 +86,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Provider;
+import javax.xml.transform.TransformerException;
 
 public class DataFetcher {
 

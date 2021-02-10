@@ -1,8 +1,9 @@
 package stroom.data.zip;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.io.CloseableUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;

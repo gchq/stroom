@@ -16,10 +16,11 @@
 
 package stroom.data.store.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override

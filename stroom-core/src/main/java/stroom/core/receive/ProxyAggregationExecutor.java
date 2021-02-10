@@ -17,12 +17,13 @@
 
 package stroom.core.receive;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

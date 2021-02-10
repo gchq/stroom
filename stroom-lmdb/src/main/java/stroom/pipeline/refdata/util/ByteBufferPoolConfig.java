@@ -5,9 +5,9 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.inject.Singleton;
 
 @Singleton
 public class ByteBufferPoolConfig extends AbstractConfig {

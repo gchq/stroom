@@ -17,8 +17,6 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
@@ -42,13 +40,16 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 public class DataUploadTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataUploadTaskHandler.class);

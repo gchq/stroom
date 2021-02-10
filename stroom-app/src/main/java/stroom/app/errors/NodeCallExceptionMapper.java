@@ -27,10 +27,10 @@ import io.dropwizard.jersey.errors.ErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ThreadLocalRandom;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class NodeCallExceptionMapper implements ExceptionMapper<NodeCallException> {
 

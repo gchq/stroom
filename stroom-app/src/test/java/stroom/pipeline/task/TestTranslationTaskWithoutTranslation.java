@@ -17,7 +17,6 @@
 package stroom.pipeline.task;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
@@ -30,16 +29,19 @@ import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
+
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";
     private static final String FEED_NAME = "TEST_FEED";
     private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");

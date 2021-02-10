@@ -19,12 +19,12 @@ package stroom.pipeline.refdata.util;
 
 import stroom.util.logging.LogUtil;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used

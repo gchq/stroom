@@ -27,8 +27,8 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
-import javax.inject.Inject;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 class JobResourceImpl implements JobResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobResourceImpl.class);

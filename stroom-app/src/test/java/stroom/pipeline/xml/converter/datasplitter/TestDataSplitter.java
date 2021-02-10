@@ -27,9 +27,9 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

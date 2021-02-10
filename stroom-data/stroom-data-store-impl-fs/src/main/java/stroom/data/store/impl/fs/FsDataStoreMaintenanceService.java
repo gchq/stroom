@@ -26,7 +26,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -38,8 +37,6 @@ import stroom.util.shared.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -56,6 +53,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * API used by the tasks to interface to the stream store under the bonnet.

@@ -22,7 +22,6 @@ import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 
@@ -30,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,10 +38,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticAggregationManager.class);
     private static final long STAT_VALUE = 10L;
     private static final String COL_NAME_VAL = "VAL";

@@ -17,8 +17,6 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
@@ -43,11 +41,14 @@ import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -55,6 +56,7 @@ import static org.assertj.core.api.Assertions.fail;
 // TODO : Add test data
 @Disabled("Make new test data")
 class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
+
     private static final int N4 = 4;
     private static final String PIPELINE = "XMLWithErrorsInTransform/XMLWithErrorsInTransform.Pipeline.data.xml";
     private static final String INPUT = "XMLWithErrorsInTransform/HttpProblem.in";

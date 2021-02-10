@@ -21,7 +21,6 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class SupersededOutputHelperImpl implements SupersededOutputHelper {

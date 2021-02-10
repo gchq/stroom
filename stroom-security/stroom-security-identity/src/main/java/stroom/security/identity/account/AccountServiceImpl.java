@@ -1,18 +1,19 @@
 package stroom.security.identity.account;
 
+import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 public class AccountServiceImpl implements AccountService {
+
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
     private final IdentityConfig config;

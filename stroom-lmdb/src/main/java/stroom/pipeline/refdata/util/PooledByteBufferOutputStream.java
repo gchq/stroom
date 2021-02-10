@@ -24,8 +24,6 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.annotation.concurrent.NotThreadSafe;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
@@ -33,6 +31,8 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.annotation.concurrent.NotThreadSafe;
+import javax.inject.Inject;
 
 /*
  * This class is derived from and copies parts of

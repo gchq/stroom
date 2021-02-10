@@ -22,13 +22,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.ParamUtil;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,10 +67,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStatisticsQueryServiceImpl.class);
 
     private static final String STAT_NAME = "MyStat";

@@ -42,14 +42,15 @@ import event.logging.User;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 
+import java.math.BigInteger;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
-import java.math.BigInteger;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
+
     private final Provider<AccountService> serviceProvider;
     private final StroomEventLoggingService stroomEventLoggingService;
 

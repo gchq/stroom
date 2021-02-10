@@ -16,16 +16,17 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class DistributedTaskFactoryRegistry {

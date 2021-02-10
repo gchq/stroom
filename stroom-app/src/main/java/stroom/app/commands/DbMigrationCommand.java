@@ -13,8 +13,8 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.nio.file.Path;
+import javax.sql.DataSource;
 
 /**
  * Additional DW Command so instead of

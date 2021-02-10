@@ -43,7 +43,6 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -51,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class DataServiceImpl implements DataService {
 

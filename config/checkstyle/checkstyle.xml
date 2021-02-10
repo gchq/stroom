@@ -342,6 +342,62 @@
              value="Interface type name ''{0}'' must match pattern ''{1}''."/>
     </module>
 
+    <module name="NoFinalizer"/>
+    <module name="GenericWhitespace">
+      <message key="ws.followed"
+             value="GenericWhitespace ''{0}'' is followed by whitespace."/>
+      <message key="ws.preceded"
+             value="GenericWhitespace ''{0}'' is preceded with whitespace."/>
+      <message key="ws.illegalFollow"
+             value="GenericWhitespace ''{0}'' should followed by whitespace."/>
+      <message key="ws.notPreceded"
+             value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
+    </module>
+    <module name="Indentation">
+      <property name="basicOffset" value="4"/>
+      <property name="braceAdjustment" value="4"/>
+      <property name="caseIndent" value="4"/>
+      <property name="throwsIndent" value="4"/>
+      <property name="lineWrappingIndentation" value="8"/>
+      <property name="arrayInitIndent" value="4"/>
+    </module>
+    <module name="AbbreviationAsWordInName">
+      <property name="ignoreFinal" value="false"/>
+      <property name="allowedAbbreviationLength" value="0"/>
+
+      <property name="allowedAbbreviations" value="DTO,URI,IT,XSLT,IO,XML"/>
+      <property name="tokens"
+               value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,
+                    PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,
+                    RECORD_COMPONENT_DEF"/>
+    </module>
+    <!--<module name="OverloadMethodsDeclarationOrder"/>-->
+
+    <module name="VariableDeclarationUsageDistance"/>
+
+    <!-- We want an order like:
+      import stroom......
+
+      import com......
+
+      import java.....
+      import javax.....
+
+      import static ......
+    -->
+    <module name="CustomImportOrder">
+      <property name="specialImportsRegExp" value="^stroom\."/>
+      <!-- Something that is not java. or javax. -->
+      <property name="thirdPartyPackageRegExp" value="^(?!javax?\.).*"/>
+      <property name="sortImportsInGroupAlphabetically" value="true"/>
+      <property name="separateLineBetweenGroups" value="true"/>
+      <property name="customImportOrderRules" value="SPECIAL_IMPORTS###THIRD_PARTY_PACKAGE###STANDARD_JAVA_PACKAGE###STATIC"/>
+      <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF"/>
+
+      <!-- TODO set it to error when we have managed to run auto format on all classes. -->
+      <property name="severity" value="warning"/>
+    </module>
+
   </module>
 
 </module>

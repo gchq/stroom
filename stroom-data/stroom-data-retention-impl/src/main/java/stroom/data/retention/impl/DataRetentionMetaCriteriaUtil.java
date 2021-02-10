@@ -8,8 +8,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.date.DateUtil;
 import stroom.util.Period;
+import stroom.util.date.DateUtil;
 
 import java.util.List;
 

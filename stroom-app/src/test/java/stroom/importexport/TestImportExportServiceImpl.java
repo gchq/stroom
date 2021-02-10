@@ -18,7 +18,6 @@
 package stroom.importexport;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -35,10 +34,12 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.ResourceKey;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Test;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

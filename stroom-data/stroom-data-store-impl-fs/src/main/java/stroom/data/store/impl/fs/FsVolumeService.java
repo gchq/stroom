@@ -6,7 +6,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
-import stroom.util.io.PathCreator;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -18,6 +17,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -27,9 +27,6 @@ import stroom.util.shared.ResultPage;
 
 import com.google.common.collect.ImmutableMap;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -43,6 +40,9 @@ import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * TODO JC: I'm not clear what currentVolumeList is for. Add comments?

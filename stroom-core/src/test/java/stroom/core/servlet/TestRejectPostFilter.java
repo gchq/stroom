@@ -17,8 +17,9 @@
 package stroom.core.servlet;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

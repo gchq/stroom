@@ -39,11 +39,11 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -17,8 +17,8 @@
 
 package stroom.data.store.api;
 
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.shared.Meta;
 
 /**
  * <p>

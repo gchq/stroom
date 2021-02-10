@@ -17,8 +17,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
@@ -26,13 +24,16 @@ import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class JobNodeTrackerCache {

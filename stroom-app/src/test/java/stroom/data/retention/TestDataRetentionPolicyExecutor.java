@@ -40,9 +40,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

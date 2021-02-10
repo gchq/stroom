@@ -1,12 +1,12 @@
 package stroom.app.guice;
 
+import java.net.URI;
+import java.util.Map;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
-import java.net.URI;
-import java.util.Map;
 
 class WebTargetProxy implements WebTarget {
 

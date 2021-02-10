@@ -23,7 +23,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 
 public class BenchmarkDataFeed {
     private final AtomicInteger connectedCount = new AtomicInteger(0);

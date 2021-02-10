@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {
+
     private final ElementRegistry registry;
 
     MockPipelineElementRegistryFactory() {

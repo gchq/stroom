@@ -30,12 +30,12 @@ import stroom.util.shared.ModelStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 /**
  * Task to clean the stream store.

@@ -21,7 +21,7 @@ import com.google.inject.AbstractModule;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ResourceInfo;
 
-public class MockRSLoggingModule extends AbstractModule {
+public class MockRsLoggingModule extends AbstractModule {
 
     @Override
     protected void configure() {

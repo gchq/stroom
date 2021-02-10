@@ -19,8 +19,8 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
+import javax.inject.Inject;
 
 /**
  * Creates an account in the internal identity provider

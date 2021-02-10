@@ -29,13 +29,13 @@ import stroom.util.shared.Clearable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * <p>

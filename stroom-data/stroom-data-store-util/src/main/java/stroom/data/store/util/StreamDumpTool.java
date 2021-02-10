@@ -16,7 +16,6 @@
 
 package stroom.data.store.util;
 
-import com.google.inject.Injector;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
@@ -24,7 +23,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -32,6 +30,8 @@ import stroom.task.shared.TaskId;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.ModelStringUtil;
+
+import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -24,7 +24,6 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
@@ -40,8 +39,6 @@ import stroom.util.time.TimePeriod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +55,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class MetaServiceImpl implements MetaService, Searchable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);

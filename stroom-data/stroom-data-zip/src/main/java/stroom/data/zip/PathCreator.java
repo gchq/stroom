@@ -1,7 +1,8 @@
 package stroom.data.zip;
 
-import com.google.common.base.Strings;
 import stroom.meta.api.AttributeMap;
+
+import com.google.common.base.Strings;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

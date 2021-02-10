@@ -27,8 +27,6 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,6 +38,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.sql.DataSource;
 
 class DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableService.class);

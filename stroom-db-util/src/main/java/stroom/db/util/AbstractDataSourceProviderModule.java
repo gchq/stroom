@@ -9,18 +9,19 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * @param <T_CONFIG>       A config class that implements {@link HasDbConfig}
+ * @param <T_CONFIG>    A config class that implements {@link HasDbConfig}
  * @param <T_CONN_PROV> A class that extends {@link DataSource}
  */
 public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
         extends AbstractModule {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
 
     protected abstract String getModuleName();

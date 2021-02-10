@@ -16,12 +16,13 @@
 
 package stroom.pipeline.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public abstract class AbstractPoolCache<K, V> implements Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
     private final ICache<PoolKey<K>, PoolItem<V>> cache;

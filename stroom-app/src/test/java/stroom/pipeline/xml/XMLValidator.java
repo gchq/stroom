@@ -29,10 +29,10 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Helper class to validate XML based resources are valid.

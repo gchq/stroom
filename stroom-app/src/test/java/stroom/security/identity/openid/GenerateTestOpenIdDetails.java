@@ -39,15 +39,15 @@ import java.util.regex.Pattern;
  * Used for generating a set of OpenId Connect credentials and a corresponding
  * API key so that stroom-proxy can connect to stroom on first boot.
  * ONLY intended for test/demo purposes.
- *
+ * <p>
  * !!!!!!!!!! WARNING !!!!!!!!!!
- *
+ * <p>
  * If you run this and commit the new creds it will break any existing api keys
  * in any existing test environments that are upgrading and use these default creds.
  * If that happens you will need to delete any user API keys in the UI and recreate them.
  * There is an API key for INTERNAL_PROCESSING_USER which is system generated. You will also
  * need to delete that and reboot so stroom can recreated it.
- *
+ * <p>
  * !!!!!!!!!! WARNING !!!!!!!!!!
  */
 

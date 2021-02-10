@@ -44,8 +44,6 @@ import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +55,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

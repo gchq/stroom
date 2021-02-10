@@ -16,10 +16,11 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

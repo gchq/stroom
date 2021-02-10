@@ -29,14 +29,15 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.Message;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class XsltStoreImpl implements XsltStore {
+
     private final Store<XsltDoc> store;
 
     @Inject

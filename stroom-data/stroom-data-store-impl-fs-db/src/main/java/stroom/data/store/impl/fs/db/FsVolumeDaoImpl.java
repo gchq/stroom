@@ -18,12 +18,12 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.TableField;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;

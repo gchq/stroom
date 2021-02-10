@@ -1,11 +1,12 @@
 package stroom.data.zip;
 
 
+import stroom.meta.api.AttributeMap;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMap;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

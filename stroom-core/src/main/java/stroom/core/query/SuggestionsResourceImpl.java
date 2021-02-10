@@ -19,9 +19,9 @@ package stroom.core.query;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 
 class SuggestionsResourceImpl implements SuggestionsResource {
 

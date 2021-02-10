@@ -16,10 +16,11 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.util.date.DateUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

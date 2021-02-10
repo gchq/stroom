@@ -16,24 +16,25 @@
 
 package stroom.job.impl.db;
 
+import stroom.db.util.GenericDao;
+import stroom.db.util.JooqUtil;
+import stroom.job.impl.FindJobCriteria;
+import stroom.job.impl.JobDao;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
+import stroom.job.shared.Job;
+import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.ResultPage;
+
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
-import stroom.db.util.GenericDao;
-import stroom.db.util.JooqUtil;
-import stroom.job.impl.JobDao;
-import stroom.job.impl.db.jooq.tables.records.JobRecord;
-import stroom.job.impl.FindJobCriteria;
-import stroom.job.shared.Job;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.HasIntCrud;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;

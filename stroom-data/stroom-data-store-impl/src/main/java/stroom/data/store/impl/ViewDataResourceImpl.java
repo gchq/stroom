@@ -39,10 +39,10 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import com.codahale.metrics.annotation.Timed;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 @Timed
 class ViewDataResourceImpl implements ViewDataResource {

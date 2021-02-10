@@ -9,9 +9,9 @@ import stroom.util.io.StreamUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.charset.Charset;
 import java.util.Optional;
+import javax.inject.Inject;
 
 public class FeedPropertiesImpl implements FeedProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedPropertiesImpl.class);

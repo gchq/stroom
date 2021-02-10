@@ -16,9 +16,10 @@
 
 package stroom.job.impl;
 
+import stroom.job.api.DistributedTask;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.api.DistributedTask;
 
 import java.util.List;
 

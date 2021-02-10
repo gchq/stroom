@@ -1,15 +1,16 @@
 package stroom.security.identity.openid;
 
-import stroom.security.identity.config.OpenIdConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.security.identity.config.OpenIdConfig;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 class AccessCodeCache {
+
     private static final String CACHE_NAME = "Access Code Cache";
 
     private final ICache<String, AccessCodeRequest> cache;

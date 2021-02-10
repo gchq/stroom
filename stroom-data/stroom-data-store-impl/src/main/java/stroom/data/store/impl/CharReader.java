@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -17,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Reads the bytes in an {@link InputStream} and decodes them into {@link DecodedChar} instances

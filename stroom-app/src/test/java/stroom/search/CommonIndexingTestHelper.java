@@ -29,11 +29,11 @@ import stroom.util.shared.Severity;
 
 import org.assertj.core.api.Assertions;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

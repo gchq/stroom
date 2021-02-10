@@ -16,8 +16,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
@@ -28,8 +26,9 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * This class executes all tasks that are currently queued for execution. This

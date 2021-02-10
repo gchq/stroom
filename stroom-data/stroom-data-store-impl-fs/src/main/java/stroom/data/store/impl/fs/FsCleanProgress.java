@@ -19,8 +19,6 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.util.shared.ModelStringUtil;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 class FsCleanProgress {

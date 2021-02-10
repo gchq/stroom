@@ -39,11 +39,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 @ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {

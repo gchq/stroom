@@ -23,7 +23,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.json.JsonUtil;
 

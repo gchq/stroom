@@ -1,11 +1,12 @@
 package stroom.data.zip;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.util.io.WrappedOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;

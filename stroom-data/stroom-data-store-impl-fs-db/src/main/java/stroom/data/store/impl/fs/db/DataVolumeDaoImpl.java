@@ -1,15 +1,16 @@
 package stroom.data.store.impl.fs.db;
 
-import org.jooq.Condition;
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import org.jooq.Condition;
+
 import java.util.Collection;
 import java.util.List;
+import javax.inject.Inject;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;

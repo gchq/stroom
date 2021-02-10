@@ -26,15 +26,15 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class JobService {

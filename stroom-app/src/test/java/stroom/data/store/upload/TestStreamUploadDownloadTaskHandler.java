@@ -43,12 +43,12 @@ import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

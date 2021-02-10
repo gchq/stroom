@@ -18,6 +18,7 @@ package stroom.core.servlet;
 
 import stroom.util.servlet.HttpServletRequestHolder;
 
+import java.io.IOException;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -26,7 +27,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 public class HttpServletRequestFilter implements Filter {
     private final HttpServletRequestHolder httpServletRequestHolder;

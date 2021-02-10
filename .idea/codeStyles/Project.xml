@@ -14,8 +14,8 @@
           <emptyLine />
           <package name="" withSubpackages="true" static="false" />
           <emptyLine />
-          <package name="javax" withSubpackages="true" static="false" />
           <package name="java" withSubpackages="true" static="false" />
+          <package name="javax" withSubpackages="true" static="false" />
           <emptyLine />
           <package name="" withSubpackages="true" static="true" />
         </value>
@@ -24,6 +24,7 @@
     <codeStyleSettings language="JAVA">
       <option name="BLANK_LINES_BEFORE_PACKAGE" value="1" />
       <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
+      <option name="ALIGN_MULTILINE_RESOURCES" value="false" />
     </codeStyleSettings>
   </code_scheme>
 </component>

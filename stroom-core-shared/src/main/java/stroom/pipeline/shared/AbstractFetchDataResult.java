@@ -17,8 +17,8 @@
 package stroom.pipeline.shared;
 
 
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Count;
+import stroom.util.shared.OffsetRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

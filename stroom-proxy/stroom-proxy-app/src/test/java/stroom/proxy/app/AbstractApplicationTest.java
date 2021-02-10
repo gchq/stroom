@@ -32,13 +32,13 @@ public abstract class AbstractApplicationTest {
 
         // The key/trust store paths will not be available in travis so null them out
         config.getProxyConfig()
-            .getForwardStreamConfig()
-            .getForwardDestinations()
-            .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
+                .getForwardStreamConfig()
+                .getForwardDestinations()
+                .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
 
         config.getProxyConfig()
-            .getJerseyClientConfiguration()
-            .setTlsConfiguration(null);
+                .getJerseyClientConfiguration()
+                .setTlsConfiguration(null);
     }
 
 
@@ -48,24 +48,24 @@ public abstract class AbstractApplicationTest {
 
     private static Config readConfig(final Path configFile) {
         final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-            new FileConfigurationSourceProvider(),
-            new EnvironmentVariableSubstitutor(false));
+                new FileConfigurationSourceProvider(),
+                new EnvironmentVariableSubstitutor(false));
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
-            .create(
-                Config.class,
-                io.dropwizard.jersey.validation.Validators.newValidator(),
-                Jackson.newObjectMapper(),
-                "dw");
+                .create(
+                        Config.class,
+                        io.dropwizard.jersey.validation.Validators.newValidator(),
+                        Jackson.newObjectMapper(),
+                        "dw");
 
         Config config = null;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException | IOException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
-                configFile.toAbsolutePath()), e);
+                    configFile.toAbsolutePath()), e);
         }
 
         return config;

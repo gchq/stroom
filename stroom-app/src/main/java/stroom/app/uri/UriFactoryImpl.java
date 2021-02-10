@@ -13,10 +13,10 @@ import io.dropwizard.server.DefaultServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class UriFactoryImpl implements UriFactory {

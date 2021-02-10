@@ -18,9 +18,6 @@
 package stroom.pipeline.task;
 
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
@@ -39,12 +36,15 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

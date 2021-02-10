@@ -44,7 +44,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +53,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

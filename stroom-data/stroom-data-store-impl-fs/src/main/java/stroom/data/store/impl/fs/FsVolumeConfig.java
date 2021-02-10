@@ -7,9 +7,9 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.List;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
-import java.util.List;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {

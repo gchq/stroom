@@ -12,8 +12,6 @@ import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ServiceDiscovererImpl implements ServiceDiscoverer {

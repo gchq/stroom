@@ -33,17 +33,15 @@ import stroom.data.store.impl.fs.SegmentInputStreamProvider;
 import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
 import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
 import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
-import stroom.meta.mock.MockMetaService;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.mock.MockMetaService;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,6 +51,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class MockStore implements Store, Clearable {

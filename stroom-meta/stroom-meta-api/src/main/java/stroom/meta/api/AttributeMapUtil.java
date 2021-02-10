@@ -16,12 +16,12 @@
 
 package stroom.meta.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
-import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,6 +43,7 @@ import java.time.temporal.ChronoField;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.StringTokenizer;
+import javax.servlet.http.HttpServletRequest;
 
 public class AttributeMapUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapUtil.class);

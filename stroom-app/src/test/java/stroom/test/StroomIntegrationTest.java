@@ -25,9 +25,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Objects;
+import javax.inject.Inject;
 
 /**
  * This class should be common to all component and integration tests.

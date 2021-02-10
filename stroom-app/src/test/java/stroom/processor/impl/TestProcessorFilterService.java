@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorFilterService extends AbstractCoreIntegrationTest {
+
     @Inject
     private ProcessorService processorService;
     @Inject

@@ -17,8 +17,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
@@ -30,9 +28,12 @@ import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 @Singleton
 class JobNodeService {

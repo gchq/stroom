@@ -23,9 +23,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.List;
 
 class DataResourceImpl implements DataResource {
     private final Provider<DataService> dataServiceProvider;

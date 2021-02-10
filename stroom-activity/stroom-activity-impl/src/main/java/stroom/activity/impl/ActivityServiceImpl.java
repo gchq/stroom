@@ -34,7 +34,6 @@ import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +42,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 public class ActivityServiceImpl implements ActivityService {
 

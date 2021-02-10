@@ -18,7 +18,6 @@ package stroom.core.tools;
 
 import stroom.util.io.StreamUtil;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * <p>

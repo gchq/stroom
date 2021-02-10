@@ -55,8 +55,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -69,11 +67,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestReferenceData extends AbstractCoreIntegrationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);

@@ -1,12 +1,13 @@
 package stroom.core.welcome;
 
-import io.swagger.annotations.Api;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.SessionInfo;
+
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

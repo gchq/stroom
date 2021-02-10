@@ -9,9 +9,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
 

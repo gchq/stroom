@@ -16,9 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.TargetUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
