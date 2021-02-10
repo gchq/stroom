@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import com.google.web.bindery.requestfactory.server.Logging;
 import event.logging.BaseObject;
 import event.logging.Data;
 import event.logging.Device;
@@ -81,9 +82,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
-    //todo consider making a config property
-    private static int MAX_LIST_ELEMENT_COUNT = 5;
-
     private static final String SYSTEM = "Stroom";
     private static final String ENVIRONMENT = "";
     private static final String GENERATOR = "StroomEventLoggingService";
@@ -100,12 +98,16 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private final ObjectMapper objectMapper;
 
+    private final LoggingConfig loggingConfig;
+
     @Inject
-    StroomEventLoggingServiceImpl(final SecurityContext securityContext,
+    StroomEventLoggingServiceImpl(final LoggingConfig loggingConfig,
+                                  final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider) {
+        this.loggingConfig = loggingConfig;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.objectInfoProviderMap = objectInfoProviderMap;
@@ -470,7 +472,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
     public List<Data> getDataItems(java.lang.Object obj) {
-        if (obj == null){
+        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0){
             return null;
         }
         // Construct a Jackson JavaType for the class
@@ -497,11 +499,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     if (valObj != null) {
                         if (valObj instanceof Collection<?>){
                             Collection<?> collection = (Collection<?>) valObj;
-                            final String collectionValue = collection.stream().limit(MAX_LIST_ELEMENT_COUNT).
-                                    map(Objects::toString).collect(Collectors.joining(", "));
-                            if (collection.size() > MAX_LIST_ELEMENT_COUNT){
+
+                            if (loggingConfig.getMaxListElements() >= 0 && collection.size() > loggingConfig.getMaxListElements()){
+                                final String collectionValue = collection.stream()
+                                        .limit(loggingConfig.getMaxListElements())
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
                                 builder.withValue(collectionValue + "...(" + collection.size() + " elements in total).");
                             } else {
+                                final String collectionValue = collection.stream()
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
                                 builder.withValue(collectionValue);
                             }
                         } else if (isLeafPropertyType(valObj.getClass())) {
@@ -509,7 +517,17 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                             if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
                                 value = "********";
                             } else {
-                                value = valObj.toString();
+                                if (loggingConfig.getMaxDataElementStringLength() > 0){
+                                    final String stringVal = valObj.toString();
+                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()){
+                                        value = stringVal.substring(0, loggingConfig.getMaxDataElementStringLength() - 1)
+                                                + "...";
+                                    } else {
+                                        value = stringVal;
+                                    }
+                                } else {
+                                    value = valObj.toString();
+                                }
                             }
                             builder.withValue(value);
                         } else {

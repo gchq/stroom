@@ -27,6 +27,30 @@ import stroom.util.shared.AbstractConfig;
 public class LoggingConfig extends AbstractConfig {
     private boolean logEveryRestCallEnabled = false;
 
+    private int maxListElements = 5;
+
+    private int maxDataElementStringLength = 500;
+
+    @JsonProperty("maxListElements")
+    @JsonPropertyDescription("Maximum number of elements in event log before truncation.")
+    public int getMaxListElements() {
+        return maxListElements;
+    }
+
+    public void setMaxListElements(final int maxListElements) {
+        this.maxListElements = maxListElements;
+    }
+
+    @JsonProperty("maxDataElementStringLength")
+    @JsonPropertyDescription("Maximum number of characters for values of Data items.")
+    public int getMaxDataElementStringLength() {
+        return maxDataElementStringLength;
+    }
+
+    public void setMaxDataElementStringLength(final int maxDataElementStringLength) {
+        this.maxDataElementStringLength = maxDataElementStringLength;
+    }
+
     @JsonProperty("logEveryRestCallEnabled")
     @JsonPropertyDescription("Ensure that every RESTful service calls is logged, not only user initiated ones.")
     public boolean isLogEveryRestCallEnabled() {
@@ -41,6 +65,8 @@ public class LoggingConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "LoggingConfig{" +
+                "maxListElements=" + maxListElements +
+                ", " +
                 "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
                 '}';
     }
