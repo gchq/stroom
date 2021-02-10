@@ -19,7 +19,7 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 
 import com.google.inject.AbstractModule;
 
-public class RestResourceAutoSLoggerModule extends AbstractModule {
+public class RestResourceAutoLoggerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RestResourceAutoLogger.class).to(RestResourceAutoLoggerImpl.class);
