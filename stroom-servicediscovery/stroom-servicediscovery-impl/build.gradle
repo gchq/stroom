@@ -5,22 +5,24 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-api')
 //    compile project(':stroom-statistics:stroom-statistics-api')
-//    compile project(':stroom-util-shared')
+
     compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 //    compile project(':stroom-docref')
 
-//    compile libs.guava
+
 
     compile libs.curator_client
     compile libs.curator_framework
     compile libs.curator_x_discovery
     compile libs.dropwizard_metrics_healthchecks
+    compile libs.guava
     compile libs.guice4
     compile libs.vavr
-//    compile libs.jackson_annotations
-//    compile libs.javax_inject
+    compile libs.jackson_annotations
+    compile libs.javax_inject
 //    compile libs.jaxb_api
-//    compile libs.slf4j_api
+    compile libs.slf4j_api
 //    compile libs.vavr
 //
 //    testCompile libs.assertj_core

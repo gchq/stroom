@@ -55,7 +55,7 @@ dependencies {
 //    compile libs.slf4j_api
 //    compile project(':stroom-docref')
 //    compile libs.swagger_annotations
-//    compile libs.vavr
+    compile libs.vavr
 //    compile libs.ws_rs_api
 //    compile libs.xml_apis
 //
