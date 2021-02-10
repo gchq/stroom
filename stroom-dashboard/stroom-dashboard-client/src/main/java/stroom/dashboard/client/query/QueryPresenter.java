@@ -35,7 +35,7 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -679,7 +679,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void downloadQuery() {
         if (getQuerySettings().getDataSource() != null) {
 
-            final SearchRequest searchRequest = searchModel.createDownloadQueryRequest(
+            final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
                     params,
                     false,

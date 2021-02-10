@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class SearchRequest {
+public class DashboardSearchRequest {
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty
@@ -36,10 +36,10 @@ public class SearchRequest {
     private final String dateTimeLocale;
 
     @JsonCreator
-    public SearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
-                         @JsonProperty("search") final Search search,
-                         @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
-                         @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
+    public DashboardSearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
+                                  @JsonProperty("search") final Search search,
+                                  @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
+                                  @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
@@ -66,7 +66,7 @@ public class SearchRequest {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final SearchRequest that = (SearchRequest) o;
+        final DashboardSearchRequest that = (DashboardSearchRequest) o;
         return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
                 Objects.equals(search, that.search) &&
                 Objects.equals(componentResultRequests, that.componentResultRequests) &&
@@ -105,7 +105,7 @@ public class SearchRequest {
         private Builder() {
         }
 
-        private Builder(final SearchRequest searchRequest) {
+        private Builder(final DashboardSearchRequest searchRequest) {
             this.dashboardQueryKey = searchRequest.dashboardQueryKey;
             this.search = searchRequest.search;
             this.componentResultRequests = searchRequest.componentResultRequests;
@@ -132,8 +132,8 @@ public class SearchRequest {
             return this;
         }
 
-        public SearchRequest build() {
-            return new SearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+        public DashboardSearchRequest build() {
+            return new DashboardSearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
         }
     }
 }

@@ -25,7 +25,7 @@ import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
@@ -37,6 +37,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
+import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -67,13 +68,13 @@ public class SearchRequestMapper {
         this.visualisationStore = visualisationStore;
     }
 
-    public stroom.query.api.v2.SearchRequest mapRequest(final DashboardQueryKey queryKey,
-                                                        final SearchRequest searchRequest) {
+    public SearchRequest mapRequest(final DashboardQueryKey queryKey,
+                                    final DashboardSearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
 
-        return stroom.query.api.v2.SearchRequest.builder()
+        return SearchRequest.builder()
                 .key(new QueryKey(queryKey.getUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
@@ -82,7 +83,7 @@ public class SearchRequestMapper {
                 .build();
     }
 
-    private Query mapQuery(final SearchRequest searchRequest) {
+    private Query mapQuery(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getSearch() == null) {
             return null;
         }
@@ -124,7 +125,7 @@ public class SearchRequestMapper {
         }
     }
 
-    private List<ResultRequest> mapResultRequests(final SearchRequest searchRequest) {
+    private List<ResultRequest> mapResultRequests(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
@@ -134,7 +135,7 @@ public class SearchRequestMapper {
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
 
-                final stroom.query.api.v2.ResultRequest copy = stroom.query.api.v2.ResultRequest.builder()
+                final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
@@ -152,7 +153,7 @@ public class SearchRequestMapper {
                         .buildTableSettings();
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final stroom.query.api.v2.ResultRequest copy = stroom.query.api.v2.ResultRequest.builder()
+                final ResultRequest copy = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
                         .addMappings(parentTableSettings)
                         .addMappings(childTableSettings)
@@ -203,12 +204,12 @@ public class SearchRequestMapper {
 ////        return tableSettings;
 //    }
 
-//    private List<stroom.query.api.v2.Field> mapFields(final List<Field> fields) {
+//    private List<Field> mapFields(final List<Field> fields) {
 //        if (fields == null || fields.size() == 0) {
 //            return Collections.emptyList();
 //        }
 //
-//        final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());
+//        final List<Field> list = new ArrayList<>(fields.size());
 //        for (final Field field : fields) {
 //            final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
 //                    .id(field.getId())

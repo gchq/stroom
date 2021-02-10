@@ -19,7 +19,7 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
@@ -34,6 +34,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
@@ -51,8 +52,8 @@ public class SearchRequestTestData {
                 "queryId-1");
     }
 
-    static stroom.query.api.v2.SearchRequest apiSearchRequest() {
-        SearchRequest dashboardSearchRequest = dashboardSearchRequest();
+    static SearchRequest apiSearchRequest() {
+        DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         return searchRequestMapper.mapRequest(
@@ -60,7 +61,7 @@ public class SearchRequestTestData {
                 dashboardSearchRequest);
     }
 
-    static SearchRequest dashboardSearchRequest() {
+    static DashboardSearchRequest dashboardSearchRequest() {
         DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
         ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
@@ -134,7 +135,7 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
-        return new SearchRequest(
+        return new DashboardSearchRequest(
                 dashboardQueryKey(), search, componentResultRequests, "en-gb");
     }
 
