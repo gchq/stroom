@@ -185,14 +185,14 @@ public class ContainerResourceInfo {
         OperationType op = getOperationType();
         if (OperationType.MANUALLY_LOGGED.equals(op)){
             return false;
-        }
-        if (OperationType.UNLOGGED.equals(op)){
-            return config.isLogEveryRestCallEnabled();
-        }
-        if (isAutologgerAnnotationPresent()){
+        } else if (config.isLogEveryRestCallEnabled()){
+            return true;
+        } else if (OperationType.UNLOGGED.equals(op)){
+            return false;
+        } else if (isAutologgerAnnotationPresent()){
             return true;
         } else {
-            return config.isGlobalLoggingEnabled();
+            return false;
         }
     }
 }

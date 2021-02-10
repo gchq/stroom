@@ -25,11 +25,7 @@ import stroom.util.shared.AbstractConfig;
 
 @Singleton
 public class RequestLoggingConfig extends AbstractConfig {
-
-    private boolean globalLoggingEnabled = false;
-
     private boolean logEveryRestCallEnabled = false;
-
 
     @JsonProperty("logEveryRestCallEnabled")
     @JsonPropertyDescription("Ensure that every RESTful service calls is logged, not only user initiated ones.")
@@ -41,21 +37,10 @@ public class RequestLoggingConfig extends AbstractConfig {
         this.logEveryRestCallEnabled = logEveryRestCallEnabled;
     }
 
-    @JsonProperty("globalLoggingEnabled")
-    @JsonPropertyDescription("Log additional RESTful service calls.")
-    public boolean isGlobalLoggingEnabled() {
-        return globalLoggingEnabled;
-    }
-
-    public void setGlobalLoggingEnabled(final boolean globalLoggingEnabled) {
-        this.globalLoggingEnabled = globalLoggingEnabled;
-    }
 
     @Override
     public String toString() {
         return "RequestLoggingConfig{" +
-                "globalLoggingEnabled=" + globalLoggingEnabled +
-                "," +
                 "logEveryRestCallEnabled=" + logEveryRestCallEnabled +
                 '}';
     }
