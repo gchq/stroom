@@ -1,5 +1,18 @@
 {
   "openapi" : "3.0.1",
+  "info" : {
+    "contact" : {
+      "name" : "stroom",
+      "url" : "https://github.com/gchq/stroom"
+    },
+    "description" : "Various APIs for interacting with Stroom and its data",
+    "license" : {
+      "name" : "Apache 2.0",
+      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "title" : "Stroom API",
+    "version" : "v1/v2"
+  },
   "paths" : {
     "/account/v1" : {
       "get" : {
@@ -1642,7 +1655,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/SearchResponse"
+                    "$ref" : "#/components/schemas/DashboardSearchResponse"
                   },
                   "uniqueItems" : true
                 }
@@ -9626,6 +9639,53 @@
           }
         }
       },
+      "DashboardSearchRequest" : {
+        "type" : "object",
+        "properties" : {
+          "componentResultRequests" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ComponentResultRequest"
+            }
+          },
+          "dashboardQueryKey" : {
+            "$ref" : "#/components/schemas/DashboardQueryKey"
+          },
+          "dateTimeLocale" : {
+            "type" : "string"
+          },
+          "search" : {
+            "$ref" : "#/components/schemas/Search"
+          }
+        }
+      },
+      "DashboardSearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "complete" : {
+            "type" : "boolean"
+          },
+          "errors" : {
+            "type" : "string"
+          },
+          "highlights" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/DashboardQueryKey"
+          },
+          "results" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Result"
+            }
+          }
+        }
+      },
       "DataInfoSection" : {
         "type" : "object",
         "properties" : {
@@ -10107,7 +10167,7 @@
             "$ref" : "#/components/schemas/DashboardQueryKey"
           },
           "searchRequest" : {
-            "$ref" : "#/components/schemas/SearchRequest"
+            "$ref" : "#/components/schemas/DashboardSearchRequest"
           }
         }
       },
@@ -10135,7 +10195,7 @@
             "type" : "boolean"
           },
           "searchRequest" : {
-            "$ref" : "#/components/schemas/SearchRequest"
+            "$ref" : "#/components/schemas/DashboardSearchRequest"
           }
         }
       },
@@ -13809,7 +13869,7 @@
           "searchRequests" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/SearchRequest"
+              "$ref" : "#/components/schemas/DashboardSearchRequest"
             },
             "uniqueItems" : true
           }

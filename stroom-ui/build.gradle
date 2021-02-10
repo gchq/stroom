@@ -39,7 +39,7 @@ def outputDir = "${resourcesDir}/new-ui"
 
 task generateApi {
     // Ensure swagger output is created first as we use it to create the typescript API for the UI.
-    dependsOn ":stroom-app:generateSwaggerDocumentation"
+    dependsOn ":stroom-app:resolve"
 
     doLast {
         exec {
@@ -58,8 +58,6 @@ task removeYarnBuild {
 task yarnBuild {
     dependsOn removeYarnBuild
     dependsOn generateApi
-//    // Ensure swagger output is created first as we use it to create the typescript API for the UI.
-//    dependsOn ":stroom-app:generateSwaggerDocumentation"
 
     doLast {
         exec {
