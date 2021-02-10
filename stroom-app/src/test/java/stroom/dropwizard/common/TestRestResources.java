@@ -68,7 +68,8 @@ class TestRestResources {
 
             return classes.stream()
                     .map(resourceClass ->
-                            DynamicTest.dynamicTest(resourceClass.getName(),
+                            DynamicTest.dynamicTest(
+                                    resourceClass.getSimpleName() + " (" + resourceClass.getPackageName() + ")",
                                     () ->
                                             doResourceClassAsserts(resourceClass)));
         }
@@ -98,7 +99,7 @@ class TestRestResources {
                     .flatMap(clazz ->
                             Arrays.stream(clazz.getMethods())
                                     .map(method -> Tuple.of(clazz, method)))
-                    .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._1, clazzMethod._2))
+                    .filter(clazzMethod -> hasJaxRsAnnotation(clazzMethod._1, clazzMethod._2, false))
                     .map(clazzMethod-> Tuple.of(
                             clazzMethod._2.getName(),
                             getJaxRsHttpMethod(clazzMethod._2),
@@ -177,7 +178,8 @@ class TestRestResources {
                 .filter(anno -> httpMethodAnnos.contains(anno.annotationType()))
                 .findFirst()
                 .map(annotation -> annotation.annotationType().getSimpleName())
-                .orElseThrow();
+                .orElse("???");
+//                .orElseThrow(() -> new RuntimeException("Method " + method + "has no jaxrs anno, e.g. GET/PUT/etc."));
     }
 
     private void doResourceClassAsserts(final Class<? extends RestResource> resourceClass) {
@@ -219,7 +221,7 @@ class TestRestResources {
 
                 Arrays.stream(resourceClass.getMethods())
                         .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                        .filter(method -> hasJaxRsAnnotation(resourceClass, method))
+                        .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
                         .forEach(method -> {
                             final boolean methodIsAutoLogged = method.isAnnotationPresent(AutoLogged.class);
 
@@ -257,29 +259,33 @@ class TestRestResources {
         }
     }
 
-    private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method) {
+    private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method, final boolean checkInterfaces) {
         boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
                 .anyMatch(annotation ->
                         annotation.annotationType().getPackageName().equals("javax.ws.rs"));
-        if (!thisMethodHasJaxRs) {
-            final Class<?> restInterface = Arrays.stream(clazz.getInterfaces())
-                    .filter(iface -> Arrays.asList(iface.getInterfaces()).contains(RestResource.class))
-                    .findAny()
-                    .orElse(null);
-
-            if (restInterface == null) {
-                return false;
-            } else {
-                // now find the same method on the interface
-                final Optional<Method> optIfaceMethod = Arrays.stream(restInterface.getMethods())
-                        .filter(ifaceMethod -> areMethodsEqual(method, ifaceMethod))
-                        .findAny();
-
-                return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface, ifaceMethod))
-                        .orElse(false);
-            }
+        if (!checkInterfaces) {
+            return thisMethodHasJaxRs;
         } else {
-            return true;
+            if (!thisMethodHasJaxRs) {
+                final Class<?> restInterface = Arrays.stream(clazz.getInterfaces())
+                        .filter(iface -> Arrays.asList(iface.getInterfaces()).contains(RestResource.class))
+                        .findAny()
+                        .orElse(null);
+
+                if (restInterface == null) {
+                    return false;
+                } else {
+                    // now find the same method on the interface
+                    final Optional<Method> optIfaceMethod = Arrays.stream(restInterface.getMethods())
+                            .filter(ifaceMethod -> areMethodsEqual(method, ifaceMethod))
+                            .findAny();
+
+                    return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface, ifaceMethod, checkInterfaces))
+                            .orElse(false);
+                }
+            } else {
+                return true;
+            }
         }
     }
 
@@ -326,7 +332,7 @@ class TestRestResources {
 
         Arrays.stream(resourceClass.getMethods())
                 .filter(method -> !Modifier.isPrivate(method.getModifiers()))
-                .filter(method -> hasJaxRsAnnotation(resourceClass, method))
+                .filter(method -> hasJaxRsAnnotation(resourceClass, method, true))
                 .forEach(method -> {
 
                     final List<Class<? extends Annotation>> methodAnnotationTypes = Arrays.stream(

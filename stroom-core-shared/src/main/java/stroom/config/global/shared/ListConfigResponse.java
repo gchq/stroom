@@ -14,6 +14,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "List of config properties")
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
+
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values) {
         super(values);
     }

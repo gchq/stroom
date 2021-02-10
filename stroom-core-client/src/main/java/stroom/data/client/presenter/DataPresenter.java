@@ -32,7 +32,6 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.client.UiConfigCache;
@@ -81,7 +80,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
-    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
@@ -502,8 +500,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
-                            .call(VIEW_DATA_RESOURCE)
-                            .getChildStreamTypes(currentSourceLocation.getId(), currentSourceLocation.getPartNo());
+                            .call(DATA_RESOURCE)
+                            .getChildStreamTypes(
+                                    currentSourceLocation.getId(),
+                                    currentSourceLocation.getPartNo());
                 }
             }
         }
@@ -646,7 +646,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                                     }
                                 })
                                 .onFailure(caught -> itemNavigatorPresenter.setRefreshing(false))
-                                .call(VIEW_DATA_RESOURCE)
+                                .call(DATA_RESOURCE)
                                 .fetch(request);
                     }
                 }
@@ -957,7 +957,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         rest
                 .onSuccess(this::handleMetaInfoResult)
                 .call(DATA_RESOURCE)
-                .info(metaId);
+                .viewInfo(metaId);
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {

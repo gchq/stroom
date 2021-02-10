@@ -1,13 +1,14 @@
 package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.HasUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class XsltDTO extends DocRef {
+public class XsltDTO extends DocRef implements HasUuid {
     @JsonProperty
     private final String description;
     @JsonProperty

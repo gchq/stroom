@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -40,13 +39,8 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface XsltResource extends RestResource, DirectRestService {
 
-    @POST
-    @Path("/read")
-    @ApiOperation("Fetch an xslt doc by its doc ref")
-    XsltDoc read(@ApiParam("docRef") DocRef docRef);
-
     @PUT
-    @Path("/update")
+    @Path("/")
     @ApiOperation("Update an xslt doc")
     XsltDoc update(XsltDoc xslt);
 

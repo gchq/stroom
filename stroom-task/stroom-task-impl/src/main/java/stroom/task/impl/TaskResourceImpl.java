@@ -27,14 +27,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+
+import event.logging.EventAction;
+import event.logging.ProcessAction;
+import event.logging.ProcessEventAction;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
 
-@AutoLogged
+//@AutoLogged  see
 class TaskResourceImpl implements TaskResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
@@ -98,6 +103,9 @@ class TaskResourceImpl implements TaskResource {
     }
 
     @Override
+    @AutoLogged(
+            value = OperationType.PROCESS,
+            verb = "Terminating")
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
 
         final String path = ResourcePaths.buildAuthenticatedApiPath(
@@ -105,16 +113,46 @@ class TaskResourceImpl implements TaskResource {
                 TaskResource.TERMINATE_PATH_PART,
                 nodeName);
 
-        nodeServiceProvider.get()
-                .remoteRestCall(
-                        nodeName,
-                        path,
-                        () ->
-                                taskManagerProvider.get().terminate(
-                                        request.getCriteria(),
-                                        request.isKill()),
-                        builder ->
-                                builder.post(Entity.json(request)));
+
+        // TODO @AT Add custom logging to set the Process.Action to TERMINATE
+//        Runnable work = () -> {
+            nodeServiceProvider.get()
+                    .remoteRestCall(
+                            nodeName,
+                            path,
+                            () ->
+                                    taskManagerProvider.get().terminate(
+                                            request.getCriteria(),
+                                            request.isKill()),
+                            builder ->
+                                    builder.post(Entity.json(request)));
+//        };
+
+//        stroomEventLoggingService.loggedAction(
+//                StroomEventLoggingUtil.buildTypeId(this, "terminate"),
+//                "just kill it",
+//                ProcessEventAction.builder()
+//                        .withAction(ProcessAction.TERMINATE)
+//                        .withInput(stroomEventLoggingService.convertToMulti(request))
+//                        .build(),
+//                () -> {
+//                    // do stuff
+//                });
+
         return true;
+    }
+
+    static interface EventActionDecorator<T extends EventAction> {
+        T decorate(final T eventAction);
+    }
+
+    static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {
+
+        @Override
+        public ProcessEventAction decorate(final ProcessEventAction eventAction) {
+            return eventAction.newCopyBuilder()
+                    .withAction(ProcessAction.TERMINATE)
+                    .build();
+        }
     }
 }

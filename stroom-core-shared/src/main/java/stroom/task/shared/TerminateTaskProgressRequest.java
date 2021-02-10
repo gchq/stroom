@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TerminateTaskProgressRequest {
+
     @JsonProperty
     private final FindTaskCriteria criteria;
     @JsonProperty
@@ -40,5 +41,13 @@ public class TerminateTaskProgressRequest {
 
     public boolean isKill() {
         return kill;
+    }
+
+    @Override
+    public String toString() {
+        return "TerminateTaskProgressRequest{" +
+                "criteria=" + criteria +
+                ", kill=" + kill +
+                '}';
     }
 }

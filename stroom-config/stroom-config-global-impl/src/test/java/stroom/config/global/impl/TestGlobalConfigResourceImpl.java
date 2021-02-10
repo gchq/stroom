@@ -340,7 +340,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);
-                    configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
+                    configProperty.setVersion(configProperty.getVersion() == null
+                            ? 1
+                            : configProperty.getVersion() + 1);
                     return configProperty;
                 });
 
@@ -358,6 +360,20 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
                 .thenAnswer(invocation ->
                         baseEndPointUrls.get((String) invocation.getArgument(0)));
+
+//        when(nodeService.remoteRestResult(
+//                Mockito.anyString(),
+//                Mockito.anyString(),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any())).thenCallRealMethod();
+//
+//        when(nodeService.remoteRestResult(
+//                Mockito.anyString(),
+//                Mockito.any(Class.class),
+//                Mockito.any(),
+//                Mockito.any(),
+//                Mockito.any())).thenCallRealMethod();
 
         // Set up the NodeInfo mock
 
