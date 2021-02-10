@@ -21,16 +21,21 @@ dependencies {
     compile project(':stroom-lmdb')
     compile project(':stroom-query:stroom-expression')
     compile project(':stroom-query:stroom-query-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
 
     //--------3rd party--------
-    compile libs.agrona
+//    compile libs.agrona
     compile libs.guava
     compile libs.jackson_databind
     compile libs.jackson_annotations
     compile libs.jackson_core
+    compile libs.javax_inject
     compile libs.kryo
+    compile libs.lmdbjava
     compile libs.slf4j_api
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
+    compile libs.validation_api
 
     //--------testing----------
     testCompile libs.assertj_core

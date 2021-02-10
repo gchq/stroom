@@ -1,14 +1,20 @@
 ext.moduleName = 'stroom.activity.impl.db'
 
 dependencies {
+    compile project(':stroom-activity:stroom-activity-api')
     compile project(':stroom-activity:stroom-activity-impl')
     compile project(':stroom-activity:stroom-activity-impl-db-jooq')
     compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
+    compile project(':stroom-util-shared')
     
-    compile libs.flyway_core
+//    compile libs.flyway_core
     compile libs.guice4
-    compile libs.hikari
+//    compile libs.hikari
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
 

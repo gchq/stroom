@@ -2,10 +2,9 @@ ext.moduleName = 'stroom.data.retention.impl'
 
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-api')
-    compile project(':stroom-cluster:stroom-cluster-lock-mock')
     compile project(':stroom-core-shared')
     compile project(':stroom-data:stroom-data-retention-api')
-    compile project(':stroom-dictionary:stroom-dictionary-api')
+//    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-meta:stroom-meta-api')
@@ -17,9 +16,11 @@ dependencies {
     compile project(':stroom-docref')
     
     compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
+//    compile libs.jackson_annotations
+//    compile libs.jaxb_api
     compile libs.slf4j_api
+
+    testCompile project(':stroom-cluster:stroom-cluster-lock-mock')
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api

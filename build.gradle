@@ -137,7 +137,7 @@ ext.libs = [
         stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
-        agrona                         : "org.agrona:agrona:1.8.0",
+//        agrona                         : "org.agrona:agrona:1.8.0",
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.18.1",
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
