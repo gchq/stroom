@@ -16,17 +16,19 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.util.shared.Selection;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 public class ClassificationWrappedMetaPresenter extends ClassificationWrapperPresenter
         implements HasDataSelectionHandlers<Selection<Long>>, HasDocumentRead<Object> {
+
     private final MetaPresenter metaPresenter;
 
     @Inject

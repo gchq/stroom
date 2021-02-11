@@ -36,6 +36,7 @@ package stroom.dashboard.expression.v1;
                                 description = "Field, the result of another function or a constant.",
                                 argType = Val.class)}))
 class LessThan extends AbstractEqualityFunction {
+
     static final String NAME = "<";
     static final String ALIAS = "lessThan";
     private static final LessThanEvaluator EVALUATOR = new LessThanEvaluator();
@@ -50,6 +51,7 @@ class LessThan extends AbstractEqualityFunction {
     }
 
     private static class LessThanEvaluator extends Evaluator {
+
         @Override
         protected Val evaluate(final Val a, final Val b) {
             if (a.getClass().equals(b.getClass())) {

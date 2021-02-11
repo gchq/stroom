@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsError extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isError";
     private static final long serialVersionUID = -305245496413936297L;
     private static final ErrorTest TEST = new ErrorTest();
@@ -47,6 +48,7 @@ class IsError extends AbstractIsFunction implements Serializable {
     }
 
     private static class ErrorTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val.type().isError());

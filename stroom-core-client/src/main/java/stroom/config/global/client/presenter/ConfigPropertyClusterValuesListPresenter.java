@@ -27,8 +27,8 @@ public class ConfigPropertyClusterValuesListPresenter
         extends MyPresenterWidget<DataGridView<ClusterValuesRow>> {
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
-    private ListDataProvider<ClusterValuesRow> dataProvider;
-    private ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
+    private final ListDataProvider<ClusterValuesRow> dataProvider;
+    private final ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
 
     private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
@@ -101,7 +101,9 @@ public class ConfigPropertyClusterValuesListPresenter
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {
         return buildBasicColumn(row ->
-                (row.getNodeCount() != null ? row.getNodeCount().toString() : ""));
+                (row.getNodeCount() != null
+                        ? row.getNodeCount().toString()
+                        : ""));
     }
 
     private Column<ClusterValuesRow, String> buildBasicColumn(final Function<ClusterValuesRow, String> valueFunc) {

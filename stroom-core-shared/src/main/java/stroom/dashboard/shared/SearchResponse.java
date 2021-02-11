@@ -32,6 +32,7 @@ import java.util.Set;
 @JsonPropertyOrder({"queryKey", "highlights", "errors", "complete", "results"})
 @JsonInclude(Include.NON_NULL)
 public class SearchResponse {
+
     /**
      * The dashboard component that this search response is for.
      */
@@ -106,8 +107,12 @@ public class SearchResponse {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SearchResponse that = (SearchResponse) o;
         return complete == that.complete &&
                 Objects.equals(queryKey, that.queryKey) &&

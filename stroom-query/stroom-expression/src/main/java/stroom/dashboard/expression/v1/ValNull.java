@@ -17,6 +17,7 @@
 package stroom.dashboard.expression.v1;
 
 public final class ValNull implements Val {
+
     public static final ValNull INSTANCE = new ValNull();
     public static final Type TYPE = Type.NULL;
 
@@ -62,7 +63,9 @@ public final class ValNull implements Val {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
         return o != null && getClass() == o.getClass();
     }
 

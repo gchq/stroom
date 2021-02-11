@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class SourceKey {
+
     private final long metaId;
     private final long partNo;
     private final Long segmentNo;
@@ -50,8 +51,12 @@ public class SourceKey {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SourceKey sourceKey = (SourceKey) o;
         return metaId == sourceKey.metaId &&
                 partNo == sourceKey.partNo &&

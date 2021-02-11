@@ -353,6 +353,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     public static class ConfigPropertyRow {
+
         private final ConfigProperty configProperty;
         private final String effectiveValue;
         private final String source;
@@ -397,6 +398,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

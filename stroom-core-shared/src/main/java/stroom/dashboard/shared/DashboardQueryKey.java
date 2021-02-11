@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class DashboardQueryKey {
+
     @JsonProperty
     private final String uuid;
     @JsonProperty
@@ -56,8 +57,12 @@ public class DashboardQueryKey {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DashboardQueryKey that = (DashboardQueryKey) o;
         return Objects.equals(uuid, that.uuid) &&
                 Objects.equals(dashboardUuid, that.dashboardUuid) &&

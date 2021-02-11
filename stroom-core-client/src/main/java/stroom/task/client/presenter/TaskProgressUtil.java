@@ -37,6 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class TaskProgressUtil {
+
     private TaskProgressUtil() {
     }
 
@@ -275,6 +276,7 @@ class TaskProgressUtil {
     }
 
     private static class TaskProgressComparator implements Comparator<TaskProgress> {
+
         private final FindTaskProgressCriteria criteria;
 
         private TaskProgressComparator(final FindTaskProgressCriteria criteria) {

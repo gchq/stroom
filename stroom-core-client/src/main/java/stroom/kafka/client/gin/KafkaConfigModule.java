@@ -25,10 +25,13 @@ import stroom.kafka.client.presenter.KafkaConfigSettingsPresenter.KafkaConfigSet
 import stroom.kafka.client.view.KafkaConfigSettingsViewImpl;
 
 public class KafkaConfigModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(KafkaConfigPlugin.class);
         bind(KafkaConfigPresenter.class);
-        bindPresenterWidget(KafkaConfigSettingsPresenter.class, KafkaConfigSettingsView.class, KafkaConfigSettingsViewImpl.class);
+        bindPresenterWidget(KafkaConfigSettingsPresenter.class,
+                KafkaConfigSettingsView.class,
+                KafkaConfigSettingsViewImpl.class);
     }
 }

@@ -66,6 +66,7 @@ import java.util.function.Consumer;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
         implements Refreshable, HasDocumentRead<IndexDoc>, ReadOnlyChangeHandler {
+
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
     private final TooltipPresenter tooltipPresenter;
@@ -174,7 +175,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
+                false,
+                false)) {
             @Override
             public TickBoxState getValue() {
                 if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
@@ -397,11 +400,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             selectionCriteria.getIndexShardIdSet().clear();
 
             if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(), queryCriteria.obtainPageRequest()) {
+                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(),
+                        queryCriteria.obtainPageRequest()) {
                     @Override
-                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
                         final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(queryCriteria);
+                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(
+                                queryCriteria);
                     }
 
                     @Override

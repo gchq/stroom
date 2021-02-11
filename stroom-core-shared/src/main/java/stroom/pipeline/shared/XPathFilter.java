@@ -16,17 +16,19 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.HasDisplayValue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 public class XPathFilter {
+
     @JsonProperty
     private String path;
     @JsonProperty
@@ -109,7 +111,10 @@ public class XPathFilter {
     }
 
     public enum MatchType implements HasDisplayValue {
-        EXISTS("exists", false), CONTAINS("contains", true), EQUALS("equals", true), UNIQUE("unique values", false);
+        EXISTS("exists", false),
+        CONTAINS("contains", true),
+        EQUALS("equals", true),
+        UNIQUE("unique values", false);
 
         private final String displayValue;
         private final boolean needsValue;

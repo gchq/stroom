@@ -16,12 +16,14 @@
 
 package stroom.content.client.event;
 
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.SelectContentTabHandler> {
+
     private static Type<SelectContentTabHandler> TYPE;
     private final TabData tabData;
 
@@ -55,6 +57,7 @@ public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.Select
     }
 
     public interface SelectContentTabHandler extends EventHandler {
+
         void onSelect(SelectContentTabEvent event);
     }
 }

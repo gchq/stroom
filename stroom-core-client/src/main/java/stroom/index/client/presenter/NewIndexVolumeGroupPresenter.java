@@ -17,9 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -28,9 +25,14 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.function.Consumer;
 
 public class NewIndexVolumeGroupPresenter extends MyPresenterWidget<NameDocumentView> {
+
     @Inject
     public NewIndexVolumeGroupPresenter(final EventBus eventBus, final NameDocumentView view) {
         super(eventBus, view);

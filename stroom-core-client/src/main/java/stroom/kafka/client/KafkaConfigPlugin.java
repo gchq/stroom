@@ -17,10 +17,6 @@
 
 package stroom.kafka.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -29,13 +25,19 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.client.presenter.KafkaConfigPresenter;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
 public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
+
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private final Provider<KafkaConfigPresenter> editorProvider;
 
@@ -43,10 +45,10 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
 
     @Inject
     public KafkaConfigPlugin(final EventBus eventBus,
-                            final Provider<KafkaConfigPresenter> editorProvider,
+                             final Provider<KafkaConfigPresenter> editorProvider,
                              final RestFactory restFactory,
-                            final ContentManager contentManager,
-                            final DocumentPluginEventManager entityPluginEventManager) {
+                             final ContentManager contentManager,
+                             final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
@@ -68,7 +70,9 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<KafkaConfigDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<KafkaConfigDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<KafkaConfigDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -78,7 +82,10 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final KafkaConfigDoc document, final Consumer<KafkaConfigDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final KafkaConfigDoc document,
+                     final Consumer<KafkaConfigDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<KafkaConfigDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

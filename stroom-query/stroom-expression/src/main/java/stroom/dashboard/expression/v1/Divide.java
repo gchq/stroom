@@ -34,6 +34,7 @@ package stroom.dashboard.expression.v1;
                         isVarargs = true,
                         minVarargsCount = 2)))
 class Divide extends NumericFunction {
+
     static final String NAME = "/";
     static final String ALIAS = "divide";
     private static final Calc CALC = new Calc();
@@ -48,6 +49,7 @@ class Divide extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

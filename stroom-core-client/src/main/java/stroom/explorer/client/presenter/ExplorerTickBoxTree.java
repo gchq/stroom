@@ -43,12 +43,13 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import java.util.List;
 
 public class ExplorerTickBoxTree extends AbstractExplorerTree {
+
     private final ExplorerTreeModel treeModel;
     private final TickBoxSelectionModel selectionModel;
     private final CellTable<ExplorerNode> cellTable;
 
-    private String expanderClassName;
-    private String tickBoxClassName;
+    private final String expanderClassName;
+    private final String tickBoxClassName;
 
     public ExplorerTickBoxTree(final RestFactory restFactory) {
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
@@ -286,16 +287,19 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     @CssResource.ImportedWithPrefix("gwt-CellTable")
     public interface ExplorerTreeStyle extends CellTable.Style {
+
         String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTree.css";
     }
 
     public interface ExplorerTreeResources extends CellTable.Resources {
+
         @Override
         @Source(ExplorerTreeStyle.DEFAULT_CSS)
         ExplorerTreeStyle cellTableStyle();
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
+
         MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
             super(table);
         }

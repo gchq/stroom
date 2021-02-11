@@ -138,7 +138,9 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
 
             final String lbl = display.getName() + " "
                     + offsetFromIncStr
-                    + (display.hasMultipleItemsPerPage() ? " to " + offsetToIncStr : "")
+                    + (display.hasMultipleItemsPerPage()
+                    ? " to " + offsetToIncStr
+                    : "")
                     + " of "
                     + getLongValueForLabel(display.getTotalItemsCount().asOptional());
 

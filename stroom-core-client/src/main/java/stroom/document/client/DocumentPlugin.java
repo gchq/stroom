@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
+
     private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
     private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
     private final ContentManager contentManager;
@@ -132,7 +133,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         return presenter;
     }
 
-    protected void showTab(final DocRef docRef, final MyPresenterWidget<?> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
+    protected void showTab(final DocRef docRef,
+                           final MyPresenterWidget<?> documentEditPresenter,
+                           final CloseHandler closeHandler,
+                           final DocumentTabData tabData) {
         final Consumer<Throwable> errorConsumer = caught -> {
             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
             // Stop spinning.
@@ -483,15 +487,21 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     protected abstract MyPresenterWidget<?> createEditor();
 
-    public abstract void load(final DocRef docRef, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
+    public abstract void load(final DocRef docRef,
+                              final Consumer<D> resultConsumer,
+                              final Consumer<Throwable> errorConsumer);
 
-    public abstract void save(final DocRef docRef, final D document, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
+    public abstract void save(final DocRef docRef,
+                              final D document,
+                              final Consumer<D> resultConsumer,
+                              final Consumer<Throwable> errorConsumer);
 
     protected abstract DocRef getDocRef(D document);
 
     public abstract String getType();
 
     private class EntityCloseHandler implements CloseHandler {
+
         private final DocumentTabData tabData;
 
         EntityCloseHandler(final DocumentTabData tabData) {

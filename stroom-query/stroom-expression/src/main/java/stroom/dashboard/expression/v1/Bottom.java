@@ -43,6 +43,7 @@ import java.text.ParseException;
                                 argType = ValInteger.class)
                 }))
 public class Bottom extends AbstractSelectorFunction implements Serializable {
+
     static final String NAME = "bottom";
     private static final long serialVersionUID = -305845496003936297L;
 
@@ -70,6 +71,7 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
     }
 
     public static class BottomSelector extends Selector {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;
@@ -83,7 +85,7 @@ public class Bottom extends AbstractSelectorFunction implements Serializable {
 
         public Val select(final Selection<Val> selection) {
             final StringBuilder sb = new StringBuilder();
-            for (int i = Math.max(0, selection.size() - limit);  i < selection.size(); i++) {
+            for (int i = Math.max(0, selection.size() - limit); i < selection.size(); i++) {
                 final Val val = selection.get(i);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {

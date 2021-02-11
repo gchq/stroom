@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class YamlUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(YamlUtil.class);
 
     private YamlUtil() {
@@ -94,8 +95,6 @@ public class YamlUtil {
     /**
      * Reads a yaml file that matches the structure of a complete DropWizard {@link Config}
      * object tree. The file undergoes substitution and validation.
-     *
-     * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
         final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
@@ -125,8 +124,6 @@ public class YamlUtil {
 
     /**
      * Reads a YAML string that has already been through the drop wizard env var substitution.
-     *
-     * @throws IOException
      */
     public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
 

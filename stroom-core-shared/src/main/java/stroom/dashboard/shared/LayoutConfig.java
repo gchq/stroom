@@ -37,6 +37,7 @@ import javax.xml.bind.annotation.XmlType;
         @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
 })
 public abstract class LayoutConfig {
+
     @JsonIgnore
     private transient SplitLayoutConfig parent;
 

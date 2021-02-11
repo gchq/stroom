@@ -100,7 +100,6 @@ public class ByteArrayUtils {
     }
 
     /**
-     * @param arr
      * @return The array represented in hex, decimal and 'hbase' forms. The
      * hbase form is mix of ascii and deciaml, so an ascii char if the
      * byte value exists in the ascii table
@@ -116,7 +115,10 @@ public class ByteArrayUtils {
      */
     public static String byteArrayToAllForms(final byte[] arr, final int offset, final int length) {
         if (arr != null) {
-            return ByteArrayUtils.byteArrayToHex(arr, offset, length) + " (hex) | " + ByteArrayUtils.byteArrayToString(arr, offset, length) + " (dec) | "
+            return ByteArrayUtils.byteArrayToHex(arr, offset, length) + " (hex) | " + ByteArrayUtils.byteArrayToString(
+                    arr,
+                    offset,
+                    length) + " (dec) | "
                     + Bytes.toStringBinary(arr, offset, length) + " (hbase)";
         } else {
             return "NULL";

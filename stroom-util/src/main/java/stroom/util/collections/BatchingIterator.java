@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Utility class for converting a stream of T into batches of {@link List<T>}
+ * Utility class for converting a stream of T into batches of {@link List}
  *
  * @param <T> The type of object in the stream
  */

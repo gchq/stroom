@@ -33,7 +33,7 @@ public class IndexFields implements Serializable {
 
     private static final long serialVersionUID = 4457718308915039068L;
 
-    private List<IndexField> indexFields;
+    private final List<IndexField> indexFields;
 
     public IndexFields() {
         this.indexFields = new ArrayList<>();

@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
+
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
     private ExplorerNode selectedExplorerNode;
@@ -175,9 +176,11 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     private static class ExtendedExplorerTree extends ExplorerTree {
+
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
-        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final RestFactory restFactory) {
+        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter,
+                                    final RestFactory restFactory) {
             super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         }
@@ -185,7 +188,9 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         @Override
         protected void setInitialSelectedItem(final ExplorerNode selection) {
             super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), new SelectionType(false, false), true);
+            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection),
+                    new SelectionType(false, false),
+                    true);
         }
 
         @Override

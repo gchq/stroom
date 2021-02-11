@@ -67,8 +67,12 @@ public class SearchRequest {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SearchRequest that = (SearchRequest) o;
         return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
                 Objects.equals(search, that.search) &&

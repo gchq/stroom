@@ -16,17 +16,19 @@
 
 package stroom.pipeline.shared;
 
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelinePropertyType;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 public class FetchPropertyTypesResult {
+
     @JsonProperty
     private final PipelineElementType pipelineElementType;
     @JsonProperty

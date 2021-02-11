@@ -47,7 +47,7 @@ public class SourceLocation {
     // TODO @AT Change to an OffsetRange to support error segments
     @JsonProperty
     private final long segmentNo; // optional for segmented data only (segment aka record), zero based
-//    private final OffsetRange<Long> segmentNoRange;
+    //    private final OffsetRange<Long> segmentNoRange;
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
@@ -177,8 +177,12 @@ public class SourceLocation {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SourceLocation that = (SourceLocation) o;
         return id == that.id &&
                 partNo == that.partNo &&
@@ -216,6 +220,7 @@ public class SourceLocation {
     }
 
     public static final class Builder {
+
         private long id;
         private long partNo = 0; // Non multipart data has segment no of zero by default, zero based
         private String childType;

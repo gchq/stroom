@@ -92,7 +92,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     private void addButtonColumn(final String name,
                                  final int width,
                                  final SvgPreset svgPreset) {
-        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(new SvgCell(true)) {
+        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(new SvgCell(
+                true)) {
 
             @Override
             public SvgPreset getValue(final DataRetentionRule object) {

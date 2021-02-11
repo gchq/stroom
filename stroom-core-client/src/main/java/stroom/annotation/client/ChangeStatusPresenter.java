@@ -16,13 +16,6 @@
 
 package stroom.annotation.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetStatusRequest;
@@ -35,10 +28,20 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.Objects;
 
-public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView> implements PopupUiHandlers, ChangeStatusUiHandlers {
+public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
+        implements PopupUiHandlers, ChangeStatusUiHandlers {
+
     private final RestFactory restFactory;
     private final ChooserPresenter statusPresenter;
     private List<Long> annotationIdList;
@@ -123,6 +126,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView> i
     }
 
     public interface ChangeStatusView extends View, HasUiHandlers<ChangeStatusUiHandlers> {
+
         void setStatus(String status);
     }
 }

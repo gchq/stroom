@@ -48,14 +48,15 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
     public static final String LIST = "LIST";
 
@@ -65,9 +66,9 @@ public class ManageActivityPresenter extends
     private final UiConfigCache uiConfigCache;
     private final UrlParameters urlParameters;
     private final CurrentActivity currentActivity;
-    private ButtonView newButton;
-    private ButtonView openButton;
-    private ButtonView deleteButton;
+    private final ButtonView newButton;
+    private final ButtonView openButton;
+    private final ButtonView deleteButton;
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private Supplier<SafeHtml> quickFilterTooltipSupplier;
@@ -310,6 +311,7 @@ public class ManageActivityPresenter extends
     }
 
     private class NameFilterTimer extends Timer {
+
         private String name;
 
         @Override

@@ -202,7 +202,7 @@ public class TaskProgress implements TreeRow {
      * and their default values this avoids having to have a prop called isFilteredOut and is
      * explicitly clear.
      */
-    public static enum FilterMatchState {
+    public enum FilterMatchState {
         MATCHED,
         NOT_MATCHED;
 

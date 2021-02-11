@@ -48,8 +48,6 @@ import java.util.Map.Entry;
  * <p>
  * See <a href="package-summary.html">this summary</a> to get an overview how to
  * use TreeLayout.
- *
- * @param <TreeNode>
  */
 @SuppressWarnings("checkstyle:all") // 3rd part code
 public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
@@ -169,7 +167,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     private double getWidthOrHeightOfNode(final TreeNode treeNode, final boolean returnWidth) {
-        return returnWidth ? getNodeWidth(treeNode) : getNodeHeight(treeNode);
+        return returnWidth
+                ? getNodeWidth(treeNode)
+                : getNodeHeight(treeNode);
     }
 
     /**
@@ -215,7 +215,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private int getLevelChangeSign() {
         final Location rootLocation = configuration.getRootLocation();
-        return rootLocation == Location.Bottom || rootLocation == Location.Right ? -1 : 1;
+        return rootLocation == Location.Bottom || rootLocation == Location.Right
+                ? -1
+                : 1;
     }
 
     private void updateBounds(final TreeNode node, final double centerX, final double centerY) {
@@ -298,7 +300,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private double getMod(final TreeNode node) {
         final Double d = mod.get(node);
-        return d != null ? d.doubleValue() : 0;
+        return d != null
+                ? d.doubleValue()
+                : 0;
     }
 
     // ------------------------------------------------------------------------
@@ -319,7 +323,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private TreeNode getAncestor(final TreeNode node) {
         final TreeNode n = ancestor.get(node);
-        return n != null ? n : node;
+        return n != null
+                ? n
+                : node;
     }
 
     private void setAncestor(final TreeNode node, final TreeNode ancestor) {
@@ -328,7 +334,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private double getPrelim(final TreeNode node) {
         final Double d = prelim.get(node);
-        return d != null ? d.doubleValue() : 0;
+        return d != null
+                ? d.doubleValue()
+                : 0;
     }
 
     private void setPrelim(final TreeNode node, final double d) {
@@ -337,7 +345,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private double getChange(final TreeNode node) {
         final Double d = change.get(node);
-        return d != null ? d.doubleValue() : 0;
+        return d != null
+                ? d.doubleValue()
+                : 0;
     }
 
     private void setChange(final TreeNode node, final double d) {
@@ -346,7 +356,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
 
     private double getShift(final TreeNode node) {
         final Double d = shift.get(node);
-        return d != null ? d.doubleValue() : 0;
+        return d != null
+                ? d.doubleValue()
+                : 0;
     }
 
     private void setShift(final TreeNode node, final double d) {
@@ -371,11 +383,15 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
     }
 
     private TreeNode nextLeft(final TreeNode v) {
-        return tree.isLeaf(v) ? getThread(v) : tree.getFirstChild(v);
+        return tree.isLeaf(v)
+                ? getThread(v)
+                : tree.getFirstChild(v);
     }
 
     private TreeNode nextRight(final TreeNode v) {
-        return tree.isLeaf(v) ? getThread(v) : tree.getLastChild(v);
+        return tree.isLeaf(v)
+                ? getThread(v)
+                : tree.getLastChild(v);
     }
 
     /**
@@ -410,7 +426,9 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         // when the ancestor of vIMinus is a sibling of v (i.e. has the same
         // parent as v) it is also the greatest distinct ancestor vIMinus and
         // v. Otherwise it is the defaultAncestor
-        return tree.isChildOfParent(ancestor, parentOfV) ? ancestor : defaultAncestor;
+        return tree.isChildOfParent(ancestor, parentOfV)
+                ? ancestor
+                : defaultAncestor;
     }
 
     private void moveSubtree(final TreeNode wMinus, final TreeNode wPlus, final TreeNode parent, final double shift) {

@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.util.Objects;
 
 public final class ValErr implements Val {
+
     public static final ValErr INSTANCE = new ValErr("Err");
     public static final Type TYPE = Type.ERR;
     private final String message;
@@ -97,8 +98,12 @@ public final class ValErr implements Val {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValErr valErr = (ValErr) o;
         return Objects.equals(message, valErr.message);
     }

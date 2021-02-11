@@ -34,6 +34,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends BaseCriteria {
+
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";

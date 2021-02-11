@@ -35,15 +35,16 @@ import stroom.util.logging.LogExecutionTime;
 import org.apache.lucene.search.Query;
 import org.apache.solr.client.solrj.SolrServerException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SolrIndexRetentionExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexRetentionExecutor.class);
 
     private static final String TASK_NAME = "Solr Index Retention Executor";
@@ -115,15 +116,15 @@ public class SolrIndexRetentionExecutor {
                                 searchConfig.getMaxBooleanClauseCount(),
                                 null,
                                 System.currentTimeMillis());
-                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery
-                                (solrIndexDoc.getRetentionExpression());
+                        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(
+                                solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                             try {
                                 info(taskContext, () ->
-                                                "Deleting data from '" + solrIndexDoc.getName()
-                                                        + "' matching query '" + queryString + "'");
+                                        "Deleting data from '" + solrIndexDoc.getName()
+                                                + "' matching query '" + queryString + "'");
                                 solrClient.deleteByQuery(
                                         solrIndexDoc.getCollection(),
                                         queryString,

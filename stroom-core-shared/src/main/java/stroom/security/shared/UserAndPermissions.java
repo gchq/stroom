@@ -25,6 +25,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class UserAndPermissions {
+
     @JsonProperty
     private final String userId;
     @JsonProperty

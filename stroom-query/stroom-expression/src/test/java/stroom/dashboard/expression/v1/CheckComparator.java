@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 class CheckComparator {
-    /**
-     * @param dailyReports
-     * @param comparator
-     */
+
     static <T> void checkConsitency(final List<T> dailyReports, final Comparator<T> comparator) {
         final Map<T, List<T>> objectMapSmallerOnes = new HashMap<>();
 
@@ -37,11 +34,6 @@ class CheckComparator {
         });
     }
 
-    /**
-     * @param objectMapSmallerOnes
-     * @param o1
-     * @param o2
-     */
     private static <T> void checkConsistency(final Map<T, List<T>> objectMapSmallerOnes, T o1, T o2) {
         final List<T> smallerThan = objectMapSmallerOnes.get(o1);
 
@@ -55,13 +47,6 @@ class CheckComparator {
         }
     }
 
-    /**
-     * @param keyMapValues
-     * @param key
-     * @param <K>
-     * @param <V>
-     * @return List<Value>
-     */
     private static <K, V> List<V> getListSafely(Map<K, List<V>> keyMapValues, K key) {
         List<V> values = keyMapValues.get(key);
 
@@ -74,23 +59,14 @@ class CheckComparator {
 
     /**
      * @author Oku
-     *
-     * @param <T>
      */
     private interface IPairIteratorCallback<T> {
-        /**
-         * @param o1
-         * @param o2
-         */
+
         void pair(T o1, T o2);
     }
 
     /**
-     *
      * Iterates through each distinct unordered pair formed by the elements of a given iterator
-     *
-     * @param it
-     * @param callback
      */
     private static <T> void iterateDistinctPairs(final Iterator<T> it, IPairIteratorCallback<T> callback) {
         List<T> list = new ArrayList<>();

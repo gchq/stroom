@@ -618,7 +618,9 @@ public abstract class AbstractMetaListPresenter
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
                                     AbstractMetaListPresenter.this,
-                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""),
+                                    text + " " + result + " record" + ((result.longValue() > 1)
+                                            ? "s"
+                                            : ""),
                                     this::refresh))
                     .call(META_RESOURCE)
                     .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));

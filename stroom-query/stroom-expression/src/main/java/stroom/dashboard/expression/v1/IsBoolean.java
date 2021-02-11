@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsBoolean extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isBoolean";
     private static final long serialVersionUID = -305145496413936297L;
     private static final BooleanTest TEST = new BooleanTest();
@@ -47,6 +48,7 @@ class IsBoolean extends AbstractIsFunction implements Serializable {
     }
 
     private static class BooleanTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValBoolean);

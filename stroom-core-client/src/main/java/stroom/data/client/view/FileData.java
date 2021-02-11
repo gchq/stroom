@@ -56,7 +56,9 @@ public class FileData {
     }
 
     public enum Status {
-        UPLOADING("Uploading"), COMPLETE("Complete"), FAILED("Failed");
+        UPLOADING("Uploading"),
+        COMPLETE("Complete"),
+        FAILED("Failed");
 
         private final String displayValue;
 

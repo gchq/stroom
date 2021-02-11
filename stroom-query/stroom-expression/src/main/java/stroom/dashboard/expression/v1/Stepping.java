@@ -71,6 +71,7 @@ package stroom.dashboard.expression.v1;
                         })
         })
 class Stepping extends AbstractLink {
+
     static final String NAME = "stepping";
 
     static final String ARG_ID = "id";
@@ -87,6 +88,7 @@ class Stepping extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

@@ -1,13 +1,14 @@
 package stroom.document.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.client.UiConfigCache;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 
 public class NewUiDocRefPresenter extends DocumentEditPresenter<IFramePresenter.IFrameView, Doc> {
@@ -16,10 +17,10 @@ public class NewUiDocRefPresenter extends DocumentEditPresenter<IFramePresenter.
 
     @Inject
     public NewUiDocRefPresenter(final EventBus eventBus,
-                               final IFramePresenter.IFrameView view,
-                               final ClientSecurityContext securityContext,
+                                final IFramePresenter.IFrameView view,
+                                final ClientSecurityContext securityContext,
                                 final UiConfigCache clientPropertyCache
-                                ) {
+    ) {
         super(eventBus, view, securityContext);
 
         this.clientPropertyCache = clientPropertyCache;

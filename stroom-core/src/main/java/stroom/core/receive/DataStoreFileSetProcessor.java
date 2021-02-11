@@ -56,6 +56,7 @@ import javax.inject.Inject;
  * then both stroom-proxy and stroom can use it.
  */
 public final class DataStoreFileSetProcessor implements FileSetProcessor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataStoreFileSetProcessor.class);
 
     private final Store store;
@@ -152,9 +153,9 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         }
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers( final String feedName,
-                                                                      final String typeName,
-                                                                      final boolean oneByOne) {
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName,
+                                                                     final String typeName,
+                                                                     final boolean oneByOne) {
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
                 store,

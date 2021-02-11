@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonPropertyOrder({"id", "visible", "settings"})
 @JsonInclude(Include.NON_NULL)
 public class TabConfig {
+
     @XmlElement(name = "id")
     @JsonProperty("id")
     private String id;

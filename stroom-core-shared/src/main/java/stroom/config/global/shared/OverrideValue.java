@@ -17,9 +17,9 @@ public class OverrideValue<T> {
     private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);
 
     @JsonProperty
-    private boolean hasOverride;
+    private final boolean hasOverride;
     @JsonProperty
-    private T value;
+    private final T value;
 
     @SuppressWarnings("unchecked")
     public static <T> OverrideValue<T> unSet(final Class<T> type) {

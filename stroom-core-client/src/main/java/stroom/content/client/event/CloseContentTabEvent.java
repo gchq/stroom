@@ -16,12 +16,14 @@
 
 package stroom.content.client.event;
 
+import stroom.widget.tab.client.presenter.TabData;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.widget.tab.client.presenter.TabData;
 
 public class CloseContentTabEvent extends GwtEvent<CloseContentTabEvent.CloseContentTabHandler> {
+
     private static Type<CloseContentTabHandler> TYPE;
     private final TabData tabData;
 
@@ -55,6 +57,7 @@ public class CloseContentTabEvent extends GwtEvent<CloseContentTabEvent.CloseCon
     }
 
     public interface CloseContentTabHandler extends EventHandler {
+
         void onClose(CloseContentTabEvent event);
     }
 }

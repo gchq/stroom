@@ -549,6 +549,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
+
         HasText getName();
 
         HasText getDescription();

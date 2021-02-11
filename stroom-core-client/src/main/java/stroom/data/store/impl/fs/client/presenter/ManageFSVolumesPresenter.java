@@ -53,8 +53,11 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
     private final ButtonView rescanButton;
 
     @Inject
-    public ManageFSVolumesPresenter(final EventBus eventBus, final WrapperView view, final ManageVolumesProxy proxy,
-                                    final FSVolumeStatusListPresenter volumeStatusListPresenter, final Provider<FSVolumeEditPresenter> editProvider,
+    public ManageFSVolumesPresenter(final EventBus eventBus,
+                                    final WrapperView view,
+                                    final ManageVolumesProxy proxy,
+                                    final FSVolumeStatusListPresenter volumeStatusListPresenter,
+                                    final Provider<FSVolumeEditPresenter> editProvider,
                                     final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.volumeStatusListPresenter = volumeStatusListPresenter;

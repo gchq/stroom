@@ -1,7 +1,5 @@
 package stroom.document.client;
 
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -10,10 +8,14 @@ import stroom.document.client.presenter.NewUiDocRefPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.shared.IndexDoc;
 
-import javax.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class NewUiDocumentPlugin extends DocumentPlugin<Doc> {
+
     private final Provider<NewUiDocRefPresenter> editorProvider;
 
     @Inject
@@ -43,7 +45,10 @@ public class NewUiDocumentPlugin extends DocumentPlugin<Doc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final Doc document, final Consumer<Doc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final Doc document,
+                     final Consumer<Doc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
 
     }
 

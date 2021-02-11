@@ -101,7 +101,9 @@ public class UiConfigCache implements HasHandlers {
             eventBus = new SimpleEventBus();
         }
 
-        final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(), this, handler);
+        final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(),
+                this,
+                handler);
         get().onSuccess(properties -> PropertyChangeEvent.fire(UiConfigCache.this, properties));
         return handlerRegistration;
     }

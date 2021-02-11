@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final RestFactory restFactory;
@@ -406,6 +407,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     }
 
     public interface ActivityEditView extends View {
+
         HTML getHtml();
     }
 }

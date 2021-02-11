@@ -50,6 +50,7 @@ import com.google.inject.Provider;
 import java.util.List;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
+
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
     private final LayeredCanvas canvas;

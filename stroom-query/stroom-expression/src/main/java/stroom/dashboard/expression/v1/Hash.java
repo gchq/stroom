@@ -121,7 +121,8 @@ class Hash extends AbstractFunction implements Serializable {
             } else {
                 final String string = param.toString();
                 if (string == null) {
-                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string", 0);
+                    throw new ParseException("Unable to convert first argument of '" + name + "' function to string",
+                            0);
                 }
                 gen = new StaticValueFunction(ValString.create(hash(string, algorithm, salt))).createGenerator();
             }

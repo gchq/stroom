@@ -175,7 +175,7 @@ class TestQuickFilterPredicateFactory {
                                 MatchToken.of("a"),
                                 MatchToken.of("b"),
                                 MatchToken.of("c")
-                                )),
+                        )),
                 makeTokenTest(" \"a b c\"  \"d e f\" ",
                         List.of(
                                 MatchToken.of("a b c"),
@@ -202,7 +202,7 @@ class TestQuickFilterPredicateFactory {
                 makeTokenTest("\"colour:red\"        big",
                         List.of(
                                 MatchToken.of("colour", "red"),
-                                MatchToken.of( "big")
+                                MatchToken.of("big")
                         ))
         );
     }
@@ -249,6 +249,7 @@ class TestQuickFilterPredicateFactory {
     }
 
     private static class Pojo {
+
         private final String status;
         private final String simpleStr1;
         private final String simpleStr2;

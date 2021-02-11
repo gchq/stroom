@@ -61,7 +61,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(false, (Resources) GWT.create(BasicResources.class)));
+        super(eventBus, new CellTableViewImpl<>(false, GWT.create(BasicResources.class)));
         this.eventBus = eventBus;
 
         getView().addColumn(getTickBoxColumn());

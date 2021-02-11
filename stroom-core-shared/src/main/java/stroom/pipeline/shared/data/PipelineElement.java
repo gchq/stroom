@@ -22,12 +22,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 /**
  * <p>
@@ -55,6 +55,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"elementType", "source", "id", "type"})
 public class PipelineElement implements Comparable<PipelineElement> {
+
     @XmlTransient
     @JsonProperty
     private PipelineElementType elementType;
@@ -115,8 +116,12 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PipelineElement that = (PipelineElement) o;
         return id.equals(that.id) &&
                 type.equals(that.type);

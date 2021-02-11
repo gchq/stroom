@@ -17,12 +17,14 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.inject.Inject;
 import stroom.cell.dropdowntree.client.DropDownCell;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
+import com.google.inject.Inject;
+
 public class EntityDropDownCell extends DropDownCell<DocRef> {
+
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
     private String unselectedText;

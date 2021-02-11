@@ -17,10 +17,12 @@
 
 package stroom.document.client.event;
 
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
 public interface HasDirtyHandlers extends HasHandlers {
+
     HandlerRegistration addDirtyHandler(DirtyHandler handler);
 }

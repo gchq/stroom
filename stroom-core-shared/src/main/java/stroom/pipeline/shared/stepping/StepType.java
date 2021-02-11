@@ -17,5 +17,9 @@
 package stroom.pipeline.shared.stepping;
 
 public enum StepType {
-    FIRST, FORWARD, BACKWARD, LAST, REFRESH
+    FIRST,
+    FORWARD,
+    BACKWARD,
+    LAST,
+    REFRESH
 }

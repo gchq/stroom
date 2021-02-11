@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
+
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
     private static final int SMALL_COL = 90;

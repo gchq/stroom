@@ -17,14 +17,16 @@
 
 package stroom.document.client.event;
 
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.ExplorerNode;
 
 import java.util.List;
 
 public class ShowMoveDocumentDialogEvent extends GwtEvent<ShowMoveDocumentDialogEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final List<ExplorerNode> explorerNodeList;
 
@@ -58,6 +60,7 @@ public class ShowMoveDocumentDialogEvent extends GwtEvent<ShowMoveDocumentDialog
     }
 
     public interface Handler extends EventHandler {
+
         void onMove(final ShowMoveDocumentDialogEvent event);
     }
 }

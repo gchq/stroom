@@ -17,10 +17,6 @@
 
 package stroom.folder.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.client.TaskEndEvent;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.function.Consumer;
 
 public class FolderPlugin extends DocumentPlugin<DocRef> {
+
     private final Provider<FolderPresenter> editorProvider;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
@@ -66,17 +68,25 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<DocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<DocRef> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
 
     }
 
     @Override
-    public void save(final DocRef docRef, final DocRef document, final Consumer<DocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final DocRef document,
+                     final Consumer<DocRef> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
 
     }
 
     @Override
-    protected void showTab(final DocRef docRef, final MyPresenterWidget<?> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
+    protected void showTab(final DocRef docRef,
+                           final MyPresenterWidget<?> documentEditPresenter,
+                           final CloseHandler closeHandler,
+                           final DocumentTabData tabData) {
         try {
             if (documentEditPresenter instanceof FolderPresenter) {
                 ((FolderPresenter) documentEditPresenter).read(docRef);

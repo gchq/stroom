@@ -17,15 +17,6 @@
 
 package stroom.search.solr.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
@@ -49,6 +40,16 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 
 public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFieldListPresenter.SolrIndexFieldListView>
         implements HasDocumentRead<SolrIndexDoc>, HasWrite<SolrIndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final DataGridView<SolrIndexField> dataGridView;
@@ -214,7 +216,8 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                         final SolrIndexField indexField = new SolrIndexField();
                         if (indexFieldEditPresenter.write(indexField)) {
                             fields.add(indexField);
-                            fields.sort(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER));
+                            fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                                    String.CASE_INSENSITIVE_ORDER));
                             dataGridView.getSelectionModel().setSelected(indexField);
                             refresh();
 
@@ -251,7 +254,8 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                                 if (!indexField.equals(existingField)) {
                                     fields.remove(existingField);
                                     fields.add(indexField);
-                                    fields.sort(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER));
+                                    fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                                            String.CASE_INSENSITIVE_ORDER));
                                     dataGridView.getSelectionModel().setSelected(indexField);
                                     refresh();
 
@@ -366,6 +370,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     public interface SolrIndexFieldListView extends View {
+
         void setDataGridView(final View view);
 
         void setSynchState(final String syncState);

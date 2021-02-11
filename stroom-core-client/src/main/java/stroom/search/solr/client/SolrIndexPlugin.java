@@ -17,10 +17,6 @@
 
 package stroom.search.solr.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.search.solr.client.presenter.SolrIndexPresenter;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
+
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final Provider<SolrIndexPresenter> editorProvider;
@@ -58,7 +60,9 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<SolrIndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<SolrIndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<SolrIndexDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -68,7 +72,10 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final SolrIndexDoc document, final Consumer<SolrIndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final SolrIndexDoc document,
+                     final Consumer<SolrIndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<SolrIndexDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

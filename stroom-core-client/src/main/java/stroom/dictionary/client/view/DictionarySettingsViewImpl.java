@@ -16,6 +16,10 @@
 
 package stroom.dictionary.client.view;
 
+import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
@@ -23,11 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -61,5 +63,6 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
     }
 
     public interface Binder extends UiBinder<Widget, DictionarySettingsViewImpl> {
+
     }
 }

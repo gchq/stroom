@@ -17,10 +17,6 @@
 
 package stroom.xmlschema.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -33,9 +29,15 @@ import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
+
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
 
     private final Provider<XMLSchemaPresenter> editorProvider;
@@ -58,7 +60,9 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<XmlSchemaDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<XmlSchemaDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<XmlSchemaDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -68,7 +72,10 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final XmlSchemaDoc document, final Consumer<XmlSchemaDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final XmlSchemaDoc document,
+                     final Consumer<XmlSchemaDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<XmlSchemaDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

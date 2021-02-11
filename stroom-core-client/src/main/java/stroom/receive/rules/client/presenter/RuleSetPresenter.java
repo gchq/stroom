@@ -17,9 +17,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ContentCallback;
@@ -31,9 +28,15 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.ArrayList;
 
-public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ReceiveDataRules> implements HasDirtyHandlers {
+public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ReceiveDataRules>
+        implements HasDirtyHandlers {
+
     private static final TabData RULES = new TabDataImpl("Rules");
     private static final TabData FIELDS = new TabDataImpl("Fields");
 

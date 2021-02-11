@@ -30,6 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
 @JsonInclude(Include.NON_NULL)
 public class XsltDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "XSLT";
 
     @JsonProperty
@@ -77,9 +78,15 @@ public class XsltDoc extends Doc implements HasData {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final XsltDoc xsltDoc = (XsltDoc) o;
         return Objects.equals(description, xsltDoc.description) &&
                 Objects.equals(data, xsltDoc.data);

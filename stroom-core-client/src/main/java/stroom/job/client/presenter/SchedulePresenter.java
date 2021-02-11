@@ -88,7 +88,10 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         final Long scheduleReferenceTime = this.scheduleReferenceTime;
         final Long lastExecutedTime = this.lastExecutedTime;
         if (currentString != null && currentString.trim().length() > 0 && jobType != null) {
-            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType, scheduleReferenceTime, lastExecutedTime, currentString);
+            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
+                    scheduleReferenceTime,
+                    lastExecutedTime,
+                    currentString);
             final Rest<ScheduledTimes> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
@@ -112,10 +115,16 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         if (ok) {
             write();
 
-            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType, scheduleReferenceTime, lastExecutedTime, scheduleString);
+            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
+                    scheduleReferenceTime,
+                    lastExecutedTime,
+                    scheduleString);
             final Rest<ScheduledTimes> rest = restFactory.create();
             rest
-                    .onSuccess(result -> HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok))
+                    .onSuccess(result -> HidePopupEvent.fire(SchedulePresenter.this,
+                            SchedulePresenter.this,
+                            autoClose,
+                            ok))
                     .call(SCHEDULED_TIME_RESOURCE)
                     .get(request);
         } else {

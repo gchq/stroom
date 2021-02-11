@@ -43,6 +43,7 @@ package stroom.dashboard.expression.v1;
                                 minVarargsCount = 1)
                 }))
 class Modulo extends NumericFunction {
+
     static final String NAME = "%";
     static final String ALIAS1 = "mod";
     static final String ALIAS2 = "modulo";
@@ -58,6 +59,7 @@ class Modulo extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
         private static final long serialVersionUID = 1099553839843710283L;
 
         @Override

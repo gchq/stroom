@@ -30,12 +30,19 @@ import stroom.search.solr.client.view.SolrIndexFieldListViewImpl;
 import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
 
 public class SolrIndexModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(SolrIndexPlugin.class);
         bind(SolrIndexPresenter.class);
-        bindPresenterWidget(SolrIndexSettingsPresenter.class, SolrIndexSettingsView.class, SolrIndexSettingsViewImpl.class);
-        bindPresenterWidget(SolrIndexFieldListPresenter.class, SolrIndexFieldListView.class, SolrIndexFieldListViewImpl.class);
-        bindPresenterWidget(SolrIndexFieldEditPresenter.class, SolrIndexFieldEditView.class, SolrIndexFieldEditViewImpl.class);
+        bindPresenterWidget(SolrIndexSettingsPresenter.class,
+                SolrIndexSettingsView.class,
+                SolrIndexSettingsViewImpl.class);
+        bindPresenterWidget(SolrIndexFieldListPresenter.class,
+                SolrIndexFieldListView.class,
+                SolrIndexFieldListViewImpl.class);
+        bindPresenterWidget(SolrIndexFieldEditPresenter.class,
+                SolrIndexFieldEditView.class,
+                SolrIndexFieldEditViewImpl.class);
     }
 }

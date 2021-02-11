@@ -16,22 +16,24 @@
 
 package stroom.activity.client;
 
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.ActivityResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.activity.shared.Activity;
-import stroom.activity.shared.ActivityResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 
-import javax.inject.Singleton;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
 @Singleton
 public class CurrentActivity implements HasHandlers {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final EventBus eventBus;

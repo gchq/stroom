@@ -16,9 +16,6 @@
 
 package stroom.help.client;
 
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
@@ -27,7 +24,12 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class HelpPlugin extends Plugin {
+
     private final UiConfigCache clientPropertyCache;
 
     @Inject
@@ -45,9 +47,21 @@ public class HelpPlugin extends Plugin {
                     IconMenuItem helpMenuItem;
                     final String helpUrl = result.getHelpUrl();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        helpMenuItem = new IconMenuItem(1, SvgPresets.HELP, SvgPresets.HELP, "Help", null, true, () -> Window.open(helpUrl, "_blank", ""));
+                        helpMenuItem = new IconMenuItem(1,
+                                SvgPresets.HELP,
+                                SvgPresets.HELP,
+                                "Help",
+                                null,
+                                true,
+                                () -> Window.open(helpUrl, "_blank", ""));
                     } else {
-                        helpMenuItem = new IconMenuItem(1, SvgPresets.HELP, SvgPresets.HELP, "Help is not configured!", null, false, null);
+                        helpMenuItem = new IconMenuItem(1,
+                                SvgPresets.HELP,
+                                SvgPresets.HELP,
+                                "Help is not configured!",
+                                null,
+                                false,
+                                null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);

@@ -38,13 +38,13 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     private final ManageGlobalPropertyListPresenter listPresenter;
     private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
-    private ButtonView openButton;
+    private final ButtonView openButton;
 
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
-            final GlobalPropertyTabView view,
-            final ManageGlobalPropertyListPresenter listPresenter,
-            final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
+                                      final GlobalPropertyTabView view,
+                                      final ManageGlobalPropertyListPresenter listPresenter,
+                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;

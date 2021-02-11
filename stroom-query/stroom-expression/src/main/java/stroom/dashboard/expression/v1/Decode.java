@@ -58,6 +58,7 @@ import java.util.regex.Pattern;
                                 description = "The result of the function if none of the test arguments match.",
                                 argType = ValString.class)}))
 class Decode extends AbstractManyChildFunction implements Serializable {
+
     static final String NAME = "decode";
     private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
@@ -92,7 +93,8 @@ class Decode extends AbstractManyChildFunction implements Serializable {
             for (int i = 1; i < params.length - 1; i += 2) {
                 final String regex = params[i].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for argument of '" + name + "' function", 0);
+                    throw new ParseException("An empty regex has been defined for argument of '" + name + "' function",
+                            0);
                 }
 
                 final Pattern pattern = PatternCache.get(regex);
@@ -110,7 +112,8 @@ class Decode extends AbstractManyChildFunction implements Serializable {
                     // Test regex is valid.
                     final String regex = params[i].toString();
                     if (regex.length() == 0) {
-                        throw new ParseException("An empty regex has been defined for argument of '" + name + "' function", 0);
+                        throw new ParseException("An empty regex has been defined for argument of '" + name + "' function",
+                                0);
                     }
                     PatternCache.get(regex);
                 }
@@ -140,6 +143,7 @@ class Decode extends AbstractManyChildFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {

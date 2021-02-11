@@ -33,7 +33,12 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         this.restFactory = restFactory;
     }
 
-    public void show(final FindMetaCriteria criteria, final String postAction, final String action, final String caption, final boolean reprocess, final Runnable runnable) {
+    public void show(final FindMetaCriteria criteria,
+                     final String postAction,
+                     final String action,
+                     final String caption,
+                     final boolean reprocess,
+                     final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
         final Rest<SelectionSummary> rest = restFactory.create();

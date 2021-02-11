@@ -19,6 +19,7 @@ package stroom.feed.client;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 public interface DataUploadService extends RemoteService {
+
     // No additional methods to add.
     String STATUS = "Status";
     String SUCCESS = "Success";

@@ -1,7 +1,5 @@
 package stroom.security.shared;
 
-import stroom.search.solr.shared.SolrIndexField;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -19,6 +17,7 @@ import java.util.Set;
 @JsonPropertyOrder({"docUuid", "users", "groups", "permissions"})
 @JsonInclude(Include.NON_NULL)
 public class DocumentPermissions {
+
     @JsonProperty
     private final String docUuid;
     @JsonProperty
@@ -98,8 +97,12 @@ public class DocumentPermissions {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DocumentPermissions that = (DocumentPermissions) o;
         return Objects.equals(docUuid, that.docUuid) &&
                 Objects.equals(users, that.users) &&
@@ -131,6 +134,7 @@ public class DocumentPermissions {
     }
 
     public static final class Builder {
+
         private String docUuid;
         private List<User> users;
         private List<User> groups;

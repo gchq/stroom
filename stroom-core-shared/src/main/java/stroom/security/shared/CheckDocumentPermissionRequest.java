@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"documentUuid", "permission"})
 @JsonInclude(Include.NON_NULL)
 public class CheckDocumentPermissionRequest {
+
     @JsonProperty
     private final String documentUuid;
     @JsonProperty

@@ -17,13 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.docref.DocRef;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
@@ -40,12 +33,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CopyDocumentPresenter
         extends MyPresenter<CopyDocumentView, CopyDocumentProxy>
         implements ShowCopyDocumentDialogEvent.Handler, PopupUiHandlers {
+
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
 
@@ -112,6 +114,7 @@ public class CopyDocumentPresenter
     }
 
     public interface CopyDocumentView extends View {
+
         void setFolderView(View view);
 
         PermissionInheritance getPermissionInheritance();
@@ -121,5 +124,6 @@ public class CopyDocumentPresenter
 
     @ProxyCodeSplit
     public interface CopyDocumentProxy extends Proxy<CopyDocumentPresenter> {
+
     }
 }

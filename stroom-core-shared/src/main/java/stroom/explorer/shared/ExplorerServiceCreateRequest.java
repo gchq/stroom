@@ -17,14 +17,16 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerServiceCreateRequest {
+
     @JsonProperty
     private String docType;
     @JsonProperty

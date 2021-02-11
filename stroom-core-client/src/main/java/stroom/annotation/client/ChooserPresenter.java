@@ -16,6 +16,11 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.CellTableViewImpl.HoverResources;
+
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -30,15 +35,12 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements ChooserUiHandlers {
+
     private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<>();
     private final CellTableView<String> table;
     private DataSupplier dataSupplier;
@@ -49,7 +51,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         view.setUiHandlers(this);
 
-        table = new CellTableViewImpl<>(true, (Resources) GWT.create(HoverResources.class));
+        table = new CellTableViewImpl<>(true, GWT.create(HoverResources.class));
         view.setBottomView(table);
 
         // Text.
@@ -111,10 +113,12 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
     }
 
     public interface DataSupplier {
+
         void onChange(String filter, Consumer<List<String>> consumer);
     }
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
+
         void setBottomView(View view);
 
         void clearFilter();

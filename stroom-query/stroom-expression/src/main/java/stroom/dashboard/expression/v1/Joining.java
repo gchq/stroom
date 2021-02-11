@@ -74,6 +74,7 @@ import java.util.List;
                         })
         })
 class Joining extends AbstractFunction {
+
     static final String NAME = "joining";
     static final int DEFAULT_LIMIT = 10;
 
@@ -123,6 +124,7 @@ class Joining extends AbstractFunction {
     }
 
     private static class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final String delimiter;

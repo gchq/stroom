@@ -53,7 +53,8 @@ class TestJWTService {
     void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
-        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(resolvedOpenIdConfig, openIdPublicKeysSupplier);
+        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(resolvedOpenIdConfig,
+                openIdPublicKeysSupplier);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
 
@@ -178,9 +179,10 @@ class TestJWTService {
                 .setExpectedIssuer("Issuer") // whom the JWT needs to have been issued by
                 .setExpectedAudience("Audience") // to whom the JWT is intended for
                 .setVerificationKey(rsaJsonWebKey.getKey()) // verify the signature with the public key
-                .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
-                                AlgorithmConstraints.ConstraintType.WHITELIST, AlgorithmIdentifiers.RSA_USING_SHA256)) // which is only RS256 here
+                                AlgorithmConstraints.ConstraintType.WHITELIST,
+                                AlgorithmIdentifiers.RSA_USING_SHA256)) // which is only RS256 here
                 .build(); // create the JwtConsumer instance
 
         LOGGER.info("Public key: {}", rsaJsonWebKey.getPublicKey().toString());

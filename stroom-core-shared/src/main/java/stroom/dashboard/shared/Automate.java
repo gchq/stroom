@@ -27,6 +27,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"open", "refresh", "refreshInterval"})
 @JsonInclude(Include.NON_NULL)
 public class Automate {
+
     @JsonProperty("open")
     private final boolean open;
     @JsonProperty("refresh")
@@ -58,8 +59,12 @@ public class Automate {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Automate automate = (Automate) o;
         return open == automate.open &&
                 refresh == automate.refresh &&
@@ -89,6 +94,7 @@ public class Automate {
     }
 
     public static final class Builder {
+
         private boolean open;
         private boolean refresh;
         private String refreshInterval = "10s";

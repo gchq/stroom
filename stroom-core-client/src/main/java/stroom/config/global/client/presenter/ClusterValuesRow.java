@@ -12,10 +12,10 @@ import java.util.Set;
 
 class ClusterValuesRow implements TreeRow {
 
-    private String effectiveValue;
-    private Integer nodeCount;
-    private String nodeName;
-    private String source;
+    private final String effectiveValue;
+    private final Integer nodeCount;
+    private final String nodeName;
+    private final String source;
     private Expander expander;
 
     ClusterValuesRow(final String effectiveValue,
@@ -85,7 +85,9 @@ class ClusterValuesRow implements TreeRow {
                 .forEach(entry -> {
                     final String effectiveValue = entry.getKey();
                     final Set<NodeSource> nodes = entry.getValue();
-                    final int nodeCount = nodes != null ? nodes.size() : 0;
+                    final int nodeCount = nodes != null
+                            ? nodes.size()
+                            : 0;
 
                     // If this value has only one node associated to it then just show all the detail
                     // in the master row
@@ -149,8 +151,12 @@ class ClusterValuesRow implements TreeRow {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ClusterValuesRow that = (ClusterValuesRow) o;
         return Objects.equals(effectiveValue, that.effectiveValue) &&
                 Objects.equals(nodeName, that.nodeName);

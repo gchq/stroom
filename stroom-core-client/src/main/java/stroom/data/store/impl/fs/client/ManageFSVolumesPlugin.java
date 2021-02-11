@@ -37,7 +37,9 @@ public class ManageFSVolumesPlugin extends NodeToolsPlugin {
     private final Provider<ManageFSVolumesPresenter> manageVolumesPresenter;
 
     @Inject
-    public ManageFSVolumesPlugin(final EventBus eventBus, final ClientSecurityContext securityContext, final Provider<ManageFSVolumesPresenter> manageVolumesPresenter) {
+    public ManageFSVolumesPlugin(final EventBus eventBus,
+                                 final ClientSecurityContext securityContext,
+                                 final Provider<ManageFSVolumesPresenter> manageVolumesPresenter) {
         super(eventBus, securityContext);
         this.manageVolumesPresenter = manageVolumesPresenter;
     }

@@ -17,12 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
@@ -34,10 +28,18 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.List;
 
 public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDocumentProxy>
         implements ShowRenameDocumentDialogEvent.Handler, PopupUiHandlers {
+
     private List<ExplorerNode> explorerNodeList;
     private ExplorerNode entity;
 
@@ -104,5 +106,6 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
 
     @ProxyCodeSplit
     public interface NameDocumentProxy extends Proxy<NameDocumentPresenter> {
+
     }
 }

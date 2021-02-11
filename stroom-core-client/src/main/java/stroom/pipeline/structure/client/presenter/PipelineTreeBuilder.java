@@ -20,5 +20,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 public interface PipelineTreeBuilder {
+
     DefaultTreeForTreeLayout<PipelineElement> getTree(PipelineModel model);
 }

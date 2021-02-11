@@ -43,7 +43,9 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<IndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<IndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<IndexDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -53,7 +55,10 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final IndexDoc document, final Consumer<IndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final IndexDoc document,
+                     final Consumer<IndexDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<IndexDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

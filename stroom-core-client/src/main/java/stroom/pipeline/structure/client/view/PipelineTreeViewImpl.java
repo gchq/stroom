@@ -16,12 +16,6 @@
 
 package stroom.pipeline.structure.client.view;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
@@ -30,9 +24,17 @@ import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
 import java.util.List;
 
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
+
     private final PipelineTreePanel treePanel;
     private final DraggableTreePanel<PipelineElement> layoutPanel;
     private SelectionModel<PipelineElement> selectionModel;

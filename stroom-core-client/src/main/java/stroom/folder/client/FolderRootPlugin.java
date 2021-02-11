@@ -17,9 +17,6 @@
 
 package stroom.folder.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
@@ -37,7 +34,12 @@ import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class FolderRootPlugin extends Plugin implements TabData {
+
     private final ContentManager contentManager;
     private final Provider<FolderRootPresenter> editorProvider;
     private final ClientSecurityContext securityContext;
@@ -45,9 +47,12 @@ public class FolderRootPlugin extends Plugin implements TabData {
     private FolderRootPresenter presenter;
 
     @Inject
-    public FolderRootPlugin(final EventBus eventBus, final ExplorerTreePresenter explorerTreePresenter,
-                            final Provider<FolderRootPresenter> editorProvider, final ClientSecurityContext securityContext,
-                            final ContentManager contentManager, final DocumentPluginEventManager entityPluginEventManager) {
+    public FolderRootPlugin(final EventBus eventBus,
+                            final ExplorerTreePresenter explorerTreePresenter,
+                            final Provider<FolderRootPresenter> editorProvider,
+                            final ClientSecurityContext securityContext,
+                            final ContentManager contentManager,
+                            final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;
         this.editorProvider = editorProvider;
@@ -92,7 +97,8 @@ public class FolderRootPlugin extends Plugin implements TabData {
     }
 
     private FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
+        if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION) || securityContext.hasAppPermission(
+                PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             return editorProvider.get();
         }
 

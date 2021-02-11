@@ -17,10 +17,6 @@
 
 package stroom.dictionary.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -33,9 +29,15 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.function.Consumer;
 
 public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
+
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
 
     private final Provider<DictionaryPresenter> editorProvider;
@@ -58,7 +60,9 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<DictionaryDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<DictionaryDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<DictionaryDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -68,7 +72,10 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final DictionaryDoc document, final Consumer<DictionaryDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final DictionaryDoc document,
+                     final Consumer<DictionaryDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<DictionaryDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

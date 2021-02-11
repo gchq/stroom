@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements HasDirtyHandlers {
+
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -473,6 +474,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     public interface SteppingView extends View {
+
         void setTreeHeight(int height);
 
         void addWidgetLeft(Widget widget);

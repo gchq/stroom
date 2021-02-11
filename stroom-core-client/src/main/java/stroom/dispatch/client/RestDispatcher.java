@@ -11,6 +11,7 @@ import org.fusesource.restygwt.client.Method;
 import java.util.logging.Logger;
 
 class RestDispatcher implements Dispatcher {
+
     @Override
     public Request send(Method method, RequestBuilder builder) throws RequestException {
         if (GWT.isClient() && LogConfiguration.loggingIsEnabled()) {

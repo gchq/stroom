@@ -66,16 +66,19 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
+                        expanderIcon = template.icon(resources.style().expanderIcon(),
+                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
+                        expanderIcon = template.icon(resources.style().expanderIcon(),
+                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             } else {
-                expanderIcon = template.icon(resources.style().expanderIcon(), UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-leaf.svg"));
+                expanderIcon = template.icon(resources.style().expanderIcon(),
+                        UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-leaf.svg"));
             }
 
             int indent = item.getDepth();

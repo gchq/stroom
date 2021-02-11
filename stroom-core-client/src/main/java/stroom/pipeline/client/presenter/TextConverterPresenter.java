@@ -34,6 +34,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import javax.inject.Provider;
 
 public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, TextConverterDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
 

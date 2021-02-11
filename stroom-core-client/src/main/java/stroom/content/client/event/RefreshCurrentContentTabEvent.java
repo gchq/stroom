@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 public class RefreshCurrentContentTabEvent extends GwtEvent<RefreshCurrentContentTabEvent.Handler> {
+
     private static Type<Handler> TYPE;
 
     private RefreshCurrentContentTabEvent() {
@@ -48,6 +49,7 @@ public class RefreshCurrentContentTabEvent extends GwtEvent<RefreshCurrentConten
     }
 
     public interface Handler extends EventHandler {
+
         void onRefresh(RefreshCurrentContentTabEvent event);
     }
 }

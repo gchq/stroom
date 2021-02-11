@@ -30,12 +30,13 @@ import java.io.Serializable;
                         @FunctionArg(
                                 name = "value",
                                 description = "The string to convert to lower case.",
-                                argType = ValString.class) }))
+                                argType = ValString.class)}))
 class LowerCase extends AbstractStringFunction implements Serializable {
+
     static final String NAME = "lowerCase";
     private static final long serialVersionUID = -305845496003936297L;
 
-    private static final Operation OPERATION = (Operation) String::toLowerCase;
+    private static final Operation OPERATION = String::toLowerCase;
 
     public LowerCase(final String name) {
         super(name);

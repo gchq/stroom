@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class XsltDTO extends DocRef {
+
     @JsonProperty
     private final String description;
     @JsonProperty

@@ -27,6 +27,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
+
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
     private boolean enabled = true;
 

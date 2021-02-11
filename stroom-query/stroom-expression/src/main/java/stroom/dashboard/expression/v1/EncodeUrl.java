@@ -34,10 +34,11 @@ import java.io.Serializable;
                                 argType = ValString.class)
                 }))
 class EncodeUrl extends AbstractStringFunction implements Serializable {
+
     static final String NAME = "encodeUrl";
     private static final long serialVersionUID = -305845496003936297L;
 
-    private static final Operation OPERATION = (Operation) EncodingUtil::encodeUrl;
+    private static final Operation OPERATION = EncodingUtil::encodeUrl;
 
     public EncodeUrl(final String name) {
         super(name);

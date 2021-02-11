@@ -48,7 +48,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView> implements HasDirtyHandlers {
+public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
+        implements HasDirtyHandlers {
 
     private final ExpressionTreePresenter expressionPresenter;
     private final MenuListPresenter menuListPresenter;

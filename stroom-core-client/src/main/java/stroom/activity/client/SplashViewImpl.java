@@ -25,7 +25,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashView {
+
     public interface Binder extends UiBinder<Widget, SplashViewImpl> {
+
     }
 
     private final Widget widget;

@@ -21,4 +21,5 @@ import stroom.util.shared.HasType;
 import stroom.widget.tab.client.presenter.TabData;
 
 public interface DocumentTabData extends TabData, HasType {
+
 }

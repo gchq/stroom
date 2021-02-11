@@ -28,10 +28,11 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class FetchExplorerNodeResult {
+
     @JsonProperty
-    private List<ExplorerNode> rootNodes;
+    private final List<ExplorerNode> rootNodes;
     @JsonProperty
-    private List<String> openedItems;
+    private final List<String> openedItems;
     @JsonProperty
     private Set<String> temporaryOpenedItems;
 
@@ -68,8 +69,12 @@ public class FetchExplorerNodeResult {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FetchExplorerNodeResult that = (FetchExplorerNodeResult) o;
         return Objects.equals(rootNodes, that.rootNodes) &&
                 Objects.equals(openedItems, that.openedItems) &&

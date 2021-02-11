@@ -39,6 +39,7 @@ import java.util.List;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
+
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final EntityDropDownPresenter pipelinePresenter;
@@ -148,6 +149,7 @@ public class NewPipelineReferencePresenter
     }
 
     public interface NewPipelineReferenceView extends View {
+
         void setElement(String element);
 
         void setPipelineView(View view);

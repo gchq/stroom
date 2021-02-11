@@ -31,6 +31,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
 @JsonInclude(Include.NON_NULL)
 public class TextConverterDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "TextConverter";
 
     @JsonProperty
@@ -95,9 +96,15 @@ public class TextConverterDoc extends Doc implements HasData {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final TextConverterDoc that = (TextConverterDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(data, that.data) &&
@@ -110,7 +117,9 @@ public class TextConverterDoc extends Doc implements HasData {
     }
 
     public enum TextConverterType implements HasDisplayValue {
-        NONE("None"), DATA_SPLITTER("Data Splitter"), XML_FRAGMENT("XML Fragment");
+        NONE("None"),
+        DATA_SPLITTER("Data Splitter"),
+        XML_FRAGMENT("XML Fragment");
 
         private final String displayValue;
 

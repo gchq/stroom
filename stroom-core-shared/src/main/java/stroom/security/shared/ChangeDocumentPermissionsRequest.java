@@ -32,7 +32,7 @@ public class ChangeDocumentPermissionsRequest {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private Changes changes;
+    private final Changes changes;
     @JsonProperty
     private final Cascade cascade;
 

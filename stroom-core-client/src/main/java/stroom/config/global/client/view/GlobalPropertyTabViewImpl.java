@@ -25,7 +25,7 @@ public class GlobalPropertyTabViewImpl
     @UiField
     ResizeSimplePanel dataGrid;
 
-    private Widget widget;
+    private final Widget widget;
 
     @Inject
     GlobalPropertyTabViewImpl(final EventBus eventBus, final Binder binder) {

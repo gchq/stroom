@@ -16,10 +16,6 @@
 
 package stroom.search.solr.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
@@ -30,10 +26,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.Set;
 
 public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFieldEditView> {
+
     private Set<String> otherFieldNames;
 
     @Inject
@@ -78,7 +80,9 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
             return false;
         }
         if (!name.matches(SolrIndexField.VALID_FIELD_NAME_PATTERN)) {
-            AlertEvent.fireWarn(this, "An index field name must conform to the pattern '" + SolrIndexField.VALID_FIELD_NAME_PATTERN + "'", null);
+            AlertEvent.fireWarn(this,
+                    "An index field name must conform to the pattern '" + SolrIndexField.VALID_FIELD_NAME_PATTERN + "'",
+                    null);
             return false;
         }
         if (otherFieldNames.contains(indexField.getFieldName())) {
@@ -123,6 +127,7 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     public interface SolrIndexFieldEditView extends View {
+
         SolrIndexFieldType getFieldUse();
 
         void setFieldUse(SolrIndexFieldType fieldUse);

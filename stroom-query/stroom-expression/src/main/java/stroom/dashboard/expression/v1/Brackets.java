@@ -20,6 +20,7 @@ import java.text.ParseException;
 
 @ArchitecturalFunction
 class Brackets extends AbstractFunction {
+
     private Function function;
 
     public Brackets() {

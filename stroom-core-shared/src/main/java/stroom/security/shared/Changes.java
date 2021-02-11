@@ -29,6 +29,7 @@ import java.util.Set;
 @JsonPropertyOrder({"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 public class Changes {
+
     @JsonProperty
     private final Map<String, Set<String>> add;
     @JsonProperty

@@ -233,7 +233,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 this,
                 currentSourceLocation,
                 DataViewType.SOURCE,
-                (displayMode != null ? displayMode : DisplayMode.STROOM_TAB));
+                (displayMode != null
+                        ? displayMode
+                        : DisplayMode.STROOM_TAB));
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {

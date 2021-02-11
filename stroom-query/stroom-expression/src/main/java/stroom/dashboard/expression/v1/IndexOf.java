@@ -42,6 +42,7 @@ import java.text.ParseException;
                                 argType = ValString.class)
                 }))
 class IndexOf extends AbstractFunction implements Serializable {
+
     static final String NAME = "indexOf";
     private static final long serialVersionUID = -305845496003936297L;
     private Function stringFunction;
@@ -102,6 +103,7 @@ class IndexOf extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;

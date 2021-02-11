@@ -75,7 +75,7 @@ class TestStringPredicateFactory {
                                 "SO_IS_THIS_IS_MY_FEED",
                                 "timf",
                                 "TIMF",
-                                "th  i   s i  s m  y feed" ),
+                                "th  i   s i  s m  y feed"),
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 1 (upper case)",
@@ -85,7 +85,7 @@ class TestStringPredicateFactory {
                                 "SO_IS_THIS_IS_MY_FEED",
                                 "timf",
                                 "TIMF",
-                                "th  i   s i  s m  y feed" ),
+                                "th  i   s i  s m  y feed"),
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 2",

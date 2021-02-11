@@ -80,8 +80,9 @@ public class KeyGenerator {
                 .setExpectedIssuer("stroom") // whom the JWT needs to have been issued by
                 .setExpectedAudience("PZnJr8kHRKqnlJRQThSI") // to whom the JWT is intended for
                 .setVerificationKey(publicJwk.getPublicKey()) // verify the signature with the public key
-                .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
-                        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
+                        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST,
+                                // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
                 .build(); // create the JwtConsumer instance
         try {

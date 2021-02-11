@@ -60,9 +60,10 @@ package stroom.dashboard.expression.v1;
                                                 "being opened, append the title to the type, e.g. 'dialog|My Title'.",
                                         argType = ValString.class,
                                         // taken from HyperLinkType
-                                        allowedValues = { "tab", "dialog", "dashboard", "stepping", "data",
-                                                "annotation", "browser"}) }) })
+                                        allowedValues = {"tab", "dialog", "dashboard", "stepping", "data",
+                                                "annotation", "browser"})})})
 class Link extends AbstractLink {
+
     static final String NAME = "link";
 
     public Link(final String name) {
@@ -75,6 +76,7 @@ class Link extends AbstractLink {
     }
 
     private static final class LinkGen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         LinkGen(final Generator[] childGenerators) {

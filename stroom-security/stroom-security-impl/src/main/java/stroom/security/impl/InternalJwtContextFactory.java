@@ -16,12 +16,13 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
 class InternalJwtContextFactory implements JwtContextFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InternalJwtContextFactory.class);
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
@@ -99,7 +100,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
                 .setVerificationKeyResolver(verificationKeyResolver)
                 .setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
                                 AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))

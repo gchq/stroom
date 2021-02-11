@@ -16,11 +16,12 @@
 
 package stroom.annotation.client;
 
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.CellTableViewImpl.HoverResources;
+
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
@@ -31,19 +32,16 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.BasicResources;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
 
 import java.util.List;
 
 public class StatusPresenter extends MyPresenterWidget<CellTableView<String>> {
+
     private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<>();
 
     @Inject
     public StatusPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(true, (Resources) GWT.create(HoverResources.class)));
+        super(eventBus, new CellTableViewImpl<>(true, GWT.create(HoverResources.class)));
 //        this.eventBus = eventBus;
 
 //        // Checked.

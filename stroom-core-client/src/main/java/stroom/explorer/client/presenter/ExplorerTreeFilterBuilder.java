@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExplorerTreeFilterBuilder {
+
     private Set<String> includedTypes;
     private Set<String> tags;
     private Set<String> requiredPermissions;

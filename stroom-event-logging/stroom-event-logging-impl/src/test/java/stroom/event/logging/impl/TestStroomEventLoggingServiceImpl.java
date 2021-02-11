@@ -28,14 +28,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -225,8 +225,8 @@ class TestStroomEventLoggingServiceImpl {
 
     @Test
     void testDataItemCreationAndRedaction() throws Exception {
-        List<Data> allData = stroomEventLoggingService.getDataItems
-                (new TestSecretObj("test", "xyzzy", "open-sesame"));
+        List<Data> allData = stroomEventLoggingService.getDataItems(
+                new TestSecretObj("test", "xyzzy", "open-sesame"));
 
         assertThat(allData.size()).isEqualTo(4);
         assertThat(allData).anyMatch(data -> data.getName().equals("name"));

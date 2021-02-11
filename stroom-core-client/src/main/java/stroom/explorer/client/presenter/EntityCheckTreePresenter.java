@@ -16,22 +16,24 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.Set;
 
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
         implements HasDataSelectionHandlers<Set<ExplorerNode>> {
+
     //    private final TickBoxSelectionModel<ExplorerNode> selectionModel;
     private final ExplorerTickBoxTree explorerTree;
 
@@ -157,6 +159,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     }
 
     public interface EntityCheckTreeView extends View {
+
         void setCellTree(Widget cellTree);
     }
 }

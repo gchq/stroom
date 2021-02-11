@@ -41,8 +41,9 @@ import java.util.regex.Pattern;
                         @FunctionArg(
                                 name = "replacement",
                                 description = "The string to replace each match with.",
-                                argType = ValString.class) }))
+                                argType = ValString.class)}))
 class Replace extends AbstractManyChildFunction implements Serializable {
+
     static final String NAME = "replace";
     private static final long serialVersionUID = -305845496003936297L;
     private Generator gen;
@@ -72,7 +73,8 @@ class Replace extends AbstractManyChildFunction implements Serializable {
             final String replacement = params[2].toString();
 
             if (regex.length() == 0) {
-                throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function", 0);
+                throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function",
+                        0);
             }
 
             final Pattern pattern = PatternCache.get(regex);
@@ -84,7 +86,8 @@ class Replace extends AbstractManyChildFunction implements Serializable {
                 // Test regex is valid.
                 final String regex = params[1].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function", 0);
+                    throw new ParseException("An empty regex has been defined for second argument of '" + name + "' function",
+                            0);
                 }
                 PatternCache.get(regex);
             }
@@ -113,6 +116,7 @@ class Replace extends AbstractManyChildFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         Gen(final Generator[] childGenerators) {

@@ -1,8 +1,8 @@
 package stroom.core.client;
 
-import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Singleton;
 
 @Singleton
 public class HasSaveRegistry implements HasSave {

@@ -30,6 +30,7 @@ import com.esotericsoftware.kryo.io.Output;
                 returnDescription = "Number of records",
                 args = {}))
 class Count extends AbstractFunction {
+
     static final String NAME = "count";
 
     public Count(final String name) {
@@ -52,6 +53,7 @@ class Count extends AbstractFunction {
     }
 
     private static final class Gen extends AbstractNoChildGenerator {
+
         private static final long serialVersionUID = 9222017471352363944L;
 
         private long count;

@@ -33,6 +33,7 @@ import java.util.Objects;
         "queryInfo"})
 @JsonInclude(Include.NON_NULL)
 public class Search {
+
     @JsonProperty
     private final DocRef dataSourceRef;
     @JsonProperty
@@ -96,8 +97,12 @@ public class Search {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Search search = (Search) o;
         return incremental == search.incremental &&
                 storeHistory == search.storeHistory &&
@@ -142,6 +147,7 @@ public class Search {
     }
 
     public static final class Builder {
+
         private DocRef dataSourceRef;
         private ExpressionOperator expression;
         private Map<String, ComponentSettings> componentSettingsMap;

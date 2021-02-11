@@ -191,7 +191,8 @@ public class ExplorerTreeModel {
                                     if (result.getOpenedItems() != null) {
                                         for (int i = result.getOpenedItems().size() - 1; i >= 0 && nextSelection == null; i--) {
                                             final String item = result.getOpenedItems().get(i);
-                                            final ExplorerNode explorerNode = ExplorerNode.create(new DocRef(null, item));
+                                            final ExplorerNode explorerNode = ExplorerNode.create(new DocRef(null,
+                                                    item));
                                             if (rows.contains(explorerNode)) {
                                                 nextSelection = explorerNode;
                                             }

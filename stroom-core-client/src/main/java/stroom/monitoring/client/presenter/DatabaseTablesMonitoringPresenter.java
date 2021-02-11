@@ -16,10 +16,6 @@
 
 package stroom.monitoring.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -35,7 +31,11 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
@@ -94,7 +94,8 @@ public class DatabaseTablesMonitoringPresenter
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus,
+                criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
@@ -113,11 +114,7 @@ public class DatabaseTablesMonitoringPresenter
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 dataProvider.refresh();
             }
         });

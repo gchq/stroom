@@ -37,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class XsltPlugin extends DocumentPlugin<XsltDoc> {
+
     private static final XsltResource XSLT_RESOURCE = GWT.create(XsltResource.class);
 
     private final Provider<XsltPresenter> editorProvider;
@@ -59,7 +60,9 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<XsltDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<XsltDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<XsltDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -69,7 +72,10 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final XsltDoc document, final Consumer<XsltDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final XsltDoc document,
+                     final Consumer<XsltDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<XsltDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

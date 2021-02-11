@@ -34,9 +34,9 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     public static final String ENTITY_TYPE = "Activity";
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
     private Long createTimeMs;
     @JsonProperty

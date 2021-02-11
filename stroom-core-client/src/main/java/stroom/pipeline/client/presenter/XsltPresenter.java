@@ -34,6 +34,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import javax.inject.Provider;
 
 public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
+
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData XSLT_TAB = new TabDataImpl("XSLT");
 

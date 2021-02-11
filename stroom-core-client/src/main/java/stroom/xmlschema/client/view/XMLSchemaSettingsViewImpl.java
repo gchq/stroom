@@ -16,6 +16,10 @@
 
 package stroom.xmlschema.client.view;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
@@ -23,11 +27,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 
 public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSettingsView, ReadOnlyChangeHandler {
+
     private final Widget widget;
 
     @UiField
@@ -86,5 +88,6 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     }
 
     public interface Binder extends UiBinder<Widget, XMLSchemaSettingsViewImpl> {
+
     }
 }

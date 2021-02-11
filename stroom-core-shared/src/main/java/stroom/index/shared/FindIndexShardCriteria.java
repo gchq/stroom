@@ -41,17 +41,17 @@ public class FindIndexShardCriteria extends BaseCriteria {
     @JsonProperty
     private Range<Integer> documentCountRange;
     @JsonProperty
-    private Selection<String> nodeNameSet;
+    private final Selection<String> nodeNameSet;
     @JsonProperty
-    private Selection<Integer> volumeIdSet;
+    private final Selection<Integer> volumeIdSet;
     @JsonProperty
-    private Selection<String> indexUuidSet;
+    private final Selection<String> indexUuidSet;
     @JsonProperty
-    private Selection<Long> indexShardIdSet;
+    private final Selection<Long> indexShardIdSet;
     @JsonProperty
-    private Selection<IndexShardStatus> indexShardStatusSet;
+    private final Selection<IndexShardStatus> indexShardStatusSet;
     @JsonProperty
-    private StringCriteria partition;
+    private final StringCriteria partition;
 
     public static FindIndexShardCriteria matchAll() {
         return new FindIndexShardCriteria(

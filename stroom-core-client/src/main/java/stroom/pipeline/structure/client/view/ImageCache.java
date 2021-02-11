@@ -26,7 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ImageCache {
-    private static Map<String, ImageElement> imageCache = new HashMap<>();
+
+    private static final Map<String, ImageElement> imageCache = new HashMap<>();
 
     public static void getImage(final ImageResource imageResource, final LoadCallback callback) {
         if (imageResource == null) {
@@ -96,6 +97,7 @@ public class ImageCache {
     }
 
     public interface LoadCallback {
+
         void onLoad(ImageElement imageElement);
     }
 }

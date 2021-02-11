@@ -85,7 +85,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
 
         dataProvider = new RestDataProvider<JobNode, ResultPage<JobNode>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<JobNode>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<JobNode>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<JobNode>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_NODE_RESOURCE).list(jobName, null);
             }
@@ -134,13 +135,16 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                                 AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
                             }
                         })
-                        .onFailure(caught -> AlertEvent.fireError(JobNodeListPresenter.this, caught.getMessage(), null));
+                        .onFailure(caught -> AlertEvent.fireError(JobNodeListPresenter.this,
+                                caught.getMessage(),
+                                null));
             }
 
         }, "<br/>", 20);
 
         // Enabled.
-        final Column<JobNode, TickBoxState> enabledColumn = new Column<JobNode, TickBoxState>(TickBoxCell.create(false, false)) {
+        final Column<JobNode, TickBoxState> enabledColumn = new Column<JobNode, TickBoxState>(TickBoxCell.create(false,
+                false)) {
             @Override
             public TickBoxState getValue(final JobNode row) {
                 return TickBoxState.fromBoolean(row.isEnabled());
@@ -294,7 +298,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                     final String schedule = schedulePresenter.getScheduleString();
                     jobNode.setSchedule(schedule);
                     final Rest<JobNode> rest = restFactory.create();
-                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(), schedule);
+                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(),
+                            schedule);
                 }
             }
         };

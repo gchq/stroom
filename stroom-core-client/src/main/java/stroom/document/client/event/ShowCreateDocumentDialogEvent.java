@@ -17,15 +17,17 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerNode;
 
 import java.util.function.Consumer;
 
 public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDialogEvent.Handler> {
+
     private static Type<Handler> TYPE;
     private final ExplorerNode selected;
     private final String docType;
@@ -93,6 +95,7 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     }
 
     public interface Handler extends EventHandler {
+
         void onCreate(final ShowCreateDocumentDialogEvent event);
     }
 }

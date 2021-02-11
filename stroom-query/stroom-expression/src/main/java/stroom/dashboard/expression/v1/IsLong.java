@@ -33,6 +33,7 @@ import java.io.Serializable;
                                 argType = Val.class)
                 }))
 class IsLong extends AbstractIsFunction implements Serializable {
+
     static final String NAME = "isLong";
     private static final long serialVersionUID = -305145496413936297L;
     private static final LongTest TEST = new LongTest();
@@ -47,6 +48,7 @@ class IsLong extends AbstractIsFunction implements Serializable {
     }
 
     private static class LongTest implements Test {
+
         @Override
         public Val test(final Val val) {
             return ValBoolean.create(val instanceof ValLong);

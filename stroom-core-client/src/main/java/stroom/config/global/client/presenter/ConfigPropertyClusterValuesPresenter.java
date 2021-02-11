@@ -25,7 +25,7 @@ public class ConfigPropertyClusterValuesPresenter
 
     public static final String LIST = "LIST";
 
-    private ConfigPropertyClusterValuesListPresenter listPresenter;
+    private final ConfigPropertyClusterValuesListPresenter listPresenter;
 
     @Inject
     public ConfigPropertyClusterValuesPresenter(final EventBus eventBus,

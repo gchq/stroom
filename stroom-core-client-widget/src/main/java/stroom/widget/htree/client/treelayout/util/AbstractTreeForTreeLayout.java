@@ -60,7 +60,6 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
      * <p>
      * Time Complexity: O(1)
      *
-     * @param node
      * @return [nullable] the parent of the node, or null when the node is a
      * root.
      */
@@ -75,7 +74,6 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
      * <p>
      * A client must not modify the returned list.
      *
-     * @param node
      * @return the children of the given node. When node is a leaf the list is
      * empty.
      */

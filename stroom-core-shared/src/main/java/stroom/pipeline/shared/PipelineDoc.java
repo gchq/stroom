@@ -16,14 +16,15 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
+import stroom.pipeline.shared.data.PipelineData;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
-import stroom.pipeline.shared.data.PipelineData;
 
 import java.util.Objects;
 
@@ -33,6 +34,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline", "pipelineData"})
 @JsonInclude(Include.NON_NULL)
 public class PipelineDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "Pipeline";
 
     @JsonProperty
@@ -90,9 +92,15 @@ public class PipelineDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final PipelineDoc that = (PipelineDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(parentPipeline, that.parentPipeline) &&

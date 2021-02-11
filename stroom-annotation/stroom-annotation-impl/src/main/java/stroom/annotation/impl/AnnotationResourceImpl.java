@@ -29,12 +29,13 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class AnnotationResourceImpl implements AnnotationResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
     private static final FilterFieldMappers<String> FILTER_FIELD_MAPPERS = FilterFieldMappers.singleStringField();

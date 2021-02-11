@@ -33,20 +33,8 @@ public class FetchDataRequest {
     private SourceLocation sourceLocation;
     @JsonProperty
     private long segmentCount = 1;
-//    @JsonProperty
-//    private Long streamId;
-//    @JsonProperty
-//    private String childStreamType;
     @JsonProperty
     private DocRef pipeline;
-//    @JsonProperty
-//    private OffsetRange<Long> streamRange;
-//    @JsonProperty
-//    private OffsetRange<Long> pageRange; // this may be line offset + no. of lines or rec offset + no. of recs
-//    @JsonProperty
-//    private Location locationFrom;
-//    @JsonProperty
-//    private Location locationTo;
     @JsonProperty
     private boolean showAsHtml;
     @JsonProperty
@@ -83,12 +71,6 @@ public class FetchDataRequest {
     @JsonIgnore
     private transient boolean fireEvents;
 
-//    public FetchDataRequest() {
-//        streamRange = new OffsetRange<>(0L, 1L);
-//        pageRange = new OffsetRange<>(0L, 100L);
-//    }
-
-
     public FetchDataRequest(final SourceLocation sourceLocation) {
         this.sourceLocation = sourceLocation;
     }
@@ -100,27 +82,15 @@ public class FetchDataRequest {
     }
 
     @JsonCreator
-    public FetchDataRequest( @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                             @JsonProperty("segmentCount") final long segmentCount,
-//            @JsonProperty("streamId") final Long streamId,
-//                            @JsonProperty("childStreamType") final String childStreamType,
-                             @JsonProperty("pipeline") final DocRef pipeline,
-//                            @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-//                            @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-//                            @JsonProperty("locationFrom") final Location locationFrom,
-//                            @JsonProperty("locationTo") final Location locationTo,
-                             @JsonProperty("showAsHtml") final boolean showAsHtml,
-                             @JsonProperty("markerMode") final boolean markerMode,
-                             @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
+    public FetchDataRequest(@JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+                            @JsonProperty("segmentCount") final long segmentCount,
+                            @JsonProperty("pipeline") final DocRef pipeline,
+                            @JsonProperty("showAsHtml") final boolean showAsHtml,
+                            @JsonProperty("markerMode") final boolean markerMode,
+                            @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
         this.sourceLocation = sourceLocation;
         this.segmentCount = segmentCount;
-//        this.streamId = streamId;
-//        this.childStreamType = childStreamType;
         this.pipeline = pipeline;
-//        this.streamRange = streamRange;
-//        this.pageRange = pageRange;
-//        this.locationFrom = locationFrom;
-//        this.locationTo = locationTo;
         this.showAsHtml = showAsHtml;
         this.markerMode = markerMode;
         this.expandedSeverities = expandedSeverities;
@@ -141,54 +111,6 @@ public class FetchDataRequest {
     public void setSegmentCount(final long segmentCount) {
         this.segmentCount = segmentCount;
     }
-
-    //    public Long getStreamId() {
-//        return streamId;
-//    }
-//
-//    public void setStreamId(final Long streamId) {
-//        this.streamId = streamId;
-//    }
-
-//    public String getChildStreamType() {
-//        return childStreamType;
-//    }
-//
-//    public void setChildStreamType(final String childStreamType) {
-//        this.childStreamType = childStreamType;
-//    }
-
-//    public OffsetRange<Long> getStreamRange() {
-//        return streamRange;
-//    }
-//
-//    public void setStreamRange(final OffsetRange<Long> streamRange) {
-//        this.streamRange = streamRange;
-//    }
-//
-//    public OffsetRange<Long> getPageRange() {
-//        return pageRange;
-//    }
-//
-//    public void setPageRange(final OffsetRange<Long> pageRange) {
-//        this.pageRange = pageRange;
-//    }
-//
-//    public Location getLocationFrom() {
-//        return locationFrom;
-//    }
-//
-//    public void setLocationFrom(final Location locationFrom) {
-//        this.locationFrom = locationFrom;
-//    }
-//
-//    public Location getLocationTo() {
-//        return locationTo;
-//    }
-//
-//    public void setLocationTo(final Location locationTo) {
-//        this.locationTo = locationTo;
-//    }
 
     public boolean isShowAsHtml() {
         return showAsHtml;

@@ -1,10 +1,5 @@
 package stroom.processor.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.AbstractField;
@@ -18,7 +13,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -26,10 +20,17 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
+
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
@@ -181,13 +182,18 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(pipelineRef, queryData,  10, true, false);
+            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(pipelineRef,
+                    queryData,
+                    10,
+                    true,
+                    false);
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }
     }
 
     public interface ProcessorEditView extends View {
+
         void setExpressionView(View view);
     }
 

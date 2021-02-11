@@ -30,6 +30,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class AboutPlugin extends Plugin {
+
     private final Provider<AboutPresenter> provider;
 
     @Inject

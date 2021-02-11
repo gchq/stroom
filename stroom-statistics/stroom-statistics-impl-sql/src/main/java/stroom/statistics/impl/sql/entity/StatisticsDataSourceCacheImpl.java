@@ -33,8 +33,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +41,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(
@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
                 EntityAction.UPDATE,
                 EntityAction.DELETE})
 class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.Handler, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StatisticsDataSourceCacheImpl.class);
 
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID = "StatisticDataSourceCacheById";
@@ -96,7 +97,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                                     .collect(Collectors.toList());
                             if (results.size() > 1) {
                                 throw new RuntimeException(String.format(
-                                        "Found multiple StatisticDataSource entities with name %s. This should not happen", k));
+                                        "Found multiple StatisticDataSource entities with name %s. This should not happen",
+                                        k));
                             } else if (results.size() == 1) {
                                 return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
                             } else {
@@ -195,13 +197,15 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                     EntityAction.CREATE.equals(entityAction)) {
 
                 final DocRef eventDocRef = event.getDocRef();
-                final String eventDocName = eventDocRef != null ? eventDocRef.getName() : null;
+                final String eventDocName = eventDocRef != null
+                        ? eventDocRef.getName()
+                        : null;
                 final AtomicBoolean haveInvalidatedName = new AtomicBoolean(false);
 
                 final Optional<Optional<StatisticStoreDoc>> optional = cacheByDocRef.getOptional(
                         event.getDocRef());
 
-                if (optional.isPresent() ) {
+                if (optional.isPresent()) {
 
                     // found it in one cache so remove from both
                     LOGGER.debug("Invalidating docRef {}", eventDocRef);

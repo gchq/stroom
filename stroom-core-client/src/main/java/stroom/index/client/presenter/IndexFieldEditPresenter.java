@@ -31,10 +31,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.validation.ValidationException;
 import java.util.Set;
+import javax.validation.ValidationException;
 
 public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditView> {
+
     private Set<String> otherFieldNames;
 
     @Inject
@@ -86,6 +87,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
     }
 
     public interface IndexFieldEditView extends View {
+
         IndexFieldType getFieldUse();
 
         void setFieldUse(IndexFieldType fieldUse);

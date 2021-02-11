@@ -16,11 +16,13 @@
 
 package stroom.kafka.client.gin;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import stroom.kafka.client.KafkaConfigPlugin;
 import stroom.kafka.client.presenter.KafkaConfigPresenter;
 
+import com.google.gwt.inject.client.AsyncProvider;
+
 public interface KafkaConfigGinjector {
+
     AsyncProvider<KafkaConfigPlugin> getKafkaConfigPlugin();
 
     AsyncProvider<KafkaConfigPresenter> getKafkaConfigPresenter();

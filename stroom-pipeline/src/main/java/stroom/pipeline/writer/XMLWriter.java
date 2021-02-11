@@ -16,13 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import net.sf.saxon.s9api.XsltExecutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.cache.PoolItem;
@@ -53,16 +46,23 @@ import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.s9api.XsltExecutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Writes out XML and records segment boundaries as it goes.
@@ -78,6 +78,7 @@ import java.util.Properties;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);
 
     private final LocationFactory locationFactory;
@@ -545,7 +546,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     /**
      * Used when XSLT is supplied (for xsl:output)
-     * @return
      */
     private String getFeedName() {
         if (feedHolder != null) {
@@ -559,7 +559,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     /**
      * Used when XSLT is supplied (for xsl:output)
-     * @return
      */
     private String getPipelineName() {
         if (pipelineHolder != null) {
@@ -584,7 +583,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         if (truncatedStr != null) {
             int strLen = truncatedStr.length();
             if (strLen > 100) {
-                truncatedStr = String.format("%s..TRUNCATED..%s", truncatedStr.substring(0, 45), truncatedStr.substring(strLen - 45));
+                truncatedStr = String.format("%s..TRUNCATED..%s",
+                        truncatedStr.substring(0, 45),
+                        truncatedStr.substring(strLen - 45));
             }
         } else {
             truncatedStr = "NULL";
@@ -604,7 +605,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         } catch (final RuntimeException e) {
             LOGGER.warn("Ignoring error {}", e.getMessage());
         }
-        return charBuffer != null ? charBuffer.toString() : "";
+        return charBuffer != null
+                ? charBuffer.toString()
+                : "";
     }
 
 

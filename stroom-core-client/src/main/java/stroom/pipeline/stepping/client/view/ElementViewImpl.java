@@ -16,13 +16,15 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 
 public class ElementViewImpl extends ViewImpl implements ElementView {
+
     private Widget widget;
 
     private View code;

@@ -48,6 +48,7 @@ import java.util.List;
                                 isVarargs = true,
                                 minVarargsCount = 2))})
 class Variance extends AbstractManyChildFunction implements AggregateFunction {
+
     static final String NAME = "variance";
 
     public Variance(final String name) {
@@ -88,6 +89,7 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
     }
 
     private static final class AggregateGen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = -6770724151493320673L;
 
         private final List<Double> list = new ArrayList<>();
@@ -149,6 +151,7 @@ class Variance extends AbstractManyChildFunction implements AggregateFunction {
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
+
         private static final long serialVersionUID = -6770724151493320673L;
 
         Gen(final Generator[] generators) {

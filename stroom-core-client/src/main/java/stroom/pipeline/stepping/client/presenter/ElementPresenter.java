@@ -53,6 +53,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
+
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
     private final Provider<EditorPresenter> editorProvider;
@@ -394,6 +395,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public interface ElementView extends View {
+
         void setCodeView(View view);
 
         void setInputView(View view);

@@ -16,12 +16,6 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.AlertEvent;
@@ -37,9 +31,17 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.function.Consumer;
 
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
+
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final UiConfigCache uiConfigCache;
@@ -94,9 +96,12 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                                     .call(ACTIVITY_RESOURCE)
                                     .acknowledgeSplash(new AcknowledgeSplashRequest(body, version));
                         } else {
-                            AlertEvent.fireWarn(SplashPresenter.this, "You must accept the terms to use this system", null, () -> {
-                                hide(autoClose, ok);
-                            });
+                            AlertEvent.fireWarn(SplashPresenter.this,
+                                    "You must accept the terms to use this system",
+                                    null,
+                                    () -> {
+                                        hide(autoClose, ok);
+                                    });
                         }
                     }
 
@@ -112,7 +117,14 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 //                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
 
                 final PopupSize popupSize = new PopupSize(800, 600, true);
-                ShowPopupEvent.fire(SplashPresenter.this, SplashPresenter.this, PopupType.ACCEPT_REJECT_DIALOG, null, popupSize, title, popupUiHandlers, true);
+                ShowPopupEvent.fire(SplashPresenter.this,
+                        SplashPresenter.this,
+                        PopupType.ACCEPT_REJECT_DIALOG,
+                        null,
+                        popupSize,
+                        title,
+                        popupUiHandlers,
+                        true);
 
             } else {
                 consumer.accept(true);
@@ -129,6 +141,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     }
 
     public interface SplashView extends View {
+
         void setHtml(String html);
 
         MaxScrollPanel getScrollPanel();

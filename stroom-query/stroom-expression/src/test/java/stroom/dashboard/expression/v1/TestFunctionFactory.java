@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 
 class TestFunctionFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFunctionFactory.class);
 
     /**
@@ -42,7 +43,7 @@ class TestFunctionFactory {
 
             final List<Class<? extends Function>> allFunctionClasses = result.getAllClasses()
                     .stream()
-                    .filter(classInfo ->  classInfo.implementsInterface(Function.class.getName()))
+                    .filter(classInfo -> classInfo.implementsInterface(Function.class.getName()))
                     .filter(classInfo -> !classInfo.hasAnnotation(ArchitecturalFunction.class.getName()))
                     .map(classInfo -> (Class<? extends Function>) classInfo.loadClass())
                     .collect(Collectors.toList());
@@ -72,7 +73,7 @@ class TestFunctionFactory {
                         .withFailMessage("Function class " +
                                 className +
                                 " is not in FunctionFactory. " +
-                                "Add an @FunctionDef annotation to it or mark is as @ArchitecturalFunction" )
+                                "Add an @FunctionDef annotation to it or mark is as @ArchitecturalFunction")
                         .isNotEmpty();
 
                 optFuncDef.ifPresent(functionDef -> {
