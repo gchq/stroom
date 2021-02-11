@@ -1,18 +1,18 @@
 package stroom.security.identity.authenticate;
 
+import stroom.config.common.UriFactory;
+import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenService;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.identity.config.PasswordPolicyConfig;
-import stroom.config.common.UriFactory;
-import stroom.security.api.SecurityContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
