@@ -23,15 +23,16 @@ import stroom.security.api.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
-import javax.ws.rs.client.Client;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
+import javax.ws.rs.client.Client;
 
 class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
     private final Map<String, Supplier<String>> urlMap;

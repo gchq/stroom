@@ -10,6 +10,7 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DictionaryDTO extends DocRef {
+
     @JsonProperty
     private final String description;
     @JsonProperty

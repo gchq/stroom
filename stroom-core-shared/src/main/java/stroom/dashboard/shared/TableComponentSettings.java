@@ -163,8 +163,12 @@ public class TableComponentSettings implements ComponentSettings {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
@@ -231,14 +235,17 @@ public class TableComponentSettings implements ComponentSettings {
         private Builder(final TableComponentSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
             this.fields = tableSettings.getFields() == null
-                    ? null : new ArrayList<>(tableSettings.getFields());
+                    ? null
+                    : new ArrayList<>(tableSettings.getFields());
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
-                    ? null : new ArrayList<>(tableSettings.getMaxResults());
+                    ? null
+                    : new ArrayList<>(tableSettings.getMaxResults());
             this.showDetail = tableSettings.getShowDetail();
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
-                    ? null : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+                    ? null
+                    : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.modelVersion = tableSettings.getModelVersion();
         }
 

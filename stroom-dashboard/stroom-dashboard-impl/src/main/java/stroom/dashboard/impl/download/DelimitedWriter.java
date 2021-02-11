@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.util.regex.Pattern;
 
 public class DelimitedWriter {
+
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "\"";
     private static final String DOUBLE_QUOTE = "\"\"";

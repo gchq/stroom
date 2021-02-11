@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 class TestSearchResponseMapper {
+
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
@@ -41,14 +42,23 @@ class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression("${test}").build());
+        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression(
+                "${test}").build());
         final List<Row> rows = Collections.singletonList(Row.builder()
                 .groupKey("groupKey")
                 .values(Collections.singletonList("test"))
                 .depth(5)
                 .build());
-        final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
-        return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Collections.singletonList("some error"), false);
+        final TableResult tableResult = new TableResult("table-1234",
+                fields,
+                rows,
+                new OffsetRange(1, 2),
+                1,
+                "tableResultError");
+        return new SearchResponse(Arrays.asList("highlight1", "highlight2"),
+                Arrays.asList(tableResult, getVisResult1()),
+                Collections.singletonList("some error"),
+                false);
     }
 
     private FlatResult getVisResult1() {

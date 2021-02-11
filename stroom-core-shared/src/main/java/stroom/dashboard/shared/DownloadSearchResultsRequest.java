@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class DownloadSearchResultsRequest {
+
     @JsonProperty
     private final String applicationInstanceId;
     @JsonProperty

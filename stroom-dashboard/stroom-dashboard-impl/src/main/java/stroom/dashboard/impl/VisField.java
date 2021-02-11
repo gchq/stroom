@@ -22,14 +22,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonPropertyOrder({"id", "sort"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "VisField", propOrder = {"id", "sort"})
 public class VisField implements Serializable {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     private String id;
@@ -68,19 +69,33 @@ public class VisField implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof VisField)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof VisField)) {
+            return false;
+        }
 
         final VisField visField = (VisField) o;
 
-        if (id != null ? !id.equals(visField.id) : visField.id != null) return false;
-        return sort != null ? sort.equals(visField.sort) : visField.sort == null;
+        if (id != null
+                ? !id.equals(visField.id)
+                : visField.id != null) {
+            return false;
+        }
+        return sort != null
+                ? sort.equals(visField.sort)
+                : visField.sort == null;
     }
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (sort != null ? sort.hashCode() : 0);
+        int result = id != null
+                ? id.hashCode()
+                : 0;
+        result = 31 * result + (sort != null
+                ? sort.hashCode()
+                : 0);
         return result;
     }
 

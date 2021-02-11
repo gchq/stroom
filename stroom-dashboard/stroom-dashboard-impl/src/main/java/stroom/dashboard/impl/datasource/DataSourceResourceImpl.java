@@ -22,10 +22,11 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
 import java.util.List;
+import javax.inject.Inject;
 
 class DataSourceResourceImpl implements DataSourceResource {
+
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 

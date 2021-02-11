@@ -36,6 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class VisFrame extends Frame implements VisPane {
+
     private final MessageSupport messageSupport;
     private VisFunction function;
 

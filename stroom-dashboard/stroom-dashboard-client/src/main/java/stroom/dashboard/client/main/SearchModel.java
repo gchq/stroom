@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchModel {
+
     private final SearchBus searchBus;
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
@@ -432,6 +433,8 @@ public class SearchModel {
     }
 
     public enum Mode {
-        ACTIVE, INACTIVE, PAUSED
+        ACTIVE,
+        INACTIVE,
+        PAUSED
     }
 }

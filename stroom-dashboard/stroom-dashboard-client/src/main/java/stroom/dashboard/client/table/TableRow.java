@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class TableRow {
+
     private final Expander expander;
     private final String groupKey;
     private final Map<String, Cell> cells;
@@ -152,8 +153,12 @@ public class TableRow {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableRow tableRow = (TableRow) o;
         return Objects.equals(expander, tableRow.expander) &&
                 Objects.equals(groupKey, tableRow.groupKey) &&
@@ -166,6 +171,7 @@ public class TableRow {
     }
 
     public static class Cell {
+
         private final String rawValue;
         private final String styles;
 

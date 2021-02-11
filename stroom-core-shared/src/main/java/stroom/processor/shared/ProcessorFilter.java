@@ -33,6 +33,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
+
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {
@@ -340,8 +341,12 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorFilter that = (ProcessorFilter) o;
         return Objects.equals(id, that.id);
     }

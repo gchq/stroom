@@ -23,6 +23,7 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractSettingsTabPresenter<V extends View> extends MyPresenterWidget<V>
         implements ComponentDataModifier {
+
     private Components components;
 
     @Inject

@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteDataSourceProvider.class);
 
     private static final String DATA_SOURCE_ENDPOINT = "/dataSource";

@@ -16,22 +16,20 @@
 
 package stroom.dashboard.impl;
 
+import stroom.dashboard.impl.download.TypeConverter;
+import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.SearchResponse;
+import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.Result;
+import stroom.query.api.v2.VisResult;
+import stroom.query.api.v2.VisResult.Store;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import stroom.dashboard.impl.download.TypeConverter;
-import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.VisResult;
-import stroom.query.api.v2.VisResult.Store;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.Row;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +41,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
-    public SearchResponse mapResponse(final DashboardQueryKey queryKey, final stroom.query.api.v2.SearchResponse searchResponse) {
+
+    public SearchResponse mapResponse(final DashboardQueryKey queryKey,
+                                      final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -153,7 +153,8 @@ public class SearchResponseMapper {
                             if (field.getSort() != null && field.getSort().getDirection() != null) {
                                 sortDirection = field.getSort().getDirection().getDisplayValue();
                             }
-                            sortDirectionMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(sortDirection);
+                            sortDirectionMap.computeIfAbsent(field.getGroup(),
+                                    k -> new ArrayList<>()).add(sortDirection);
 
                             if (field.getGroup() != null) {
                                 maxDepth = Math.max(maxDepth, field.getGroup() + 1);

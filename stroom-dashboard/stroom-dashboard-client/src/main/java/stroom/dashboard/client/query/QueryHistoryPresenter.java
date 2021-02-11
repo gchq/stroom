@@ -16,12 +16,6 @@
 
 package stroom.dashboard.client.query;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellList;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
@@ -38,10 +32,18 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.CellList;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
+
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
     private final RestFactory restFactory;
@@ -151,6 +153,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
     }
 
     public interface QueryHistoryView extends View {
+
         CellList<StoredQuery> getCellList();
 
         void setExpressionView(View view);

@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.widget.layout.client.view.ResizeFlowPanel;
+import stroom.widget.spinner.client.SpinnerSmall;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -23,12 +27,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.widget.layout.client.view.ResizeFlowPanel;
-import stroom.widget.spinner.client.SpinnerSmall;
 
 public class TableViewImpl extends ViewImpl
         implements TableView {
+
     private static TableResources resources;
     private final Widget widget;
     private final SpinnerSmall spinnerSmall;
@@ -69,5 +71,6 @@ public class TableViewImpl extends ViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, TableViewImpl> {
+
     }
 }

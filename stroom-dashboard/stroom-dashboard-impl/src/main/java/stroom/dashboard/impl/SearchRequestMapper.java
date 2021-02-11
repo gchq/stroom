@@ -47,7 +47,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -56,8 +55,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.inject.Inject;
 
 public class SearchRequestMapper {
+
     public static final String EXPRESSION_JSON_PARAM_KEY = "expressionJson";
 
     private final VisualisationStore visualisationStore;
@@ -107,7 +108,8 @@ public class SearchRequestMapper {
             String expressionJson = "null";
             try {
                 expressionJson = StringEscapeUtils.unescapeXml(searchExpressionParam.getValue());
-                final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson, ExpressionOperator.class);
+                final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson,
+                        ExpressionOperator.class);
                 final ExpressionOperator expression = ExpressionOperator
                         .builder()
                         .addOperator(searchRequest.getSearch().getExpression())
@@ -120,7 +122,9 @@ public class SearchRequestMapper {
             }
 
         } else {
-            return new Query(searchRequest.getSearch().getDataSourceRef(), searchRequest.getSearch().getExpression(), params);
+            return new Query(searchRequest.getSearch().getDataSourceRef(),
+                    searchRequest.getSearch().getExpression(),
+                    params);
         }
     }
 
@@ -150,7 +154,8 @@ public class SearchRequestMapper {
                 final TableSettings parentTableSettings = visResultRequest.getVisDashboardSettings().getTableSettings()
                         .copy()
                         .buildTableSettings();
-                final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
+                final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(),
+                        parentTableSettings);
 
                 final stroom.query.api.v2.ResultRequest copy = stroom.query.api.v2.ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
@@ -381,7 +386,8 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private stroom.query.api.v2.Field.Builder convertField(final VisField visField, final Map<String, stroom.query.api.v2.Format> formatMap) {
+    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
+                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
         final stroom.query.api.v2.Field.Builder builder = stroom.query.api.v2.Field.builder();
 
         builder.format(Format.GENERAL);
@@ -422,7 +428,8 @@ public class SearchRequestMapper {
 
             final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
             if (visSettings != null && visSettings.getData() != null) {
-                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJson());
+                final SettingResolver settingResolver = new SettingResolver(visSettings,
+                        visComponentSettings.getJson());
                 final Structure structure = visSettings.getData().getStructure();
                 if (structure != null) {
 
@@ -612,6 +619,7 @@ public class SearchRequestMapper {
     }
 
     private static class SettingResolver {
+
         private final Map<String, Control> controls = new HashMap<>();
         private final Map<String, String> dashboardSettings;
 

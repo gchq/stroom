@@ -17,8 +17,6 @@ import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
 import stroom.dashboard.shared.FunctionSignature.Type;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,9 +24,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class FunctionServiceImpl implements FunctionService {
+
     private final List<FunctionSignature> signatures;
 
     @Inject
@@ -108,7 +109,7 @@ public class FunctionServiceImpl implements FunctionService {
     }
 
     private static List<String> buildCategoryPath(final FunctionDef functionDef,
-                                           final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
+                                                  final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
 
         final String category = functionSignature.category().length > 0
                 ? convertCategory(functionSignature.category())

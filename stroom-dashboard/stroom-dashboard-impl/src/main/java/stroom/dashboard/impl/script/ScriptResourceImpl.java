@@ -23,19 +23,22 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 class ScriptResourceImpl implements ScriptResource {
+
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
     private final DocumentResourceHelper documentResourceHelper;
 
     @Inject
-    ScriptResourceImpl(final ScriptStore scriptStore, final SecurityContext securityContext, final DocumentResourceHelper documentResourceHelper) {
+    ScriptResourceImpl(final ScriptStore scriptStore,
+                       final SecurityContext securityContext,
+                       final DocumentResourceHelper documentResourceHelper) {
         this.scriptStore = scriptStore;
         this.securityContext = securityContext;
         this.documentResourceHelper = documentResourceHelper;

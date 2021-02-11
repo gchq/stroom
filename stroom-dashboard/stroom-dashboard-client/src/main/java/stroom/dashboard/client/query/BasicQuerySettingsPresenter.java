@@ -35,6 +35,7 @@ import java.util.Objects;
 
 public class BasicQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView> {
+
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
 
     @Inject
@@ -133,6 +134,7 @@ public class BasicQuerySettingsPresenter
     }
 
     public interface BasicQuerySettingsView extends BasicSettingsTabPresenter.SettingsView {
+
         void setDataSourceSelectionView(View view);
 
         boolean isQueryOnOpen();

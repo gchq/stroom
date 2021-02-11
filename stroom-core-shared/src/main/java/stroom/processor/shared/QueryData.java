@@ -16,23 +16,24 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.pipeline.shared.stepping.FindElementDocRequest;
-import stroom.query.api.v2.ExpressionOperator;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
 @XmlRootElement(name = "query")
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @JsonProperty
@@ -90,6 +91,7 @@ public class QueryData implements Serializable {
     }
 
     public static final class Builder {
+
         private DocRef dataSource;
         private ExpressionOperator expression;
         private Limits limits;

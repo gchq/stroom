@@ -39,7 +39,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSettingsUiHandlers> implements BasicTextSettingsView {
+public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSettingsUiHandlers>
+        implements BasicTextSettingsView {
+
     private static final HasDisplayValue ANY = () -> "Any";
     private static final HasDisplayValue NONE = () -> "";
 
@@ -265,5 +267,6 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     }
 
     public interface Binder extends UiBinder<Widget, BasicTextSettingsViewImpl> {
+
     }
 }

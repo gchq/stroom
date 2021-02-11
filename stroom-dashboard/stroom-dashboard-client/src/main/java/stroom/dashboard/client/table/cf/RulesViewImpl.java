@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView {
+
     private final Widget widget;
 
     @UiField
@@ -54,5 +55,6 @@ public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView 
 //    }
 
     public interface Binder extends UiBinder<Widget, RulesViewImpl> {
+
     }
 }

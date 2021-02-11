@@ -20,14 +20,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonPropertyOrder({"size"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "VisLimit", propOrder = {"size"})
 public class VisLimit implements Serializable {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     private Integer size;
@@ -51,17 +52,25 @@ public class VisLimit implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final VisLimit visLimit = (VisLimit) o;
 
-        return size != null ? size.equals(visLimit.size) : visLimit.size == null;
+        return size != null
+                ? size.equals(visLimit.size)
+                : visLimit.size == null;
     }
 
     @Override
     public int hashCode() {
-        return size != null ? size.hashCode() : 0;
+        return size != null
+                ? size.hashCode()
+                : 0;
     }
 
     @Override

@@ -16,14 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
@@ -32,7 +24,17 @@ import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewImpl;
+
 public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayoutView {
+
     private static Resources resources;
     private final Widget widget;
 
@@ -95,15 +97,18 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
     }
 
     public interface Binder extends UiBinder<Widget, DashboardLayoutViewImpl> {
+
     }
 
     public interface Style extends CssResource {
+
         String outerPanel();
 
         String layout();
     }
 
     public interface Resources extends ClientBundle {
+
         @Source("dashboard.css")
         Style style();
     }

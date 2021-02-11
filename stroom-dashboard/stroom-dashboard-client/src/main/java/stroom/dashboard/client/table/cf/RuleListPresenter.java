@@ -19,11 +19,11 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
@@ -38,6 +38,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 
 public class RuleListPresenter extends MyPresenterWidget<DataGridView<ConditionalFormattingRule>> {
+
     @Inject
     public RuleListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, false));
@@ -53,7 +54,8 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
      */
     private void initTableColumns() {
         // Expression.
-        final Column<ConditionalFormattingRule, String> expressionColumn = new Column<ConditionalFormattingRule, String>(new TextCell()) {
+        final Column<ConditionalFormattingRule, String> expressionColumn = new Column<ConditionalFormattingRule, String>(
+                new TextCell()) {
             @Override
             public String getValue(final ConditionalFormattingRule row) {
                 return row.getExpression().toString();
@@ -62,7 +64,8 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
         getView().addResizableColumn(expressionColumn, "Expression", 200);
 
         // Background colour.
-        final Column<ConditionalFormattingRule, String> backgroundColumn = new Column<ConditionalFormattingRule, String>(new TextCell()) {
+        final Column<ConditionalFormattingRule, String> backgroundColumn = new Column<ConditionalFormattingRule, String>(
+                new TextCell()) {
             @Override
             public String getValue(final ConditionalFormattingRule row) {
                 return row.getBackgroundColor();

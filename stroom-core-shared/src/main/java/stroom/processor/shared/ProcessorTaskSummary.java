@@ -16,16 +16,18 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ProcessorTaskSummary {
+
     @JsonProperty
     private final DocRef pipeline;
     @JsonProperty
@@ -73,8 +75,12 @@ public class ProcessorTaskSummary {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorTaskSummary that = (ProcessorTaskSummary) o;
         return Objects.equals(pipeline, that.pipeline) &&
                 Objects.equals(feed, that.feed) &&

@@ -16,19 +16,21 @@
 
 package stroom.processor.shared;
 
+import stroom.util.shared.Expander;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.Expander;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"processorFilter"})
 @JsonInclude(Include.NON_NULL)
 public class ProcessorFilterRow extends ProcessorListRow {
+
     private static final Expander EXPANDER = new Expander(1, false, true);
 
     @JsonProperty
@@ -52,8 +54,12 @@ public class ProcessorFilterRow extends ProcessorListRow {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessorFilterRow that = (ProcessorFilterRow) o;
         return Objects.equals(processorFilter, that.processorFilter);
     }

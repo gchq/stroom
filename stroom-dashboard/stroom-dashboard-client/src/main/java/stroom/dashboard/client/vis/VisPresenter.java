@@ -70,6 +70,7 @@ import java.util.List;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {
+
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
@@ -191,7 +192,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void setComponents(final Components components) {
         super.setComponents(components);
         registerHandler(components.addComponentChangeHandler(event -> {
-            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(), event.getComponentId())) {
+            if (getVisSettings() != null && EqualsUtil.isEquals(getVisSettings().getTableId(),
+                    event.getComponentId())) {
                 updateTableId(event.getComponentId());
             }
         }));
@@ -654,6 +656,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     public interface VisView extends View {
+
         void setRefreshing(boolean refreshing);
 
         void showMessage(String message);

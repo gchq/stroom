@@ -16,18 +16,20 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.util.client.JSONUtil;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
-import stroom.util.client.JSONUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class PostMessage {
+
     private static final Map<Integer, FrameListener> frameListeners = new HashMap<>();
     private static PostMessage instance;
 
@@ -121,6 +123,7 @@ public class PostMessage {
     }-*/;
 
     public interface FrameListener {
+
         int getFrameId();
 
         void receiveMessage(MessageEvent event, JSONObject message);

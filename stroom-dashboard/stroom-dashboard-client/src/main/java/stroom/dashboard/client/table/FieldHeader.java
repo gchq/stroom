@@ -21,6 +21,7 @@ import stroom.query.api.v2.Field;
 import com.google.gwt.user.cellview.client.Header;
 
 public class FieldHeader extends Header<Field> {
+
     private final Field field;
 
     public FieldHeader(final FieldsManager fieldsManager, final Field field) {

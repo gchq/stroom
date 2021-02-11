@@ -16,14 +16,16 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.table.FieldsManager.Style;
+
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.dashboard.client.table.FieldsManager.Style;
 
 public class FieldsCell extends AbstractCell<Boolean> {
+
     private static Template template;
     private final FieldsManager fieldsManager;
 
@@ -40,6 +42,7 @@ public class FieldsCell extends AbstractCell<Boolean> {
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @Template("<div class=\"{0}\"><div class=\"{1}\">Name:</div><div class=\"{1}\">Sort:</div><div class=\"{1}\">Filter:</div><div class=\"{1}\">Function:</div></div>")
         SafeHtml optionsVisible(String labelsClassName, String labelClassName);
     }

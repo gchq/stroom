@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 public interface SearchEventLog {
+
     void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo);
 
     void search(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
@@ -32,7 +33,11 @@ public interface SearchEventLog {
 
     void downloadResults(DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 
-    void downloadResults(String type, DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
+    void downloadResults(String type,
+                         DocRef dataSourceRef,
+                         ExpressionOperator expression,
+                         String queryInfo,
+                         Exception ex);
 
     void search(String type, DocRef dataSourceRef, ExpressionOperator expression, String queryInfo, Exception ex);
 }

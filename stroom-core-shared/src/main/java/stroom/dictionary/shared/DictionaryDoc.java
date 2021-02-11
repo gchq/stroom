@@ -16,13 +16,14 @@
 
 package stroom.dictionary.shared;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 @JsonInclude(Include.NON_NULL)
 public class DictionaryDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "Dictionary";
 
     @JsonProperty
@@ -87,9 +89,15 @@ public class DictionaryDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final DictionaryDoc that = (DictionaryDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(data, that.data) &&

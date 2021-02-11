@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.query.gin;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
@@ -40,7 +39,10 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
 
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
 public class QueryModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         bind(QueryPlugin.class).asEagerSingleton();

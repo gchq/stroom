@@ -7,10 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class EventLink {
+
     @JsonProperty
-    private long annotationId;
+    private final long annotationId;
     @JsonProperty
-    private EventId eventId;
+    private final EventId eventId;
 
     @JsonCreator
     public EventLink(@JsonProperty("annotationId") final long annotationId,

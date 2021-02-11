@@ -53,7 +53,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
@@ -92,6 +91,7 @@ import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
@@ -311,7 +311,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         if (dataSourceFieldsMap != null) {
             for (final AbstractField field : dataSourceFieldsMap.values()) {
                 // Protection from default values of false not being in the serialised json
-                if (field.getQueryable() != null ? field.getQueryable() : false) {
+                if (field.getQueryable() != null
+                        ? field.getQueryable()
+                        : false) {
                     fields.add(field);
                 }
             }
@@ -516,7 +518,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         // Create and register the search model.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(), dashboard.getName(), getComponentConfig().getId());
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(),
+                dashboard.getName(),
+                getComponentConfig().getId());
         searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
@@ -707,6 +711,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
+
         ButtonView addButton(SvgPreset preset);
 
         void setExpressionView(View view);

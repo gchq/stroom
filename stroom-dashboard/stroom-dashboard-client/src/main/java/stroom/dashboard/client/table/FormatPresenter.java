@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
+
     private final TimeZones timeZones;
     private Type type;
     private TablePresenter tablePresenter;
@@ -71,11 +72,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
             setType(format.getType());
         }
 
-        if (format != null && format.getWrap() != null && format.getWrap()) {
-            getView().setWrap(true);
-        } else {
-            getView().setWrap(false);
-        }
+        getView().setWrap(format != null && format.getWrap() != null && format.getWrap());
 
         final PopupSize popupSize = new PopupSize(390, 217, 390, 217, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
@@ -180,6 +177,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     public interface FormatView extends View, HasUiHandlers<FormatUihandlers> {
+
         void setTypes(List<Type> types);
 
         void setType(Type type);

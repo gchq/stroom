@@ -16,12 +16,13 @@
 
 package stroom.dashboard.impl;
 
+import stroom.dashboard.impl.vis.VisSettings;
+import stroom.util.io.StreamUtil;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import stroom.dashboard.impl.vis.VisSettings;
-import stroom.util.io.StreamUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestVisSettings {
+
     @Test
     void test() throws Exception {
         final Path jsonFile = Paths.get(getClass().getClassLoader().getResource("TestVisSettings/settings.json").toURI());

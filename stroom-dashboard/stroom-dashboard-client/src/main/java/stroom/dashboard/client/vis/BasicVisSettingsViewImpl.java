@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.main.Component;
+import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
+import stroom.item.client.ItemListBox;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -26,14 +30,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
-import stroom.item.client.ItemListBox;
 
 import java.util.List;
 
 public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSettingsUiHandlers>
         implements BasicVisSettingsView {
+
     private final Widget widget;
     @UiField
     Label id;
@@ -107,5 +109,6 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     }
 
     public interface Binder extends UiBinder<Widget, BasicVisSettingsViewImpl> {
+
     }
 }

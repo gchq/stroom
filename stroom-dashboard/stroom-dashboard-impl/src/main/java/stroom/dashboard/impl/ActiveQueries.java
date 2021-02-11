@@ -53,7 +53,8 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = securityContext.asProcessingUserResult(() -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
+                final Boolean success = securityContext.asProcessingUserResult(() -> dataSourceProviderRegistry.getDataSourceProvider(
+                        activeQuery.getDocRef())
                         .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
                         .orElseGet(() -> {
                             LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",

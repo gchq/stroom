@@ -30,6 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "data", "systemId", "deprecated", "schemaGroup"})
 @JsonInclude(Include.NON_NULL)
 public class XmlSchemaDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "XMLSchema";
 
     @JsonProperty
@@ -125,9 +126,15 @@ public class XmlSchemaDoc extends Doc implements HasData {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final XmlSchemaDoc that = (XmlSchemaDoc) o;
         return deprecated == that.deprecated &&
                 Objects.equals(description, that.description) &&

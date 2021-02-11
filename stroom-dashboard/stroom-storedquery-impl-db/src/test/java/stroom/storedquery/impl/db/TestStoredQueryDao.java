@@ -43,12 +43,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestStoredQueryDao {
+
     private static final String QUERY_COMPONENT = "Test Component";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
 
@@ -76,7 +75,9 @@ class TestStoredQueryDao {
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
 
-        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao, new StoredQueryConfig(), new SimpleTaskContextFactory());
+        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao,
+                new StoredQueryConfig(),
+                new SimpleTaskContextFactory());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");

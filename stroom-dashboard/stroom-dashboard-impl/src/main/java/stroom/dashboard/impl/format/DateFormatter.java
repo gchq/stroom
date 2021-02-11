@@ -30,6 +30,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class DateFormatter implements Formatter {
+
     private final DateTimeFormatter format;
 
     private DateFormatter(final DateTimeFormatter format) {

@@ -29,6 +29,7 @@ import java.nio.file.Path;
  * Helper class for resources.
  */
 public final class StreamUtil {
+
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     private StreamUtil() {

@@ -24,6 +24,7 @@ import stroom.visualisation.shared.VisualisationResource;
 import javax.inject.Inject;
 
 class VisualisationResourceImpl implements VisualisationResource {
+
     private final VisualisationStore visualisationStore;
     private final DocumentResourceHelper documentResourceHelper;
 

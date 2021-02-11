@@ -22,10 +22,6 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.IsServlet;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
@@ -33,6 +29,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -40,6 +40,7 @@ import java.util.Set;
  * </p>
  */
 class ScriptServlet extends HttpServlet implements IsServlet {
+
     private static final long serialVersionUID = 2912973031600581055L;
     private static final Set<String> PATH_SPECS = Set.of("/script");
 

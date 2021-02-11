@@ -21,11 +21,12 @@ import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ExternalService;
 import stroom.servicediscovery.api.ServiceDiscoverer;
 
+import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
-import java.util.Optional;
 
 public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourceProviderRegistry {
+
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
     private final Provider<Client> clientProvider;

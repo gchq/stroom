@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FieldCell extends CompositeCell<Field> {
+
     private final FieldsManager fieldsManager;
 
     public FieldCell(final FieldsManager fieldsManager, final List<HasCell<Field, ?>> cells) {

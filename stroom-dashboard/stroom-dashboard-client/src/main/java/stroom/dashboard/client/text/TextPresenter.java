@@ -344,8 +344,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         }
 
                         final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-                                .withPartNo(currentPartNo != null ? currentPartNo - 1 : 0) // make zero based
-                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1 : 0) // make zero based
+                                .withPartNo(currentPartNo != null
+                                        ? currentPartNo - 1
+                                        : 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null
+                                        ? currentRecordNo - 1
+                                        : 0) // make zero based
                                 .withDataRange(dataRange)
                                 .withHighlight(highlight)
                                 .build();
@@ -627,8 +631,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (currentStreamId != null) {
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
-                    currentPartNo != null ? currentPartNo : 1,
-                    currentRecordNo != null ? currentRecordNo : -1);
+                    currentPartNo != null
+                            ? currentPartNo
+                            : 1,
+                    currentRecordNo != null
+                            ? currentRecordNo
+                            : -1);
 
             BeginPipelineSteppingEvent.fire(
                     this,

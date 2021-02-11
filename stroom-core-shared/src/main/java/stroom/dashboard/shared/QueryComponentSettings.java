@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.ComponentConfig.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -31,6 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"dataSource", "expression", "automate"})
 @JsonInclude(Include.NON_NULL)
 public class QueryComponentSettings implements ComponentSettings {
+
     @JsonProperty("dataSource")
     private final DocRef dataSource;
     @JsonProperty("expression")
@@ -62,8 +62,12 @@ public class QueryComponentSettings implements ComponentSettings {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final QueryComponentSettings that = (QueryComponentSettings) o;
         return Objects.equals(dataSource, that.dataSource) &&
                 Objects.equals(expression, that.expression) &&
@@ -93,6 +97,7 @@ public class QueryComponentSettings implements ComponentSettings {
     }
 
     public static final class Builder {
+
         private DocRef dataSource;
         private ExpressionOperator expression;
         private Automate automate;

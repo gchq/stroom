@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class CreateProcessFilterRequest {
+
     @JsonProperty
     private final DocRef pipeline;
     @JsonProperty

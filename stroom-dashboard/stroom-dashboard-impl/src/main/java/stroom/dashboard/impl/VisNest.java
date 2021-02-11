@@ -20,14 +20,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 
 @JsonPropertyOrder({"key", "limit", "nest", "values"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "VisNest", propOrder = {"key", "limit", "nest", "values"})
 public class VisNest implements Serializable {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     private VisField key;
@@ -88,23 +89,49 @@ public class VisNest implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof VisNest)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof VisNest)) {
+            return false;
+        }
 
         final VisNest visNest = (VisNest) o;
 
-        if (key != null ? !key.equals(visNest.key) : visNest.key != null) return false;
-        if (limit != null ? !limit.equals(visNest.limit) : visNest.limit != null) return false;
-        if (nest != null ? !nest.equals(visNest.nest) : visNest.nest != null) return false;
-        return values != null ? values.equals(visNest.values) : visNest.values == null;
+        if (key != null
+                ? !key.equals(visNest.key)
+                : visNest.key != null) {
+            return false;
+        }
+        if (limit != null
+                ? !limit.equals(visNest.limit)
+                : visNest.limit != null) {
+            return false;
+        }
+        if (nest != null
+                ? !nest.equals(visNest.nest)
+                : visNest.nest != null) {
+            return false;
+        }
+        return values != null
+                ? values.equals(visNest.values)
+                : visNest.values == null;
     }
 
     @Override
     public int hashCode() {
-        int result = key != null ? key.hashCode() : 0;
-        result = 31 * result + (limit != null ? limit.hashCode() : 0);
-        result = 31 * result + (nest != null ? nest.hashCode() : 0);
-        result = 31 * result + (values != null ? values.hashCode() : 0);
+        int result = key != null
+                ? key.hashCode()
+                : 0;
+        result = 31 * result + (limit != null
+                ? limit.hashCode()
+                : 0);
+        result = 31 * result + (nest != null
+                ? nest.hashCode()
+                : 0);
+        result = 31 * result + (values != null
+                ? values.hashCode()
+                : 0);
         return result;
     }
 

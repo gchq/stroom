@@ -16,16 +16,18 @@
 
 package stroom.dictionary.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -34,7 +36,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Set;
 
 @Api(value = "dictionary - /v1")
 @Path("/dictionary" + ResourcePaths.V1)
@@ -65,7 +66,6 @@ public interface DictionaryResource extends RestResource, DirectRestService {
             value = "Download a dictionary doc",
             response = ResourceGeneration.class)
     ResourceGeneration download(DocRef dictionaryRef);
-
 
 
     ////////////////////////
@@ -100,5 +100,5 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     @POST
     @Path("/{dictionaryUuid}")
     void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-                         final DictionaryDTO updates);
+              final DictionaryDTO updates);
 }

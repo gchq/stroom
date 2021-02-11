@@ -9,6 +9,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class EventId {
+
     @JsonProperty
     private final long streamId;
     @JsonProperty
@@ -16,7 +17,7 @@ public class EventId {
 
     /**
      * @param streamId
-     * @param eventId One based
+     * @param eventId  One based
      */
     @JsonCreator
     public EventId(@JsonProperty("streamId") final long streamId,
@@ -53,8 +54,12 @@ public class EventId {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final EventId eventId1 = (EventId) o;
         return streamId == eventId1.streamId &&
                 eventId == eventId1.eventId;
