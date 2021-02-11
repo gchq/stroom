@@ -27,6 +27,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"node", "master"})
 @JsonInclude(Include.NON_NULL)
 public class NodeStatusResult {
+
     @JsonProperty
     private final Node node;
     @JsonProperty
@@ -50,8 +51,12 @@ public class NodeStatusResult {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final NodeStatusResult that = (NodeStatusResult) o;
         return Objects.equals(node.getId(), that.node.getId());
     }

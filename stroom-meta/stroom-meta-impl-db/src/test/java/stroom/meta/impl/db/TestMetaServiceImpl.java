@@ -40,13 +40,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -316,7 +316,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_period() {
 
-        List<DataRetentionRuleAction> ruleActions = List.of(
+        final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
                 buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
@@ -347,7 +347,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_period2() {
 
-        List<DataRetentionRuleAction> ruleActions = List.of(
+        final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
                 buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)

@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.Map;
 
 class FileMetaGrep extends AbstractCommandLineTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
     private Map<String, String> matchMap;
     private String[] repoPathParts = null;
@@ -107,44 +108,44 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
             if (path.endsWith("meta.bgz")) {
                 String bdyPath = path.substring(0, path.length() - 4) + ".bdy.dat";
-                    int segment = 0;
-                    boolean done = false;
-                    while (!done) {
-                        try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(file),
-                                new UncompressedInputStream(Paths.get(bdyPath), true))) {
-                            if (segmentInputStream.count() <= segment - 1) {
-                                done = true;
-                            } else {
-                                segmentInputStream.include(segment);
+                int segment = 0;
+                boolean done = false;
+                while (!done) {
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(file),
+                            new UncompressedInputStream(Paths.get(bdyPath), true))) {
+                        if (segmentInputStream.count() <= segment - 1) {
+                            done = true;
+                        } else {
+                            segmentInputStream.include(segment);
 
-                                AttributeMap attributeMap = new AttributeMap();
-                                AttributeMapUtil.read(segmentInputStream, attributeMap);
+                            AttributeMap attributeMap = new AttributeMap();
+                            AttributeMapUtil.read(segmentInputStream, attributeMap);
 
-                                boolean match = true;
+                            boolean match = true;
 
-                                for (String matchKey : matchMap.keySet()) {
-                                    if (!attributeMap.containsKey(matchKey)) {
+                            for (String matchKey : matchMap.keySet()) {
+                                if (!attributeMap.containsKey(matchKey)) {
+                                    // No Good
+                                    match = false;
+                                } else {
+                                    if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
                                         // No Good
                                         match = false;
-                                    } else {
-                                        if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
-                                            // No Good
-                                            match = false;
-                                        }
                                     }
                                 }
-
-                                if (match) {
-                                    // Found Match
-                                    System.out.println("Found Match in " + path + " at segment " + segment);
-                                    System.out.write(AttributeMapUtil.toByteArray(attributeMap));
-                                    System.out.println();
-                                }
-
-                                segment++;
                             }
+
+                            if (match) {
+                                // Found Match
+                                System.out.println("Found Match in " + path + " at segment " + segment);
+                                System.out.write(AttributeMapUtil.toByteArray(attributeMap));
+                                System.out.println();
+                            }
+
+                            segment++;
                         }
                     }
+                }
             }
         } catch (IOException ioEx) {
             ioEx.printStackTrace();

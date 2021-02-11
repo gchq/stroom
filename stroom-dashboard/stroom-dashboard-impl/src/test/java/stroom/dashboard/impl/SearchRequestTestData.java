@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SearchRequestTestData {
+
     static DashboardQueryKey dashboardQueryKey() {
         return new DashboardQueryKey(
                 "queryKeyUuid",
@@ -60,7 +61,7 @@ public class SearchRequestTestData {
     }
 
     static stroom.dashboard.shared.SearchRequest dashboardSearchRequest() {
-        DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
+        final DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
         ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
@@ -78,7 +79,9 @@ public class SearchRequestTestData {
                         .filter(new Filter("include1", "exclude1"))
                         .format(Format.builder()
                                 .type(Format.Type.NUMBER)
-                                .settings(new NumberFormatSettings(1, false))
+                                .settings(new NumberFormatSettings(
+                                        1,
+                                        false))
                                 .build())
                         .group(1)
                         .width(200)

@@ -59,6 +59,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private DataRetentionRulesService dataRetentionRulesService;
 
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     @Test
     void testMultipleRuns() {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
@@ -69,7 +70,8 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
                 - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
-        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
+                timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
@@ -159,8 +161,17 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         return meta;
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return DataRetentionRule.ageRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return DataRetentionRule.ageRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit);
     }
 
     private DataRetentionRule createForeverRule(final int num, final ExpressionOperator expression) {

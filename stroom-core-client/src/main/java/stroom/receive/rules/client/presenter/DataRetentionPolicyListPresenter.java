@@ -141,9 +141,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     private boolean isDefaultRule(final DataRetentionRule rule) {
-       return Objects.equals(
-               DataRetentionPolicyPresenter.DEFAULT_UI_ONLY_RETAIN_ALL_RULE.getName(),
-               rule.getName());
+        return Objects.equals(
+                DataRetentionPolicyPresenter.DEFAULT_UI_ONLY_RETAIN_ALL_RULE.getName(),
+                rule.getName());
     }
 
     private SafeHtml getSafeHtml(final String string, final DataRetentionRule rule) {

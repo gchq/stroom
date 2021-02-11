@@ -930,7 +930,6 @@ public class DataFetcher {
                                final InputStreamProvider inputStreamProvider) {
         return pipelineScopeRunnable.scopeResult(() -> {
             try {
-                String data;
 
                 final FeedHolder feedHolder = feedHolderProvider.get();
                 final MetaDataHolder metaDataHolder = metaDataHolderProvider.get();
@@ -1018,7 +1017,7 @@ public class DataFetcher {
                     }
                 }
 
-                data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+                final String data = baos.toString(StreamUtil.DEFAULT_CHARSET_NAME);
 
                 if (!errorReceiver.isAllOk()) {
                     throw new TransformerException(errorReceiver.toString());

@@ -21,17 +21,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobDaoImpl {
+
     @Inject
     private JobDaoImpl dao;
 
     @BeforeEach
     void beforeEach() {
         Guice.createInjector(
-            new TestModule(),
-            new JobDbModule(),
-            new MockSecurityContextModule(),
-            new DbTestModule())
-            .injectMembers(this);
+                new TestModule(),
+                new JobDbModule(),
+                new MockSecurityContextModule(),
+                new DbTestModule())
+                .injectMembers(this);
         cleanup();
     }
 
@@ -76,7 +77,7 @@ class TestJobDaoImpl {
     void update() {
         // Given
         Job job = createStandardJob();
-        int version = job.getVersion();
+        final int version = job.getVersion();
         job.setName("Different name");
         job.setEnabled(false);
 

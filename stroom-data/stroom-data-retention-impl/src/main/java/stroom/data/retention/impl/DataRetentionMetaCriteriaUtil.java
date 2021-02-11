@@ -14,6 +14,7 @@ import stroom.util.date.DateUtil;
 import java.util.List;
 
 public final class DataRetentionMetaCriteriaUtil {
+
     private DataRetentionMetaCriteriaUtil() {
     }
 
@@ -36,14 +37,14 @@ public final class DataRetentionMetaCriteriaUtil {
                 for (final DataRetentionRule rule : rules) {
                     // Ignore empty AND{} or OR{} as they just equal true
 //                    if (!canIgnoreOperator(rule.getExpression())) {
-                        // expression has children or is a NOT
-                        inner.addOperator(rule.getExpression());
+                    // expression has children or is a NOT
+                    inner.addOperator(rule.getExpression());
 //                    }
                 }
 
                 final ExpressionOperator innerOperator = inner.build();
 //                if (!canIgnoreOperator(innerOperator)) {
-                    outer.addOperator(negateOperator(innerOperator));
+                outer.addOperator(negateOperator(innerOperator));
 //                }
             }
         }

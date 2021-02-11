@@ -26,6 +26,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class CacheInfo {
+
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -66,12 +67,16 @@ public class CacheInfo {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final CacheInfo cacheInfo = (CacheInfo) o;
         return Objects.equals(name, cacheInfo.name) &&
-            Objects.equals(map, cacheInfo.map) &&
-            Objects.equals(nodeName, cacheInfo.nodeName);
+                Objects.equals(map, cacheInfo.map) &&
+                Objects.equals(nodeName, cacheInfo.nodeName);
     }
 
     @Override

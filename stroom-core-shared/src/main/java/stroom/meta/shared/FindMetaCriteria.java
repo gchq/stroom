@@ -32,6 +32,7 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
+
     @JsonProperty
     private boolean fetchRelationships;
 
@@ -88,9 +89,15 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FindMetaCriteria)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FindMetaCriteria)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final FindMetaCriteria that = (FindMetaCriteria) o;
         return fetchRelationships == that.fetchRelationships;
     }

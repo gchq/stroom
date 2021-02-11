@@ -50,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 class TestByteBufferPool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPool.class);
 
     private static final long RANDOM_SEED = 345649236493L;
@@ -174,12 +175,12 @@ class TestByteBufferPool {
     void testGetSystemInfo() {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
-        PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
-        PooledByteBuffer buffer2 = byteBufferPool.getPooledByteBuffer(1);
-        PooledByteBuffer buffer3 = byteBufferPool.getPooledByteBuffer(10);
-        PooledByteBuffer buffer4 = byteBufferPool.getPooledByteBuffer(10);
-        PooledByteBuffer buffer5 = byteBufferPool.getPooledByteBuffer(10);
-        PooledByteBuffer buffer6 = byteBufferPool.getPooledByteBuffer(100);
+        final PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
+        final PooledByteBuffer buffer2 = byteBufferPool.getPooledByteBuffer(1);
+        final PooledByteBuffer buffer3 = byteBufferPool.getPooledByteBuffer(10);
+        final PooledByteBuffer buffer4 = byteBufferPool.getPooledByteBuffer(10);
+        final PooledByteBuffer buffer5 = byteBufferPool.getPooledByteBuffer(10);
+        final PooledByteBuffer buffer6 = byteBufferPool.getPooledByteBuffer(100);
 
         buffer1.getByteBuffer();
         buffer2.getByteBuffer();
@@ -237,7 +238,9 @@ class TestByteBufferPool {
         assertThat(theBuffer.capacity()).isEqualTo(capacity);
     }
 
-    private void assertPoolSizeAfterMultipleConcurrentGetRequests(final int threadCount, final int minCapacity, final ByteBufferPool byteBufferPool) {
+    private void assertPoolSizeAfterMultipleConcurrentGetRequests(final int threadCount,
+                                                                  final int minCapacity,
+                                                                  final ByteBufferPool byteBufferPool) {
         final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
         final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();

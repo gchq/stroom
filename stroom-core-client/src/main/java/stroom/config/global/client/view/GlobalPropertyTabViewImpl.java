@@ -17,8 +17,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class GlobalPropertyTabViewImpl
-    extends ViewWithUiHandlers<ManageGlobalPropertyUiHandlers>
-    implements GlobalPropertyTabPresenter.GlobalPropertyTabView {
+        extends ViewWithUiHandlers<ManageGlobalPropertyUiHandlers>
+        implements GlobalPropertyTabPresenter.GlobalPropertyTabView {
 
     @UiField
     QuickFilter nameFilter;
@@ -59,5 +59,6 @@ public class GlobalPropertyTabViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyTabViewImpl> {
+
     }
 }

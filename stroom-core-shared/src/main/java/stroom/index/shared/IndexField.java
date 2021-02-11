@@ -24,14 +24,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * <p>
@@ -42,6 +42,7 @@ import java.util.Objects;
 @XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed", "stored", "termPositions"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
+
     private static final long serialVersionUID = 3100770758821157580L;
 
     @XmlElement(name = "fieldType")
@@ -106,8 +107,12 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 .build();
     }
 
-    public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
-                                         final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
+    public static IndexField createField(final String fieldName,
+                                         final AnalyzerType analyzerType,
+                                         final boolean caseSensitive,
+                                         final boolean stored,
+                                         final boolean indexed,
+                                         final boolean termPositions) {
         return new Builder()
                 .fieldName(fieldName)
                 .analyzerType(analyzerType)
@@ -192,8 +197,12 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final IndexField that = (IndexField) o;
         return stored == that.stored &&
                 indexed == that.indexed &&
@@ -275,6 +284,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     public static final class Builder {
+
         private IndexFieldType fieldType = IndexFieldType.FIELD;
         private String fieldName;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;

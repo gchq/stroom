@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FlatResultCreator implements ResultCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FlatResultCreator.class);
 
     private final FieldFormatter fieldFormatter;
@@ -49,12 +50,12 @@ public class FlatResultCreator implements ResultCreator {
     private String error;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
-                             final String queryKey,
-                             final String componentId,
-                             final ResultRequest resultRequest,
-                             final Map<String, String> paramMap,
-                             final FieldFormatter fieldFormatter,
-                             final Sizes defaultMaxResultsSizes) {
+            final String queryKey,
+            final String componentId,
+            final ResultRequest resultRequest,
+            final Map<String, String> paramMap,
+            final FieldFormatter fieldFormatter,
+            final Sizes defaultMaxResultsSizes) {
         this.fieldFormatter = fieldFormatter;
 
         final List<TableSettings> tableSettings = resultRequest.getMappings();
@@ -212,14 +213,14 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private int addResults(final DataStore data,
-                           final RangeChecker rangeChecker,
-                           final OpenGroups openGroups,
-                           final Items items,
-                           final List<List<Object>> results,
-                           final int depth,
-                           final int parentCount,
-                           final Sizes maxResults,
-                           final Map<Integer, List<Field>> groupFields) {
+            final RangeChecker rangeChecker,
+            final OpenGroups openGroups,
+            final Items items,
+            final List<List<Object>> results,
+            final int depth,
+            final int parentCount,
+            final Sizes maxResults,
+            final Map<Integer, List<Field>> groupFields) {
         int count = parentCount;
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
@@ -307,26 +308,29 @@ public class FlatResultCreator implements ResultCreator {
 
     @FunctionalInterface
     private interface RangeChecker {
+
         boolean check(long count);
     }
 
     @FunctionalInterface
     private interface OpenGroups {
+
         boolean isOpen(RawKey key);
     }
 
     private static class Mapper {
+
         private final int[] parentFieldIndices;
         private final DataStore dataStore;
         private final int maxItems;
 
         Mapper(final DataStoreFactory dataStoreFactory,
-               final String queryKey,
-               final String componentId,
-               final TableSettings parent,
-               final TableSettings child,
-               final Map<String, String> paramMap,
-               final int maxItems) {
+                final String queryKey,
+                final String componentId,
+                final TableSettings parent,
+                final TableSettings child,
+                final Map<String, String> paramMap,
+                final int maxItems) {
             this.maxItems = maxItems;
 
             final FieldIndex parentFieldIndex = new FieldIndex();
@@ -393,6 +397,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class RangeCheckerFactory {
+
         public static RangeChecker create(final OffsetRange range) {
             if (range == null) {
                 return count -> true;
@@ -405,6 +410,7 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private static class OpenGroupsFactory {
+
         public static OpenGroups create(final Set<RawKey> openGroups) {
             if (openGroups == null || openGroups.size() == 0) {
                 return group -> true;

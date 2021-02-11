@@ -34,6 +34,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class FindIndexShardCriteria extends BaseCriteria {
+
     public static final String FIELD_ID = "Id";
     public static final String FIELD_PARTITION = "Partition";
 
@@ -141,9 +142,15 @@ public class FindIndexShardCriteria extends BaseCriteria {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FindIndexShardCriteria)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FindIndexShardCriteria)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final FindIndexShardCriteria that = (FindIndexShardCriteria) o;
         return Objects.equals(documentCountRange, that.documentCountRange) &&
                 Objects.equals(nodeNameSet, that.nodeNameSet) &&
@@ -156,6 +163,13 @@ public class FindIndexShardCriteria extends BaseCriteria {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), documentCountRange, nodeNameSet, volumeIdSet, indexUuidSet, indexShardIdSet, indexShardStatusSet, partition);
+        return Objects.hash(super.hashCode(),
+                documentCountRange,
+                nodeNameSet,
+                volumeIdSet,
+                indexUuidSet,
+                indexShardIdSet,
+                indexShardStatusSet,
+                partition);
     }
 }

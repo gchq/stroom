@@ -17,6 +17,7 @@
 package stroom.search.solr.shared;
 
 public interface SolrIndexConstants {
+
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
     String FEED_ID = "FeedId";

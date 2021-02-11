@@ -5,20 +5,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.util.Objects;
 import java.util.function.Supplier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public class ByteStreamDecoder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteStreamDecoder.class);
 
-    private final Charset charset;
     private final CharsetDecoder charsetDecoder;
 //    private final Supplier<Byte> byteSupplier;
 
@@ -39,14 +38,11 @@ public class ByteStreamDecoder {
     }
 
     public ByteStreamDecoder(final Charset charset) {
-        this.charset = Objects.requireNonNull(charset);
-        this.charsetDecoder = charset.newDecoder();
+        this.charsetDecoder = Objects.requireNonNull(charset)
+                .newDecoder();
     }
 
     public DecodedChar decodeNextChar(final Supplier<Byte> byteSupplier) {
-        boolean charDecoded = false;
-        int loopCnt = 0;
-        int byteCnt = 0;
         // Clear the buffers ready for a new char's bytes
         inputBuffer.clear();
         outputBuffer.clear();
@@ -60,6 +56,9 @@ public class ByteStreamDecoder {
         // Start trying to decode a char from this position
 //            int byteOffset = startOffset;
 
+        boolean charDecoded = false;
+        int loopCnt = 0;
+        int byteCnt = 0;
         while (!charDecoded && loopCnt++ < MAX_BYTES_PER_CHAR) {
             byte b = 0;
             try {
@@ -139,7 +138,7 @@ public class ByteStreamDecoder {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public static interface ByteSupplier {
+    public interface ByteSupplier {
 
         /**
          * @return The byte represented as an unsigned value 0-255 or -1 if there are

@@ -52,6 +52,7 @@ import java.util.Collection;
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
 final class FileSystemUtil {
+
     private static final int MKDIR_RETRY_COUNT = 2;
     private static final int MKDIR_RETRY_SLEEP_MS = 100;
 
@@ -130,17 +131,17 @@ final class FileSystemUtil {
 
     static boolean deleteAnyPath(final Path file) {
         boolean ok = true;
-            if (Files.isRegularFile(file)) {
-                try {
-                    Files.delete(file);
-                } catch (final IOException e) {
-                    ok = false;
-                }
-            } else {
-                if (Files.isDirectory(file)) {
-                    ok &= FileUtil.deleteDir(file);
-                }
+        if (Files.isRegularFile(file)) {
+            try {
+                Files.delete(file);
+            } catch (final IOException e) {
+                ok = false;
             }
+        } else {
+            if (Files.isDirectory(file)) {
+                ok &= FileUtil.deleteDir(file);
+            }
+        }
         return ok;
     }
 

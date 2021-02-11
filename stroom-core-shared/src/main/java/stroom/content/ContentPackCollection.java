@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class ContentPackCollection {
+
     @JsonProperty
     private final List<ContentPack> contentPacks;
 

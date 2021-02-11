@@ -18,19 +18,20 @@
 package stroom.receive.rules.shared;
 
 
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.query.api.v2.ExpressionOperator;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
@@ -38,6 +39,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @JsonInclude(Include.NON_NULL)
 public class ReceiveDataRule {
+
     @XmlElement(name = "ruleNumber")
     @JsonProperty
     private final int ruleNumber;
@@ -99,8 +101,12 @@ public class ReceiveDataRule {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ReceiveDataRule that = (ReceiveDataRule) o;
         return ruleNumber == that.ruleNumber &&
                 creationTime == that.creationTime &&

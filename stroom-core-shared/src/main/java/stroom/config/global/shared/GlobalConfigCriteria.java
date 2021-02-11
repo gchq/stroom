@@ -47,9 +47,15 @@ public class GlobalConfigCriteria extends BaseCriteria {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final GlobalConfigCriteria that = (GlobalConfigCriteria) o;
         return Objects.equals(quickFilterInput, that.quickFilterInput);
     }

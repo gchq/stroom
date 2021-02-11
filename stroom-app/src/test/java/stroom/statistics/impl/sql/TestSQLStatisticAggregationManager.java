@@ -89,7 +89,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 4;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -257,7 +259,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -426,7 +430,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3 + 1;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -516,7 +522,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final int numberOfDifferentPrecisions = 3 + 1;
 
         final long expectedCountTotalByPrecision = statNameCount * timesCount
-                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+                * (statisticType.equals(StatisticType.COUNT)
+                ? STAT_VALUE
+                : 1);
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
@@ -599,7 +607,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
     private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
                           final StatisticType statisticType) throws SQLException {
-        int iteration = 0;
 
         LOGGER.info("Filling STAT_VAL_SRC");
 
@@ -607,6 +614,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         Instant newStartDate = startDate;
         LOGGER.info("Adding stats working back from: " + newStartDate);
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
+        int iteration = 0;
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME))
                 .isEqualTo(statNameCount * timesCount * ++iteration);
 

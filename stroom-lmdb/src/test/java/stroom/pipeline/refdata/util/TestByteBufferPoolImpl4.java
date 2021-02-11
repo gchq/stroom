@@ -50,6 +50,7 @@ class TestByteBufferPoolImpl4 {
         doTest(byteBufferPoolConfig, 100, 1);
     }
 
+    @SuppressWarnings("checkstyle:variabledeclarationusagedistance")
     @Test
     void testGetBuffer_zeroValue() {
         final ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();

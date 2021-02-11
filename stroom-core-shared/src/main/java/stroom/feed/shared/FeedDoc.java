@@ -16,21 +16,23 @@
 
 package stroom.feed.shared;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "status"})
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "Feed";
 
     @JsonProperty
@@ -167,7 +169,9 @@ public class FeedDoc extends Doc {
     }
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
-        RECEIVE("Receive", 1), REJECT("Reject", 2), DROP("Drop", 3);
+        RECEIVE("Receive", 1),
+        REJECT("Reject", 2),
+        DROP("Drop", 3);
 
         public static final PrimitiveValueConverter<FeedStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 FeedStatus.values());

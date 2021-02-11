@@ -19,9 +19,9 @@ class TestPropertyUtil {
     @Test
     void getProperties() {
 
-        MyClass myClass = new MyClass();
-        MyClass myChildClass1 = new MyClass();
-        MyClass myChildClass2 = new MyClass();
+        final MyClass myClass = new MyClass();
+        final MyClass myChildClass1 = new MyClass();
+        final MyClass myChildClass2 = new MyClass();
         myClass.setMyClass(myChildClass1);
         final Map<String, PropertyUtil.Prop> propMap = PropertyUtil.getProperties(myClass);
 
@@ -29,10 +29,10 @@ class TestPropertyUtil {
                 .hasSize(4);
 
         assertThat(propMap.values().stream()
-                    .map(PropertyUtil.Prop::getParentObject)
-                    .map(System::identityHashCode)
-                    .distinct()
-                    .collect(Collectors.toList()))
+                .map(PropertyUtil.Prop::getParentObject)
+                .map(System::identityHashCode)
+                .distinct()
+                .collect(Collectors.toList()))
                 .containsExactly(System.identityHashCode(myClass));
 
         testProp(propMap, "myBoolean", true, false, myClass::isMyBoolean, boolean.class);
@@ -91,7 +91,7 @@ class TestPropertyUtil {
 
     }
 
-        private void testProp(final Map<String, PropertyUtil.Prop> propMap,
+    private void testProp(final Map<String, PropertyUtil.Prop> propMap,
                           final String name,
                           final Object expectedValue,
                           final Object newValue,
@@ -110,6 +110,7 @@ class TestPropertyUtil {
     }
 
     private static class MyClass {
+
         private boolean myBoolean = true;
         private int myInt = 99;
         private String myString = "abc";

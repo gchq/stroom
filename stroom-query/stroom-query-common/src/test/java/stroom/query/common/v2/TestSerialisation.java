@@ -51,14 +51,6 @@ import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,6 +59,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -187,9 +187,9 @@ class TestSerialisation {
         ObjectMapper mapper = createMapper(true);
 
         final Path dir = TestFileUtil.getTestResourcesDir().resolve("SerialisationTest");
-        Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
-        Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
-        Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
+        final Path expectedFile = dir.resolve(testName + "-JSON.expected.json");
+        final Path actualFileIn = dir.resolve(testName + "-JSON.actual.in.json");
+        final Path actualFileOut = dir.resolve(testName + "-JSON.actual.out.json");
 
         String serialisedIn = mapper.writeValueAsString(objIn);
 //        System.out.println(serialisedIn);
@@ -426,8 +426,12 @@ class TestSerialisation {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Base)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Base)) {
+                return false;
+            }
 
             final Base base = (Base) o;
 
@@ -462,9 +466,15 @@ class TestSerialisation {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Sub1)) return false;
-            if (!super.equals(o)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Sub1)) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
 
             final Sub1 sub1 = (Sub1) o;
 
@@ -501,19 +511,29 @@ class TestSerialisation {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Sub2)) return false;
-            if (!super.equals(o)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Sub2)) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
 
             final Sub2 sub2 = (Sub2) o;
 
-            return str != null ? str.equals(sub2.str) : sub2.str == null;
+            return str != null
+                    ? str.equals(sub2.str)
+                    : sub2.str == null;
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
-            result = 31 * result + (str != null ? str.hashCode() : 0);
+            result = 31 * result + (str != null
+                    ? str.hashCode()
+                    : 0);
             return result;
         }
     }
@@ -541,17 +561,25 @@ class TestSerialisation {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Lst)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Lst)) {
+                return false;
+            }
 
             final Lst lst = (Lst) o;
 
-            return list != null ? list.equals(lst.list) : lst.list == null;
+            return list != null
+                    ? list.equals(lst.list)
+                    : lst.list == null;
         }
 
         @Override
         public int hashCode() {
-            return list != null ? list.hashCode() : 0;
+            return list != null
+                    ? list.hashCode()
+                    : 0;
         }
     }
 
@@ -579,17 +607,25 @@ class TestSerialisation {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Multi)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Multi)) {
+                return false;
+            }
 
             final Multi multi = (Multi) o;
 
-            return list != null ? list.equals(multi.list) : multi.list == null;
+            return list != null
+                    ? list.equals(multi.list)
+                    : multi.list == null;
         }
 
         @Override
         public int hashCode() {
-            return list != null ? list.hashCode() : 0;
+            return list != null
+                    ? list.hashCode()
+                    : 0;
         }
     }
 }

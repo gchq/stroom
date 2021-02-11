@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 @JsonInclude(Include.NON_NULL)
 public class OverrideValue<T> {
+
     private static final OverrideValue<?> UNSET = new OverrideValue<>(false, null);
     private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);
 
@@ -114,8 +115,12 @@ public class OverrideValue<T> {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final OverrideValue<?> overrideValue = (OverrideValue<?>) o;
         return hasOverride == overrideValue.hasOverride &&
                 Objects.equals(value, overrideValue.value);

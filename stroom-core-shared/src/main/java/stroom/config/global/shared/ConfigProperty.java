@@ -221,7 +221,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
      */
     @JsonIgnore
     public String getNameAsString() {
-        return name == null ? null : name.toString();
+        return name == null
+                ? null
+                : name.toString();
     }
 
     public PropertyPath getName() {
@@ -466,8 +468,12 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConfigProperty that = (ConfigProperty) o;
         return editable == that.editable &&
                 password == that.password &&

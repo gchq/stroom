@@ -47,8 +47,6 @@ import org.jooq.Record1;
 import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -60,6 +58,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.util.Map.entry;
 

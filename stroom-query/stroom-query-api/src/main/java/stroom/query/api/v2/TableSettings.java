@@ -45,6 +45,7 @@ import java.util.Objects;
 @ApiModel(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
+
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
 
     @ApiModelProperty(
@@ -159,8 +160,12 @@ public final class TableSettings {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
@@ -174,7 +179,14 @@ public final class TableSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryId, fields, extractValues, extractionPipeline, maxResults, showDetail, conditionalFormattingRules, modelVersion);
+        return Objects.hash(queryId,
+                fields,
+                extractValues,
+                extractionPipeline,
+                maxResults,
+                showDetail,
+                conditionalFormattingRules,
+                modelVersion);
     }
 
     @Override
@@ -203,6 +215,7 @@ public final class TableSettings {
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static final class Builder {
+
         protected String queryId;
         protected List<Field> fields;
         protected Boolean extractValues;
@@ -218,14 +231,17 @@ public final class TableSettings {
         private Builder(final TableSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
             this.fields = tableSettings.getFields() == null
-                    ? null : new ArrayList<>(tableSettings.getFields());
+                    ? null
+                    : new ArrayList<>(tableSettings.getFields());
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
-                    ? null : new ArrayList<>(tableSettings.getMaxResults());
+                    ? null
+                    : new ArrayList<>(tableSettings.getMaxResults());
             this.showDetail = tableSettings.getShowDetail();
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
-                    ? null : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+                    ? null
+                    : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.modelVersion = tableSettings.getModelVersion();
         }
 

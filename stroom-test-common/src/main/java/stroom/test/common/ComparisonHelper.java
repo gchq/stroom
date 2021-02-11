@@ -114,7 +114,7 @@ public final class ComparisonHelper {
 
         boolean areFilesTheSame = true;
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
-             final Stream<String> actualStream = Files.lines(actualFile)) {
+                final Stream<String> actualStream = Files.lines(actualFile)) {
 
             final List<String> expectedLines = expectedStream.collect(Collectors.toList());
             final List<String> actualLines = actualStream.collect(Collectors.toList());

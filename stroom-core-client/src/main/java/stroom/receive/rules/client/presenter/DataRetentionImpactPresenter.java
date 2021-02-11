@@ -225,20 +225,19 @@ public class DataRetentionImpactPresenter
         // or it is toggled from nest/flat
         final List<DataRetentionImpactRow> rows = Optional.ofNullable(this.sourceData)
                 .map(summaries -> {
-                            if (isTableNested) {
-                                return DataRetentionImpactRow.buildNestedTable(
-                                        dataRetentionRules.getActiveRules(),
-                                        summaries,
-                                        treeAction,
-                                        criteria);
-                            } else {
-                                return DataRetentionImpactRow.buildFlatTable(
-                                        dataRetentionRules.getActiveRules(),
-                                        summaries,
-                                        criteria);
-                            }
-                        }
-                )
+                    if (isTableNested) {
+                        return DataRetentionImpactRow.buildNestedTable(
+                                dataRetentionRules.getActiveRules(),
+                                summaries,
+                                treeAction,
+                                criteria);
+                    } else {
+                        return DataRetentionImpactRow.buildFlatTable(
+                                dataRetentionRules.getActiveRules(),
+                                summaries,
+                                criteria);
+                    }
+                })
                 .orElse(Collections.emptyList());
         dataProvider.setCompleteList(rows);
 //        rows.forEach(row -> GWT.log(row.toString()));
@@ -367,7 +366,7 @@ public class DataRetentionImpactPresenter
                 36); // Need space for three expander levels
 
         getView().addResizableColumn(
-                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),
@@ -389,7 +388,7 @@ public class DataRetentionImpactPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_META_TYPE,

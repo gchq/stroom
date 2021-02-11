@@ -78,7 +78,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import javax.inject.Provider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -86,6 +85,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<DataGridView<MetaRow>>

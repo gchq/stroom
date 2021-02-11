@@ -99,14 +99,16 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() throws IOException {
-        final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         FeedDoc eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("Original Description");
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
 
-        List<DocRef> allSchemas = xmlSchemaStore.list();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -130,6 +132,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedStore.writeDocument(eventFeed);
+
+        List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
             final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             xmlSchema.setData("XML");
@@ -172,7 +176,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipelineWithProcessorFilter() {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
 
         final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
@@ -208,7 +215,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipeline() throws IOException {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
         final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
         final DocRef childPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Child", folder, null);
         final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineRef);

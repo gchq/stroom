@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestStroomZipRepository {
+
     @Test
     void testScan() throws IOException {
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo1"));
@@ -47,7 +48,12 @@ class TestStroomZipRepository {
         stroomZipRepository.roll();
 
         // Re open.
-        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir, null, false, 100, 0, false);
+        final StroomZipRepository reopenStroomZipRepository = new StroomZipRepository(repoDir,
+                null,
+                false,
+                100,
+                0,
+                false);
 
         reopenStroomZipRepository.scanRepository((min, max) -> {
             assertThat(1L == min).isTrue();
@@ -101,7 +107,8 @@ class TestStroomZipRepository {
         assertThat(Files.isRegularFile(lockFile3)).isTrue();
 
         try {
-            Files.setLastModifiedTime(lockFile3, FileTime.fromMillis(System.currentTimeMillis() - (48 * 60 * 60 * 1000)));
+            Files.setLastModifiedTime(lockFile3,
+                    FileTime.fromMillis(System.currentTimeMillis() - (48 * 60 * 60 * 1000)));
         } catch (final RuntimeException e) {
             fail("Unable to set LastModified");
         }
@@ -153,7 +160,12 @@ class TestStroomZipRepository {
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, 0, false);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir,
+                repositoryFormat,
+                false,
+                10000,
+                0,
+                false);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", "myFeed");
@@ -162,7 +174,8 @@ class TestStroomZipRepository {
         attributeMap.put("key3", "myKey3");
 
         StroomZipOutputStreamImpl out1;
-        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap)) {
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(
+                attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile())).isFalse();
@@ -186,13 +199,19 @@ class TestStroomZipRepository {
         final String FEED_NAME = "myFeed";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
-        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, 0, false);
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir,
+                repositoryFormat,
+                false,
+                10000,
+                0,
+                false);
 
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("feed", FEED_NAME);
 
         StroomZipOutputStreamImpl out1;
-        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap)) {
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(
+                attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile())).isFalse();
@@ -201,7 +220,7 @@ class TestStroomZipRepository {
         Path zipFile = out1.getFile();
         Path feedDir = zipFile.getParent();
         Path dateDir = feedDir.getParent();
-        String dateDirStr = dateDir.getFileName().toString();
+        final String dateDirStr = dateDir.getFileName().toString();
 
         assertThat(Files.isRegularFile(zipFile)).isTrue();
 
@@ -223,9 +242,15 @@ class TestStroomZipRepository {
         final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
-        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000, 0, false);
+        final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir,
+                repositoryFormat,
+                false,
+                10000,
+                0,
+                false);
         StroomZipOutputStreamImpl out1;
-        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap)) {
+        try (final StroomZipOutputStreamImpl out = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(
+                attributeMap)) {
             StroomZipOutputStreamUtil.addSimpleEntry(out, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                     "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
             assertThat(Files.isRegularFile(out.getFile())).isFalse();

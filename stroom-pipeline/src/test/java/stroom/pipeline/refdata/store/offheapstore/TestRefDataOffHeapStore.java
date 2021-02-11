@@ -60,7 +60,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -83,6 +82,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -94,7 +94,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1,
+            300).boxed().map(i -> "-").collect(Collectors.joining());
 
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
@@ -257,7 +258,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
-        String key = "50";
+        final String key = "50";
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
 
@@ -825,7 +826,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                                     final boolean doPurges,
                                                     final boolean doAsserts) {
 
-        Instant fullTestStartTime = Instant.now();
+        final Instant fullTestStartTime = Instant.now();
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
@@ -900,7 +901,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
                     for (int i = 0; i < entryCount; i++) {
 
-                        String mapName = mapNamFunc.buildMapName(refStreamDef, valueType, random.nextInt(keyValueMapCount));
+                        String mapName = mapNamFunc.buildMapName(refStreamDef,
+                                valueType,
+                                random.nextInt(keyValueMapCount));
                         MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
                         int entryIdx = random.nextInt(entryCount);
 
@@ -1082,7 +1085,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 loader.setCommitInterval(32_000);
 
                                 loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
-                                loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                                loadRangeValueData(keyValueMapCount,
+                                        entryCount,
+                                        refStreamDefinition,
+                                        loader,
+                                        mapNamFunc);
 
                                 loader.completeProcessing();
                             });
@@ -1110,7 +1117,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                     final int entryCount,
                                     final RefStreamDefinition refStreamDefinition,
                                     final RefDataLoader loader) {
-        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
+        loadRangeValueData(keyValueMapCount,
+                entryCount,
+                refStreamDefinition,
+                loader,
+                this::buildMapNameWithRefStreamDef);
     }
 
     private void loadRangeValueData(final int keyValueMapCount,

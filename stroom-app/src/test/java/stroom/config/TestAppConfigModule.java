@@ -130,7 +130,7 @@ class TestAppConfigModule {
                 return Paths.get("NOT USED");
             }
         });
-        Injector injector = Guice.createInjector(appConfigModule);
+        final Injector injector = Guice.createInjector(appConfigModule);
 //        Injector injector = Guice.createInjector(new AbstractModule() {
 //            @Override
 //            protected void configure() {

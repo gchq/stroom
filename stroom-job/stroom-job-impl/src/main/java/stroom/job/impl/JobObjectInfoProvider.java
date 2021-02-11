@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class JobObjectInfoProvider implements ObjectInfoProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobObjectInfoProvider.class);
 
     @Override
@@ -44,10 +45,10 @@ class JobObjectInfoProvider implements ObjectInfoProvider {
         }
 
         final Builder<Void> builder = OtherObject.builder()
-        .withType("Job")
-        .withId(String.valueOf(job.getId()))
-        .withName(job.getName())
-        .withDescription(description);
+                .withType("Job")
+                .withId(String.valueOf(job.getId()))
+                .withName(job.getName())
+                .withDescription(description);
 
         try {
             builder.addData(EventLoggingUtil.createData("Enabled", String.valueOf(job.isEnabled())));

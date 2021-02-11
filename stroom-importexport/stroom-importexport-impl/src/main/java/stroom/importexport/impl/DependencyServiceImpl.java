@@ -4,7 +4,6 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.FilterFieldMapper;
@@ -18,7 +17,6 @@ import stroom.util.shared.Sort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -30,8 +28,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
@@ -78,12 +78,11 @@ public class DependencyServiceImpl implements DependencyService {
     );
 
     //todo maybe better to introduce dependencies between packages in order to avoid this duplication
-    private static final DocRef [] ALL_PSEUDO_DOCREFS = {
-        new DocRef("Searchable", "Annotations", "Annotations"),
-        new DocRef("Searchable", "Meta Store", "Meta Store"),
-        new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
-        new DocRef("Searchable", "Task Manager", "Task Manager")
-    };
+    private static final DocRef[] ALL_PSEUDO_DOCREFS = {
+            new DocRef("Searchable", "Annotations", "Annotations"),
+            new DocRef("Searchable", "Meta Store", "Meta Store"),
+            new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
+            new DocRef("Searchable", "Task Manager", "Task Manager")};
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
@@ -144,7 +143,7 @@ public class DependencyServiceImpl implements DependencyService {
                                     parentDocRef,
                                     childDocRef,
                                     pseudoDocRefs.contains(childDocRef) ||
-                                    allDependencies.containsKey(childDocRef)));
+                                            allDependencies.containsKey(childDocRef)));
                 })
                 .filter(filterPredicate)
                 .sorted(sortListComparator)

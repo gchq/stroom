@@ -33,6 +33,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state", "retentionExpression"})
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "SolrIndex";
 
     @JsonProperty
@@ -165,9 +166,15 @@ public class SolrIndexDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SolrIndexDoc)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SolrIndexDoc)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final SolrIndexDoc solrIndexDoc = (SolrIndexDoc) o;
         return Objects.equals(description, solrIndexDoc.description) &&
                 Objects.equals(collection, solrIndexDoc.collection) &&

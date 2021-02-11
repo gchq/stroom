@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -21,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 public class InternalStatisticsConfig extends AbstractConfig {
@@ -260,7 +260,7 @@ public class InternalStatisticsConfig extends AbstractConfig {
         return func.apply(this).stream()
                 .filter(docRef -> enabledStoreTypes.contains(docRef.getType()))
                 .collect(Collectors.toList());
-   }
+    }
 
     @Override
     public String toString() {
@@ -284,7 +284,7 @@ public class InternalStatisticsConfig extends AbstractConfig {
      */
     @JsonIgnore
     private static List<DocRef> buildDocRefs(final InternalStatisticKey internalStatisticKey,
-                                             final Map<String, String> storeTypeToUuidMap) {
+            final Map<String, String> storeTypeToUuidMap) {
         return storeTypeToUuidMap.entrySet()
                 .stream()
                 .map(entry -> {

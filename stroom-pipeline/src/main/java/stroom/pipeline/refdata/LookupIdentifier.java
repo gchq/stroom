@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 public class LookupIdentifier {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LookupIdentifier.class);
 
     static final String NEST_SEPARATOR = "/";
@@ -42,9 +43,10 @@ public class LookupIdentifier {
      * recursive fashion, e.g. for ("map1/map2", "key1", 123456)
      * Lookup in map1: "key1" => "key2"
      * Lookup in map2: "key2" => "someValue"
-     * @param map The name of the map, or a delimited string listing a sequence of map names to
-     *            perform a chained lookup, e.g. "myMap" or "map1/map2/map3"
-     * @param key The key to lookup in the map or primaryMap
+     *
+     * @param map       The name of the map, or a delimited string listing a sequence of map names to
+     *                  perform a chained lookup, e.g. "myMap" or "map1/map2/map3"
+     * @param key       The key to lookup in the map or primaryMap
      * @param eventTime The time the lookup is effective at (epochMs)
      */
     public LookupIdentifier(final String map, final String key, final long eventTime) {
@@ -123,7 +125,7 @@ public class LookupIdentifier {
     }
 
     public LookupIdentifier cloneWithNewKey(String newKey) {
-       return new LookupIdentifier(map, newKey, eventTime);
+        return new LookupIdentifier(map, newKey, eventTime);
     }
 
     @Override
@@ -139,8 +141,12 @@ public class LookupIdentifier {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final LookupIdentifier that = (LookupIdentifier) o;
         return eventTime == that.eventTime &&
                 Objects.equals(map, that.map) &&

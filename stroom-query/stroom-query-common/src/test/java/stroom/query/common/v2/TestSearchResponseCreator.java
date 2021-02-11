@@ -64,7 +64,7 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_timesOut() {
-        Duration serverTimeout = Duration.ofMillis(500);
+        final Duration serverTimeout = Duration.ofMillis(500);
         SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is never complete
@@ -150,8 +150,8 @@ class TestSearchResponseCreator {
 
     @Test
     void create_incremental_noTimeout() {
-        Duration clientTimeout = Duration.ofMillis(0);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
+        final Duration clientTimeout = Duration.ofMillis(0);
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);

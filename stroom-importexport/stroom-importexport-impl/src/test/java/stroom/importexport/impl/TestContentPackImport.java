@@ -48,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestContentPackImport {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestContentPackImport.class);
 
     private static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
@@ -193,7 +194,7 @@ class TestContentPackImport {
     void testStartup_enabledThreeFiles() throws IOException {
         setStandardMockAnswers();
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-        ContentPackImport contentPackImport = getContentPackImport();
+        final ContentPackImport contentPackImport = getContentPackImport();
 
         FileUtil.touch(testPack1);
         FileUtil.touch(testPack2);

@@ -30,16 +30,17 @@ import stroom.security.shared.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private final DocumentPermissionDao documentPermissionDao;
@@ -49,9 +50,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-                                  final UserDao userDao,
-                                  final PermissionChangeEventBus permissionChangeEventBus,
-                                  final SecurityContextImpl securityContext) {
+            final UserDao userDao,
+            final PermissionChangeEventBus permissionChangeEventBus,
+            final SecurityContextImpl securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
@@ -59,7 +60,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     public Set<String> getPermissionsForDocumentForUser(final String docUuid,
-                                                        final String userUuid) {
+            final String userUuid) {
         return documentPermissionDao.getPermissionsForDocumentForUser(docUuid, userUuid);
     }
 
@@ -81,7 +82,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                             }
                             userPermissions.put(user.getUuid(), permissions);
                         });
-                });
+            });
         } catch (final RuntimeException e) {
             LOGGER.error("getPermissionsForDocument()", e);
             throw e;
@@ -91,21 +92,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     public void addPermission(final String docUuid,
-                              final String userUuid,
-                              final String permission) {
+            final String userUuid,
+            final String permission) {
         documentPermissionDao.addPermission(docUuid, userUuid, permission);
         AddPermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     public void removePermission(final String docUuid,
-                                 final String userUuid,
-                                 final String permission) {
+            final String userUuid,
+            final String permission) {
         documentPermissionDao.removePermission(docUuid, userUuid, permission);
         RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     void clearDocumentPermissionsForUser(final String docUuid,
-                                         final String userUuid) {
+            final String userUuid) {
         documentPermissionDao.clearDocumentPermissionsForUser(docUuid, userUuid);
         RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, null);
     }

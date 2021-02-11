@@ -28,8 +28,8 @@ class TestFieldMapper {
         final MyParent parent1 = new MyParent();
         final MyParent parent2 = new MyParent();
 
-        int parent1Id = System.identityHashCode(parent1);
-        int parent1ChildId = System.identityHashCode(parent1.child);
+        final int parent1Id = System.identityHashCode(parent1);
+        final int parent1ChildId = System.identityHashCode(parent1.child);
 
         assertThat(parent2)
                 .isEqualTo(parent1);
@@ -112,8 +112,8 @@ class TestFieldMapper {
         System.out.println("parent1       " + System.identityHashCode(parent1));
         System.out.println("parent1 child " + System.identityHashCode(parent1.child));
 
-        int parent1Id = System.identityHashCode(parent1);
-        int parent1ChildId = System.identityHashCode(parent1.child);
+        final int parent1Id = System.identityHashCode(parent1);
+        final int parent1ChildId = System.identityHashCode(parent1.child);
 
         final MyParent parent2 = new MyParent();
         parent2.setMyInt(99);
@@ -165,8 +165,8 @@ class TestFieldMapper {
         System.out.println("parent1       " + System.identityHashCode(parent1));
         System.out.println("parent1 child " + System.identityHashCode(parent1.child));
 
-        int parent1Id = System.identityHashCode(parent1);
-        int parent1ChildId = System.identityHashCode(parent1.child);
+        final int parent1Id = System.identityHashCode(parent1);
+        final int parent1ChildId = System.identityHashCode(parent1.child);
 
         // the source
         final MyParent parent2 = new MyParent();
@@ -231,8 +231,8 @@ class TestFieldMapper {
         System.out.println("parent1       " + System.identityHashCode(destParent));
         System.out.println("parent1 child " + System.identityHashCode(destParent.child));
 
-        int destParentId = System.identityHashCode(destParent);
-        int destParentChildId = System.identityHashCode(destParent.child);
+        final int destParentId = System.identityHashCode(destParent);
+        final int destParentChildId = System.identityHashCode(destParent.child);
 
         final MyParent sourceParent = new MyParent();
         sourceParent.getChild().setMyString("nonDefault");
@@ -342,8 +342,12 @@ class TestFieldMapper {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final MyParent myParent = (MyParent) o;
             return myInt == myParent.myInt &&
                     myString.equals(myParent.myString) &&
@@ -388,8 +392,12 @@ class TestFieldMapper {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final MyChild myChild = (MyChild) o;
             return myInt == myChild.myInt &&
                     myString.equals(myChild.myString);

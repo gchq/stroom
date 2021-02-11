@@ -38,15 +38,15 @@ public class FunctionSignatureUtil {
     }
 
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
-                                            final Consumer<String> insertFunction,
-                                            final String helpUrlBase) {
+            final Consumer<String> insertFunction,
+            final String helpUrlBase) {
         return buildMenuItems(signatures, insertFunction, helpUrlBase, 0);
     }
 
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
-                                            final Consumer<String> insertFunction,
-                                            final String helpUrlBase,
-                                            final int depth) {
+            final Consumer<String> insertFunction,
+            final String helpUrlBase,
+            final int depth) {
         // This is roughly what we are aiming for
         // Date //primary category
         //   Rounding // sub-category
@@ -107,9 +107,9 @@ public class FunctionSignatureUtil {
     }
 
     private static List<Item> convertLeaves(final List<FunctionSignature> signatures,
-                                              final AtomicInteger positionInMenu,
-                                              final Consumer<String> insertFunction,
-                                              final String helpUrlBase) {
+            final AtomicInteger positionInMenu,
+            final Consumer<String> insertFunction,
+            final String helpUrlBase) {
 
         // Create one for each alias too, except the special one char ones
         // like +, -, /, * etc. as they have a form without brackets
@@ -148,7 +148,7 @@ public class FunctionSignatureUtil {
 
 
     public static List<AceCompletion> buildCompletions(final List<FunctionSignature> signatures,
-                                                       final String helpUrlBase) {
+            final String helpUrlBase) {
         // FlatMap to aliases so we have one func def per alias
         // Filter on name length > 1 to ignore aliases like +, -, * etc which have a different form,
         // e.g. 1+2 vs add(1, 2)
@@ -163,12 +163,12 @@ public class FunctionSignatureUtil {
     }
 
     public static SafeHtml buildInfoHtml(final FunctionSignature signature,
-                                         final String helpUrlBase) {
+            final String helpUrlBase) {
         if (signature != null) {
 
             // Limit the width of the tooltip
             final Builder builder = TooltipUtil.builder(safeStylesBuilder ->
-                            safeStylesBuilder.appendTrustedString("max-width:600px;"))
+                    safeStylesBuilder.appendTrustedString("max-width:600px;"))
                     .addHeading(buildSignatureStr(signature))
                     .addSeparator();
 
@@ -269,8 +269,8 @@ public class FunctionSignatureUtil {
     }
 
     private static String argToSnippetArg(final String argName,
-                                          final Arg arg,
-                                          final int position) {
+            final Arg arg,
+            final int position) {
         final String snippetDefault = arg.getDefaultValue() != null
                 ? arg.getDefaultValue()
                 : argName;
@@ -300,10 +300,10 @@ public class FunctionSignatureUtil {
     }
 
     private static Item convertFunctionDefinitionToItem(final String name,
-                                                        final List<FunctionSignature> signatures,
-                                                        final Consumer<String> insertFunction,
-                                                        final int functionPosition,
-                                                        final String helpUrlBase) {
+            final List<FunctionSignature> signatures,
+            final Consumer<String> insertFunction,
+            final int functionPosition,
+            final String helpUrlBase) {
 
         // We either return
         //   func1 (sig) -> info
@@ -343,9 +343,9 @@ public class FunctionSignatureUtil {
     }
 
     private static Item convertSignatureToItem(final FunctionSignature signature,
-                                               final Consumer<String> insertFunction,
-                                               final int signaturePosition,
-                                               final String helpUrlBase) {
+            final Consumer<String> insertFunction,
+            final int signaturePosition,
+            final String helpUrlBase) {
         // Return something like
         // funcX (sigY) -> info
 
@@ -441,7 +441,7 @@ public class FunctionSignatureUtil {
     }
 
     private static String buildVarargsName(final Arg arg,
-                                           final int argNo) {
+            final int argNo) {
 
         final String suffix = argNo <= arg.getMinVarargsCount()
                 ? String.valueOf(argNo)
@@ -454,7 +454,7 @@ public class FunctionSignatureUtil {
 
 
     private static boolean addArgsBlockToInfo(final FunctionSignature signature,
-                                              final Builder builder) {
+            final Builder builder) {
         AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
         builder.addThreeColTable(tableBuilder -> {
@@ -534,8 +534,8 @@ public class FunctionSignatureUtil {
     }
 
     private static void addHelpLinkToInfo(final FunctionSignature signature,
-                                          final String helpUrlBase,
-                                          final Builder builder) {
+            final String helpUrlBase,
+            final Builder builder) {
         builder
                 .appendWithoutBreak("For more information see the ")
                 .appendLinkWithoutBreak(
@@ -552,12 +552,12 @@ public class FunctionSignatureUtil {
     private static String functionNameToAnchor(final String name) {
         final StringBuilder stringBuilder = new StringBuilder();
         for (final char chr : name.toCharArray()) {
-           if (Character.isUpperCase(chr)) {
-               stringBuilder.append("-")
-                       .append(String.valueOf(chr).toLowerCase());
-           } else {
-               stringBuilder.append(chr);
-           }
+            if (Character.isUpperCase(chr)) {
+                stringBuilder.append("-")
+                        .append(String.valueOf(chr).toLowerCase());
+            } else {
+                stringBuilder.append(chr);
+            }
         }
         return stringBuilder.toString();
     }

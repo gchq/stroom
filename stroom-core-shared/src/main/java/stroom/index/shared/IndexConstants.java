@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 public interface IndexConstants {
+
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
     String FEED_ID = "FeedId";

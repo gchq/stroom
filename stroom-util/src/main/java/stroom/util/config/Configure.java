@@ -19,10 +19,6 @@ package stroom.util.config;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -35,6 +31,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 /**
  * Usage java stroom.util.config.Configure
@@ -179,7 +179,7 @@ public class Configure extends AbstractCommandLineTool {
         Files.deleteIfExists(newFile);
         int replaceCount = 0;
         try (BufferedReader buffReader = new BufferedReader(Files.newBufferedReader(file));
-             BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
+                BufferedWriter buffWriter = new BufferedWriter(Files.newBufferedWriter(newFile))) {
             String line;
             int lineCount = 0;
             while ((line = buffReader.readLine()) != null) {

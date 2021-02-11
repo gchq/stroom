@@ -1,17 +1,18 @@
 package stroom.config.global.client.view;
 
+import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
+import stroom.config.global.client.presenter.ConfigPropertyClusterValuesUiHandlers;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
-import stroom.config.global.client.presenter.ConfigPropertyClusterValuesUiHandlers;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class ConfigPropertyClusterValuesViewImpl
-    extends ViewWithUiHandlers<ConfigPropertyClusterValuesUiHandlers>
-    implements ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView {
+        extends ViewWithUiHandlers<ConfigPropertyClusterValuesUiHandlers>
+        implements ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView {
 
     private final Widget widget;
 
@@ -46,5 +47,6 @@ public class ConfigPropertyClusterValuesViewImpl
     }
 
     public interface Binder extends UiBinder<Widget, ConfigPropertyClusterValuesViewImpl> {
+
     }
 }

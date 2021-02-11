@@ -125,7 +125,9 @@ class BenchmarkIO {
         Files.delete(bgzipIdxFile3);
     }
 
-    private void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType) throws IOException {
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    private void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType)
+            throws IOException {
         // Write the data.
         OutputStream os;
         switch (streamType) {
@@ -135,17 +137,20 @@ class BenchmarkIO {
             case GZIP:
                 os = new BufferedOutputStream(
                         new GZIPOutputStream(
-                                new BufferedOutputStream(Files.newOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE)),
+                                new BufferedOutputStream(Files.newOutputStream(file1),
+                                        FileSystemUtil.STREAM_BUFFER_SIZE)),
                         FileSystemUtil.STREAM_BUFFER_SIZE);
                 break;
             case BGZIP:
                 os = new BlockGZIPOutputFile(file1);
                 break;
             case BGZIP_SEG:
-                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1),
+                        () -> new LockingFileOutputStream(file2, false));
                 break;
             case BGZIP_SEG_COMPRESS:
-                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new BlockGZIPOutputFile(file2));
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () ->
+                        new BlockGZIPOutputFile(file2));
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected stream type: " + streamType);
@@ -154,10 +159,12 @@ class BenchmarkIO {
         long startTime = System.currentTimeMillis();
 
         if (StreamType.RAW_SEG_TEXT.equals(streamType)) {
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
+            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () ->
+                    new LockingFileOutputStream(file2, false));
             TargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else if (StreamType.RAW_SEG_XML.equals(streamType)) {
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
+            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () ->
+                    new LockingFileOutputStream(file2, false));
             TargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else {
             int startPos = 0;

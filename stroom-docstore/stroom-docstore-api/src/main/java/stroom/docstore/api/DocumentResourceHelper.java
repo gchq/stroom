@@ -20,7 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 public interface DocumentResourceHelper {
-    <D extends Doc>D read(DocumentActionHandler<D> documentActionHandler, DocRef docRef);
+
+    <D extends Doc> D read(DocumentActionHandler<D> documentActionHandler, DocRef docRef);
 
     <D extends Doc> D update(DocumentActionHandler<D> documentActionHandler, D doc);
 }

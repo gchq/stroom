@@ -41,8 +41,12 @@ public class DataRetentionDeleteSummaryRequest {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionDeleteSummaryRequest request = (DataRetentionDeleteSummaryRequest) o;
         return Objects.equals(queryId, request.queryId) &&
                 Objects.equals(dataRetentionRules, request.dataRetentionRules) &&

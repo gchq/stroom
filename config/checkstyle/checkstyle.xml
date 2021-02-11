@@ -354,38 +354,51 @@
              value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
     </module>
     <module name="Indentation">
+      <!-- IJ tab/indent settings are:
+        tab size: 4
+        indent: 4
+        continuation indent: 8
+      -->
       <property name="basicOffset" value="4"/>
-      <property name="braceAdjustment" value="4"/>
+      <!--<property name="braceAdjustment" value="4"/>-->
+      <property name="braceAdjustment" value="0"/>
       <property name="caseIndent" value="4"/>
       <property name="throwsIndent" value="4"/>
-      <property name="lineWrappingIndentation" value="8"/>
-      <property name="arrayInitIndent" value="4"/>
+      <!-- Set to 4 not 8 to allow for IJ aligning method args -->
+      <property name="lineWrappingIndentation" value="4"/>
+
+      <!-- Set to 8 not 4 to match IJ auto formatting -->
+      <property name="arrayInitIndent" value="8"/>
+      <property name="forceStrictCondition" value="false"/>
     </module>
     <module name="AbbreviationAsWordInName">
       <property name="ignoreFinal" value="false"/>
       <property name="allowedAbbreviationLength" value="0"/>
 
-      <property name="allowedAbbreviations" value="DTO,URI,IT,XSLT,IO,XML"/>
+      <!--<property name="allowedAbbreviations" value="DTO,URI,IT,XSLT,IO,XML"/>-->
       <property name="tokens"
                value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,
                     PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,
                     RECORD_COMPONENT_DEF"/>
+
+      <!-- too many in use currently so set as warning -->
+      <property name="severity" value="warning"/>
     </module>
     <!--<module name="OverloadMethodsDeclarationOrder"/>-->
 
     <module name="VariableDeclarationUsageDistance"/>
 
-    <!-- We want an order like:
-      import stroom......
-
-      import com......
-
-      import java.....
-      import javax.....
-
-      import static ......
-    -->
     <module name="CustomImportOrder">
+      <!-- We want an order like:
+        import stroom......
+
+        import com......
+
+        import java.....
+        import javax.....
+
+        import static ......
+      -->
       <property name="specialImportsRegExp" value="^stroom\."/>
       <!-- Something that is not java. or javax. -->
       <property name="thirdPartyPackageRegExp" value="^(?!javax?\.).*"/>

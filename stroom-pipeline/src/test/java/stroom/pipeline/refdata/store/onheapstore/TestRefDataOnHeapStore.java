@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -29,7 +30,6 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.lmdb.PutOutcome;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -50,7 +50,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -75,10 +74,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefDataOnHeapStore {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
@@ -87,7 +88,8 @@ class TestRefDataOnHeapStore {
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1,
+            300).boxed().map(i -> "-").collect(Collectors.joining());
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
@@ -254,7 +256,7 @@ class TestRefDataOnHeapStore {
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
-        String key = "50";
+        final String key = "50";
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
 
@@ -507,7 +509,7 @@ class TestRefDataOnHeapStore {
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
 
         LOGGER.info("-------------------------load starts here--------------------------------------");
-        List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
+        final List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
                 refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
 
         assertDbCounts(
@@ -686,7 +688,11 @@ class TestRefDataOnHeapStore {
                                     final int entryCount,
                                     final RefStreamDefinition refStreamDefinition,
                                     final RefDataLoader loader) {
-        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
+        loadRangeValueData(keyValueMapCount,
+                entryCount,
+                refStreamDefinition,
+                loader,
+                this::buildMapNameWithRefStreamDef);
     }
 
     private void loadRangeValueData(final int keyValueMapCount,
@@ -962,6 +968,7 @@ class TestRefDataOnHeapStore {
     }
 
     private interface MapNamFunc {
+
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
     }

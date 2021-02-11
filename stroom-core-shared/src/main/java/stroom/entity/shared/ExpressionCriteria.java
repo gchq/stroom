@@ -30,6 +30,7 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExpressionCriteria extends BaseCriteria {
+
     @JsonProperty
     private ExpressionOperator expression;
 
@@ -59,9 +60,15 @@ public class ExpressionCriteria extends BaseCriteria {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExpressionCriteria)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExpressionCriteria)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final ExpressionCriteria that = (ExpressionCriteria) o;
         return Objects.equals(expression, that.expression);
     }

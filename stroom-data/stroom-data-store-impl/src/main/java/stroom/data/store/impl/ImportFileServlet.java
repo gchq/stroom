@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletResponse;
  * Generic Import Service
  */
 public final class ImportFileServlet extends HttpServlet implements IsServlet {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
@@ -60,7 +61,7 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
 
     @Inject
     ImportFileServlet(final ResourceStore resourceStore,
-                      final StreamEventLog streamEventLog) {
+            final StreamEventLog streamEventLog) {
         this.resourceStore = resourceStore;
         this.streamEventLog = streamEventLog;
     }
@@ -86,7 +87,7 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
             final Path file = resourceStore.getTempFile(uuid);
             streamEventLog.importStream("Import", FileUtil.getCanonicalPath(file), null);
             try (final InputStream inputStream = fileItem.getInputStream();
-                 final OutputStream outputStream = Files.newOutputStream(file)) {
+                    final OutputStream outputStream = Files.newOutputStream(file)) {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }
 

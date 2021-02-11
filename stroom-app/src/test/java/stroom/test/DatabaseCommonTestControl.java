@@ -85,7 +85,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Override
     public void setup(final Path tempDir) {
         LOGGER.debug("temp dir: {}", tempDir);
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
         Path fsVolDir;
         Path indexVolDir;
         if (tempDir == null) {
@@ -126,7 +126,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
      */
     @Override
     public void clear() {
-        Instant startTime = Instant.now();
+        final Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
 

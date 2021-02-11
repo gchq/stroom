@@ -16,20 +16,22 @@
 
 package stroom.cache.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.cache.client.presenter.CachePresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
+
     @Inject
     public CacheMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
                                  final Provider<CachePresenter> presenterProvider,
@@ -42,13 +44,13 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_CACHE_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem(
-                        12,
-                        SvgPresets.MONITORING,
-                        SvgPresets.MONITORING,
-                        "Caches",
-                        null,
-                        true,
-                        () -> open()));
+                            12,
+                            SvgPresets.MONITORING,
+                            SvgPresets.MONITORING,
+                            "Caches",
+                            null,
+                            true,
+                            () -> open()));
         }
     }
 }

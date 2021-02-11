@@ -29,6 +29,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ClusterNodeInfo {
+
     @JsonProperty
     private String discoverTime;
     @JsonProperty
@@ -140,29 +141,33 @@ public class ClusterNodeInfo {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ClusterNodeInfo that = (ClusterNodeInfo) o;
         return Objects.equals(discoverTime, that.discoverTime) &&
-            Objects.equals(buildInfo, that.buildInfo) &&
-            Objects.equals(nodeName, that.nodeName) &&
-            Objects.equals(endpointUrl, that.endpointUrl) &&
-            Objects.equals(itemList, that.itemList) &&
-            Objects.equals(ping, that.ping) &&
-            Objects.equals(error, that.error);
+                Objects.equals(buildInfo, that.buildInfo) &&
+                Objects.equals(nodeName, that.nodeName) &&
+                Objects.equals(endpointUrl, that.endpointUrl) &&
+                Objects.equals(itemList, that.itemList) &&
+                Objects.equals(ping, that.ping) &&
+                Objects.equals(error, that.error);
     }
 
     @Override
     public String toString() {
         return "ClusterNodeInfo{" +
-            "discoverTime='" + discoverTime + '\'' +
-            ", buildInfo=" + buildInfo +
-            ", nodeName='" + nodeName + '\'' +
-            ", endpointUrl='" + endpointUrl + '\'' +
-            ", itemList=" + itemList +
-            ", ping=" + ping +
-            ", error='" + error + '\'' +
-            '}';
+                "discoverTime='" + discoverTime + '\'' +
+                ", buildInfo=" + buildInfo +
+                ", nodeName='" + nodeName + '\'' +
+                ", endpointUrl='" + endpointUrl + '\'' +
+                ", itemList=" + itemList +
+                ", ping=" + ping +
+                ", error='" + error + '\'' +
+                '}';
     }
 
     @Override
@@ -172,6 +177,7 @@ public class ClusterNodeInfo {
 
     @JsonInclude(Include.NON_NULL)
     public static class ClusterNodeInfoItem {
+
         @JsonProperty
         private final String nodeName;
         @JsonProperty
@@ -203,12 +209,16 @@ public class ClusterNodeInfo {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final ClusterNodeInfoItem that = (ClusterNodeInfoItem) o;
             return active == that.active &&
-                master == that.master &&
-                Objects.equals(nodeName, that.nodeName);
+                    master == that.master &&
+                    Objects.equals(nodeName, that.nodeName);
         }
 
         @Override
@@ -219,10 +229,10 @@ public class ClusterNodeInfo {
         @Override
         public String toString() {
             return "ClusterNodeInfoItem{" +
-                "nodeName='" + nodeName + '\'' +
-                ", active=" + active +
-                ", master=" + master +
-                '}';
+                    "nodeName='" + nodeName + '\'' +
+                    ", active=" + active +
+                    ", master=" + master +
+                    '}';
         }
     }
 }

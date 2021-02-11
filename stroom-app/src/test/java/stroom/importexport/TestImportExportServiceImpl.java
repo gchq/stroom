@@ -44,6 +44,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -63,39 +64,66 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(1);
 
         final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", system, null);
-        DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_" + FileSystemTestUtil.getUniqueTestString(), system, null);
-        DocRef folder2child1 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
-        DocRef folder2child2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        final DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER,
+                "Root2_" + FileSystemTestUtil.getUniqueTestString(),
+                system,
+                null);
+        final DocRef folder2child1 = explorerService.create(ExplorerConstants.FOLDER,
+                "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(),
+                folder2,
+                null);
+        final DocRef folder2child2 = explorerService.create(ExplorerConstants.FOLDER,
+                "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(),
+                folder2,
+                null);
 
         assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(5);
 
-        final DocRef tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
+        final DocRef tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder1,
+                null);
         final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref);
         tran1.setDescription("Description");
         pipelineStore.writeDocument(tran1);
 
-        final DocRef tran2Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        final DocRef tran2Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder2,
+                null);
         PipelineDoc tran2 = pipelineStore.readDocument(tran2Ref);
         tran2.setDescription("Description");
         tran2.setParentPipeline(tran1Ref);
         tran2 = pipelineStore.writeDocument(tran2);
 
-        final DocRef referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
+        final DocRef referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder1,
+                null);
         final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef);
         referenceFeed.setDescription("Description");
         feedStore.writeDocument(referenceFeed);
 
-        final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder2,
+                null);
         FeedDoc eventFeed = feedStore.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
         feedStore.writeDocument(eventFeed);
 
-        final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
+        final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder2child1,
+                null);
         final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
         feedStore.writeDocument(eventFeedChild);
 
-        final DocRef eventFeedChild2Ref = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child2, null);
+        final DocRef eventFeedChild2Ref = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                folder2child2,
+                null);
         final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Ref);
         eventFeedChild2.setDescription("Description2");
         feedStore.writeDocument(eventFeedChild2);

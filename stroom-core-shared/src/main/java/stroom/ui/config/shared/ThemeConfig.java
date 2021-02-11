@@ -9,13 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"backgroundAttachment", "backgroundColor", "backgroundImage", "backgroundPosition", "backgroundRepeat", "backgroundOpacity", "tubeVisible", "tubeOpacity", "labelColours"})
 @JsonInclude(Include.NON_NULL)
 public class ThemeConfig extends AbstractConfig {
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundAttachment;
@@ -155,22 +156,34 @@ public class ThemeConfig extends AbstractConfig {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ThemeConfig that = (ThemeConfig) o;
         return Objects.equals(backgroundAttachment, that.backgroundAttachment) &&
-            Objects.equals(backgroundColor, that.backgroundColor) &&
-            Objects.equals(backgroundImage, that.backgroundImage) &&
-            Objects.equals(backgroundPosition, that.backgroundPosition) &&
-            Objects.equals(backgroundRepeat, that.backgroundRepeat) &&
-            Objects.equals(backgroundOpacity, that.backgroundOpacity) &&
-            Objects.equals(tubeVisible, that.tubeVisible) &&
-            Objects.equals(tubeOpacity, that.tubeOpacity) &&
-            Objects.equals(labelColours, that.labelColours);
+                Objects.equals(backgroundColor, that.backgroundColor) &&
+                Objects.equals(backgroundImage, that.backgroundImage) &&
+                Objects.equals(backgroundPosition, that.backgroundPosition) &&
+                Objects.equals(backgroundRepeat, that.backgroundRepeat) &&
+                Objects.equals(backgroundOpacity, that.backgroundOpacity) &&
+                Objects.equals(tubeVisible, that.tubeVisible) &&
+                Objects.equals(tubeOpacity, that.tubeOpacity) &&
+                Objects.equals(labelColours, that.labelColours);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(backgroundAttachment, backgroundColor, backgroundImage, backgroundPosition, backgroundRepeat, backgroundOpacity, tubeVisible, tubeOpacity, labelColours);
+        return Objects.hash(backgroundAttachment,
+                backgroundColor,
+                backgroundImage,
+                backgroundPosition,
+                backgroundRepeat,
+                backgroundOpacity,
+                tubeVisible,
+                tubeOpacity,
+                labelColours);
     }
 }

@@ -17,19 +17,21 @@
 
 package stroom.receive.rules.shared;
 
+import stroom.datasource.api.v2.AbstractField;
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.docstore.shared.Doc;
 
 import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @JsonInclude(Include.NON_NULL)
 public class ReceiveDataRules extends Doc {
+
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
 
     @JsonProperty
@@ -75,21 +77,37 @@ public class ReceiveDataRules extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
 
         final ReceiveDataRules ruleSet = (ReceiveDataRules) o;
 
-        if (fields != null ? !fields.equals(ruleSet.fields) : ruleSet.fields != null) return false;
-        return rules != null ? rules.equals(ruleSet.rules) : ruleSet.rules == null;
+        if (fields != null
+                ? !fields.equals(ruleSet.fields)
+                : ruleSet.fields != null) {
+            return false;
+        }
+        return rules != null
+                ? rules.equals(ruleSet.rules)
+                : ruleSet.rules == null;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (fields != null ? fields.hashCode() : 0);
-        result = 31 * result + (rules != null ? rules.hashCode() : 0);
+        result = 31 * result + (fields != null
+                ? fields.hashCode()
+                : 0);
+        result = 31 * result + (rules != null
+                ? rules.hashCode()
+                : 0);
         return result;
     }
 }

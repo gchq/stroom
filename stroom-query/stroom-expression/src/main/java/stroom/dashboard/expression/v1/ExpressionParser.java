@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExpressionParser {
+
     // We deliberately exclude brackets as they are treated as an unnamed function.
     private static final Type[] BODMAS = new Type[]{
             Type.ORDER,

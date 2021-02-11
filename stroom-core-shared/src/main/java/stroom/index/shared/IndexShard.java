@@ -16,16 +16,17 @@
 
 package stroom.index.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PrimitiveValueConverter;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import java.util.Set;
 })
 @JsonInclude(Include.NON_NULL)
 public class IndexShard {
+
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections

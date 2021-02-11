@@ -33,6 +33,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class FindTaskProgressCriteria extends BaseCriteria {
+
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
@@ -43,7 +44,9 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     public static final FilterFieldDefinition FIELD_DEF_NODE = FilterFieldDefinition.qualifiedField(FIELD_NODE);
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
     public static final FilterFieldDefinition FIELD_DEF_USER = FilterFieldDefinition.qualifiedField(FIELD_USER);
-    public static final FilterFieldDefinition FIELD_DEF_SUBMIT_TIME = FilterFieldDefinition.qualifiedField(FIELD_SUBMIT_TIME, "time");
+    public static final FilterFieldDefinition FIELD_DEF_SUBMIT_TIME = FilterFieldDefinition.qualifiedField(
+            FIELD_SUBMIT_TIME,
+            "time");
     public static final FilterFieldDefinition FIELD_DEF_INFO = FilterFieldDefinition.qualifiedField(FIELD_INFO);
 
     public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(

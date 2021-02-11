@@ -33,8 +33,6 @@ import stroom.util.shared.ResultPage;
 
 import org.apache.lucene.store.LockObtainFailedException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -55,9 +53,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 
     private final NodeInfo nodeInfo;
@@ -78,13 +79,13 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Inject
     public IndexShardWriterCacheImpl(final NodeInfo nodeInfo,
-                                     final IndexShardService indexShardService,
-                                     final IndexConfig indexConfig,
-                                     final IndexStructureCache indexStructureCache,
-                                     final IndexShardManager indexShardManager,
-                                     final IndexShardWriterExecutorProvider executorProvider,
-                                     final TaskContextFactory taskContextFactory,
-                                     final SecurityContext securityContext) {
+            final IndexShardService indexShardService,
+            final IndexConfig indexConfig,
+            final IndexStructureCache indexStructureCache,
+            final IndexShardManager indexShardManager,
+            final IndexShardWriterExecutorProvider executorProvider,
+            final TaskContextFactory taskContextFactory,
+            final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
         this.indexConfig = indexConfig;
@@ -145,7 +146,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 // Look for non deleted, non full, non corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                     // Get the index fields.
-                    final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                    final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE,
+                            indexShardKey.getIndexUuid()));
                     if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
                         final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
                         if (indexShardWriter != null) {
@@ -182,7 +184,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final long indexShardId = indexShard.getId();
 
         // Get the index fields.
-        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE,
+                indexShardKey.getIndexUuid()));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();
@@ -193,7 +196,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
-            final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager, indexStructure, indexShardKey, indexShard, ramBufferSizeMB);
+            final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager,
+                    indexStructure,
+                    indexShardKey,
+                    indexShard,
+                    ramBufferSizeMB);
 
             // We have opened the index so update the DB object.
             indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
@@ -277,7 +284,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      */
     @Override
     public void sweep() {
-        LOGGER.logDurationIfDebugEnabled(() -> {
+        LOGGER.logDurationIfDebugEnabled(
+                () -> {
                     removeElementsExceedingTTLandTTI();
                     removeElementsExceedingCore();
                 },
@@ -357,7 +365,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         });
     }
 
-    private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter, final Executor executor) {
+    private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter,
+            final Executor executor) {
         final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult("Flushing writer", taskContext -> {
             try {
                 taskContext.info(() -> "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
@@ -411,8 +420,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                     LOGGER.error(e::getMessage, e);
                                 }
 
-                        return null;
-                    });
+                                return null;
+                            });
                     final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(
                             supplier,
                             executor);
@@ -473,7 +482,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         executor = Executors.newSingleThreadScheduledExecutor();
                         // Start logging action progress.
                         executor.scheduleAtFixedRate(() ->
-                                LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"),
+                                        LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"),
                                 10,
                                 10,
                                 TimeUnit.SECONDS);
@@ -541,6 +550,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private static class Settings {
+
         private final long creationTime;
         private final long timeToLive;
         private final long timeToIdle;
@@ -549,11 +559,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         private final long maxItems;
 
         Settings(final long creationTime,
-                 final long timeToLive,
-                 final long timeToIdle,
-                 final long minItems,
-                 final long coreItems,
-                 final long maxItems) {
+                final long timeToLive,
+                final long timeToIdle,
+                final long minItems,
+                final long coreItems,
+                final long maxItems) {
             this.creationTime = creationTime;
             this.timeToLive = timeToLive;
             this.timeToIdle = timeToIdle;

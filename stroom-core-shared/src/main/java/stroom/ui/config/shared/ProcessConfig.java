@@ -9,13 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ProcessConfig extends AbstractConfig {
+
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
 
@@ -77,11 +78,15 @@ public class ProcessConfig extends AbstractConfig {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ProcessConfig that = (ProcessConfig) o;
         return defaultTimeLimit == that.defaultTimeLimit &&
-            defaultRecordLimit == that.defaultRecordLimit;
+                defaultRecordLimit == that.defaultRecordLimit;
     }
 
     @Override

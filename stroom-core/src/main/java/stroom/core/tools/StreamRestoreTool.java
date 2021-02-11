@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class StreamRestoreTool extends DatabaseTool {
+
     private static final int KEY_PAD = 30;
     private static final int COUNT_PAD = 10;
     private static final String VOLUME_PATH = "VolumePath";
@@ -79,21 +80,22 @@ public class StreamRestoreTool extends DatabaseTool {
     private final SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>>
             streamTypeFeedDateStreamCount =
             new SimpleConcurrentMap<String, SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>>() {
-        @Override
-        protected SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>> initialValue(final String key) {
-            return new SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>() {
                 @Override
-                protected SimpleConcurrentMap<String, KeyCount> initialValue(final String key) {
-                    return new SimpleConcurrentMap<String, KeyCount>() {
+                protected SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>> initialValue(
+                        final String key) {
+                    return new SimpleConcurrentMap<String, SimpleConcurrentMap<String, KeyCount>>() {
                         @Override
-                        protected KeyCount initialValue(final String key) {
-                            return new KeyCount(key);
+                        protected SimpleConcurrentMap<String, KeyCount> initialValue(final String key) {
+                            return new SimpleConcurrentMap<String, KeyCount>() {
+                                @Override
+                                protected KeyCount initialValue(final String key) {
+                                    return new KeyCount(key);
+                                }
+                            };
                         }
                     };
                 }
             };
-        }
-    };
     private String deleteFile = null;
     private Map<String, Long> pathStreamTypeMap = null;
     private Map<String, Long> pathVolumeMap = null;
@@ -531,6 +533,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     static class KeyCount {
+
         List<String> key;
         MutableInt count;
 

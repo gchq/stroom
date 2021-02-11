@@ -16,14 +16,16 @@
 
 package stroom.data.shared;
 
+import stroom.util.shared.ResourceKey;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.ResourceKey;
 
 @JsonInclude(Include.NON_NULL)
 public class UploadDataRequest {
+
     @JsonProperty
     private final ResourceKey key;
     @JsonProperty

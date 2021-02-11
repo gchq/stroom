@@ -4,6 +4,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 
 public final class DataRetentionFields {
+
     public static final String RETENTION_AGE = "Age";
     public static final String RETENTION_UNTIL = "Until";
     public static final String RETENTION_RULE = "Rule";

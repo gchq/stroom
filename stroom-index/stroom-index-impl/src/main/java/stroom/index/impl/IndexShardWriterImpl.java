@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardWriterImpl implements IndexShardWriter {
+
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterImpl.class);
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardWriterImpl.class);
 
@@ -101,16 +102,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
      * Convenience constructor used in tests.
      */
     public IndexShardWriterImpl(final IndexShardManager indexShardManager,
-                         final IndexStructure indexStructure,
-                         final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
+            final IndexStructure indexStructure,
+            final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
         this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
     IndexShardWriterImpl(final IndexShardManager indexShardManager,
-                         final IndexStructure indexStructure,
-                         final IndexShardKey indexShardKey,
-                         final IndexShard indexShard,
-                         final int ramBufferSizeMB) throws IOException {
+            final IndexStructure indexStructure,
+            final IndexShardKey indexShardKey,
+            final IndexShard indexShard,
+            final int ramBufferSizeMB) throws IOException {
         this.indexShardManager = indexShardManager;
         this.indexShardKey = indexShardKey;
         this.indexShardId = indexShard.getId();
@@ -127,8 +128,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         updateIndexStructure(indexStructure);
 
         Directory directory;
-        IndexWriter indexWriter;
-        AtomicInteger documentCount;
 
         // Open the index writer.
         // If we already have a directory then this is an existing index.
@@ -175,7 +174,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         directory = new NIOFSDirectory(dir, LockFactoryFactory.get());
 
         // IndexWriter to use for adding data to the index.
-        indexWriter = new IndexWriter(directory, indexWriterConfig);
+        final IndexWriter indexWriter = new IndexWriter(directory, indexWriterConfig);
         open.set(true);
 
         final LiveIndexWriterConfig liveIndexWriterConfig = indexWriter.getConfig();
@@ -187,7 +186,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
 
         // Check the number of committed docs in this shard.
         final int numDocs = indexWriter.numDocs();
-        documentCount = new AtomicInteger(numDocs);
+        final AtomicInteger documentCount = new AtomicInteger(numDocs);
 
         if (indexShard.getDocumentCount() != numDocs) {
             LAMBDA_LOGGER.error(() -> "Mismatch document count. Index says " + numDocs + " DB says " + indexShard.getDocumentCount());
@@ -373,10 +372,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     private void update(final long indexShardId,
-                        final Integer documentCount,
-                        final Long commitDurationMs,
-                        final Long commitMs,
-                        final Long fileSize) {
+            final Integer documentCount,
+            final Long commitDurationMs,
+            final Long commitMs,
+            final Long fileSize) {
         if (indexShardManager != null) {
             indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }

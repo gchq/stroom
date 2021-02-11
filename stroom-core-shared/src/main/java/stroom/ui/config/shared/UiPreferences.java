@@ -8,13 +8,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import java.util.Objects;
+import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"allowPasswordResets", "dateFormat", "defaultApiKeyExpiryInMinutes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UiPreferences extends AbstractConfig {
+
     @JsonProperty
     @JsonPropertyDescription("The date format to use in the UI")
     private String dateFormat;
@@ -55,8 +56,12 @@ public class UiPreferences extends AbstractConfig {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final UiPreferences that = (UiPreferences) o;
         return Objects.equals(dateFormat, that.dateFormat);
     }

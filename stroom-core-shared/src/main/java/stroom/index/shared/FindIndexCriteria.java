@@ -16,19 +16,21 @@
 
 package stroom.index.shared;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindIndexCriteria extends FindDocumentEntityCriteria {
+
     public FindIndexCriteria() {
     }
 

@@ -1,7 +1,6 @@
 package stroom.config.global.shared;
 
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -11,6 +10,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.Arrays;
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -19,14 +20,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
     String NODE_PROPERTIES_SUB_PATH = "/nodeProperties";
@@ -54,8 +54,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     // TODO do we need this if the method returns a type?
     @ApiOperation(
-        value = "TODO",
-        response = ListConfigResponse.class)
+            value = "TODO",
+            response = ListConfigResponse.class)
     @POST
     @Path(PROPERTIES_SUB_PATH)
     ListConfigResponse list(@ApiParam("criteria") final GlobalConfigCriteria criteria);

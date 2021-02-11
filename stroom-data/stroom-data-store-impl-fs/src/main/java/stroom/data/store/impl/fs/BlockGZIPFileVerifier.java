@@ -34,6 +34,7 @@ import javax.annotation.Nonnull;
  * Class used to check a Block GZIP file.
  */
 class BlockGZIPFileVerifier {
+
     // File being read
     private final Path path;
     private final RandomAccessFile raFile;
@@ -192,10 +193,10 @@ class BlockGZIPFileVerifier {
 
         fillBuffer(stream, magicMarkerRawBufffer, 0, magicMarkerRawBufffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.MAGIC_MARKER, magicMarkerRawBufffer)) {
-            byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
+            final byte[] rawBuffer = new byte[magicMarkerRawBufffer.length + 200];
 
             getRaFile().seek(Math.max(0, pos - 10));
-            int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
+            final int bufSize = getRaFile().read(rawBuffer, 0, rawBuffer.length);
 
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Failed to find block sync point at ");
@@ -225,6 +226,7 @@ class BlockGZIPFileVerifier {
      * Class to interface a stream to a random access file.
      */
     class RAInputStreamAdaptor extends InputStream {
+
         @Override
         public int read() throws IOException {
             return getRaFile().read();

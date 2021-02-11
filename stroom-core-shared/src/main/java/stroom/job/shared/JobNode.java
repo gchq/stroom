@@ -1,19 +1,21 @@
 package stroom.job.shared;
 
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class JobNode implements HasAuditInfo, HasIntegerId {
+
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -188,7 +190,10 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     }
 
     public enum JobType implements HasPrimitiveValue {
-        UNKNOWN("UNKNOWN", 0), CRON("Cron", 1), FREQUENCY("Fequency", 2), DISTRIBUTED("Distributed", 3);
+        UNKNOWN("UNKNOWN", 0),
+        CRON("Cron", 1),
+        FREQUENCY("Fequency", 2),
+        DISTRIBUTED("Distributed", 3);
 
         public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
                 JobType.values());
@@ -231,8 +236,12 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final JobNode jobNode = (JobNode) o;
         return Objects.equals(id, jobNode.id);
     }

@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.guice.ProxyModule;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.grapher.graphviz.GraphvizGrapher;
@@ -9,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.proxy.app.guice.ProxyModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class GuiceBindGraph {
     }
 
     private void graph(String filename, Injector demoInjector) throws IOException {
-        Path dotFile = Paths.get(filename);
+        final Path dotFile = Paths.get(filename);
         PrintWriter out = new PrintWriter(new File(filename), "UTF-8");
 
         Injector injector = Guice.createInjector(new GraphvizModule());

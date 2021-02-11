@@ -16,12 +16,6 @@
 
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.Icon;
@@ -29,6 +23,13 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 
 public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
         implements ManageGlobalPropertyUiHandlers {
@@ -41,9 +42,9 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
-                                      final GlobalPropertyTabView view,
-                                      final ManageGlobalPropertyListPresenter listPresenter,
-                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
+            final GlobalPropertyTabView view,
+            final ManageGlobalPropertyListPresenter listPresenter,
+            final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -123,7 +124,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         listPresenter.refresh();
     }
 
-    public interface GlobalPropertyTabView
-        extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
+    public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
+
     }
 }

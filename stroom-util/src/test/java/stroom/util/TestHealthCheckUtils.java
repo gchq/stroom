@@ -14,8 +14,8 @@ class TestHealthCheckUtils {
 
     @Test
     void maskPasswords() {
-        Map<String, Object> root = new HashMap<>();
-        Map<String, Object> subMap = new HashMap<>();
+        final Map<String, Object> root = new HashMap<>();
+        final Map<String, Object> subMap = new HashMap<>();
 
         root.put("xxx", 1);
         root.put("yyy", "abc");

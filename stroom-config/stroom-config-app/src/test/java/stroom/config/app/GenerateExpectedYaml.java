@@ -1,12 +1,13 @@
 package stroom.config.app;
 
+import stroom.util.logging.LogUtil;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,19 +22,20 @@ public class GenerateExpectedYaml {
 
     private static final String APP_CONFIG = "appConfig";
 
-    private static final String HEADER =
-        "# This file is generated based on all the default configuration values that are built into stroom.\n" +
-        "# It serves as an example of the structure of the full configuration tree.\n" +
-        "# If any configuration item is not explicitly set then these defaults will be used instead.\n" +
-        "# Some configuration items are expected to set, e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
-        "# but most can be left with their default values.";
+    private static final String HEADER = "" +
+            "# This file is generated based on all the default configuration values that are built into stroom.\n" +
+            "# It serves as an example of the structure of the full configuration tree.\n" +
+            "# If any configuration item is not explicitly set then these defaults will be used instead.\n" +
+            "# Some configuration items are expected to set,\n" +
+            "# e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
+            "# but most can be left with their default values.";
 
     /**
      * Builds a fresh config object tree with all the hard coded default values
      * and generates the yaml serialised form of it, saving the result to the
      * EXPECTED_YAML_FILE_NAME file so that it can be used in
      * {@link TestYamlUtil#testGeneratedYamlAgainstExpected()}
-     *
+     * <p>
      * NOTE: This main method is called from the stroom-app gradle build so if it
      * is moved you will need to refactor that too.
      */
@@ -64,8 +66,8 @@ public class GenerateExpectedYaml {
             // called for a specific output location so add a header
 
             outputLines = generatedYaml.replace("---", "---\n" + HEADER)
-                .lines()
-                .collect(Collectors.toList());
+                    .lines()
+                    .collect(Collectors.toList());
         } else {
             // called manually for TestYamlUtil so don't modify the content else it will break the test
             outputLines = removeDropWizardLines(generatedYaml);
@@ -76,7 +78,7 @@ public class GenerateExpectedYaml {
 
         if (!generatedYaml.contains(APP_CONFIG + ":")) {
             throw new RuntimeException(LogUtil.message("Expecting to find {} in {}",
-                APP_CONFIG + ":", defaultsFile.normalize().toAbsolutePath().toString()));
+                    APP_CONFIG + ":", defaultsFile.normalize().toAbsolutePath().toString()));
         }
 
         if (schemaFile != null) {
@@ -86,10 +88,10 @@ public class GenerateExpectedYaml {
 
     public static List<String> removeDropWizardLines(final String value) {
         return value.lines()
-            .sequential()
-            .takeWhile(line ->
-                line.startsWith("---") || line.startsWith(APP_CONFIG + ":") || line.startsWith(" "))
-            .collect(Collectors.toList());
+                .sequential()
+                .takeWhile(line ->
+                        line.startsWith("---") || line.startsWith(APP_CONFIG + ":") || line.startsWith(" "))
+                .collect(Collectors.toList());
     }
 
 

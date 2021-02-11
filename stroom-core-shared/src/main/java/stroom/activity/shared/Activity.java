@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class Activity implements HasAuditInfo, HasIntegerId {
+
     public static final String ENTITY_TYPE = "Activity";
 
     @JsonProperty
@@ -180,6 +181,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
 
     @JsonInclude(Include.NON_NULL)
     public static class ActivityDetails {
+
         @JsonProperty
         private final List<Prop> properties;
 
@@ -224,6 +226,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
 
     @JsonInclude(Include.NON_NULL)
     public static class Prop {
+
         @JsonProperty
         private String id;
         @JsonProperty

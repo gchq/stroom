@@ -33,12 +33,12 @@ public class FunctionSignature {
 
     @JsonCreator
     public FunctionSignature(@JsonProperty("name") final String name,
-                             @JsonProperty("aliases") final List<String> aliases,
-                             @JsonProperty("categoryPath") final List<String> categoryPath,
-                             @JsonProperty("args") final List<Arg> args,
-                             @JsonProperty("returnType") final Type returnType,
-                             @JsonProperty("returnDescription") final String returnDescription,
-                             @JsonProperty("description") final String description) {
+            @JsonProperty("aliases") final List<String> aliases,
+            @JsonProperty("categoryPath") final List<String> categoryPath,
+            @JsonProperty("args") final List<Arg> args,
+            @JsonProperty("returnType") final Type returnType,
+            @JsonProperty("returnDescription") final String returnDescription,
+            @JsonProperty("description") final String description) {
         this.name = name;
         this.aliases = aliases;
         this.categoryPath = categoryPath;
@@ -146,8 +146,12 @@ public class FunctionSignature {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FunctionSignature that = (FunctionSignature) o;
         return Objects.equals(name, that.name)
                 && Objects.equals(aliases, that.aliases)
@@ -187,13 +191,13 @@ public class FunctionSignature {
 
         @JsonCreator
         public Arg(@JsonProperty("name") final String name,
-                   @JsonProperty("argType") final Type argType,
-                   @JsonProperty("optional") final boolean optional,
-                   @JsonProperty("varargs") final boolean varargs,
-                   @JsonProperty("minVarargsCount") final int minVarargsCount,
-                   @JsonProperty("description") final String description,
-                   @JsonProperty("allowedValues") final List<String> allowedValues,
-                   @JsonProperty("defaultValue") final String defaultValue) {
+                @JsonProperty("argType") final Type argType,
+                @JsonProperty("optional") final boolean optional,
+                @JsonProperty("varargs") final boolean varargs,
+                @JsonProperty("minVarargsCount") final int minVarargsCount,
+                @JsonProperty("description") final String description,
+                @JsonProperty("allowedValues") final List<String> allowedValues,
+                @JsonProperty("defaultValue") final String defaultValue) {
             this.name = name;
             this.argType = argType;
             this.optional = optional;
@@ -239,8 +243,12 @@ public class FunctionSignature {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Arg arg = (Arg) o;
             return optional == arg.optional
                     && varargs == arg.varargs
@@ -254,12 +262,18 @@ public class FunctionSignature {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, argType, optional, varargs, minVarargsCount, description, allowedValues, defaultValue);
+            return Objects.hash(name,
+                    argType,
+                    optional,
+                    varargs,
+                    minVarargsCount,
+                    description,
+                    allowedValues,
+                    defaultValue);
         }
 
         @Override
-        public String
-        toString() {
+        public String toString() {
             return "Arg{" +
                     "name='" + name + '\'' +
                     ", argType=" + argType +

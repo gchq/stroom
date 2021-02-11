@@ -191,9 +191,15 @@ public class IndexDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final IndexDoc indexDoc = (IndexDoc) o;
         return maxDocsPerShard == indexDoc.maxDocsPerShard &&
                 partitionSize == indexDoc.partitionSize &&
@@ -220,7 +226,10 @@ public class IndexDoc extends Doc {
     }
 
     public enum PartitionBy implements HasDisplayValue {
-        DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
+        DAY("Day"),
+        WEEK("Week"),
+        MONTH("Month"),
+        YEAR("Year");
 
         private final String displayValue;
 

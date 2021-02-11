@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
 public class ScheduledTimes {
+
     @JsonProperty
     private final String lastExecutedTime;
     @JsonProperty

@@ -54,8 +54,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         final VisComponentSettings visSettings = getVisSettings();
 
         final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");
-        ;
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+
 
         final List<ComponentConfig> components = new ArrayList<>();
 
@@ -97,6 +96,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         dashboardData.setComponents(components);
         dashboardData.setLayout(down);
 
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
         dashboard.setDashboardConfig(dashboardData);
 
         dashboard = dashboardStore.writeDocument(dashboard);

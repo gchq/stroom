@@ -32,6 +32,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies", "data"})
 @JsonInclude(Include.NON_NULL)
 public class ScriptDoc extends Doc implements HasData {
+
     public static final String DOCUMENT_TYPE = "Script";
 
     @JsonProperty
@@ -91,9 +92,15 @@ public class ScriptDoc extends Doc implements HasData {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final ScriptDoc scriptDoc = (ScriptDoc) o;
         return Objects.equals(description, scriptDoc.description) &&
                 Objects.equals(dependencies, scriptDoc.dependencies) &&
