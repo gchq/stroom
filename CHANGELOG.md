@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2043** : Removed an artificial limit on the number of data points that will be returned to a dashboard visualisation. The UI code had been written to only request a maximum of 1000 data points which meant that some visualisations were missing expected data. It may be necessary to add some limitation to avoid the UI being overloaded but the limitation has been removed for now as it was not configurable and did not warn the user when the limit had been reached.
+
 * Migrated new UI to use Swagger generated endpoints and types.
 
-* Issue **#1414** : A User Id can no longer be changed once a user is created. 
+* Issue **#1414** : A User Id can no longer be changed once a user is created.
 
 * Issue **#1862** : Email and name fields are no longer required when creating users.
 

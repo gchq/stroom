@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.Search.Builder;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest.Fetch;
 
