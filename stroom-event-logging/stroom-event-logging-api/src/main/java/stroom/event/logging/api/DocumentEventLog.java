@@ -31,7 +31,11 @@ public interface DocumentEventLog {
     void copy(final Object before, final Object after, final Throwable ex);
 
 
-    void create(final String entityType, final String entityName, final String eventTypeId, final String verb, final Throwable ex);
+    void create(final String entityType,
+                final String entityName,
+                final String eventTypeId,
+                final String verb,
+                final Throwable ex);
 
     void create(final String entityType, final String entityName, final String eventTypeId, final Throwable ex);
 
@@ -44,9 +48,18 @@ public interface DocumentEventLog {
     void create(final Object entity, final Throwable ex);
 
 
-    void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final String verb, final Throwable ex);
+    void delete(final BaseCriteria criteria,
+                final Query query,
+                final Long size,
+                final String eventTypeId,
+                final String verb,
+                final Throwable ex);
 
-    void delete(final BaseCriteria criteria, final Query query, final Long size, final String eventTypeId, final Throwable ex);
+    void delete(final BaseCriteria criteria,
+                final Query query,
+                final Long size,
+                final String eventTypeId,
+                final Throwable ex);
 
     void delete(final BaseCriteria criteria, final Query query, final Long size, final Throwable ex);
 
@@ -76,16 +89,29 @@ public interface DocumentEventLog {
     void process(final Object entity, final String eventTypeId, final Throwable ex);
 
 
-    void rename(final Object before, final Object after, final String eventTypeId, final String verb, final Throwable ex);
+    void rename(final Object before,
+                final Object after,
+                final String eventTypeId,
+                final String verb,
+                final Throwable ex);
 
     void rename(final Object before, final Object after, final String eventTypeId, final Throwable ex);
 
     void rename(final Object before, final Object after, final Throwable ex);
 
 
-    void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String verb, final Throwable ex);
+    void search(final String typeId,
+                final Query query,
+                final String resultType,
+                final PageResponse pageResponse,
+                final String verb,
+                final Throwable ex);
 
-    void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex);
+    void search(final String typeId,
+                final Query query,
+                final String resultType,
+                final PageResponse pageResponse,
+                final Throwable ex);
 
 
     void unknownOperation(final Object entity, final String eventTypeId, String description, Throwable ex);

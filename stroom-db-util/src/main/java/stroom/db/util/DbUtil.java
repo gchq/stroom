@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -15,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.sql.DataSource;
 
 public class DbUtil {
 
@@ -81,7 +81,9 @@ public class DbUtil {
                             "Error connecting to {} with username {}", jdbcUrl, username), e);
                 }
                 final Throwable cause = e.getCause();
-                final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+                final String errorMsg = cause != null
+                        ? cause.getMessage()
+                        : e.getMessage();
                 final int vendorCode = e.getErrorCode();
                 LOGGER.warn("Unable to establish database connection due to error: [{}] " +
                                 "and vendorCode [{}], will try again " +
@@ -116,7 +118,9 @@ public class DbUtil {
             return true;
         } catch (SQLException e) {
             final Throwable cause = e.getCause();
-            final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+            final String errorMsg = cause != null
+                    ? cause.getMessage()
+                    : e.getMessage();
             final int vendorCode = e.getErrorCode();
             throw new RuntimeException(LogUtil.message(
                     "Unable to establish database connection due to error: [{}] and vendorCode [{}].",
@@ -185,21 +189,29 @@ public class DbUtil {
 
     public static Integer getInteger(final ResultSet rs, final String strColName) throws SQLException {
         final int nValue = rs.getInt(strColName);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Integer getInteger(final ResultSet rs, final int columnIndex) throws SQLException {
         final int nValue = rs.getInt(columnIndex);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Long getLong(final ResultSet rs, final String strColName) throws SQLException {
         final long nValue = rs.getLong(strColName);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 
     public static Long getLong(final ResultSet rs, final int columnIndex) throws SQLException {
         final long nValue = rs.getLong(columnIndex);
-        return rs.wasNull() ? null : nValue;
+        return rs.wasNull()
+                ? null
+                : nValue;
     }
 }

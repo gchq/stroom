@@ -35,8 +35,6 @@ import stroom.util.shared.ResourceKey;
 
 import io.swagger.annotations.ApiParam;
 
-import javax.inject.Inject;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -44,8 +42,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.ws.rs.PathParam;
 
 class DictionaryResourceImpl implements DictionaryResource {
+
     private final DictionaryStore dictionaryStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -115,7 +116,10 @@ class DictionaryResourceImpl implements DictionaryResource {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
 
-        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result = dictionaryStore.importDocument(documentData.getDocRef(),
+                documentData.getDataMap(),
+                importState,
+                ImportState.ImportMode.IGNORE_CONFIRMATION);
         if (result != null) {
             return result.getDocRef();
         } else {

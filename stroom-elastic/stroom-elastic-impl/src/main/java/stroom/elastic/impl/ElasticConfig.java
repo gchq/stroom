@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ElasticConfig {
+
     private CacheConfig elasticIndexConfigCache = CacheConfig.builder()
             .maximumSize(100L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))

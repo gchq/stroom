@@ -21,6 +21,7 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 
 public interface DocumentActionHandler<D> {
+
     D readDocument(DocRef docRef);
 
     D writeDocument(D document);

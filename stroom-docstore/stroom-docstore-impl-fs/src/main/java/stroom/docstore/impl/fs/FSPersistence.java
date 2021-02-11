@@ -12,8 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
@@ -31,9 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class FSPersistence implements Persistence, Clearable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FSPersistence.class);
 
     private static final String META = "meta";
@@ -75,7 +76,8 @@ public class FSPersistence implements Persistence, Clearable {
     @Override
     public Map<String, byte[]> read(final DocRef docRef) throws IOException {
         final Map<String, byte[]> data = new HashMap<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()), docRef.getUuid() + ".*")) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
+                docRef.getUuid() + ".*")) {
             stream.forEach(file -> {
                 try {
                     final String fileName = file.getFileName().toString();
@@ -123,7 +125,8 @@ public class FSPersistence implements Persistence, Clearable {
 
     @Override
     public void delete(final DocRef docRef) {
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()), docRef.getUuid() + ".*")) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
+                docRef.getUuid() + ".*")) {
             stream.forEach(file -> {
                 try {
                     Files.delete(file);
@@ -213,7 +216,8 @@ public class FSPersistence implements Persistence, Clearable {
     private Optional<String> getName(final Path metaFile) {
         try {
             final byte[] data = Files.readAllBytes(metaFile);
-            final GenericDoc genericDoc = objectMapper.readValue(new StringReader(EncodingUtil.asString(data)), GenericDoc.class);
+            final GenericDoc genericDoc = objectMapper.readValue(new StringReader(EncodingUtil.asString(data)),
+                    GenericDoc.class);
             return Optional.ofNullable(genericDoc.getName());
 
         } catch (final IOException | RuntimeException e) {
@@ -230,5 +234,6 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     private static class GenericDoc extends Doc {
+
     }
 }

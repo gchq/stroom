@@ -47,7 +47,7 @@ import javax.servlet.http.Part;
 public class MockHttpServletRequest implements HttpServletRequest {
 
     private Map<String, String> headers = new HashMap<>();
-    private Map<String, Object> attributes = new HashMap<>();
+    private final Map<String, Object> attributes = new HashMap<>();
     private byte[] inputStreamData;
     private InputStream inputStream;
     private String queryString;
@@ -317,7 +317,8 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse)
+            throws IllegalStateException {
         return null;
     }
 

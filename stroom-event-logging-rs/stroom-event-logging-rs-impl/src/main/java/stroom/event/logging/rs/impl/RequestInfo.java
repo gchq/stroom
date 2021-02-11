@@ -20,10 +20,10 @@ import stroom.util.shared.HasId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
 
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.MultivaluedMap;
 
 import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
 
@@ -69,7 +69,8 @@ class RequestInfo {
         }
 
         if (numberOfPathAndQueryParms > 1) {
-            WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
+            WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(
+                    false));
             obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
             return obj;
         } else {
@@ -86,7 +87,8 @@ class RequestInfo {
             } else if ("uuid".equals(paramName)) {
                 return new ObjectUuid(paramValue);
             } else {
-                WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
+                WithParameters obj = new WithParameters(containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(
+                        false));
                 obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
                 return obj;
             }
@@ -166,11 +168,13 @@ class RequestInfo {
         }
 
         public void addParams(MultivaluedMap<String, String> origParms) {
-            name = name.length() > 0 ? name + ", " : "" +
-                    createParms(origParms).stream()
-                            .map(e ->
-                                    e.getKey() + " = " + e.getValue())
-                            .collect(Collectors.joining(", "));
+            name = name.length() > 0
+                    ? name + ", "
+                    : "" +
+                            createParms(origParms).stream()
+                                    .map(e ->
+                                            e.getKey() + " = " + e.getValue())
+                                    .collect(Collectors.joining(", "));
         }
 
         @Override

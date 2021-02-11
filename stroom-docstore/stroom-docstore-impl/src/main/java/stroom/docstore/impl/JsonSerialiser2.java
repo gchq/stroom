@@ -1,11 +1,12 @@
 package stroom.docstore.impl;
 
+import stroom.docstore.api.Serialiser2;
+import stroom.util.string.EncodingUtil;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import stroom.docstore.api.Serialiser2;
-import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JsonSerialiser2<D> implements Serialiser2<D> {
+
     private static final String META = "meta";
 
     private final Class<D> clazz;

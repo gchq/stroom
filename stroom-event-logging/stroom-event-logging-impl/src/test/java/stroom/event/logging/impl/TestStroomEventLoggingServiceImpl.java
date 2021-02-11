@@ -44,7 +44,7 @@ class TestStroomEventLoggingServiceImpl {
 
     private static final String TYPE_ID = "typeId";
     private static final String DESCRIPTION = "I did something";
-    private SecurityContext securityContext = new MockSecurityContext();
+    private final SecurityContext securityContext = new MockSecurityContext();
     @Mock
     private HttpServletRequest httpServletRequest;
     @Mock
@@ -54,7 +54,7 @@ class TestStroomEventLoggingServiceImpl {
 
     private StroomEventLoggingService stroomEventLoggingService;
 
-    private BaseObject testObj = OtherObject.builder().withDescription("Test").build();
+    private final BaseObject testObj = OtherObject.builder().withDescription("Test").build();
 
     @BeforeEach
     void setup() {
@@ -308,8 +308,8 @@ class TestStroomEventLoggingServiceImpl {
 
     public static class TestSecretObj implements HasName {
 
-        private String name;
-        private String password;
+        private final String name;
+        private final String password;
         private String myNewSecret;
         private boolean secret;
 

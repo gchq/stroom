@@ -146,29 +146,29 @@ public class StroomEventLoggingUtil {
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren().stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.OR)) {
                     operator = Or.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else if (expressionOperator.op().equals(Op.NOT)) {
                     operator = Not.builder()
                             .withQueryItems(expressionOperator.getChildren() == null
                                     ? null
                                     : expressionOperator.getChildren()
-                                    .stream()
-                                    .map(StroomEventLoggingUtil::convertItem)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList()))
+                                            .stream()
+                                            .map(StroomEventLoggingUtil::convertItem)
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList()))
                             .build();
                 } else {
                     throw new RuntimeException("Unknown op " + expressionOperator.op());

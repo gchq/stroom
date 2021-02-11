@@ -25,6 +25,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class DocRefInfo {
+
     @JsonProperty
     private DocRef docRef;
     @JsonProperty
@@ -107,8 +108,12 @@ public class DocRefInfo {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DocRefInfo that = (DocRefInfo) o;
         return Objects.equals(docRef, that.docRef) &&
                 Objects.equals(createTime, that.createTime) &&
@@ -132,6 +137,7 @@ public class DocRefInfo {
     }
 
     public static final class Builder {
+
         private DocRef docRef;
         private Long createTime;
         private Long updateTime;

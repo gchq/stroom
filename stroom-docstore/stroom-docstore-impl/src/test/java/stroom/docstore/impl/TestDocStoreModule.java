@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class TestDocStoreModule {
+
     @Mock
     private Persistence persistenceMock;
     @Mock
@@ -56,5 +57,6 @@ class TestDocStoreModule {
     }
 
     private static class MyDoc extends Doc {
+
     }
 }

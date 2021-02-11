@@ -24,13 +24,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 /**
  * {@value #CLASS_DESC}
@@ -42,6 +42,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DocRef implements Comparable<DocRef>, HasDisplayValue {
+
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
             "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
 
@@ -183,8 +184,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DocRef)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DocRef)) {
+            return false;
+        }
         final DocRef docRef = (DocRef) o;
         return Objects.equals(type, docRef.type) &&
                 Objects.equals(uuid, docRef.uuid);
@@ -219,6 +224,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue {
      * Builder for constructing a {@link DocRef docRef}
      */
     public static final class Builder {
+
         private String type;
         private String uuid;
         private String name;

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class ExpressionMapper implements Function<ExpressionItem, Condition> {
+
     private final CommonExpressionMapper expressionMapper;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
@@ -82,14 +83,17 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     public interface Converter<T> {
+
         T apply(String value);
     }
 
     public interface MultiConverter<T> {
+
         List<T> apply(String value);
     }
 
     private static class ConverterAdapter<T> implements MultiConverter<T> {
+
         private final Converter<T> converter;
 
         ConverterAdapter(final Converter<T> converter) {

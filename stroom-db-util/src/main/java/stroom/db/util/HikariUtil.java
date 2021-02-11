@@ -30,7 +30,7 @@ public class HikariUtil {
     }
 
     private static HikariConfig create(final ConnectionConfig connectionConfig,
-            final ConnectionPoolConfig connectionPoolConfig) {
+                                       final ConnectionPoolConfig connectionPoolConfig) {
         final HikariConfig config = new HikariConfig();
 
         // Pool properties
@@ -66,8 +66,8 @@ public class HikariUtil {
      * process.
      */
     private static <T1, T2> void copyAndMapProp(final Supplier<T1> source,
-            final Consumer<T2> dest,
-            final Function<T1, T2> typeMapper) {
+                                                final Consumer<T2> dest,
+                                                final Function<T1, T2> typeMapper) {
         final T1 sourceValue = source.get();
         if (sourceValue != null) {
             dest.accept(typeMapper.apply(sourceValue));

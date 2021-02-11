@@ -11,11 +11,12 @@ import org.flywaydb.core.api.FlywayException;
 import javax.sql.DataSource;
 
 /**
- * @param <T_CONFIG>       A config class that implements {@link HasDbConfig}
+ * @param <T_CONFIG>    A config class that implements {@link HasDbConfig}
  * @param <T_CONN_PROV> A class that extends {@link HikariDataSource}
  */
 public abstract class AbstractFlyWayDbModule<T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource>
         extends AbstractDataSourceProviderModule<T_CONFIG, T_CONN_PROV> {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFlyWayDbModule.class);
 
     protected abstract String getFlyWayTableName();

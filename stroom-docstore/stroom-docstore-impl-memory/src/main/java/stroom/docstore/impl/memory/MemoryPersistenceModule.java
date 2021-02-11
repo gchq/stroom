@@ -23,6 +23,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class MemoryPersistenceModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(Persistence.class).to(MemoryPersistence.class);

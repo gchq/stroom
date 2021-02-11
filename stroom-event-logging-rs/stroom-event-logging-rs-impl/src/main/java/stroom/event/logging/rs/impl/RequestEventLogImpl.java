@@ -26,9 +26,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import event.logging.Query;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.Optional;
 
 class RequestEventLogImpl implements RequestEventLog {
 

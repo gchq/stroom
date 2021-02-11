@@ -11,20 +11,20 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
 
-import javax.sql.DataSource;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.sql.DataSource;
 
 public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TYPE, T_ID_TYPE>
         implements HasCrud<T_OBJ_TYPE, T_ID_TYPE> {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
 
-    private Table<T_REC_TYPE> table;
-    private TableField<T_REC_TYPE, T_ID_TYPE> idField;
+    private final Table<T_REC_TYPE> table;
+    private final TableField<T_REC_TYPE, T_ID_TYPE> idField;
     private Class<T_OBJ_TYPE> objectTypeClass;
-    private DataSource connectionProvider;
+    private final DataSource connectionProvider;
     private BiFunction<T_OBJ_TYPE, T_REC_TYPE, T_REC_TYPE> objectToRecordMapper = (object, record) -> {
         record.from(object);
         return record;

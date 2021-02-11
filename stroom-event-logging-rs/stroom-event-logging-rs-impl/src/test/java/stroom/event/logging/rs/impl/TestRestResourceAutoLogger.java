@@ -59,18 +59,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRestResourceAutoLogger {
 
-    private HttpServletRequest request = new MockHttpServletRequest();
+    private final HttpServletRequest request = new MockHttpServletRequest();
 
-    private MockContainerRequestContext requestContext = new MockContainerRequestContext();
+    private final MockContainerRequestContext requestContext = new MockContainerRequestContext();
 
-    private SecurityContext securityContext = new MockSecurityContext();
+    private final SecurityContext securityContext = new MockSecurityContext();
 
     @Mock
     private DocumentEventLog documentEventLog;
 
     private RequestEventLog requestEventLog;
 
-    private StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
+    private final StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
 
     @Mock
     private ResourceInfo resourceInfo;
@@ -78,7 +78,7 @@ public class TestRestResourceAutoLogger {
     @Mock
     private WriterInterceptorContext writerInterceptorContext;
 
-    private RequestLoggingConfig config = new RequestLoggingConfig();
+    private final RequestLoggingConfig config = new RequestLoggingConfig();
 
     @Captor
     private ArgumentCaptor<Object> objectCaptor;
@@ -110,7 +110,7 @@ public class TestRestResourceAutoLogger {
 
     Random random = new Random();
 
-    private Injector injector;
+    private final Injector injector;
 
     private AutoCloseable closeable;
 

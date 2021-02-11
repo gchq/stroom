@@ -19,11 +19,11 @@ package stroom.event.logging.rs.impl;
 import stroom.util.shared.AutoLogged;
 import stroom.util.shared.AutoLogged.OperationType;
 
+import java.lang.reflect.Method;
+import java.util.Optional;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
-import java.lang.reflect.Method;
-import java.util.Optional;
 
 public class ContainerResourceInfo {
 

@@ -30,6 +30,7 @@ import com.google.gwt.thirdparty.json.JSONException;
 import com.google.gwt.thirdparty.json.JSONObject;
 import org.glassfish.jersey.message.MessageUtils;
 
+import java.io.IOException;
 import javax.inject.Inject;
 import javax.security.sasl.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
@@ -40,7 +41,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
@@ -124,7 +124,9 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         json.put("code", status.ordinal());
         json.put("message", ex.getMessage());
         json.put("details", status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
-                + ((ex.getCause() != null) ? " cause: " + ex.getCause().getMessage() : ""));
+                + ((ex.getCause() != null)
+                ? " cause: " + ex.getCause().getMessage()
+                : ""));
         return json.toString();
     }
 
