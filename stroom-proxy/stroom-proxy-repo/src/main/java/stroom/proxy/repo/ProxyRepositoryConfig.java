@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ProxyRepositoryConfig {
+
     private boolean isStoringEnabled = false;
     private String repoDir;
     private String format = "${pathId}/${id}";

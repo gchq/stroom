@@ -1,9 +1,5 @@
 package stroom.proxy.app.handler;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
@@ -12,10 +8,11 @@ import stroom.util.cert.SSLUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.net.ssl.SSLSocketFactory;
+import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +20,17 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handler class that forwards the request to a URL.
  */
 @Singleton
 public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwardStreamHandlerFactory.class);
 
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
@@ -156,6 +158,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     }
 
     private static class ForwardDestination {
+
         private final ForwardDestinationConfig config;
         private final SSLSocketFactory sslSocketFactory;
 

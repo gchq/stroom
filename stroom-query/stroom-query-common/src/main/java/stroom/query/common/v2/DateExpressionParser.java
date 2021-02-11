@@ -119,7 +119,7 @@ public class DateExpressionParser {
         for (final DatePoint datePoint : DatePoint.values()) {
             final String function = datePoint.getFunction();
 
-            int start = expression.indexOf(function, 0);
+            int start = expression.indexOf(function);
             while (start != -1) {
                 final int end = start + function.length();
 

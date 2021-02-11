@@ -14,7 +14,8 @@ public class ProxyLifecycle implements Managed {
     private final ProxyRepositoryReader proxyRepositoryReader;
 
     @Inject
-    public ProxyLifecycle(final ProxyRepositoryManager proxyRepositoryManager, final ProxyRepositoryReader proxyRepositoryReader) {
+    public ProxyLifecycle(final ProxyRepositoryManager proxyRepositoryManager,
+                          final ProxyRepositoryReader proxyRepositoryReader) {
         this.proxyRepositoryManager = proxyRepositoryManager;
         this.proxyRepositoryReader = proxyRepositoryReader;
     }

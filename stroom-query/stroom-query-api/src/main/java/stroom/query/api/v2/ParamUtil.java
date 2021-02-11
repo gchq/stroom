@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParamUtil {
+
     public static String getParam(final String string) {
         if (string == null) {
             return null;

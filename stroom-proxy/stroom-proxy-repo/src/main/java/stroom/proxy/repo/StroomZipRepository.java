@@ -16,14 +16,15 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -51,6 +52,7 @@ import java.util.function.BiConsumer;
  * each 3 part as a dir separator.
  */
 public class StroomZipRepository {
+
     static final String LOCK_EXTENSION = ".lock";
     public static final String ZIP_EXTENSION = ".zip";
 
@@ -163,7 +165,8 @@ public class StroomZipRepository {
             if (index + ID_VAR.length() < repositoryFormat.length()) {
                 final char c = repositoryFormat.charAt(index + ID_VAR.length());
                 if (c != '_') {
-                    throw new RuntimeException("The ${id} replacement variable in the proxy repository format must be followed by '_'");
+                    throw new RuntimeException(
+                            "The ${id} replacement variable in the proxy repository format must be followed by '_'");
                 }
             }
 
@@ -244,38 +247,41 @@ public class StroomZipRepository {
 
     private void scanDir(final Path dir, final AtomicLong minId, final AtomicLong maxId) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        if (file.toString().endsWith(ZIP_EXTENSION)) {
-                            LOGGER.debug("Examining " + file.toString());
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                if (file.toString().endsWith(ZIP_EXTENSION)) {
+                                    LOGGER.debug("Examining " + file.toString());
 
-                            final String idString = getIdPart(file);
-                            if (idString.length() == 0) {
-                                LOGGER.warn("File is not a valid repository file " + file.toString());
-                            } else {
-                                final long id = Long.valueOf(idString);
+                                    final String idString = getIdPart(file);
+                                    if (idString.length() == 0) {
+                                        LOGGER.warn("File is not a valid repository file " + file.toString());
+                                    } else {
+                                        final long id = Long.valueOf(idString);
 
-                                boolean success = false;
-                                while (!success) {
-                                    final long min = minId.get();
-                                    success = id >= min || minId.compareAndSet(min, id);
+                                        boolean success = false;
+                                        while (!success) {
+                                            final long min = minId.get();
+                                            success = id >= min || minId.compareAndSet(min, id);
+                                        }
+
+                                        success = false;
+                                        while (!success) {
+                                            final long max = maxId.get();
+                                            success = id <= max || maxId.compareAndSet(max, id);
+                                        }
+                                    }
                                 }
-
-                                success = false;
-                                while (!success) {
-                                    final long max = maxId.get();
-                                    success = id <= max || maxId.compareAndSet(max, id);
-                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
                             }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -332,8 +338,11 @@ public class StroomZipRepository {
             throw new RuntimeException("This is a read only repository");
         }
 
-        final String filename = StroomFileNameUtil.constructFilename(executionUuid, fileCount.incrementAndGet(), repositoryFormat,
-                attributeMap, ZIP_EXTENSION);
+        final String filename = StroomFileNameUtil.constructFilename(executionUuid,
+                fileCount.incrementAndGet(),
+                repositoryFormat,
+                attributeMap,
+                ZIP_EXTENSION);
         final Path file = currentDir.resolve(filename);
 
         // Check that we aren't going to clash with the directories and files made by the zip fragmentation process
@@ -434,37 +443,40 @@ public class StroomZipRepository {
                           final long oldestLockFileMs,
                           final boolean deleteRootDirectory) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        if (file.toString().endsWith(".zip.lock")) {
-                            final FileTime lastModified = attrs.lastModifiedTime();
-                            if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
-                                try {
-                                    Files.delete(file);
-                                    LOGGER.info("Removed old lock file due to age " + file.toString());
-                                } catch (final IOException e) {
-                                    LOGGER.error("Unable to remove old lock file due to age " + file.toString());
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                if (file.toString().endsWith(".zip.lock")) {
+                                    final FileTime lastModified = attrs.lastModifiedTime();
+                                    if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
+                                        try {
+                                            Files.delete(file);
+                                            LOGGER.info("Removed old lock file due to age " + file.toString());
+                                        } catch (final IOException e) {
+                                            LOGGER.error("Unable to remove old lock file due to age " + file.toString());
+                                        }
+                                    }
                                 }
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
                             }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
 
-                @Override
-                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
-                    if (getRootDir().equals(dir) && !deleteRootDirectory) {
-                        LOGGER.debug("Won't attempt to delete directory {} as it is the root", dir);
-                    } else {
-                        attemptDirDeletion(dir, oldestDirMs);
-                    }
-                    return super.postVisitDirectory(dir, exc);
-                }
-            });
+                        @Override
+                        public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                            if (getRootDir().equals(dir) && !deleteRootDirectory) {
+                                LOGGER.debug("Won't attempt to delete directory {} as it is the root", dir);
+                            } else {
+                                attemptDirDeletion(dir, oldestDirMs);
+                            }
+                            return super.postVisitDirectory(dir, exc);
+                        }
+                    });
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -522,28 +534,31 @@ public class StroomZipRepository {
         boolean success = true;
         try {
             if (Files.isDirectory(path)) {
-                Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
-                        try {
-                            if (!dir.equals(path)) {
-                                if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("Attempting to delete dir: " + dir.toString());
+                Files.walkFileTree(path,
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                                try {
+                                    if (!dir.equals(path)) {
+                                        if (LOGGER.isDebugEnabled()) {
+                                            LOGGER.debug("Attempting to delete dir: " + dir.toString());
+                                        }
+                                        Files.delete(dir);
+                                        if (LOGGER.isDebugEnabled()) {
+                                            LOGGER.debug("Deleted dir: " + dir.toString());
+                                        }
+                                    }
+                                } catch (final RuntimeException | IOException e) {
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug("Failed to delete dir: " + dir.toString());
+                                    }
+                                    LOGGER.trace(e.getMessage(), e);
                                 }
-                                Files.delete(dir);
-                                if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("Deleted dir: " + dir.toString());
-                                }
+                                return super.postVisitDirectory(dir, exc);
                             }
-                        } catch (final RuntimeException | IOException e) {
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("Failed to delete dir: " + dir.toString());
-                            }
-                            LOGGER.trace(e.getMessage(), e);
-                        }
-                        return super.postVisitDirectory(dir, exc);
-                    }
-                });
+                        });
 
                 // Remove the directory.
                 Files.delete(path);
@@ -574,19 +589,22 @@ public class StroomZipRepository {
     List<Path> listAllZipFiles() {
         final List<Path> list = new ArrayList<>();
         try {
-            Files.walkFileTree(getRootDir(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
-                            list.add(file);
+            Files.walkFileTree(getRootDir(),
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                    list.add(file);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }

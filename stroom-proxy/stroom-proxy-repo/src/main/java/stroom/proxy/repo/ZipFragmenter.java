@@ -98,9 +98,13 @@ class ZipFragmenter {
 
                             final Path outputFile = PartsPathUtil.createPart(currentDir, path, idString);
                             // If output file already exists then it ought to be overwritten automatically.
-                            try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(outputFile)) {
+                            try (final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(
+                                    outputFile)) {
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Meta);
-                                transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Context);
+                                transferEntry(stroomZipFile,
+                                        stroomZipOutputStream,
+                                        baseName,
+                                        StroomZipFileType.Context);
                                 transferEntry(stroomZipFile, stroomZipOutputStream, baseName, StroomZipFileType.Data);
                             }
                             i++;
@@ -144,9 +148,11 @@ class ZipFragmenter {
         try {
             final InputStream inputStream = stroomZipFile.getInputStream(baseName, type);
             if (inputStream != null) {
-                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream, BufferSizeUtil.get())) {
+                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream,
+                        BufferSizeUtil.get())) {
                     final String outputEntryName = new StroomZipEntry(null, baseName, type).getFullName();
-                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(outputEntryName), BufferSizeUtil.get())) {
+                    try (final OutputStream outputStream = new BufferedOutputStream(stroomZipOutputStream.addEntry(
+                            outputEntryName), BufferSizeUtil.get())) {
                         StreamUtil.streamToStream(bufferedInputStream, outputStream);
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);

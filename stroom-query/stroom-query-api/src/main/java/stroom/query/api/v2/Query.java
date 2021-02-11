@@ -37,6 +37,7 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiModel(description = Query.CLASS_DESC)
 public final class Query {
+
     public static final String CLASS_DESC = "The query terms for the search";
 
     @ApiModelProperty(
@@ -79,8 +80,12 @@ public final class Query {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Query query = (Query) o;
         return Objects.equals(dataSource, query.dataSource) &&
                 Objects.equals(expression, query.expression) &&
@@ -113,6 +118,7 @@ public final class Query {
      * Builder for constructing a {@link Query}
      */
     public static final class Builder {
+
         private DocRef dataSource;
         private ExpressionOperator expression;
         private List<Param> params;

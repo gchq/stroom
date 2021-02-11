@@ -16,21 +16,23 @@
 
 package stroom.datasource.api.v2;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class TextField extends AbstractField {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
-    private static List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
+    private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
         DEFAULT_CONDITIONS.add(Condition.CONTAINS);

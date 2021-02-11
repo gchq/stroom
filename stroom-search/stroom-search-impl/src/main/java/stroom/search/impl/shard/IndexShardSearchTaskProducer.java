@@ -25,14 +25,15 @@ import stroom.task.api.TaskProducer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.inject.Provider;
 
 class IndexShardSearchTaskProducer extends TaskProducer {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
     private static final String TASK_NAME = "Search Index Shard";
 
@@ -55,7 +56,11 @@ class IndexShardSearchTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker.getHitCount());
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory,
+                    shard,
+                    fieldNames,
+                    receiver,
+                    tracker.getHitCount());
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider, tracker);
             taskQueue.add(runnable);
         }
@@ -101,6 +106,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
     }
 
     private static class IndexShardSearchRunnable implements Consumer<TaskContext> {
+
         private final IndexShardSearchTask task;
         private final Provider<IndexShardSearchTaskHandler> handlerProvider;
         private final IndexShardSearchProgressTracker tracker;

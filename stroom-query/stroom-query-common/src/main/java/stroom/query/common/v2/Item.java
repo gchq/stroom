@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Val;
 
 public interface Item {
+
     RawKey getRawKey();
 
     Key getKey();

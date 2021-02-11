@@ -29,7 +29,9 @@ public enum StroomStatusCode {
     CLIENT_CERTIFICATE_NOT_AUTHORISED(HttpServletResponse.SC_FORBIDDEN, 310, "Client Certificate not authorised",
             "The feed you have provided does not allow your client certificate to send data"),
 
-    COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 400, "Compressed stream invalid",
+    COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            400,
+            "Compressed stream invalid",
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated unexpectedly or is corrupt."),
 
     UNKNOWN_ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 999, "Unknown error",
@@ -49,7 +51,7 @@ public enum StroomStatusCode {
     private final int code;
     private final int httpCode;
 
-    private StroomStatusCode(final int httpCode, final int code, final String message, final String reason) {
+    StroomStatusCode(final int httpCode, final int code, final String message, final String reason) {
         this.httpCode = httpCode;
         this.code = code;
         this.message = message;

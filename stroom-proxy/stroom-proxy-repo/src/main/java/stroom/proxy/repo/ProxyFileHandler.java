@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipEntry;
@@ -28,12 +26,16 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 
 public final class ProxyFileHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
     private final BufferFactory bufferFactory;
@@ -118,16 +120,20 @@ public final class ProxyFileHandler {
 //        return size;
 //    }
 
-    private void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
-                           final String sourceName, final StreamProgressMonitor streamProgress,
+    private void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList,
+                           final StroomZipFile stroomZipFile,
+                           final String sourceName,
+                           final StreamProgressMonitor streamProgress,
                            final StroomZipEntry targetEntry)
             throws IOException {
         final InputStream inputStream = stroomZipFile.getInputStream(sourceName, targetEntry.getStroomZipFileType());
         sendEntry(requestHandlerList, inputStream, streamProgress, targetEntry);
     }
 
-    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final InputStream inputStream,
-                           final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
+    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+                           final InputStream inputStream,
+                           final StreamProgressMonitor streamProgress,
+                           final StroomZipEntry targetEntry)
             throws IOException {
         if (inputStream != null) {
             if (LOGGER.isDebugEnabled()) {

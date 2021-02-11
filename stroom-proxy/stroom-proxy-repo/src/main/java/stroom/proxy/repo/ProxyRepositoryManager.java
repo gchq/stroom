@@ -14,7 +14,6 @@ import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -26,12 +25,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
 
 /**
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
 public class ProxyRepositoryManager implements HasHealthCheck {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);
 
     private final AtomicReference<StroomZipRepository> activeRepository = new AtomicReference<>();
@@ -45,7 +46,9 @@ public class ProxyRepositoryManager implements HasHealthCheck {
     @Inject
     public ProxyRepositoryManager(final TempDirProvider tempDirProvider,
                                   final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getDir()), getFormat(proxyRepositoryConfig.getFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
+        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getDir()),
+                getFormat(proxyRepositoryConfig.getFormat()),
+                createScheduler(proxyRepositoryConfig.getRollCron()));
     }
 
     ProxyRepositoryManager(final Path repoDir,
@@ -153,7 +156,8 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                                     // Is this directory name an ISO 8601 compliant date?
                                     millis = DateUtil.parseFileDateTimeString(baseName);
                                 } catch (final RuntimeException e) {
-                                    LOGGER.warn("Failed to parse directory that looked like it should be rolled repository: " + file);
+                                    LOGGER.warn(
+                                            "Failed to parse directory that looked like it should be rolled repository: " + file);
                                 }
 
                                 // Only proceed if we managed to parse the dir name as a ISO 8601 date.

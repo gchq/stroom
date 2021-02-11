@@ -8,7 +8,6 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,8 +17,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 public class CoprocessorsFactory {
+
     private final SizesProvider sizesProvider;
     private final DataStoreFactory dataStoreFactory;
 
@@ -77,7 +78,11 @@ public class CoprocessorsFactory {
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
-                final Coprocessor coprocessor = create(queryKey, coprocessorSettings, fieldIndex, paramMap, errorConsumer);
+                final Coprocessor coprocessor = create(queryKey,
+                        coprocessorSettings,
+                        fieldIndex,
+                        paramMap,
+                        errorConsumer);
 
                 if (coprocessor != null) {
                     coprocessorMap.put(coprocessorSettings.getCoprocessorId(), coprocessor);

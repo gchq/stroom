@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SearchModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new ExtractionModule());
@@ -59,7 +60,9 @@ public class SearchModule extends AbstractModule {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
         return o != null && getClass() == o.getClass();
     }
 
@@ -69,6 +72,7 @@ public class SearchModule extends AbstractModule {
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {
+
         @Inject
         EvictExpiredElements(final LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager) {
             super(luceneSearchResponseCreatorManager::evictExpiredElements);

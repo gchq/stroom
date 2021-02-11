@@ -16,6 +16,13 @@
 
 package stroom.search.impl.shard;
 
+import stroom.index.impl.IndexShardUtil;
+import stroom.index.impl.LockFactoryFactory;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.search.impl.SearchException;
+import stroom.util.io.FileUtil;
+
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherFactory;
@@ -24,18 +31,13 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.impl.IndexShardUtil;
-import stroom.index.impl.LockFactoryFactory;
-import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.search.impl.SearchException;
-import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IndexShardSearcher {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearcher.class);
 
     private final IndexShard indexShard;
@@ -76,7 +78,8 @@ public class IndexShardSearcher {
                 final Path dir = IndexShardUtil.getIndexPath(indexShard);
 
                 if (!Files.isDirectory(dir)) {
-                    throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(dir));
+                    throw new SearchException("Index directory not found for searching: " + FileUtil.getCanonicalPath(
+                            dir));
                 }
 
                 directory = new NIOFSDirectory(dir, LockFactoryFactory.get());

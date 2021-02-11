@@ -39,7 +39,6 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,8 +47,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 
 public class StroomStreamProcessor {
+
     private static final String ZERO_CONTENT = "0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
     private static volatile String hostName;

@@ -30,7 +30,6 @@ import stroom.query.util.LambdaLoggerFactory;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,8 +44,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 public class MapDataStore implements DataStore {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
     private static RawKey ROOT_KEY;
@@ -364,6 +365,7 @@ public class MapDataStore implements DataStore {
     }
 
     public static class ItemsImpl implements Items {
+
         private final int trimmedSize;
         private final int maxSize;
         private final ItemSerialiser itemSerialiser;
@@ -500,6 +502,7 @@ public class MapDataStore implements DataStore {
     }
 
     public static class ItemImpl implements Item {
+
         private final ItemSerialiser itemSerialiser;
         private final MapDataStore dataStore;
         private final byte[] bytes;

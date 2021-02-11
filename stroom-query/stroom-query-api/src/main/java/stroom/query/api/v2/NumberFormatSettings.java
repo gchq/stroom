@@ -31,6 +31,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "The definition of a format to apply to numeric data")
 public final class NumberFormatSettings implements FormatSettings {
+
     private static final int DEFAULT_DECIMAL_PLACES = 0;
     private static final boolean DEFAULT_USE_SEPARATOR = false;
 
@@ -76,8 +77,12 @@ public final class NumberFormatSettings implements FormatSettings {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final NumberFormatSettings that = (NumberFormatSettings) o;
         return Objects.equals(decimalPlaces, that.decimalPlaces) &&
                 Objects.equals(useSeparator, that.useSeparator);
@@ -108,6 +113,7 @@ public final class NumberFormatSettings implements FormatSettings {
      * Builder for constructing a {@link NumberFormatSettings}
      */
     public static final class Builder {
+
         private Integer decimalPlaces;
         private Boolean useSeparator;
 

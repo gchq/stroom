@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 class StreamMapCreator {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
     private final MetaService metaService;

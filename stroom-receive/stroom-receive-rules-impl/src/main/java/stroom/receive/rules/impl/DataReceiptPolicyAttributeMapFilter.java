@@ -26,6 +26,7 @@ import stroom.receive.rules.shared.RuleAction;
 import java.util.Objects;
 
 class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
+
     private final ReceiveDataPolicyChecker dataReceiptPolicyChecker;
 
     DataReceiptPolicyAttributeMapFilter(final ReceiveDataPolicyChecker dataReceiptPolicyChecker) {

@@ -31,7 +31,6 @@ import stroom.util.shared.ModelStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -53,11 +52,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
  */
 public final class RepositoryProcessor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryProcessor.class);
 
     private final ExecutorProvider executorProvider;
@@ -125,10 +126,18 @@ public final class RepositoryProcessor {
                         // Break down the zip repository so that all zip files only contain a single stream.
                         // We do this so that we can form new aggregates that contain less files than the
                         // maximum number or are smaller than the maximum size
-                        reachedFileScanLimit = fragmentZipFiles(executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
+                        reachedFileScanLimit = fragmentZipFiles(executorProvider,
+                                taskContext,
+                                taskContextFactory,
+                                threadCount,
+                                errorReceiver);
 
                         // Aggregate the zip files.
-                        aggregateZipFiles(executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
+                        aggregateZipFiles(executorProvider,
+                                taskContext,
+                                taskContextFactory,
+                                threadCount,
+                                errorReceiver);
 
                     } while (reachedFileScanLimit);
 
@@ -158,34 +167,37 @@ public final class RepositoryProcessor {
 
             final AtomicInteger fileCount = new AtomicInteger();
             try {
-                Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                        if (PartsPathUtil.isPartsDir(dir)) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        }
-                        return super.preVisitDirectory(dir, attrs);
-                    }
+                Files.walkFileTree(repoPath,
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                                if (PartsPathUtil.isPartsDir(dir)) {
+                                    return FileVisitResult.SKIP_SUBTREE;
+                                }
+                                return super.preVisitDirectory(dir, attrs);
+                            }
 
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                        taskContext.info(() -> FileUtil.getCanonicalPath(file));
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                                taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-                        if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
-                            return FileVisitResult.TERMINATE;
-                        }
+                                if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
+                                    return FileVisitResult.TERMINATE;
+                                }
 
-                        // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
-                        final String fileName = file.getFileName().toString();
-                        if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
-                                !PartsPathUtil.isPart(file)) {
-                            fileCount.incrementAndGet();
-                            zipFragmenter.process(file);
-                        }
+                                // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
+                                final String fileName = file.getFileName().toString();
+                                if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
+                                        !PartsPathUtil.isPart(file)) {
+                                    fileCount.incrementAndGet();
+                                    zipFragmenter.process(file);
+                                }
 
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -196,7 +208,9 @@ public final class RepositoryProcessor {
             // Did we reach the file scan limit?
             return fileCount.get() >= maxFileScan;
         };
-        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentContext, "Fragmenting Repository - " + repoDir, function);
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentContext,
+                "Fragmenting Repository - " + repoDir,
+                function);
         return supplier.get();
     }
 
@@ -226,36 +240,39 @@ public final class RepositoryProcessor {
                     threadCount);
 
             try {
-                Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                        if (PartsPathUtil.isPartsDir(dir)) {
-                            final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
+                Files.walkFileTree(repoPath,
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                                if (PartsPathUtil.isPartsDir(dir)) {
+                                    final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
 
-                            // Make sure the parts directory that this file is in is not a partially fragmented output directory.
-                            if (Files.exists(originalZipFile)) {
-                                return FileVisitResult.SKIP_SUBTREE;
+                                    // Make sure the parts directory that this file is in is not a partially fragmented output directory.
+                                    if (Files.exists(originalZipFile)) {
+                                        return FileVisitResult.SKIP_SUBTREE;
+                                    }
+                                }
+                                return super.preVisitDirectory(dir, attrs);
                             }
-                        }
-                        return super.preVisitDirectory(dir, attrs);
-                    }
 
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                        taskContext.info(() -> FileUtil.getCanonicalPath(file));
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                                taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-                        if (Thread.currentThread().isInterrupted()) {
-                            return FileVisitResult.TERMINATE;
-                        }
+                                if (Thread.currentThread().isInterrupted()) {
+                                    return FileVisitResult.TERMINATE;
+                                }
 
-                        // Process only part files, i.e. files that have been created by the fragmenting process.
-                        if (PartsPathUtil.isPart(file)) {
-                            fileProcessor.process(file, attrs);
-                        }
+                                // Process only part files, i.e. files that have been created by the fragmenting process.
+                                if (PartsPathUtil.isPart(file)) {
+                                    fileProcessor.process(file, attrs);
+                                }
 
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
+                                return FileVisitResult.CONTINUE;
+                            }
+                        });
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -266,7 +283,9 @@ public final class RepositoryProcessor {
             // Complete processing remaining file sets.
             zipInfoConsumer.complete();
         };
-        final Runnable runnable = taskContextFactory.context(parentContext, "Aggregating Repository - " + repoDir, consumer);
+        final Runnable runnable = taskContextFactory.context(parentContext,
+                "Aggregating Repository - " + repoDir,
+                consumer);
         runnable.run();
     }
 
@@ -275,6 +294,7 @@ public final class RepositoryProcessor {
     }
 
     private static class ZipInfoConsumer implements Consumer<ZipInfo> {
+
         private final int maxFilesPerAggregate;
         private final int maxConcurrentMappedFiles;
         private final long maxUncompressedFileSize;
@@ -377,10 +397,12 @@ public final class RepositoryProcessor {
             totalMappedFiles -= fileSet.getFiles().size();
 
             try {
-                final Runnable runnable = taskContextFactory.context(parentContext, "File Set Processor", taskContext -> {
-                    final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
-                    fileSetProcessor.process(fileSet);
-                });
+                final Runnable runnable = taskContextFactory.context(parentContext,
+                        "File Set Processor",
+                        taskContext -> {
+                            final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
+                            fileSetProcessor.process(fileSet);
+                        });
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
                 futures.add(completableFuture);
@@ -403,6 +425,7 @@ public final class RepositoryProcessor {
     }
 
     private static class ZipFragmenterFileProcessor {
+
         private final ZipFragmenter zipFragmenter;
         private final Executor executor;
         private final TaskContext parentContext;
@@ -456,6 +479,7 @@ public final class RepositoryProcessor {
     }
 
     private static class ZipInfoExtractorFileProcessor {
+
         private final ZipInfoExtractor zipInfoExtractor;
         private final Executor executor;
         private final TaskContext parentContext;
@@ -474,7 +498,11 @@ public final class RepositoryProcessor {
             this.parentContext = parentContext;
             this.taskContextFactory = taskContextFactory;
 
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection", 5, 0, threadCount, 2 * threadCount);
+            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection",
+                    5,
+                    0,
+                    threadCount,
+                    2 * threadCount);
             executor = executorProvider.get(fileInspectorThreadPool);
         }
 

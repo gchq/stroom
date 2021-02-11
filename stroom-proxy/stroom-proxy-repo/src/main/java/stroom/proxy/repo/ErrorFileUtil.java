@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ErrorFileUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorFileUtil.class);
 
     private static final String ZIP_EXTENSION = ".zip";
@@ -22,7 +23,7 @@ public class ErrorFileUtil {
         if (fileName.endsWith(BAD_EXTENSION)) {
             return file.getParent()
                     .resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length() - BAD_EXTENSION.length())
-                    + ERROR_EXTENSION + BAD_EXTENSION);
+                            + ERROR_EXTENSION + BAD_EXTENSION);
         } else {
             return file.getParent()
                     .resolve(fileName.substring(0, fileName.length() - ZIP_EXTENSION.length()) + ERROR_EXTENSION);

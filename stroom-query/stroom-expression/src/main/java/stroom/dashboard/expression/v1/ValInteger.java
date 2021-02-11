@@ -19,6 +19,7 @@ package stroom.dashboard.expression.v1;
 import java.util.Objects;
 
 public final class ValInteger implements ValNumber {
+
     public static final Type TYPE = Type.INTEGER;
 
     private final int value;
@@ -73,8 +74,12 @@ public final class ValInteger implements ValNumber {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValInteger that = (ValInteger) o;
         return value == that.value;
     }
@@ -85,6 +90,7 @@ public final class ValInteger implements ValNumber {
     }
 
     private static class ValIntegerCache {
+
         static final ValInteger[] cache = new ValInteger[-(-128) + 127 + 1];
 
         static {

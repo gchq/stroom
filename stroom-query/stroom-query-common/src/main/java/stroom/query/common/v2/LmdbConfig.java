@@ -15,6 +15,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class LmdbConfig extends AbstractConfig {
+
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;

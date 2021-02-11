@@ -43,6 +43,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class ReceiveDataPolicyChecker {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataPolicyChecker.class);
 
     private static final int ONE_MINUTE = 60 * 1000;
@@ -133,10 +134,12 @@ class ReceiveDataPolicyChecker {
     }
 
     private interface Checker {
+
         RuleAction check(AttributeMap attributeMap);
     }
 
     private static class ReceiveAllChecker implements Checker {
+
         @Override
         public RuleAction check(final AttributeMap attributeMap) {
             return RuleAction.RECEIVE;
@@ -144,11 +147,14 @@ class ReceiveDataPolicyChecker {
     }
 
     private static class CheckerImpl implements Checker {
+
         private final ExpressionMatcher expressionMatcher;
         private final List<ReceiveDataRule> activeRules;
         private final Map<String, AbstractField> fieldMap;
 
-        CheckerImpl(final ExpressionMatcher expressionMatcher, final List<ReceiveDataRule> activeRules, final Map<String, AbstractField> fieldMap) {
+        CheckerImpl(final ExpressionMatcher expressionMatcher,
+                    final List<ReceiveDataRule> activeRules,
+                    final Map<String, AbstractField> fieldMap) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.fieldMap = fieldMap;
@@ -167,7 +173,8 @@ class ReceiveDataPolicyChecker {
             return RuleAction.RECEIVE;
         }
 
-        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap, final Map<String, AbstractField> fieldMap) {
+        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap,
+                                                       final Map<String, AbstractField> fieldMap) {
             final Map<String, Object> map = new HashMap<>();
             fieldMap.forEach((fieldName, field) -> {
                 try {
@@ -199,7 +206,9 @@ class ReceiveDataPolicyChecker {
             return null;
         }
 
-        private ReceiveDataRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<ReceiveDataRule> activeRules) {
+        private ReceiveDataRule findMatchingRule(final ExpressionMatcher expressionMatcher,
+                                                 final Map<String, Object> attributeMap,
+                                                 final List<ReceiveDataRule> activeRules) {
             for (final ReceiveDataRule rule : activeRules) {
                 try {
                     if (expressionMatcher.match(attributeMap, rule.getExpression())) {

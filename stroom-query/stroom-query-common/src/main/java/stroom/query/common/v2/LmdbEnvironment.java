@@ -14,8 +14,6 @@ import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -24,9 +22,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class LmdbEnvironment {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvironment.class);
 
     // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.

@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
@@ -36,10 +34,14 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
+import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.ApiParam;
+
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -70,7 +72,8 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
         //a lifespan beyond the scope of this request and then begin the search for the data
         //If it is not the first call for this query key then it will return the existing searchResponseCreator with
         //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(
+                request));
 
         //create a response from the data found so far, this could be complete/incomplete
         SearchResponse searchResponse = searchResponseCreator.create(request);
@@ -81,7 +84,8 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
         return searchResponse;
     }
 
-    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request, final SearchResponse searchResponse) {
+    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request,
+                                             final SearchResponse searchResponse) {
         String resultInfo;
 
         if (searchResponse.getResults() != null) {

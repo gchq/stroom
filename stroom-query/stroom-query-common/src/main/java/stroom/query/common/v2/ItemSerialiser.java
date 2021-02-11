@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ItemSerialiser {
+
     private final CompiledField[] fields;
 
     public ItemSerialiser(final CompiledField[] fields) {

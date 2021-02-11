@@ -41,6 +41,7 @@ import java.util.Objects;
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class, VisResult.class})
 public abstract class Result {
+
     //TODO add an example value
     @ApiModelProperty(
             value = "The ID of the component that this result set was requested for. See ResultRequest in SearchRequest",
@@ -71,8 +72,12 @@ public abstract class Result {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
                 Objects.equals(error, result.error);
@@ -95,10 +100,11 @@ public abstract class Result {
      * Builder for constructing a {@link Result}. This class is abstract and must be overridden for
      * each known Result implementation class.
      *
-     * @param <T>           The result class type, either Flat or Table
+     * @param <T>             The result class type, either Flat or Table
      * @param <T_CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
      */
     public abstract static class Builder<T extends Result, T_CHILD_CLASS extends Builder<T, ?>> {
+
         String componentId;
         String error;
 

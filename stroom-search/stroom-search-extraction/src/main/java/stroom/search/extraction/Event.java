@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.Val;
 
 class Event implements Comparable<Event> {
+
     private final long streamId;
     private final long eventId;
     private final Val[] values;

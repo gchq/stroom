@@ -42,6 +42,7 @@ import java.text.ParseException;
                                 argType = ValString.class)
                 }))
 class LastIndexOf extends AbstractFunction implements Serializable {
+
     static final String NAME = "lastIndexOf";
     private static final long serialVersionUID = -305845496003936297L;
     private Function stringFunction;
@@ -102,6 +103,7 @@ class LastIndexOf extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;

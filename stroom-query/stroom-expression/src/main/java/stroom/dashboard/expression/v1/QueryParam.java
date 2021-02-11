@@ -35,6 +35,7 @@ import java.util.Map;
                                 argType = Val.class)
                 }))
 class QueryParam extends AbstractFunction {
+
     static final String NAME = "param";
 
     private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();

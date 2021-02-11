@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.dropwizard.client.JerseyClientConfiguration;
 
 public class ProxyConfig {
+
     private String proxyContentDir;
     private boolean useDefaultOpenIdCredentials = true;
 

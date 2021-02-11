@@ -33,6 +33,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapFilterFactory.class);
 
     private final AttributeMapFilter attributeMapFilter;

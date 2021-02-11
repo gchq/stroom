@@ -34,6 +34,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @ApiModel(description = "Describes the formatting that will be applied to values in a field")
 public class Format {
+
     public static final List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
     public static final Format GENERAL = new Builder().type(Type.GENERAL).build();
     public static final Format NUMBER = new Builder().type(Type.NUMBER).build();
@@ -75,8 +76,12 @@ public class Format {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Format format = (Format) o;
         return type == format.type &&
                 Objects.equals(settings, format.settings) &&
@@ -127,6 +132,7 @@ public class Format {
      * Builder for constructing a {@link Format}
      */
     public static final class Builder {
+
         private Type type;
         private FormatSettings settings;
         private Boolean wrap;

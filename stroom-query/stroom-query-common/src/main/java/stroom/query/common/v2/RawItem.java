@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 public class RawItem {
+
     private final byte[] key;
     private final byte[] generators;
 

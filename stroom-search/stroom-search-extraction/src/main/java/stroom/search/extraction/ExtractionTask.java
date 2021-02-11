@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import stroom.docref.DocRef;
 
 class ExtractionTask {
+
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;

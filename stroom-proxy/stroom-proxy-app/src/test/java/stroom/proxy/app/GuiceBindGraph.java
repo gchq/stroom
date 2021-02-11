@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -36,7 +37,7 @@ public class GuiceBindGraph {
 
     private void graph(String filename, Injector demoInjector) throws IOException {
         final Path dotFile = Paths.get(filename);
-        PrintWriter out = new PrintWriter(new File(filename), "UTF-8");
+        PrintWriter out = new PrintWriter(new File(filename), StandardCharsets.UTF_8);
 
         Injector injector = Guice.createInjector(new GraphvizModule());
         GraphvizGrapher grapher = injector.getInstance(GraphvizGrapher.class);

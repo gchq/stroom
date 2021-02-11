@@ -25,13 +25,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -49,6 +49,7 @@ import java.util.Objects;
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract class ExpressionItem implements Serializable {
+
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
@@ -78,8 +79,12 @@ public abstract class ExpressionItem implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExpressionItem)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExpressionItem)) {
+            return false;
+        }
         final ExpressionItem that = (ExpressionItem) o;
         return Objects.equals(enabled, that.enabled);
     }
@@ -109,6 +114,7 @@ public abstract class ExpressionItem implements Serializable {
      * of ExpressionItem should provide a builder that extends this one.
      */
     public abstract static class Builder<T extends ExpressionItem, T_CHILD_CLASS extends Builder<T, ?>> {
+
         Boolean enabled;
 
         Builder() {

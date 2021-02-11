@@ -8,6 +8,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.util.Arrays;
 
 class GroupKeyPart implements KeyPart {
+
     private final Val[] groupValues;
 
     public GroupKeyPart(final Val[] groupValues) {
@@ -31,8 +32,12 @@ class GroupKeyPart implements KeyPart {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final GroupKeyPart that = (GroupKeyPart) o;
         return Arrays.equals(groupValues, that.groupValues);
     }

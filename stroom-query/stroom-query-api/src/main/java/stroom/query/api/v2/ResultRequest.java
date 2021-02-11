@@ -36,6 +36,7 @@ import java.util.Set;
 @ApiModel(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
         "e.g. sorted, grouped, limited, etc.")
 public final class ResultRequest {
+
     @ApiModelProperty(
             value = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
@@ -122,8 +123,12 @@ public final class ResultRequest {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ResultRequest that = (ResultRequest) o;
         return Objects.equals(componentId, that.componentId) &&
                 Objects.equals(mappings, that.mappings) &&
@@ -169,6 +174,7 @@ public final class ResultRequest {
      * Builder for constructing a {@link ResultRequest}
      */
     public static final class Builder {
+
         private String componentId;
         private List<TableSettings> mappings;
         private OffsetRange requestedRange;

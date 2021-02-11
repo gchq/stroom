@@ -16,16 +16,17 @@
 
 package stroom.receive.common;
 
-import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck.Result;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -39,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class FeedStatusResource implements RestResource, HasHealthCheck {
+
     public static final String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
 
     private final FeedStatusService feedStatusService;

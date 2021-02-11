@@ -25,6 +25,7 @@ import java.nio.file.Path;
  * should be used for temp files (e.g. GUI generated temp files
  */
 public interface ResourceStore {
+
     /**
      * Create a temporary file and give it a string key.
      */

@@ -16,12 +16,13 @@
 
 package stroom.expression.matcher;
 
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+
+import org.junit.jupiter.api.Test;
 
 import java.time.ZoneOffset;
 import java.util.HashMap;
@@ -30,9 +31,13 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionMatcher {
+
     private static final TextField FEED_NAME = new TextField("Feed Name");
     private static final TextField TYPE_NAME = new TextField("Type");
-    private static final Map<String, AbstractField> FIELD_MAP = Map.of(FEED_NAME.getName(), FEED_NAME, TYPE_NAME.getName(), TYPE_NAME);
+    private static final Map<String, AbstractField> FIELD_MAP = Map.of(FEED_NAME.getName(),
+            FEED_NAME,
+            TYPE_NAME.getName(),
+            TYPE_NAME);
 
     @Test
     void testSimpleMatch() {
@@ -69,8 +74,14 @@ class TestExpressionMatcher {
         test(createAttributeMap(), ExpressionOperator.builder().enabled(false).build(), false);
     }
 
-    private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP, null, null, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+    private void test(final Map<String, Object> attributeMap,
+                      final ExpressionOperator expression,
+                      final boolean outcome) {
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP,
+                null,
+                null,
+                ZoneOffset.UTC.getId(),
+                System.currentTimeMillis());
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }
 

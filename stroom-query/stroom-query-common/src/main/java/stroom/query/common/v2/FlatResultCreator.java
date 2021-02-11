@@ -50,12 +50,12 @@ public class FlatResultCreator implements ResultCreator {
     private String error;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
-            final String queryKey,
-            final String componentId,
-            final ResultRequest resultRequest,
-            final Map<String, String> paramMap,
-            final FieldFormatter fieldFormatter,
-            final Sizes defaultMaxResultsSizes) {
+                             final String queryKey,
+                             final String componentId,
+                             final ResultRequest resultRequest,
+                             final Map<String, String> paramMap,
+                             final FieldFormatter fieldFormatter,
+                             final Sizes defaultMaxResultsSizes) {
         this.fieldFormatter = fieldFormatter;
 
         final List<TableSettings> tableSettings = resultRequest.getMappings();
@@ -213,14 +213,14 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     private int addResults(final DataStore data,
-            final RangeChecker rangeChecker,
-            final OpenGroups openGroups,
-            final Items items,
-            final List<List<Object>> results,
-            final int depth,
-            final int parentCount,
-            final Sizes maxResults,
-            final Map<Integer, List<Field>> groupFields) {
+                           final RangeChecker rangeChecker,
+                           final OpenGroups openGroups,
+                           final Items items,
+                           final List<List<Object>> results,
+                           final int depth,
+                           final int parentCount,
+                           final Sizes maxResults,
+                           final Map<Integer, List<Field>> groupFields) {
         int count = parentCount;
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
@@ -325,12 +325,12 @@ public class FlatResultCreator implements ResultCreator {
         private final int maxItems;
 
         Mapper(final DataStoreFactory dataStoreFactory,
-                final String queryKey,
-                final String componentId,
-                final TableSettings parent,
-                final TableSettings child,
-                final Map<String, String> paramMap,
-                final int maxItems) {
+               final String queryKey,
+               final String componentId,
+               final TableSettings parent,
+               final TableSettings child,
+               final Map<String, String> paramMap,
+               final int maxItems) {
             this.maxItems = maxItems;
 
             final FieldIndex parentFieldIndex = new FieldIndex();

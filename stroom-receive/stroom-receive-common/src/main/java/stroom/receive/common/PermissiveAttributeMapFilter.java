@@ -20,6 +20,7 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 
 public class PermissiveAttributeMapFilter implements AttributeMapFilter {
+
     @Override
     public boolean filter(AttributeMap attributeMap) {
         return true;

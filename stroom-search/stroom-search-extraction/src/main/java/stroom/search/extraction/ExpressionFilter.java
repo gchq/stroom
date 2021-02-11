@@ -1,6 +1,5 @@
 package stroom.search.extraction;
 
-import stroom.meta.api.MetaProperties;
 import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.ArrayList;
@@ -9,6 +8,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class ExpressionFilter extends ExpressionCopier {
+
     private final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions;
 
     private ExpressionFilter(final List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions) {
@@ -41,6 +41,7 @@ public class ExpressionFilter extends ExpressionCopier {
     }
 
     public static final class Builder {
+
         private List<Function<ExpressionTerm.Builder, ExpressionTerm.Builder>> functions = new ArrayList<>();
 
         private Builder() {

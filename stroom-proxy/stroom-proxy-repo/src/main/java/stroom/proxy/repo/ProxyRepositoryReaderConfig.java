@@ -1,11 +1,13 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.ModelStringUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.ModelStringUtil;
 
 public class ProxyRepositoryReaderConfig {
+
     private String readCron;
     private int forwardThreadCount = 3;
     private int maxFileScan = 100000;

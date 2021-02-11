@@ -34,6 +34,7 @@ import java.util.Objects;
 @ApiModel(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
 public final class Field implements HasDisplayValue {
+
     @ApiModelProperty(value = "The internal id of the field for equality purposes")
     @JsonProperty
     private final String id;
@@ -175,8 +176,12 @@ public final class Field implements HasDisplayValue {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Field field = (Field) o;
         return Objects.equals(id, field.id) &&
                 Objects.equals(name, field.name) &&
@@ -223,6 +228,7 @@ public final class Field implements HasDisplayValue {
      * Builder for constructing a {@link Field}
      */
     public static final class Builder {
+
         private String id;
         private String name;
         private String expression;

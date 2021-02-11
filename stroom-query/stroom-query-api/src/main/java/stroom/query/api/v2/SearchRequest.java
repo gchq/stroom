@@ -24,17 +24,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * A class for describing a search request including the query to run and definition(s) of how the results
@@ -47,6 +47,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A request for new search or a follow up request for more data for an existing iterative search")
 public final class SearchRequest implements Serializable {
+
     private static final long serialVersionUID = -6668626615097471925L;
 
     @XmlElement
@@ -238,8 +239,12 @@ public final class SearchRequest implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SearchRequest that = (SearchRequest) o;
         return Objects.equals(key, that.key) &&
                 Objects.equals(query, that.query) &&
@@ -278,6 +283,7 @@ public final class SearchRequest implements Serializable {
      * Builder for constructing a {@link SearchRequest}
      */
     public static final class Builder {
+
         private List<ResultRequest> resultRequests;
         private QueryKey key;
         private Query query;

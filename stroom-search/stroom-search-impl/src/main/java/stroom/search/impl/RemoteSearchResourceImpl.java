@@ -32,6 +32,7 @@ import javax.ws.rs.core.StreamingOutput;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RemoteSearchResourceImpl implements RemoteSearchResource {
+
     private final RemoteSearchService remoteSearchService;
 
     @Inject

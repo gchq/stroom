@@ -14,6 +14,10 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -22,14 +26,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
 
     private static final long ONE_MINUTE = 60000;
 

@@ -48,7 +48,6 @@ import org.lmdbjava.Dbi;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -69,8 +68,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import javax.annotation.Nonnull;
 
 public class LmdbDataStore implements DataStore {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
     private static final long COMMIT_FREQUENCY_MS = 1000;
     private static RawKey ROOT_RAW_KEY;
@@ -400,7 +401,8 @@ public class LmdbDataStore implements DataStore {
                         lock.lock();
                         try {
                             // See if we can find an existing item.
-                            final ByteBuffer existing = Metrics.measure("Grouped get", () -> lmdbDbi.get(txn, keyBuffer));
+                            final ByteBuffer existing = Metrics.measure("Grouped get",
+                                    () -> lmdbDbi.get(txn, keyBuffer));
                             ByteBuffer valueBuffer;
                             if (existing != null) {
                                 final Generator[] existingValue = valueSerde.deserialize(existing);
@@ -732,6 +734,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private static class ItemArrayList {
+
         private final int minArraySize;
         private ItemImpl[] array;
         private int size;
@@ -779,6 +782,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     public static class ItemImpl implements Item, HasGenerators {
+
         private final LmdbDataStore lmdbDataStore;
         private final RawKey rawKey;
         private final Key key;
@@ -869,6 +873,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private static class QueueItem {
+
         private final Key key;
         private final Generator[] generators;
 

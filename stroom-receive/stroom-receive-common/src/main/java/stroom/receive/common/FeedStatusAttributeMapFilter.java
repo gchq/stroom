@@ -1,7 +1,5 @@
 package stroom.receive.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
@@ -9,10 +7,14 @@ import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 
 public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
-    private static Logger LOGGER = LoggerFactory.getLogger(FeedStatusAttributeMapFilter.class);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeedStatusAttributeMapFilter.class);
 
     private final FeedStatusService feedStatusService;
 

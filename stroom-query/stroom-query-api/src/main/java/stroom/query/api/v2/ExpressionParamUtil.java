@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class ExpressionParamUtil {
+
     private ExpressionParamUtil() {
         // Utility class.
     }

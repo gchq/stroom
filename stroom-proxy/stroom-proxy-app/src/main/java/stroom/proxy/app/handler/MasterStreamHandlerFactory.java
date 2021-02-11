@@ -4,12 +4,13 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 
 @Singleton
 public class MasterStreamHandlerFactory implements StreamHandlerFactory {
+
     private final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory;
     private final ForwardStreamHandlerFactory forwardStreamHandlerFactory;
 

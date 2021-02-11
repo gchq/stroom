@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 // TODO @AT Confirm behavior of annotation link in the app, i.e. can you have a link with no anno id and/or no linked
 //   event. Need to confirm which args are opt.
+
 /**
  * See also HyperlinkEventHandlerImpl
  */
@@ -102,6 +103,7 @@ package stroom.dashboard.expression.v1;
                         })
         })
 class Annotation extends AbstractLink {
+
     static final String NAME = "annotation";
 
     protected static final String ARG_ANNOTATION_ID = "annotationId";
@@ -123,6 +125,7 @@ class Annotation extends AbstractLink {
     }
 
     private static final class Gen extends AbstractLinkGen {
+
         private static final long serialVersionUID = 217968020285584214L;
 
         Gen(final Generator[] childGenerators) {

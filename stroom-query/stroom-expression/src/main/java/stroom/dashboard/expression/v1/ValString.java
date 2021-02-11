@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ValString implements Val {
+
     static final ValString EMPTY = new ValString("");
     public static final Type TYPE = Type.STRING;
     private final String value;
@@ -108,8 +109,12 @@ public final class ValString implements Val {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ValString valString = (ValString) o;
         return Objects.equals(value, valString.value);
     }

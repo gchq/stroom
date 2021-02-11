@@ -27,8 +27,9 @@ import java.util.Map;
         commonReturnDescription = "Username of the logged in user.",
         signatures = @FunctionSignature(
                 description = "Returns the user name of the current logged in user.",
-                args = { }))
+                args = {}))
 class CurrentUser extends AbstractFunction {
+
     static final String KEY = "currentUser()";
     static final String NAME = "currentUser";
 

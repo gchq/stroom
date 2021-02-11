@@ -22,6 +22,7 @@ import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 
 public class FormatterFactory {
+
     private final String dateTimeLocale;
 
     public FormatterFactory(final String dateTimeLocale) {
@@ -42,7 +43,8 @@ public class FormatterFactory {
             case NUMBER:
                 return NumberFormatter.create((NumberFormatSettings) field.getFormat().getSettings());
             case DATE_TIME:
-                return DateTimeFormatter.create((DateTimeFormatSettings) field.getFormat().getSettings(), dateTimeLocale);
+                return DateTimeFormatter.create((DateTimeFormatSettings) field.getFormat().getSettings(),
+                        dateTimeLocale);
             default:
                 return Unformatted.create();
         }

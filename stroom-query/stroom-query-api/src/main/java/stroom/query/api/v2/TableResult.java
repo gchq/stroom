@@ -33,6 +33,7 @@ import java.util.Objects;
         description = "Object for describing a set of results in a table form that supports grouped data",
         parent = Result.class)
 public class TableResult extends Result {
+
     @ApiModelProperty(required = true)
     @JsonProperty
     private final List<Field> fields;
@@ -82,9 +83,15 @@ public class TableResult extends Result {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final TableResult that = (TableResult) o;
         return Objects.equals(fields, that.fields) &&
                 Objects.equals(rows, that.rows) &&
@@ -118,6 +125,7 @@ public class TableResult extends Result {
      * Builder for constructing a {@link TableResult tableResult}
      */
     public static final class Builder extends Result.Builder<TableResult, Builder> {
+
         private List<Field> fields;
         private List<Row> rows;
         private OffsetRange resultRange;

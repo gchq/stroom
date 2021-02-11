@@ -1,14 +1,16 @@
 package stroom.proxy.feed.remote;
 
+import stroom.proxy.StroomStatusCode;
+import stroom.proxy.remote.RemoteResponse;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.proxy.StroomStatusCode;
-import stroom.proxy.remote.RemoteResponse;
 
 @JsonInclude(Include.NON_NULL)
 public class GetFeedStatusResponse extends RemoteResponse {
+
     private static final long serialVersionUID = 9221787861812287256L;
 
     @JsonProperty

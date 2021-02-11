@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
  * each group level 2
  */
 public class Sizes {
+
     static final int FALLBACK = Integer.MAX_VALUE;
 
     private final int[] sizes;

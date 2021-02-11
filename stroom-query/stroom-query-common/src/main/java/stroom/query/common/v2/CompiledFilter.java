@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CompiledFilter {
+
     private final List<Pattern> includes;
     private final List<Pattern> excludes;
 
@@ -33,7 +34,9 @@ public class CompiledFilter {
     }
 
     public boolean match(final String value) {
-        final String v = value == null ? "" : value;
+        final String v = value == null
+                ? ""
+                : value;
         boolean match = true;
 
         if (includes != null) {

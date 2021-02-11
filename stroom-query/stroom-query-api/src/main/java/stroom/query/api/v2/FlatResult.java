@@ -34,6 +34,7 @@ import java.util.Objects;
         description = "A result structure used primarily for visualisation data",
         parent = Result.class)
 public final class FlatResult extends Result {
+
     @JsonProperty
     private final List<Field> structure;
 
@@ -73,9 +74,15 @@ public final class FlatResult extends Result {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         FlatResult that = (FlatResult) o;
         return Objects.equals(structure, that.structure) &&
                 Objects.equals(values, that.values) &&
@@ -104,6 +111,7 @@ public final class FlatResult extends Result {
      * Builder for constructing a {@link FlatResult}
      */
     public static final class Builder extends Result.Builder<FlatResult, Builder> {
+
         private List<Field> structure = Collections.emptyList();
         private List<List<Object>> values = Collections.emptyList();
         private Long overriddenSize;

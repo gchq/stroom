@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class SearchResponseCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchResponseCreator.class);
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
@@ -141,7 +142,8 @@ public class SearchResponseCreator {
                     return createErrorResponse(
                             store,
                             Collections.singletonList(
-                                    LambdaLogger.buildMessage("The search timed out after {}", effectiveTimeout.toString())));
+                                    LambdaLogger.buildMessage("The search timed out after {}",
+                                            effectiveTimeout.toString())));
                 }
 
             } catch (InterruptedException e) {
@@ -165,10 +167,15 @@ public class SearchResponseCreator {
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Returning new SearchResponse with results: {}, complete: {}, isComplete: {}",
-                        (results == null ? "null" : results.size()), complete, store.isComplete());
+                        (results == null
+                                ? "null"
+                                : results.size()), complete, store.isComplete());
             }
 
-            final SearchResponse searchResponse = new SearchResponse(store.getHighlights(), results, store.getErrors(), complete);
+            final SearchResponse searchResponse = new SearchResponse(store.getHighlights(),
+                    results,
+                    store.getErrors(),
+                    complete);
 
             if (complete) {
                 SearchDebugUtil.writeRequest(searchRequest, false);

@@ -20,6 +20,7 @@ import java.util.Map;
 
 @ArchitecturalFunction
 public class Expression implements Function {
+
     private Function function;
     private boolean hasAggregate;
 

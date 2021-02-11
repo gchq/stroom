@@ -24,6 +24,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -31,9 +34,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
@@ -46,6 +46,7 @@ import java.util.Objects;
 @ApiModel(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
 public final class SearchResponse {
+
     @XmlElementWrapper(name = "highlights")
     @XmlElement(name = "highlight")
     @ApiModelProperty(
@@ -133,8 +134,12 @@ public final class SearchResponse {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SearchResponse that = (SearchResponse) o;
         return Objects.equals(highlights, that.highlights) &&
                 Objects.equals(results, that.results) &&
@@ -158,6 +163,7 @@ public final class SearchResponse {
     }
 
     public static class TableResultBuilder extends Builder<TableResult, TableResultBuilder> {
+
         @Override
         public TableResultBuilder self() {
             return this;
@@ -180,6 +186,7 @@ public final class SearchResponse {
     private abstract static class Builder<
             T_RESULT_CLASS extends Result,
             T_CHILD_CLASS extends Builder<T_RESULT_CLASS, ?>> {
+
         // Mandatory parameters
         Boolean complete;
 

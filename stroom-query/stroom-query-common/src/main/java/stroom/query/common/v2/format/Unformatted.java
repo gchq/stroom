@@ -20,6 +20,7 @@ package stroom.query.common.v2.format;
 import stroom.dashboard.expression.v1.Val;
 
 public class Unformatted implements Formatter {
+
     private Unformatted() {
     }
 

@@ -34,6 +34,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
 class ZipInfoExtractor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipInfoExtractor.class);
 
     private final ErrorReceiver errorReceiver;
@@ -62,7 +63,8 @@ class ZipInfoExtractor {
                     // Extract meta data
                     if (attributeMap == null) {
                         try {
-                            final InputStream metaStream = stroomZipFile.getInputStream(sourceName, StroomZipFileType.Meta);
+                            final InputStream metaStream = stroomZipFile.getInputStream(sourceName,
+                                    StroomZipFileType.Meta);
                             if (metaStream == null) {
                                 errorReceiver.onError(path, "Unable to find meta?");
                             } else {

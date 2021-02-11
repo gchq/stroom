@@ -17,6 +17,7 @@ import java.util.Objects;
         "enabled"})
 @JsonInclude(Include.NON_NULL)
 public class ConditionalFormattingRule {
+
     @JsonProperty("id")
     private final String id;
     @JsonProperty("expression")
@@ -72,8 +73,12 @@ public class ConditionalFormattingRule {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
         return hide == that.hide &&
                 enabled == that.enabled &&
@@ -109,6 +114,7 @@ public class ConditionalFormattingRule {
     }
 
     public static final class Builder {
+
         private String id;
         private ExpressionOperator expression;
         private boolean hide;

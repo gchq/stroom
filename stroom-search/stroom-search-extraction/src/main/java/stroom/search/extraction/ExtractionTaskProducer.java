@@ -32,7 +32,6 @@ import stroom.task.api.TaskProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +45,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import javax.inject.Provider;
 
 class ExtractionTaskProducer extends TaskProducer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
     private static final String TASK_NAME = "Extraction";
 

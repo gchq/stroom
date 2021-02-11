@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FieldFormatter {
+
     private final FormatterFactory formatterFactory;
     private final Map<Field, Formatter> formatterCache = new HashMap<>();
 

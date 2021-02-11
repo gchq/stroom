@@ -26,11 +26,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 @JsonPropertyOrder({"field", "condition", "value", "docRef"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -41,6 +41,7 @@ import java.util.Objects;
         description = "A predicate term in a query expression tree",
         parent = ExpressionItem.class)
 public final class ExpressionTerm extends ExpressionItem {
+
     @XmlElement
     @ApiModelProperty(
             value = "The name of the field that is being evaluated in this predicate term",
@@ -103,9 +104,15 @@ public final class ExpressionTerm extends ExpressionItem {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
                 condition == that.condition &&
@@ -207,6 +214,7 @@ public final class ExpressionTerm extends ExpressionItem {
      * Builder for constructing a {@link ExpressionTerm}
      */
     public static final class Builder extends ExpressionItem.Builder<ExpressionTerm, Builder> {
+
         private String field;
         private Condition condition;
         private String value;

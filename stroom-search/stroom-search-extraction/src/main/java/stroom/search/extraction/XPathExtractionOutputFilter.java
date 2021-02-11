@@ -49,9 +49,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
+import javax.inject.Inject;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -60,6 +60,7 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
 public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilter {
+
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SecurityContext securityContext;
@@ -330,7 +331,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
             } else {
                 contentHandler = null;
                 secondLevelElementToCreateDocs = "";
-                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs), null);
+                log(Severity.ERROR,
+                        LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs),
+                        null);
             }
 
         } else if (depth == 0) {
@@ -338,7 +341,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 topLevelElementToSkip = "";
             } else {
                 topLevelElementToSkip = "";
-                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", topLevelElementToSkip), null);
+                log(Severity.ERROR,
+                        LogUtil.message("Unable to finding closing tag for {}", topLevelElementToSkip),
+                        null);
             }
 
         } else {

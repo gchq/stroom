@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public interface Store {
+
     /**
      * Stop searching and destroy any stored data.
      */

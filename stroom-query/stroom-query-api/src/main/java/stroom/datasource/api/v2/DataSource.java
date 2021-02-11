@@ -28,6 +28,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public final class DataSource implements Serializable {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     @JsonProperty
@@ -45,8 +46,12 @@ public final class DataSource implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DataSource that = (DataSource) o;
         return Objects.equals(fields, that.fields);
     }
@@ -72,6 +77,7 @@ public final class DataSource implements Serializable {
     }
 
     public static final class Builder {
+
         private List<AbstractField> fields = new ArrayList<>();
 
         private Builder() {

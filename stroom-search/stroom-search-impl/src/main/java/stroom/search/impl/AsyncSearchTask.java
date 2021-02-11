@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class AsyncSearchTask {
+
     private final QueryKey key;
     private final String searchName;
     private final Query query;

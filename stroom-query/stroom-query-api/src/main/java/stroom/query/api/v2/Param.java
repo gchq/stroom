@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
@@ -36,6 +36,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A key value pair that describes a property of a query")
 public final class Param {
+
     @XmlElement
     @ApiModelProperty(
             value = "The property key",
@@ -68,8 +69,12 @@ public final class Param {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Param param = (Param) o;
         return Objects.equals(key, param.key) &&
                 Objects.equals(value, param.value);
@@ -100,6 +105,7 @@ public final class Param {
      * Builder for constructing a {@link Param}
      */
     public static final class Builder {
+
         private String key;
         private String value;
 

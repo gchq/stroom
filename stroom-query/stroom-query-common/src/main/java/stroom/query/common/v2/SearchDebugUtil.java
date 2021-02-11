@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class SearchDebugUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchDebugUtil.class);
 
     private static Path dir;

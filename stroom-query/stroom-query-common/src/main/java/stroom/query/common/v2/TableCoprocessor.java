@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class TableCoprocessor implements Coprocessor {
+
     private final TableSettings tableSettings;
     private final DataStore dataStore;
 

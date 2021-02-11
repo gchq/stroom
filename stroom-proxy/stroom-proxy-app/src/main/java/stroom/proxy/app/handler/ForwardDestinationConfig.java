@@ -1,9 +1,11 @@
 package stroom.proxy.app.handler;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.cert.SSLConfig;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ForwardDestinationConfig {
+
     private String forwardUrl;
     private Integer forwardTimeoutMs = 30000;
     private Integer forwardDelayMs;
