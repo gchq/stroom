@@ -106,11 +106,23 @@ public final class ComparisonHelper {
         return -1;
     }
 
+    /**
+     * Generate a unified diff of the two files using the default number of lines of context.
+     * The diff output is sent to system out in coloured form.
+     *
+     * @return True if the files are the same
+     */
     public static boolean unifiedDiff(final Path expectedFile, final Path actualFile) {
         return unifiedDiff(expectedFile, actualFile, 3);
     }
 
-    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile, final int context) {
+    /**
+     * Generate a unified diff of the two files using the specified number of lines of context.
+     * The diff output is sent to system out in coloured form.
+     *
+     * @return True if the files are the same
+     */
+    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile, final int contextLines) {
 
         boolean areFilesTheSame = true;
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
@@ -126,7 +138,7 @@ public final class ComparisonHelper {
                     actualFile.toString(),
                     expectedLines,
                     patch,
-                    context);
+                    contextLines);
 
             if (!unifiedDiff.isEmpty()) {
                 areFilesTheSame = false;
@@ -152,9 +164,8 @@ public final class ComparisonHelper {
                 System.out.println(LogUtil.message("\nvimdiff {} {}",
                         FileUtil.getCanonicalPath(expectedFile), FileUtil.getCanonicalPath(actualFile)));
 
-
                 System.out.println(LogUtil.message(
-                        "If you are satisfied the differences are valid then you can do\ncp {} {}",
+                        "\nIf you are fully satisfied the differences are valid then you can do\ncp {} {}",
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile)));
             }
