@@ -13,34 +13,51 @@ import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({"backgroundAttachment", "backgroundColor", "backgroundImage", "backgroundPosition", "backgroundRepeat", "backgroundOpacity", "tubeVisible", "tubeOpacity", "labelColours"})
+@JsonPropertyOrder({
+        "backgroundAttachment",
+        "backgroundColor",
+        "backgroundImage",
+        "backgroundPosition",
+        "backgroundRepeat",
+        "backgroundOpacity",
+        "tubeVisible",
+        "tubeOpacity",
+        "labelColours"})
 @JsonInclude(Include.NON_NULL)
 public class ThemeConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundAttachment;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundColor;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundImage;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundPosition;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundRepeat;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String backgroundOpacity;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String tubeVisible;
+
     @JsonProperty
     @JsonPropertyDescription("GUI")
     private String tubeOpacity;
+
     @JsonProperty
     @JsonPropertyDescription("A comma separated list of KV pairs to provide colours for labels.")
     private String labelColours;
@@ -106,36 +123,72 @@ public class ThemeConfig extends AbstractConfig {
         return backgroundAttachment;
     }
 
+    public void setBackgroundAttachment(final String backgroundAttachment) {
+        this.backgroundAttachment = backgroundAttachment;
+    }
+
     public String getBackgroundColor() {
         return backgroundColor;
+    }
+
+    public void setBackgroundColor(final String backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 
     public String getBackgroundImage() {
         return backgroundImage;
     }
 
+    public void setBackgroundImage(final String backgroundImage) {
+        this.backgroundImage = backgroundImage;
+    }
+
     public String getBackgroundPosition() {
         return backgroundPosition;
+    }
+
+    public void setBackgroundPosition(final String backgroundPosition) {
+        this.backgroundPosition = backgroundPosition;
     }
 
     public String getBackgroundRepeat() {
         return backgroundRepeat;
     }
 
+    public void setBackgroundRepeat(final String backgroundRepeat) {
+        this.backgroundRepeat = backgroundRepeat;
+    }
+
     public String getBackgroundOpacity() {
         return backgroundOpacity;
+    }
+
+    public void setBackgroundOpacity(final String backgroundOpacity) {
+        this.backgroundOpacity = backgroundOpacity;
     }
 
     public String getTubeVisible() {
         return tubeVisible;
     }
 
+    public void setTubeVisible(final String tubeVisible) {
+        this.tubeVisible = tubeVisible;
+    }
+
     public String getTubeOpacity() {
         return tubeOpacity;
     }
 
+    public void setTubeOpacity(final String tubeOpacity) {
+        this.tubeOpacity = tubeOpacity;
+    }
+
     public String getLabelColours() {
         return labelColours;
+    }
+
+    public void setLabelColours(final String labelColours) {
+        this.labelColours = labelColours;
     }
 
     @Override

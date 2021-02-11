@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
+
     private CacheConfig userGroupsCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(30))
@@ -48,6 +49,10 @@ public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
 
     public CacheConfig getUserCache() {
         return userCache;
+    }
+
+    public void setUserCache(final CacheConfig userCache) {
+        this.userCache = userCache;
     }
 
     public CacheConfig getUserDocumentPermissionsCache() {

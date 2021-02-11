@@ -21,32 +21,42 @@ package stroom.security.identity.config;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.simplejavamail.mailer.config.TransportStrategy;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig
 public class SmtpConfig extends AbstractConfig {
 
     @NotNull
-    @JsonProperty
+    @JsonProperty("host")
+    @JsonPropertyDescription("The fully qualified hostname of the SMTP server.")
     private String host = "localhost";
 
-    @NotNull
-    @JsonProperty
+    @Min(0)
+    @Max(65535)
+    @JsonProperty("port")
+    @JsonPropertyDescription("The port for the SMTP server.")
     private int port = 2525;
 
     @NotNull
-    @JsonProperty
+    @JsonProperty("transport")
+    @JsonPropertyDescription("The transport type for communicating with the SMTP server.")
     private String transport = "plain";
 
     @NotNull
-    @JsonProperty
+    @JsonProperty("username")
+    @JsonPropertyDescription("The username to authenticate with on the SMTP server.")
     private String username = "username";
 
     @NotNull
-    @JsonProperty
+    @JsonProperty("password")
+    @JsonPropertyDescription("The password to authenticate with on the SMTP server.")
     private String password = "password";
 
     public String getHost() {
@@ -89,6 +99,7 @@ public class SmtpConfig extends AbstractConfig {
         this.transport = transport;
     }
 
+    @JsonIgnore
     public TransportStrategy getTransportStrategy() {
         switch (transport) {
             case "TLS":

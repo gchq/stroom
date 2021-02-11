@@ -46,10 +46,6 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -62,6 +58,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
@@ -335,7 +335,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         .orElseThrow(() ->
                                 new BadRequestException("Unknown feed " + referenceLoader.getReferenceFeed()));
             } else {
-                throw new BadRequestException("Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
+                throw new BadRequestException(
+                        "Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
             }
         }
     }
@@ -347,7 +348,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             return supplier.get();
         } else {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to view reference data");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to view reference data");
         }
     }
 
@@ -357,7 +359,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             runnable.run();
         } else {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to view reference data");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to view reference data");
         }
     }
 
@@ -663,7 +666,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         // TODO @AT Handle stuff like 'today() -1d'
         // TODO @AT Need to get now() once for the query
-        final Long termValue = getDate(expressionTerm.getField(), expressionTerm.getValue(), Instant.now().toEpochMilli());
+        final Long termValue = getDate(expressionTerm.getField(),
+                expressionTerm.getValue(),
+                Instant.now().toEpochMilli());
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
             return rec -> Objects.equals(valueExtractor.apply(rec), termValue);
         } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN)) {

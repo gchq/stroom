@@ -30,7 +30,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -125,6 +128,9 @@ public final class PropertyUtil {
         // Using getMethods rather than getDeclaredMethods means we have to make the methods public
         // but it does allow us to see inherited methods, e.g. on CommonDbConfig
         final Method[] methods = clazz.getMethods();
+        final List<String> propsWithGetter = new ArrayList<>();
+        final List<String> propsWithSetter = new ArrayList<>();
+
         for (final Method method : methods) {
             final String methodName = method.getName();
 
@@ -138,6 +144,7 @@ public final class PropertyUtil {
                         final String name = getPropertyName(methodName, 2);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setGetter(method);
+                        propsWithGetter.add(name);
                     }
 
                 } else if (methodName.startsWith("get")) {
@@ -150,6 +157,7 @@ public final class PropertyUtil {
                         final String name = getPropertyName(methodName, 3);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setGetter(method);
+                        propsWithGetter.add(name);
                     }
                 } else if (methodName.startsWith("set")) {
                     // Setter.
@@ -160,8 +168,32 @@ public final class PropertyUtil {
                         final String name = getPropertyName(methodName, 3);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setSetter(method);
+                        propsWithSetter.add(name);
                     }
                 }
+            }
+        }
+        // Now ensure we have matched getters and setters. At the moment we rely
+        // on setters so the objects must be mutable.
+        if (propsWithGetter.size() != propsWithSetter.size()) {
+            propsWithGetter.sort(Comparator.naturalOrder());
+            propsWithSetter.sort(Comparator.naturalOrder());
+            if (!propsWithGetter.equals(propsWithSetter)) {
+                final List<String> gettersWithNoSetter = propsWithGetter.stream()
+                        .filter(getter -> !propsWithSetter.contains(getter))
+                        .collect(Collectors.toList());
+
+                final List<String> settersWithNoGetter = propsWithSetter.stream()
+                        .filter(setter -> !propsWithGetter.contains(setter))
+                        .collect(Collectors.toList());
+
+                throw new RuntimeException(LogUtil.message(
+                        "Mismatch in getters and setters on class {}\n" +
+                                "Getters with no setter: {}\n" +
+                                "Setters with no getter: {}",
+                        clazz.getName(),
+                        gettersWithNoSetter,
+                        settersWithNoGetter));
             }
         }
     }
