@@ -88,7 +88,9 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
             viewData = null;
         }
 
-        final int selectedIndex = getSelectedIndex(viewData == null ? value : viewData);
+        final int selectedIndex = getSelectedIndex(viewData == null
+                ? value
+                : viewData);
         sb.appendHtmlConstant("<select tabindex=\"-1\">");
         int index = 0;
         for (final V option : options) {

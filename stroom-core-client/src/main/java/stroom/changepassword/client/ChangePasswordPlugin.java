@@ -13,6 +13,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ChangePasswordPlugin extends Plugin {
+
     private final UiConfigCache clientPropertyCache;
 
     @Inject
@@ -49,7 +50,13 @@ public class ChangePasswordPlugin extends Plugin {
 
                         });
                     } else {
-                        changePasswordMenuItem = new IconMenuItem(5, icon, icon, "'Change Password' is not configured!", null, false, null);
+                        changePasswordMenuItem = new IconMenuItem(5,
+                                icon,
+                                icon,
+                                "'Change Password' is not configured!",
+                                null,
+                                false,
+                                null);
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);

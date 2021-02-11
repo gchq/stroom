@@ -1005,8 +1005,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @return a wrapper around Ace Selection object
      */
     public AceSelection getSelection() {
-        if (selection == null)
+        if (selection == null) {
             selection = new AceSelection(getSelectionJS());
+        }
         return selection;
     }
 

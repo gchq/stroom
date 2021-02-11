@@ -49,7 +49,9 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     }
 
     public SvgCell(final boolean isButton) {
-        super(isButton ? "click" : null);
+        super(isButton
+                ? "click"
+                : null);
         this.isButton = isButton;
 
         if (resources == null) {

@@ -23,7 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<T> implements MultiSelectionModel<T>, HasSelection<T> {
+public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<T>
+        implements MultiSelectionModel<T>, HasSelection<T> {
 
     private Selection<T> selection = new Selection<>();
     private final Set<T> changes = new HashSet<>();

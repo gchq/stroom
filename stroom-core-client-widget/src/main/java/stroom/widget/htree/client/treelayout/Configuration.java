@@ -160,7 +160,10 @@ public interface Configuration<T_TREE_NODE> {
      * Identifies the sides of a rectangle (top, left, ...)
      */
     enum Location {
-        Top, Left, Bottom, Right
+        Top,
+        Left,
+        Bottom,
+        Right
     }
 
     /**
@@ -168,6 +171,8 @@ public interface Configuration<T_TREE_NODE> {
      * from root)
      */
     enum AlignmentInLevel {
-        Center, TowardsRoot, AwayFromRoot
+        Center,
+        TowardsRoot,
+        AwayFromRoot
     }
 }

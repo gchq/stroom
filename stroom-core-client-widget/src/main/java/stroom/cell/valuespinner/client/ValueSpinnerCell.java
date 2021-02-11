@@ -525,7 +525,9 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         }
 
         private boolean equalsOrNull(final Object a, final Object b) {
-            return (a != null) ? a.equals(b) : ((b == null));
+            return (a != null)
+                    ? a.equals(b)
+                    : ((b == null));
         }
     }
 }

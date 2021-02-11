@@ -16,15 +16,6 @@
 
 package stroom.importexport.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.Rest;
@@ -42,11 +33,22 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.List;
 
 public class ImportConfigPresenter
         extends MyPresenter<ImportConfigPresenter.ImportConfigView, ImportConfigPresenter.ImportProxy>
         implements ImportConfigEvent.Handler {
+
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final RestFactory restFactory;
@@ -151,10 +153,12 @@ public class ImportConfigPresenter
     }
 
     public interface ImportConfigView extends View {
+
         FormPanel getForm();
     }
 
     @ProxyCodeSplit
     public interface ImportProxy extends Proxy<ImportConfigPresenter> {
+
     }
 }

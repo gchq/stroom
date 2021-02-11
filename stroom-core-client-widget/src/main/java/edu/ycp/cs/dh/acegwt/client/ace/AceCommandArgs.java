@@ -16,9 +16,11 @@ public class AceCommandArgs {
      */
     public AceCommandArgs(Map<String, String> data) {
         value = JavaScriptObject.createObject();
-        if (data != null)
-            for (Map.Entry<String, String> entry : data.entrySet())
+        if (data != null) {
+            for (Map.Entry<String, String> entry : data.entrySet()) {
                 with(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /**

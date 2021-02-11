@@ -17,16 +17,18 @@
 package stroom.widget.editor.testclient.model;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.editor.client.model.XMLStyler;
 import stroom.test.StroomCoreClientTestFileUtil;
 import stroom.test.common.ComparisonHelper;
 import stroom.util.io.StreamUtil;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
 class TestXMLStyler {
+
     private static final String PRE_START_ELEMENT = "<pre class=\"xmlArea-ContentPre\">";
     private static final String PRE_END_ELEMENT = "</pre>";
 

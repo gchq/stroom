@@ -449,10 +449,18 @@ public class XmlFormatter {
      * The different fragment types of an XML instance.
      */
     private enum ElementType {
-        DOCTYPE, START, END, EMPTY, PI, COMMENT, CONTENT
+        DOCTYPE,
+        START,
+        END,
+        EMPTY,
+        PI,
+        COMMENT,
+        CONTENT
     }
 
     private enum CommentState {
-        START, CONTENT, END
+        START,
+        CONTENT,
+        END
     }
 }

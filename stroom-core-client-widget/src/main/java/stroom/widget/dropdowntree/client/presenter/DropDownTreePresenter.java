@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 
 public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTreePresenter.DropDownTreeView>
         implements DropDownTreeUiHandlers, PopupUiHandlers {
+
     private String caption = "Choose item";
 
     public DropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view) {
@@ -67,6 +68,7 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     }
 
     public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
+
         void setCellTree(Widget widget);
 
         void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);

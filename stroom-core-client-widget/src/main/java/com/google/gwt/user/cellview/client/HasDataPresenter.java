@@ -130,7 +130,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
      * @param pageSize the default page size
      */
     public HasDataPresenter(final HasData<T> display, final View<T> view, final int pageSize,
-            final ProvidesKey<T> keyProvider) {
+                            final ProvidesKey<T> keyProvider) {
         this.display = display;
         this.view = view;
         this.keyProvider = keyProvider;

@@ -44,8 +44,12 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
         super.onBind();
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event -> RequestCloseTabEvent.fire(CurveTabLayoutPresenter.this, event.getTabData())));
-        registerHandler(getView().getTabBar().addMaximiseRequestHandler(event -> MaximiseEvent.fire(CurveTabLayoutPresenter.this, getView())));
+        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event -> RequestCloseTabEvent.fire(
+                CurveTabLayoutPresenter.this,
+                event.getTabData())));
+        registerHandler(getView().getTabBar().addMaximiseRequestHandler(event -> MaximiseEvent.fire(
+                CurveTabLayoutPresenter.this,
+                getView())));
     }
 
     public void add(final TabData tabData, final Layer layer) {

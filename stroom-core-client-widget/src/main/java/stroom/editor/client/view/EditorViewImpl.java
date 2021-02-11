@@ -59,13 +59,13 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * This is a widget that can be used to edit text. It provides useful

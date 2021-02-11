@@ -160,7 +160,9 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
         this.valueUpdater = valueUpdater;
 
         final E viewData = getViewData(lastKey);
-        final E date = (viewData == null) ? lastValue : viewData;
+        final E date = (viewData == null)
+                ? lastValue
+                : viewData;
 
         Scheduler.get().scheduleDeferred(() -> showPopup(date));
     }

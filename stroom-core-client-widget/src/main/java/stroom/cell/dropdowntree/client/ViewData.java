@@ -104,6 +104,8 @@ public class ViewData<E> {
     }
 
     private boolean equalsOrNull(Object a, Object b) {
-        return (a != null) ? a.equals(b) : ((b == null));
+        return (a != null)
+                ? a.equals(b)
+                : ((b == null));
     }
 }

@@ -132,7 +132,9 @@ public class QuickFilter extends FlowPanel
     }
 
     private SafeHtml getPopupText() {
-        return popupTextSupplier != null ? popupTextSupplier.get() : null;
+        return popupTextSupplier != null
+                ? popupTextSupplier.get()
+                : null;
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {

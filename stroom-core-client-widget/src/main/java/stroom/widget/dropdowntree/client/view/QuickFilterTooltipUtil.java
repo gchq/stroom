@@ -31,7 +31,9 @@ public class QuickFilterTooltipUtil {
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
         final String description = "By default matches on " +
-                (defaultFieldNames != null ? defaultFieldNames + " " : "") +
+                (defaultFieldNames != null
+                        ? defaultFieldNames + " "
+                        : "") +
                 "with the characters input appearing anywhere (in order) in the matches.";
         // All this help content needs to match what happens in QuickFilterPredicateFactory
         final Builder builder = TooltipUtil.builder()

@@ -16,6 +16,9 @@
 
 package stroom.widget.tickbox.client.view;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.util.shared.HasBooleanValue;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -35,9 +38,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.util.shared.HasBooleanValue;
 
 public class TickBox extends Composite
         implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue {

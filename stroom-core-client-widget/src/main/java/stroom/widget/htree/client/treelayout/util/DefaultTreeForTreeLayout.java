@@ -82,7 +82,9 @@ public class DefaultTreeForTreeLayout<T_TREE_NODE> extends AbstractTreeForTreeLa
     @Override
     public List<T_TREE_NODE> getChildrenList(final T_TREE_NODE node) {
         final List<T_TREE_NODE> result = childrenMap.get(node);
-        return result == null ? getEmptyList() : result;
+        return result == null
+                ? getEmptyList()
+                : result;
     }
 
     /**

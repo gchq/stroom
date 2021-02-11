@@ -308,7 +308,8 @@ public class ResizableDialog extends AbstractPopupPanel {
     }
 
     private enum DragType {
-        MOVE, RESIZE
+        MOVE,
+        RESIZE
     }
 
     public interface Binder extends UiBinder<Widget, ResizableDialog> {

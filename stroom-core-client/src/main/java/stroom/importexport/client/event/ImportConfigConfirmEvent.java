@@ -28,8 +28,8 @@ import java.util.List;
 public class ImportConfigConfirmEvent extends GwtEvent<ImportConfigConfirmEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private ResourceKey resourceKey;
-    private List<ImportState> confirmList;
+    private final ResourceKey resourceKey;
+    private final List<ImportState> confirmList;
 
     private ImportConfigConfirmEvent(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         this.resourceKey = resourceKey;

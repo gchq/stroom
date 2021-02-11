@@ -17,14 +17,6 @@
 
 package stroom.importexport.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -47,12 +39,22 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
 import java.util.HashSet;
 import java.util.Set;
 
 public class ExportConfigPresenter
         extends MyPresenter<ExportConfigPresenter.ExportConfigView, ExportConfigPresenter.ExportProxy>
         implements ExportConfigEvent.Handler {
+
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final LocationManager locationManager;
@@ -60,8 +62,12 @@ public class ExportConfigPresenter
     private final RestFactory restFactory;
 
     @Inject
-    public ExportConfigPresenter(final EventBus eventBus, final ExportConfigView view, final ExportProxy proxy, final LocationManager locationManager,
-                                 final EntityCheckTreePresenter treePresenter, final RestFactory restFactory) {
+    public ExportConfigPresenter(final EventBus eventBus,
+                                 final ExportConfigView view,
+                                 final ExportProxy proxy,
+                                 final LocationManager locationManager,
+                                 final EntityCheckTreePresenter treePresenter,
+                                 final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.locationManager = locationManager;
         this.treePresenter = treePresenter;
@@ -122,10 +128,12 @@ public class ExportConfigPresenter
     }
 
     public interface ExportConfigView extends View {
+
         void setTreeView(View view);
     }
 
     @ProxyCodeSplit
     public interface ExportProxy extends Proxy<ExportConfigPresenter> {
+
     }
 }

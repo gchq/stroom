@@ -256,7 +256,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                         }
                     } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
                         final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(), UriUtils.fromString(glyphIcon.getUrl())));
+                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(),
+                                UriUtils.fromString(glyphIcon.getUrl())));
                     } else {
                         inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }

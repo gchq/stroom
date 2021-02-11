@@ -320,8 +320,9 @@ public class AceCommandDescription {
 
         public static ScrollIntoView fromString(String value) {
             for (ScrollIntoView ret : ScrollIntoView.values()) {
-                if (ret.name().equals(value))
+                if (ret.name().equals(value)) {
                     return ret;
+                }
             }
             return null;
         }
@@ -346,8 +347,9 @@ public class AceCommandDescription {
 
         public static MultiSelectAction fromString(String value) {
             for (MultiSelectAction ret : MultiSelectAction.values()) {
-                if (ret.name().equals(value))
+                if (ret.name().equals(value)) {
                     return ret;
+                }
             }
             return null;
         }
@@ -415,8 +417,9 @@ public class AceCommandDescription {
 
         @Override
         public String toString() {
-            if (allPlatforms != null)
+            if (allPlatforms != null) {
                 return "KeyBinding [allPlatforms=" + allPlatforms + "]";
+            }
             return "KeyBinding [mac=" + mac + ", exceptMac=" + exceptMac + "]";
         }
 

@@ -127,7 +127,9 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
 //        if (!selected) {
 
         if (newSelected == selected) {
-            final Object oldKey = newSelectedPending ? getKey(newSelectedItem) : curKey;
+            final Object oldKey = newSelectedPending
+                    ? getKey(newSelectedItem)
+                    : curKey;
             final Object newKey = getKey(item);
             if (equalsOrBothNull(oldKey, newKey)) {
                 return;
@@ -149,7 +151,9 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
     }
 
     private boolean equalsOrBothNull(final Object a, final Object b) {
-        return (a == null) ? (b == null) : a.equals(b);
+        return (a == null)
+                ? (b == null)
+                : a.equals(b);
     }
 
     private void resolveChanges() {

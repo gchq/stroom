@@ -68,10 +68,12 @@ public class PopupPosition {
     }
 
     public enum HorizontalLocation {
-        LEFT, RIGHT
+        LEFT,
+        RIGHT
     }
 
     public enum VerticalLocation {
-        ABOVE, BELOW
+        ABOVE,
+        BELOW
     }
 }

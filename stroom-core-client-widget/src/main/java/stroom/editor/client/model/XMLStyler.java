@@ -658,8 +658,16 @@ public class XMLStyler {
      * Individual styles for each XML fragment type.
      */
     public enum Style {
-        SYNTAX("s"), PI("pi"), DOCTYPE("d"), ELEMENT_NAME("e"), ATTRIBUTE_NAME("an"), ATTRIBUTE_VALUE("av"), CONTENT(
-                "c"), COMMENT("z"), HIGHLIGHT("hl");
+        SYNTAX("s"),
+        PI("pi"),
+        DOCTYPE("d"),
+        ELEMENT_NAME("e"),
+        ATTRIBUTE_NAME("an"),
+        ATTRIBUTE_VALUE("av"),
+        CONTENT(
+                "c"),
+        COMMENT("z"),
+        HIGHLIGHT("hl");
 
         private final String start;
         private final String end;
@@ -687,8 +695,14 @@ public class XMLStyler {
      * The different fragment types of an XML instance.
      */
     private enum ElementType {
-        DOCTYPE(Style.DOCTYPE), START(Style.ELEMENT_NAME), END(Style.ELEMENT_NAME), EMPTY(Style.ELEMENT_NAME), PI(
-                Style.PI), COMMENT(Style.COMMENT), CONTENT(Style.CONTENT);
+        DOCTYPE(Style.DOCTYPE),
+        START(Style.ELEMENT_NAME),
+        END(Style.ELEMENT_NAME),
+        EMPTY(Style.ELEMENT_NAME),
+        PI(
+                Style.PI),
+        COMMENT(Style.COMMENT),
+        CONTENT(Style.CONTENT);
 
         private final Style style;
 
@@ -702,6 +716,8 @@ public class XMLStyler {
     }
 
     private enum CommentState {
-        START, CONTENT, END
+        START,
+        CONTENT,
+        END
     }
 }

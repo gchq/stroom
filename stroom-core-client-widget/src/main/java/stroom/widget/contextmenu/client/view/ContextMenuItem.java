@@ -38,7 +38,7 @@ public class ContextMenuItem extends Composite {
     @UiField
     Style style;
 
-    private FlowPanel layout;
+    private final FlowPanel layout;
 
     public ContextMenuItem(final ContextMenu contextMenu, final String text, final Command command) {
         this.contextMenu = contextMenu;

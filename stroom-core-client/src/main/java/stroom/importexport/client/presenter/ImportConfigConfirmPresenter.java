@@ -68,6 +68,7 @@ import java.util.List;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView, ImportConfigConfirmPresenter.ImportConfirmProxy>
         implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
+
     private static final ContentResource CONTENT_RESOURCE = com.google.gwt.core.client.GWT.create(ContentResource.class);
 
     private final TooltipPresenter tooltipPresenter;
@@ -195,7 +196,9 @@ public class ImportConfigConfirmPresenter extends
                 return TickBoxState.fromBoolean(object.isAction());
             }
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
+                false,
+                false)) {
             @Override
             public TickBoxState getValue() {
                 return getHeaderState();
@@ -362,8 +365,10 @@ public class ImportConfigConfirmPresenter extends
         // Abort ... set the confirm list to blank
         final Rest<ResourceKey> rest = restFactory.create();
         rest
-                .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "Import Aborted", () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                        ImportConfigConfirmPresenter.this, false, false)))
+                .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
+                        "Import Aborted",
+                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                                ImportConfigConfirmPresenter.this, false, false)))
                 .call(CONTENT_RESOURCE)
                 .importContent(new ImportConfigRequest(resourceKey, new ArrayList<>()));
     }
@@ -381,7 +386,10 @@ public class ImportConfigConfirmPresenter extends
                     clearCaches();
                 }))
                 .onFailure(caught -> {
-                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false, true);
+                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                            ImportConfigConfirmPresenter.this,
+                            false,
+                            true);
                     // Even if the import was error we should refresh the tree in
                     // case it got part done.
                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
@@ -402,6 +410,7 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public interface ImportConfigConfirmView extends View {
+
         void setDataGridView(View view);
 
         Long getEnableFromDate();
@@ -415,5 +424,6 @@ public class ImportConfigConfirmPresenter extends
 
     @ProxyCodeSplit
     public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
+
     }
 }

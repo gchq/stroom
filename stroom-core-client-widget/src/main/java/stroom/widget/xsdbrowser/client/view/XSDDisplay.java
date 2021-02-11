@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 public class XSDDisplay extends Composite {
+
     private static final Resources resources = GWT.create(Resources.class);
     private final FlowPanel contentPanel = new FlowPanel();
     private final Map<XSDNode, Integer> rowMap = new HashMap<>();
@@ -687,6 +688,7 @@ public class XSDDisplay extends Composite {
     }
 
     public interface Resources extends ClientBundle {
+
         ImageResource superArrow();
 
         ImageResource superArrowSelect();

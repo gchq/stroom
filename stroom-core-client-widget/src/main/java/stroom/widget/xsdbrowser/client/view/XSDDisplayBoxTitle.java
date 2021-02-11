@@ -16,6 +16,8 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.util.client.DoubleSelectTester;
+
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -24,9 +26,9 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import stroom.widget.util.client.DoubleSelectTester;
 
 public class XSDDisplayBoxTitle extends Composite {
+
     private final Image imgImage;
     private final Label lblTitle;
     private final ClickPanel layout;

@@ -22,8 +22,9 @@ public class AceSelection {
     public AceSelection(JavaScriptObject selection) {
         this.selection = selection;
         this.rootListener = ignore -> {
-            for (AceSelectionListener lst : subListeners)
+            for (AceSelectionListener lst : subListeners) {
                 lst.onChangeSelection(AceSelection.this);
+            }
         };
         registerRootListener(selection, rootListener);
     }

@@ -12,10 +12,11 @@ import java.util.Objects;
  * [:text](http://some-url/:id){:hyperlinkTarget}
  */
 public class Hyperlink {
-    private String text;
-    private String href;
-    private String type;
-    private SvgPreset icon;
+
+    private final String text;
+    private final String href;
+    private final String type;
+    private final SvgPreset icon;
 
     public Hyperlink(final String text,
                      final String href,
@@ -96,8 +97,12 @@ public class Hyperlink {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Hyperlink hyperlink = (Hyperlink) o;
         return Objects.equals(text, hyperlink.text) &&
                 Objects.equals(href, hyperlink.href) &&
@@ -139,6 +144,7 @@ public class Hyperlink {
     }
 
     public static final class Builder {
+
         private String text;
         private String href;
         private String type;

@@ -317,7 +317,8 @@ public class PopupSupportImpl implements PopupSupport {
                     break;
                 case ACCEPT_REJECT_DIALOG:
                     popup = new ResizableDialog(popupUiHandlers, popupSize);
-                    final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(popupUiHandlers);
+                    final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
+                            popupUiHandlers);
                     controls = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());
                     popup.setContent(acceptRejectContent);
