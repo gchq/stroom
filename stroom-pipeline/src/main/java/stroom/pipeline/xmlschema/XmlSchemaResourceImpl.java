@@ -18,7 +18,7 @@ package stroom.pipeline.xmlschema;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 

@@ -3,8 +3,8 @@ package stroom.core.welcome;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

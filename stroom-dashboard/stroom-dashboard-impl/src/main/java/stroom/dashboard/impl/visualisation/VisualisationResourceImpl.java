@@ -18,7 +18,7 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 

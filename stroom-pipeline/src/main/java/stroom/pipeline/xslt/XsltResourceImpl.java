@@ -22,7 +22,7 @@ import stroom.pipeline.shared.XsltDTO;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
