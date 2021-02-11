@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.lmdb.PutOutcome;
-import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.PutOutcome;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
@@ -39,9 +39,9 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import javax.inject.Inject;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
@@ -104,6 +104,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     }
 
     public interface Factory {
+
         MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

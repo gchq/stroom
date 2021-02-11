@@ -21,9 +21,6 @@ import stroom.util.shared.ModelStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -37,6 +34,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.inject.Inject;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handler class that forwards the request to a URL.
@@ -132,7 +132,8 @@ public class HTTPAppender extends AbstractAppender {
             connection.setDoInput(true);
 
             if (useCompression) {
-                connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+                connection.addRequestProperty(StandardHeaderArguments.COMPRESSION,
+                        StandardHeaderArguments.COMPRESSION_ZIP);
             }
 
             AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
@@ -225,7 +226,13 @@ public class HTTPAppender extends AbstractAppender {
 
     }
 
-    public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
+    public void log(final Logger logger,
+                    final AttributeMap attributeMap,
+                    final String type,
+                    final String url,
+                    final int responseCode,
+                    final long bytes,
+                    final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
             final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))

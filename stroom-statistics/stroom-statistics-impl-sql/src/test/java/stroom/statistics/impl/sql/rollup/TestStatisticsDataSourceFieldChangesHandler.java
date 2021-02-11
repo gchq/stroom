@@ -17,13 +17,14 @@
 package stroom.statistics.impl.sql.rollup;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStatisticsDataSourceFieldChangesHandler extends StroomUnitTest {
+
     /**
      * Go from B, C, D to A,B,D
      */

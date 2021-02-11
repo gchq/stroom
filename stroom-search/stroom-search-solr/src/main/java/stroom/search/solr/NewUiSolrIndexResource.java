@@ -30,6 +30,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -37,9 +40,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
 
 @Api(
         value = "solr index - /v1",
@@ -48,6 +48,7 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUiSolrIndexResource implements RestResource {
+
     public static final String BASE_RESOURCE_PATH = "/solr/index" + ResourcePaths.V1;
 
     private final SolrIndexStore solrIndexStore;
@@ -76,7 +77,10 @@ public class NewUiSolrIndexResource implements RestResource {
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData base64EncodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(base64EncodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result = solrIndexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result = solrIndexStore.importDocument(documentData.getDocRef(),
+                documentData.getDataMap(),
+                importState,
+                ImportMode.IGNORE_CONFIRMATION);
         if (result != null) {
             return result.getDocRef();
         } else {

@@ -18,8 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 

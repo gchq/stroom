@@ -21,7 +21,6 @@ import stroom.util.shared.EntityServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class DocPermissionResourceImpl implements DocPermissionResource {
 
@@ -275,7 +275,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
                 case ALL:
                     // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
-                    final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+                    final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(
+                            docRef.getUuid());
                     final Map<String, Set<String>> add = new HashMap<>();
                     for (final Entry<String, Set<String>> entry : parentPermissions.getPermissions().entrySet()) {
                         final String userUuid = entry.getKey();

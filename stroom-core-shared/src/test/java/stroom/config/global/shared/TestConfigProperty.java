@@ -1,11 +1,12 @@
 package stroom.config.global.shared;
 
+import stroom.util.shared.PropertyPath;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.util.shared.PropertyPath;
 
 import java.io.IOException;
 

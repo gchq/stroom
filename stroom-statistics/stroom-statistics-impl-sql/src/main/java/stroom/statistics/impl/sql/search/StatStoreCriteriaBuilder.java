@@ -14,20 +14,24 @@ import stroom.util.shared.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.BadRequestException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.BadRequestException;
 
 public class StatStoreCriteriaBuilder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatStoreCriteriaBuilder.class);
 
-    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(ExpressionTerm.Condition.BETWEEN);
+    private static final List<ExpressionTerm.Condition> SUPPORTED_DATE_CONDITIONS = Collections.singletonList(
+            ExpressionTerm.Condition.BETWEEN);
 
-    public static FindEventCriteria buildCriteria(final StatisticStoreDoc dataSource, final ExpressionOperator expression, final String timeZoneId) {
+    public static FindEventCriteria buildCriteria(final StatisticStoreDoc dataSource,
+                                                  final ExpressionOperator expression,
+                                                  final String timeZoneId) {
 
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
@@ -202,7 +206,9 @@ public class StatStoreCriteriaBuilder {
         return hasBeenFound;
     }
 
-    private static Range<Long> extractRange(final ExpressionTerm dateTerm, final String timeZoneId, final long nowEpochMilli) {
+    private static Range<Long> extractRange(final ExpressionTerm dateTerm,
+                                            final String timeZoneId,
+                                            final long nowEpochMilli) {
         long rangeFrom = 0;
         long rangeTo = Long.MAX_VALUE;
 
@@ -221,7 +227,10 @@ public class StatStoreCriteriaBuilder {
         return range;
     }
 
-    private static long parseDateTime(final String type, final String value, final String timeZoneId, final long nowEpochMilli) {
+    private static long parseDateTime(final String type,
+                                      final String value,
+                                      final String timeZoneId,
+                                      final long nowEpochMilli) {
         final ZonedDateTime dateTime;
         try {
             dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli)

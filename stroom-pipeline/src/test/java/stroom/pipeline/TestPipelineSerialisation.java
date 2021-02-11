@@ -17,16 +17,18 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.xml.XMLMarshallerUtil;
+
+import org.junit.jupiter.api.Test;
 
 import javax.xml.bind.JAXBContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineSerialisation {
+
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
@@ -34,7 +36,8 @@ class TestPipelineSerialisation {
     void testEmpty() {
         final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
         final PipelineData pipelineData = new PipelineData();
-        final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
+        final String string = XMLMarshallerUtil.marshal(jaxbContext,
+                XMLMarshallerUtil.removeEmptyCollections(pipelineData));
         assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
                 "<pipeline/>").isEqualTo(string.trim());
     }
@@ -44,7 +47,8 @@ class TestPipelineSerialisation {
         final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
-        final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
+        final String string = XMLMarshallerUtil.marshal(jaxbContext,
+                XMLMarshallerUtil.removeEmptyCollections(pipelineData));
         assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
                 "<pipeline>\n" +
                 "   <elements>\n" +

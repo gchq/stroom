@@ -17,10 +17,10 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.lmdb.Deserializer;
 import stroom.lmdb.Serde;
 import stroom.lmdb.Serializer;
+import stroom.pipeline.refdata.store.offheapstore.UID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -9,15 +9,16 @@ import stroom.security.openid.api.OpenId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.Response;
-import java.util.Map;
-import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class SessionResourceImpl implements SessionResource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
 
     private final AuthenticationEventLog eventLog;

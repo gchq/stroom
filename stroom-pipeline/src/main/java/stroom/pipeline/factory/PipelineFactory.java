@@ -16,8 +16,6 @@
 
 package stroom.pipeline.factory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.destination.DestinationProvider;
@@ -32,8 +30,6 @@ import stroom.pipeline.reader.AbstractReaderElement;
 import stroom.pipeline.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecorder;
-import stroom.pipeline.shared.stepping.PipelineStepRequest;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -41,6 +37,8 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.source.SourceElement;
 import stroom.pipeline.stepping.ElementMonitor;
 import stroom.pipeline.stepping.Recorder;
@@ -49,7 +47,9 @@ import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.writer.OutputRecorder;
 import stroom.util.pipeline.scope.PipelineScoped;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -59,9 +59,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 @PipelineScoped
 public class PipelineFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineFactory.class);
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
@@ -199,12 +201,12 @@ public class PipelineFactory {
      * Code for properties.
      */
     public static void setProperty(final ElementRegistry pipelineElementRegistry,
-                             final String id,
-                             final String elementType,
-                             final Object elementInstance,
-                             final String propertyName,
-                             final PipelinePropertyValue value,
-                             final SteppingController controller) {
+                                   final String id,
+                                   final String elementType,
+                                   final Object elementInstance,
+                                   final String propertyName,
+                                   final PipelinePropertyValue value,
+                                   final SteppingController controller) {
         // Some methods might be removed so ignore them if they don't exist.
         final Method method = pipelineElementRegistry.getMethod(elementType, propertyName);
 
@@ -635,7 +637,8 @@ public class PipelineFactory {
 
             } else if (elementType.hasRole(PipelineElementType.ROLE_READER)) {
                 if (controller.getRecordDetector() == null) {
-                    final ReaderRecordDetectorElement recordDetector = elementFactory.getElementInstance(ReaderRecordDetectorElement.class);
+                    final ReaderRecordDetectorElement recordDetector = elementFactory.getElementInstance(
+                            ReaderRecordDetectorElement.class);
                     controller.setRecordDetector(recordDetector);
                     ((HasTargets) fragment.getOut()).setTarget(recordDetector);
                     result = new Fragment(fragment.getIn(), recordDetector);
@@ -647,6 +650,7 @@ public class PipelineFactory {
     }
 
     private static class Fragment {
+
         private final Element in;
         private final Element out;
 

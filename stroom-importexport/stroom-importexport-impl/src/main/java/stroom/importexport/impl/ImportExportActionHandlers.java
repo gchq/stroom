@@ -18,15 +18,16 @@ package stroom.importexport.impl;
 
 import stroom.importexport.api.ImportExportActionHandler;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 @Singleton
 class ImportExportActionHandlers {
+
     private final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders;
     private volatile Map<String, ImportExportActionHandler> handlers;
 

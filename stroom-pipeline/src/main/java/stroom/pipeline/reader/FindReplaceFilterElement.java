@@ -16,7 +16,6 @@
 
 package stroom.pipeline.reader;
 
-import org.apache.commons.text.StringEscapeUtils;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -27,8 +26,10 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.io.Reader;
+import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "FindReplaceFilter",
@@ -41,6 +42,7 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class FindReplaceFilterElement extends AbstractReaderElement {
+
     private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
 
@@ -70,8 +72,12 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         try {
             textReplacementFilterReader = FindReplaceFilter.builder()
                     .reader(reader)
-                    .find(escapeFind ? StringEscapeUtils.unescapeJava(find) : find)
-                    .replacement(escapeReplacement ? StringEscapeUtils.unescapeJava(replacement) : replacement)
+                    .find(escapeFind
+                            ? StringEscapeUtils.unescapeJava(find)
+                            : find)
+                    .replacement(escapeReplacement
+                            ? StringEscapeUtils.unescapeJava(replacement)
+                            : replacement)
                     .maxReplacements(maxReplacements)
                     .regex(regex)
                     .dotAll(dotAll)

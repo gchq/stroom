@@ -16,9 +16,10 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.store.LockFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import org.apache.lucene.store.LockFactory;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class LockFactoryFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LockFactoryFactory.class);
     private static final LockFactory INSTANCE = new ShardLockFactory();
 

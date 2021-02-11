@@ -16,16 +16,18 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.factory.Processor;
+import stroom.pipeline.factory.Terminator;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.factory.Processor;
-import stroom.pipeline.factory.Terminator;
 
 import java.util.Collections;
 import java.util.List;
 
 public class XMLFilterAdaptor implements XMLFilter {
+
     @Override
     public void startProcessing() {
     }

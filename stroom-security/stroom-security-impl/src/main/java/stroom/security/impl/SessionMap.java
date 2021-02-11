@@ -16,12 +16,13 @@
 
 package stroom.security.impl;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionMap implements HttpSessionListener {
+
     private static final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
 
     static HttpSession getSession(final String sessionId) {

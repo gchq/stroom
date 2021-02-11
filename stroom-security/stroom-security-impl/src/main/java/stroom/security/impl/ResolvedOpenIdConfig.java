@@ -16,14 +16,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletResponse;
 
 public class ResolvedOpenIdConfig {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ResolvedOpenIdConfig.class);
 
     public static final String INTERNAL_ISSUER = "stroom";

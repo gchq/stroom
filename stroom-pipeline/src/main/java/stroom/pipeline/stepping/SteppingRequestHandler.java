@@ -58,15 +58,16 @@ import stroom.util.date.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 class SteppingRequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingRequestHandler.class);
 
     private final Store streamStore;

@@ -16,10 +16,12 @@
 
 package stroom.pipeline.xml.converter.json;
 
-import org.xml.sax.XMLReader;
 import stroom.pipeline.xml.converter.ParserFactory;
 
+import org.xml.sax.XMLReader;
+
 public class JSONParserFactory implements ParserFactory {
+
     private JSONFactoryConfig config = new JSONFactoryConfig();
     private boolean addRootObject = true;
 

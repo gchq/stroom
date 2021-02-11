@@ -19,7 +19,6 @@ import stroom.util.time.StroomDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +29,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A heap based implementation of the {@link RefDataStore}

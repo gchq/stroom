@@ -23,12 +23,13 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Objects;
 
 @Singleton
 class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable {
+
     private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
@@ -49,7 +50,9 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
 
     @Override
     public boolean hasDocumentPermission(final String documentUuid, final String permission) {
-        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserIdentity(), documentUuid, permission);
+        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserIdentity(),
+                documentUuid,
+                permission);
         return cache.get(documentPermission);
     }
 
@@ -59,6 +62,7 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     }
 
     private static class DocumentPermission {
+
         private final UserIdentity userIdentity;
         private final String documentUuid;
         private final String permission;
@@ -72,8 +76,12 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final DocumentPermission that = (DocumentPermission) o;
             return Objects.equals(userIdentity, that.userIdentity) &&
                     Objects.equals(documentUuid, that.documentUuid) &&

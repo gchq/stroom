@@ -16,6 +16,10 @@
 
 package stroom.pipeline.xml.converter.xmlfragment;
 
+import stroom.pipeline.errorhandler.ProcessException;
+import stroom.pipeline.xml.converter.AbstractParser;
+import stroom.util.xml.SAXParserFactoryFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
@@ -24,18 +28,16 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
-import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.xml.converter.AbstractParser;
-import stroom.util.xml.SAXParserFactoryFactory;
 
+import java.io.IOException;
+import java.io.StringReader;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
-import java.io.StringReader;
 
 public class XMLFragmentParser extends AbstractParser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLFragmentParser.class);
 
     private static final SAXParserFactory PARSER_FACTORY;
@@ -82,6 +84,7 @@ public class XMLFragmentParser extends AbstractParser {
     }
 
     private class FragmentEntity implements EntityResolver {
+
         private static final String FRAGMENT = "fragment";
         private final InputSource fragment;
 

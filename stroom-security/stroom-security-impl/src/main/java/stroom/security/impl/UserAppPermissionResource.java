@@ -1,8 +1,9 @@
 package stroom.security.impl;
 
-import io.swagger.annotations.Api;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;

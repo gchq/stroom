@@ -17,16 +17,19 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEventStoreTimeIntervalEnum {
+
     @Test
     void testFromColumnInterval() {
         for (final EventStoreTimeIntervalEnum intervalEnum : EventStoreTimeIntervalEnum.values()) {
-            assertThat(EventStoreTimeIntervalEnum.fromColumnInterval(intervalEnum.columnInterval())).isEqualTo(intervalEnum);
+            assertThat(EventStoreTimeIntervalEnum.fromColumnInterval(intervalEnum.columnInterval())).isEqualTo(
+                    intervalEnum);
         }
     }
 

@@ -51,8 +51,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -61,9 +59,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterServiceImpl.class);
 
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
@@ -266,7 +267,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             final ExpressionOperator processorExpression = ExpressionOperator.builder()
                     .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
                     .build();
-            final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(processorExpression));
+            final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(
+                    processorExpression));
 
             // Get unique processors.
             final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
@@ -366,7 +368,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                    .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
+                    .addTerm(ProcessorFilterFields.PROCESSOR_ID,
+                            ExpressionTerm.Condition.EQUALS,
+                            processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
             filters.addAll(filterResultPage.getValues());
         }
@@ -430,7 +434,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     try {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
                             // Check the user has read permissions on the pipeline.
-                            if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+                            if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(),
+                                    DocumentPermissionNames.READ)) {
                                 throw new PermissionException(securityContext.getUserId(),
                                         "You do not have permission to create this processor filter");
                             }

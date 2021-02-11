@@ -25,14 +25,15 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.Set;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
 class UserGroupsCache implements EntityEvent.Handler, Clearable {
+
     private static final String CACHE_NAME = "User Groups Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
@@ -44,7 +45,9 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
                     final Provider<EntityEventBus> eventBusProvider,
                     final AuthorisationConfig authorisationConfig) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserGroupsCache, userService::findGroupUuidsForUser);
+        cache = cacheManager.create(CACHE_NAME,
+                authorisationConfig::getUserGroupsCache,
+                userService::findGroupUuidsForUser);
     }
 
     Set<String> get(final String userUuid) {

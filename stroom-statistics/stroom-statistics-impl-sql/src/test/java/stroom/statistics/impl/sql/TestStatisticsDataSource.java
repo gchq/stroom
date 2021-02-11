@@ -17,12 +17,13 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStatisticsDataSource {
+
     private static final String FIELD1 = "field1";
     private static final String FIELD2 = "field2";
     private static final String FIELD3 = "field3";
@@ -69,7 +71,9 @@ class TestStatisticsDataSource {
     void testListOrder1() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        assertThat(new ArrayList<>(sds.getConfig().getFields())).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(new ArrayList<>(sds.getConfig().getFields())).isEqualTo(Arrays.asList(new StatisticField(FIELD1),
+                new StatisticField(FIELD2),
+                new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
@@ -80,7 +84,9 @@ class TestStatisticsDataSource {
     void testListOrder2() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1),
+                new StatisticField(FIELD2),
+                new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
@@ -90,7 +96,8 @@ class TestStatisticsDataSource {
 
         sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
-        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1),
+                new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD3));
 
@@ -100,7 +107,9 @@ class TestStatisticsDataSource {
 
         sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
-        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1),
+                new StatisticField(FIELD2),
+                new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 

@@ -17,11 +17,6 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -33,9 +28,12 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.xml.XMLUtil;
 
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -47,10 +45,14 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DS3PerformanceTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);
 
     private static final int ITERATIONS = 1;
@@ -89,7 +91,8 @@ class DS3PerformanceTest {
         System.out.println("DS3 Elapsed Time = " + ds3Elapsed);
     }
 
-    private long process(final Path input, final Path output, final XMLReader parser) throws IOException, SAXException, TransformerConfigurationException {
+    private long process(final Path input, final Path output, final XMLReader parser)
+            throws IOException, SAXException, TransformerConfigurationException {
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         threadMXBean.setThreadContentionMonitoringEnabled(true);
         threadMXBean.setThreadCpuTimeEnabled(true);
@@ -121,7 +124,8 @@ class DS3PerformanceTest {
         writer.close();
     }
 
-    private OutputStream createWriter(final XMLReader reader, final Path tmp) throws IOException, TransformerConfigurationException {
+    private OutputStream createWriter(final XMLReader reader, final Path tmp)
+            throws IOException, TransformerConfigurationException {
         // Create an output writer.
         final TransformerHandler th = XMLUtil.createTransformerHandler(true);
         final OutputStream os = new BufferedOutputStream(Files.newOutputStream(tmp));
@@ -143,7 +147,8 @@ class DS3PerformanceTest {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
-        final SchemaFilter schemaFilter = schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI, errorReceiverProxy);
+        final SchemaFilter schemaFilter = schemaFilterFactory.getSchemaFilter(DS3ParserFactory.NAMESPACE_URI,
+                errorReceiverProxy);
         ds3ParserFactory = new DS3ParserFactory(schemaFilter);
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
@@ -159,9 +164,11 @@ class DS3PerformanceTest {
 
     private void compareFiles(final Path input, final Path actualFile, final Path expectedFile) throws IOException {
         // Make sure the file exists.
-        assertThat(Files.isRegularFile(actualFile)).as("Cannot find actual output file " + FileUtil.getCanonicalPath(actualFile)).isTrue();
+        assertThat(Files.isRegularFile(actualFile)).as("Cannot find actual output file " + FileUtil.getCanonicalPath(
+                actualFile)).isTrue();
         // Make sure the file exists.
-        assertThat(Files.isRegularFile(expectedFile)).as("Cannot find expected output file " + FileUtil.getCanonicalPath(expectedFile)).isTrue();
+        assertThat(Files.isRegularFile(expectedFile)).as("Cannot find expected output file " + FileUtil.getCanonicalPath(
+                expectedFile)).isTrue();
 
         // Normalise both files.
         normalise(actualFile);
@@ -176,11 +183,13 @@ class DS3PerformanceTest {
             int a = 0;
             int b = 0;
             while (a != -1 && b != -1) {
-                assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(a);
+                assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(
+                        a);
                 a = actualIS.read();
                 b = expectedIS.read();
             }
-            assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(a);
+            assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(
+                    a);
 
             success = true;
         } finally {

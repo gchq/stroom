@@ -14,7 +14,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,8 +22,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
     private final IndexVolumeGroupDao indexVolumeGroupDao;
     private final IndexVolumeDao indexVolumeDao;

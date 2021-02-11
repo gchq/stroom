@@ -17,24 +17,26 @@
 package stroom.pipeline.xml.converter.xmlfragment;
 
 
-import org.junit.jupiter.api.Test;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.XMLUtil;
 
+import org.junit.jupiter.api.Test;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestXMLFragmentParser extends StroomUnitTest {
+
     @Test
     void test() throws SAXException, IOException, TransformerConfigurationException {
         final String outerXML = "<?xml version=\"1.1\"?><!DOCTYPE Record [<!ENTITY fragment SYSTEM \"fragment\">]><records>&fragment;</records>";

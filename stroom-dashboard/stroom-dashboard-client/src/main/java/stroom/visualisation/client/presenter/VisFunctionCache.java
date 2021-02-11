@@ -16,19 +16,21 @@
 
 package stroom.visualisation.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.HandlerRegistry;
 import stroom.docref.DocRef;
 import stroom.security.client.api.event.LogoutEvent;
 
-import javax.inject.Singleton;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Singleton;
 
 @Singleton
 public class VisFunctionCache {
+
     private final EventBus eventBus;
     private final HandlerRegistry handlerRegistry = new HandlerRegistry();
 

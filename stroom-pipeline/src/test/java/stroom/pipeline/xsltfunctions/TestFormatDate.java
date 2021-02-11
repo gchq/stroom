@@ -17,11 +17,12 @@
 package stroom.pipeline.xsltfunctions;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.date.DateUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.Month;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestFormatDate extends StroomUnitTest {
+
     @Test
     void testDayOfWeekAndWeekAndWeakYear() {
         final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");

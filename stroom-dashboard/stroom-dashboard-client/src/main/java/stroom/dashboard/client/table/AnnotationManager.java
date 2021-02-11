@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ShowAnnotationEvent;
@@ -37,13 +35,17 @@ import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import javax.inject.Inject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class AnnotationManager {
+
     private final MenuListPresenter menuListPresenter;
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
@@ -60,7 +62,9 @@ public class AnnotationManager {
         this.changeAssignedToPresenter = changeAssignedToPresenter;
     }
 
-    public void showAnnotationMenu(final NativeEvent event, final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+    public void showAnnotationMenu(final NativeEvent event,
+                                   final TableComponentSettings tableComponentSettings,
+                                   final List<TableRow> selectedItems) {
         this.tableComponentSettings = tableComponentSettings;
         this.selectedItems = selectedItems;
 
@@ -85,7 +89,8 @@ public class AnnotationManager {
                 popupUiHandlers, target);
     }
 
-    private void updateMenuItems(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+    private void updateMenuItems(final TableComponentSettings tableComponentSettings,
+                                 final List<TableRow> selectedItems) {
         final List<Item> menuItems = new ArrayList<>();
 
         final List<EventId> eventIdList = getEventIdList(tableComponentSettings, selectedItems);
@@ -156,7 +161,8 @@ public class AnnotationManager {
         return null;
     }
 
-    public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+    public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings,
+                                          final List<TableRow> selectedItems) {
         final List<String> values = getValues(tableComponentSettings, selectedItems, "annotation:Id");
         return values
                 .stream()
@@ -165,7 +171,9 @@ public class AnnotationManager {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getValues(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems, final String fieldName) {
+    public List<String> getValues(final TableComponentSettings tableComponentSettings,
+                                  final List<TableRow> selectedItems,
+                                  final String fieldName) {
         final List<String> values = new ArrayList<>();
         if (selectedItems != null && selectedItems.size() > 0) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
@@ -179,7 +187,9 @@ public class AnnotationManager {
         return values;
     }
 
-    public String getValue(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems, final String fieldName) {
+    public String getValue(final TableComponentSettings tableComponentSettings,
+                           final List<TableRow> selectedItems,
+                           final String fieldName) {
         if (selectedItems != null && selectedItems.size() > 0) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
             if (fieldId != null) {
@@ -206,15 +216,33 @@ public class AnnotationManager {
     }
 
     private Item createCreateMenu(final List<EventId> eventIdList) {
-        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Create Annotation", null, true, () -> createAnnotation(eventIdList));
+        return new IconMenuItem(0,
+                SvgPresets.EDIT,
+                SvgPresets.EDIT,
+                "Create Annotation",
+                null,
+                true,
+                () -> createAnnotation(eventIdList));
     }
 
     private Item createStatusMenu(final List<Long> annotationIdList) {
-        return new IconMenuItem(1, SvgPresets.EDIT, SvgPresets.EDIT, "Change Status", null, true, () -> changeStatus(annotationIdList));
+        return new IconMenuItem(1,
+                SvgPresets.EDIT,
+                SvgPresets.EDIT,
+                "Change Status",
+                null,
+                true,
+                () -> changeStatus(annotationIdList));
     }
 
     private Item createAssignMenu(final List<Long> annotationIdList) {
-        return new IconMenuItem(2, SvgPresets.EDIT, SvgPresets.EDIT, "Change Assigned To", null, true, () -> changeAssignedTo(annotationIdList));
+        return new IconMenuItem(2,
+                SvgPresets.EDIT,
+                SvgPresets.EDIT,
+                "Change Assigned To",
+                null,
+                true,
+                () -> changeAssignedTo(annotationIdList));
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {

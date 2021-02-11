@@ -17,11 +17,14 @@
 package stroom.security.impl.session;
 
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IsServlet;
-import stroom.util.shared.ResultPage;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -29,13 +32,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 class SessionListServlet extends HttpServlet implements IsServlet {
+
     private static final long serialVersionUID = 8723931558071593017L;
 
     private static final Set<String> PATH_SPECS = Set.of("/sessionList");

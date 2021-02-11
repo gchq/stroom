@@ -16,12 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -32,7 +26,13 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +40,7 @@ import java.io.UncheckedIOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.inject.Inject;
 
 /**
  * Creates an output stream for a file on an Hadoop Distributed File System
@@ -56,6 +57,7 @@ import java.util.function.Consumer;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.HADOOP)
 public class HDFSFileAppender extends AbstractAppender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HDFSFileAppender.class);
 
     private static final String LOCK_EXTENSION = ".lock";

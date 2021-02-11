@@ -17,13 +17,14 @@
 package stroom.pipeline.reader;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.reader.FindReplaceFilter.SubSequence;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestFindReplaceFilter {
+
     private static final int BUFFER_SIZE = 4096;
 
     @Test
@@ -173,7 +175,10 @@ class TestFindReplaceFilter {
                 .find("[\u0000-\u0009\u000C\u000E-\u001F]")
                 .replacement(" ")
                 .regex(true);
-        test(builder, "This\u0000string\u0001contains\u0002non\u0003alpha\u0004chars", "This string contains non alpha chars", null);
+        test(builder,
+                "This\u0000string\u0001contains\u0002non\u0003alpha\u0004chars",
+                "This string contains non alpha chars",
+                null);
     }
 
     @Test
@@ -425,7 +430,10 @@ class TestFindReplaceFilter {
 
         final String input = sb.toString();
         final String expected = input;
-        test(builder, input, expected, "The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
+        test(builder,
+                input,
+                expected,
+                "The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
     }
 
     @Test
@@ -442,7 +450,10 @@ class TestFindReplaceFilter {
 
         final String input = sb.toString();
         final String expected = input.replaceFirst("a*", "c");
-        test(builder, input, expected, "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+        test(builder,
+                input,
+                expected,
+                "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
     }
 
     @Test
@@ -476,18 +487,25 @@ class TestFindReplaceFilter {
 
         final String input = sb.toString();
         final String expected = input;
-        test(builder, input, expected, "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+        test(builder,
+                input,
+                expected,
+                "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
     }
 
     @Test
     void testOdd() {
-        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll("a*", "c");
+        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll(
+                "a*",
+                "c");
         assertThat(out).isEqualTo("cbcc");
     }
 
     @Test
     void testOdd2() {
-        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll("a*$", "c");
+        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll(
+                "a*$",
+                "c");
         assertThat(out).isEqualTo("bcc");
     }
 
@@ -583,21 +601,37 @@ class TestFindReplaceFilter {
         return sb.toString();
     }
 
-    private void test(final Builder builder, final String input, final String expectedOutput, final String expectedError) {
+    private void test(final Builder builder,
+                      final String input,
+                      final String expectedOutput,
+                      final String expectedError) {
         test(builder, BUFFER_SIZE, input, expectedOutput, expectedError);
     }
 
-    private void test(final Builder builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+    private void test(final Builder builder,
+                      final int length,
+                      final String input,
+                      final String expectedOutput,
+                      final String expectedError) {
         final Builder[] builders = {builder};
         testMulti(builders, length, input, expectedOutput, expectedError);
     }
 
-    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+    private void testMulti(final Builder[] builder,
+                           final int length,
+                           final String input,
+                           final String expectedOutput,
+                           final String expectedError) {
         testMulti(builder, length, input, expectedOutput, expectedError, false);
         testMulti(builder, length, input, expectedOutput, expectedError, true);
     }
 
-    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError, final boolean singleChar) {
+    private void testMulti(final Builder[] builder,
+                           final int length,
+                           final String input,
+                           final String expectedOutput,
+                           final String expectedError,
+                           final boolean singleChar) {
         try {
             final LocationFactory locationFactory = new DefaultLocationFactory();
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();

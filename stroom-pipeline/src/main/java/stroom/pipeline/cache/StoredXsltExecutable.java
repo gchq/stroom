@@ -16,11 +16,13 @@
 
 package stroom.pipeline.cache;
 
-import net.sf.saxon.s9api.XsltExecutable;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 
+import net.sf.saxon.s9api.XsltExecutable;
+
 public class StoredXsltExecutable {
+
     private final XsltExecutable xsltExecutable;
     private final StroomXsltFunctionLibrary functionLibrary;
     private final StoredErrorReceiver errorReceiver;

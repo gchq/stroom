@@ -16,12 +16,7 @@
 
 package stroom.pipeline.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.ErrorHandler;
 import stroom.cache.api.CacheManager;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -31,10 +26,16 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.ParserConfig;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.ErrorHandler;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,6 +45,7 @@ import javax.inject.Singleton;
 class ParserFactoryPoolImpl
         extends AbstractDocPool<TextConverterDoc, StoredParserFactory>
         implements ParserFactoryPool, EntityEvent.Handler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
     private final DSChooser dsChooser;
@@ -54,7 +56,11 @@ class ParserFactoryPoolImpl
                           final DocumentPermissionCache documentPermissionCache,
                           final SecurityContext securityContext,
                           final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool", parserConfig::getCacheConfig, documentPermissionCache, securityContext);
+        super(cacheManager,
+                "Parser Factory Pool",
+                parserConfig::getCacheConfig,
+                documentPermissionCache,
+                securityContext);
         this.dsChooser = dsChooser;
     }
 
@@ -85,7 +91,8 @@ class ParserFactoryPoolImpl
                 // parserFactory = javaCCParserFactory;
 
             } else if (textConverter.getConverterType().equals(TextConverterType.XML_FRAGMENT)) {
-                parserFactory = XMLFragmentParserFactory.create(StreamUtil.stringToStream(textConverter.getData()), errorHandler);
+                parserFactory = XMLFragmentParserFactory.create(StreamUtil.stringToStream(textConverter.getData()),
+                        errorHandler);
 
             } else {
                 parserFactory = dsChooser.configure(textConverter.getData(), errorHandler);

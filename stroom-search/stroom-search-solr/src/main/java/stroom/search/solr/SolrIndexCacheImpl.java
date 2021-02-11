@@ -20,23 +20,24 @@ package stroom.search.solr;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
+import stroom.search.solr.shared.SolrIndexDoc;
+import stroom.search.solr.shared.SolrIndexField;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
-import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearable {
+
     private static final String CACHE_NAME = "Solr Index Cache";
 
     private final SolrIndexStore solrIndexStore;
@@ -66,7 +67,8 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
             throw new SolrIndexException("No index fields have been set for: " + docRef);
         }
 
-        final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
+        final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName,
+                Function.identity()));
         return new CachedSolrIndex(loaded, fields, fieldMap);
     }
 

@@ -41,13 +41,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.stream.Collectors;
 
 @Api(
         value = "stroom-solr-index query - /v2",
@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class StroomSolrIndexQueryResource implements RestResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -96,7 +97,8 @@ public class StroomSolrIndexQueryResource implements RestResource {
         //a lifespan beyond the scope of this request and then begin the search for the data
         //If it is not the first call for this query key then it will return the existing searchResponseCreator with
         //access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
+        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(
+                request));
 
         //create a response from the data found so far, this could be complete/incomplete
         SearchResponse searchResponse = searchResponseCreator.create(request);
@@ -107,7 +109,8 @@ public class StroomSolrIndexQueryResource implements RestResource {
         return searchResponse;
     }
 
-    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request, final SearchResponse searchResponse) {
+    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request,
+                                             final SearchResponse searchResponse) {
         String resultInfo;
 
         if (searchResponse.getResults() != null) {

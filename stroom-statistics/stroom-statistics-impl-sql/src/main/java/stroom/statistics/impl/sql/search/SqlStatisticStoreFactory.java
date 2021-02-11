@@ -17,13 +17,14 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 public class SqlStatisticStoreFactory implements StoreFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
 
@@ -57,8 +58,10 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                         Preconditions.checkNotNull(searchRequest)
                                 .getQuery())
                         .getDataSource());
-        Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
-        Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
+        Preconditions.checkNotNull(searchRequest.getResultRequests(),
+                "searchRequest must have at least one resultRequest");
+        Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(),
+                "searchRequest must have at least one resultRequest");
 
         final StatisticStoreDoc statisticStoreDoc = statisticStoreCache.getStatisticsDataSource(docRef);
 

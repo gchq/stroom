@@ -26,7 +26,6 @@ import stroom.util.shared.ResultPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +37,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 class SearchableTaskProgress implements Searchable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableTaskProgress.class);
     private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("Searchable", "Task Manager", "Task Manager");
 
@@ -79,7 +80,9 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
@@ -133,8 +136,10 @@ class SearchableTaskProgress implements Searchable {
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
                 targetNodes.forEach(nodeName -> {
-                    final Supplier<TaskProgressResponse> supplier = taskContextFactory.contextResult(taskContext, "Getting progress from node '" + nodeName + "'", tc ->
-                            taskResource.list(nodeName));
+                    final Supplier<TaskProgressResponse> supplier = taskContextFactory.contextResult(taskContext,
+                            "Getting progress from node '" + nodeName + "'",
+                            tc ->
+                                    taskResource.list(nodeName));
                     CompletableFuture
                             .supplyAsync(supplier, executor)
                             .whenComplete((r, t) -> {

@@ -28,11 +28,11 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.
@@ -46,6 +46,7 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
 public class RollingFileAppender extends AbstractRollingAppender {
+
     private final PathCreator pathCreator;
 
     private String[] outputPaths;

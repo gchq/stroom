@@ -12,9 +12,9 @@ import net.sf.saxon.event.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.Objects;
+import javax.inject.Inject;
 
 
 public class OffHeapRefDataValueProxyConsumer
@@ -48,7 +48,8 @@ public class OffHeapRefDataValueProxyConsumer
             final int typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(new ByteBufferConsumerId(typeId));
+            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(new ByteBufferConsumerId(
+                    typeId));
 
             Objects.requireNonNull(consumerFactory, () -> LogUtil.message("No factory found for typeId {}", typeId));
             final RefDataValueByteBufferConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
@@ -61,6 +62,7 @@ public class OffHeapRefDataValueProxyConsumer
     }
 
     public interface Factory {
+
         OffHeapRefDataValueProxyConsumer create(final Receiver receiver,
                                                 final PipelineConfiguration pipelineConfiguration);
     }

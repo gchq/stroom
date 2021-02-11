@@ -24,7 +24,6 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +33,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Provider;
 
 public class SolrSearchResultCollector implements Store {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchResultCollector.class);
     private static final String TASK_NAME = "SolrSearchTask";
 

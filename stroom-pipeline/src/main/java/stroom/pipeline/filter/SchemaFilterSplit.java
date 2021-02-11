@@ -21,8 +21,8 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.security.api.SecurityContext;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
+import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
@@ -34,6 +34,7 @@ import javax.xml.XMLConstants;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_VALIDATOR}, icon = ElementIcons.XSD)
 public class SchemaFilterSplit extends AbstractXMLFilter {
+
     private final SchemaFilter schemaFilter;
     private final FindXMLSchemaCriteria schemaConstraint = new FindXMLSchemaCriteria();
     private String schemaLanguage = XMLConstants.W3C_XML_SCHEMA_NS_URI;

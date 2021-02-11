@@ -31,6 +31,11 @@ import stroom.util.shared.ResourcePaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
@@ -39,14 +44,10 @@ import javax.servlet.http.HttpSessionListener;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 @Singleton
 class SessionListListener implements HttpSessionListener, SessionListService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionListListener.class);
 
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
@@ -158,15 +159,19 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                         .stream()
                         .map(nodeName -> {
                             final Supplier<SessionListResponse> listSessionsOnNodeTask =
-                                    taskContextFactory.contextResult(parentTaskContext, LogUtil.message("Get session list on node [{}]", nodeName), taskContext ->
-                                            listSessions(nodeName));
+                                    taskContextFactory.contextResult(parentTaskContext,
+                                            LogUtil.message("Get session list on node [{}]", nodeName),
+                                            taskContext ->
+                                                    listSessions(nodeName));
 
                             LOGGER.debug("Creating async task for node {}", nodeName);
                             return CompletableFuture
                                     .supplyAsync(listSessionsOnNodeTask)
                                     .exceptionally(throwable -> {
-                                        LOGGER.error("Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
-                                                nodeName, throwable.getMessage());
+                                        LOGGER.error(
+                                                "Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
+                                                nodeName,
+                                                throwable.getMessage());
                                         LOGGER.debug("Error getting session list for node [{}]",
                                                 nodeName, throwable);
                                         // TODO do we want to silently ignore nodes that error?

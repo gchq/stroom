@@ -16,14 +16,16 @@
 
 package stroom.pipeline.writer;
 
+import stroom.util.io.WrappedOutputStream;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import stroom.util.io.WrappedOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class HDFSLockedOutputStream extends WrappedOutputStream {
+
     private static final String UNABLE_TO_RENAME_FILE = "Unable to rename file \"";
     private static final String TO = "\" to \"";
     private static final String QUOTE = "\"";

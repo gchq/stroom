@@ -29,13 +29,14 @@ import org.apache.solr.client.solrj.request.schema.SchemaRequest.FieldTypes;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.schema.SchemaResponse.FieldTypesResponse;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 class SolrIndexResourceImpl implements SolrIndexResource {
+
     private final SolrIndexStore solrIndexStore;
     private final DocumentResourceHelper documentResourceHelper;
 

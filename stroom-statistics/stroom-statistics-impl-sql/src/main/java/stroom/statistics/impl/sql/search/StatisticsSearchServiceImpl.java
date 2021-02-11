@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @SuppressWarnings("unused")
         //called by DI
@@ -305,7 +305,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 try {
                     return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
                 } catch (SQLException e) {
-                    throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()), e);
+                    throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()),
+                            e);
                 }
             });
             return data;
@@ -345,7 +346,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             // the aggregateValue is sum of all values against that
             // key/time. We therefore need to get the
             // average using the count column
-            final double averagedValue = count != 0 ? (aggregatedValue / count) : 0;
+            final double averagedValue = count != 0
+                    ? (aggregatedValue / count)
+                    : 0;
 
             arr[idx] = ValDouble.create(averagedValue);
         };

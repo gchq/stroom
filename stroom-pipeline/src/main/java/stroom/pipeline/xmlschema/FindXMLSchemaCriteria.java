@@ -16,21 +16,23 @@
 
 package stroom.pipeline.xmlschema;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
+
     @JsonProperty
     private String namespaceURI;
     @JsonProperty
@@ -111,9 +113,15 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final FindXMLSchemaCriteria that = (FindXMLSchemaCriteria) o;
         return Objects.equals(namespaceURI, that.namespaceURI) &&
                 Objects.equals(systemId, that.systemId) &&

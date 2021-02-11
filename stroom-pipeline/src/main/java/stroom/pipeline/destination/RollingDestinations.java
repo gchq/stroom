@@ -16,19 +16,21 @@
 
 package stroom.pipeline.destination;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class RollingDestinations {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
     private static final int MAX_TRY_COUNT = 1000;

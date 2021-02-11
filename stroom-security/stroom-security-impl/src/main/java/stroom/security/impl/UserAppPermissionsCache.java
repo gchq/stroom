@@ -25,14 +25,15 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.Set;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
 public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
+
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
@@ -44,7 +45,9 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
                             final UserAppPermissionService userAppPermissionService,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserAppPermissionsCache, userAppPermissionService::getPermissionNamesForUser);
+        cache = cacheManager.create(CACHE_NAME,
+                authorisationConfig::getUserAppPermissionsCache,
+                userAppPermissionService::getPermissionNamesForUser);
     }
 
     Set<String> get(final String userUuid) {

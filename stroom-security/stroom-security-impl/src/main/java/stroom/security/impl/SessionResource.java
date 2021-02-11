@@ -1,12 +1,13 @@
 package stroom.security.impl;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.security.impl.session.SessionDetails;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -30,6 +31,7 @@ import javax.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SessionResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
     String NODE_NAME_PARAM = "nodeName";
@@ -39,7 +41,8 @@ public interface SessionResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Checks if the current session is authenticated and redirects to an auth flow if it is not",
             response = String.class)
-    LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest, @QueryParam("redirect_uri") String redirectUri);
+    LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
+                        @QueryParam("redirect_uri") String redirectUri);
 
     @GET
     @Path("logout/{sessionId}")

@@ -1,9 +1,10 @@
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.docref.DocRef;
 
 @ApiModel(description = "A request to determine if the user has the requested permission on a 'document'")
 public class AuthorisationRequest {

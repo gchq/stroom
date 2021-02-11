@@ -16,13 +16,14 @@
 
 package stroom.pipeline.destination;
 
+import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.scheduler.SimpleCron;
+
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.PathCreator;
-import stroom.util.io.ByteCountOutputStream;
-import stroom.util.io.FileUtil;
-import stroom.util.scheduler.SimpleCron;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.function.Consumer;
 
 public class RollingFileDestination extends RollingDestination {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileDestination.class);
 
     private static final int MAX_FAILED_RENAME_ATTEMPTS = 100;
@@ -71,13 +73,19 @@ public class RollingFileDestination extends RollingDestination {
                 // I have a feeling that the OS might sometimes report that a
                 // file exists that has actually just been rolled.
                 LOGGER.warn("File exists for key={} so rolling immediately", key);
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
+                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.APPEND))));
 
                 // Roll the file.
                 roll();
 
             } else {
-                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))));
+                setOutputStream(new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(file,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.APPEND))));
             }
         } catch (final IOException e) {
             try {

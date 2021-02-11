@@ -26,10 +26,11 @@ import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
 
-import javax.inject.Provider;
 import java.util.List;
+import javax.inject.Provider;
 
 class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> extends ExtensionFunctionDefinition {
+
     private final String functionName;
     private final int minArgs;
     private final int maxArgs;

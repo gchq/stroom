@@ -26,8 +26,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,9 +36,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticAggregationTransactionHelper {
+
     public static final long NEWEST_SENSIBLE_STAT_AGE = DateUtil.parseNormalDateTimeString("9999-01-01T00:00:00.000Z");
     // The number of records to add to the aggregate from the aggregate source
     // table on each pass
@@ -604,6 +605,7 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public static class AggregateConfig {
+
         // How
         private final long ageMs;
         private final byte precision;

@@ -16,10 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
@@ -28,6 +24,11 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.Incrementor;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.RecordCountService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 
@@ -39,6 +40,7 @@ import javax.inject.Inject;
 @ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
     private static final int LOG_COUNT = 10000;
 

@@ -18,11 +18,11 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.lmdb.PutOutcome;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
 import stroom.pipeline.refdata.util.ByteBufferPoolFactory;
@@ -39,6 +39,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessingInfoDb extends AbstractLmdbDbTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessingInfoDb.class);
 
     private ProcessingInfoDb processingInfoDb = null;

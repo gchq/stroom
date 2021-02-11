@@ -16,7 +16,6 @@
 
 package stroom.pipeline.parser;
 
-import org.xml.sax.XMLReader;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -27,12 +26,15 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 
+import org.xml.sax.XMLReader;
+
 import javax.inject.Inject;
 
 @ConfigurableElement(type = "JSONParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.JSON)
 public class JSONParser extends AbstractParser {
+
     private JSONFactoryConfig config = new JSONFactoryConfig();
     private boolean addRootObject = true;
 

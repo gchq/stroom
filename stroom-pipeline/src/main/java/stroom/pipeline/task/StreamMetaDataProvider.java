@@ -21,8 +21,8 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StreamMetaDataProvider implements MetaDataProvider {
+
     private static final int MINIMUM_BYTE_COUNT = 10;
     private static final String FEED = "Feed";
     private static final String STREAM_TYPE = "StreamType";
@@ -151,7 +152,8 @@ public class StreamMetaDataProvider implements MetaDataProvider {
         return parentData.computeIfAbsent(PIPELINE, k -> {
             final Meta meta = metaHolder.getMeta();
             if (meta != null && meta.getPipelineUuid() != null) {
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()));
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                        meta.getPipelineUuid()));
                 if (pipelineDoc != null) {
                     return pipelineDoc.getName();
                 }

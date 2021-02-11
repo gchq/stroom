@@ -6,6 +6,7 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -17,7 +18,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(value = "reference data - /v1")
 @Path(ReferenceDataResource.BASE_PATH)

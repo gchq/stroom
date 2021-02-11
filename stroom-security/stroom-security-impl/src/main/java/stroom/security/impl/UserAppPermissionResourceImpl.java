@@ -1,10 +1,11 @@
 package stroom.security.impl;
 
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.util.Set;
 
 public class UserAppPermissionResourceImpl implements UserAppPermissionResource {
+
     private final UserAppPermissionService userAppPermissionService;
 
     @Inject

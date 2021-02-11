@@ -69,8 +69,6 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -94,6 +92,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * An Off Heap implementation of {@link RefDataStore} using LMDB.
@@ -381,7 +381,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     if (doesStoreContainRanges) {
                         // we have ranges for this map def so we would expect to be able to convert the key
                         throw new RuntimeException(LogUtil.message(
-                                "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                                "Key {} cannot be used with the range store as it cannot be converted to a long", key),
+                                e);
                     }
                     // no ranges for this map def so the fact that we could not convert the key to a long
                     // is not a problem. Do nothing.
@@ -490,7 +491,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
         try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(now, purgeAge);
-             final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
+                final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
             final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
@@ -897,7 +898,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final MapDefinition mapDefinition = mapDefinitionUIDStore.get(readTxn, mapUid)
                 .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
 
-        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn, mapDefinition.getRefStreamDefinition())
+        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
+                mapDefinition.getRefStreamDefinition())
                 .orElse(null);
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);
@@ -959,9 +961,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
                     .addDetail("Path", dbDir.toAbsolutePath().toString())
                     .addDetail("Environment max size", maxSize)
-                    .addDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
+                    .addDetail("Environment current size",
+                            ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .addDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .addDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
+                    .addDetail("Purge cut off",
+                            TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .addDetail("Max readers", maxReaders)
                     .addDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())

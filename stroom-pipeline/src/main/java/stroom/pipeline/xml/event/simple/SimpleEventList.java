@@ -16,15 +16,17 @@
 
 package stroom.pipeline.xml.event.simple;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.EventList;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleEventList implements EventList {
+
     private final List<Event> events = new ArrayList<>();
 
     public void add(final Event event) {

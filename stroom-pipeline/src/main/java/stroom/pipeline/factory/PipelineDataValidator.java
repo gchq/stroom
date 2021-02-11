@@ -25,12 +25,13 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 
-import javax.inject.Inject;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class PipelineDataValidator {
+
     private final ElementRegistryFactory pipelineElementRegistryFactory;
 
     @Inject
@@ -51,16 +52,24 @@ public class PipelineDataValidator {
         validatePropertiesList(registry, sourcePipeline, pipelineData.getProperties().getRemove(), elementMap);
 
         // Validate pipeline references.
-        validatePipelineReferencesList(registry, sourcePipeline, pipelineData.getPipelineReferences().getAdd(), elementMap);
-        validatePipelineReferencesList(registry, sourcePipeline, pipelineData.getPipelineReferences().getRemove(), elementMap);
+        validatePipelineReferencesList(registry,
+                sourcePipeline,
+                pipelineData.getPipelineReferences().getAdd(),
+                elementMap);
+        validatePipelineReferencesList(registry,
+                sourcePipeline,
+                pipelineData.getPipelineReferences().getRemove(),
+                elementMap);
 
         // Validate links.
         validateLinksList(sourcePipeline, pipelineData.getLinks().getAdd(), elementMap);
         validateLinksList(sourcePipeline, pipelineData.getLinks().getRemove(), elementMap);
     }
 
-    private void validateElementList(final ElementRegistry registry, final DocRef sourcePipeline,
-                                     final List<PipelineElement> elementsList, final Map<String, PipelineElementType> elementMap) {
+    private void validateElementList(final ElementRegistry registry,
+                                     final DocRef sourcePipeline,
+                                     final List<PipelineElement> elementsList,
+                                     final Map<String, PipelineElementType> elementMap) {
         for (final PipelineElement element : elementsList) {
             if (element.getId() == null) {
                 throw new PipelineFactoryException("No id has been declared for element: " + element.getType());
@@ -85,8 +94,10 @@ public class PipelineDataValidator {
         }
     }
 
-    private void validatePropertiesList(final ElementRegistry registry, final DocRef sourcePipeline,
-                                        final List<PipelineProperty> propertiesList, final Map<String, PipelineElementType> elementMap) {
+    private void validatePropertiesList(final ElementRegistry registry,
+                                        final DocRef sourcePipeline,
+                                        final List<PipelineProperty> propertiesList,
+                                        final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineProperty> iterator = propertiesList.iterator();
         while (iterator.hasNext()) {
             final PipelineProperty property = iterator.next();
@@ -117,8 +128,10 @@ public class PipelineDataValidator {
         }
     }
 
-    private void validatePipelineReferencesList(final ElementRegistry registry, final DocRef sourcePipeline,
-                                                final List<PipelineReference> pipelineReferencesList, final Map<String, PipelineElementType> elementMap) {
+    private void validatePipelineReferencesList(final ElementRegistry registry,
+                                                final DocRef sourcePipeline,
+                                                final List<PipelineReference> pipelineReferencesList,
+                                                final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineReference> iterator = pipelineReferencesList.iterator();
         while (iterator.hasNext()) {
             final PipelineReference pipelineReference = iterator.next();

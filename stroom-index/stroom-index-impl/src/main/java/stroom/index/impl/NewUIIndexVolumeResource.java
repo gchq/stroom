@@ -1,11 +1,12 @@
 package stroom.index.impl;
 
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
 import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

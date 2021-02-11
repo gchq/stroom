@@ -16,8 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -29,13 +27,16 @@ import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.
@@ -48,6 +49,7 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILE)
 public class FileAppender extends AbstractAppender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FileAppender.class);
 
     private static final String LOCK_EXTENSION = ".lock";

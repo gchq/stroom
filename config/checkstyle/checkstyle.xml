@@ -142,12 +142,14 @@
                     LITERAL_SWITCH, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, METHOD_DEF,
                     OBJBLOCK, STATIC_INIT, RECORD_DEF, COMPACT_CTOR_DEF"/>
     </module>
+
     <module name="RightCurly">
       <property name="id" value="RightCurlySame"/>
       <property name="tokens"
                value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE,
                     LITERAL_DO"/>
     </module>
+
     <module name="RightCurly">
       <property name="id" value="RightCurlyAlone"/>
       <property name="option" value="alone"/>
@@ -156,6 +158,7 @@
                     INSTANCE_INIT, ANNOTATION_DEF, ENUM_DEF, INTERFACE_DEF, RECORD_DEF,
                     COMPACT_CTOR_DEF"/>
     </module>
+
     <module name="SuppressionXpathSingleFilter">
       <!-- suppresion is required till https://github.com/checkstyle/checkstyle/issues/7541 -->
       <property name="id" value="RightCurlyAlone"/>
@@ -168,6 +171,7 @@
                value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE,
                     LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, DO_WHILE"/>
     </module>
+
     <module name="WhitespaceAround">
       <property name="allowEmptyConstructors" value="true"/>
       <property name="allowEmptyLambdas" value="true"/>
@@ -197,6 +201,7 @@
     <module name="FallThrough"/>
     <module name="UpperEll"/>
     <module name="ModifierOrder"/>
+
     <module name="EmptyLineSeparator">
       <property name="tokens"
                value="PACKAGE_DEF, IMPORT, STATIC_IMPORT, CLASS_DEF, INTERFACE_DEF, ENUM_DEF,
@@ -210,23 +215,27 @@
       <property name="tokens" value="DOT"/>
       <property name="option" value="nl"/>
     </module>
+
     <module name="SeparatorWrap">
       <property name="id" value="SeparatorWrapComma"/>
       <property name="tokens" value="COMMA"/>
       <property name="option" value="EOL"/>
     </module>
+
     <module name="SeparatorWrap">
       <!-- ELLIPSIS is EOL until https://github.com/google/styleguide/issues/258 -->
       <property name="id" value="SeparatorWrapEllipsis"/>
       <property name="tokens" value="ELLIPSIS"/>
       <property name="option" value="EOL"/>
     </module>
+
     <module name="SeparatorWrap">
       <!-- ARRAY_DECLARATOR is EOL until https://github.com/google/styleguide/issues/259 -->
       <property name="id" value="SeparatorWrapArrayDeclarator"/>
       <property name="tokens" value="ARRAY_DECLARATOR"/>
       <property name="option" value="EOL"/>
     </module>
+
     <module name="SeparatorWrap">
       <property name="id" value="SeparatorWrapMethodRef"/>
       <property name="tokens" value="METHOD_REF"/>
@@ -238,6 +247,7 @@
       <message key="name.invalidPattern"
              value="Package name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="TypeName">
       <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF,
                     ANNOTATION_DEF, RECORD_DEF"/>
@@ -248,6 +258,7 @@
       <message key="name.invalidPattern"
              value="Type name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="MemberName">
       <!--<property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>-->
 
@@ -256,6 +267,7 @@
       <message key="name.invalidPattern"
              value="Member name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="ParameterName">
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
 
@@ -265,6 +277,7 @@
       <message key="name.invalidPattern"
              value="Parameter name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="LambdaParameterName">
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
 
@@ -274,6 +287,7 @@
       <message key="name.invalidPattern"
              value="Lambda parameter name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="CatchParameterName">
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
 
@@ -283,6 +297,7 @@
       <message key="name.invalidPattern"
              value="Catch parameter name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="LocalVariableName">
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
 
@@ -292,6 +307,7 @@
       <message key="name.invalidPattern"
              value="Local variable name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="PatternVariableName">
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
 
@@ -301,6 +317,7 @@
       <message key="name.invalidPattern"
              value="Pattern variable name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="ClassTypeParameterName">
       <!-- This is google's pattern K, T1, ConProvT, RowT -->
       <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
@@ -311,6 +328,7 @@
       <message key="name.invalidPattern"
              value="Class type name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <!--<module name="RecordComponentName">-->
       <!--<property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>-->
       <!--<message key="name.invalidPattern"-->
@@ -331,6 +349,7 @@
       <message key="name.invalidPattern"
              value="Method type name ''{0}'' must match pattern ''{1}''."/>
     </module>
+
     <module name="InterfaceTypeParameterName">
       <!-- This is google's pattern K, T1, ConProvT, RowT -->
       <!--<property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)"/>-->
@@ -343,6 +362,7 @@
     </module>
 
     <module name="NoFinalizer"/>
+
     <module name="GenericWhitespace">
       <message key="ws.followed"
              value="GenericWhitespace ''{0}'' is followed by whitespace."/>
@@ -353,6 +373,7 @@
       <message key="ws.notPreceded"
              value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
     </module>
+
     <module name="Indentation">
       <!-- IJ tab/indent settings are:
         tab size: 4
@@ -371,19 +392,20 @@
       <property name="arrayInitIndent" value="8"/>
       <property name="forceStrictCondition" value="false"/>
     </module>
-    <module name="AbbreviationAsWordInName">
-      <property name="ignoreFinal" value="false"/>
-      <property name="allowedAbbreviationLength" value="0"/>
 
-      <!--<property name="allowedAbbreviations" value="DTO,URI,IT,XSLT,IO,XML"/>-->
-      <property name="tokens"
-               value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,
-                    PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,
-                    RECORD_COMPONENT_DEF"/>
+    <!--<module name="AbbreviationAsWordInName">-->
+      <!--<property name="ignoreFinal" value="false"/>-->
+      <!--<property name="allowedAbbreviationLength" value="0"/>-->
 
-      <!-- too many in use currently so set as warning -->
-      <property name="severity" value="warning"/>
-    </module>
+      <!--<property name="allowedAbbreviations" value="DTO,URI,IT,XSLT,IO,XML,HTML,GZIP"/>-->
+      <!--<property name="tokens"-->
+               <!--value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,-->
+                    <!--PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,-->
+                    <!--RECORD_COMPONENT_DEF"/>-->
+
+      <!--[> too many in use currently so set as warning <]-->
+      <!--<property name="severity" value="warning"/>-->
+    <!--</module>-->
     <!--<module name="OverloadMethodsDeclarationOrder"/>-->
 
     <module name="VariableDeclarationUsageDistance"/>
@@ -416,12 +438,14 @@
                value="CTOR_DEF, LITERAL_NEW, METHOD_CALL, METHOD_DEF,
                     SUPER_CTOR_CALL, ENUM_CONSTANT_DEF, RECORD_DEF"/>
     </module>
+
     <module name="NoWhitespaceBefore">
       <property name="tokens"
                value="COMMA, SEMI, POST_INC, POST_DEC, DOT,
                     LABELED_STAT, METHOD_REF"/>
       <property name="allowLineBreaks" value="true"/>
     </module>
+
     <module name="ParenPad">
       <property name="tokens"
                value="ANNOTATION, ANNOTATION_FIELD_DEF, CTOR_CALL, CTOR_DEF, DOT, ENUM_CONSTANT_DEF,
@@ -430,6 +454,7 @@
                     METHOD_DEF, QUESTION, RESOURCE_SPECIFICATION, SUPER_CTOR_CALL, LAMBDA,
                     RECORD_DEF"/>
     </module>
+
     <!-- our strings tend to have the + at the end but boolean expressions tend to have the && on the new line -->
     <!--<module name="OperatorWrap">-->
       <!--<property name="option" value="NL"/>-->
@@ -437,17 +462,20 @@
                <!--value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR,-->
                     <!--LT, MINUS, MOD, NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR, METHOD_REF "/>-->
     <!--</module>-->
+
     <module name="AnnotationLocation">
       <property name="id" value="AnnotationLocationMostCases"/>
       <property name="tokens"
                value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF,
                       RECORD_DEF, COMPACT_CTOR_DEF"/>
     </module>
+
     <module name="AnnotationLocation">
       <property name="id" value="AnnotationLocationVariables"/>
       <property name="tokens" value="VARIABLE_DEF"/>
       <property name="allowSamelineMultipleAnnotations" value="true"/>
     </module>
+
     <!-- javadoc is in too much of a state to enable this one -->
     <!--<module name="NonEmptyAtclauseDescription"/>-->
 

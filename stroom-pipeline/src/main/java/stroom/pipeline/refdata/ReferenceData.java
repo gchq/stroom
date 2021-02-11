@@ -45,7 +45,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,8 +53,10 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class ReferenceData {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
 
@@ -234,9 +235,9 @@ public class ReferenceData {
      * to this stream only.
      */
     private RefStreamDefinition getNestedStreamEventList(final PipelineReference pipelineReference,
-                                                                   final String mapName,
-                                                                   final String keyName,
-                                                                   final ReferenceDataResult result) {
+                                                         final String mapName,
+                                                         final String keyName,
+                                                         final ReferenceDataResult result) {
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, map {}, key {}",

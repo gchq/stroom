@@ -32,6 +32,9 @@ import stroom.util.shared.ResourcePaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
@@ -45,9 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * <p>
@@ -56,6 +56,7 @@ import java.util.Set;
  */
 @Singleton
 class SecurityFilter implements Filter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 

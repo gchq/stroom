@@ -16,8 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -29,8 +27,11 @@ import stroom.pipeline.xml.event.simple.SimpleEventList;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
-import javax.inject.Inject;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
 import java.util.List;
+import javax.inject.Inject;
 
 /**
  * Filters out records that have raised an error or warning during processing.
@@ -38,6 +39,7 @@ import java.util.List;
 @ConfigurableElement(type = "RecordOutputFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_OUTPUT)
 public class RecordOutputFilter extends BufferFilter {
+
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private int depth;

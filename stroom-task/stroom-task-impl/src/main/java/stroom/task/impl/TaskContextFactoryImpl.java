@@ -11,7 +11,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -19,8 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 class TaskContextFactoryImpl implements TaskContextFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
 
     private final SecurityContext securityContext;
@@ -43,7 +44,9 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     @Override
-    public Runnable context(final TaskContext parentContext, final String taskName, final Consumer<TaskContext> consumer) {
+    public Runnable context(final TaskContext parentContext,
+                            final String taskName,
+                            final Consumer<TaskContext> consumer) {
         Objects.requireNonNull(parentContext, "Null parent context");
         return createFromConsumer(parentContext, taskName, consumer);
     }
@@ -54,12 +57,16 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     @Override
-    public <R> Supplier<R> contextResult(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+    public <R> Supplier<R> contextResult(final TaskContext parentContext,
+                                         final String taskName,
+                                         final Function<TaskContext, R> function) {
         Objects.requireNonNull(parentContext, "Null parent context");
         return createFromFunction(parentContext, taskName, function);
     }
 
-    private Runnable createFromConsumer(final TaskContext parentContext, final String taskName, final Consumer<TaskContext> consumer) {
+    private Runnable createFromConsumer(final TaskContext parentContext,
+                                        final String taskName,
+                                        final Consumer<TaskContext> consumer) {
         final Supplier<Void> supplierOut = createFromFunction(parentContext, taskName, taskContext -> {
             consumer.accept(taskContext);
             return null;
@@ -67,7 +74,9 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         return supplierOut::get;
     }
 
-    private <R> Supplier<R> createFromFunction(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+    private <R> Supplier<R> createFromFunction(final TaskContext parentContext,
+                                               final String taskName,
+                                               final Function<TaskContext, R> function) {
         return wrap(parentContext, taskName, function);
     }
 
@@ -76,7 +85,9 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         return CurrentTaskContext.currentContext();
     }
 
-    private <R> Supplier<R> wrap(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+    private <R> Supplier<R> wrap(final TaskContext parentContext,
+                                 final String taskName,
+                                 final Function<TaskContext, R> function) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final TaskId parentTaskId = getParentTaskId(parentContext);
         final TaskId taskId = TaskIdFactory.create(parentTaskId);

@@ -17,11 +17,11 @@
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -31,6 +31,7 @@ import javax.inject.Singleton;
 @EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
+
     private final SchemaLoader schemaLoader;
     private final SecurityContext securityContext;
 

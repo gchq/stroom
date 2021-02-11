@@ -16,6 +16,10 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
+import stroom.pipeline.xml.converter.json.JSONParser;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -27,14 +31,12 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
-import stroom.pipeline.xml.converter.json.JSONParser;
-import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.io.StringReader;
 
 class JsonToXml extends StroomExtensionFunctionCall {
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         Sequence result = EmptyAtomicSequence.getInstance();

@@ -48,14 +48,15 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
+import javax.inject.Inject;
 
 @ConfigurableElement(type = "StreamAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class StreamAppender extends AbstractAppender {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -209,7 +210,8 @@ public class StreamAppender extends AbstractAppender {
                 streamTarget.getAttributes().putAll(metaData.getAttributes());
 
                 // Get current process statistics
-                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount,
+                        errorReceiverProxy);
                 // Diff the current statistics with the last captured statistics.
                 final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
                 // Set the last statistics.

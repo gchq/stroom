@@ -2,13 +2,14 @@ package stroom.proxy.repo;
 
 import com.google.common.base.Strings;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.List;
 
 @Singleton
 public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory {
+
     private final ProxyRepositoryConfig proxyRepositoryConfig;
     private final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider;
 

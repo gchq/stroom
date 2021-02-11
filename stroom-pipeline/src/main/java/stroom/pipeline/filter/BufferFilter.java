@@ -16,17 +16,19 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.xml.event.simple.SimpleEventList;
+import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.pipeline.xml.event.simple.SimpleEventList;
-import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
 
 /**
  * This filter is used to buffer SAX events in memory if required. Having
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public abstract class BufferFilter extends AbstractXMLFilter {
+
     private SimpleEventListBuilder handler;
 
     /**

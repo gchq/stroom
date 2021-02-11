@@ -16,14 +16,15 @@
 
 package stroom.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +33,7 @@ import java.util.List;
 
 @PipelineScoped
 public class DefaultErrorWriter implements ErrorWriter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultErrorWriter.class);
 
     private static final String NEW_LINE = "\n";

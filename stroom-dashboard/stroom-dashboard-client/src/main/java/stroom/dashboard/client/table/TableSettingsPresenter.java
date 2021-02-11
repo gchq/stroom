@@ -16,13 +16,15 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class TableSettingsPresenter extends SettingsPresenter {
+
     @Inject
     public TableSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                   final BasicTableSettingsPresenter basicSettingsPresenter,

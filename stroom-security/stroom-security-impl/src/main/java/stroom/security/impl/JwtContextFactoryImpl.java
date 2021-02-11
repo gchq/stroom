@@ -5,16 +5,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jose4j.jwt.consumer.JwtContext;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 class JwtContextFactoryImpl implements JwtContextFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwtContextFactoryImpl.class);
     private final List<JwtContextFactory> factories;
 

@@ -31,11 +31,12 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 class SolrClusterSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrClusterSearchTaskHandler.class);
 
     private final SolrSearchFactory solrSearchFactory;
@@ -106,7 +107,10 @@ class SolrClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, storedFields, coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext,
+                    storedFields,
+                    coprocessors,
+                    query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -114,7 +118,14 @@ class SolrClusterSearchTaskHandler {
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            solrSearchFactory.search(cachedSolrIndex, storedFields, now, expression, extractionReceiver, taskContext, hitCount, dateTimeLocale);
+            solrSearchFactory.search(cachedSolrIndex,
+                    storedFields,
+                    now,
+                    expression,
+                    extractionReceiver,
+                    taskContext,
+                    hitCount,
+                    dateTimeLocale);
 
             // Wait for search completion.
             boolean allComplete = false;

@@ -16,20 +16,23 @@
 
 package stroom.pipeline.cache;
 
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 import java.io.Serializable;
 
 public class SchemaKey implements Serializable {
+
     private static final long serialVersionUID = 8418383654436897040L;
 
     private final String schemaLanguage;
     private final String data;
     private final FindXMLSchemaCriteria findXMLSchemaCriteria;
 
-    public SchemaKey(final String schemaLanguage, final String data, final FindXMLSchemaCriteria findXMLSchemaCriteria) {
+    public SchemaKey(final String schemaLanguage,
+                     final String data,
+                     final FindXMLSchemaCriteria findXMLSchemaCriteria) {
         this.schemaLanguage = schemaLanguage;
         this.data = data;
         this.findXMLSchemaCriteria = findXMLSchemaCriteria;
