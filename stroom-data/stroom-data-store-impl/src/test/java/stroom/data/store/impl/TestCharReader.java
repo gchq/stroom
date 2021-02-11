@@ -157,7 +157,9 @@ class TestCharReader {
                     final ByteOrderMark byteOrderMark = tuple2._2();
                     final String testName = charset.displayName()
                             + "__"
-                            + (byteOrderMark != null ? byteOrderMark.toString() : "NO-BOM");
+                            + (byteOrderMark != null
+                            ? byteOrderMark.toString()
+                            : "NO-BOM");
 
                     return DynamicTest.dynamicTest(testName, () -> {
                         LOGGER.info("Charset {}, byteOrderMark {}",

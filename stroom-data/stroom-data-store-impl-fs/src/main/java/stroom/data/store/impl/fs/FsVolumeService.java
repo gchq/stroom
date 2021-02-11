@@ -50,6 +50,7 @@ import javax.inject.Singleton;
 @Singleton
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
@@ -291,7 +292,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             for (String path : paths) {
                 final Path resolvedPath = Paths.get(
                         pathCreator.makeAbsolute(
-                        pathCreator.replaceSystemProperties(path)));
+                                pathCreator.replaceSystemProperties(path)));
                 LOGGER.info("Deleting directory {}", resolvedPath.toAbsolutePath().normalize().toString());
                 FileUtil.deleteDir(resolvedPath);
             }
@@ -533,6 +534,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private static class VolumeList {
+
         private final long createTime;
         private final List<FsVolume> list;
 

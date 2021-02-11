@@ -24,6 +24,7 @@ import java.io.InputStream;
  * items with in the main stream.
  */
 public abstract class NestedInputStream extends InputStream {
+
     /**
      * @return number of nested entries
      */

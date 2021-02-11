@@ -52,6 +52,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class DataUploadTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataUploadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
@@ -91,12 +92,12 @@ public class DataUploadTaskHandler {
     }
 
     private void uploadData(final TaskContext taskContext,
-                           final String fileName,
-                           final Path file,
-                           final String feedName,
-                           final String streamTypeName,
-                           final Long effectiveMs,
-                           final String metaData) {
+                            final String fileName,
+                            final Path file,
+                            final String feedName,
+                            final String streamTypeName,
+                            final Long effectiveMs,
+                            final String metaData) {
         securityContext.secure(() -> {
             taskContext.info(file::toString);
             if (feedName == null) {
@@ -121,11 +122,13 @@ public class DataUploadTaskHandler {
             }
 
             if (effectiveMs != null) {
-                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
+                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME,
+                        DateUtil.createNormalDateTimeString(effectiveMs));
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
+                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
 
             if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
@@ -162,7 +165,13 @@ public class DataUploadTaskHandler {
                 final int pos = i;
                 taskContext.info(() -> "Zip " + pos + "/" + groupedFileLists.size());
 
-                uploadData(taskContext, stroomZipFile, feedName, streamTypeName, effectiveMs, attributeMap, groupedFileLists.get(i));
+                uploadData(taskContext,
+                        stroomZipFile,
+                        feedName,
+                        streamTypeName,
+                        effectiveMs,
+                        attributeMap,
+                        groupedFileLists.get(i));
 
             }
         } catch (final RuntimeException | IOException e) {
@@ -223,7 +232,11 @@ public class DataUploadTaskHandler {
                             streamProgressMonitor);
                     streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
                             streamProgressMonitor);
-                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
+                    streamContents(stroomZipFile,
+                            attributeMap,
+                            outputStreamProvider,
+                            inputBase,
+                            StroomZipFileType.Context,
                             streamProgressMonitor);
                 }
             }

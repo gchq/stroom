@@ -44,6 +44,7 @@ import java.util.stream.Stream;
  * Handy tool to dump out content.
  */
 public class StreamDumpTool extends AbstractCommandLineTool {
+
     private final ToolInjector toolInjector;
 
     private String feed;
@@ -128,7 +129,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final MetaService metaService = injector.getInstance(MetaService.class);
         final SecurityContext securityContext = injector.getInstance(SecurityContext.class);
         final BufferFactory bufferFactory = () -> new byte[4096];
-        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(null, streamStore, metaService, securityContext, bufferFactory);
+        final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(null,
+                streamStore,
+                metaService,
+                securityContext,
+                bufferFactory);
 
         securityContext.asProcessingUser(() ->
                 download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler));

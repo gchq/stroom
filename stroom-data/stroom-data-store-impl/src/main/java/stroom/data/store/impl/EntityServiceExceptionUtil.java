@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 
 public class EntityServiceExceptionUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceExceptionUtil.class);
 
     /**

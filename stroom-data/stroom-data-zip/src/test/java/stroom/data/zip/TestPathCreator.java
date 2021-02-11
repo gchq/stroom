@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPathCreator {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPathCreator.class);
 
     private final AttributeMap attributeMap = new AttributeMap();

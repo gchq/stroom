@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 public class StreamEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -212,7 +213,6 @@ public class StreamEventLog {
 //            appendOperator(items, findMetaCriteria.getExpression());
 //        }
 //    }
-
 
 
 }

@@ -28,6 +28,7 @@ import stroom.db.util.DataSourceProxy;
 import javax.sql.DataSource;
 
 public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
+
     private static final String MODULE = "stroom-data-store";
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";
     private static final String FLYWAY_TABLE = "fs_schema_history";
@@ -68,6 +69,7 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements FsDataStoreDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

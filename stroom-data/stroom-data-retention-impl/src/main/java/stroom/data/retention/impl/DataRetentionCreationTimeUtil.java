@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
  * A utility class to calculate times from supplied retention ages.
  */
 final class DataRetentionCreationTimeUtil {
+
     private DataRetentionCreationTimeUtil() {
         // Utility class.
     }

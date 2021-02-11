@@ -42,9 +42,9 @@ public class CharReader {
     private DecodedChar lastCharDecoded = null;
 
     /**
-     * @param inputStream The stream to read from. This reader will not close the stream.
+     * @param inputStream          The stream to read from. This reader will not close the stream.
      * @param includeByteOrderMark If true, any BOM in the stream will be included.
-     * @param encoding The character encoding name of the stream.
+     * @param encoding             The character encoding name of the stream.
      */
     public CharReader(final InputStream inputStream,
                       final boolean includeByteOrderMark,
@@ -94,15 +94,15 @@ public class CharReader {
         // Set up the BOMs that the input stream should look for
         final ByteOrderMark[] byteOrderMarks;
         if (encoding.equalsIgnoreCase(StandardCharsets.UTF_8.name())) {
-            byteOrderMarks = new ByteOrderMark[] {ByteOrderMark.UTF_8};
+            byteOrderMarks = new ByteOrderMark[]{ByteOrderMark.UTF_8};
         } else if (encoding.equalsIgnoreCase(StandardCharsets.UTF_16LE.name())) {
-            byteOrderMarks = new ByteOrderMark[] {ByteOrderMark.UTF_16LE};
+            byteOrderMarks = new ByteOrderMark[]{ByteOrderMark.UTF_16LE};
         } else if (encoding.equalsIgnoreCase(StandardCharsets.UTF_16BE.name())) {
-            byteOrderMarks = new ByteOrderMark[] {ByteOrderMark.UTF_16BE};
+            byteOrderMarks = new ByteOrderMark[]{ByteOrderMark.UTF_16BE};
         } else if (encoding.toUpperCase().startsWith("UTF-16")) {
-            byteOrderMarks = new ByteOrderMark[] {ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE};
+            byteOrderMarks = new ByteOrderMark[]{ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE};
         } else if (encoding.toUpperCase().startsWith("UTF-32")) {
-            byteOrderMarks = new ByteOrderMark[] {ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE};
+            byteOrderMarks = new ByteOrderMark[]{ByteOrderMark.UTF_32LE, ByteOrderMark.UTF_32BE};
         } else {
             byteOrderMarks = null;
         }

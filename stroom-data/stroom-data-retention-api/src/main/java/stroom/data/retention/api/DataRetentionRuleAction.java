@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class DataRetentionRuleAction {
+
     private final DataRetentionRule dataRetentionRule;
     private final RetentionRuleOutcome retentionRuleOutcome;
 
@@ -39,8 +40,12 @@ public class DataRetentionRuleAction {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DataRetentionRuleAction that = (DataRetentionRuleAction) o;
         return retentionRuleOutcome == that.retentionRuleOutcome &&
                 dataRetentionRule.equals(that.dataRetentionRule);

@@ -38,8 +38,8 @@ import java.util.zip.GZIPOutputStream;
 class BenchmarkIO {
 
     private static final int MB = 1000000;
-    private static HashMap<StreamType, Integer> writeSpeed = new HashMap<>();
-    private static HashMap<StreamType, Integer> readSpeed = new HashMap<>();
+    private static final HashMap<StreamType, Integer> writeSpeed = new HashMap<>();
+    private static final HashMap<StreamType, Integer> readSpeed = new HashMap<>();
 
     static {
         for (final StreamType streamType : StreamType.values()) {

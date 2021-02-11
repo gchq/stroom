@@ -357,7 +357,7 @@ public class DataFetcher {
         final OffsetRange<Long> itemRange = new OffsetRange<>(
                 sourceLocation.getSegmentNo(),
                 (long) resultList.size());
-        final Count<Long> totalItemCount = new Count<>((long) totalResults, true);
+        final Count<Long> totalItemCount = new Count<>(totalResults, true);
         final Count<Long> totalCharCount = new Count<>(0L, true);
 
         return new FetchMarkerResult(
@@ -779,7 +779,9 @@ public class DataFetcher {
         // At this point currByteOffset is the offset of the first byte of the char outside our range
         // so subtract one to get the offset of the last byte (may be mult-byte) of the last 'char'
         // in our range
-        final long byteOffsetToInc = currByteOffset > 0 ? currByteOffset - 1 : currByteOffset;
+        final long byteOffsetToInc = currByteOffset > 0
+                ? currByteOffset - 1
+                : currByteOffset;
         if (foundRange) {
             charData = strBuilderResultRange.toString();
             actualDataRange = DataRange.builder()

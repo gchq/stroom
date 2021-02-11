@@ -30,6 +30,7 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 
 @Singleton
 public class FsVolumeDaoImpl implements FsVolumeDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
@@ -150,7 +151,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return fileVolume;
     }
 
-    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final Selection<VolumeUseStatus> selection) {
+    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field,
+                                                                   final Selection<VolumeUseStatus> selection) {
         final Selection<Byte> set = Selection.selectNone();
         set.setMatchAll(selection.isMatchAll());
         set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));

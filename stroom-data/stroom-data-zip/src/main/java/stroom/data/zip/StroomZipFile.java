@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Enumeration;
 
 public class StroomZipFile implements Closeable {
+
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
 
     public static final StroomZipEntry SINGLE_DATA_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,

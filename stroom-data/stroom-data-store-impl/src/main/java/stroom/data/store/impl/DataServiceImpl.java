@@ -149,7 +149,8 @@ class DataServiceImpl implements DataService {
 
     @Override
     public List<DataInfoSection> info(final long id) {
-        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
+        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(
+                id)));
         final MetaRow metaRow = metaRows.getFirst();
 
 //        final Meta meta = metaService.getMeta(id, true);
@@ -269,7 +270,9 @@ class DataServiceImpl implements DataService {
         }
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid(), pipelineName));
+            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                    meta.getPipelineUuid(),
+                    pipelineName));
             entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
         }
         return entries;
@@ -287,9 +290,12 @@ class DataServiceImpl implements DataService {
 //            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
 //            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
+                    attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
+                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
+                    attributeMap.get(DataRetentionFields.RETENTION_RULE)));
         }
 
         return entries;

@@ -22,6 +22,7 @@ import stroom.util.shared.ModelStringUtil;
 import java.util.concurrent.atomic.AtomicLong;
 
 class FsCleanProgress {
+
     private final AtomicLong scanDirCount = new AtomicLong();
     private final AtomicLong scanFileCount = new AtomicLong();
     private final AtomicLong scanDeleteCount = new AtomicLong();

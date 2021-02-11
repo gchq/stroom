@@ -16,6 +16,7 @@ import java.util.zip.ZipOutputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStroomZipFile {
+
     @Test
     void testRealZip1() throws IOException {
         Path uniqueTestDir = Files.createTempDirectory("stroom");

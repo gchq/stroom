@@ -56,6 +56,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class MockStore implements Store, Clearable {
+
     /**
      * Our stream data.
      */
@@ -381,6 +382,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
+
         SeekableByteArrayInputStream(final byte[] bytes) {
             super(bytes);
         }
@@ -402,6 +404,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
+
         private final Meta meta;
         private boolean closed;
         private boolean deleted;
@@ -610,6 +613,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockSource implements InternalSource, SegmentInputStreamProviderFactory {
+
         private final Map<String, MockSource> childMap = new HashMap<>();
         private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
         private final String streamType;
@@ -617,7 +621,7 @@ public class MockStore implements Store, Clearable {
         private AttributeMap attributeMap;
         private InputStream inputStream;
 
-        private Meta meta;
+        private final Meta meta;
         private boolean closed;
 
         MockSource(final Meta meta) {
@@ -768,6 +772,7 @@ public class MockStore implements Store, Clearable {
     }
 
     private class MockBoundaryStreamSource extends MockSource {
+
         MockBoundaryStreamSource(final Source parent) {
             super(parent, InternalStreamTypeNames.BOUNDARY_INDEX);
         }

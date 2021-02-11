@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScanVolumePathResult implements Serializable {
+
     private static final long serialVersionUID = -5119181751996452930L;
 
     public long fileCount = 0;
     public long tooNewToDeleteCount = 0;
     public List<String> childDirectoryList = new ArrayList<>();
-    private List<String> deleteList = new ArrayList<>();
+    private final List<String> deleteList = new ArrayList<>();
 
     /**
      * @return the fileCount

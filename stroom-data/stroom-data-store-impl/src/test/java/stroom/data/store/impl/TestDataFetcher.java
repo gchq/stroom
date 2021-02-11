@@ -70,7 +70,7 @@ class TestDataFetcher {
         final StringBuilder decodedStringBuilder = new StringBuilder();
         for (int i = 0; i < lineBytes.length; i++) {
             if (i < len) {
-                byte[] arr = new byte[] {lineBytes[i]};
+                byte[] arr = new byte[]{lineBytes[i]};
 
                 hexStringBuilder
                         .append(Hex.encodeHexString(arr))

@@ -47,6 +47,7 @@ import javax.inject.Inject;
 
 @ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {
+
     @Inject
     private Store streamStore;
     @Inject

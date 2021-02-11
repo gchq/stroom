@@ -25,6 +25,7 @@ import stroom.util.shared.ResourceKey;
 import java.util.List;
 
 interface DataService {
+
     ResourceGeneration download(FindMetaCriteria criteria);
 
     ResourceKey upload(UploadDataRequest request);

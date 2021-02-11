@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 
 class TestMockStreamStore {
+
     @Test
     void testExample() throws IOException {
         final MockMetaService mockMetaService = new MockMetaService();

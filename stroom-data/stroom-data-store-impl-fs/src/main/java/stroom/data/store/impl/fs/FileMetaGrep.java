@@ -38,7 +38,7 @@ import java.util.Map;
 class FileMetaGrep extends AbstractCommandLineTool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
-    private Map<String, String> matchMap;
+    private final Map<String, String> matchMap;
     private String[] repoPathParts = null;
     private String feedId;
 
@@ -79,19 +79,22 @@ class FileMetaGrep extends AbstractCommandLineTool {
 
     private void scanDir(Path path) {
         try {
-            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        if (matches(file.toAbsolutePath().normalize().toString())) {
-                            scanFile(file);
+            Files.walkFileTree(path,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                if (matches(file.toAbsolutePath().normalize().toString())) {
+                                    scanFile(file);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -111,7 +114,8 @@ class FileMetaGrep extends AbstractCommandLineTool {
                 int segment = 0;
                 boolean done = false;
                 while (!done) {
-                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(file),
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(
+                            file),
                             new UncompressedInputStream(Paths.get(bdyPath), true))) {
                         if (segmentInputStream.count() <= segment - 1) {
                             done = true;

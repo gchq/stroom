@@ -28,6 +28,7 @@ import javax.inject.Inject;
 //import stroom.entity.util.PeriodUtil;
 
 public class FeedDataRetentionExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedDataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";

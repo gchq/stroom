@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class PathCreator {
+
     static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);

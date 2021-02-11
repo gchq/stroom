@@ -23,6 +23,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class MockStreamStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(Store.class).to(MockStore.class);

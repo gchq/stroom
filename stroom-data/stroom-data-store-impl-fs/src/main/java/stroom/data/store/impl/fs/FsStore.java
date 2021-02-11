@@ -55,6 +55,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 class FsStore implements Store, AttributeMapFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -88,7 +89,12 @@ class FsStore implements Store, AttributeMapFactory {
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
         final Path volumePath = Paths.get(dataVolume.getVolumePath());
         final String streamType = meta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, meta, volumePath, streamType, false);
+        final FsTarget target = FsTarget.create(metaService,
+                fileSystemStreamPathHelper,
+                meta,
+                volumePath,
+                streamType,
+                false);
 
         // Force Creation of the files
         target.getOutputStream();

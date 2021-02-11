@@ -48,6 +48,7 @@ import javax.inject.Inject;
 
 @ExtendWith({MockitoExtension.class})
 class TestStreamDumpTool {
+
     @Inject
     private Store streamStore;
     @Inject

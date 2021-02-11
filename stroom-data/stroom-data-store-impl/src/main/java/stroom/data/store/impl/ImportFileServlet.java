@@ -61,7 +61,7 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
 
     @Inject
     ImportFileServlet(final ResourceStore resourceStore,
-            final StreamEventLog streamEventLog) {
+                      final StreamEventLog streamEventLog) {
         this.resourceStore = resourceStore;
         this.streamEventLog = streamEventLog;
     }

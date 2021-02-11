@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @Unauthenticated
 public class EchoServlet extends HttpServlet implements IsServlet {
+
     private static final long serialVersionUID = -2569496543022536282L;
 
     private static final Set<String> PATH_SPECS = Set.of("/echo");

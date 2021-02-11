@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 class FsPathHelper {
+
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
@@ -345,7 +346,8 @@ class FsPathHelper {
     }
 
     boolean isStreamTypeLazy(final String streamTypeName) {
-        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(
+                streamTypeName);
     }
 //
 //    static boolean isStreamTypeSegment(final String streamTypeName) {

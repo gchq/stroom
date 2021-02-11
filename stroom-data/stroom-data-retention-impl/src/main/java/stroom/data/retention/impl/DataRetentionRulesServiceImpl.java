@@ -49,6 +49,7 @@ import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
 
@@ -178,12 +179,17 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

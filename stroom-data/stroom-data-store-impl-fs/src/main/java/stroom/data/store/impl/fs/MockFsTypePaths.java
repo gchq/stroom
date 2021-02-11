@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class MockFsTypePaths implements FsTypePathDao {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MockFsTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
     private static final Map<String, String> TYPE_MAP = new HashMap<>();

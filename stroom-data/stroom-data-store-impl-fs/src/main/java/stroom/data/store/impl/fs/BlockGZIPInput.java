@@ -32,6 +32,7 @@ import javax.annotation.Nonnull;
  * @see BlockGZIPConstants
  */
 abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
+
     // Use to help track non-closed streams
     private final StreamCloser streamCloser = new BasicStreamCloser();
     /**
@@ -384,6 +385,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
      * read more than we are allowed to (for the gzip stream)
      */
     class GzipInputStreamAdaptor extends InputStream {
+
         private int bytesRead;
 
         // Start a new adaptor.

@@ -31,6 +31,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionRules {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionRules.class);
 
 //    @Test
@@ -63,7 +64,17 @@ class TestDataRetentionRules {
         assertThat(streamIdDeleteList.size()).isEqualTo(0);
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return new DataRetentionRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit,
+                false);
     }
 }

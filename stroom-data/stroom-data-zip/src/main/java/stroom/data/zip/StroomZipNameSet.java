@@ -23,6 +23,7 @@ import java.util.stream.Stream;
  * matching files etc.
  */
 public class StroomZipNameSet {
+
     private static final Set<String> CONTEXT_FILE_EXT = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(".ctx", ".context")));
     private static final Set<String> META_FILE_EXT = Collections

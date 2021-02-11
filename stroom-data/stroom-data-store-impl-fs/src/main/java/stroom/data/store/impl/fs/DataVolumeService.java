@@ -8,6 +8,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 
 public class DataVolumeService {
+
     private final DataVolumeDao dataVolumeDao;
     private final SecurityContext securityContext;
 

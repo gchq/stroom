@@ -271,7 +271,8 @@ final class FileSystemUtil {
                 if (!Files.isDirectory(dir)) {
                     if (retry > 0) {
                         retry = retry - 1;
-                        LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + FileUtil.getCanonicalPath(dir));
+                        LOGGER.warn("doMkdirs() - Sleep and Retry due to unable to create " + FileUtil.getCanonicalPath(
+                                dir));
                         Thread.sleep(MKDIR_RETRY_SLEEP_MS);
                         return doMkdirs(superDir, dir, retry);
                     } else {

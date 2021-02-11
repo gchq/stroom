@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 class DataResourceImpl implements DataResource {
+
     private final Provider<DataService> dataServiceProvider;
     private final StreamEventLog streamEventLog;
 

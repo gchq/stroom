@@ -22,6 +22,7 @@ import stroom.util.guice.ServletBinder;
 import com.google.inject.AbstractModule;
 
 public class DataStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(DataService.class).to(DataServiceImpl.class);
