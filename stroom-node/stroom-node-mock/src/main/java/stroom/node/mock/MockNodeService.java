@@ -17,19 +17,20 @@
 
 package stroom.node.mock;
 
-import stroom.node.api.NodeService;
 import stroom.node.api.FindNodeCriteria;
+import stroom.node.api.NodeService;
 
-import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Singleton;
 
 /**
  * Mock class that manages one node.
  */
 @Singleton
 public class MockNodeService implements NodeService {
-    private MockNodeInfo nodeInfo = new MockNodeInfo();
+
+    private final MockNodeInfo nodeInfo = new MockNodeInfo();
 
     @Override
     public String getBaseEndpointUrl(final String nodeName) {

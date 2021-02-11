@@ -29,6 +29,7 @@ import java.util.Optional;
 
 @Singleton
 public class ProcessorFilterCache implements Clearable {
+
     private static final String CACHE_NAME = "Processor Filter Cache";
 
     private final ICache<Integer, Optional<ProcessorFilter>> cache;

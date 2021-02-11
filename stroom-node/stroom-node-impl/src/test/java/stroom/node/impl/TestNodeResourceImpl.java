@@ -1,9 +1,5 @@
 package stroom.node.impl;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.FindNodeCriteria;
@@ -19,6 +15,11 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
+
     private final Map<String, ClusterNodeInfo> expectedClusterNodeInfoMap = new HashMap<>();
     private final Map<String, NodeServiceImpl> nodeServiceMap = new HashMap<>();
 
@@ -277,7 +279,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                                 .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation -> baseEndPointUrls.get(invocation.getArgument(0)));
 
         when(nodeService.find(Mockito.any(FindNodeCriteria.class)))
                 .thenReturn(allNodes.stream()

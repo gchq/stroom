@@ -18,6 +18,7 @@ package stroom.pipeline.xml.event.simple;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
 import stroom.pipeline.xml.event.BaseEvent;
 import stroom.pipeline.xml.event.Event;
 
@@ -25,6 +26,7 @@ import stroom.pipeline.xml.event.Event;
  * A class used to store a endDocument SAX event.
  */
 public final class EndDocument extends BaseEvent {
+
     private static final String END_DOCUMENT = "endDocument:";
 
     /**

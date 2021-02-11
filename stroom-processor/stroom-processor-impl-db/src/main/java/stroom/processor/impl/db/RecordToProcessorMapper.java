@@ -1,13 +1,15 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Record;
 import stroom.processor.shared.Processor;
+
+import org.jooq.Record;
 
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 
 class RecordToProcessorMapper implements Function<Record, Processor> {
+
     @Override
     public Processor apply(final Record record) {
         final Processor processor = new Processor();

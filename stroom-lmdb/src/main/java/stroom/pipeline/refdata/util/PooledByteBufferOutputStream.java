@@ -221,6 +221,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     }
 
     public interface Factory {
+
         PooledByteBufferOutputStream create(final int initialCapacity);
     }
 }

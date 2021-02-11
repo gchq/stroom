@@ -39,6 +39,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -48,7 +49,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -57,6 +57,7 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
+
     private final MetaService dataMetaService;
     private final SecurityContext securityContext;
 
@@ -73,7 +74,8 @@ public class StreamAttributeMapResource implements RestResource {
         return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(
+                        "A pagination request requires both a pageSize and an offset").build();
             }
 
             //Convert pageOffset (i.e. page from index 0) to item offset.
@@ -96,8 +98,8 @@ public class StreamAttributeMapResource implements RestResource {
 
             ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
-                public PageResponse pageResponse = results.getPageResponse();
-                public List<MetaRow> streamAttributeMaps = results.getValues();
+                public final PageResponse pageResponse = results.getPageResponse();
+                public final List<MetaRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });
@@ -110,7 +112,8 @@ public class StreamAttributeMapResource implements RestResource {
         return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(
+                        "A pagination request requires both a pageSize and an offset").build();
             }
 
             //Convert pageOffset (i.e. page from index 0) to item offset.
@@ -131,8 +134,8 @@ public class StreamAttributeMapResource implements RestResource {
 
             ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
-                public PageResponse pageResponse = results.getPageResponse();
-                public List<MetaRow> streamAttributeMaps = results.getValues();
+                public final PageResponse pageResponse = results.getPageResponse();
+                public final List<MetaRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });

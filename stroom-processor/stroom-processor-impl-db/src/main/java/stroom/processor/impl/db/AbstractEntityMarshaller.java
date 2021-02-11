@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.bind.JAXBContext;
 
 abstract class AbstractEntityMarshaller<T_ENTITY, T_OBJECT> implements Marshaller<T_ENTITY, T_OBJECT> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
     private final JAXBContext jaxbContext;

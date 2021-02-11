@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class MetaModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(MetaService.class).to(MetaServiceImpl.class);
@@ -51,9 +52,10 @@ public class MetaModule extends AbstractModule {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override
@@ -62,6 +64,7 @@ public class MetaModule extends AbstractModule {
     }
 
     private static class FlushDataMetaDb extends RunnableWrapper {
+
         @Inject
         FlushDataMetaDb(final MetaValueDao metaValueService) {
             super(metaValueService::flush);
@@ -69,6 +72,7 @@ public class MetaModule extends AbstractModule {
     }
 
     private static class DataAttributesRetention extends RunnableWrapper {
+
         @Inject
         DataAttributesRetention(final MetaValueDao metaValueService) {
             super(metaValueService::deleteOldValues);

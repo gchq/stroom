@@ -47,6 +47,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaDaoImpl {
+
     private static final String RAW_STREAM_TYPE_NAME = "RAW_TEST_STREAM_TYPE";
     private static final String PROCESSED_STREAM_TYPE_NAME = "TEST_STREAM_TYPE";
     private static final String TEST1_FEED_NAME = "TEST1";
@@ -98,20 +99,25 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()), Status.LOCKED, Status.UNLOCKED, System.currentTimeMillis());
+        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
+                Status.LOCKED,
+                Status.UNLOCKED,
+                System.currentTimeMillis());
     }
 
     @Test
     void testFind() {
         setup();
 
-        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST1_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(20);
 
-        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(40);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -129,13 +135,15 @@ class TestMetaDaoImpl {
     void testExtendedFind() {
         setup();
 
-        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST1_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(20);
 
-        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(40);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -160,13 +168,15 @@ class TestMetaDaoImpl {
     void testFindReprocess() {
         setup();
 
-        ResultPage<Meta> resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        ResultPage<Meta> resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST1_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(10);
 
         resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(10);
 
-        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
         assertThat(resultPage.size()).isEqualTo(20);
 
         resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -187,13 +197,17 @@ class TestMetaDaoImpl {
     void testGetSelectionSummary() {
         setup();
 
-        SelectionSummary selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        SelectionSummary selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST1_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(20);
 
-        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
+        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(20);
 
-        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
+                TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(40);
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
@@ -211,13 +225,17 @@ class TestMetaDaoImpl {
     void testGetReprocessSelectionSummary() {
         setup();
 
-        SelectionSummary selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        SelectionSummary selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST1_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(10);
 
-        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
+        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(10);
 
-        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
+                TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(20);
 
         selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));

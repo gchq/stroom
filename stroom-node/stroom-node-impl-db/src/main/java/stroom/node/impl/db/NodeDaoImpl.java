@@ -27,18 +27,19 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
+
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-        FindNodeCriteria.FIELD_ID, NODE.ID,
-        FindNodeCriteria.FIELD_NAME, NODE.NAME);
+            FindNodeCriteria.FIELD_ID, NODE.ID,
+            FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 

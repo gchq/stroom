@@ -46,6 +46,7 @@ import java.util.StringTokenizer;
 import javax.servlet.http.HttpServletRequest;
 
 public class AttributeMapUtil {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapUtil.class);
 
     private static final String CERT_EXPIRY_HEADER_TOKEN = "X-SSL-Client-V-End";

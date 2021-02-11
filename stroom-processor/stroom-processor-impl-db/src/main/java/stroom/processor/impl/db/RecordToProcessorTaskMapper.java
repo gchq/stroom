@@ -1,16 +1,18 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Record;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 
+import org.jooq.Record;
+
 import java.util.function.Function;
 
-import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
+import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
+
     @Override
     public ProcessorTask apply(final Record record) {
         final ProcessorTask processorTask = new ProcessorTask();

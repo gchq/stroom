@@ -59,6 +59,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class MetaServiceImpl implements MetaService, Searchable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
 
     private static final DocRef META_STORE_PSEUDO_DOC_REF = new DocRef("Searchable", "Meta Store", "Meta Store");
@@ -128,7 +129,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Meta getMeta(final long id, final boolean anyStatus) {
-        final ExpressionOperator secureExpression = addPermissionConstraints(getIdExpression(id, anyStatus), DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator secureExpression = addPermissionConstraints(getIdExpression(id, anyStatus),
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(new PageRequest(0L, 1));
         final List<Meta> list = find(findMetaCriteria).getValues();
@@ -168,7 +171,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
     }
 
-    private int updateStatus(final long id, final Status currentStatus, final Status newStatus, final long statusTime, final String permission) {
+    private int updateStatus(final long id,
+                             final Status currentStatus,
+                             final Status newStatus,
+                             final long statusTime,
+                             final String permission) {
         final ExpressionOperator expression = getIdExpression(id, true);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, permission, FEED_FIELDS);
         final FindMetaCriteria criteria = new FindMetaCriteria(secureExpression);
@@ -184,7 +191,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 permission = DocumentPermissionNames.DELETE;
             }
 
-            final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), permission, FEED_FIELDS);
+            final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                    permission,
+                    FEED_FIELDS);
             criteria.setExpression(expression);
 
             return metaDao.updateStatus(criteria, currentStatus, newStatus, System.currentTimeMillis());
@@ -215,7 +224,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final long id, final boolean lockCheck) {
-        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, lockCheck));
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION,
+                () -> doLogicalDelete(id, lockCheck));
     }
 
     private int doLogicalDelete(final long id, final boolean lockCheck) {
@@ -249,8 +259,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ, FEED_FIELDS);
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         criteria.setExpression(expression);
         metaDao.search(criteria, fields, consumer);
     }
@@ -329,7 +343,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.find(criteria);
     }
@@ -362,7 +378,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private ResultPage<Meta> simpleFind(final ExpressionOperator expression) {
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression,
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         criteria.setExpression(secureExpression);
         return metaDao.find(criteria);
     }
@@ -407,14 +425,20 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         // Now add all data that occurs within the requested period.
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
+                .addTerm(MetaFields.EFFECTIVE_TIME,
+                        ExpressionTerm.Condition.GREATER_THAN,
+                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFields.EFFECTIVE_TIME,
+                        ExpressionTerm.Condition.LESS_THAN,
+                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression,
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
         set.addAll(secureFind(findMetaCriteria).getValues());
@@ -424,13 +448,17 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(MetaFields.EFFECTIVE_TIME,
+                        ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaFields.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
 
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression,
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         return metaDao.getLatestIdByEffectiveDate(new FindMetaCriteria(secureExpression));
     }
 
@@ -559,7 +587,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ, ALL_FEED_FIELDS);
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                DocumentPermissionNames.READ,
+                ALL_FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.findReprocess(criteria);
     }
@@ -581,14 +611,18 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ, FEED_FIELDS);
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                DocumentPermissionNames.READ,
+                FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getSelectionSummary(criteria);
     }
 
     @Override
     public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ, ALL_FEED_FIELDS);
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+                DocumentPermissionNames.READ,
+                ALL_FEED_FIELDS);
         criteria.setExpression(expression);
         return metaDao.getReprocessSelectionSummary(criteria);
     }
@@ -603,7 +637,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private void addChildren(final Meta parent, final boolean anyStatus, final List<Meta> result) {
-        final List<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus))).getValues();
+        final List<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(),
+                anyStatus))).getValues();
         children.forEach(child -> {
             result.add(child);
             addChildren(child, anyStatus, result);
@@ -612,7 +647,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private void addParents(final Meta child, final boolean anyStatus, final List<Meta> result) {
         if (child.getParentMetaId() != null) {
-            final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus))).getValues();
+            final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(),
+                    anyStatus))).getValues();
             if (parents != null && parents.size() > 0) {
                 parents.forEach(parent -> {
                     result.add(parent);

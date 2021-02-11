@@ -31,6 +31,7 @@ import javax.inject.Provider;
 
 // TODO : @66 Add event logging
 class MetaResourceImpl implements MetaResource {
+
     private final Provider<MetaService> metaServiceProvider;
 
     @Inject

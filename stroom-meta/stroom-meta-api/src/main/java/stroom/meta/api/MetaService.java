@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
+
     /**
      * Get the current maximum id of any data.
      *

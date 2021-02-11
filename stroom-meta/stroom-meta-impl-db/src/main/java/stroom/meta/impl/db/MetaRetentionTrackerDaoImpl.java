@@ -6,14 +6,15 @@ import stroom.meta.impl.MetaRetentionTrackerDao;
 
 import org.jooq.Record;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static stroom.meta.impl.db.jooq.tables.MetaRetentionTracker.META_RETENTION_TRACKER;
 
 public class MetaRetentionTrackerDaoImpl implements MetaRetentionTrackerDao {
+
     private static final Function<Record, DataRetentionTracker> RECORD_MAPPER = record ->
             new DataRetentionTracker(
                     record.get(META_RETENTION_TRACKER.LAST_RUN_TIME),

@@ -25,6 +25,7 @@ import java.util.List;
  * This class represents a statistic to be gathered by Stroom.
  */
 class MetaStatisticsTemplate implements Serializable {
+
     private static final long serialVersionUID = -2347332113575225973L;
 
     private InternalStatisticKey key;
@@ -36,12 +37,14 @@ class MetaStatisticsTemplate implements Serializable {
     }
 
     MetaStatisticsTemplate(final InternalStatisticKey key, final String timeMsAttribute,
-                              final List<String> tagAttributeList) {
+                           final List<String> tagAttributeList) {
         this(key, timeMsAttribute, null, tagAttributeList);
     }
 
-    MetaStatisticsTemplate(final InternalStatisticKey key, final String timeMsAttribute, final String incrementAttribute,
-                              final List<String> tagAttributeList) {
+    MetaStatisticsTemplate(final InternalStatisticKey key,
+                           final String timeMsAttribute,
+                           final String incrementAttribute,
+                           final List<String> tagAttributeList) {
         this.key = key;
         this.timeMsAttribute = timeMsAttribute;
         this.incrementAttribute = incrementAttribute;

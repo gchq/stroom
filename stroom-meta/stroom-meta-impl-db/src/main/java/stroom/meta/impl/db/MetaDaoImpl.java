@@ -63,8 +63,6 @@ import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -88,6 +86,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
@@ -205,15 +205,23 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
-        expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.STATUS,
+                meta.STATUS,
+                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
         expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value -> getDate(MetaFields.EFFECTIVE_TIME, value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME,
+                meta.EFFECTIVE_TIME,
+                value -> getDate(MetaFields.EFFECTIVE_TIME, value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
-        expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
+        expressionMapper.map(MetaFields.PARENT_STATUS,
+                parent.STATUS,
+                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME,
+                parent.CREATE_TIME,
+                value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
 
@@ -236,7 +244,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private long getDate(final DateField field, final String value) {
         try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
+                    ZoneOffset.UTC.getId(),
+                    System.currentTimeMillis());
 
             return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + field.getName()
                     + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
@@ -431,7 +441,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         .collect(Collectors.toList());
             }
 
-            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                    new HashSet<>());
 
             if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
@@ -657,7 +668,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
                 startTime = Instant.now();
                 final Optional<TimePeriod> optSubPeriod = getTimeSlice(startTimeInc, batchSize, conditions);
-                totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
+                totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime,
+                        Instant.now().plusMillis(1)));
 
                 if (optSubPeriod.isEmpty()) {
                     LOGGER.debug("No time slice found");
@@ -676,9 +688,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
                                 .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()))
                                 .execute()),
-                        cnt -> LogUtil.message("Logically deleted {} meta records with approx. limit of {}. Iteration {}",
-                                cnt, batchSize, iteration));
-                totalUpdateDuration = totalUpdateDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
+                        cnt -> LogUtil.message(
+                                "Logically deleted {} meta records with approx. limit of {}. Iteration {}",
+                                cnt,
+                                batchSize,
+                                iteration));
+                totalUpdateDuration = totalUpdateDuration.plus(Duration.between(startTime,
+                        Instant.now().plusMillis(1)));
 
                 // Advance the start time
                 startTimeInc = subPeriod.getFrom();
@@ -692,8 +708,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     totalUpdateCount.get(),
                     batchSize,
                     iteration.decrementAndGet(),
-                    iteration.get() != 0 ? totalSelectDuration.dividedBy(iteration.get()) : Duration.ZERO,
-                    iteration.get() != 0 ? totalUpdateDuration.dividedBy(iteration.get()) : Duration.ZERO);
+                    iteration.get() != 0
+                            ? totalSelectDuration.dividedBy(iteration.get())
+                            : Duration.ZERO,
+                    iteration.get() != 0
+                            ? totalUpdateDuration.dividedBy(iteration.get())
+                            : Duration.ZERO);
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.error("Thread interrupted");
@@ -856,10 +876,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
-        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED, MetaFields.FEED_NAME)::contains);
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(),
+                Set.of(MetaFields.FEED, MetaFields.FEED_NAME));
+        final boolean feedValueExists = fieldList.stream().anyMatch(Set.of(MetaFields.FEED,
+                MetaFields.FEED_NAME)::contains);
         final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE_NAME);
         final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
         final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
@@ -1005,7 +1029,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         final List<Meta> list = find(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
@@ -1018,7 +1043,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final Collection<String> extendedFieldNames =
             MetaFields.getExtendedFields().stream().map(AbstractField::getName).collect(Collectors.toList());
 
-    private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr, final Set<Integer> identified) {
+    private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
+                                                          final Set<Integer> identified) {
 
         if (expr == null || expr.getChildren() == null) {
             return identified;
@@ -1037,7 +1063,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 //Don't know what this is!
                 LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
                 //Allow search to succeed without optimisation
-                return IntStream.range(metaKeyDao.getMinId(), metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
+                return IntStream.range(metaKeyDao.getMinId(),
+                        metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
             }
         }
         return identified;
@@ -1086,7 +1113,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         final List<Meta> list = findReprocess(conditions, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {

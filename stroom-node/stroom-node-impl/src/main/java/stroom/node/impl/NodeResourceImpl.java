@@ -35,15 +35,15 @@ import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource {

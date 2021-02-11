@@ -337,6 +337,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
     }
 
     private static final class Key implements Comparable<Key> {
+
         private final int capacity;
         private final long insertionTime;
 
@@ -366,8 +367,12 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Key key = (Key) o;
             return capacity == key.capacity &&
                     insertionTime == key.insertionTime;

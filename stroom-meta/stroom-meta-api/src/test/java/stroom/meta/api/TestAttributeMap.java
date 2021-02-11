@@ -12,6 +12,7 @@ import java.util.HashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMap {
+
     @Test
     void testSimple() {
         AttributeMap attributeMap = new AttributeMap();
@@ -57,7 +58,8 @@ class TestAttributeMap {
         assertThat(attributeMap.get("b")).isEqualTo("2");
         assertThat(attributeMap.get("z")).isNull();
 
-        assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET)).isEqualTo("a:1\nb:2\nz\n");
+        assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET)).isEqualTo(
+                "a:1\nb:2\nz\n");
     }
 
     @Test

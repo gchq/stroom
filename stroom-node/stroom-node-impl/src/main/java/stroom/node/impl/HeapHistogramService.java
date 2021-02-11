@@ -42,7 +42,7 @@ class HeapHistogramService {
     private static final String DIAGNOSTIC_COMMAND_MBEAN_OBJECT_NAME = "com.sun.management:type=DiagnosticCommand";
 
     private static final String ACTION_NAME = "gcClassHistogram";
-    private static String ID_REPLACEMENT = "--ID-REMOVED--";
+    private static final String ID_REPLACEMENT = "--ID-REMOVED--";
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
 

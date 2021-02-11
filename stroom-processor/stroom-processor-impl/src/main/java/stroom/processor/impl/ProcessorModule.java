@@ -38,6 +38,7 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
@@ -83,6 +84,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
+
         @Inject
         ProcessorTaskQueueStatistics(final ProcessorTaskManager processorTaskManager) {
             super(processorTaskManager::writeQueueStatistics);
@@ -90,6 +92,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskRetention extends RunnableWrapper {
+
         @Inject
         ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
             super(processorTaskDeleteExecutor::exec);
@@ -97,6 +100,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
+
         @Inject
         ProcessorTaskManagerStartup(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::startup);
@@ -104,6 +108,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
+
         @Inject
         ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
             super(processorTaskManager::shutdown);

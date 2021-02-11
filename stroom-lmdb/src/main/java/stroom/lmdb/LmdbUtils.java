@@ -48,6 +48,7 @@ import javax.xml.bind.DatatypeConverter;
  * Class of static utility methods for working with lmdbjava
  */
 public class LmdbUtils {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbUtils.class);
 
     private LmdbUtils() {
@@ -308,14 +309,23 @@ public class LmdbUtils {
     public static void logRawDatabaseContents(final Env<ByteBuffer> env,
                                               final Dbi<ByteBuffer> dbi,
                                               final Consumer<String> logEntryConsumer) {
-        logDatabaseContents(env, dbi, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex, logEntryConsumer);
+        logDatabaseContents(env,
+                dbi,
+                ByteBufferUtils::byteBufferToHex,
+                ByteBufferUtils::byteBufferToHex,
+                logEntryConsumer);
     }
 
     public static void logRawDatabaseContents(final Env<ByteBuffer> env,
                                               final Dbi<ByteBuffer> dbi,
                                               final Txn<ByteBuffer> txn,
                                               final Consumer<String> logEntryConsumer) {
-        logDatabaseContents(env, dbi, txn, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex, logEntryConsumer);
+        logDatabaseContents(env,
+                dbi,
+                txn,
+                ByteBufferUtils::byteBufferToHex,
+                ByteBufferUtils::byteBufferToHex,
+                logEntryConsumer);
     }
 
     /**

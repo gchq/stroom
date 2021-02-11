@@ -24,11 +24,11 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
-import stroom.util.io.PathCreator;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
@@ -36,6 +36,7 @@ import com.google.inject.AbstractModule;
 import javax.inject.Inject;
 
 public class NodeModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(NodeInfo.class).to(NodeInfoImpl.class);
@@ -71,6 +72,7 @@ public class NodeModule extends AbstractModule {
     }
 
     private static class JavaHeapHistogramStatistics extends RunnableWrapper {
+
         @Inject
         JavaHeapHistogramStatistics(final HeapHistogramStatisticsExecutor heapHistogramStatisticsExecutor) {
             super(heapHistogramStatisticsExecutor::exec);
@@ -78,6 +80,7 @@ public class NodeModule extends AbstractModule {
     }
 
     private static class NodeStatus extends RunnableWrapper {
+
         @Inject
         NodeStatus(final NodeStatusExecutor nodeStatusExecutor) {
             super(nodeStatusExecutor::exec);

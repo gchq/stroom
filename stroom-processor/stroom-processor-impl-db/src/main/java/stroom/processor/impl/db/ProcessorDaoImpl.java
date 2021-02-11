@@ -13,14 +13,15 @@ import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
+
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
     private final ExpressionMapper expressionMapper;

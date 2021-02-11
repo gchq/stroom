@@ -30,6 +30,7 @@ import javax.xml.bind.JAXBException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXMLMarshallUtil {
+
     private static ProcessorFilterMarshaller marshaller;
 
     @Test

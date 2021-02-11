@@ -1,22 +1,23 @@
 package stroom.node.impl;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
-import javax.inject.Inject;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * Class for running scheduled jobs to execute a jmap heap histogram and load the results into
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unused")
 class HeapHistogramStatisticsExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramStatisticsExecutor.class);
 
     private static final String TAG_NAME_NODE = "Node";

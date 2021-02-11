@@ -7,6 +7,7 @@ import java.util.Optional;
  * The outcome of a put operation to a map or similar KV store
  */
 public class PutOutcome {
+
     private final boolean isSuccess;
     private final Boolean isDuplicate;
 
@@ -60,8 +61,12 @@ public class PutOutcome {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PutOutcome that = (PutOutcome) o;
         return isSuccess == that.isSuccess &&
                 Objects.equals(isDuplicate, that.isDuplicate);

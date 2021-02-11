@@ -53,7 +53,11 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             int id = idOptional.get();
             Field valueField = createValueField(id);
 
-            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
+            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField,
+                    valueField,
+                    value -> List.of(Long.valueOf(value)),
+                    wordListProvider,
+                    collectionService);
 
             final MetaTermHandler handler = new MetaTermHandler(
                     createKeyField(id),

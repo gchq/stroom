@@ -24,11 +24,11 @@ import stroom.util.shared.Clearable;
 import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 

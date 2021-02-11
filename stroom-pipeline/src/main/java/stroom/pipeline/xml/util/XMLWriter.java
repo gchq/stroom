@@ -361,7 +361,9 @@ public class XMLWriter implements ContentHandler {
     private void writeEscape(final Writer writer, final String chars, final boolean inAttribute)
             throws java.io.IOException, SAXException {
         int segstart = 0;
-        final boolean[] specialChars = (inAttribute ? specialInAtt : specialInText);
+        final boolean[] specialChars = (inAttribute
+                ? specialInAtt
+                : specialInText);
 
         final int clength = chars.length();
         while (segstart < clength) {
@@ -489,7 +491,9 @@ public class XMLWriter implements ContentHandler {
         growIndentChars(spaces + 2);
 
         // Output the initial newline character only if line==0
-        final int start = (line == 0 ? 0 : 1);
+        final int start = (line == 0
+                ? 0
+                : 1);
 
         writer.write(indentChars, start, spaces + 1);
         sameline = false;
@@ -525,7 +529,8 @@ public class XMLWriter implements ContentHandler {
     }
 
     public enum XMLVersion {
-        VERSION_1_0("1.0"), VERSION_1_1("1.1");
+        VERSION_1_0("1.0"),
+        VERSION_1_1("1.1");
 
         private final String output;
 

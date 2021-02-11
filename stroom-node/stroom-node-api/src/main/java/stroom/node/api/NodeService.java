@@ -24,7 +24,8 @@ import java.util.List;
  * Class to manage nodes.
  * </p>
  */
-public interface NodeService  {
+public interface NodeService {
+
     String getBaseEndpointUrl(String nodeName);
 
     boolean isEnabled(String nodeName);

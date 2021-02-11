@@ -96,10 +96,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         final OptionalInt optMaxSize = pooledByteBufferCounts == null
                 ? OptionalInt.empty()
                 : pooledByteBufferCounts.keySet()
-                    .stream()
-                    .filter(ByteBufferPoolImpl4::isPowerOf10)
-                    .mapToInt(Integer::intValue)
-                    .max();
+                        .stream()
+                        .filter(ByteBufferPoolImpl4::isPowerOf10)
+                        .mapToInt(Integer::intValue)
+                        .max();
 
         if (optMaxSize.isPresent()) {
             // Going from a zero based offset to a count so have to add one.
@@ -128,8 +128,12 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand do no need to hold the queue/counter
-            pooledBufferQueues[i] = configuredCount > 1 ? new ArrayBlockingQueue<>(configuredCount) : null;
-            pooledBufferCounters[i] = configuredCount > 1 ? new AtomicInteger(0) : null;
+            pooledBufferQueues[i] = configuredCount > 1
+                    ? new ArrayBlockingQueue<>(configuredCount)
+                    : null;
+            pooledBufferCounters[i] = configuredCount > 1
+                    ? new AtomicInteger(0)
+                    : null;
             maxBufferCounts[i] = configuredCount;
             bufferSizes[i] = bufferCapacity;
             msgs.add(bufferCapacity + "=" + configuredCount);
@@ -139,10 +143,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                 (pooledByteBufferCounts == null
                         ? "null"
                         : pooledByteBufferCounts.entrySet()
-                            .stream()
-                            .sorted(Entry.comparingByKey())
-                            .map(entry -> entry.getKey() + "=" + entry.getValue())
-                            .collect(Collectors.joining(","))),
+                                .stream()
+                                .sorted(Entry.comparingByKey())
+                                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                .collect(Collectors.joining(","))),
                 String.join(",", msgs));
     }
 

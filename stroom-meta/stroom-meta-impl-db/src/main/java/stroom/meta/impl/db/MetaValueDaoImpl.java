@@ -30,8 +30,6 @@ import stroom.util.shared.Clearable;
 
 import org.jooq.BatchBindStep;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,11 +39,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaValueDaoImpl implements MetaValueDao, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaValueDaoImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
@@ -123,8 +124,12 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         JooqUtil.context(metaDbConnProvider, context -> {
             BatchBindStep batchBindStep = context
                     .batch(context
-                            .insertInto(META_VAL, META_VAL.CREATE_TIME, META_VAL.META_ID, META_VAL.META_KEY_ID, META_VAL.VAL)
-                            .values((Long) null, (Long) null, (Integer) null, (Long) null));
+                            .insertInto(META_VAL,
+                                    META_VAL.CREATE_TIME,
+                                    META_VAL.META_ID,
+                                    META_VAL.META_KEY_ID,
+                                    META_VAL.VAL)
+                            .values(null, null, null, (Long) null));
             for (final Row row : rows) {
                 batchBindStep = batchBindStep.bind(row.getCreateMs(), row.getMetaId(), row.getKeyId(), row.getValue());
             }
@@ -301,6 +306,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     }
 
     private static final class Row {
+
         private final long createMs;
         private final long metaId;
         private final int keyId;

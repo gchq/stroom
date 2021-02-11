@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockIntCrud<T> implements HasIntCrud<T>, Clearable {
+
     private final Map<Integer, T> map = new HashMap<>();
     private final AtomicInteger generatedId = new AtomicInteger();
 

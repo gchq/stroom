@@ -23,5 +23,10 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.TaskContext;
 
 public interface DataProcessorTaskExecutor {
-    ProcessorResult exec(TaskContext taskContext, Processor processor, ProcessorFilter processorFilter, ProcessorTask processorTask, Source source);
+
+    ProcessorResult exec(TaskContext taskContext,
+                         Processor processor,
+                         ProcessorFilter processorFilter,
+                         ProcessorTask processorTask,
+                         Source source);
 }

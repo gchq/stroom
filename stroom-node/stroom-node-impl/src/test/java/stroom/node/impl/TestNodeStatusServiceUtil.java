@@ -17,14 +17,16 @@
 package stroom.node.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.node.impl.NodeStatusServiceUtil.CPUStats;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNodeStatusServiceUtil {
+
     // example output from 'cat /proc/stat'
-    private String output = "cpu  4723476392 160361 77496194 8438714515 57132415 3363 1832867 0 0\n"
+    private final String output = "cpu  4723476392 160361 77496194 8438714515 57132415 3363 1832867 0 0\n"
             + "cpu0 213427959 8748 3829293 188887931 9302819 0 86473 0 0\n"
             + "cpu2 158921680 6551 3345043 251521227 1857261 0 848 0 0\n"
             + "cpu3 144709783 7816 3281287 266391876 1262997 0 704 0 0\n"

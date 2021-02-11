@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface MetaValueDao extends Flushable {
+
     void addAttributes(Meta meta, AttributeMap attributes);
 
     Map<Long, Map<String, String>> getAttributes(List<Meta> list);

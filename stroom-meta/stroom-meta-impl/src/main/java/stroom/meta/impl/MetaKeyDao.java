@@ -20,6 +20,7 @@ package stroom.meta.impl;
 import java.util.Optional;
 
 public interface MetaKeyDao {
+
     Optional<String> getNameForId(final int keyId);
 
     Optional<Integer> getIdForName(final String name);

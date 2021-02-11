@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ByteBufferPoolConfig extends AbstractConfig {
+
     // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
     private Map<Integer, Integer> pooledByteBufferCounts = new TreeMap<>(Map.of(
             1, 50,
