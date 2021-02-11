@@ -10,6 +10,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -22,8 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.Map;
 
 @Api
 @Singleton
@@ -31,6 +31,7 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface OpenIdResource extends RestResource {
+
     @GET
     @Path("auth")
     @Timed

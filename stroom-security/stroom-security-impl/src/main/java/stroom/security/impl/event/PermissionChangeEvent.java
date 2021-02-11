@@ -30,7 +30,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = ClearDocumentPermissionsEvent.class, name = "clearDocumentPermissionsEvent")
 })
 public interface PermissionChangeEvent {
+
     interface Handler {
+
         void onChange(PermissionChangeEvent event);
     }
 }

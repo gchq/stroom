@@ -18,8 +18,8 @@
 
 package stroom.security.identity.authenticate;
 
-import stroom.security.openid.api.OpenId;
 import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.openid.api.OpenId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -45,6 +45,7 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
+
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
     @GET

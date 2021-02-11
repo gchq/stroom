@@ -12,16 +12,17 @@ import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwk.PublicJsonWebKey;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static stroom.security.identity.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 
 @Singleton
 class JwkDaoImpl implements JwkDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwkDaoImpl.class);
     private static final int MIN_KEY_AGE_MS = 1000 * 60 * 60 * 24;
     private static final int MAX_KEY_AGE_MS = 1000 * 60 * 60 * 24 * 2;

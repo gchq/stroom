@@ -16,7 +16,6 @@
 
 package stroom.security.client.gin;
 
-import com.google.inject.Singleton;
 import stroom.changepassword.client.ChangePasswordPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.security.client.CurrentUser;
@@ -37,7 +36,10 @@ import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
 
+import com.google.inject.Singleton;
+
 public class SecurityModule extends PluginModule {
+
     @Override
     protected void configure() {
         bind(ClientSecurityContext.class).to(CurrentUser.class).in(Singleton.class);
@@ -53,8 +55,14 @@ public class SecurityModule extends PluginModule {
         bindSharedView(UserEditPresenter.UserEditView.class, UserEditViewImpl.class);
         bindSharedView(GroupEditPresenter.UserGroupEditView.class, UserGroupEditViewImpl.class);
 
-        bindPresenterWidget(DocumentPermissionsPresenter.class, DocumentPermissionsPresenter.DocumentPermissionsView.class, DocumentPermissionsViewImpl.class);
-        bindPresenterWidget(DocumentPermissionsTabPresenter.class, DocumentPermissionsTabPresenter.DocumentPermissionsTabView.class, DocumentPermissionsTabViewImpl.class);
-        bindPresenterWidget(FolderPermissionsTabPresenter.class, FolderPermissionsTabPresenter.FolderPermissionsTabView.class, FolderPermissionsTabViewImpl.class);
+        bindPresenterWidget(DocumentPermissionsPresenter.class,
+                DocumentPermissionsPresenter.DocumentPermissionsView.class,
+                DocumentPermissionsViewImpl.class);
+        bindPresenterWidget(DocumentPermissionsTabPresenter.class,
+                DocumentPermissionsTabPresenter.DocumentPermissionsTabView.class,
+                DocumentPermissionsTabViewImpl.class);
+        bindPresenterWidget(FolderPermissionsTabPresenter.class,
+                FolderPermissionsTabPresenter.FolderPermissionsTabView.class,
+                FolderPermissionsTabViewImpl.class);
     }
 }

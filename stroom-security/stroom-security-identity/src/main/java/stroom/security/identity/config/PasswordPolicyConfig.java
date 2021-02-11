@@ -20,6 +20,7 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class PasswordPolicyConfig extends AbstractConfig {
+
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
     private Boolean allowPasswordResets;

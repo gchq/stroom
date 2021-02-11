@@ -7,6 +7,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Optional;
 
 public interface TokenService {
+
     ResultPage<Token> list();
 
     ResultPage<Token> search(SearchTokenRequest request);

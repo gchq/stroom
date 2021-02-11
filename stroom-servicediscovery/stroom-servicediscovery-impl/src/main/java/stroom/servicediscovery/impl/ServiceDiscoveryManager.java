@@ -10,8 +10,6 @@ import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,9 +19,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class ServiceDiscoveryManager {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
     private final ServiceDiscoveryConfig serviceDiscoveryConfig;
@@ -98,7 +99,8 @@ public class ServiceDiscoveryManager {
         String basePath = Preconditions.checkNotNull(serviceDiscoveryConfig.getZookeeperBasePath());
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
                 .builder(String.class)
-                .client(Preconditions.checkNotNull(curatorFrameworkRef.get(), "curatorFramework should not be null at this point"))
+                .client(Preconditions.checkNotNull(curatorFrameworkRef.get(),
+                        "curatorFramework should not be null at this point"))
                 .basePath(basePath)
                 .build();
 

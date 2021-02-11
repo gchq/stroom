@@ -1,6 +1,7 @@
 package stroom.security.identity.authenticate;
 
 public class CredentialValidationResult {
+
     private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
     private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";

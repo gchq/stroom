@@ -3,6 +3,7 @@ package stroom.security.identity.authenticate;
 import java.util.Objects;
 
 public class PasswordValidator {
+
     public static void validateLength(final String newPassword,
                                       int minimumLength) {
         if (newPassword == null) {

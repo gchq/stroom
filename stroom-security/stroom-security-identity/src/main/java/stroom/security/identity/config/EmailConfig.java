@@ -18,14 +18,16 @@
 
 package stroom.security.identity.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig
 public class EmailConfig extends AbstractConfig {
+
     public static final String PROP_NAME_SMTP = "smtp";
 
     @NotNull
@@ -34,28 +36,28 @@ public class EmailConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty
-    private String fromAddress = "noreply@stroom";
+    private final String fromAddress = "noreply@stroom";
 
     @NotNull
     @JsonProperty
-    private String fromName = "Stroom User Accounts";
+    private final String fromName = "Stroom User Accounts";
 
     @NotNull
     @JsonProperty
-    private String passwordResetSubject = "Password reset for Stroom";
+    private final String passwordResetSubject = "Password reset for Stroom";
 
     @NotNull
     @JsonProperty
-    private String passwordResetText = "A password reset has been requested for this email address. Please visit the following URL to reset your password: %s.";
+    private final String passwordResetText = "A password reset has been requested for this email address. Please visit the following URL to reset your password: %s.";
 
     @NotNull
     @JsonProperty
-    private String passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
+    private final String passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
 
     @NotNull
     @JsonProperty
     // Defaults to false because this feature needs to be configured and actively turned on before it works.
-    private boolean allowPasswordResets = false;
+    private final boolean allowPasswordResets = false;
 
     @JsonProperty(PROP_NAME_SMTP)
     public SmtpConfig getSmtpConfig() {

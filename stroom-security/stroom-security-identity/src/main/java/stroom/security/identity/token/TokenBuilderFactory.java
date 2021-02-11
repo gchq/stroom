@@ -24,12 +24,13 @@ import stroom.security.identity.exceptions.TokenCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.time.Instant;
 
 @Singleton
 public class TokenBuilderFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilderFactory.class);
 
     private final IdentityConfig config;
@@ -39,7 +40,7 @@ public class TokenBuilderFactory {
 
     @Inject
     public TokenBuilderFactory(final IdentityConfig config,
-                        final JwkCache jwkCache) {
+                               final JwkCache jwkCache) {
         this.config = config;
         this.jwkCache = jwkCache;
     }

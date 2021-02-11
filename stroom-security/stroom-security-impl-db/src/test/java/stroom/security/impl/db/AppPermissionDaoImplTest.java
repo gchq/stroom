@@ -1,14 +1,15 @@
 package stroom.security.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AppPermissionDaoImplTest {
+
     private static UserDao userDao;
     private static AppPermissionDao appPermissionDao;
 

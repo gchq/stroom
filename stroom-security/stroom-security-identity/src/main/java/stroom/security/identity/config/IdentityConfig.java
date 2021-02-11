@@ -39,6 +39,7 @@ import javax.validation.constraints.NotNull;
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public final class IdentityConfig extends AbstractConfig implements HasDbConfig {
+
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
     public static final String PROP_NAME_OPENID = "openid";

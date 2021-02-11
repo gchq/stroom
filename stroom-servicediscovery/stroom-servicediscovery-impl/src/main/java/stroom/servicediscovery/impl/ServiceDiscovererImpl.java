@@ -120,7 +120,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
                                             entry.getKey().getVersionedServiceName()), e);
                                 }
                             })
-                            .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(), serviceInstance.buildUriSpec()))
+                            .map(serviceInstance -> new Tuple2<>(serviceInstance.getName(),
+                                    serviceInstance.buildUriSpec()))
                             .collect(Collectors.groupingBy(
                                     Tuple2::_1,
                                     TreeMap::new,

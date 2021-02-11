@@ -18,8 +18,6 @@ package stroom.security.identity.db;
 
 import org.junit.jupiter.api.Disabled;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @Disabled
 public final class AccountMapperTest {
 //    @Test

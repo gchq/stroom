@@ -3,6 +3,7 @@ package stroom.security.identity.token;
 import stroom.util.shared.ResultPage;
 
 public interface TokenEventLog {
+
     void search(SearchTokenRequest request, ResultPage<Token> response, Throwable ex);
 
     void create(CreateTokenRequest request, Token token, Throwable ex);

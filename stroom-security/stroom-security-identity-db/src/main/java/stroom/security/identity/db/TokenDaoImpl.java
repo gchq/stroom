@@ -18,6 +18,7 @@
 
 package stroom.security.identity.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.db.jooq.tables.records.TokenRecord;
 import stroom.security.identity.token.SearchTokenRequest;
@@ -26,7 +27,6 @@ import stroom.security.identity.token.TokenDao;
 import stroom.security.identity.token.TokenResource;
 import stroom.security.identity.token.TokenType;
 import stroom.security.identity.token.TokenTypeDao;
-import stroom.db.util.JooqUtil;
 import stroom.util.collections.ResultPageCollector;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -43,8 +43,6 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record12;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -53,12 +51,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.util.Map.entry;
 import static stroom.security.identity.db.jooq.tables.TokenType.TOKEN_TYPE;
 
 @Singleton
 class TokenDaoImpl implements TokenDao {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
 
     private static final Function<Record, Token> RECORD_TO_TOKEN_MAPPER = record -> {
@@ -131,7 +132,9 @@ class TokenDaoImpl implements TokenDao {
                     Token::getUserEmail),
             FilterFieldMapper.of(
                     TokenResource.FIELD_DEF_STATUS,
-                    token -> token.isEnabled() ? "Enabled" : "Disabled"),
+                    token -> token.isEnabled()
+                            ? "Enabled"
+                            : "Disabled"),
             FilterFieldMapper.of(
                     TokenResource.FIELD_DEF_COMMENTS,
                     Token::getComments));
@@ -150,7 +153,8 @@ class TokenDaoImpl implements TokenDao {
     public ResultPage<Token> list() {
         final List<Token> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
+                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(tokenTypeDao.getTokenTypeId(
+                        TokenType.USER.getText().toLowerCase())))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
@@ -250,8 +254,10 @@ class TokenDaoImpl implements TokenDao {
         final int tokenTypeId = tokenTypeDao.getTokenTypeId(tokenType);
 
         return JooqUtil.contextResult(authDbConnProvider, context -> {
-            LOGGER.debug(() -> LogUtil.message("Creating a {}", stroom.security.identity.db.jooq.tables.Token.TOKEN.getName()));
-            final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(token, context.newRecord(stroom.security.identity.db.jooq.tables.Token.TOKEN));
+            LOGGER.debug(() -> LogUtil.message("Creating a {}",
+                    stroom.security.identity.db.jooq.tables.Token.TOKEN.getName()));
+            final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(token,
+                    context.newRecord(stroom.security.identity.db.jooq.tables.Token.TOKEN));
             record.setFkAccountId(accountId);
             record.setFkTokenTypeId(tokenTypeId);
             record.store();
@@ -367,12 +373,16 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public int deleteTokenById(int tokenId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId)).execute());
+        return JooqUtil.contextResult(authDbConnProvider,
+                context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(
+                        tokenId)).execute());
     }
 
     @Override
     public int deleteTokenByTokenString(String token) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token)).execute());
+        return JooqUtil.contextResult(authDbConnProvider,
+                context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(
+                        token)).execute());
     }
 
     @Override
@@ -394,7 +404,8 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
+                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(accountId))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID)
                 .fetch()
@@ -420,7 +431,8 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
+                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId))
                 .fetchOptional()
                 .map(RECORD_TO_TOKEN_MAPPER));
@@ -446,7 +458,8 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
+                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token))
                 .fetchOptional()
                 .map(RECORD_TO_TOKEN_MAPPER));

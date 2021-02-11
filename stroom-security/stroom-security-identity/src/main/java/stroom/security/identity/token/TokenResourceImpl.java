@@ -28,6 +28,7 @@ import javax.ws.rs.NotFoundException;
 
 // TODO : @66 Add audit logging
 public class TokenResourceImpl implements TokenResource {
+
     private final Provider<TokenService> serviceProvider;
     private final TokenEventLog tokenEventLog;
 

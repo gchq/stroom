@@ -25,14 +25,15 @@ import stroom.task.api.TaskContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventBusImpl.class);
 
     private final Executor executor;
@@ -78,7 +79,8 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
             if (started) {
                 // Dispatch the entity event to all nodes in the cluster.
-                final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change", taskContext -> fireRemote(event));
+                final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change",
+                        taskContext -> fireRemote(event));
                 CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {

@@ -10,11 +10,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 //TODO: auth-into-stroom : this file is largely redundant now that we're using embedded.
+
 /**
  * A belt and braces approach to cleaning the database. It's not an expensive operation and doing it before
  * and after a test guarantees we won't run into issues with existing data.
  */
 public abstract class DatabaseIT {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseIT.class);
 
     public static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";

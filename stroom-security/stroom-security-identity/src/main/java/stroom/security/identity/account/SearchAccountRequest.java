@@ -13,6 +13,7 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class SearchAccountRequest extends BaseCriteria {
+
     @JsonProperty
     private final String quickFilter;
 

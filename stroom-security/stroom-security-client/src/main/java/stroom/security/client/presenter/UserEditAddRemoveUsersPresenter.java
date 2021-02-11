@@ -16,9 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.AppPermissionResource;
@@ -34,11 +31,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 
-import javax.inject.Provider;
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.HashSet;
 import java.util.Set;
+import javax.inject.Provider;
 
 public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter implements UserListUiHandlers {
+
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final RestFactory restFactory;
@@ -49,8 +51,10 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
     private User relatedUser;
 
     @Inject
-    public UserEditAddRemoveUsersPresenter(final EventBus eventBus, final UserListView userListView,
-                                           final RestFactory restFactory, final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
+    public UserEditAddRemoveUsersPresenter(final EventBus eventBus,
+                                           final UserListView userListView,
+                                           final RestFactory restFactory,
+                                           final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
         super(eventBus, userListView, restFactory);
         this.restFactory = restFactory;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
@@ -89,7 +93,9 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
                             final Set<User> addSet = new HashSet<>();
                             addSet.add(selected);
                             final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(addSet, null);
-                            final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
+                            final ChangeUserRequest request = new ChangeUserRequest(relatedUser,
+                                    changedLinkedUsers,
+                                    null);
 
                             final Rest<Boolean> rest = restFactory.create();
                             rest
@@ -100,7 +106,12 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
                     }
                 }
             };
-            ShowPopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Choose " + type + " To Add", popupUiHandlers);
+            ShowPopupEvent.fire(UserEditAddRemoveUsersPresenter.this,
+                    selectUserPresenter,
+                    PopupView.PopupType.OK_CANCEL_DIALOG,
+                    popupSize,
+                    "Choose " + type + " To Add",
+                    popupUiHandlers);
         }));
         registerHandler(removeButton.addClickHandler(event -> {
             final User selected = getSelectionModel().getSelected();

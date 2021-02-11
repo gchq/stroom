@@ -18,10 +18,11 @@
 
 package stroom.security.identity.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.simplejavamail.mailer.config.TransportStrategy;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.simplejavamail.mailer.config.TransportStrategy;
 
 import javax.validation.constraints.NotNull;
 
@@ -52,20 +53,40 @@ public class SmtpConfig extends AbstractConfig {
         return host;
     }
 
+    public void setHost(final String host) {
+        this.host = host;
+    }
+
     public int getPort() {
         return port;
+    }
+
+    public void setPort(final int port) {
+        this.port = port;
     }
 
     public String getUsername() {
         return username;
     }
 
+    public void setUsername(final String username) {
+        this.username = username;
+    }
+
     public String getPassword() {
         return password;
     }
 
+    public void setPassword(final String password) {
+        this.password = password;
+    }
+
     public String getTransport() {
         return transport;
+    }
+
+    public void setTransport(final String transport) {
+        this.transport = transport;
     }
 
     public TransportStrategy getTransportStrategy() {

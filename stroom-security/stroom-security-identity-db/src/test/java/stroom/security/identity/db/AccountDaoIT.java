@@ -304,14 +304,18 @@ public class AccountDaoIT extends DatabaseIT {
             assertThat(shouldNeedChange).isTrue();
 
             // Boundary cases
-            Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01, Duration.parse("P90D"), true);
+            Boolean shouldNotNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+                    Duration.parse("P90D"),
+                    true);
             assertThat(shouldNotNeedChangeBoundaryCase).isTrue();
 
             accountDao.changePassword(user01, "new password");
             shouldNeedChange = accountDao.needsPasswordChange(user01, Duration.parse("PT200M"), true);
             assertThat(shouldNeedChange).isFalse();
 
-            Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01, Duration.parse("PT91M"), true);
+            Boolean shouldNeedChangeBoundaryCase = accountDao.needsPasswordChange(user01,
+                    Duration.parse("PT91M"),
+                    true);
             assertThat(shouldNeedChangeBoundaryCase).isFalse();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -362,7 +366,8 @@ public class AccountDaoIT extends DatabaseIT {
 
     private AccountDao getUserDao(Connection conn) {
         // We don't care about most config for this test, so we'll pass in null
-        AccountDao accountDao = new AccountDaoImpl(null, new AuthDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
+        AccountDao accountDao = new AccountDaoImpl(null,
+                new AuthDbModule.DataSourceImpl(DbTestUtil.createTestDataSource(new CommonDbConfig())));
         // We're doing tests against elapsed time so we need to be able to move the clock.
         final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
 

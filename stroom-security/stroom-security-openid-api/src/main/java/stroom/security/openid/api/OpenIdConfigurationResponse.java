@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 @JsonInclude(Include.NON_NULL)
 public class OpenIdConfigurationResponse {
+
     @JsonProperty("authorization_endpoint")
     @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
             "Should only be set if useInternal is true.")
@@ -149,6 +150,7 @@ public class OpenIdConfigurationResponse {
     }
 
     public static final class Builder {
+
         private String authorizationEndpoint;
         private String[] claimsSupported;
         private String[] codeChallengeMethodsSupported;

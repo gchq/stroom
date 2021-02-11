@@ -18,14 +18,16 @@
 
 package stroom.security.identity.exceptions.mappers;
 
+import stroom.security.identity.exceptions.UnsupportedFilterException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.identity.exceptions.UnsupportedFilterException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class UnsupportedFilterExceptionMapper implements ExceptionMapper<UnsupportedFilterException> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(UnsupportedFilterExceptionMapper.class);
 
     @Override

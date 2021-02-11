@@ -44,16 +44,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class DocumentPermissionsPresenter
         extends MyPresenterWidget<DocumentPermissionsView> {
+
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private static final Map<String, List<String>> ALL_PERMISSIONS_CACHE = new HashMap<>();
@@ -194,6 +195,7 @@ public class DocumentPermissionsPresenter
     }
 
     public interface DocumentPermissionsView extends View {
+
         void setTabsView(View view);
 
         ItemListBox<ChangeDocumentPermissionsRequest.Cascade> getCascade();

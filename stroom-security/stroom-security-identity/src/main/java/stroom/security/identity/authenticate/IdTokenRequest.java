@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 
 @ApiModel(description = "A request to exchange an access code with an id token. This is the final step in the OpenID authentication flow and must be a back-channel call, i.e. the client secret should never be sent to a browser.")
 public class IdTokenRequest {
+
     @NotNull
     @ApiModelProperty(value = "The client id. This is a string that uniquely identifies the client.", required = true)
     private String clientId;

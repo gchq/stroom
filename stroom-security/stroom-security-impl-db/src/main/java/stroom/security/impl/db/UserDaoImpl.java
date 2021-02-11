@@ -13,7 +13,6 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;

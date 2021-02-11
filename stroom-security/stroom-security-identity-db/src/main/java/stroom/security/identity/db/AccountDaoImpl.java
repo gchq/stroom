@@ -155,7 +155,9 @@ class AccountDaoImpl implements AccountDao {
                     Account::getEmail),
             FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_STATUS,
-                    account -> account.isEnabled() ? "Enabled" : "Disabled"),
+                    account -> account.isEnabled()
+                            ? "Enabled"
+                            : "Disabled"),
             FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_FIRST_NAME,
                     Account::getFirstName),
@@ -492,9 +494,9 @@ class AccountDaoImpl implements AccountDao {
                     "Cannot check if this user needs a password change because this user does not exist!");
         }
 
-        final long passwordLastChangedMs = user.getPasswordLastChangedMs() == null ?
-                user.getCreateTimeMs() :
-                user.getPasswordLastChangedMs();
+        final long passwordLastChangedMs = user.getPasswordLastChangedMs() == null
+                ? user.getCreateTimeMs()
+                : user.getPasswordLastChangedMs();
 
         final Duration durationSinceLastPasswordChange = Duration.between(
                 Instant.ofEpochMilli(passwordLastChangedMs),

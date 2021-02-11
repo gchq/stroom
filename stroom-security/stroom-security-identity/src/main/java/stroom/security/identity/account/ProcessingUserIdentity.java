@@ -21,6 +21,7 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 public class ProcessingUserIdentity implements UserIdentity {
+
     private String id;
     private String jws;
 
@@ -50,8 +51,12 @@ public class ProcessingUserIdentity implements UserIdentity {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserIdentity)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserIdentity)) {
+            return false;
+        }
         final UserIdentity that = (UserIdentity) o;
         return Objects.equals(id, that.getId()) &&
                 Objects.equals(jws, that.getJws());

@@ -5,7 +5,7 @@ public enum TokenType {
     API("api"),
     EMAIL_RESET("email_reset");
 
-    private String tokenTypeText;
+    private final String tokenTypeText;
 
     TokenType(String tokenTypeText) {
         this.tokenTypeText = tokenTypeText;

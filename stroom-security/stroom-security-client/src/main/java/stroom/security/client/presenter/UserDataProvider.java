@@ -33,6 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class UserDataProvider implements Refreshable {
+
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final EventBus eventBus;
@@ -49,11 +50,7 @@ public class UserDataProvider implements Refreshable {
         view.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
-                }
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 dataProvider.refresh();
             }
         });

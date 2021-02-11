@@ -1,14 +1,14 @@
 package stroom.security.identity.token;
 
-import stroom.security.identity.account.Account;
-import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.account.AccountService;
-import stroom.security.identity.exceptions.NoSuchUserException;
-import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.identity.config.TokenConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.TokenException;
 import stroom.security.api.TokenVerifier;
+import stroom.security.identity.account.Account;
+import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.account.AccountService;
+import stroom.security.identity.config.TokenConfig;
+import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.PermissionException;
@@ -17,14 +17,15 @@ import stroom.util.shared.ResultPage;
 import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwk.JsonWebKey;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 
 public class TokenServiceImpl implements TokenService, HasHealthCheck {
+
     private final JwkCache jwkCache;
     private final TokenDao tokenDao;
     private final AccountDao accountDao;

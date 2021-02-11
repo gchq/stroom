@@ -18,10 +18,10 @@
 
 package stroom.security.identity.exceptions.mappers;
 
+import stroom.config.common.UriFactory;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.exceptions.TokenCreationException;
-import stroom.config.common.UriFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 
 @SuppressWarnings("unused")
 class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
 
     private final UriFactory uriFactory;

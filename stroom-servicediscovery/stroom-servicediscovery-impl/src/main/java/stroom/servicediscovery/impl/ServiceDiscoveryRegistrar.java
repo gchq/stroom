@@ -14,13 +14,13 @@ import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Responsible for registering stroom's various externally exposed services with service discovery
@@ -56,14 +56,17 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
             try {
                 hostOrIp = InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException e) {
-                LOGGER.warn("Unable to determine hostname of this instance due to error. Will try to get IP address instead", e);
+                LOGGER.warn(
+                        "Unable to determine hostname of this instance due to error. Will try to get IP address instead",
+                        e);
             }
 
             if (hostOrIp == null || hostOrIp.isEmpty()) {
                 try {
                     hostOrIp = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e) {
-                    throw new RuntimeException(String.format("Error establishing hostname or IP address of this instance"), e);
+                    throw new RuntimeException(String.format(
+                            "Error establishing hostname or IP address of this instance"), e);
                 }
             }
         }

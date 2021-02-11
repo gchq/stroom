@@ -40,6 +40,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDocumentPermissionsServiceImpl {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     private static UserService userService;

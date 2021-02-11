@@ -132,8 +132,10 @@ public class AccountServiceImpl implements AccountService {
             }
 
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateLength(request.getPassword(),
+                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(),
+                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
         }
@@ -148,8 +150,10 @@ public class AccountServiceImpl implements AccountService {
             }
 
             if (request.getPassword() != null || request.getConfirmPassword() != null) {
-                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
-                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateLength(request.getPassword(),
+                        config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(),
+                        config.getPasswordPolicyConfig().getPasswordComplexityRegex());
                 PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
             }
         }
