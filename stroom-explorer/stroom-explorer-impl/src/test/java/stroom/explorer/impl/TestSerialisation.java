@@ -10,13 +10,14 @@ import stroom.util.json.JsonUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSerialisation {
+
     @Test
     void testFetchRequest() throws Exception {
         final ExplorerNode explorerNode = new ExplorerNode("test", "test", "test", "test");

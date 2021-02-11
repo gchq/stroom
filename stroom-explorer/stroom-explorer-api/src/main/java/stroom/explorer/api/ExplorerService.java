@@ -28,13 +28,21 @@ import stroom.util.shared.Clearable;
 import java.util.List;
 
 public interface ExplorerService extends Clearable {
+
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
 
-    DocRef create(String docType, String docName, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
+    DocRef create(String docType,
+                  String docName,
+                  DocRef destinationFolderRef,
+                  PermissionInheritance permissionInheritance);
 
-    BulkActionResult copy(List<DocRef> docRefs, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
+    BulkActionResult copy(List<DocRef> docRefs,
+                          DocRef destinationFolderRef,
+                          PermissionInheritance permissionInheritance);
 
-    BulkActionResult move(List<DocRef> docRefs, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
+    BulkActionResult move(List<DocRef> docRefs,
+                          DocRef destinationFolderRef,
+                          PermissionInheritance permissionInheritance);
 
     DocRef rename(DocRef docRef, String docName);
 

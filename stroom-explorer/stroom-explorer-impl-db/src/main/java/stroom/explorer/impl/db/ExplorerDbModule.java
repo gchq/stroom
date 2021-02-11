@@ -8,6 +8,7 @@ import stroom.explorer.impl.ExplorerTreeDao;
 import javax.sql.DataSource;
 
 public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
+
     private static final String MODULE = "stroom-explorer";
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db/migration";
     private static final String FLYWAY_TABLE = "explorer_schema_history";
@@ -45,6 +46,7 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, Exp
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements ExplorerDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

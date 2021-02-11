@@ -20,15 +20,16 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.TaskContextFactory;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.inject.Inject;
 
 class ExplorerTreeModel {
+
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
 
@@ -82,7 +83,8 @@ class ExplorerTreeModel {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
-                        final Runnable runnable = taskContextFactory.context("Update Explorer Tree Model", taskContext -> updateModel());
+                        final Runnable runnable = taskContextFactory.context("Update Explorer Tree Model",
+                                taskContext -> updateModel());
                         CompletableFuture
                                 .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)

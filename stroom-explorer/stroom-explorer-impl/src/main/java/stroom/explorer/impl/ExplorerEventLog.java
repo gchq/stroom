@@ -21,7 +21,13 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.PermissionInheritance;
 
 interface ExplorerEventLog {
-    void create(String type, String uuid, String name, DocRef folder, PermissionInheritance permissionInheritance, Exception ex);
+
+    void create(String type,
+                String uuid,
+                String name,
+                DocRef folder,
+                PermissionInheritance permissionInheritance,
+                Exception ex);
 
     void copy(DocRef document, DocRef folder, PermissionInheritance permissionInheritance, Exception ex);
 

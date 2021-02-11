@@ -28,23 +28,31 @@ import stroom.explorer.shared.PermissionInheritance;
 import java.util.List;
 
 class MockExplorerService implements ExplorerService {
+
     @Override
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
         return null;
     }
 
     @Override
-    public DocRef create(final String docType, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public DocRef create(final String docType,
+                         final String docName,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
         return null;
     }
 
     @Override
-    public BulkActionResult copy(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public BulkActionResult copy(final List<DocRef> docRefs,
+                                 final DocRef destinationFolderRef,
+                                 final PermissionInheritance permissionInheritance) {
         return null;
     }
 
     @Override
-    public BulkActionResult move(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public BulkActionResult move(final List<DocRef> docRefs,
+                                 final DocRef destinationFolderRef,
+                                 final PermissionInheritance permissionInheritance) {
         return null;
     }
 

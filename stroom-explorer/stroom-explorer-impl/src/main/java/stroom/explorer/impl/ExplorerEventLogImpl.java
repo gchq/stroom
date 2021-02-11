@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 
 class ExplorerEventLogImpl implements ExplorerEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;

@@ -4,10 +4,11 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
+
     private final DocRefInfoCache docRefInfoCache;
 
     @Inject
