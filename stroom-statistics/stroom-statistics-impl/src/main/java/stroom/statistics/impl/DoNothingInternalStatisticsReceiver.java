@@ -1,9 +1,10 @@
 package stroom.statistics.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * the system to function albeit with the loss of the stats.
  */
 class DoNothingInternalStatisticsReceiver implements InternalStatisticsReceiver {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DoNothingInternalStatisticsReceiver.class);
 
     private long lastLog = 0;

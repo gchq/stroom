@@ -17,13 +17,6 @@ import com.google.common.base.Preconditions;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import javax.inject.Inject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +26,13 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.inject.Inject;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 @SuppressWarnings("unused")
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
@@ -73,7 +73,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 internalStatisticsConfig.getKafkaConfigUuid());
 
         try (SharedKafkaProducer sharedKafkaProducer =
-                     stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
+                stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
 
             sharedKafkaProducer.getKafkaProducer().ifPresentOrElse(
                     kafkaProducer ->

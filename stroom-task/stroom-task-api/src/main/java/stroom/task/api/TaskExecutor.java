@@ -35,6 +35,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class TaskExecutor {
+
     private static final int DEFAULT_MAX_THREADS = 5;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskExecutor.class);

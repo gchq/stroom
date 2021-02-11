@@ -117,7 +117,13 @@ public class FieldMapper {
 //                            LOGGER.info("Updating config value of {} from [{}] to [{}]",
 //                                    prop.getName(), destPropValue, sourcePropValue);
 //                            prop.getSetter().invoke(dest, sourcePropValue);
-                        updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
+                        updateValue(dest,
+                                prop,
+                                sourcePropValue,
+                                destPropValue,
+                                defaultPropValue,
+                                updateAction,
+                                copyOptions);
                     } else if (destPropValue == null) {
                         // Create a new object to copy into
                         final Object newInstance = prop.getValueClass().getConstructor().newInstance();
@@ -133,7 +139,13 @@ public class FieldMapper {
                     // prop is a primitive or a non-stroom class, so update it if it is different
                     if ((sourcePropValue == null && destPropValue != null) ||
                             (sourcePropValue != null && !sourcePropValue.equals(destPropValue))) {
-                        updateValue(dest, prop, sourcePropValue, destPropValue, defaultPropValue, updateAction, copyOptions);
+                        updateValue(dest,
+                                prop,
+                                sourcePropValue,
+                                destPropValue,
+                                defaultPropValue,
+                                updateAction,
+                                copyOptions);
                     }
                 }
             }
@@ -148,7 +160,8 @@ public class FieldMapper {
                                         final Object destPropValue,
                                         final Object defaultPropValue,
                                         final UpdateAction updateAction,
-                                        final CopyOption... copyOptions) throws IllegalAccessException, InvocationTargetException {
+                                        final CopyOption... copyOptions)
+            throws IllegalAccessException, InvocationTargetException {
         if (sourcePropValue != null || !isOptionPresent(CopyOption.DONT_COPY_NULLS, copyOptions)) {
             // source not null OR are copying nulls
 
@@ -156,7 +169,8 @@ public class FieldMapper {
 
             if (isOptionPresent(CopyOption.DONT_COPY_DEFAULTS, copyOptions)) {
                 if (Objects.equals(sourcePropValue, defaultPropValue)) {
-                    LOGGER.trace("Source value of {} is a default value but we are not copying defaults", sourcePropValue);
+                    LOGGER.trace("Source value of {} is a default value but we are not copying defaults",
+                            sourcePropValue);
                 } else {
                     doCopy = true;
                 }
@@ -165,7 +179,10 @@ public class FieldMapper {
             }
 
             if (doCopy) {
-                LOGGER.debug("Updating config value of {} from [{}] to [{}]", prop.getName(), destPropValue, sourcePropValue);
+                LOGGER.debug("Updating config value of {} from [{}] to [{}]",
+                        prop.getName(),
+                        destPropValue,
+                        sourcePropValue);
                 prop.getSetter().invoke(destParent, sourcePropValue);
                 if (updateAction != null) {
                     updateAction.accept(destParent, prop, sourcePropValue, destPropValue);

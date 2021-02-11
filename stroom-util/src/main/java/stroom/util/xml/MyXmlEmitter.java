@@ -68,7 +68,9 @@ public class MyXmlEmitter extends XMLEmitter {
             throws java.io.IOException, XPathException {
         int segstart = 0;
         boolean disabled = false;
-        final boolean[] specialChars = (inAttribute ? IS_SPECIAL_IN_ATT : IS_SPECIAL_IN_TEXT);
+        final boolean[] specialChars = (inAttribute
+                ? IS_SPECIAL_IN_ATT
+                : IS_SPECIAL_IN_TEXT);
 
         if (chars instanceof CompressedWhitespace) {
             ((CompressedWhitespace) chars).writeEscape(specialChars, writer);

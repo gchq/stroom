@@ -284,7 +284,7 @@ public class InternalStatisticsConfig extends AbstractConfig {
      */
     @JsonIgnore
     private static List<DocRef> buildDocRefs(final InternalStatisticKey internalStatisticKey,
-            final Map<String, String> storeTypeToUuidMap) {
+                                             final Map<String, String> storeTypeToUuidMap) {
         return storeTypeToUuidMap.entrySet()
                 .stream()
                 .map(entry -> {

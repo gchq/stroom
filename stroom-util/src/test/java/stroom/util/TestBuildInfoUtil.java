@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class TestBuildInfoUtil {
+
     @Test
     void testSimple() {
         Assertions.assertThat(new BuildInfoProvider().get()).isNotNull();

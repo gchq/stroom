@@ -28,13 +28,14 @@ import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
+
     private final StatisticStoreCache statisticStoreCache;
     private final Statistics statistics;
 
@@ -68,7 +69,9 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
-        fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME, true, Collections.singletonList(Condition.BETWEEN)));
+        fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
+                true,
+                Collections.singletonList(Condition.BETWEEN)));
 
         // one field per tag
         if (entity.getConfig() != null) {

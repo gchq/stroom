@@ -63,8 +63,12 @@ public class TextRange implements Comparable<TextRange> {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TextRange highlight = (TextRange) o;
         return Objects.equals(from, highlight.from) &&
                 Objects.equals(to, highlight.to);

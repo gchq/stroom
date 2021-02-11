@@ -3,6 +3,7 @@ package stroom.util.shared;
 import java.util.Optional;
 
 public interface HasIntCrud<T_ENTITY> {
+
     /**
      * Creates the passes record object in the persistence implementation
      *

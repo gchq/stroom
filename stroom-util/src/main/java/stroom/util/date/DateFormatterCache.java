@@ -29,7 +29,10 @@ public final class DateFormatterCache {
     // Create cache
     private static final int MAX_ENTRIES = 1000;
 
-    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(MAX_ENTRIES + 1, .75F, true) {
+    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(
+            MAX_ENTRIES + 1,
+            .75F,
+            true) {
         // This method is called just after a new entry has been added
         public boolean removeEldestEntry(Map.Entry eldest) {
             if (size() > MAX_ENTRIES) {
@@ -42,7 +45,10 @@ public final class DateFormatterCache {
         }
     });
 
-    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(MAX_ENTRIES + 1, .75F, true) {
+    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(
+            MAX_ENTRIES + 1,
+            .75F,
+            true) {
         // This method is called just after a new entry has been added
         public boolean removeEldestEntry(Map.Entry eldest) {
             if (size() > MAX_ENTRIES) {
@@ -172,8 +178,12 @@ public final class DateFormatterCache {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final CachedFormatterKey that = (CachedFormatterKey) o;
             return Objects.equals(pattern, that.pattern) &&
                     Objects.equals(defaultTime, that.defaultTime);

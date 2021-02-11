@@ -20,6 +20,7 @@ package stroom.statistics.impl.sql.search;
  * Interface that is common to all nodes in the filter tree
  */
 public interface PrintableNode {
+
     @Override
     String toString();
 

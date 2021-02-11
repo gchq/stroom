@@ -26,6 +26,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
         implements Copyable<FindDocumentEntityCriteria> {
+
     @JsonProperty
     private String requiredPermission;
 

@@ -16,10 +16,12 @@
 
 package stroom.statistics.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
+import com.google.inject.AbstractModule;
+
 public class MockInternalStatisticsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(InternalStatisticsReceiver.class).to(MockInternalStatisticsReceiver.class);

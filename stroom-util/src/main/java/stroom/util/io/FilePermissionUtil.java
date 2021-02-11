@@ -68,7 +68,8 @@ public class FilePermissionUtil {
             }
         }
 
-        Files.setPosixFilePermissions(file, new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
+        Files.setPosixFilePermissions(file,
+                new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
 
         FileTime newFileAccessTime = FileTime.fromMillis(
                 Files.readAttributes(file, BasicFileAttributes.class).lastAccessTime().toMillis() + MS_IN_DAY);

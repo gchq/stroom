@@ -2,13 +2,14 @@ package stroom.task.impl;
 
 import stroom.task.shared.TaskId;
 
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Singleton;
 
 @Singleton
 class TaskRegistry {
+
     private final Map<TaskId, TaskContextImpl> currentTasks = new ConcurrentHashMap<>(1024, 0.75F, 1024);
 
     void put(final TaskId taskId, final TaskContextImpl taskContext) {

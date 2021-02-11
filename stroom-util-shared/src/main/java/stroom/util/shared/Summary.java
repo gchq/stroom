@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"severity", "count", "total", "expander"})
 @JsonInclude(Include.NON_NULL)
 public class Summary implements Marker, TreeRow {
+
     @JsonProperty
     private final Severity severity;
     @JsonProperty

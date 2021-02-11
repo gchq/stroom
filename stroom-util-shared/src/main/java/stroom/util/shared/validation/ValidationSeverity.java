@@ -1,7 +1,7 @@
 package stroom.util.shared.validation;
 
-import javax.validation.Payload;
 import java.util.Set;
+import javax.validation.Payload;
 
 /**
  * Severities for javax.validation.  Use it like this:
@@ -54,11 +54,8 @@ public enum ValidationSeverity {
 
     }
 
-    ;
-
     public class Warning implements ValidationSeverityPayload {
 
     }
 
-    ;
 }

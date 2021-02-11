@@ -308,8 +308,9 @@ public class XML11Char {
      */
     public static boolean isXML11ValidName(String name) {
         int length = name.length();
-        if (length == 0)
+        if (length == 0) {
             return false;
+        }
         int i = 1;
         char ch = name.charAt(0);
         if (!isXML11NameStart(ch)) {
@@ -357,8 +358,9 @@ public class XML11Char {
      */
     public static boolean isXML11ValidNCName(String ncName) {
         int length = ncName.length();
-        if (length == 0)
+        if (length == 0) {
             return false;
+        }
         int i = 1;
         char ch = ncName.charAt(0);
         if (!isXML11NCNameStart(ch)) {
@@ -404,8 +406,9 @@ public class XML11Char {
      */
     public static boolean isXML11ValidNmtoken(String nmtoken) {
         int length = nmtoken.length();
-        if (length == 0)
+        if (length == 0) {
             return false;
+        }
         for (int i = 0; i < length; ++i) {
             char ch = nmtoken.charAt(i);
             if (!isXML11Name(ch)) {

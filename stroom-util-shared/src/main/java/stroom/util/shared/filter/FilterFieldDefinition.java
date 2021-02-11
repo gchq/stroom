@@ -29,10 +29,10 @@ public class FilterFieldDefinition {
 //    }
 
     /**
-     * @param displayName The display name or column heading for the field in the table.
+     * @param displayName     The display name or column heading for the field in the table.
      * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
      *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
-     * @param defaultField True if this field does not need to be qualified in the filter
+     * @param defaultField    True if this field does not need to be qualified in the filter
      */
     @JsonCreator
     public FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
@@ -54,7 +54,8 @@ public class FilterFieldDefinition {
 
     /**
      * Creates a field that has to be qualified, e.g. 'type:error'
-     * @param displayName The display name or column heading for the field in the table.
+     *
+     * @param displayName     The display name or column heading for the field in the table.
      * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
      *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
      */
@@ -75,7 +76,8 @@ public class FilterFieldDefinition {
     /**
      * Creates a field that is a default field which does not havee to be qualified. You can have multiple
      * default fields. If there are multiple then the predicate for each default field are OR'd together.
-     * @param displayName The display name or column heading for the field in the table.
+     *
+     * @param displayName     The display name or column heading for the field in the table.
      * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
      *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
      */
@@ -118,8 +120,12 @@ public class FilterFieldDefinition {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FilterFieldDefinition that = (FilterFieldDefinition) o;
         return defaultField == that.defaultField &&
                 Objects.equals(displayName, that.displayName) &&
@@ -133,6 +139,8 @@ public class FilterFieldDefinition {
 
     @Override
     public String toString() {
-        return "[" + displayName + " (" + filterQualifier + ") " + (defaultField ? "DEFAULT" : "QUALIFIED") + "]";
+        return "[" + displayName + " (" + filterQualifier + ") " + (defaultField
+                ? "DEFAULT"
+                : "QUALIFIED") + "]";
     }
 }

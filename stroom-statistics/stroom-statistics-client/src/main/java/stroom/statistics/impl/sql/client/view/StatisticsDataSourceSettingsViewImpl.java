@@ -16,12 +16,6 @@
 
 package stroom.statistics.impl.sql.client.view;
 
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
@@ -31,8 +25,16 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
 public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<StatisticsDataSourceSettingsUiHandlers>
         implements StatisticsDataSourceSettingsView {
+
     private final Widget widget;
     @UiField
     TextArea description;
@@ -154,5 +156,6 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     }
 
     public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
+
     }
 }

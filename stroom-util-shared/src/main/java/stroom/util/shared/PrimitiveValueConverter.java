@@ -20,7 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
-    private Map<Byte, E> map;
+
+    private final Map<Byte, E> map;
 
     public PrimitiveValueConverter(E[] values) {
         map = new HashMap<>(values.length);

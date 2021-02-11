@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public abstract class TaskProducer {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
     private final AtomicInteger threadsUsed = new AtomicInteger();

@@ -328,8 +328,12 @@ public class AsciiTable {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Column<?, ?> column = (Column<?, ?>) o;
             return name.equals(column.name) &&
                     columnExtractor.equals(column.columnExtractor) &&
@@ -408,8 +412,12 @@ public class AsciiTable {
                 final Column<T_ROW, T_COL> column = new Column<>(
                         name,
                         columnExtractor,
-                        columnFormatter == null ? Objects::toString : columnFormatter,
-                        nullValueSupplier == null ? () -> "" : nullValueSupplier,
+                        columnFormatter == null
+                                ? Objects::toString
+                                : columnFormatter,
+                        nullValueSupplier == null
+                                ? () -> ""
+                                : nullValueSupplier,
                         alignment);
                 return column;
             }

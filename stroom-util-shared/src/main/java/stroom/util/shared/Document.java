@@ -17,4 +17,5 @@
 package stroom.util.shared;
 
 public interface Document extends HasType, HasUuid {
+
 }

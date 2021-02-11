@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public class PermissionException extends EntityServiceException {
+
     private static final long serialVersionUID = -7671344466028839328L;
 
     private String user;
@@ -38,8 +39,12 @@ public class PermissionException extends EntityServiceException {
         super(message, null, false);
         this.user = user;
         if (securedType != null || name != null || methodName != null) {
-            setDetail(ModelStringUtil.toDisplayValue(securedType) + (name == null ? "" : " - " + name)
-                    + (methodName == null ? "" : " - " + methodName));
+            setDetail(ModelStringUtil.toDisplayValue(securedType) + (name == null
+                    ? ""
+                    : " - " + name)
+                    + (methodName == null
+                    ? ""
+                    : " - " + methodName));
         }
     }
 

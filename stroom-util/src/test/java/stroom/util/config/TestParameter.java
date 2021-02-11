@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestParameter {
+
     @Test
     void testNodeName() {
         Parameter parameter = new Parameter();

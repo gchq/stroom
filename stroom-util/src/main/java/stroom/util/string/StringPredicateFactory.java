@@ -5,12 +5,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 /**
  * Useful methods to create various {@link Predicate<String>}
@@ -119,7 +119,8 @@ public class StringPredicateFactory {
                 predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
             } else if (modifiedInput.endsWith("$")) {
                 // remove the $ marker char from the end
-                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0, modifiedInput.length() - 1));
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0,
+                        modifiedInput.length() - 1));
             } else if (modifiedInput.startsWith("^")) {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
@@ -160,7 +161,9 @@ public class StringPredicateFactory {
     public static Predicate<String> toLoggingPredicate(final Predicate<String> predicate) {
         return str -> {
             boolean result = predicate.test(str);
-            final ConsoleColour colour = result ? ConsoleColour.GREEN : ConsoleColour.RED;
+            final ConsoleColour colour = result
+                    ? ConsoleColour.GREEN
+                    : ConsoleColour.RED;
 
             String msg = ConsoleColour.colourise(LogUtil.message("String under test [{}], result: {}",
                     str, result), colour);

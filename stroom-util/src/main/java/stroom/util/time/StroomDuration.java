@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Class to represent a duration. Internally it stores the duration as a {@link Duration} object.
@@ -167,8 +167,12 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final StroomDuration that = (StroomDuration) o;
         return duration.equals(that.duration);
     }

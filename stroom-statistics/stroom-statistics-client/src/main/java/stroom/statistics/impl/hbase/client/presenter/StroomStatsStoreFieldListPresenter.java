@@ -17,13 +17,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -41,11 +34,21 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
+        ReadOnlyChangeHandler {
+
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -227,7 +230,8 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     private void reComputeRollUpBitMask(final StroomStatsStoreEntityData oldStroomStatsStoreEntityData,
                                         final StroomStatsStoreEntityData newStroomStatsStoreEntityData) {
         if (customMaskListPresenter != null) {
-            customMaskListPresenter.reComputeRollUpBitMask(oldStroomStatsStoreEntityData, newStroomStatsStoreEntityData);
+            customMaskListPresenter.reComputeRollUpBitMask(oldStroomStatsStoreEntityData,
+                    newStroomStatsStoreEntityData);
         }
     }
 

@@ -17,8 +17,9 @@
 package stroom.util.config;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigure {
+
     @Test
     void testNotOK() {
         final Parameter parameter = new Parameter();

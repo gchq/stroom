@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCondition {
+
     @Test
     void test() {
         final ReentrantLock lock = new ReentrantLock();

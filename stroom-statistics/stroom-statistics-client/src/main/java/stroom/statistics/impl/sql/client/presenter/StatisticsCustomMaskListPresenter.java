@@ -58,7 +58,9 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
+        ReadOnlyChangeHandler {
+
     private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
 
     private final ButtonView newButton;
@@ -228,7 +230,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         // add a line with no rollups as a starting point
         if (statisticsDataSource.getCustomRollUpMasks().size() == 0
                 && statisticsDataSource.getStatisticFieldCount() > 0) {
-            maskList.addMask(new CustomRollUpMask(Collections.<Integer>emptyList()));
+            maskList.addMask(new CustomRollUpMask(Collections.emptyList()));
         }
     }
 
@@ -299,7 +301,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
                     updateState(result.getCustomRollUpMasks());
                 })
                 .call(STATISTIC_ROLLUP_RESOURCE)
-                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData, newStatisticsDataSourceData));
+                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
+                        newStatisticsDataSourceData));
     }
 
     /**
@@ -307,6 +310,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
      * the UI, to allow multiple rows with the same check box values
      */
     public static class MaskHolder {
+
         private final int id;
         private final CustomRollUpMask mask;
 
@@ -334,16 +338,17 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             final MaskHolder other = (MaskHolder) obj;
-            if (id != other.id)
-                return false;
-            return true;
+            return id == other.id;
         }
     }
 
@@ -352,6 +357,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
      * {@link CustomRollUpMask} object added to it
      */
     public static class MaskHolderList extends ArrayList<MaskHolder> {
+
         private static final long serialVersionUID = 4981870664808232963L;
 
         private int idCounter = 0;

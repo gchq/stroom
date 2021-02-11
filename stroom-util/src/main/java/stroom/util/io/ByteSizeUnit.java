@@ -68,7 +68,9 @@ public enum ByteSizeUnit {
                     })
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException(String.format(
-                    "ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
+                    "ShortName [%s] is not valid. Should be one of [%s] (case insensitive).",
+                    shortName,
+                    allShortNames));
         }
         return val;
     }
@@ -146,8 +148,12 @@ public enum ByteSizeUnit {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             CaseInsensitiveString that = (CaseInsensitiveString) o;
 

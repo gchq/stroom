@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDateUtil {
+
     @Test
     void testSimpleZuluTimes() {
         doTest("2008-11-18T09:47:50.548Z");
@@ -40,12 +41,14 @@ class TestDateUtil {
 
     @Test
     void testSimple() {
-        assertThat(DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo("2010-01-01T23:59:59.000Z");
+        assertThat(DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo(
+                "2010-01-01T23:59:59.000Z");
 
     }
 
     @Test
     void testSimpleFileFormat() {
-        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo("2010-01-01T23#59#59,000Z");
+        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo(
+                "2010-01-01T23#59#59,000Z");
     }
 }

@@ -20,6 +20,7 @@ package stroom.util;
 import org.junit.jupiter.api.Test;
 
 class TestBackupConfig {
+
     @Test
     void testLine() {
         final String line = "user1 \tuser2";

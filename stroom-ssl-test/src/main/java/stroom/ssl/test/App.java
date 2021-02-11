@@ -24,6 +24,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 public class App extends Application<Config> {
+
     public static void main(final String[] args) throws Exception {
         new App().run(args);
     }

@@ -454,10 +454,10 @@ class TaskManagerImpl implements TaskManager {
         return taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
-                    TaskId grandparentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), null);
-                    TaskId parentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()),
+                    TaskId grandparentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
+                    TaskId parentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
                             grandparentTaskId);
-                    TaskId childTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()),
+                    TaskId childTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(),
                             parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),

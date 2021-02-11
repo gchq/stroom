@@ -308,8 +308,12 @@ public final class PropertyUtil {
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final Prop prop = (Prop) o;
             return Objects.equals(name, prop.name) &&
                     Objects.equals(parentObject, prop.parentObject) &&

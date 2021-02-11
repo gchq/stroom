@@ -19,6 +19,7 @@ package stroom.util.shared;
 import java.util.Set;
 
 public interface TreeAction<R> {
+
     void setRowExpanded(R row, boolean expanded);
 
     boolean isRowExpanded(R row);

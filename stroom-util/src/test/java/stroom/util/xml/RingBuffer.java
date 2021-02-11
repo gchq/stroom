@@ -19,6 +19,7 @@ package stroom.util.xml;
 import java.io.Serializable;
 
 public class RingBuffer implements CharSequence, Serializable {
+
     private static final long serialVersionUID = -3021087453916074085L;
 
     private static final int DEFAULT_SIZE = 16;
@@ -26,7 +27,7 @@ public class RingBuffer implements CharSequence, Serializable {
 
     private int offset;
     private int length;
-    private char[] buffer;
+    private final char[] buffer;
 
     /**
      * Create a buffer with an initial size of 16.
@@ -38,8 +39,7 @@ public class RingBuffer implements CharSequence, Serializable {
     /**
      * Create a buffer with a specified initial size.
      *
-     * @param initialSize
-     *            The initial size of the buffer.
+     * @param initialSize The initial size of the buffer.
      */
     public RingBuffer(final int initialSize) {
         buffer = new char[initialSize];

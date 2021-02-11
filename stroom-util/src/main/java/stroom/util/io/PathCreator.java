@@ -18,7 +18,6 @@ package stroom.util.io;
 
 import com.google.common.base.Strings;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -28,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 public class PathCreator {
 

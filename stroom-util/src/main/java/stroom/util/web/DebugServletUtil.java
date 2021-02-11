@@ -18,11 +18,11 @@ package stroom.util.web;
 
 import stroom.util.io.StreamUtil;
 
+import java.io.IOException;
+import java.util.Enumeration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Enumeration;
 
 /**
  * Utility between Stroom and Stroom PROXY

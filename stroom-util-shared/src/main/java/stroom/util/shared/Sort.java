@@ -25,6 +25,7 @@ import java.io.Serializable;
 
 @JsonInclude(Include.NON_NULL)
 public class Sort implements Serializable {
+
     private static final long serialVersionUID = -5994197736743037915L;
 
     @JsonProperty

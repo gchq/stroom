@@ -20,5 +20,6 @@ package stroom.util.shared;
  * Implemented by services that can flush down.
  */
 public interface Flushable {
+
     void flush();
 }

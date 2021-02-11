@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 class StatisticRollupResourceImpl implements StatisticRollupResource {
+
     @Override
     public List<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);

@@ -5,11 +5,12 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import javax.inject.Inject;
 
 public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticStoreDoc> {
+
     private final Serialiser2<StatisticStoreDoc> delegate;
 
     @Inject

@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
  */
 @JsonInclude(Include.NON_NULL)
 public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matcher<T>, Clearable {
+
     @JsonProperty
     private boolean matchAll;
     @JsonProperty
@@ -76,7 +77,8 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
         return set.contains(item);
     }
 
-    public static <T_IN, T_OUT> Selection<T_OUT> convert(final Selection<T_IN> in, final Function<T_IN, T_OUT> converter) {
+    public static <T_IN, T_OUT> Selection<T_OUT> convert(final Selection<T_IN> in,
+                                                         final Function<T_IN, T_OUT> converter) {
         if (in == null) {
             return null;
         }
@@ -140,8 +142,12 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Selection)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Selection)) {
+            return false;
+        }
         final Selection<?> that = (Selection<?>) o;
         return matchAll == that.matchAll &&
                 Objects.equals(set, that.set);

@@ -167,10 +167,10 @@ class TestModelStringUtil {
 
     @Test
     void testParseStringQuotes() {
-        assertThat(ModelStringUtil.parseNumberString("\'\'")).isNull();
+        assertThat(ModelStringUtil.parseNumberString("''")).isNull();
         assertThat(ModelStringUtil.parseNumberString("\"")).isNull();
-        assertThat(ModelStringUtil.parseNumberString("\'1").longValue()).isEqualTo(1);
-        assertThat(ModelStringUtil.parseNumberString("\'1.0\'").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("'1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("'1.0'").longValue()).isEqualTo(1);
         assertThat(ModelStringUtil.parseNumberString("\"1k\"").longValue()).isEqualTo(1000);
     }
 

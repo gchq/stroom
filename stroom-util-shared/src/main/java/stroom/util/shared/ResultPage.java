@@ -43,6 +43,7 @@ import java.util.stream.Stream;
  */
 @JsonInclude(Include.NON_NULL)
 public class ResultPage<T> implements Serializable {
+
     @JsonProperty
     private final List<T> values;
     @JsonProperty
@@ -89,7 +90,10 @@ public class ResultPage<T> implements Serializable {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse((long) offset, limited.size(), (long) fullList.size(), true);
+                final PageResponse pageResponse = new PageResponse(offset,
+                        limited.size(),
+                        (long) fullList.size(),
+                        true);
                 return new ResultPage<>(limited, pageResponse);
             }
         }
@@ -118,7 +122,10 @@ public class ResultPage<T> implements Serializable {
 
     public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
         if (values != null) {
-            return new PageResponse(pageResponse.getOffset(), values.size(), pageResponse.getTotal(), pageResponse.isExact());
+            return new PageResponse(pageResponse.getOffset(),
+                    values.size(),
+                    pageResponse.getTotal(),
+                    pageResponse.isExact());
         }
         return new PageResponse(pageResponse.getOffset(), 0, pageResponse.getTotal(), pageResponse.isExact());
     }
@@ -143,8 +150,8 @@ public class ResultPage<T> implements Serializable {
      * Used for filter queries (maybe bounded).
      */
     private static <T> ResultPage<T> createPageResultList(final List<T> realList,
-                                                         final PageRequest pageRequest,
-                                                         final Long totalSize) {
+                                                          final PageRequest pageRequest,
+                                                          final Long totalSize) {
         final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
@@ -279,7 +286,9 @@ public class ResultPage<T> implements Serializable {
                         resultPageFactory.apply(
                                 accumulator,
                                 new PageResponse(
-                                        pageRequest != null ? pageRequest.getOffset() : 0,
+                                        pageRequest != null
+                                                ? pageRequest.getOffset()
+                                                : 0,
                                         accumulator.size(),
                                         counter,
                                         true));
@@ -294,7 +303,7 @@ public class ResultPage<T> implements Serializable {
 
     /**
      * Creates a collector that builds a sub class of a ResultPage, e.g.
-     *   .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+     * .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
      */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final PageRequest pageRequest,
@@ -305,7 +314,7 @@ public class ResultPage<T> implements Serializable {
 
     /**
      * Creates a collector that builds a sub class of a ResultPage, e.g.
-     *   .collect(ListConfigResponse.collector(ListConfigResponse::new));
+     * .collect(ListConfigResponse.collector(ListConfigResponse::new));
      */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -330,11 +339,15 @@ public class ResultPage<T> implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ResultPage<?> that = (ResultPage<?>) o;
         return Objects.equals(values, that.values) &&
-            Objects.equals(pageResponse, that.pageResponse);
+                Objects.equals(pageResponse, that.pageResponse);
     }
 
     @Override
@@ -345,8 +358,8 @@ public class ResultPage<T> implements Serializable {
     @Override
     public String toString() {
         return "ResultPage{" +
-            "values=" + values +
-            ", pageResponse=" + pageResponse +
-            '}';
+                "values=" + values +
+                ", pageResponse=" + pageResponse +
+                '}';
     }
 }

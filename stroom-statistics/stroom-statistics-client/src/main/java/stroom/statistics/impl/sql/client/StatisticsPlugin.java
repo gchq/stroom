@@ -17,11 +17,6 @@
 
 package stroom.statistics.impl.sql.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
@@ -40,11 +35,18 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
+
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
 
     private final Provider<StatisticsDataSourcePresenter> editorProvider;
@@ -87,8 +89,10 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb), throwable -> {
-                });
+                load(DocRefUtil.create(entity),
+                        entityFromDb -> doConfirmSave(presenter, entity, entityFromDb),
+                        throwable -> {
+                        });
             }
         }
     }
@@ -137,7 +141,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef,
+                     final Consumer<StatisticStoreDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<StatisticStoreDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
@@ -147,7 +153,10 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     }
 
     @Override
-    public void save(final DocRef docRef, final StatisticStoreDoc document, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef,
+                     final StatisticStoreDoc document,
+                     final Consumer<StatisticStoreDoc> resultConsumer,
+                     final Consumer<Throwable> errorConsumer) {
         final Rest<StatisticStoreDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)

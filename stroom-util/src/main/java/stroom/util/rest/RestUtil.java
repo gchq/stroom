@@ -1,7 +1,7 @@
 package stroom.util.rest;
 
-import javax.ws.rs.BadRequestException;
 import java.util.function.Supplier;
+import javax.ws.rs.BadRequestException;
 
 public class RestUtil {
 
@@ -20,9 +20,12 @@ public class RestUtil {
         }
     }
 
-    public static void requireNonNull(final Object object, Supplier<String> messageSupplier) throws BadRequestException {
+    public static void requireNonNull(final Object object, Supplier<String> messageSupplier)
+            throws BadRequestException {
         if (object == null) {
-            throw new BadRequestException(messageSupplier != null ? messageSupplier.get() : null);
+            throw new BadRequestException(messageSupplier != null
+                    ? messageSupplier.get()
+                    : null);
         }
     }
 }

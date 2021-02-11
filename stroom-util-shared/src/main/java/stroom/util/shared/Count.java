@@ -92,8 +92,12 @@ public class Count<T extends Number> {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Count<?> count = (Count<?>) o;
         return exact == count.exact &&
                 Objects.equals(this.count, count.count);

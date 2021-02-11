@@ -26,6 +26,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class PageResponse implements Serializable {
+
     private static final long serialVersionUID = -8613411971150227752L;
 
     @JsonProperty
@@ -67,8 +68,12 @@ public class PageResponse implements Serializable {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final PageResponse that = (PageResponse) o;
         return offset == that.offset &&
                 length == that.length &&
@@ -83,6 +88,10 @@ public class PageResponse implements Serializable {
 
     @Override
     public String toString() {
-        return offset + ".." + length + " of " + (total == null ? "?" : total) + " " + (exact ? "exact" : "");
+        return offset + ".." + length + " of " + (total == null
+                ? "?"
+                : total) + " " + (exact
+                ? "exact"
+                : "");
     }
 }

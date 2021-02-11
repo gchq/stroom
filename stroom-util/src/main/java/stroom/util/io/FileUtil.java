@@ -104,14 +104,14 @@ public final class FileUtil {
                     new AbstractFileVisitor() {
                         @Override
                         public FileVisitResult visitFile(final Path file,
-                                final BasicFileAttributes attrs) {
+                                                         final BasicFileAttributes attrs) {
                             delete(file, success);
                             return super.visitFile(file, attrs);
                         }
 
                         @Override
                         public FileVisitResult postVisitDirectory(final Path dir,
-                                final IOException exc) {
+                                                                  final IOException exc) {
                             if (!dir.equals(path)) {
                                 delete(dir, success);
                             }
@@ -198,7 +198,7 @@ public final class FileUtil {
     }
 
     public static void addFilePermission(final Path path,
-            final PosixFilePermission... posixFilePermission) throws IOException {
+                                         final PosixFilePermission... posixFilePermission) throws IOException {
         final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
         final Set<PosixFilePermission> newPermissions = new HashSet<>(filePermissions);
         newPermissions.addAll(Arrays.asList(posixFilePermission));
@@ -206,7 +206,7 @@ public final class FileUtil {
     }
 
     public static void removeFilePermission(final Path path,
-            final PosixFilePermission... posixFilePermission) throws IOException {
+                                            final PosixFilePermission... posixFilePermission) throws IOException {
         final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(path);
         final Set<PosixFilePermission> newPermissions = new HashSet<>(filePermissions);
         newPermissions.removeAll(Arrays.asList(posixFilePermission));

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFileNameUtil {
+
     @Test
     void testSimple() {
         Assertions.assertThat(FileNameUtil.getBaseName("001.dat")).isEqualTo("001");

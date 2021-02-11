@@ -238,7 +238,8 @@ public class QuickFilterPredicateFactory {
 
             if (!matchToken.matchInput.isBlank()) {
                 if (!matchToken.isQualified()) {
-                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput, fieldMappers);
+                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput,
+                            fieldMappers);
                     compoundPredicate = andPredicates(compoundPredicate, unqualifiedPredicate);
                 } else {
                     // A qualified token, so get its mapper
@@ -320,14 +321,20 @@ public class QuickFilterPredicateFactory {
 
         @Override
         public String toString() {
-            return "[" + (qualifier != null ? qualifier : "") + "]:[" + matchInput + "]";
+            return "[" + (qualifier != null
+                    ? qualifier
+                    : "") + "]:[" + matchInput + "]";
         }
 
         @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final MatchToken that = (MatchToken) o;
             return Objects.equals(qualifier, that.qualifier) &&
                     matchInput.equals(that.matchInput);

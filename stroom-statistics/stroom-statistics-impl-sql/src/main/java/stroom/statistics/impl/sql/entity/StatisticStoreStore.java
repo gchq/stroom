@@ -24,5 +24,6 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import java.util.List;
 
 public interface StatisticStoreStore extends DocumentStore<StatisticStoreDoc> {
+
     List<DocRef> list();
 }

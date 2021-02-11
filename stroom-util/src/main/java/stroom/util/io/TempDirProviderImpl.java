@@ -2,12 +2,12 @@ package stroom.util.io;
 
 import stroom.util.logging.LogUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class TempDirProviderImpl implements TempDirProvider {

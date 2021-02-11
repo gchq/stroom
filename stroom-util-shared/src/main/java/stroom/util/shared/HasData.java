@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 public interface HasData {
+
     String getData();
 
     void setData(String data);

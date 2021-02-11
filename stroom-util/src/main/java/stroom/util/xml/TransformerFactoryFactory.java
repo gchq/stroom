@@ -23,10 +23,10 @@ import net.sf.saxon.serialize.Emitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
 import javax.xml.XMLConstants;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
-import java.util.Properties;
 
 public final class TransformerFactoryFactory {
 

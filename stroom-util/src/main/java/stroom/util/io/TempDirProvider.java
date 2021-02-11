@@ -1,7 +1,7 @@
 package stroom.util.io;
 
-import javax.inject.Provider;
 import java.nio.file.Path;
+import javax.inject.Provider;
 
 public interface TempDirProvider extends Provider<Path> {
 

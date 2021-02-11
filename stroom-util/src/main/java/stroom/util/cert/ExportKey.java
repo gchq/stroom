@@ -39,7 +39,9 @@ import java.util.HashMap;
  */
 public class ExportKey {
 
-    public static void main(String[] args) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException {
+    public static void main(String[] args)
+            throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException,
+            NoSuchProviderException, UnrecoverableKeyException {
         HashMap<String, String> argsMap = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             String[] split = args[i].split("=");

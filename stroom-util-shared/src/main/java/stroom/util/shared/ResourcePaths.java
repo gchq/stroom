@@ -94,14 +94,14 @@ public interface ResourcePaths {
                 .replace("//", "/");
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    static final class Builder {
+    final class Builder {
 
-        private List<String> pathParts = new ArrayList<>();
-        private List<String> queryParams = new ArrayList<>();
+        private final List<String> pathParts = new ArrayList<>();
+        private final List<String> queryParams = new ArrayList<>();
 
         private Builder() {
         }

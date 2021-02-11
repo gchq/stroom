@@ -10,6 +10,7 @@ public interface HasItems {
 
     /**
      * Called when the navigator needs the item range
+     *
      * @return The range of items on the page, zero based.
      */
     OffsetRange<Long> getItemRange();
@@ -17,6 +18,7 @@ public interface HasItems {
     /**
      * Called when the navigator needs the item from offset.
      * Inclusive
+     *
      * @return The first item number on the page, zero based.
      */
     default long getItemOffsetFrom() {
@@ -26,6 +28,7 @@ public interface HasItems {
     /**
      * Called when the navigator needs the item to offset.
      * Inclusive
+     *
      * @return The last item number on the page, zero based.
      */
     default long getItemOffsetTo() {
@@ -34,6 +37,7 @@ public interface HasItems {
 
     /**
      * Called when the navigator sets the item no.
+     *
      * @param itemNo The first item number on the page, zero based.
      */
     void setItemNo(final long itemNo);

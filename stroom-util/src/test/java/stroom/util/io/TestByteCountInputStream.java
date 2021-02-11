@@ -25,6 +25,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestByteCountInputStream {
+
     @Test
     void test1() throws IOException {
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(new ByteArrayInputStream(new byte[10]));

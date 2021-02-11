@@ -17,8 +17,9 @@
 package stroom.util.scheduler;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.util.date.DateUtil;
+
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestSimpleCron {
+
     private Long currentTime = null;
 
     @Test
@@ -203,13 +205,16 @@ class TestSimpleCron {
         SimpleCron cron = SimpleCron.compile("0,10,20,30,40,50 * *");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:00:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:00:00.000Z")))).isEqualTo(
+                "2010-01-01T08:10:00.000Z");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:05:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:05:00.000Z")))).isEqualTo(
+                "2010-01-01T08:10:00.000Z");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:09:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:09:00.000Z")))).isEqualTo(
+                "2010-01-01T08:10:00.000Z");
     }
 
     @Test

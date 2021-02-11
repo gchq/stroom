@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 
 // TODO : @66 add event logging
 class TaskResourceImpl implements TaskResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final TaskManagerImpl taskManager;

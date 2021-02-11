@@ -117,7 +117,7 @@ class TestPropertyUtil {
         private MyClass myClass;
 
         // should not appear in the property map
-        private String nonPublicString = "xxx";
+        private final String nonPublicString = "xxx";
 
         public boolean isMyBoolean() {
             return myBoolean;

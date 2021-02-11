@@ -17,9 +17,6 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -31,7 +28,12 @@ import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
 public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StatisticStoreDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");

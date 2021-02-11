@@ -22,7 +22,6 @@ import com.wix.mysql.distribution.Version;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -42,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.sql.DataSource;
 
 public class DbTestUtil {
 
@@ -134,7 +134,8 @@ public class DbTestUtil {
             connectionProps.put("password", rootConnectionConfig.getPassword());
 
             final String dbName = DbTestUtil.createTestDbName();
-            try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(), connectionProps)) {
+            try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
+                    connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
                     int result = 0;
                     result = statement.executeUpdate("CREATE DATABASE `" + dbName + "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
@@ -351,7 +352,8 @@ public class DbTestUtil {
             }
             return packageRoot;
         } catch (final Exception e) {
-            throw new RuntimeException("While interrogating " + c.getName() + ", an unexpected exception was thrown.", e);
+            throw new RuntimeException("While interrogating " + c.getName() + ", an unexpected exception was thrown.",
+                    e);
         }
     }
 

@@ -28,11 +28,12 @@ import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.servlet.http.HttpSessionListener;
-import java.util.concurrent.Executor;
 
 public class TaskModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new TaskContextModule());
@@ -61,9 +62,10 @@ public class TaskModule extends AbstractModule {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override
@@ -72,6 +74,7 @@ public class TaskModule extends AbstractModule {
     }
 
     private static class TaskManagerStartup extends RunnableWrapper {
+
         @Inject
         TaskManagerStartup(final TaskManager taskManager) {
             super(taskManager::startup);
@@ -79,6 +82,7 @@ public class TaskModule extends AbstractModule {
     }
 
     private static class TaskManagerShutdown extends RunnableWrapper {
+
         @Inject
         TaskManagerShutdown(final TaskManager taskManager) {
             super(taskManager::shutdown);

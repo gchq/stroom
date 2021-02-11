@@ -30,6 +30,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STROOM_STATS)
 class StroomStatsAppender extends AbstractKafkaAppender {
+
     private final StroomStatsStoreStore stroomStatsStoreStore;
     private final HBaseStatisticsConfig hBaseStatisticsConfig;
     private String topic;

@@ -19,13 +19,13 @@ package stroom.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 public class BasicStreamCloser implements StreamCloser {
 
