@@ -102,7 +102,8 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     private void testStepping(final String feedName) throws IOException {
-        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve("TestFullTranslationTaskAndStepping");
+        final Path outDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(
+                "TestFullTranslationTaskAndStepping");
 
         final long time = System.currentTimeMillis();
         testSteppingTask(feedName, outDir);

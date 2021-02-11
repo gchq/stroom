@@ -230,7 +230,8 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         assertThat(completedExceptionally.get()).isTrue();
     }
 
-    private void testCompletedExceptionallyNested(final ExecutorProvider executorProviderOuter, final ExecutorProvider executorProviderInner) {
+    private void testCompletedExceptionallyNested(final ExecutorProvider executorProviderOuter,
+                                                  final ExecutorProvider executorProviderInner) {
         final AtomicBoolean completedNormally = new AtomicBoolean();
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 

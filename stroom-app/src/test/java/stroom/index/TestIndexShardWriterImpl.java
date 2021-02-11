@@ -214,7 +214,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final Document document = new Document();
         document.add(field);
 
-        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010", commonTestScenarioCreator.createIndexFields(), 10);
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                10);
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 

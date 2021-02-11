@@ -58,7 +58,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
                 - TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
-        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
+                timeOutsideRetentionPeriod));
 
         final Meta metaInsideRetention = metaService.create(
                 MetaProperties.builder()
@@ -85,7 +86,9 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
-        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange, Collections.emptyList(), 100);
+        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange,
+                Collections.emptyList(),
+                100);
         final ResultPage<Meta> list = metaService.find(findMetaCriteria);
         assertThat(list.size()).isEqualTo(1);
     }

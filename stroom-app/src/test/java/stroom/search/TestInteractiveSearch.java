@@ -397,7 +397,9 @@ class TestInteractiveSearch extends AbstractSearchTest {
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionOperator.Builder expressionIn,
+                      final int expectResultCount,
+                      final List<String> componentIds,
                       final boolean extractValues) {
         testInteractive(expressionIn, expectResultCount, componentIds, extractValues);
         testEvents(expressionIn, expectResultCount);
@@ -545,8 +547,12 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 .build();
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField, final String userTerm, final String from,
-                                                       final String to, final String wordsField, final String wordsTerm) {
+    private ExpressionOperator.Builder buildExpression(final String userField,
+                                                       final String userTerm,
+                                                       final String from,
+                                                       final String to,
+                                                       final String wordsField,
+                                                       final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);
@@ -554,8 +560,12 @@ class TestInteractiveSearch extends AbstractSearchTest {
         return operator;
     }
 
-    private ExpressionOperator.Builder buildInExpression(final String userField, final String userTerm, final String from,
-                                                         final String to, final String wordsField, final String wordsTerm) {
+    private ExpressionOperator.Builder buildInExpression(final String userField,
+                                                         final String userTerm,
+                                                         final String from,
+                                                         final String to,
+                                                         final String wordsField,
+                                                         final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

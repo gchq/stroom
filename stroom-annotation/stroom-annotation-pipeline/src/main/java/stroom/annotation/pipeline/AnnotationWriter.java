@@ -34,8 +34,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
+import javax.inject.Inject;
 
 /**
  * This class processes XML documents that conform to annotation:1 schema, and creates corresponding Stroom annotations.
@@ -173,10 +173,16 @@ class AnnotationWriter extends AbstractXMLFilter {
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null) {
-            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation, Annotation.COMMENT, null, currentEventIds);
+            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation,
+                    Annotation.COMMENT,
+                    null,
+                    currentEventIds);
 
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation, Annotation.COMMENT, null, currentEventIds));
+                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation,
+                        Annotation.COMMENT,
+                        null,
+                        currentEventIds));
 
             } catch (final RuntimeException e) {
                 log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject(), e);

@@ -84,7 +84,9 @@ class TestEventSearch extends AbstractSearchTest {
         test(expressionIn, expectResultCount, componentIds, true);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
+    private void test(final ExpressionOperator.Builder expressionIn,
+                      final int expectResultCount,
+                      final List<String> componentIds,
                       final boolean extractValues) {
 //        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
 //        StroomProperties.setOverrideProperty("stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
@@ -99,13 +101,22 @@ class TestEventSearch extends AbstractSearchTest {
         for (final String componentId : componentIds) {
             final TableSettings tableSettings = createTableSettings(index, extractValues);
 
-            final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                    Collections.singletonList(tableSettings),
+                    null,
+                    null,
+                    ResultRequest.ResultStyle.TABLE,
+                    Fetch.CHANGES);
             resultRequests.add(tableResultRequest);
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = search(searchRequest);
 
         final Map<String, List<Row>> rows = new HashMap<>();

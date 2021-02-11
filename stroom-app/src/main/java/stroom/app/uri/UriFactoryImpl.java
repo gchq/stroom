@@ -166,10 +166,7 @@ class UriFactoryImpl implements UriFactory {
         if (uriConfig.getScheme() == null || uriConfig.getScheme().isEmpty()) {
             return false;
         }
-        if (uriConfig.getHostname() == null || uriConfig.getHostname().isEmpty()) {
-            return false;
-        }
-        return true;
+        return uriConfig.getHostname() != null && !uriConfig.getHostname().isEmpty();
     }
 
     /**

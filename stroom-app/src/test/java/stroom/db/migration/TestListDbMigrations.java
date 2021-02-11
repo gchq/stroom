@@ -34,7 +34,8 @@ public class TestListDbMigrations {
 
     // Have to cope with stroom mig files, e.g. 07_00_00_017__IDX_SHRD.sql
     // and auth mig files, e.g. V2_1__Create_tables.sql
-    private static final Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(?>V0?7_|V[0-9]+(?>_[0-9]+)?__).*\\.(sql|java)$");
+    private static final Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile(
+            "^(?>V0?7_|V[0-9]+(?>_[0-9]+)?__).*\\.(sql|java)$");
     private static final Pattern MIGRATION_PATH_REGEX_PATTERN = Pattern.compile("^.*/src/main/.*$");
 
     Map<String, List<Tuple2<String, Path>>> migrations = new HashMap<>();

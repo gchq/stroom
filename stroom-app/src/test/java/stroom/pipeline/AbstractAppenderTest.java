@@ -98,7 +98,9 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void test(final String name, final String type) {
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
-        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
+        final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml",
+                name,
+                TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
         final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
 

@@ -75,26 +75,29 @@ public class DataLoader {
 
     private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fileName = file.getFileName().toString().toLowerCase();
-                        final long applicableEffectiveMs = getEffectiveTimeMsFromFileName(file)
-                                .orElse(effectiveMs);
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fileName = file.getFileName().toString().toLowerCase();
+                                final long applicableEffectiveMs = getEffectiveTimeMsFromFileName(file)
+                                        .orElse(effectiveMs);
 
-                        if (fileName.endsWith(INPUT_EXTENSION)) {
-                            loadInputFile(file, mandateEffectiveDate, applicableEffectiveMs);
+                                if (fileName.endsWith(INPUT_EXTENSION)) {
+                                    loadInputFile(file, mandateEffectiveDate, applicableEffectiveMs);
 
-                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                            loadZipFile(file, mandateEffectiveDate, applicableEffectiveMs);
+                                } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                                    loadZipFile(file, mandateEffectiveDate, applicableEffectiveMs);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -170,7 +173,9 @@ public class DataLoader {
                     }
                     streamTargetStroomStreamHandler.handleEntryEnd();
 
-                    streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Data));
+                    streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null,
+                            baseName,
+                            StroomZipFileType.Data));
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);

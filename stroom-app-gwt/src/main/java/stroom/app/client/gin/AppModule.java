@@ -16,14 +16,6 @@
 
 package stroom.app.client.gin;
 
-import com.google.inject.Singleton;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.RootPresenter;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
-import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
@@ -79,7 +71,17 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
+import com.google.inject.Singleton;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.gwtplatform.mvp.client.RootPresenter;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.TokenFormatter;
+
 public class AppModule extends AbstractPresenterModule {
+
     @Override
     protected void configure() {
         // Default implementation of standard resources

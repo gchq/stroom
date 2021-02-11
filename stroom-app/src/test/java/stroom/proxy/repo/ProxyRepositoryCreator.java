@@ -67,23 +67,26 @@ public class ProxyRepositoryCreator {
 
     private void readDir(final Path dir, final boolean mandateEffectiveDate, final Long effectiveMs) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fileName = file.getFileName().toString().toLowerCase();
-                        if (fileName.endsWith(INPUT_EXTENSION)) {
-                            loadInput(file, mandateEffectiveDate, effectiveMs);
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fileName = file.getFileName().toString().toLowerCase();
+                                if (fileName.endsWith(INPUT_EXTENSION)) {
+                                    loadInput(file, mandateEffectiveDate, effectiveMs);
 
-                        } else if (fileName.endsWith(ZIP_EXTENSION)) {
-                            loadZip(file, mandateEffectiveDate, effectiveMs);
+                                } else if (fileName.endsWith(ZIP_EXTENSION)) {
+                                    loadZip(file, mandateEffectiveDate, effectiveMs);
+                                }
+                            } catch (final RuntimeException e) {
+                                throw new RuntimeException(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -105,13 +108,17 @@ public class ProxyRepositoryCreator {
 
                     // Add meta data.
                     final AttributeMap map = createMap(feedName, effectiveMs);
-                    try (final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName())) {
+                    try (final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null,
+                            newName,
+                            StroomZipFileType.Meta).getFullName())) {
                         AttributeMapUtil.write(map, zipPart);
                     }
 
                     // Add data.
                     try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-                         final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName())) {
+                            final OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null,
+                                    newName,
+                                    StroomZipFileType.Data).getFullName())) {
                         StreamUtil.streamToStream(inputStream, zipPart);
                     }
                 }
@@ -139,7 +146,8 @@ public class ProxyRepositoryCreator {
 
                     // Add meta data.
                     final AttributeMap map = createMap(feedName, effectiveMs);
-                    try (final InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta)) {
+                    try (final InputStream inputStream = stroomZipFile.getInputStream(baseName,
+                            StroomZipFileType.Meta)) {
                         if (inputStream != null) {
                             AttributeMapUtil.read(inputStream, map);
                         }
@@ -153,7 +161,9 @@ public class ProxyRepositoryCreator {
                     try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context)) {
                         if (inputStream != null) {
                             try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Context).getFullName())) {
+                                    .addEntry(new StroomZipEntry(null,
+                                            newName,
+                                            StroomZipFileType.Context).getFullName())) {
                                 StreamUtil.streamToStream(inputStream, outputStream);
                             }
                         }
@@ -163,7 +173,9 @@ public class ProxyRepositoryCreator {
                     try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data)) {
                         if (inputStream != null) {
                             try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName())) {
+                                    .addEntry(new StroomZipEntry(null,
+                                            newName,
+                                            StroomZipFileType.Data).getFullName())) {
                                 StreamUtil.streamToStream(inputStream, outputStream);
                             }
                         }

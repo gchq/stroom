@@ -178,7 +178,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         assertThat(documents.get(0).getField("f2").fieldType().stored()).isFalse();
 
-        assertThat(((documents.get(0).getField("d1")).numericValue().longValue())).isEqualTo(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"));
+        assertThat(((documents.get(0).getField("d1")).numericValue().longValue())).isEqualTo(DateUtil.parseUnknownString(
+                "2010-01-01T12:00:00.000Z"));
 
     }
 
@@ -198,7 +199,9 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
+                    "index",
+                    indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

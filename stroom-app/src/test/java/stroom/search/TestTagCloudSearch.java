@@ -101,16 +101,27 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 .extractionPipeline(resultPipeline)
                 .build();
 
-        final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
+        final ExpressionOperator.Builder expression = buildExpression("user5",
+                "2000-01-01T00:00:00.000Z",
+                "2016-01-02T00:00:00.000Z");
         final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
+        final ResultRequest tableResultRequest = new ResultRequest(componentId,
+                Collections.singletonList(tableSettings),
+                null,
+                null,
+                ResultRequest.ResultStyle.TABLE,
+                Fetch.CHANGES);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
+        final SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequests,
+                ZoneOffset.UTC.getId(),
+                false);
         final SearchResponse searchResponse = search(searchRequest);
 
         final List<Row> values = new ArrayList<>();

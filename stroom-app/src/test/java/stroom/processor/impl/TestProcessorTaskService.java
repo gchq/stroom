@@ -68,9 +68,14 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         // Create all required tasks.
         createTasks();
 
-        final ProcessorTask ps1 = processorTaskService.find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1))).getFirst();
+        final ProcessorTask ps1 = processorTaskService.find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(
+                file1))).getFirst();
         assertThat(ps1).isNotNull();
-        processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
+        processorTaskDao.changeTaskStatus(ps1,
+                ps1.getNodeName(),
+                TaskStatus.COMPLETE,
+                ps1.getStartTimeMs(),
+                ps1.getEndTimeMs());
 
         final ExpressionOperator expressionOperator1 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
@@ -83,7 +88,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         // Check the date filter works
         final ExpressionOperator expressionOperator2 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, file1.getCreateMs() - 10000)
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        file1.getCreateMs() - 10000)
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
                 .build();
         criteria.setExpression(expressionOperator2);
@@ -92,8 +99,12 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
         final ExpressionOperator expressionOperator3 = ExpressionOperator.builder()
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
-                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.LESS_THAN,
+                        Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
                 .build();
         criteria.setExpression(expressionOperator3);
 //        criteria.setCreatePeriod(
@@ -119,7 +130,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
                 .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        System.currentTimeMillis())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
@@ -149,7 +162,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
                 .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        System.currentTimeMillis())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);

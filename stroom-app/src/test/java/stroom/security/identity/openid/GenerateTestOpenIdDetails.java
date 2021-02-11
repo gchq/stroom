@@ -108,11 +108,13 @@ public class GenerateTestOpenIdDetails {
 
         final PublicJsonWebKey publicJsonWebKey2 = RsaJsonWebKey.Factory.newPublicJwk(publicKeyAsJsonStr);
 
-        if (!Arrays.equals(publicJsonWebKey.getPublicKey().getEncoded(), publicJsonWebKey2.getPublicKey().getEncoded())) {
+        if (!Arrays.equals(publicJsonWebKey.getPublicKey().getEncoded(),
+                publicJsonWebKey2.getPublicKey().getEncoded())) {
             throw new RuntimeException("Public keys do not match");
         }
 
-        if (!Arrays.equals(publicJsonWebKey.getPrivateKey().getEncoded(), publicJsonWebKey2.getPrivateKey().getEncoded())) {
+        if (!Arrays.equals(publicJsonWebKey.getPrivateKey().getEncoded(),
+                publicJsonWebKey2.getPrivateKey().getEncoded())) {
             throw new RuntimeException("Private keys do not match");
         }
 

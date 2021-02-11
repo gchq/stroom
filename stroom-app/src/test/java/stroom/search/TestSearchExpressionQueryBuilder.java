@@ -47,7 +47,8 @@ public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTes
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
         indexFieldsMap.put(IndexField.createField("test", analyzerType));
 
-        final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(wordListProvider,
+        final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                wordListProvider,
                 indexFieldsMap,
                 1024,
                 ZoneOffset.UTC.getId(),
@@ -59,13 +60,17 @@ public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTes
                         ExpressionTerm.Condition.IN_DICTIONARY,
                         dictionaryRef)
                 .build();
-        final SearchExpressionQueryBuilder.SearchExpressionQuery query1 = searchExpressionQueryBuilder.buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expressionOperator);
+        final SearchExpressionQueryBuilder.SearchExpressionQuery query1 = searchExpressionQueryBuilder.buildQuery(
+                LuceneVersionUtil.CURRENT_LUCENE_VERSION,
+                expressionOperator);
         System.out.println(query1.toString());
 
         dictionaryDoc.setData("1\r\n2\r\n3\r\n4\r\n");
         dictionaryDoc = dictionaryStore.writeDocument(dictionaryDoc);
 
-        final SearchExpressionQueryBuilder.SearchExpressionQuery query2 = searchExpressionQueryBuilder.buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expressionOperator);
+        final SearchExpressionQueryBuilder.SearchExpressionQuery query2 = searchExpressionQueryBuilder.buildQuery(
+                LuceneVersionUtil.CURRENT_LUCENE_VERSION,
+                expressionOperator);
         System.out.println(query2.toString());
 
         assertThat(query2.getQuery()).isEqualTo(query1.getQuery());

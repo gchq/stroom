@@ -133,7 +133,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private StatisticStoreDoc statisticStoreDoc;
 
-    private boolean ignoreAllTests = false;
+    private final boolean ignoreAllTests = false;
 
     @BeforeEach
     void setup() {
@@ -317,7 +317,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 .forEach(tableResult -> {
                     String id = tableResult.getComponentId();
                     LOGGER.debug("id: {}", id);
-                    tableResult.getRows().forEach(row -> LOGGER.debug(row.getValues().stream().collect(Collectors.joining(","))));
+                    tableResult.getRows().forEach(row -> LOGGER.debug(row.getValues().stream().collect(Collectors.joining(
+                            ","))));
 
                     assertThat(tableResult.getTotalResults()).isEqualTo(expectedRowCount);
 

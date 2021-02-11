@@ -225,7 +225,7 @@ class TestReceiveDataServlet {
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         request.setInputStream(outputStream.toByteArray());
@@ -247,11 +247,11 @@ class TestReceiveDataServlet {
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("LINE1\n".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         try (final InputStream inputStream = new ByteArrayInputStream("LINE2\n".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
         request.setInputStream(outputStream.toByteArray());
@@ -288,7 +288,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
             StreamUtil.streamToStream(inputStream, zipOutputStream);
         }
@@ -324,7 +324,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
 
@@ -348,7 +348,7 @@ class TestReceiveDataServlet {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
-             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
             StreamUtil.streamToStream(inputStream, zipOutputStream);
         }

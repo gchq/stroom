@@ -128,10 +128,13 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             metaHolderProvider.get().setMeta(meta);
 
             // Create the pipeline.
-            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, StroomPipelineTestFileUtil.getString(PIPELINE));
+            final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
+                    StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
+                    "index",
+                    indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

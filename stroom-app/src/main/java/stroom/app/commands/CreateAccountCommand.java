@@ -118,14 +118,16 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                 accountService.read(username)
                         .ifPresentOrElse(
                                 account -> {
-                                    final String msg = LogUtil.message("An account for user '{}' already exists", username);
+                                    final String msg = LogUtil.message("An account for user '{}' already exists",
+                                            username);
                                     LOGGER.error(msg);
                                     logEvent(username, false, msg);
                                     System.exit(1);
                                 },
                                 () -> {
                                     createAccount(namespace, username);
-                                    final String msg = LogUtil.message("Account creation complete for user '{}'", username);
+                                    final String msg = LogUtil.message("Account creation complete for user '{}'",
+                                            username);
                                     LOGGER.info(msg);
                                     logEvent(username, true, msg);
                                     System.exit(0);

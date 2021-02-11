@@ -118,8 +118,12 @@ class TestExplorerTreePerformance {
             final User user = userService.createUser("testuser");
             final User userGroup = userService.createUserGroup("testusergroup");
             userService.addUserToGroup(user.getUuid(), userGroup.getUuid());
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), user.getUuid(), DocumentPermissionNames.READ);
-            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), userGroup.getUuid(), DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+                    user.getUuid(),
+                    DocumentPermissionNames.READ);
+            documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(),
+                    userGroup.getUuid(),
+                    DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
                 securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
@@ -150,7 +154,9 @@ class TestExplorerTreePerformance {
         return lastChild.get();
     }
 
-    private void count(final List<ExplorerNode> parents, final AtomicInteger count, final AtomicReference<ExplorerNode> lastChild) {
+    private void count(final List<ExplorerNode> parents,
+                       final AtomicInteger count,
+                       final AtomicReference<ExplorerNode> lastChild) {
         if (parents != null) {
             for (final ExplorerNode parent : parents) {
                 lastChild.set(parent);
@@ -161,7 +167,9 @@ class TestExplorerTreePerformance {
         }
     }
 
-    private ExplorerNode openAll(final ExplorerNode parent, final FetchExplorerNodeResult result, final FindExplorerNodeCriteria findExplorerNodeCriteria) {
+    private ExplorerNode openAll(final ExplorerNode parent,
+                                 final FetchExplorerNodeResult result,
+                                 final FindExplorerNodeCriteria findExplorerNodeCriteria) {
         ExplorerNode lastChild = null;
 
         final List<ExplorerNode> children = parent.getChildren();

@@ -49,7 +49,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
 
     @Inject
     private Store streamStore;
@@ -119,15 +119,18 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             // Create a old sub directory;
             final Path olddir = directory.resolve("olddir");
             FileUtil.mkdirs(olddir);
-            FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+            FileUtil.setLastModified(olddir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path newdir = directory.resolve("newdir");
             FileUtil.mkdirs(newdir);
-            FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+            FileUtil.setLastModified(newdir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
             Files.createFile(oldfileinnewdir);
-            FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
+            FileUtil.setLastModified(oldfileinnewdir,
+                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
             fileSystemCleanTaskExecutor.clean();
@@ -169,7 +172,8 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as(
+                "Volumes should still exist as they are new").isTrue();
 
         fileSystemCleanTaskExecutor.clean();
 

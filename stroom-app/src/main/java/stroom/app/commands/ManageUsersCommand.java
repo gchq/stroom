@@ -191,7 +191,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private void createUserOrGroup(final String name, final boolean isGroup) {
-        final String msg = LogUtil.message("Creating {} '{}'", (isGroup ? "group" : "user"), name);
+        final String msg = LogUtil.message("Creating {} '{}'",
+                (isGroup
+                        ? "group"
+                        : "user"),
+                name);
         LOGGER.info(msg);
 
         try {
@@ -199,7 +203,9 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .ifPresentOrElse(
                             user -> {
                                 final String outcomeMsg = LogUtil.message("{} '{}' already exists",
-                                        (isGroup ? "Group" : "User"), name);
+                                        (isGroup
+                                                ? "Group"
+                                                : "User"), name);
                                 LOGGER.warn(outcomeMsg);
                                 logCreateUserOrGroupEvent(name, false, outcomeMsg, isGroup);
                             },
@@ -469,10 +475,14 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 .build();
 
         stroomEventLoggingService.log(
-                "CliCreateStroom" + (isGroup ? "Group" : "User"),
+                "CliCreateStroom" + (isGroup
+                        ? "Group"
+                        : "User"),
                 LogUtil.message(
                         "A Stroom user account for {} {} was created",
-                        (isGroup ? "group" : "user"),
+                        (isGroup
+                                ? "group"
+                                : "user"),
                         username),
                 createEventAction);
     }
@@ -502,7 +512,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         stroomEventLoggingService.log(
                 "CliAddToGroup",
                 LogUtil.message("User/Group {} was {} to group {}",
-                        username, (isAddingGroup ? "added to" : "removed from"), groupName),
+                        username,
+                        (isAddingGroup
+                                ? "added to"
+                                : "removed from"),
+                        groupName),
                 authoriseBuilder
                         .withOutcome(Outcome.builder()
                                 .withSuccess(wasSuccessful)

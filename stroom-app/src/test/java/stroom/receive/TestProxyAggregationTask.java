@@ -345,7 +345,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         });
     }
 
-    private void generateTestFiles(final Path proxyDir, final int zipFilesPerFeed, final int entriesPerZip, final List<String> eventFeeds) {
+    private void generateTestFiles(final Path proxyDir,
+                                   final int zipFilesPerFeed,
+                                   final int entriesPerZip,
+                                   final List<String> eventFeeds) {
         int i = 0;
         for (final String feed : eventFeeds) {
             for (int j = 0; j < zipFilesPerFeed; j++) {
@@ -400,14 +403,17 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
             assertThat(Files.isRegularFile(testFile1)).as("Expecting task to rename bad zip file").isFalse();
-            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting task to rename bad zip file").isTrue();
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as(
+                    "Expecting task to rename bad zip file").isTrue();
             assertThat(Files.isRegularFile(testFile2)).as("Expecting good file to go").isFalse();
 
             // run again and it should clear down the one
             aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting bad zip file to still be there").isTrue();
-            assertThat(Files.isRegularFile(testFile2)).as("Expecting task to just write the one file and leave the bad one").isFalse();
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as(
+                    "Expecting bad zip file to still be there").isTrue();
+            assertThat(Files.isRegularFile(testFile2)).as(
+                    "Expecting task to just write the one file and leave the bad one").isFalse();
         }
     }
 
@@ -528,7 +534,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType) throws IOException {
+    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType)
+            throws IOException {
         try (final InputStreamProvider inputStreamProvider = is.get(0)) {
             if (hasContent) {
                 try (final SegmentInputStream inputStream = inputStreamProvider.get(dataType)) {

@@ -73,9 +73,13 @@ public class BrowserRouterAssetServlet extends HttpServlet {
                                      @Nullable final Charset defaultCharset,
                                      final String singlePagePrefix) {
         final String trimmedPath = SLASHES.trimFrom(resourcePath);
-        this.resourcePath = trimmedPath.isEmpty() ? trimmedPath : trimmedPath + '/';
+        this.resourcePath = trimmedPath.isEmpty()
+                ? trimmedPath
+                : trimmedPath + '/';
         final String trimmedUri = SLASHES.trimTrailingFrom(uriPath);
-        this.uriPath = trimmedUri.isEmpty() ? "/" : trimmedUri;
+        this.uriPath = trimmedUri.isEmpty()
+                ? "/"
+                : trimmedUri;
         this.indexFile = indexFile;
         this.defaultCharset = defaultCharset;
         this.singlePagePrefix = singlePagePrefix;

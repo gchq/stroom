@@ -20,7 +20,7 @@ import javax.inject.Inject;
  */
 public class ContentImportService {
 
-    private ImportExportService importExportService;
+    private final ImportExportService importExportService;
 
     @Inject
     ContentImportService(final ImportExportService importExportService) {

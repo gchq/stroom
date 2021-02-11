@@ -608,10 +608,10 @@ class TestJsonSerialisation {
     private static List<Class<?>> getResourceRelatedClasses() {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
-                     new ClassGraph()
-                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
-                             .scan()) {                   // Start the scan
+                new ClassGraph()
+                        .enableAllInfo()             // Scan classes, methods, fields, annotations
+                        .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
+                        .scan()) {                   // Start the scan
             for (ClassInfo routeClassInfo : scanResult.getClassesImplementing(DirectRestService.class.getName())) {
                 final Class<?> clazz = routeClassInfo.loadClass();
                 addPublicMethods(stroomClasses, clazz);
@@ -631,10 +631,10 @@ class TestJsonSerialisation {
     private List<Class<?>> getSharedClasses() {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
-                     new ClassGraph()
-                             .enableAllInfo()
-                             .whitelistPackages(PACKAGE_NAME)
-                             .scan()) {
+                new ClassGraph()
+                        .enableAllInfo()
+                        .whitelistPackages(PACKAGE_NAME)
+                        .scan()) {
             for (ClassInfo routeClassInfo : scanResult.getAllClasses()) {
                 if (routeClassInfo.getName().contains(".shared.") &&
                         !routeClassInfo.getName().contains("hadoopcommonshaded") &&

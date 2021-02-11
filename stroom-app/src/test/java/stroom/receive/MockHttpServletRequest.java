@@ -314,7 +314,8 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse) throws IllegalStateException {
+    public AsyncContext startAsync(final ServletRequest servletRequest, final ServletResponse servletResponse)
+            throws IllegalStateException {
         return null;
     }
 

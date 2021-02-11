@@ -70,8 +70,10 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
 
         final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");
-        final String data2 = StroomPipelineTestFileUtil.getString("TestPipelineFactory/OverridePipeline.Pipeline.data.xml");
-        final String data3 = StroomPipelineTestFileUtil.getString("TestPipelineFactory/CombinedPipeline.Pipeline.data.xml");
+        final String data2 = StroomPipelineTestFileUtil.getString(
+                "TestPipelineFactory/OverridePipeline.Pipeline.data.xml");
+        final String data3 = StroomPipelineTestFileUtil.getString(
+                "TestPipelineFactory/CombinedPipeline.Pipeline.data.xml");
 
         final PipelineDoc pipeline1 = PipelineTestUtil.createBasicPipeline(data1);
         final PipelineDoc pipeline2 = PipelineTestUtil.createBasicPipeline(data2);

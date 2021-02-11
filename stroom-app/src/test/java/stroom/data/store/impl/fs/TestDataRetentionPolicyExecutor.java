@@ -172,7 +172,17 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         dataRetentionRulesService.writeDocument(dataRetentionRules);
     }
 
-    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
+    private DataRetentionRule createRule(final int num,
+                                         final ExpressionOperator expression,
+                                         final int age,
+                                         final TimeUnit timeUnit) {
+        return new DataRetentionRule(num,
+                System.currentTimeMillis(),
+                "rule " + num,
+                true,
+                expression,
+                age,
+                timeUnit,
+                false);
     }
 }

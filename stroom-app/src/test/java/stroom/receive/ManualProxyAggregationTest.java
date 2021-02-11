@@ -136,7 +136,10 @@ public class ManualProxyAggregationTest {
         return proxyDir;
     }
 
-    private void generateTestFiles(final Path proxyDir, final int entriesPerZip, final int zipFileCount, final List<String> eventFeeds) {
+    private void generateTestFiles(final Path proxyDir,
+                                   final int entriesPerZip,
+                                   final int zipFileCount,
+                                   final List<String> eventFeeds) {
         IntStream.rangeClosed(1, zipFileCount)
                 .parallel()
                 .forEach(i -> {
@@ -197,7 +200,9 @@ public class ManualProxyAggregationTest {
         int feedIdx = 0;
 
         for (int i = 1; i <= count; i++) {
-            feedIdx = ++feedIdx >= eventFeeds.size() ? 0 : feedIdx;
+            feedIdx = ++feedIdx >= eventFeeds.size()
+                    ? 0
+                    : feedIdx;
             final String eventFeed = eventFeeds.get(feedIdx);
 
             LAMBDA_LOGGER.debug(() ->
@@ -289,7 +294,8 @@ public class ManualProxyAggregationTest {
         aggregate(proxyDir, maxAggregation, DEFAULT_MAX_STREAM_SIZE);
     }
 
-    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType) throws IOException {
+    private void assertContent(final String msg, final Source is, final boolean hasContent, final String dataType)
+            throws IOException {
         try (final InputStreamProvider inputStreamProvider = is.get(0)) {
             if (hasContent) {
                 try (final SegmentInputStream inputStream = inputStreamProvider.get(dataType)) {

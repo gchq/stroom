@@ -93,8 +93,11 @@ public class F2XTestUtil {
     /**
      * Run a XML and XSLT transform.
      */
-    private String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
-                               final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
+    private String runFullTest(final FeedDoc feed,
+                               final TextConverterType textConverterType,
+                               final String textConverterLocation,
+                               final String xsltLocation,
+                               final InputStream dataStream,
                                final int expectedWarnings) {
         // Create an output stream.
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -162,7 +165,8 @@ public class F2XTestUtil {
         assertThat(recordCount.getRead() > 0).as(errorReceiverProxy.toString()).isTrue();
         assertThat(recordCount.getWritten() > 0).as(errorReceiverProxy.toString()).isTrue();
         assertThat(recordCount.getWritten()).as(errorReceiverProxy.toString()).isEqualTo(recordCount.getRead());
-        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiverProxy.toString()).isEqualTo(expectedWarnings);
+        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiverProxy.toString()).isEqualTo(
+                expectedWarnings);
         assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
         assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
 

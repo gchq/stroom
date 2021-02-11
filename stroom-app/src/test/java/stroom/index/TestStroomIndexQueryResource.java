@@ -67,7 +67,11 @@ class TestStroomIndexQueryResource {
         List<ResultRequest> resultRequestList = new ArrayList<>();
         String datetimeLocale = "en-gb";
         boolean incremental = false;
-        SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequestList, datetimeLocale, incremental);
+        SearchRequest searchRequest = new SearchRequest(queryKey,
+                query,
+                resultRequestList,
+                datetimeLocale,
+                incremental);
         return searchRequest;
     }
 

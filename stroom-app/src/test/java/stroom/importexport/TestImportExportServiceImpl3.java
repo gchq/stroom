@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
+
     @Inject
     private ImportExportService importExportService;
     @Inject

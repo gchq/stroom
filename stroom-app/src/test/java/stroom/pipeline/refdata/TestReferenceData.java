@@ -108,7 +108,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 
-    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
+    private final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private RefDataStore refDataStore;
 
     @SuppressWarnings("unused")
@@ -383,13 +383,19 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");
-            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE);
+            final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
+                    feed1Ref,
+                    StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
+                        null,
+                        null,
+                        null,
+                        new ReferenceDataConfig()) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -456,13 +462,19 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");
-            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE);
+            final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
+                    feed1Ref,
+                    StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
+                        null,
+                        null,
+                        null,
+                        new ReferenceDataConfig()) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -537,7 +549,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                     final String mapName,
                                     final String key) {
         LOGGER.debug("Looking up {}, {}, {}", time, mapName, key);
-        Optional<String> optValue = lookup(referenceData, pipelineReferences, DateUtil.parseNormalDateTimeString(time), mapName, key);
+        Optional<String> optValue = lookup(referenceData,
+                pipelineReferences,
+                DateUtil.parseNormalDateTimeString(time),
+                mapName,
+                key);
         LOGGER.debug("Found {}", optValue.orElse("EMPTY"));
         return optValue;
     }
@@ -549,7 +565,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                     final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
 
-        referenceData.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
+        referenceData.ensureReferenceDataAvailability(pipelineReferences,
+                LookupIdentifier.of(mapName, key, time),
+                result);
 
         if (result.getRefDataValueProxy() != null) {
             return result.getRefDataValueProxy()

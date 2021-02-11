@@ -336,9 +336,15 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     void testFindWithAllCriteria() {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(MetaFields.STATUS_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(MetaFields.CREATE_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(MetaFields.EFFECTIVE_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
+                .addTerm(MetaFields.STATUS_TIME,
+                        Condition.BETWEEN,
+                        createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, FEED1)
                 .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, 1)
                 .addTerm(MetaFields.ID, Condition.EQUALS, 1)
@@ -388,7 +394,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         boolean foundOne = false;
         for (final Meta result : list) {
-            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""), result, StreamTypeNames.RAW_EVENTS)).isNotNull();
+            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""),
+                    result,
+                    StreamTypeNames.RAW_EVENTS)).isNotNull();
             assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
             if (fileSystemStreamPathHelper.getBaseName(result)
                     .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
@@ -398,15 +406,18 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         assertThat(foundOne).as("Expecting to find at least that one file " + exactMetaData).isTrue();
 
-        assertThat(metaService.find(new FindMetaCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
+        assertThat(metaService.find(new FindMetaCriteria()).size() >= 1).as(
+                "Expecting to find at least 1 with no criteria").isTrue();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
-        assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
+        assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as(
+                "Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
         final FindDataVolumeCriteria volumeCriteria = FindDataVolumeCriteria.create(exactMetaData);
-        assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
+        assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as(
+                "Expecting to find at least 1 with day old criteria").isTrue();
     }
 
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
@@ -662,7 +673,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private Meta buildRefData(final String feed, final int year, final int month, final String type, final boolean lock) throws IOException {
+    private Meta buildRefData(final String feed, final int year, final int month, final String type, final boolean lock)
+            throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -798,18 +810,27 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 TargetUtil.write(streamTarget, testString);
 
                 dir = ((FsTarget) streamTarget).getFile().getParent();
-                FileUtil.removeFilePermission(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+                FileUtil.removeFilePermission(dir,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.GROUP_WRITE,
+                        PosixFilePermission.OTHERS_WRITE);
             }
 
             fail("Expecting an error");
         } catch (final RuntimeException e) {
             // Expected.
         } finally {
-            FileUtil.addFilePermission(dir, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.OTHERS_WRITE);
+            FileUtil.addFilePermission(dir,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_WRITE,
+                    PosixFilePermission.OTHERS_WRITE);
         }
     }
 
     private enum DeleteTestStyle {
-        META, OPEN, OPEN_TOUCHED, OPEN_TOUCHED_CLOSED
+        META,
+        OPEN,
+        OPEN_TOUCHED,
+        OPEN_TOUCHED_CLOSED
     }
 }

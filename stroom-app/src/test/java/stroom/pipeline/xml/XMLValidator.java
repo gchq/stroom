@@ -89,12 +89,16 @@ public class XMLValidator {
                     // PropertyType(
                     // schemaFilterElementType, "schemaValidation", "Boolean",
                     // false);
-                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaValidation", false));
+                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                            "schemaValidation",
+                            false));
                     // final PropertyType schemaGroupPropertyType = new
                     // PropertyType(
                     // schemaFilterElementType, "schemaGroup", "String", false);
                     pipelineData
-                            .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
+                            .addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                                    "schemaGroup",
+                                    "DATA_SPLITTER"));
                     pipelineStore.writeDocument(pipelineDoc);
 
                     final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);

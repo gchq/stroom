@@ -84,7 +84,9 @@ public class FlywayHelper {
                     info.getVersion().getVersion(),
                     info.getDescription(),
                     info.getType().name(),
-                    info.getInstalledOn() != null ? info.getInstalledOn().toString().substring(0, 19) : "",
+                    info.getInstalledOn() != null
+                            ? info.getInstalledOn().toString().substring(0, 19)
+                            : "",
                     info.getState().getDisplayName()));
         });
 
@@ -105,10 +107,10 @@ public class FlywayHelper {
 
     private class Line {
 
-        private String version;
+        private final String version;
         String description;
-        private String type;
-        private String installedOn;
+        private final String type;
+        private final String installedOn;
         String state;
 
         Line(String version, String description, String type, String installedOn, String state) {

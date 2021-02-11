@@ -80,7 +80,8 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
                 final byte[] data = streamStore.getFileData().get(streamId).get(meta.getTypeName());
 
                 // Write the actual XML out.
-                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
+                final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir,
+                        "TestTranslationTask.out");
                 os.write(data);
                 os.flush();
                 os.close();
@@ -101,7 +102,8 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
      */
     @Test
     void testInvalidResource() {
-        commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME, CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
+        commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME,
+                CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
         final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);

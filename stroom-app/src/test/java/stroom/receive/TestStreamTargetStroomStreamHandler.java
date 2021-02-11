@@ -67,8 +67,13 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
-        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName, StreamTypeNames.RAW_REFERENCE, true);
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
+                streamStore,
+                feedProperties,
+                null,
+                feedName,
+                StreamTypeNames.RAW_REFERENCE,
+                true);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -105,8 +110,13 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         final AttributeMap attributeMap2 = new AttributeMap();
         attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
 
-        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName1, StreamTypeNames.RAW_EVENTS, false);
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
+                streamStore,
+                feedProperties,
+                null,
+                feedName1,
+                StreamTypeNames.RAW_EVENTS,
+                false);
         streamTargetStroomStreamHandler.handleHeader(attributeMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -140,8 +150,13 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
-        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS, false);
+        final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
+                streamStore,
+                feedProperties,
+                null,
+                feedName,
+                StreamTypeNames.RAW_EVENTS,
+                false);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();

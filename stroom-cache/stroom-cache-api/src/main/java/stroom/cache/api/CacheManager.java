@@ -28,7 +28,10 @@ public interface CacheManager extends AutoCloseable {
 
     <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction);
 
-    <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction, BiConsumer<K, V> removalNotificationConsumer);
+    <K, V> ICache<K, V> create(String name,
+                               Supplier<CacheConfig> cacheConfigSupplier,
+                               Function<K, V> loadFunction,
+                               BiConsumer<K, V> removalNotificationConsumer);
 
     void close();
 }

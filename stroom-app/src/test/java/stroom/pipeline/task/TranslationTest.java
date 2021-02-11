@@ -172,8 +172,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     priority++;
                 }
 
-                final String streamType = feed.isReference() ?
-                        StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
+                final String streamType = feed.isReference()
+                        ?
+                        StreamTypeNames.RAW_REFERENCE
+                        : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.builder()
@@ -353,7 +355,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedProperties, null, feed.getName(), feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
+                handlerList,
+                new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(Files.newInputStream(file), "test");
@@ -434,9 +438,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getOutputIndicators() != null
-                    && elementData.getOutputIndicators().getMaxSeverity() != null).as("Translation stepping has output indicators.").isFalse();
+                    && elementData.getOutputIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has output indicators.").isFalse();
             assertThat(elementData.getCodeIndicators() != null
-                    && elementData.getCodeIndicators().getMaxSeverity() != null).as("Translation stepping has code indicators.").isFalse();
+                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has code indicators.").isFalse();
 
             final String stem = feedName + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {

@@ -243,7 +243,9 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS);
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
+                handlerList,
+                new byte[1000],
                 "DefaultDataFeedRequest-" + attributeMap.get(StandardHeaderArguments.GUID));
         stroomStreamProcessor.setAppendReceivedPath(false);
 
