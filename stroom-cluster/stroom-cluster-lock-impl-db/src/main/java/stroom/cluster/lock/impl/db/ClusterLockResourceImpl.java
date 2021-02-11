@@ -29,6 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 class ClusterLockResourceImpl implements ClusterLockResource {
+
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;

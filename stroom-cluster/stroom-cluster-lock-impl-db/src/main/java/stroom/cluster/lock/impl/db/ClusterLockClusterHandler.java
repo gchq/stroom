@@ -16,18 +16,20 @@
 
 package stroom.cluster.lock.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class ClusterLockClusterHandler {
+
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
@@ -50,7 +52,8 @@ public class ClusterLockClusterHandler {
      */
     boolean tryLock(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to try a cluster lock");
+            throw new PermissionException(securityContext.getUserId(),
+                    "Only the processing user is allowed to try a cluster lock");
         }
 
         boolean success = false;
@@ -91,7 +94,8 @@ public class ClusterLockClusterHandler {
      */
     boolean release(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to release a cluster lock");
+            throw new PermissionException(securityContext.getUserId(),
+                    "Only the processing user is allowed to release a cluster lock");
         }
 
         boolean success = false;
@@ -137,7 +141,8 @@ public class ClusterLockClusterHandler {
      */
     boolean keepAlive(final ClusterLockKey clusterLockKey) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to keep a cluster lock alive");
+            throw new PermissionException(securityContext.getUserId(),
+                    "Only the processing user is allowed to keep a cluster lock alive");
         }
 
         boolean success = false;
@@ -238,6 +243,7 @@ public class ClusterLockClusterHandler {
     }
 
     private static class Lock {
+
         private final ClusterLockKey clusterLockKey;
         private volatile long refreshTime;
 

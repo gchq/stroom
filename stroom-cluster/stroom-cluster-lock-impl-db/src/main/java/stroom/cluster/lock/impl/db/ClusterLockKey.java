@@ -16,18 +16,17 @@
 
 package stroom.cluster.lock.impl.db;
 
+import stroom.util.date.DateUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClusterLockKey {
+
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -59,8 +58,12 @@ public class ClusterLockKey {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ClusterLockKey that = (ClusterLockKey) o;
         return creationTime == that.creationTime &&
                 Objects.equals(name, that.name) &&

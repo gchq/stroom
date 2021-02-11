@@ -31,10 +31,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -42,9 +38,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 // TODO : @66 add event logging
 class CacheResourceImpl implements CacheResource {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
     private final NodeService nodeService;
@@ -131,36 +132,42 @@ class CacheResourceImpl implements CacheResource {
         final Set<String> failedNodes = new ConcurrentSkipListSet<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
 
-        return taskContextFactory.contextResult(LogUtil.message("Clear cache [{}] on all active nodes", cacheName), parentContext -> {
-            final Long count = allNodes.stream()
-                    .map(nodeName -> {
-                        final Supplier<Long> supplier = taskContextFactory.contextResult(parentContext, LogUtil.message("Clearing cache [{}] on node [{}]",
-                                cacheName, nodeName), taskContext ->
-                                clearCache(cacheName, nodeName));
+        return taskContextFactory.contextResult(LogUtil.message("Clear cache [{}] on all active nodes", cacheName),
+                parentContext -> {
+                    final Long count = allNodes.stream()
+                            .map(nodeName -> {
+                                final Supplier<Long> supplier = taskContextFactory.contextResult(parentContext,
+                                        LogUtil.message("Clearing cache [{}] on node [{}]",
+                                                cacheName, nodeName),
+                                        taskContext ->
+                                                clearCache(cacheName, nodeName));
 
-                        return CompletableFuture
-                                .supplyAsync(supplier)
-                                .exceptionally(throwable -> {
-                                    failedNodes.add(nodeName);
-                                    exception.set(throwable);
-                                    LOGGER.error("Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for stacktrace",
-                                            cacheName, nodeName, throwable.getMessage());
-                                    LOGGER.debug("Error clearing cache [{}] on node [{}]",
-                                            cacheName, nodeName, throwable);
-                                    return 0L;
-                                });
-                    })
-                    .map(CompletableFuture::join)
-                    .reduce(Long::sum)
-                    .orElse(0L);
+                                return CompletableFuture
+                                        .supplyAsync(supplier)
+                                        .exceptionally(throwable -> {
+                                            failedNodes.add(nodeName);
+                                            exception.set(throwable);
+                                            LOGGER.error(
+                                                    "Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for stacktrace",
+                                                    cacheName,
+                                                    nodeName,
+                                                    throwable.getMessage());
+                                            LOGGER.debug("Error clearing cache [{}] on node [{}]",
+                                                    cacheName, nodeName, throwable);
+                                            return 0L;
+                                        });
+                            })
+                            .map(CompletableFuture::join)
+                            .reduce(Long::sum)
+                            .orElse(0L);
 
-            if (!failedNodes.isEmpty()) {
-                throw new RuntimeException(LogUtil.message(
-                        "Error clearing cache on node(s) [{}]. See logs for details",
-                        String.join(",", failedNodes)), exception.get());
-            }
-            return count;
-        }).get();
+                    if (!failedNodes.isEmpty()) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Error clearing cache on node(s) [{}]. See logs for details",
+                                String.join(",", failedNodes)), exception.get());
+                    }
+                    return count;
+                }).get();
     }
 
     private Long clearCache(final String cacheName, final String nodeName) {

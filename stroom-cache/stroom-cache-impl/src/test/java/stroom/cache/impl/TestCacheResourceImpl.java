@@ -1,11 +1,6 @@
 package stroom.cache.impl;
 
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
@@ -13,6 +8,12 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.shared.ResourcePaths;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,10 +25,11 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource> {
+
     @Mock
     private CacheManagerService cacheManagerService;
 
-    private Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
+    private final Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
 
     private static final int BASE_PORT = 7010;
 
@@ -56,7 +58,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                                 .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation -> baseEndPointUrls.get(invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 
@@ -80,7 +82,9 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 .thenAnswer(invocation -> {
                     FindCacheInfoCriteria criteria = (invocation.getArgument(0));
                     if (criteria.getName().isConstrained()) {
-                        return List.of(new CacheInfo(criteria.getName().getString(), Collections.emptyMap(), node.getNodeName()));
+                        return List.of(new CacheInfo(criteria.getName().getString(),
+                                Collections.emptyMap(),
+                                node.getNodeName()));
                     } else {
                         return List.of(
                                 new CacheInfo("cache1", Collections.emptyMap(), node.getNodeName()),
