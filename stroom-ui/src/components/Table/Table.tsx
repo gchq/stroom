@@ -8,14 +8,14 @@ import {
   useRowSelect,
   useSortBy,
 } from "react-table";
-import { Sort } from "../Account/api/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { CriteriaFieldSort } from "api/stroom";
 
 export interface TableProps<T> {
   columns: any[];
   data: T[];
-  initialSortBy?: Sort[];
-  onChangeSort?: (sort: Sort[]) => void;
+  initialSortBy?: CriteriaFieldSort[];
+  onChangeSort?: (sort: CriteriaFieldSort[]) => void;
   onSelect?: (selected: T[]) => void;
   onDoubleSelect?: (selected: T[]) => void;
 }

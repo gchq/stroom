@@ -1,9 +1,10 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import Prompt, { PromptProps, PromptType } from "./Prompt";
+import Prompt, { Confirm, PromptProps, PromptType } from "./Prompt";
+import { OkCancelProps } from "../Dialog/OkCancelButtons";
 
-const TestHarness: React.FunctionComponent = () => {
+const TestPrompt: React.FunctionComponent = () => {
   const promptProps: PromptProps = {
     type: PromptType.ERROR,
     title: "Test",
@@ -13,4 +14,17 @@ const TestHarness: React.FunctionComponent = () => {
   return <Prompt promptProps={promptProps} onCloseDialog={() => undefined} />;
 };
 
-storiesOf("Prompt", module).add("Dialog", () => <TestHarness />);
+const TestConfirm: React.FunctionComponent = () => {
+  const promptProps: PromptProps = {
+    type: PromptType.ERROR,
+    title: "Test",
+    message: "Ouch, that hurts!",
+  };
+
+  const okCancelProps: OkCancelProps = {};
+
+  return <Confirm promptProps={promptProps} okCancelProps={okCancelProps} />;
+};
+
+storiesOf("Prompt", module).add("Prompt", () => <TestPrompt />);
+storiesOf("Prompt", module).add("Confirm", () => <TestConfirm />);

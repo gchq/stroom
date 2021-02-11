@@ -7,7 +7,6 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -26,16 +25,12 @@ import javax.ws.rs.core.MediaType;
 public interface StroomSessionResource extends RestResource, InvalidateSessionResource {
     @GET
     @Path("/noauth/validateSession")
-    @ApiOperation(
-            value = "Validate the current session, return a redirect Uri if invalid.",
-            response = Boolean.class)
+    @ApiOperation(value = "Validate the current session, return a redirect Uri if invalid.")
     ValidateSessionResponse validateSession(@Context @NotNull HttpServletRequest request,
                                             @QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
     @Path("invalidate")
-    @ApiOperation(
-            value = "Invalidate the current session",
-            response = Boolean.class)
+    @ApiOperation(value = "Invalidate the current session")
     Boolean invalidate();
 }

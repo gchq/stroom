@@ -17,18 +17,23 @@
 import * as React from "react";
 import BackgroundLogo from "../Layout/BackgroundLogo";
 import { useEffect, useState } from "react";
-import { AuthState, ChangePasswordRequest } from "./api/types";
 import { SignIn } from "./SignIn";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
 import { ChangePasswordFormValues, ChangePasswordPage } from "./ChangePassword";
 import Background from "../Layout/Background";
-import { useAuthenticationResource } from "./api";
 import useRouter from "../../lib/useRouter";
 import * as queryString from "query-string";
 import CustomLoader from "../CustomLoader";
 import { FormikHelpers } from "formik/dist/types";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import { usePasswordPolicy } from "./usePasswordPolicy";
+import { useStroomApi } from "lib/useStroomApi";
+import {
+  AuthenticationState,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+} from "api/stroom";
+import { AuthState } from "./types";
 
 export interface FormValues {
   userId: string;
@@ -52,23 +57,24 @@ const Page: React.FunctionComponent = () => {
 
   // Client state
   const [authState, setAuthState] = useState<AuthState>();
-  const {
-    getAuthenticationState,
-    changePassword,
-  } = useAuthenticationResource();
+
   const { showError } = usePrompt();
+  const { exec } = useStroomApi();
 
   useEffect(() => {
     if (!authState) {
-      getAuthenticationState().then((response) => {
-        setAuthState({
-          ...authState,
-          userId: response.userId,
-          allowPasswordResets: response.allowPasswordResets,
-        });
-      });
+      exec(
+        (api) => api.authentication.getAuthenticationState(),
+        (response: AuthenticationState) => {
+          setAuthState({
+            ...authState,
+            userId: response.userId,
+            allowPasswordResets: response.allowPasswordResets,
+          });
+        },
+      );
     }
-  }, [getAuthenticationState, authState, setAuthState]);
+  }, [exec, authState, setAuthState]);
 
   const passwordPolicyConfig = usePasswordPolicy();
 
@@ -113,23 +119,26 @@ const Page: React.FunctionComponent = () => {
         confirmNewPassword: values.confirmPassword,
       };
 
-      changePassword(request).then((response) => {
-        if (!response) {
-          actions.setSubmitting(false);
-        } else if (response.changeSucceeded) {
-          onClose(true);
-        } else {
-          actions.setSubmitting(false);
-          showError({
-            message: response.message,
-          });
+      exec(
+        (api) => api.authentication.changePassword(request),
+        (response: ChangePasswordResponse) => {
+          if (!response) {
+            actions.setSubmitting(false);
+          } else if (response.changeSucceeded) {
+            onClose(true);
+          } else {
+            actions.setSubmitting(false);
+            showError({
+              message: response.message,
+            });
 
-          // If the user is asked to sign in again then unset the auth state.
-          if (response.forceSignIn) {
-            onClose(false);
+            // If the user is asked to sign in again then unset the auth state.
+            if (response.forceSignIn) {
+              onClose(false);
+            }
           }
-        }
-      });
+        },
+      );
     };
 
     return (

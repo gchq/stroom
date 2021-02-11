@@ -5,7 +5,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 
 import org.jooq.Condition;
@@ -369,7 +369,7 @@ public final class JooqUtil {
                 .collect(Collectors.toList());
     }
 
-    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {
+    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final CriteriaFieldSort sort) {
         final Field<?> field = fieldMap.get(sort.getId());
 
         if (field != null) {

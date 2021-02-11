@@ -18,8 +18,8 @@
 
 package stroom.security.identity.authenticate;
 
-import stroom.security.openid.api.OpenId;
 import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.openid.api.OpenId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -43,7 +43,7 @@ import javax.ws.rs.core.MediaType;
 @Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(description = "Stroom Authentication API", tags = {"Authentication"})
+@Api(tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
@@ -63,8 +63,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/login")
     @Timed
     @NotNull
-    @ApiOperation(value = "Handle a login request made using username and password credentials.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(value = "Handle a login request made using username and password credentials.")
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
@@ -82,8 +81,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/confirmPassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Confirm an authenticated users current password.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(value = "Confirm an authenticated users current password.")
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
@@ -93,8 +91,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/changePassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Change a user's password.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(value = "Change a user's password.")
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
@@ -103,8 +100,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/reset/{email}")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset a user account using an email address.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(value = "Reset a user account using an email address.")
     Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
             @PathParam("email") String emailAddress);
@@ -113,8 +109,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("resetPassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset an authenticated user's password.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(value = "Reset an authenticated user's password.")
     ChangePasswordResponse resetPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
@@ -123,15 +118,13 @@ public interface AuthenticationResource extends RestResource {
     @Path("needsPasswordChange")
     @Timed
     @NotNull
-    @ApiOperation(value = "Check if a user's password needs changing.",
-            response = Boolean.class, tags = {"Authentication"})
+    @ApiOperation(value = "Check if a user's password needs changing.")
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")
     @Timed
     @NotNull
-    @ApiOperation(value = "Get the password policy",
-            response = PasswordPolicyConfig.class, tags = {"Authentication"})
+    @ApiOperation(value = "Get the password policy")
     PasswordPolicyConfig fetchPasswordPolicy();
 }

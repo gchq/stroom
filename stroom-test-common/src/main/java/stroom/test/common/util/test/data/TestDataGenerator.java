@@ -508,9 +508,9 @@ public class TestDataGenerator {
             rowStreamConsumer.accept(rowStream);
         }
 
-        private Stream<Record> generateDataRows() {
+        private Stream<Rec> generateDataRows() {
 
-            Function<Integer, Record> toRecordMapper = integer -> {
+            Function<Integer, Rec> toRecordMapper = integer -> {
                 List<String> values = fieldDefinitions.stream()
                         .map(field -> {
                             try {
@@ -521,7 +521,7 @@ public class TestDataGenerator {
                             }
                         })
                         .collect(Collectors.toList());
-                return new Record(fieldDefinitions, values);
+                return new Rec(fieldDefinitions, values);
             };
 
             IntStream stream = IntStream.rangeClosed(1, rowCount);

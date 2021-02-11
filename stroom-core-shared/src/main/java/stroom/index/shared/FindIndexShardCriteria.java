@@ -25,7 +25,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Selection;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 
 import java.util.List;
@@ -79,7 +79,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindIndexShardCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                  @JsonProperty("sortList") final List<Sort> sortList,
+                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                   @JsonProperty("documentCountRange") final Range<Integer> documentCountRange,
                                   @JsonProperty("nodeNameSet") final Selection<String> nodeNameSet,
                                   @JsonProperty("volumeIdSet") final Selection<Integer> volumeIdSet,

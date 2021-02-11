@@ -2,14 +2,26 @@ ext.moduleName = 'stroom.searchable.impl'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-dictionary:stroom-dictionary-api')
-    compile project(':stroom-explorer:stroom-collection-api')
+    compile project(':stroom-core-shared')
+//    compile project(':stroom-dictionary:stroom-dictionary-api')
+    compile project(':stroom-docref')
+//    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-query:stroom-expression')
+    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-query:stroom-query-common')
     compile project(':stroom-search:stroom-searchable-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+
     compile libs.dropwizard_metrics_annotation
-    compile libs.guice4
+    compile libs.guava
+//    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
     compile libs.ws_rs_api
 }

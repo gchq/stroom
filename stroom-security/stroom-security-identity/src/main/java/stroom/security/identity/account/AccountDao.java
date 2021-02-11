@@ -1,15 +1,14 @@
 package stroom.security.identity.account;
 
 import stroom.security.identity.authenticate.CredentialValidationResult;
-import stroom.util.shared.ResultPage;
 
 import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
-    ResultPage<Account> list();
+    AccountResultPage list();
 
-    ResultPage<Account> search(SearchAccountRequest request);
+    AccountResultPage search(SearchAccountRequest request);
 
     Account create(Account account, String password);
 

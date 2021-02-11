@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import stroom.dashboard.shared.SearchRequest.Builder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.Field;

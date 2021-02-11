@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,44 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.shared;
+package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 @JsonInclude(Include.NON_NULL)
-public class Record {
+public class CriteriaFieldSort implements Serializable {
+    private static final long serialVersionUID = -5994197736743037915L;
+
     @JsonProperty
-    private long streamId;
+    private final String id;
     @JsonProperty
-    private long recordNo;
+    private final boolean desc;
+    @JsonProperty
+    private final boolean ignoreCase;
 
     @JsonCreator
-    public Record(@JsonProperty("streamId") final long streamId,
-                  @JsonProperty("recordNo") final long recordNo) {
-        this.streamId = streamId;
-        this.recordNo = recordNo;
+    public CriteriaFieldSort(@JsonProperty("id") final String id,
+                             @JsonProperty("desc") final boolean desc,
+                             @JsonProperty("ignoreCase") final boolean ignoreCase) {
+        this.id = id;
+        this.desc = desc;
+        this.ignoreCase = ignoreCase;
     }
 
-    public long getStreamId() {
-        return streamId;
+    public String getId() {
+        return id;
     }
 
-    public long getRecordNo() {
-        return recordNo;
+    public boolean isDesc() {
+        return desc;
+    }
+
+    public boolean isIgnoreCase() {
+        return ignoreCase;
     }
 }

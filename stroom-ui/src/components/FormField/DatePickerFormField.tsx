@@ -39,6 +39,7 @@ export const DatePickerControl: FunctionComponent<DatePickerProps> = ({
   const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
+    "allow-focus",
     className,
     touched ? (error ? "is-invalid" : "is-valid") : "",
   ]

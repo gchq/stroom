@@ -17,6 +17,7 @@
 package stroom.dashboard.impl;
 
 
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
@@ -36,7 +37,7 @@ class TestSearchResponseMapper {
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(null, getSearchResponse());
+        final DashboardSearchResponse result = mapper.mapResponse(null, getSearchResponse());
         System.out.println(result);
     }
 

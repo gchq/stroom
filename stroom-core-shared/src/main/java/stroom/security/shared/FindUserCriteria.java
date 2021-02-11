@@ -18,7 +18,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -62,7 +62,7 @@ public class FindUserCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("quickFilterInput") final String quickFilterInput,
 //                            @JsonProperty("requiredPermission") final String requiredPermission,
                             @JsonProperty("group") final Boolean group,

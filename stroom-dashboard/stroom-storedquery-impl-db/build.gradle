@@ -2,16 +2,16 @@ ext.moduleName = 'stroom.storedquery.impl.db'
 
 dependencies {
     compile project(':stroom-core-shared')
-    compile project(':stroom-config:stroom-config-common')
+//    compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-dashboard:stroom-storedquery-impl')
     compile project(':stroom-dashboard:stroom-storedquery-impl-db-jooq')
     compile project(':stroom-db-util')
 
 //    compile project(':stroom-docref')
     
-    compile libs.flyway_core
+//    compile libs.flyway_core
     compile libs.guice4
-    compile libs.hikari
+//    compile libs.hikari
 //    compile libs.jackson_annotations
 //    compile libs.jackson_databind
 //    compile libs.javax_inject

@@ -18,25 +18,25 @@
 
 package stroom.security.identity.db;
 
+import stroom.db.util.GenericDao;
+import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountResource;
+import stroom.security.identity.account.AccountResultPage;
 import stroom.security.identity.account.SearchAccountRequest;
 import stroom.security.identity.authenticate.CredentialValidationResult;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
-import stroom.db.util.GenericDao;
-import stroom.db.util.JooqUtil;
 import stroom.security.shared.User;
-import stroom.util.collections.ResultPageCollector;
+import stroom.util.ResultPageFactory;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 import org.jooq.Condition;
@@ -175,7 +175,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public ResultPage<Account> list() {
+    public AccountResultPage list() {
         final TableField<AccountRecord, String> orderByUserIdField = stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
@@ -183,11 +183,11 @@ class AccountDaoImpl implements AccountDao {
                 .orderBy(orderByUserIdField)
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
-        return ResultPage.createUnboundedList(list);
+        return ResultPageFactory.createUnboundedList(list, AccountResultPage::new);
     }
 
     @Override
-    public ResultPage<Account> search(final SearchAccountRequest request) {
+    public AccountResultPage search(final SearchAccountRequest request) {
         final Condition condition = createCondition(request);
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
@@ -212,7 +212,7 @@ class AccountDaoImpl implements AccountDao {
                         .map(Record1::value1)
                         .orElse(0);
 
-                return ResultPage.createCriterialBasedList(list, request, (long) count);
+                return ResultPageFactory.createCriterialBasedList(list, request, (long) count, AccountResultPage::new);
 
             } else {
                 // Create the predicate for the current filter value
@@ -228,8 +228,7 @@ class AccountDaoImpl implements AccountDao {
                     return stream
                             .map(RECORD_TO_ACCOUNT_MAPPER)
                             .filter(fuzzyMatchPredicate)
-                            .collect(ResultPageCollector.create(request.getPageRequest()))
-                            .build();
+                            .collect(AccountResultPage.collector(request.getPageRequest(), AccountResultPage::new));
                 }
             }
         });

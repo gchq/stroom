@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -45,7 +45,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
 
     @JsonCreator
     public FindXMLSchemaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                 @JsonProperty("sortList") final List<Sort> sortList,
+                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                  @JsonProperty("name") final StringCriteria name,
                                  @JsonProperty("requiredPermission") final String requiredPermission,
                                  @JsonProperty("namespaceURI") final String namespaceURI,

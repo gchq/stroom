@@ -1,5 +1,4 @@
 @import "../../../styles/themes.scss";
-@import "../../../styles/themify.scss";
 
 .DocRefEditor__focusarea {
   outline: none;
@@ -9,9 +8,7 @@
   border-radius: 100px !important;
   min-height: 0 !important;
   background-color: white;
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-  }
+  background-color: var(--control__background-color);
 }
 
 .DocRefEditor__search__value-container {
@@ -28,10 +25,8 @@
   // margin: 0;
   // padding: 0;
   background-color: white;
-  @include themify($themes) {
-    background-color: themed("control__background-color");
-    border: thin solid themed("control__border-color");
-  }
+  background-color: var(--control__background-color);
+  border: thin solid var(--control__border-color);
 }
 
 .DocRefEditor__search__option {
@@ -41,15 +36,11 @@
 }
 
 .DocRefEditor__search__option--is-focused {
-  @include themify($themes) {
-    color: themed("item__text-color--focus--highlighted") !important;
-    background-color: themed("item__background-color--focus--highlighted") !important;
-  }
+    color: var(--item__text-color--focus--highlighted) !important;
+    background-color: var(--item__background-color--focus--highlighted) !important;
 }
 
 .DocRefEditor__search__option--is-selected {
-  @include themify($themes) {
-    color: themed("item__text-color--focus--highlighted--selected") !important;
-    background-color: themed("item__background-color--focus--highlighted--selected") !important;
-  }
+    color: var(--item__text-color--focus--highlighted--selected) !important;
+    background-color: var(--item__background-color--focus--highlighted--selected) !important;
 }

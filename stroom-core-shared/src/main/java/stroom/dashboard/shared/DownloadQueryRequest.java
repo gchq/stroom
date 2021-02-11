@@ -26,11 +26,11 @@ public class DownloadQueryRequest {
     @JsonProperty
     private final DashboardQueryKey dashboardQueryKey;
     @JsonProperty
-    private final SearchRequest searchRequest;
+    private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
     public DownloadQueryRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
-                                @JsonProperty("searchRequest") final SearchRequest searchRequest) {
+                                @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.searchRequest = searchRequest;
     }
@@ -39,7 +39,7 @@ public class DownloadQueryRequest {
         return dashboardQueryKey;
     }
 
-    public SearchRequest getSearchRequest() {
+    public DashboardSearchRequest getSearchRequest() {
         return searchRequest;
     }
 }
