@@ -153,8 +153,10 @@ public final class ComparisonHelper {
                         FileUtil.getCanonicalPath(expectedFile), FileUtil.getCanonicalPath(actualFile)));
 
 
-                System.out.println(LogUtil.message("If you are satisfied the differences are valid then you can do\ncp {} {}",
-                        FileUtil.getCanonicalPath(actualFile), FileUtil.getCanonicalPath(expectedFile)));
+                System.out.println(LogUtil.message(
+                        "If you are satisfied the differences are valid then you can do\ncp {} {}",
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)));
             }
 
         } catch (Exception e) {
@@ -200,11 +202,13 @@ public final class ComparisonHelper {
             assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
                     + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
 
-            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
+            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(
+                    outFile) + "\"");
 
             if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
-                assertThat(Files.isDirectory(outFile)).as("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile)).isTrue();
+                assertThat(Files.isDirectory(outFile)).as("Output file is not a directory for: " + FileUtil.getCanonicalPath(
+                        inFile)).isTrue();
 
                 // Recurse.
                 compareDirs(inFile, outFile);
@@ -260,8 +264,10 @@ public final class ComparisonHelper {
         Reader reader1 = null;
         Reader reader2 = null;
         try {
-            reader1 = new BufferedReader(new InputStreamReader(Files.newInputStream(expectedFile), StreamUtil.DEFAULT_CHARSET));
-            reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile), StreamUtil.DEFAULT_CHARSET));
+            reader1 = new BufferedReader(new InputStreamReader(Files.newInputStream(expectedFile),
+                    StreamUtil.DEFAULT_CHARSET));
+            reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile),
+                    StreamUtil.DEFAULT_CHARSET));
 
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
                 throw new RuntimeException(LogUtil.message(
@@ -286,12 +292,14 @@ public final class ComparisonHelper {
                 try {
                     reader1.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
             if (reader2 != null) {
                 try {
                     reader2.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
         }
@@ -326,12 +334,14 @@ public final class ComparisonHelper {
                 try {
                     reader1.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
             if (reader2 != null) {
                 try {
                     reader2.close();
                 } catch (final IOException e) {
+                    // Swallow as trying to ensure it is closed.
                 }
             }
         }

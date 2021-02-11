@@ -222,9 +222,8 @@ public class Pager extends AbstractPager {
         try {
             return Integer.valueOf(textBox.getText().trim());
         } catch (final NumberFormatException e) {
+            return 0;
         }
-
-        return 0;
     }
 
     @Override

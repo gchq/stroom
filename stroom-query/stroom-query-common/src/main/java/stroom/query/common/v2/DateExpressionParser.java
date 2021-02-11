@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DateExpressionParser {
+
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
@@ -44,7 +45,9 @@ public class DateExpressionParser {
         return parse(expression, ZoneOffset.UTC.getId(), nowEpochMilli);
     }
 
-    public static Optional<ZonedDateTime> parse(final String expression, final String timeZoneId, final long nowEpochMilli) {
+    public static Optional<ZonedDateTime> parse(final String expression,
+                                                final String timeZoneId,
+                                                final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
 
@@ -74,6 +77,7 @@ public class DateExpressionParser {
                         zoneId = ZoneId.of(timeZoneId);
                     }
                 } catch (final RuntimeException ex) {
+                    // Ignore error
                 }
 
                 // If no time zone was specified then try and parse as a local datetime.
@@ -97,7 +101,8 @@ public class DateExpressionParser {
 
                 } else if (part.getObject() instanceof TimeFunction) {
                     if (time == null) {
-                        throw new DateTimeException("You must specify a time or time constant before adding or subtracting duration '" + part.toString().trim() + "'.");
+                        throw new DateTimeException(
+                                "You must specify a time or time constant before adding or subtracting duration '" + part.toString().trim() + "'.");
                     }
                     final TimeFunction duration = (TimeFunction) part.getObject();
                     time = duration.apply(time);
@@ -189,7 +194,10 @@ public class DateExpressionParser {
             } while (found);
 
             if (sign == 'x') {
-                throw new DateTimeException("You must specify a plus or minus operation before duration '" + new String(chars, start, end - start).trim() + "'.");
+                throw new DateTimeException("You must specify a plus or minus operation before duration '" + new String(
+                        chars,
+                        start,
+                        end - start).trim() + "'.");
             }
 
             final String section = new String(chars, index, end - index);
@@ -300,6 +308,7 @@ public class DateExpressionParser {
     }
 
     private static class Part {
+
         private final String string;
         private final Object object;
 
@@ -319,5 +328,6 @@ public class DateExpressionParser {
     }
 
     private interface TimeFunction extends Function<ZonedDateTime, ZonedDateTime> {
+
     }
 }

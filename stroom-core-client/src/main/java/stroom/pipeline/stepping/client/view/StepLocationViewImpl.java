@@ -182,9 +182,8 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         try {
             return Long.valueOf(textBox.getText().trim());
         } catch (final NumberFormatException e) {
+            return null;
         }
-
-        return null;
     }
 
     public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {

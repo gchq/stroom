@@ -22,14 +22,15 @@ import stroom.proxy.StroomStatusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
+import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
+
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamException.class);
@@ -105,7 +106,8 @@ public class StroomStreamException extends RuntimeException {
 
             if (responseCode != 200) {
                 if (stroomStatus != -1) {
-                    throw new StroomStreamException(StroomStatusCode.getStroomStatusCode(stroomStatus), responseMessage);
+                    throw new StroomStreamException(StroomStatusCode.getStroomStatusCode(stroomStatus),
+                            responseMessage);
                 } else {
                     throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, responseMessage);
                 }
@@ -125,6 +127,7 @@ public class StroomStreamException extends RuntimeException {
                 inputStream.close();
             }
         } catch (final IOException ioex) {
+            // TODO @AT Should we be swallowing this
         }
     }
 
@@ -144,7 +147,8 @@ public class StroomStreamException extends RuntimeException {
         }
         LOGGER.error("sendErrorResponse() - " + stroomStatusCode.getHttpCode() + " " + message);
 
-        httpServletResponse.setHeader(StandardHeaderArguments.STROOM_STATUS, String.valueOf(stroomStatusCode.getCode()));
+        httpServletResponse.setHeader(StandardHeaderArguments.STROOM_STATUS,
+                String.valueOf(stroomStatusCode.getCode()));
 
         try {
             httpServletResponse.sendError(stroomStatusCode.getHttpCode(), message);

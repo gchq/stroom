@@ -25,11 +25,11 @@ package stroom.dashboard.client.vis;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 
-/**
- * Design note: This class intentionally does not use the GWT DOM wrappers so
- * that this code can pull in as few dependencies as possible and live in the
- * Core module.
- */
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Design note: This class intentionally does not use the GWT DOM wrappers so
+// that this code can pull in as few dependencies as possible and live in the
+// Core module.
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Dynamically create a script tag and attach it to the DOM.
@@ -221,7 +221,9 @@ public class MyScriptInjector {
          * may be removed from the DOM.
          */
         public JavaScriptObject inject() {
-            final JavaScriptObject wnd = (window == null) ? nativeDefaultWindow() : window;
+            final JavaScriptObject wnd = (window == null)
+                    ? nativeDefaultWindow()
+                    : window;
             assert wnd != null;
             final JavaScriptObject doc = nativeGetDocument(wnd);
             assert doc != null;
@@ -279,7 +281,9 @@ public class MyScriptInjector {
          * @return the script element created for the injection.
          */
         public JavaScriptObject inject() {
-            final JavaScriptObject wnd = (window == null) ? nativeDefaultWindow() : window;
+            final JavaScriptObject wnd = (window == null)
+                    ? nativeDefaultWindow()
+                    : window;
             assert wnd != null;
             final JavaScriptObject doc = nativeGetDocument(wnd);
             assert doc != null;

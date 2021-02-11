@@ -205,7 +205,9 @@ public class TestRestResourceAutoLogger {
         filter.filter(requestContext);
         filter.aroundWriteTo(writerInterceptorContext);
 
-        Mockito.verify(documentEventLog).create(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+        Mockito.verify(documentEventLog).create(objectCaptor.capture(),
+                eventTypeIdCaptor.capture(),
+                verbCaptor.capture(),
                 throwableCaptor.capture());
 
         Object loggedObject = objectCaptor.getValue();
@@ -300,7 +302,9 @@ public class TestRestResourceAutoLogger {
         filter.filter(requestContext);
         filter.toResponse(testException);
 
-        Mockito.verify(documentEventLog).unknownOperation(objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
+        Mockito.verify(documentEventLog).unknownOperation(objectCaptor.capture(),
+                eventTypeIdCaptor.capture(),
+                verbCaptor.capture(),
                 throwableCaptor.capture());
 
         Object loggedObject = objectCaptor.getValue();
@@ -381,6 +385,7 @@ public class TestRestResourceAutoLogger {
         try {
             deserialised = objectMapper.readValue(query.getRaw().getBytes(), TestObj.class);
         } catch (Exception e) {
+            // Ignore errors
         }
 
         assertThat(deserialised).isNotNull();

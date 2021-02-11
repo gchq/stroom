@@ -190,9 +190,9 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         this.tabConfig = tabConfig;
     }
 
-    /***************
-     * Start TabData
-     ***************/
+    //###############
+    //# Start TabData
+    //###############
     @Override
     public Icon getIcon() {
         return null;
@@ -207,7 +207,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     public boolean isCloseable() {
         return true;
     }
-    /***************
-     * End TabData
-     ***************/
+    //###############
+    //# End TabData
+    //###############
 }

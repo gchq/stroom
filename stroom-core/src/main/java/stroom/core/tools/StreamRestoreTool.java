@@ -402,6 +402,7 @@ public class StreamRestoreTool extends DatabaseTool {
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
                 AttributeMapUtil.read(inputStream, attributeMap);
             } catch (final IOException ioEx) {
+                // TODO @AT Not sure if we should be swallowing this
             }
             rtnMap.putAll(attributeMap);
         }

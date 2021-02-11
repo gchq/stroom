@@ -67,9 +67,9 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         }
     }
 
-    /**************
-     * End Layer
-     **************/
+    //*************
+    // End Layer
+    //*************
 
     /**
      * Only called the first time the widget is revealed.

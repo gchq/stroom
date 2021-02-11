@@ -35,6 +35,8 @@ import stroom.util.shared.ResultPage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -45,8 +47,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.util.Comparator.comparingInt;
 import static stroom.processor.impl.SearchKeywords.SORT_NEXT;
@@ -58,6 +58,7 @@ import static stroom.processor.impl.SearchKeywords.addSorting;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
+
     private static final String FIELD_PROGRESS = "progress";
 
     private final ProcessorFilterService processorFilterService;
@@ -186,7 +187,7 @@ public class StreamTaskResource implements RestResource {
         List<StreamTask> streamTasks = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         for (ProcessorFilter filter : processorFilters.getValues()) {
-            StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
+            StreamTask.StreamTaskBuilder builder = StreamTask.builder();
 
             // Indented to make the source easier to read
             builder

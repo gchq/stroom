@@ -27,12 +27,13 @@ import stroom.util.shared.Severity;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import javax.inject.Inject;
 
 public class TextRecordEmitter extends XMLFilterAdaptor {
+
     private final List<DestinationProvider> destinationProviders;
     private final StringBuilder builder = new StringBuilder();
     @Inject
@@ -64,6 +65,7 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
 //                    if (outputStream != null) {
 //                    }
                 } catch (final IOException e) {
+                    // TODO @AT Not sure this should be swallowed
                 }
             }
         }
