@@ -128,7 +128,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             for (final Annotation annotation : annotations) {
                 try {
                     if (filter == null || filter.apply(annotation)) {
-                        // If we have more that one annotation then copy the original values into a new values object for each new row.
+                        // If we have more that one annotation then copy the original values into a new
+                        // values object for each new row.
                         if (annotations.size() > 1 || values.length < fieldIndex.size()) {
                             final Val[] copy = Arrays.copyOf(v, fieldIndex.size());
                             values = copy;
@@ -146,8 +147,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             }
         };
 
-        // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in which
-        //   case we would increment the completion count after providing values.
+        // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in
+        //  which case we would increment the completion count after providing values.
         return new ExtractionReceiver(
                 valuesConsumer,
                 receiver.getErrorConsumer(),

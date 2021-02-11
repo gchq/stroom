@@ -19,10 +19,14 @@ import javax.inject.Provider;
 public class AuthenticateLogImpl implements AuthenticateLog {
 //    private static final String AUTH_STATE = "AUTH_STATE";
 //    private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
-//    private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
-//    private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";
-//    private static final String ACCOUNT_INACTIVE_MESSAGE = "This account is marked as inactive. Please contact your administrator";
-//    //    private static final String NO_SESSION_MESSAGE = "You have no session. Please make an AuthenticationRequest to the Authentication Service.";
+//    private static final String ACCOUNT_LOCKED_MESSAGE =
+//    "This account is locked. Please contact your administrator";
+//    private static final String ACCOUNT_DISABLED_MESSAGE =
+//    "This account is disabled. Please contact your administrator";
+//    private static final String ACCOUNT_INACTIVE_MESSAGE =
+//    "This account is marked as inactive. Please contact your administrator";
+//    //    private static final String NO_SESSION_MESSAGE =
+//    "You have no session. Please make an AuthenticationRequest to the Authentication Service.";
 //    private static final String SUCCESSFUL_LOGIN_MESSAGE = "User logged in successfully.";
 //    private static final String FAILED_LOGIN_MESSAGE = "User attempted to log in but failed.";
 

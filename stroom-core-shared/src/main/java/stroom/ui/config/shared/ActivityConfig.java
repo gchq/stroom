@@ -18,7 +18,8 @@ import javax.inject.Singleton;
 public class ActivityConfig extends AbstractConfig {
 
     @JsonProperty
-    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
+    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +
+            "are performing set this property to true.")
     private boolean enabled;
     @JsonProperty
     @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
@@ -63,7 +64,13 @@ public class ActivityConfig extends AbstractConfig {
             editorBody = "Activity Code:</br>" +
                     "<input type=\"text\" name=\"code\"></input></br></br>" +
                     "Activity Description:</br>" +
-                    "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\" validation=\".{80,}\" validationMessage=\"The activity description must be at least 80 characters long.\" ></textarea>" +
+                    "<textarea " +
+                    "rows=\"4\" " +
+                    "style=\"width:100%;height:80px\" " +
+                    "name=\"description\" " +
+                    "validation=\".{80,}\" " +
+                    "validationMessage=\"The activity description must be at least 80 characters long.\" >" +
+                    "</textarea>" +
                     "Explain what the activity is";
         }
     }

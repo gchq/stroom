@@ -38,9 +38,11 @@ public class AttributeMapFilterFactory {
     private final AtomicReference<String> lastPolicyUuid = new AtomicReference<>();
 
     @Inject
-    public AttributeMapFilterFactory(final ReceiveDataConfig receiveDataConfig,
-                                     final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
-                                     final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter) {
+    public AttributeMapFilterFactory(
+            final ReceiveDataConfig receiveDataConfig,
+            final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory,
+            final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter) {
+
         this.receiveDataConfig = receiveDataConfig;
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
         this.feedStatusAttributeMapFilter = feedStatusAttributeMapFilter;

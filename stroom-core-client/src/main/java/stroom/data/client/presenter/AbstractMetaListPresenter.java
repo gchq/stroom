@@ -756,7 +756,9 @@ public abstract class AbstractMetaListPresenter
                         if (confirm) {
                             if (selection.isMatchAll()) {
                                 ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
-                                        "You have selected all items.  Are you sure you want to " + actionType + " all the selected items?",
+                                        "You have selected all items.  Are you sure you want to " +
+                                                actionType +
+                                                " all the selected items?",
                                         confirm1 -> {
                                             if (confirm1) {
                                                 runnable.run();

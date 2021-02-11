@@ -205,9 +205,9 @@ public class AppConfig extends AbstractConfig {
     }
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
-    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
-            "defined for a service area in stroom, e.g. core or config. This means you can have all service areas " +
-            "running in a single database, have each in their own database or a mixture.")
+    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection " +
+            "details are defined for a service area in stroom, e.g. core or config. This means you can have " +
+            "all service areas running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }
@@ -423,7 +423,8 @@ public class AppConfig extends AbstractConfig {
         this.proxyAggregationConfig = proxyAggregationConfig;
     }
 
-    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if behind a proxy")
+    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host " +
+            "if behind a proxy")
     @JsonProperty(PROP_NAME_PUBLIC_URI)
     public PublicUriConfig getPublicUri() {
         return publicUri;
@@ -544,7 +545,8 @@ public class AppConfig extends AbstractConfig {
         this.uiConfig = uiConfig;
     }
 
-    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
+    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of " +
+            "the server, e.g. during development or some other deployments")
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;

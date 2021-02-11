@@ -66,7 +66,11 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
     }
 
     @Override
-    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XsltDoc k, final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences, final boolean usePool) {
+    public PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(final XsltDoc k,
+                                                                   final ErrorReceiver errorReceiver,
+                                                                   final LocationFactory locationFactory,
+                                                                   final List<PipelineReference> pipelineReferences,
+                                                                   final boolean usePool) {
         // Get the item from the pool.
         final PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
 

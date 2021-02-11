@@ -55,7 +55,8 @@ public class UiConfigCache implements HasHandlers {
             public void run() {
                 // Don't auto refresh if we are already refreshing.
                 if (!refreshing) {
-                    // Don't auto refresh if we are not logged in as this will keep the user session alive unnecessarily.
+                    // Don't auto refresh if we are not logged in as this will keep the user session
+                    // alive unnecessarily.
                     if (securityContext.isLoggedIn()) {
                         refreshing = true;
                         refresh()
@@ -66,8 +67,9 @@ public class UiConfigCache implements HasHandlers {
             }
         };
 
-        // Refreshing the client properties keeps them current and also ensures that all actions on the server belonging
-        // to the logged in user are refreshed every minute so that the server doesn't try and terminate them.
+        // Refreshing the client properties keeps them current and also ensures that all actions on the
+        // server belonging to the logged in user are refreshed every minute so that the server doesn't
+        // try and terminate them.
         refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 

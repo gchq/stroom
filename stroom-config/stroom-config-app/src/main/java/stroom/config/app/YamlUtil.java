@@ -74,7 +74,8 @@ public class YamlUtil {
         }
 
         if (path == null) {
-            throw new RuntimeException("Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
+            throw new RuntimeException(
+                    "Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
         }
 
         Path realConfigFile = null;

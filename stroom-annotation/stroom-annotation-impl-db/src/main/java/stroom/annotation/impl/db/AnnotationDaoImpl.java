@@ -150,8 +150,11 @@ class AnnotationDaoImpl implements AnnotationDao {
                     ZoneOffset.UTC.getId(),
                     System.currentTimeMillis());
 
-            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+            return optional.orElseThrow(() ->
+                    new RuntimeException(
+                            "Expected a standard date value for field \"" + fieldName
+                                    + "\" but was given string \"" + value + "\""))
+                    .toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new RuntimeException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"", e);

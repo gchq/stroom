@@ -30,9 +30,10 @@ package stroom.dashboard.expression.v1;
         commonReturnType = ValString.class,
         signatures = {
                 @FunctionSignature(
-                        returnDescription = "A hyperlink to open the annotation edit screen for an existing annotation.",
-                        description = "Creates a hyperlink that will open the annotation edit screen showing the existing " +
-                                "annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
+                        returnDescription = "A hyperlink to open the annotation edit screen for an existing " +
+                                "annotation.",
+                        description = "Creates a hyperlink that will open the annotation edit screen showing " +
+                                "the existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
                         args = {
                                 @FunctionArg(
                                         name = "text",
@@ -86,13 +87,14 @@ package stroom.dashboard.expression.v1;
                                         argType = ValString.class),
                                 @FunctionArg(
                                         name = Annotation.ARG_STATUS,
-                                        description = "The status of the annotation (see stroom.annotation.statusValues " +
-                                                "property for possible values.",
+                                        description = "The status of the annotation (see " +
+                                                "stroom.annotation.statusValues property for possible values.",
                                         isOptional = true,
                                         argType = ValString.class),
                                 @FunctionArg(
                                         name = Annotation.ARG_ASSIGNED_TO,
-                                        description = "The username of the user that this annotation will be assigned to.",
+                                        description = "The username of the user that this annotation will be " +
+                                                "assigned to.",
                                         isOptional = true,
                                         argType = ValString.class),
                                 @FunctionArg(

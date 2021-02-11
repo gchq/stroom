@@ -37,7 +37,9 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
     private final ICache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
-    public AbstractPoolCache(final CacheManager cacheManager, final String cacheName, final Supplier<CacheConfig> cacheConfigSupplier) {
+    public AbstractPoolCache(final CacheManager cacheManager,
+                             final String cacheName,
+                             final Supplier<CacheConfig> cacheConfigSupplier) {
         cache = cacheManager.create(cacheName, cacheConfigSupplier, this::create, this::destroy);
     }
 

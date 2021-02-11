@@ -69,7 +69,8 @@ import javax.xml.transform.sax.TransformerHandler;
 /**
  * An XML filter for performing inline XSLT transformation of XML.
  */
-@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "XSLTFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
@@ -257,7 +258,11 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         } catch (final TransformerConfigurationException | RuntimeException e) {
             final Throwable throwable = unwrapException(e);
 
-            errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
+            errorReceiverProxy.log(Severity.FATAL_ERROR,
+                    getLocation(throwable),
+                    getElementId(),
+                    throwable.toString(),
+                    throwable);
             // If we aren't stepping then throw an exception to terminate early.
             if (!pipelineContext.isStepping()) {
                 throw new LoggedException(throwable.getMessage(), throwable);
@@ -279,7 +284,11 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 try {
                     final Throwable throwable = unwrapException(e);
 
-                    errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(throwable), getElementId(), throwable.toString(), throwable);
+                    errorReceiverProxy.log(Severity.FATAL_ERROR,
+                            getLocation(throwable),
+                            getElementId(),
+                            throwable.toString(),
+                            throwable);
                     // If we aren't stepping then throw an exception to terminate early.
                     if (!pipelineContext.isStepping()) {
                         throw new LoggedException(throwable.getMessage(), throwable);

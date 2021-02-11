@@ -552,7 +552,7 @@ subprojects {
 
     checkstyle {
         ignoreFailures false
-        showViolations false
+        showViolations true
         toolVersion = "8.40"
     }
 

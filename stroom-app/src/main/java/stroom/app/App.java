@@ -358,6 +358,7 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
         // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'

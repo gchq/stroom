@@ -53,15 +53,16 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = securityContext.asProcessingUserResult(() -> dataSourceProviderRegistry.getDataSourceProvider(
-                        activeQuery.getDocRef())
-                        .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
-                        .orElseGet(() -> {
-                            LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
-                                    queryKey.getUuid(),
-                                    activeQuery.getDocRef().getType());
-                            return Boolean.TRUE;
-                        }));
+                final Boolean success = securityContext.asProcessingUserResult(() ->
+                        dataSourceProviderRegistry.getDataSourceProvider(
+                                activeQuery.getDocRef())
+                                .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
+                                .orElseGet(() -> {
+                                    LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
+                                            queryKey.getUuid(),
+                                            activeQuery.getDocRef().getType());
+                                    return Boolean.TRUE;
+                                }));
 
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.

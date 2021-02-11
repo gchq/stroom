@@ -112,7 +112,8 @@ public class AccountServiceImpl implements AccountService {
         accountDao.update(account);
 
         // Change the account password if the update request includes a new password.
-        if (!Strings.isNullOrEmpty(request.getPassword()) && request.getPassword().equals(request.getConfirmPassword())) {
+        if (!Strings.isNullOrEmpty(request.getPassword())
+                && request.getPassword().equals(request.getConfirmPassword())) {
             accountDao.changePassword(account.getUserId(), request.getPassword());
         }
     }

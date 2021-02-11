@@ -94,7 +94,8 @@ class AmznJwtContextFactory implements JwtContextFactory {
             Objects.requireNonNull(publicKey, "Couldn't get public key");
 
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
+                    // to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
                     .setVerificationKey(publicKey)
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement

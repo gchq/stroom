@@ -186,7 +186,8 @@ class AsyncSearchTaskHandler {
 
                     // Wait for all nodes to finish.
                     LOGGER.debug(() -> "Waiting for completion");
-                    final CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    final CompletableFuture<Void> all = CompletableFuture.allOf(
+                            futures.toArray(new CompletableFuture[0]));
                     all.join();
                     LOGGER.debug(() -> "Done waiting for completion");
 
@@ -243,7 +244,8 @@ class AsyncSearchTaskHandler {
             }
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
-                final SearchException searchException = new SearchException("Failed to start remote search on node: " + targetNode);
+                final SearchException searchException = new SearchException(
+                        "Failed to start remote search on node: " + targetNode);
                 resultCollector.onFailure(targetNode, searchException);
                 throw searchException;
             }

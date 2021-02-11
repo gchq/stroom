@@ -26,6 +26,7 @@ import stroom.security.api.SecurityContext;
 import javax.inject.Inject;
 
 class XsltResourceImpl implements XsltResource {
+
     private final XsltStore xsltStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final SecurityContext securityContext;
@@ -56,7 +57,8 @@ class XsltResourceImpl implements XsltResource {
 
     public void save(final String xsltId,
                      final XsltDTO xsltDto) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        // A user should be allowed to read pipelines that they are inheriting from as long as
+        // they have 'use' permission on them.
         securityContext.useAsRead(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
 
