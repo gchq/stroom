@@ -32,7 +32,7 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -95,7 +95,7 @@ public class StreamAttributeMapResource implements RestResource {
             // Configure default criteria
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            criteria.setSort(new Sort("Create Time", true, false));
+            criteria.setSort(new CriteriaFieldSort("Create Time", true, false));
 
             // Set status to unlocked
             final ExpressionTerm expressionTerm = ExpressionTerm
@@ -140,7 +140,7 @@ public class StreamAttributeMapResource implements RestResource {
             // Configure default criteria
             FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            criteria.setSort(new Sort("Create Time", true, false));
+            criteria.setSort(new CriteriaFieldSort("Create Time", true, false));
 
             //TODO disable this and have it as a default field
             // Set status to unlocked

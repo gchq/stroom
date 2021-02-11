@@ -11,6 +11,7 @@ interface TextBoxProps {
   placeholder: string;
   autoComplete?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
   state: FormFieldState<string>;
 }
 
@@ -22,6 +23,7 @@ interface TextBoxFormFieldProps {
   placeholder: string;
   autoComplete?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
   formikProps: FormikProps<any>;
 }
 
@@ -31,12 +33,14 @@ export const TextBox: FunctionComponent<TextBoxProps> = ({
   placeholder,
   autoComplete,
   autoFocus = false,
+  disabled = false,
   state,
   children,
 }) => {
   const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
+    "allow-focus",
     className,
     touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
@@ -59,6 +63,7 @@ export const TextBox: FunctionComponent<TextBoxProps> = ({
         placeholder={placeholder}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        disabled={disabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
@@ -77,6 +82,7 @@ export const TextBoxFormField: FunctionComponent<TextBoxFormFieldProps> = ({
   placeholder,
   autoComplete,
   autoFocus,
+  disabled = false,
   formikProps,
   children,
 }) => {
@@ -89,6 +95,7 @@ export const TextBoxFormField: FunctionComponent<TextBoxFormFieldProps> = ({
         placeholder={placeholder}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        disabled={disabled}
         state={formFieldState}
       >
         {children}

@@ -35,7 +35,6 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 
 import java.util.function.Consumer;
 

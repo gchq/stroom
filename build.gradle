@@ -8,8 +8,8 @@ buildscript {
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
-        // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-        classpath 'stroom:gradle-dependency-analyze:v2.2.6'
+//        // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
+//        classpath 'stroom:gradle-dependency-analyze:v2.2.6'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -33,6 +33,8 @@ plugins {
     id 'nu.studer.jooq' version '4.1' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
+
+    id "ca.cutterslade.analyze" version "1.4.3"
 
 //    id 'java-library'
 
@@ -132,7 +134,7 @@ ext.libs = [
         stroomTestData                 : "stroom:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
-        agrona                         : "org.agrona:agrona:1.8.0",
+//        agrona                         : "org.agrona:agrona:1.8.0",
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.18.1",
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',

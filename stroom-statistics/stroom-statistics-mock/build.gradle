@@ -4,5 +4,5 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-api')
     
     compile libs.guice4
-    compile libs.javax_inject
+//    compile libs.javax_inject
 }

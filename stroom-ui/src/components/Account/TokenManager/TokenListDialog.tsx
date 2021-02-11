@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { ItemManagerProps } from "../AccountManager/ItemManager";
-import { Token } from "../types";
+import { Token } from "api/stroom";
 import { ItemManagerDialog } from "../AccountManager/ItemManagerDialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 

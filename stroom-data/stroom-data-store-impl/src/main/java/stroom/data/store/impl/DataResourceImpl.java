@@ -134,36 +134,36 @@ class DataResourceImpl implements DataResource, ReadWithLongId<List<DataInfoSect
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
         return stroomEventLoggingService.loggedResult(
-                        StroomEventLoggingUtil.buildTypeId(this, "fetch"),
-                        "Viewing stream " + idStr,
-                        ViewEventAction.builder()
-                                .build(),
-                        eventAction -> {
-                            ComplexLoggedOutcome<AbstractFetchDataResult, ViewEventAction> outcome;
-                            try {
-                                // Do the fetch
-                                final AbstractFetchDataResult fetchDataResult = dataServiceProvider.get()
-                                        .fetch(request);
+                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
+                "Viewing stream " + idStr,
+                ViewEventAction.builder()
+                        .build(),
+                eventAction -> {
+                    ComplexLoggedOutcome<AbstractFetchDataResult, ViewEventAction> outcome;
+                    try {
+                        // Do the fetch
+                        final AbstractFetchDataResult fetchDataResult = dataServiceProvider.get()
+                                .fetch(request);
 
-                                outcome = ComplexLoggedOutcome.success(
-                                        fetchDataResult,
-                                        ViewEventAction.builder()
-                                                .withObjects(stroomEventLoggingService.convert(fetchDataResult))
-                                                .build());
+                        outcome = ComplexLoggedOutcome.success(
+                                fetchDataResult,
+                                ViewEventAction.builder()
+                                        .withObjects(stroomEventLoggingService.convert(fetchDataResult))
+                                        .build());
 
-                            } catch (ViewDataException vde) {
-                                // Convert an ex into a fetch result
-                                final AbstractFetchDataResult fetchDataResult = createErrorResult(vde);
-                                outcome = ComplexLoggedOutcome.failure(
-                                        fetchDataResult,
-                                        ViewEventAction.builder()
-                                                .withObjects(stroomEventLoggingService.convert(fetchDataResult))
-                                                .build(),
-                                        vde.getMessage());
-                            }
-                            return outcome;
-                        },
-                        null);
+                    } catch (ViewDataException vde) {
+                        // Convert an ex into a fetch result
+                        final AbstractFetchDataResult fetchDataResult = createErrorResult(vde);
+                        outcome = ComplexLoggedOutcome.failure(
+                                fetchDataResult,
+                                ViewEventAction.builder()
+                                        .withObjects(stroomEventLoggingService.convert(fetchDataResult))
+                                        .build(),
+                                vde.getMessage());
+                    }
+                    return outcome;
+                },
+                null);
     }
 
 
@@ -183,7 +183,7 @@ class DataResourceImpl implements DataResource, ReadWithLongId<List<DataInfoSect
                 StreamTypeNames.RAW_EVENTS,
                 null,
                 viewDataException.getSourceLocation(),
-                OffsetRange.of(0L, 0L),
+                OffsetRange.zero(),
                 Count.of(0L, true),
                 Count.of(0L, true),
                 0L,

@@ -4,7 +4,6 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.FilterFieldMapper;
@@ -13,7 +12,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -250,7 +249,7 @@ public class DependencyServiceImpl implements DependencyService {
         if (dependencyCriteria != null && !dependencyCriteria.getSortList().isEmpty()) {
             Comparator<Dependency> compositeComparator = null;
 
-            for (final Sort sort : dependencyCriteria.getSortList()) {
+            for (final CriteriaFieldSort sort : dependencyCriteria.getSortList()) {
                 Comparator<Dependency> comparator = COMPARATOR_MAP.get(sort.getId());
                 if (comparator != null) {
                     if (sort.isDesc()) {

@@ -16,6 +16,6 @@
 ext.moduleName = 'stroom.event.logging.rs.api'
 
 dependencies {
-    compile project (':stroom-util-shared')
+//    compile project (':stroom-util-shared')
     compile libs.ws_rs_api
 }

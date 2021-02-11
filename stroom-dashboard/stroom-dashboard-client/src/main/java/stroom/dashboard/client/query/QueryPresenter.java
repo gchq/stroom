@@ -35,7 +35,7 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -53,7 +53,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
@@ -680,7 +679,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void downloadQuery() {
         if (getQuerySettings().getDataSource() != null) {
 
-            final SearchRequest searchRequest = searchModel.createDownloadQueryRequest(
+            final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
                     params,
                     false,

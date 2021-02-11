@@ -18,18 +18,24 @@ dependencies {
     compile project(':stroom-docref')
 
     compile libs.caffeine
-    compile libs.commons_lang
-    compile libs.dropwizard_client
-    compile libs.dropwizard_metrics_healthchecks
+//    compile libs.commons_lang
+//    compile libs.dropwizard_client
+//    compile libs.dropwizard_metrics_healthchecks
     compile libs.eventLogging
     compile libs.guava
     compile libs.guice4
-    compile libs.jackson_annotations
+    compile libs.http_client
+    compile libs.jackson_core
+    compile libs.jackson_databind
+//    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.javax_servlet_api
+    compile libs.jetty_http
     compile libs.jose4j
+    compile libs.restygwt
     compile libs.slf4j_api
     compile libs.swagger_annotations
+    compile libs.validation_api
     compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')

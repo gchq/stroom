@@ -20,7 +20,6 @@ package stroom.security.identity.account;
 
 import stroom.util.shared.ReadWithIntegerId;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.codahale.metrics.annotation.Timed;
@@ -40,13 +39,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.List;
 
-@Api(tags = "Account")
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Api(tags = "Account")
 public interface AccountResource extends RestResource, ReadWithIntegerId<Account> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
@@ -55,26 +52,19 @@ public interface AccountResource extends RestResource, ReadWithIntegerId<Account
     FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField("FirstName");
     FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName");
 
-    List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
-            FIELD_DEF_USER_ID,
-            FIELD_DEF_EMAIL,
-            FIELD_DEF_STATUS,
-            FIELD_DEF_FIRST_NAME,
-            FIELD_DEF_LAST_NAME);
-
     @ApiOperation(value = "Get all accounts.")
     @GET
     @Path("/")
     @Timed
     @NotNull
-    ResultPage<Account> list(@Context @NotNull HttpServletRequest httpServletRequest);
+    AccountResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @ApiOperation(value = "Search for an account by email.")
     @POST
     @Path("search")
     @Timed
     @NotNull
-    ResultPage<Account> search(SearchAccountRequest request);
+    AccountResultPage search(@ApiParam("account") SearchAccountRequest request);
 
     @ApiOperation(value = "Create an account.")
     @POST
@@ -90,7 +80,6 @@ public interface AccountResource extends RestResource, ReadWithIntegerId<Account
     @Path("{id}")
     @Timed
     @NotNull
-    @Override
     Account read(@PathParam("id") final Integer accountId);
 
     @ApiOperation(value = "Update an account.")

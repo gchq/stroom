@@ -18,8 +18,8 @@
 
 package stroom.security.identity.authenticate;
 
-import stroom.security.openid.api.OpenId;
 import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.openid.api.OpenId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

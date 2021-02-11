@@ -14,13 +14,15 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+//    compile project(':stroom-docref')
     
     compile libs.eventLogging
     compile libs.guice4
-    compile libs.dropwizard_lifecycle
+//    compile libs.dropwizard_lifecycle
+    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.slf4j_api
+    compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core

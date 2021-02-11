@@ -23,15 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import stroom.dashboard.impl.download.TypeConverter;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.v2.TableResult;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.query.api.v2.VisResult;
 import stroom.query.api.v2.VisResult.Store;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.Row;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
-    public SearchResponse mapResponse(final DashboardQueryKey queryKey, final stroom.query.api.v2.SearchResponse searchResponse) {
+    public DashboardSearchResponse mapResponse(final DashboardQueryKey queryKey, final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -67,7 +64,7 @@ public class SearchResponseMapper {
             }
         }
 
-        return new SearchResponse(queryKey, highlights, errors, searchResponse.complete(), results);
+        return new DashboardSearchResponse(queryKey, highlights, errors, searchResponse.complete(), results);
     }
 
     private Result mapResult(final Result result) {

@@ -20,7 +20,6 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.config.TokenConfig;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.codahale.metrics.annotation.Timed;
@@ -47,25 +46,24 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(tags = "Api Keys")
 public interface TokenResource extends RestResource {
-
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
     FilterFieldDefinition FIELD_DEF_USER_EMAIL = FilterFieldDefinition.qualifiedField("User Email");
     FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField("Status");
     FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField("Comments");
 
-    @ApiOperation(value = "Get all tokens.")
     @GET
     @Path("/")
     @Timed
     @NotNull
-    ResultPage<Token> list(@Context @NotNull HttpServletRequest httpServletRequest);
+    @ApiOperation(value = "Get all tokens.")
+    TokenResultPage list(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @POST
     @Path("search")
     @Timed
     @ApiOperation(value = "Submit a search request for tokens")
-    ResultPage<Token> search(@Context @NotNull HttpServletRequest httpServletRequest,
-                             @ApiParam("SearchRequest") @NotNull @Valid SearchTokenRequest request);
+    TokenResultPage search(@Context @NotNull HttpServletRequest httpServletRequest,
+                           @ApiParam("SearchRequest") @NotNull @Valid SearchTokenRequest request);
 
     @POST
     @Timed
@@ -106,8 +104,8 @@ public interface TokenResource extends RestResource {
     @DELETE
     @Path("/byToken/{token}")
     @Timed
-    Integer delete(@Context @NotNull HttpServletRequest httpServletRequest,
-                   @PathParam("token") String token);
+    Integer deleteByToken(@Context @NotNull HttpServletRequest httpServletRequest,
+                          @PathParam("token") String token);
 
     @ApiOperation(value = "Delete all tokens.")
     @DELETE

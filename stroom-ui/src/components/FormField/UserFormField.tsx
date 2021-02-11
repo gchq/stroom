@@ -9,10 +9,10 @@ import {
 import { FormField, FormFieldState } from "./FormField";
 import { FormikProps } from "formik";
 import { createFormFieldState } from "./util";
-import { useAccountResource } from "../Account/api";
-import { SearchAccountRequest } from "../Account/api/types";
 import { AsyncTypeahead, Hint } from "react-bootstrap-typeahead";
 import { Form } from "react-bootstrap";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
+import { AccountResultPage, SearchAccountRequest } from "api/stroom";
 
 export interface UserSelectControlProps {
   className?: string;
@@ -43,6 +43,7 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
   const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
+    "allow-focus",
     className,
     touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
@@ -74,7 +75,7 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
   //   </div>
   // );
 
-  const { search } = useAccountResource();
+  const { exec } = useStroomApi();
   const [isLoading, setIsLoading] = useState(false);
   const [options, setOptions] = useState([]);
 
@@ -86,17 +87,20 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
         quickFilter: query,
       };
 
-      search(request).then((result) => {
-        const options = result.values.map((i) => ({
-          id: i.id,
-          userId: i.userId,
-        }));
+      exec(
+        (api) => api.account.search(request),
+        (result: AccountResultPage) => {
+          const options = result.values.map((i) => ({
+            id: i.id,
+            userId: i.userId,
+          }));
 
-        setOptions(options);
-        setIsLoading(false);
-      });
+          setOptions(options);
+          setIsLoading(false);
+        },
+      );
     },
-    [search],
+    [exec],
   );
 
   // Load users on init.

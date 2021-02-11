@@ -1,5 +1,4 @@
 @import "../../styles/themes.scss";
-@import "../../styles/themify.scss";
 
 .Background {
   display: flex;
@@ -19,8 +18,6 @@
 
 .Layout__form-container {
   border-radius: .3rem;
-  @include themify($themes) {
-    background-color: themed("page__background-color");
-    color: themed("page__text-color");
-  }
+  background-color: var(--page__background-color);
+  color: var(--page__text-color);
 }

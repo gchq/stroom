@@ -7,7 +7,7 @@ dependencies {
     compile project(':stroom-docref')
 
     compile libs.jaxb_api
-    compile libs.vavr
+//    compile libs.vavr
     compile libs.swagger_annotations
 
     testRuntimeOnly libs.javax_activation

@@ -25,6 +25,7 @@ import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
@@ -67,8 +68,8 @@ public class SearchRequestMapper {
         this.visualisationStore = visualisationStore;
     }
 
-    public stroom.query.api.v2.SearchRequest mapRequest(final DashboardQueryKey queryKey,
-                                                        final stroom.dashboard.shared.SearchRequest searchRequest) {
+    public SearchRequest mapRequest(final DashboardQueryKey queryKey,
+                                    final DashboardSearchRequest searchRequest) {
         if (searchRequest == null) {
             return null;
         }
@@ -82,7 +83,7 @@ public class SearchRequestMapper {
                 .build();
     }
 
-    private Query mapQuery(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private Query mapQuery(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getSearch() == null) {
             return null;
         }
@@ -124,7 +125,7 @@ public class SearchRequestMapper {
         }
     }
 
-    private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {
+    private List<ResultRequest> mapResultRequests(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
@@ -134,7 +135,7 @@ public class SearchRequestMapper {
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
 
-                final stroom.query.api.v2.ResultRequest copy = stroom.query.api.v2.ResultRequest.builder()
+                final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
@@ -152,7 +153,7 @@ public class SearchRequestMapper {
                         .buildTableSettings();
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
-                final stroom.query.api.v2.ResultRequest copy = stroom.query.api.v2.ResultRequest.builder()
+                final ResultRequest copy = ResultRequest.builder()
                         .componentId(visResultRequest.getComponentId())
                         .addMappings(parentTableSettings)
                         .addMappings(childTableSettings)
@@ -203,12 +204,12 @@ public class SearchRequestMapper {
 ////        return tableSettings;
 //    }
 
-//    private List<stroom.query.api.v2.Field> mapFields(final List<Field> fields) {
+//    private List<Field> mapFields(final List<Field> fields) {
 //        if (fields == null || fields.size() == 0) {
 //            return Collections.emptyList();
 //        }
 //
-//        final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());
+//        final List<Field> list = new ArrayList<>(fields.size());
 //        for (final Field field : fields) {
 //            final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
 //                    .id(field.getId())

@@ -95,7 +95,7 @@ public class ResultPage<T> implements Serializable {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse((long) offset, limited.size(), (long) fullList.size(), true);
+                final PageResponse pageResponse = new PageResponse(offset, limited.size(), (long) fullList.size(), true);
                 return new ResultPage<>(limited, pageResponse);
             }
         }
@@ -149,8 +149,8 @@ public class ResultPage<T> implements Serializable {
      * Used for filter queries (maybe bounded).
      */
     private static <T> ResultPage<T> createPageResultList(final List<T> realList,
-                                                         final PageRequest pageRequest,
-                                                         final Long totalSize) {
+                                                          final PageRequest pageRequest,
+                                                          final Long totalSize) {
         final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
@@ -188,60 +188,6 @@ public class ResultPage<T> implements Serializable {
 
         final PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
         return new ResultPage<>(realList, pageResponse);
-    }
-
-    public PageResponse getPageResponse() {
-        return pageResponse;
-    }
-
-    public List<T> getValues() {
-        return values;
-    }
-
-    public int size() {
-        return values.size();
-    }
-
-    /**
-     * @return the first item or null if the list is empty
-     */
-    @JsonIgnore
-    public T getFirst() {
-        if (values.size() > 0) {
-            return values.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    @JsonIgnore
-    public int getPageStart() {
-        return (int) pageResponse.getOffset();
-    }
-
-    @JsonIgnore
-    public int getPageSize() {
-        if (pageResponse.getTotal() == null) {
-            return getPageStart() + values.size();
-        }
-        return pageResponse.getTotal().intValue();
-    }
-
-    @JsonIgnore
-    public boolean isExact() {
-        return pageResponse.isExact();
-    }
-
-    public Stream<T> stream() {
-        return values.stream();
-    }
-
-    public Stream<T> parallelStream() {
-        return values.parallelStream();
-    }
-
-    public void forEach(final Consumer<? super T> action) {
-        values.forEach(action);
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
@@ -300,7 +246,7 @@ public class ResultPage<T> implements Serializable {
 
     /**
      * Creates a collector that builds a sub class of a ResultPage, e.g.
-     *   .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+     * .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
      */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final PageRequest pageRequest,
@@ -311,7 +257,7 @@ public class ResultPage<T> implements Serializable {
 
     /**
      * Creates a collector that builds a sub class of a ResultPage, e.g.
-     *   .collect(ListConfigResponse.collector(ListConfigResponse::new));
+     * .collect(ListConfigResponse.collector(ListConfigResponse::new));
      */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -333,13 +279,67 @@ public class ResultPage<T> implements Serializable {
         };
     }
 
+    public PageResponse getPageResponse() {
+        return pageResponse;
+    }
+
+    public List<T> getValues() {
+        return values;
+    }
+
+    public int size() {
+        return values.size();
+    }
+
+    /**
+     * @return the first item or null if the list is empty
+     */
+    @JsonIgnore
+    public T getFirst() {
+        if (values.size() > 0) {
+            return values.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    @JsonIgnore
+    public int getPageStart() {
+        return (int) pageResponse.getOffset();
+    }
+
+    @JsonIgnore
+    public int getPageSize() {
+        if (pageResponse.getTotal() == null) {
+            return getPageStart() + values.size();
+        }
+        return pageResponse.getTotal().intValue();
+    }
+
+    @JsonIgnore
+    public boolean isExact() {
+        return pageResponse.isExact();
+    }
+
+    public Stream<T> stream() {
+        return values.stream();
+    }
+
+    public Stream<T> parallelStream() {
+        return values.parallelStream();
+    }
+
+    public void forEach(final Consumer<? super T> action) {
+        values.forEach(action);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ResultPage<?> that = (ResultPage<?>) o;
         return Objects.equals(values, that.values) &&
-            Objects.equals(pageResponse, that.pageResponse);
+                Objects.equals(pageResponse, that.pageResponse);
     }
 
     @Override
@@ -350,8 +350,8 @@ public class ResultPage<T> implements Serializable {
     @Override
     public String toString() {
         return "ResultPage{" +
-            "values=" + values +
-            ", pageResponse=" + pageResponse +
-            '}';
+                "values=" + values +
+                ", pageResponse=" + pageResponse +
+                '}';
     }
 }

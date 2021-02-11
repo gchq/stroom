@@ -608,6 +608,9 @@ appConfig:
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
         passwordComplexityRegex: ".*"
+        passwordPolicyMessage: "To conform with our Strong Password policy, you are\
+          \ required to use a sufficiently strong password. Password must be more\
+          \ than 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
       token:
         algorithm: "RS256"

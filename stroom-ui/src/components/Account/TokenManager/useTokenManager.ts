@@ -1,16 +1,15 @@
-import { Token } from "../types";
 import { useCallback, useEffect, useState } from "react";
-import { ResultPage, SearchTokenRequest } from "../api/types";
-import { useTokenResource } from "../api";
+import { SearchTokenRequest, TokenResultPage } from "api/stroom";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 interface UseTokenManager {
-  resultPage: ResultPage<Token>;
+  resultPage: TokenResultPage;
   remove: (userId: number) => void;
   request: SearchTokenRequest;
   setRequest: (request: SearchTokenRequest) => void;
 }
 
-const defaultResultPage: ResultPage<Token> = {
+const defaultResultPage: TokenResultPage = {
   values: [],
   pageResponse: {
     offset: 0,
@@ -28,28 +27,37 @@ const defaultRequest: SearchTokenRequest = {
 };
 
 export const useTokenManager = (): UseTokenManager => {
-  const [resultPage, setResultPage] = useState<ResultPage<Token>>(
+  const [resultPage, setResultPage] = useState<TokenResultPage>(
     defaultResultPage,
   );
   const [request, setRequest] = useState(defaultRequest);
-  const { search: searchApi, remove: removeUserUsingApi } = useTokenResource();
 
-  useEffect(() => {
-    searchApi(request).then((response) => {
-      if (response) {
-        setResultPage(response);
-      }
-    });
-  }, [searchApi, setResultPage, request]);
+  const { exec } = useStroomApi();
+
+  const search = useCallback(() => {
+    exec(
+      (api) => api.token.search(request),
+      (response) => {
+        if (response) {
+          setResultPage(response);
+        }
+      },
+    );
+  }, [exec, request, setResultPage]);
 
   const remove = useCallback(
     (userId: number) => {
-      removeUserUsingApi(userId).then(() =>
-        searchApi(request).then((resultPage) => setResultPage(resultPage)),
+      exec(
+        (api) => api.token.delete(userId),
+        () => search(),
       );
     },
-    [removeUserUsingApi, searchApi, request, setResultPage],
+    [exec, search],
   );
+
+  useEffect(() => {
+    search();
+  }, [search, setResultPage, request]);
 
   return {
     resultPage,
@@ -61,5 +69,3 @@ export const useTokenManager = (): UseTokenManager => {
     // search,
   };
 };
-
-export default useTokenManager;

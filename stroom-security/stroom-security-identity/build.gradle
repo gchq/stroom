@@ -18,7 +18,8 @@ ext.moduleName = 'stroom.security.identity'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-db-util')
+    compile project(':stroom-config:stroom-config-common')
+//    compile project(':stroom-db-util')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-security:stroom-security-api')
@@ -28,16 +29,17 @@ dependencies {
 
     compile libs.bcrypt
     compile libs.caffeine
-    compile libs.dropwizard_auth_jwt
-    compile libs.dropwizard_core
-    compile libs.dropwizard_flyway
-    compile libs.dropwizard_jersey
+    compile libs.dropwizard_metrics_annotation
+//    compile libs.dropwizard_auth_jwt
+//    compile libs.dropwizard_core
+//    compile libs.dropwizard_flyway
+//    compile libs.dropwizard_jersey
     compile libs.eventLogging
-    compile libs.flyway_core
+//    compile libs.flyway_core
     compile libs.guice4
-    compile libs.javax_activation
-    compile libs.jaxb_api
-    compile libs.jaxb_impl
+//    compile libs.javax_activation
+//    compile libs.jaxb_api
+//    compile libs.jaxb_impl
     compile libs.jose4j
     compile libs.simple_java_mail
     compile libs.slf4j_api

@@ -2,11 +2,11 @@ package stroom.test.common.util.test.data;
 
 import java.util.List;
 
-public class Record {
+public class Rec {
     final List<Field> fieldDefinitions;
     final List<String> values;
 
-    public Record(List<Field> fieldDefinitions, List<String> values) {
+    public Rec(List<Field> fieldDefinitions, List<String> values) {
         this.fieldDefinitions = fieldDefinitions;
         this.values = values;
     }

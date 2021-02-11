@@ -21,13 +21,11 @@ import stroom.security.api.TokenException;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ReadWithIntegerId;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.gwt.thirdparty.json.JSONException;
-import com.google.gwt.thirdparty.json.JSONObject;
 import org.glassfish.jersey.message.MessageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +85,15 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.objectMapper = createObjectMapper();
     }
 
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
     @Override
     public Response toResponse(final Exception exception) {
         if (request != null) {
@@ -100,7 +107,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         }
 
         //Could register these Exception types separately, but this seems easier to maintain at present
-        if (exception instanceof WebApplicationException){
+        if (exception instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) exception;
             return wae.getResponse();
         } else if (exception instanceof PermissionException) {
@@ -111,12 +118,12 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             return createExceptionResponse(Status.FORBIDDEN, exception);
         } else if (exception instanceof javax.naming.AuthenticationException) {
             return createExceptionResponse(Status.FORBIDDEN, exception);
-        }else {
+        } else {
             return createExceptionResponse(Status.INTERNAL_SERVER_ERROR, exception);
         }
     }
 
-    private Response createExceptionResponse (Response.Status status, Exception ex) {
+    private Response createExceptionResponse(Response.Status status, Exception ex) {
         try {
             String json = createExceptionJSON(status, ex);
             return Response.status(status).
@@ -129,13 +136,13 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         }
     }
 
-    private static String createExceptionJSON(Response.Status status, Exception ex) throws JSONException {
-        JSONObject json = new JSONObject();
-        json.put("code", status.ordinal());
-        json.put("message", ex.getMessage());
-        json.put("details", status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
-                + ((ex.getCause() != null ) ? " cause: " + ex.getCause().getMessage() : ""));
-        return json.toString();
+    private String createExceptionJSON(Response.Status status, Exception ex) throws JsonProcessingException {
+        final JsonException jsonException = new JsonException(
+                status.ordinal(),
+                ex.getMessage(),
+                status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
+                        + ((ex.getCause() != null) ? " cause: " + ex.getCause().getMessage() : ""));
+        return objectMapper.writeValueAsString(jsonException);
     }
 
     @Override
@@ -147,7 +154,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
         if (object != null) {
             RequestInfo requestInfo = (RequestInfo) object;
-            requestEventLog.log (requestInfo, writerInterceptorContext.getEntity());
+            requestEventLog.log(requestInfo, writerInterceptorContext.getEntity());
         }
     }
 
@@ -155,7 +162,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     public void filter(final ContainerRequestContext context) throws IOException {
         ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
-        if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())){
+        if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())) {
             if (context.hasEntity()) {
                 final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo, context.getEntityStream(),
                         objectMapper, MessageUtils.getCharset(context.getMediaType()));
@@ -166,15 +173,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(securityContext, containerResourceInfo));
             }
         }
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
 }

@@ -24,7 +24,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,7 +43,7 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
 
     @JsonCreator
     public FindMetaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
                             @JsonProperty("fetchRelationships") final boolean fetchRelationships) {
         super(pageRequest, sortList, expression);

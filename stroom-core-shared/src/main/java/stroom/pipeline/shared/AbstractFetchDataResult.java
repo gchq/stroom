@@ -49,7 +49,7 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final SourceLocation sourceLocation;
     @JsonProperty
-    private final OffsetRange<Long> itemRange; // part/segment/marker
+    private final OffsetRange itemRange; // part/segment/marker
     @JsonProperty
     private final Count<Long> totalItemCount; // part/segment/marker
     @JsonProperty
@@ -62,7 +62,7 @@ public abstract class AbstractFetchDataResult {
                                    @JsonProperty("streamTypeName") final String streamTypeName,
                                    @JsonProperty("classification") final String classification,
                                    @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                                   @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+                                   @JsonProperty("itemRange") final OffsetRange itemRange,
                                    @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
                                    @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                                    @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
@@ -92,7 +92,7 @@ public abstract class AbstractFetchDataResult {
         return sourceLocation;
     }
 
-    public OffsetRange<Long> getItemRange() {
+    public OffsetRange getItemRange() {
         return itemRange;
     }
 
