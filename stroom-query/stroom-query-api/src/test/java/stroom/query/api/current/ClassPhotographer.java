@@ -18,18 +18,20 @@ public class ClassPhotographer {
 
     private static final String newLine = System.getProperty("line.separator");
 
-    public static String takePortraitOf(Class clazz, String basePackage) {
-        Map<Class, List<String>> portrait = new HashMap<>();
+    public static String takePortraitOf(final Class<?> clazz, final String basePackage) {
+        final Map<Class<?>, List<String>> portrait = new HashMap<>();
         takePortraitOf(clazz, portrait, basePackage);
-        List<String> flattenedPortrait = flattenPortrait(portrait);
+        final List<String> flattenedPortrait = flattenPortrait(portrait);
         // If we don't sort the portrait it might have a different order every time.
         flattenedPortrait.sort(String::compareTo);
-        return flattenedPortrait.stream().collect(Collectors.joining(newLine));
+        return String.join(newLine, flattenedPortrait);
     }
 
-    private static void takePortraitOf(Class clazz, Map<Class, List<String>> portrait, String basePackage) {
-        List<String> methodSignatures = new ArrayList<>();
-        List<Class> classesForRecursion = new ArrayList<>();
+    private static void takePortraitOf(final Class<?> clazz,
+                                       final Map<Class<?>, List<String>> portrait,
+                                       final String basePackage) {
+        final List<String> methodSignatures = new ArrayList<>();
+        final List<Class<?>> classesForRecursion = new ArrayList<>();
 
         // We don't need to filter by 'public' because `getMethods()` only gets public methods.
         Arrays.stream(clazz.getMethods())
@@ -46,9 +48,9 @@ public class ClassPhotographer {
                 .forEach(typeToAnalyse -> takePortraitOf(typeToAnalyse, portrait, basePackage));
     }
 
-    private static List<String> flattenPortrait(Map<Class, List<String>> portraitMap) {
-        List<String> flattenedPortrait = new ArrayList<>();
-        for (Class key : portraitMap.keySet()) {
+    private static List<String> flattenPortrait(Map<Class<?>, List<String>> portraitMap) {
+        final List<String> flattenedPortrait = new ArrayList<>();
+        for (Class<?> key : portraitMap.keySet()) {
             flattenedPortrait.addAll(portraitMap.get(key).stream()
                     .map(method -> String.format("%s - %s", key.toString(), method))
                     .collect(Collectors.toList()));
@@ -59,8 +61,8 @@ public class ClassPhotographer {
     /**
      * Looks at a method and gets any return or parameter types that match the basePackage.
      */
-    private static List<Class> getClassesForRecursion(String basePackage, Method method) {
-        List<Class> classesForRecursion = new ArrayList<>();
+    private static List<Class<?>> getClassesForRecursion(String basePackage, Method method) {
+        List<Class<?>> classesForRecursion = new ArrayList<>();
 
         // Check regular return types
         if (method.getReturnType().toString().contains(basePackage)) {
@@ -71,7 +73,7 @@ public class ClassPhotographer {
                 ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
                 Arrays.stream(type.getActualTypeArguments())
                         .filter(actualType -> actualType.getTypeName().contains(basePackage))
-                        .forEach(actualType -> classesForRecursion.add((Class) actualType));
+                        .forEach(actualType -> classesForRecursion.add((Class<?>) actualType));
             }
         }
 
