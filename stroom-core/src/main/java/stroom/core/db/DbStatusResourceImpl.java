@@ -26,6 +26,7 @@ import javax.inject.Provider;
 
 // TODO : @66 add event logging
 class DbStatusResourceImpl implements DbStatusResource {
+
     private final Provider<DBTableService> dbTableServiceProvider;
 
     @Inject

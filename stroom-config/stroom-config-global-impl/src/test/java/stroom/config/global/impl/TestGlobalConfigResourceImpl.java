@@ -9,7 +9,6 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -35,6 +34,7 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalConfigResource> {
+
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
@@ -337,7 +337,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);
-                    configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
+                    configProperty.setVersion(configProperty.getVersion() == null
+                            ? 1
+                            : configProperty.getVersion() + 1);
                     return configProperty;
                 });
 
@@ -354,7 +356,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
                 .thenAnswer(invocation ->
-                        baseEndPointUrls.get((String) invocation.getArgument(0)));
+                        baseEndPointUrls.get(invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 

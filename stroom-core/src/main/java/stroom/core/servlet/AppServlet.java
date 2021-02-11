@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public abstract class AppServlet extends HttpServlet {
+
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";

@@ -29,6 +29,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 public class HttpServletRequestFilter implements Filter {
+
     private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject

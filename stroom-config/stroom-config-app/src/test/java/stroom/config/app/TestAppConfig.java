@@ -12,19 +12,20 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import java.lang.reflect.Field;
 import java.util.Set;
+import javax.inject.Singleton;
 
 class TestAppConfig {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
 
     private static final String STROOM_PACKAGE_PREFIX = "stroom.";
 
     private static final Set<Class<?>> WHITE_LISTED_CLASSES = Set.of(
-        Logger.class,
-        LambdaLogger.class,
-        StroomDuration.class
+            Logger.class,
+            LambdaLogger.class,
+            StroomDuration.class
     );
 
     /**

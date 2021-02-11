@@ -42,8 +42,6 @@ import stroom.util.shared.PropertyPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,9 +50,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
@@ -72,7 +73,8 @@ public class GlobalConfigService {
                     GlobalConfigResource.FIELD_DEF_DESCRIPTION,
                     ConfigProperty::getDescription));
 
-    private static Comparator<ConfigProperty> com = Comparator.comparing(configProperty -> configProperty.getEffectiveValueMasked().orElse(""));
+    private static final Comparator<ConfigProperty> com = Comparator.comparing(configProperty -> configProperty.getEffectiveValueMasked().orElse(
+            ""));
 
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
@@ -316,7 +318,8 @@ public class GlobalConfigService {
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
                 .orElseThrow(() ->
-                        new RuntimeException(LogUtil.message("No prop object exists for {}", configProperty.getName())));
+                        new RuntimeException(LogUtil.message("No prop object exists for {}",
+                                configProperty.getName())));
 
         final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
         final String propertyName = propertyPath.getPropertyName();

@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ConstraintViolation;
 import java.util.Set;
+import javax.validation.ConstraintViolation;
 
 class TestValidSimpleSimpleCronValidatorImpl extends AbstractValidatorTest {
 
@@ -43,6 +43,7 @@ class TestValidSimpleSimpleCronValidatorImpl extends AbstractValidatorTest {
     }
 
     private static class Pojo {
+
         @ValidSimpleCron
         private String simpleCron;
     }

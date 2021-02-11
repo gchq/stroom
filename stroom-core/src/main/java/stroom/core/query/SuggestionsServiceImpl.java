@@ -34,6 +34,7 @@ import javax.inject.Singleton;
 @Singleton
 @SuppressWarnings("unused")
 public class SuggestionsServiceImpl implements SuggestionsService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
     private static final int LIMIT = 20;
 

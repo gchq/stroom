@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class WelcomeResource implements RestResource {
+
     private final UiConfig uiConfig;
 
     @Inject
@@ -29,7 +30,7 @@ public class WelcomeResource implements RestResource {
     @GET
     public Response welcome() {
         Object response = new Object() {
-            public String html = uiConfig.getWelcomeHtml();
+            public final String html = uiConfig.getWelcomeHtml();
         };
         return Response.ok(response).build();
     }

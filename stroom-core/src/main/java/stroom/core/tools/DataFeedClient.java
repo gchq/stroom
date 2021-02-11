@@ -44,6 +44,7 @@ import javax.net.ssl.HttpsURLConnection;
  * </p>
  */
 public final class DataFeedClient {
+
     private static final String ARG_URL = "url";
     private static final String ARG_INPUTFILE = "inputfile";
     private static final String ARG_COMPRESSION = "compression";
@@ -140,7 +141,7 @@ public final class DataFeedClient {
                 System.out.println(msg);
             }
 
-            System.out.println("");
+            System.out.println();
             System.out.println("RESPONSE HEADER");
             System.out.println("===============");
 
@@ -161,7 +162,7 @@ public final class DataFeedClient {
                 System.out.println(line);
             }
 
-            System.out.println("");
+            System.out.println();
             System.out.println("RESPONSE BODY");
             System.out.println("=============");
 

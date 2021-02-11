@@ -34,6 +34,7 @@ import javax.inject.Provider;
  * </p>
  */
 public class ProxyAggregationExecutor {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
     private final RepositoryProcessor repositoryProcessor;

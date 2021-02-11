@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
  * </p>
  */
 public class RejectPostFilter implements Filter {
+
     private static final String REJECT_URI_REGEX = "rejectUri";
     private static final String POST_METHOD = "POST";
     private Pattern pattern = null;

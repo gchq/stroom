@@ -200,16 +200,16 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
-                     new ProcessInfoOutputStreamProvider(
-                             streamStore,
-                             metaData,
-                             meta,
-                             processor,
-                             processorFilter,
-                             processorTask,
-                             recordCount,
-                             errorReceiverProxy,
-                             supersededOutputHelper)) {
+                new ProcessInfoOutputStreamProvider(
+                        streamStore,
+                        metaData,
+                        meta,
+                        processor,
+                        processorFilter,
+                        processorTask,
+                        recordCount,
+                        errorReceiverProxy,
+                        supersededOutputHelper)) {
 
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();

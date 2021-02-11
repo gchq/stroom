@@ -1,10 +1,11 @@
 package stroom.config.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.util.shared.AbstractConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 

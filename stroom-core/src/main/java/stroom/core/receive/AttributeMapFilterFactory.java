@@ -29,6 +29,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {
+
     private final ReceiveDataConfig receiveDataConfig;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
     private final FeedStatusAttributeMapFilter feedStatusAttributeMapFilter;

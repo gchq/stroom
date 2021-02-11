@@ -6,12 +6,13 @@ import stroom.util.shared.AbstractConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Objects;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
-import java.util.Objects;
 
 public abstract class UriConfig extends AbstractConfig {
+
     private static final String PROP_NAME_SCHEME = "scheme";
     private static final String PROP_NAME_HOSTNAME = "hostname";
     private static final String PROP_NAME_PORT = "port";
@@ -108,8 +109,12 @@ public abstract class UriConfig extends AbstractConfig {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UriConfig)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UriConfig)) {
+            return false;
+        }
         final UriConfig uriConfig = (UriConfig) o;
         return Objects.equals(scheme, uriConfig.scheme) &&
                 Objects.equals(hostname, uriConfig.hostname) &&

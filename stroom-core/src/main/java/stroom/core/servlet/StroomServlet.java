@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 public class StroomServlet extends AppServlet implements IsServlet {
+
     private static final Set<String> PATH_SPECS = Set.of("/ui");
 
     @Inject

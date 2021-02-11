@@ -51,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
  * </p>
  */
 class ReceiveDataRequestHandler implements RequestHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataRequestHandler.class);
 
     private final SecurityContext securityContext;

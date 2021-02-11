@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Unauthenticated
 public class StatusServlet extends HttpServlet implements IsServlet {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StatusServlet.class);
 
     private static final Set<String> PATH_SPECS = Set.of("/status");

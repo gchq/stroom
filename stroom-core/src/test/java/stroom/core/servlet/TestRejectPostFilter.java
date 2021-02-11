@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRejectPostFilter extends StroomUnitTest {
+
     @Test
     void testRootPattern() {
         final RejectPostFilter filter = new RejectPostFilter();

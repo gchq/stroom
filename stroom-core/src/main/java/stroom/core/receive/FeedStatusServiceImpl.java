@@ -27,6 +27,7 @@ import stroom.security.api.SecurityContext;
 import javax.inject.Inject;
 
 class FeedStatusServiceImpl implements FeedStatusService {
+
     private final SecurityContext securityContext;
     private final FeedProperties feedProperties;
 

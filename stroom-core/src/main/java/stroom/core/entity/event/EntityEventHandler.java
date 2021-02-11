@@ -35,6 +35,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class EntityEventHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventHandler.class);
     private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;

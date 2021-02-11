@@ -37,6 +37,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class EntityEventBusImpl implements EntityEventBus {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
 
     private final Executor executor;

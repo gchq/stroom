@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ReceiveDataConfig extends AbstractConfig {
+
     /**
      * Same size as JDK's Buffered Output Stream.
      */

@@ -9,6 +9,7 @@ import stroom.db.util.DataSourceProxy;
 import javax.sql.DataSource;
 
 public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
+
     private static final String MODULE = "stroom-config";
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
     private static final String FLYWAY_TABLE = "config_schema_history";
@@ -47,6 +48,7 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements GlobalConfigDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }

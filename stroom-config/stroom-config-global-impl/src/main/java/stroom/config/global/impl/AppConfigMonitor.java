@@ -14,8 +14,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -33,6 +31,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
@@ -51,7 +51,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
-    private AtomicBoolean isRunning = new AtomicBoolean(false);
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
@@ -121,7 +121,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
             LOGGER.info("Starting config file modification watcher for {}", configFile.toAbsolutePath().normalize());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath().normalize());
+                    LOGGER.debug("Thread interrupted, stopping watching directory {}",
+                            dirToWatch.toAbsolutePath().normalize());
                     break;
                 }
 
@@ -140,8 +141,12 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                         if (event == null) {
                             LOGGER.debug("Event is null");
                         } else {
-                            String name = event.kind() != null ? event.kind().name() : "kind==null";
-                            String type = event.kind() != null ? event.kind().type().getSimpleName() : "kind==null";
+                            String name = event.kind() != null
+                                    ? event.kind().name()
+                                    : "kind==null";
+                            String type = event.kind() != null
+                                    ? event.kind().type().getSimpleName()
+                                    : "kind==null";
                             LOGGER.debug("Dir watch event {}, {}, {}", name, type, event.context());
                         }
                     }

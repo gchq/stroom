@@ -22,6 +22,7 @@ import stroom.processor.api.DataProcessorBinder;
 import com.google.inject.AbstractModule;
 
 public class PipelineStreamTaskModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SupersededOutputHelper.class).to(SupersededOutputHelperImpl.class);

@@ -33,6 +33,7 @@ import javax.inject.Inject;
 
 @PipelineScoped
 public class SupersededOutputHelperImpl implements SupersededOutputHelper {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SupersededOutputHelperImpl.class);
 
     private final MetaService dataMetaService;

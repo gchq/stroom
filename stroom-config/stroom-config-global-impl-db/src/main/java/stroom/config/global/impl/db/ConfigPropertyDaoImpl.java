@@ -1,20 +1,21 @@
 package stroom.config.global.impl.db;
 
-import org.jooq.Record;
-import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.impl.ConfigPropertyDao;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
-import javax.inject.Inject;
+import org.jooq.Record;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
@@ -50,7 +51,8 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         if (!configProperty.hasDatabaseOverride()) {
             // If there is no value override then we don't want it in the DB
             // Code further up the chain should have dealt with this
-            throw new RuntimeException(LogUtil.message("Trying to save a config record when there is no databaseValue {}",
+            throw new RuntimeException(LogUtil.message(
+                    "Trying to save a config record when there is no databaseValue {}",
                     configProperty));
         }
         record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValueOrElse(""));

@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ProxyAggregationConfig extends AbstractConfig {
+
     private String proxyDir = "proxy_repo";
     private volatile int proxyThreads = 10;
 

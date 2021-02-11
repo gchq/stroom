@@ -163,8 +163,12 @@ public class ConnectionPoolConfig extends AbstractConfig {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
         return cachePrepStmts == that.cachePrepStmts &&
                 prepStmtCacheSize == that.prepStmtCacheSize &&
@@ -176,6 +180,11 @@ public class ConnectionPoolConfig extends AbstractConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit, idleTimeout, maxLifetime, maxPoolSize);
+        return Objects.hash(cachePrepStmts,
+                prepStmtCacheSize,
+                prepStmtCacheSqlLimit,
+                idleTimeout,
+                maxLifetime,
+                maxPoolSize);
     }
 }

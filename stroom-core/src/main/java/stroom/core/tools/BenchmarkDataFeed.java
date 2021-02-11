@@ -43,6 +43,7 @@ import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 public class BenchmarkDataFeed {
+
     private final AtomicInteger connectedCount = new AtomicInteger(0);
     private final AtomicInteger sendingCount = new AtomicInteger(0);
     private final AtomicLong sendSize = new AtomicLong(0);
@@ -314,7 +315,9 @@ public class BenchmarkDataFeed {
             }
         }
 
-        final long timeSoFar = threadPoolExecutor != null ? System.currentTimeMillis() : batchStopTime;
+        final long timeSoFar = threadPoolExecutor != null
+                ? System.currentTimeMillis()
+                : batchStopTime;
         final long secondsSoFar = (timeSoFar - batchStartTime) / 1000;
 
         log("Count    " + count);
@@ -399,6 +402,7 @@ public class BenchmarkDataFeed {
     }
 
     private static class DataFeedResult {
+
         public int response;
         public long time;
         public String message;

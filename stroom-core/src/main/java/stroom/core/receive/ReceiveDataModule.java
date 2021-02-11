@@ -24,6 +24,7 @@ import stroom.util.io.BufferFactory;
 import com.google.inject.AbstractModule;
 
 public class ReceiveDataModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(BufferFactory.class).to(BufferFactoryImpl.class);

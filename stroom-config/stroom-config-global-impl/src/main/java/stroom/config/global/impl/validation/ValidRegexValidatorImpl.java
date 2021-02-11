@@ -3,9 +3,9 @@ package stroom.config.global.impl.validation;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidRegexValidator;
 
-import javax.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.validation.ConstraintValidatorContext;
 
 public class ValidRegexValidatorImpl implements ValidRegexValidator {
 

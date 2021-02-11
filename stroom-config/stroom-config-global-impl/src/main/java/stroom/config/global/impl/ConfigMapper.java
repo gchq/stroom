@@ -45,8 +45,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.dropwizard.client.JerseyClientConfiguration;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -72,6 +70,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
@@ -492,7 +492,8 @@ public class ConfigMapper {
                 } else if (valueClass.equals(Enum.class)) {
                     dataTypeName = "Enumeration";
                 } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
-                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL,
+                            valueClass.getSimpleName()) + " of ";
                 } else {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
                 }
@@ -689,7 +690,8 @@ public class ConfigMapper {
             return Boolean.FALSE;
         } else {
             throw new ConfigPropertyValidationException(
-                    LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.", str));
+                    LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.",
+                            str));
         }
     }
 
@@ -829,7 +831,9 @@ public class ConfigMapper {
                         }
 
                         final String keyStr = parts.get(0);
-                        final String valueStr = parts.size() == 1 ? null : parts.get(1);
+                        final String valueStr = parts.size() == 1
+                                ? null
+                                : parts.get(1);
 
                         final K key = keyType.cast(convertToObject(keyStr, keyType));
                         final V value = valueStr != null

@@ -41,6 +41,7 @@ import javax.net.ssl.HttpsURLConnection;
  * </p>
  */
 public final class ErrorDataFeedClient {
+
     private static final String ARG_URL = "url";
     private static final String ARG_COMPRESSION = "compression";
     private static final String ZIP = "zip";
@@ -98,9 +99,15 @@ public final class ErrorDataFeedClient {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
 
-            final int bufferSize = argsMap.containsKey(BUFFER_SIZE) ? Integer.parseInt(argsMap.get(BUFFER_SIZE)) : 100;
-            final int chunkSize = argsMap.containsKey(CHUNK_SIZE) ? Integer.parseInt(argsMap.get(CHUNK_SIZE)) : 100;
-            final int writeSize = argsMap.containsKey(WRITE_SIZE) ? Integer.parseInt(argsMap.get(WRITE_SIZE)) : 1000;
+            final int bufferSize = argsMap.containsKey(BUFFER_SIZE)
+                    ? Integer.parseInt(argsMap.get(BUFFER_SIZE))
+                    : 100;
+            final int chunkSize = argsMap.containsKey(CHUNK_SIZE)
+                    ? Integer.parseInt(argsMap.get(CHUNK_SIZE))
+                    : 100;
+            final int writeSize = argsMap.containsKey(WRITE_SIZE)
+                    ? Integer.parseInt(argsMap.get(WRITE_SIZE))
+                    : 1000;
 
             connection.setChunkedStreamingMode(chunkSize);
             connection.connect();

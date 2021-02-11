@@ -13,14 +13,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.ConfigurationFactory;
-import io.dropwizard.configuration.ConfigurationFactoryFactory;
-import io.dropwizard.configuration.ConfigurationSourceProvider;
-import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.FileConfigurationSourceProvider;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.jackson.Jackson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -187,7 +179,8 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
+                        "stroom.pipeline.referenceData.localDir")))
                 .findFirst()
                 .orElseThrow();
 
@@ -520,13 +513,17 @@ class TestConfigMapper {
 
     @Test
     void testValidateStringValue_docRefList_good() {
-        doValidateStringValueTest("stroom.docRefListProp", ",|docRef(type1|uuid1|name1),|docRef(type1|uuid1|name1)", true);
+        doValidateStringValueTest("stroom.docRefListProp",
+                ",|docRef(type1|uuid1|name1),|docRef(type1|uuid1|name1)",
+                true);
     }
 
     @Test
     void testValidateStringValue_docRefList_bad() {
         // $ not valid delimiter
-        doValidateStringValueTest("stroom.docRefListProp", ",$docRef(type1$uuid1$name1),$docRef(type1$uuid1$name1)", false);
+        doValidateStringValueTest("stroom.docRefListProp",
+                ",$docRef(type1$uuid1$name1),$docRef(type1$uuid1$name1)",
+                false);
     }
 
     @Test
@@ -615,6 +612,7 @@ class TestConfigMapper {
 
 
     private static class Config extends Configuration {
+
         private AppConfig appConfig;
 
         AppConfig getAppConfig() {
@@ -641,6 +639,7 @@ class TestConfigMapper {
 //    }
 
     public static class TestConfig extends AppConfig {
+
         private String stringProp = "initial value";
         private List<String> stringListProp = new ArrayList<>();
         private List<Integer> intListProp = new ArrayList<>();
@@ -780,12 +779,15 @@ class TestConfigMapper {
         }
 
         public enum State {
-            ON, IN_BETWEEN, OFF
+            ON,
+            IN_BETWEEN,
+            OFF
         }
     }
 
 
     public static class TestPrimitiveConfig extends AbstractConfig {
+
         private boolean booleanProp = false;
         private int intProp = 123;
         private long longProp = 123L;
@@ -834,6 +836,7 @@ class TestConfigMapper {
     }
 
     public static class TestBoxedConfig extends AbstractConfig {
+
         private Boolean booleanProp = false;
         private Integer intProp = 123;
         private Long longProp = 123L;

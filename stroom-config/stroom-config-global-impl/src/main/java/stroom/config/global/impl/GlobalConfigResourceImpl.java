@@ -1,6 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.config.common.UriFactory;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -11,6 +10,7 @@ import stroom.config.global.shared.OverrideValue;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.jersey.WebTargetFactory;
@@ -21,6 +21,8 @@ import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
 
+import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
@@ -29,8 +31,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.Objects;
-import java.util.Optional;
 
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
 

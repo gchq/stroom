@@ -81,7 +81,8 @@ public class BackupConfig {
                                         if (Files.isDirectory(sourcePath)) {
                                             final Path targetPath = targetDir.resolve(backupPath);
                                             printWriter.println(
-                                                    FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(targetPath) + "/");
+                                                    FileUtil.getCanonicalPath(sourcePath) + "/\t" + FileUtil.getCanonicalPath(
+                                                            targetPath) + "/");
                                         }
                                     }
                                 } catch (final RuntimeException e) {

@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class DynamicCSSServlet extends HttpServlet implements IsServlet {
+
     private static final Set<String> PATH_SPECS = Set.of("/dynamic.css");
 
     private static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";

@@ -98,7 +98,7 @@ public class StreamRestoreTool extends DatabaseTool {
             };
     private String deleteFile = null;
     private Map<String, Long> pathStreamTypeMap = null;
-    private Map<String, Long> pathVolumeMap = null;
+    private final Map<String, Long> pathVolumeMap = null;
     private boolean mock = false;
     private boolean inspect = false;
     private boolean sortKey = false;

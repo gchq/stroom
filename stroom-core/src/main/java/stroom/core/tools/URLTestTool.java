@@ -22,6 +22,7 @@ import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
 public class URLTestTool {
+
     public static void main(String[] args) {
         try {
             URL url = new URL(args[0]);

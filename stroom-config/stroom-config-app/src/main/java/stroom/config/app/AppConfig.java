@@ -13,6 +13,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.event.logging.rs.impl.RequestLoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -27,7 +28,6 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.event.logging.rs.impl.RequestLoggingConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -48,6 +48,7 @@ import javax.validation.constraints.AssertTrue;
 @JsonRootName(AppConfig.NAME)
 @Singleton
 public class AppConfig extends AbstractConfig {
+
     public static final String NAME = "stroom";
 
     public static final String PROP_NAME_ACTIVITY = "activity";

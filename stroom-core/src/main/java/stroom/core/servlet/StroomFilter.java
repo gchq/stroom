@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  * </p>
  */
 public class StroomFilter implements Filter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomFilter.class);
 
     /**
