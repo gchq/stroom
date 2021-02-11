@@ -1,10 +1,11 @@
 ext.moduleName = 'stroom.security.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
+//    compile project(':stroom-core-shared')
 
-    compile project(':stroom-docref')
+//    compile project(':stroom-docref')
     
-    compile libs.javax_inject
+//    compile libs.javax_inject
+    compile libs.slf4j_api
     compile libs.ws_rs_api
 }

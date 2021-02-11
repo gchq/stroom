@@ -18,11 +18,11 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -71,11 +71,9 @@ class DashboardResourceImpl implements DashboardResource {
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public Set<SearchResponse> poll(final SearchBusPollRequest request) {
+    public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
         return dashboardServiceProvider.get().poll(request);
     }
-
-
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)

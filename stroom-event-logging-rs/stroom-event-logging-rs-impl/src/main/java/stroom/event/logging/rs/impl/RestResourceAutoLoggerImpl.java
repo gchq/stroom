@@ -86,6 +86,15 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.delegatingExceptionMapper = delegatingExceptionMapper;
     }
 
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
     @Override
     public Response toResponse(final Throwable exception) {
         if (request != null) {
@@ -115,7 +124,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
         if (object != null) {
             RequestInfo requestInfo = (RequestInfo) object;
-            requestEventLog.log (requestInfo, writerInterceptorContext.getEntity());
+            requestEventLog.log(requestInfo, writerInterceptorContext.getEntity());
         }
     }
 
@@ -136,14 +145,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         }
     }
 
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
-    }
 
     //Needed for some unit tests
     void setResourceContext(final ResourceContext resourceContext){

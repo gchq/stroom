@@ -20,7 +20,6 @@ package stroom.security.identity.account;
 
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
-import stroom.util.shared.ResultPage;
 
 import event.logging.AdvancedQuery;
 import event.logging.And;
@@ -61,8 +60,7 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
-
+    public AccountResultPage list(final HttpServletRequest httpServletRequest) {
         return stroomEventLoggingService.loggedResult(
                 "ListAccounts",
                 "List all accounts",
@@ -75,7 +73,7 @@ class AccountResourceImpl implements AccountResource {
                         .build(),
                 searchEventAction -> {
                     // Do the work
-                    final ResultPage<Account> result = serviceProvider.get().list();
+                    final AccountResultPage result = serviceProvider.get().list();
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
                             .withResultPage(StroomEventLoggingUtil.createResultPage(result))
@@ -89,7 +87,7 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public ResultPage<Account> search(final SearchAccountRequest request) {
+    public AccountResultPage search(final SearchAccountRequest request) {
         return stroomEventLoggingService.loggedResult(
                 "SearchAccounts",
                 "Search for accounts by email",
@@ -108,7 +106,7 @@ class AccountResourceImpl implements AccountResource {
                         .build(),
                 searchEventAction -> {
                     // Do the work
-                    final ResultPage<Account> result = serviceProvider.get()
+                    final AccountResultPage result = serviceProvider.get()
                             .search(request);
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()

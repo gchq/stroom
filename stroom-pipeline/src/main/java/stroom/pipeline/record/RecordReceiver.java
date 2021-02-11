@@ -17,5 +17,5 @@
 package stroom.pipeline.record;
 
 public interface RecordReceiver {
-    void receive(Record record);
+    void receive(Rec record);
 }

@@ -25,12 +25,16 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-security:stroom-security-api')
 
+    compile libs.guice4
     compile libs.jackson_annotations
+    compile libs.jackson_core
+//    compile libs.jackson_databind
     compile libs.slf4j_api
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.jersey_common
-    compile libs.jersey_server
+//    compile libs.jersey_server
+    compile libs.ws_rs_api
 
     //--------testing----------
     testCompile project(':stroom-security:stroom-security-mock')

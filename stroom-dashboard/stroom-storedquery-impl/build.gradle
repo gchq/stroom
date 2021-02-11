@@ -5,20 +5,21 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-dashboard:stroom-storedquery-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-query:stroom-query-api')
+//    compile project(':stroom-query:stroom-query-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+//    compile project(':stroom-docref')
     
     compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
+//    compile libs.jackson_annotations
+//    compile libs.jackson_databind
     compile libs.javax_inject
-    compile libs.slf4j_api
+//    compile libs.slf4j_api
+    compile libs.validation_api
 
 //    runtimeOnly libs.mysql_connector_java
 ////

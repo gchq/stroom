@@ -27,7 +27,6 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import org.jooq.Condition;
 import org.jooq.Cursor;

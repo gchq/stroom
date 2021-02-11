@@ -1,5 +1,5 @@
 import { loremIpsum } from "lorem-ipsum";
-import { Token } from "components/Account/types";
+import { Token } from "api/stroom";
 import { now } from "moment";
 
 const lr = (count: number) => loremIpsum({ count, units: "words" });

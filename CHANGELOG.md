@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Migrated new UI to use Swagger generated endpoints and types.
+
+* Issue **#1414** : A User Id can no longer be changed once a user is created. 
+
+* Issue **#1862** : Email and name fields are no longer required when creating users.
+
+* Issue **#1765** : Added confirmation dialog when deleting users and API keys.
+
 * Issue **#2036** : Autologger now delegates exception handling.
 
 * Issue **#2039** : Limit the amount of text data output by autologger.

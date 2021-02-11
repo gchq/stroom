@@ -1,16 +1,15 @@
-import { useAccountResource } from "../api";
-import { Account } from "../types";
 import { useCallback, useEffect, useState } from "react";
-import { ResultPage, SearchAccountRequest } from "../api/types";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
+import { AccountResultPage, SearchAccountRequest } from "api/stroom";
 
 interface UseAccountManager {
-  resultPage: ResultPage<Account>;
+  resultPage: AccountResultPage;
   remove: (userId: number) => void;
   request: SearchAccountRequest;
   setRequest: (request: SearchAccountRequest) => void;
 }
 
-const initialResultPage: ResultPage<Account> = {
+const initialResultPage: AccountResultPage = {
   values: [],
   pageResponse: {
     offset: 0,
@@ -34,30 +33,38 @@ const initialRequest: SearchAccountRequest = {
 };
 
 const useAccountManager = (): UseAccountManager => {
-  const [resultPage, setResultPage] = useState<ResultPage<Account>>(
+  const [resultPage, setResultPage] = useState<AccountResultPage>(
     initialResultPage,
   );
   const [request, setRequest] = useState(initialRequest);
-  const {
-    search: searchApi,
-    remove: removeUserUsingApi,
-  } = useAccountResource();
+
+  const { exec } = useStroomApi();
+  const search = useCallback(
+    (request: SearchAccountRequest) =>
+      exec(
+        (api) => api.account.search(request),
+        (response) => {
+          if (response) {
+            setResultPage(response);
+          }
+        },
+      ),
+    [exec],
+  );
 
   useEffect(() => {
-    searchApi(request).then((response) => {
-      if (response) {
-        setResultPage(response);
-      }
-    });
-  }, [searchApi, setResultPage, request]);
+    search(request);
+  }, [search, setResultPage, request]);
 
   const remove = useCallback(
-    (userId: number) => {
-      removeUserUsingApi(userId).then(() =>
-        searchApi(request).then((resultPage) => setResultPage(resultPage)),
-      );
-    },
-    [removeUserUsingApi, searchApi, request, setResultPage],
+    (userId: number) =>
+      exec(
+        (api) => api.account.delete(userId),
+        (response) => {
+          search(request);
+        },
+      ),
+    [exec, search, request],
   );
 
   return {

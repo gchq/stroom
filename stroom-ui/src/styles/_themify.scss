@@ -1,46 +1,40 @@
-@mixin themify($themes: $themes) {
-  @each $theme, $map in $themes {
-    .theme-#{$theme} & {
-      $theme-map: () !global;
-      @each $key, $submap in $map {
-        $value: map-get(map-get($themes, $theme), "#{$key}");
-        $theme-map: map-merge(
-          $theme-map,
-          (
-            $key: $value
-          )
-        ) !global;
-      }
-      @content;
-      $theme-map: null !global;
-    }
-  }
-}
-
-@function themed($key) {
-  @return map-get($theme-map, $key);
-}
-
-@mixin dialog($themes) {
-  @include themify($themes) {
-    border: 1px solid themed("dialog__border-color");
-    -webkit-box-shadow: 0 5px 10px themed("dialog__border-color");
-    box-shadow: 0 5px 10px themed("dialog__border-color");
-  }
-}
-
-@mixin focus-ring($themes, $type) {
-  @include themify($themes) {
-    border-color: themed($type);
-    outline: 0;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
-  }
-}
-
-@mixin page($themes) {
-  @include themify($themes) {
-    background-color: themed("page__background-color");
-    color: themed("page__text-color");
-  }
-}
+//@mixin themify($themes: $themes) {
+//  @each $theme, $map in $themes {
+//    .theme-#{$theme} & {
+//      $theme-map: () !global;
+//      @each $key, $submap in $map {
+//        $value: map-get(map-get($themes, $theme), "#{$key}");
+//        $theme-map: map-merge(
+//          $theme-map,
+//          (
+//            $key: $value
+//          )
+//        ) !global;
+//      }
+//      @content;
+//      $theme-map: null !global;
+//    }
+//  }
+//}
+//
+//@function themed($key) {
+//  @return map-get($theme-map, $key);
+//}
+//
+//@mixin dialog($themes) {
+//  border: 1px solid var(--dialog__border-color);
+//  -webkit-box-shadow: 0 5px 10px var(--dialog__border-color);
+//  box-shadow: 0 5px 10px var(--dialog__border-color);
+//}
+//
+//@mixin focus-ring($themes, $type) {
+//  border-color: themed($type);
+//  outline: 0;
+//  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
+//  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
+//}
+//
+//@mixin page($themes) {
+//  background-color: var(--page__background-color);
+//  color: var(--page__text-color);
+//}

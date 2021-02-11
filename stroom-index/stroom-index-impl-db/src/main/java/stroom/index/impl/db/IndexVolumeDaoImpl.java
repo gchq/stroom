@@ -13,7 +13,6 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 
 import org.jooq.Condition;
 import org.jooq.Field;

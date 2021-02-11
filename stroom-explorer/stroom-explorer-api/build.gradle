@@ -6,7 +6,7 @@ dependencies {
     
     compile project(':stroom-docref')
 
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

@@ -40,9 +40,9 @@ public class FetchDataRequest {
     @JsonProperty
     private DocRef pipeline;
 //    @JsonProperty
-//    private OffsetRange<Long> streamRange;
+//    private OffsetRange streamRange;
 //    @JsonProperty
-//    private OffsetRange<Long> pageRange; // this may be line offset + no. of lines or rec offset + no. of recs
+//    private OffsetRange pageRange; // this may be line offset + no. of lines or rec offset + no. of recs
 //    @JsonProperty
 //    private Location locationFrom;
 //    @JsonProperty
@@ -84,8 +84,8 @@ public class FetchDataRequest {
     private transient boolean fireEvents;
 
 //    public FetchDataRequest() {
-//        streamRange = new OffsetRange<>(0L, 1L);
-//        pageRange = new OffsetRange<>(0L, 100L);
+//        streamRange = new OffsetRange(0L, 1L);
+//        pageRange = new OffsetRange(0L, 100L);
 //    }
 
 
@@ -105,8 +105,8 @@ public class FetchDataRequest {
 //            @JsonProperty("streamId") final Long streamId,
 //                            @JsonProperty("childStreamType") final String childStreamType,
                              @JsonProperty("pipeline") final DocRef pipeline,
-//                            @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-//                            @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                            @JsonProperty("streamRange") final OffsetRange streamRange,
+//                            @JsonProperty("pageRange") final OffsetRange pageRange,
 //                            @JsonProperty("locationFrom") final Location locationFrom,
 //                            @JsonProperty("locationTo") final Location locationTo,
                              @JsonProperty("showAsHtml") final boolean showAsHtml,
@@ -158,19 +158,19 @@ public class FetchDataRequest {
 //        this.childStreamType = childStreamType;
 //    }
 
-//    public OffsetRange<Long> getStreamRange() {
+//    public OffsetRange getStreamRange() {
 //        return streamRange;
 //    }
 //
-//    public void setStreamRange(final OffsetRange<Long> streamRange) {
+//    public void setStreamRange(final OffsetRange streamRange) {
 //        this.streamRange = streamRange;
 //    }
 //
-//    public OffsetRange<Long> getPageRange() {
+//    public OffsetRange getPageRange() {
 //        return pageRange;
 //    }
 //
-//    public void setPageRange(final OffsetRange<Long> pageRange) {
+//    public void setPageRange(final OffsetRange pageRange) {
 //        this.pageRange = pageRange;
 //    }
 //

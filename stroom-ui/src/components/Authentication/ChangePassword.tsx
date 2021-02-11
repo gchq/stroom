@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 
 import { Formik, FormikProps } from "formik";
 import { PasswordFormField, NewPasswordFormField } from "components/FormField";
-import { PasswordPolicyConfig } from "./api/types";
+import { PasswordPolicyConfig } from "api/stroom";
 import * as Yup from "yup";
 import { Form, Modal } from "react-bootstrap";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
@@ -61,6 +61,7 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
           value={values.userId}
           autoComplete="username"
           hidden={true}
+          readOnly={true}
         />
         <Form.Row>
           <NewPasswordFormField
@@ -120,8 +121,7 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
   const thresholdLength = minimumPasswordLength;
   const passwordStrengthProps: PasswordStrengthProps = {
     strength: currentStrength,
-    minStrength,
-    thresholdLength,
+    passwordPolicy: passwordPolicyConfig,
     onStrengthChanged: (s) => {
       currentStrength = s;
       setStrength(s);

@@ -3,4 +3,6 @@ ext.moduleName = 'stroom.activity.api'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
+
+    compile libs.jackson_annotations
 }

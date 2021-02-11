@@ -1,11 +1,11 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
@@ -24,7 +24,7 @@ public interface DashboardService {
 
     ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request);
 
-    Set<SearchResponse> poll(final SearchBusPollRequest request);
+    Set<DashboardSearchResponse> poll(final SearchBusPollRequest request);
 
     List<String> fetchTimeZones();
 

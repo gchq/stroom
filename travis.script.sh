@@ -264,7 +264,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       build \
       -x shadowJar \
-      -x generateSwaggerDocumentation \
+      -x resolve \
       -x copyFilesForStroomDockerBuild \
       -x copyFilesForProxyDockerBuild \
       -x buildDistribution

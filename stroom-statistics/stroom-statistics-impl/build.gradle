@@ -1,18 +1,20 @@
 ext.moduleName = 'stroom.statistics.impl'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-common')
+//    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
     compile project(':stroom-docref')
     
     compile libs.guava
     compile libs.guice4
-    compile libs.jackson_annotations
+//    compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.jaxb_api
+//    compile libs.jaxb_api
     compile libs.slf4j_api
     compile libs.vavr
     

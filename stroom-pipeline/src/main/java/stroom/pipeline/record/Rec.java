@@ -18,12 +18,12 @@ package stroom.pipeline.record;
 
 import stroom.util.io.ByteSlice;
 
-public class Record {
+public class Rec {
     private final ByteSlice header;
     private final ByteSlice footer;
     private final ByteSlice body;
 
-    public Record(final ByteSlice header, final ByteSlice footer, final ByteSlice body) {
+    public Rec(final ByteSlice header, final ByteSlice footer, final ByteSlice body) {
         this.header = header;
         this.footer = footer;
         this.body = body;

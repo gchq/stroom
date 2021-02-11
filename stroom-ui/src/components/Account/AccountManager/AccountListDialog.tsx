@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Account } from "../types";
 import { PeopleFill } from "react-bootstrap-icons";
 import { ItemManagerProps } from "./ItemManager";
 import { FunctionComponent } from "react";
 import { ItemManagerDialog } from "./ItemManagerDialog";
+import { Account } from "api/stroom";
 
 export const AccountListDialog: FunctionComponent<{
   itemManagerProps: ItemManagerProps<Account>;

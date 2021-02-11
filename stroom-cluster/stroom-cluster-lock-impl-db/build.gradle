@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.cluster.lock.impl.db'
 
 dependencies {
-    compile project(':stroom-core-shared')
+//    compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-lock-api')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db-jooq')
     compile project(':stroom-cluster:stroom-cluster-task-api')
@@ -10,18 +10,18 @@ dependencies {
     compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
+//    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile project(':stroom-docref')
+//    compile project(':stroom-docref')
     
-    compile libs.flyway_core
+//    compile libs.flyway_core
     compile libs.guice4
-    compile libs.hikari
-    compile libs.jackson_annotations
-    compile libs.jackson_databind
+//    compile libs.hikari
+//    compile libs.jackson_annotations
+//    compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
