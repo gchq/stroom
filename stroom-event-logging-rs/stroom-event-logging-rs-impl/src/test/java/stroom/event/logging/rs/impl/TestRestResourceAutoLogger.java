@@ -534,6 +534,7 @@ public class TestRestResourceAutoLogger {
             return new TestObj(BEFORE_ID);
         }
 
+
         @AutoLogged(value = OperationType.PROCESS, verb = "Shutting down", decorator = TestShutdownEventActionDecorator.class)
         public String shutdown(@PathParam("uuid") final String uuid) { return null; }
 

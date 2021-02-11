@@ -118,7 +118,11 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
             throws IOException, WebApplicationException {
-        writerInterceptorContext.proceed();
+        try {
+            writerInterceptorContext.proceed();
+        } catch (Exception ex) {
+            LOGGER.error("Error in Java RS filter chain processing.", ex);
+        }
 
         final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
 

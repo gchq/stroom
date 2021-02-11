@@ -158,7 +158,7 @@ public class ContainerResourceInfo {
         if (firstUpperIdx != -1) {
             return camelCaseWord.substring(0, firstUpperIdx);
         } else {
-            return "";
+            return camelCaseWord;
         }
     }
 
