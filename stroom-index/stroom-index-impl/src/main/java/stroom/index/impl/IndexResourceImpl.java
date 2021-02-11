@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 class IndexResourceImpl implements IndexResource {
+
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final IndexShardManager indexShardManager;
@@ -70,7 +71,10 @@ class IndexResourceImpl implements IndexResource {
         return performShardAction(nodeName, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
     }
 
-    private Long performShardAction(final String nodeName, final FindIndexShardCriteria criteria, final String subPath, final IndexShardAction action) {
+    private Long performShardAction(final String nodeName,
+                                    final FindIndexShardCriteria criteria,
+                                    final String subPath,
+                                    final IndexShardAction action) {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         // If this is the node that was contacted then just resolve it locally

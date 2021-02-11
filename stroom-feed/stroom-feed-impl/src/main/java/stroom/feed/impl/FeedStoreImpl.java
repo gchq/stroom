@@ -40,6 +40,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
+
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
 
@@ -170,7 +171,10 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final ImportState importState,
+                                       final ImportMode importMode) {
         DocRef newDocRef = docRef;
 
         if (ImportState.State.NEW.equals(importState.getState())) {
@@ -182,7 +186,9 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

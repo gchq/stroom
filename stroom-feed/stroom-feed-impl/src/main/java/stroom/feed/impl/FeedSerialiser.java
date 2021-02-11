@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 public class FeedSerialiser implements DocumentSerialiser2<FeedDoc> {
+
     private final Serialiser2<FeedDoc> delegate;
 
     @Inject

@@ -24,6 +24,7 @@ import stroom.security.api.SecurityContext;
 import javax.inject.Inject;
 
 public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
+
     private final ScheduleService scheduleService;
     private final SecurityContext securityContext;
 

@@ -48,6 +48,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 class DistributedTaskFetcher {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
 
@@ -173,7 +174,9 @@ class DistributedTaskFetcher {
                                                     }
                                                 }
 
-                                                final List<DistributedTask> tasks = distributedTaskFactory.fetch(nodeName, count);
+                                                final List<DistributedTask> tasks = distributedTaskFactory.fetch(
+                                                        nodeName,
+                                                        count);
                                                 handleResult(nodeName, jobName, tasks);
                                             }
 
@@ -297,7 +300,8 @@ class DistributedTaskFetcher {
                 // this time.
                 if (job.isEnabled() && jobNode.isEnabled()) {
                     // Store the task request.
-                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(), requiredTaskCount);
+                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(),
+                            requiredTaskCount);
                 }
             }
         }

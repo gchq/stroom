@@ -20,6 +20,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.Attributes2Impl;
+
 import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
 import stroom.util.xml.TransformerFactoryFactory;
@@ -45,6 +46,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class Config {
+
     private static final Attributes2Impl BLANK_ATTRIBUTES = new Attributes2Impl();
     private static final String YES = "yes";
 

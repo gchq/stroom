@@ -21,6 +21,7 @@ package stroom.job.api;
  * database.
  */
 public interface JobManager {
+
     /**
      * Gets the enabled job status for a named job.
      *

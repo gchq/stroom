@@ -34,8 +34,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
@@ -47,6 +45,8 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Class to provide shared {@link KafkaProducer} instances wrapped inside a {@link SharedKafkaProducer}.
@@ -120,7 +120,9 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                     removeRedundantSharedKafkaProducers();
 
                                     // swap out the existing current SharedKafkaProducer for our new one
-                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
+                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc,
+                                            docRefFromDoc,
+                                            desiredKey);
                                 }
                             }
                             return sharedKafkaProducer2;
@@ -211,7 +213,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                 .parallelStream()
                 .forEach(sharedKafkaProducer -> {
                     sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
-                        LOGGER.info("Closing Kafka producer for {}", sharedKafkaProducer.getSharedKafkaProducerIdentity());
+                        LOGGER.info("Closing Kafka producer for {}",
+                                sharedKafkaProducer.getSharedKafkaProducerIdentity());
                         kafkaProducer.close();
                     });
                 });

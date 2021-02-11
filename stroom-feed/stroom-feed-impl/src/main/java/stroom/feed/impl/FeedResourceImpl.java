@@ -28,6 +28,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 class FeedResourceImpl implements FeedResource {
+
     private static final List<String> SUPPORTED_ENCODINGS;
 
     static {

@@ -30,13 +30,15 @@ import javax.inject.Singleton;
 
 @Singleton
 class DistributedTaskFactoryRegistry {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryRegistry.class);
     private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
 
     @Inject
     DistributedTaskFactoryRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
+            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
+                    DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
 
             final Object previousFactory = factoryMap.put(jobName, distributedTaskFactory);

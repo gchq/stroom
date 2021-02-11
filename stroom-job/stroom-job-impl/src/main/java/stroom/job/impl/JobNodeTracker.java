@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class JobNodeTracker {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTracker.class);
     private final AtomicInteger currentTaskCount = new AtomicInteger();
     private JobNode jobNode;

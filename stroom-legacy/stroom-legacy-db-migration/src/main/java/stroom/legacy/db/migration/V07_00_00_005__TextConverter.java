@@ -33,6 +33,7 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_005__TextConverter extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final TextConverterSerialiser serialiser = new TextConverterSerialiser(new Serialiser2FactoryImpl());
@@ -72,7 +73,8 @@ public class V07_00_00_005__TextConverter extends BaseJavaMigration {
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
 
-                    final TextConverter.TextConverterType converterType = TextConverter.TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(convTp);
+                    final TextConverter.TextConverterType converterType = TextConverter.TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                            convTp);
                     if (converterType != null) {
                         document.setConverterType(TextConverterDoc.TextConverterType.valueOf(converterType.name()));
                     }

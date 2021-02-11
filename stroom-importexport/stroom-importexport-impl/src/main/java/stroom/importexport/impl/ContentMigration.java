@@ -16,10 +16,11 @@
 
 package stroom.importexport.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,6 +38,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ContentMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentMigration.class);
 
     // UUID structure 8-4-4-4-12
@@ -60,35 +62,38 @@ public class ContentMigration {
 
     private void migrateNodeFiles(final Path dir, final AtomicBoolean hasNodes) {
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fileName = file.getFileName().toString();
-                        if (fileName.endsWith(".node")) {
-                            hasNodes.set(true);
-                            final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));
-                            final Properties properties = PropertiesSerialiser.read(Files.newInputStream(file));
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fileName = file.getFileName().toString();
+                                if (fileName.endsWith(".node")) {
+                                    hasNodes.set(true);
+                                    final String fileStem = fileName.substring(0, fileName.lastIndexOf("."));
+                                    final Properties properties = PropertiesSerialiser.read(Files.newInputStream(file));
 
-                            final String name = properties.getProperty("name");
-                            final String type = properties.getProperty("type");
-                            final String uuid = properties.getProperty("uuid");
+                                    final String name = properties.getProperty("name");
+                                    final String type = properties.getProperty("type");
+                                    final String uuid = properties.getProperty("uuid");
 
-                            if (name != null && type != null && uuid != null) {
-                                final String newFileStem = createFilePrefix(name, type, uuid);
-                                if (!fileStem.equals(newFileStem)) {
-                                    renameFiles(file.getParent(), fileStem, newFileStem);
+                                    if (name != null && type != null && uuid != null) {
+                                        final String newFileStem = createFilePrefix(name, type, uuid);
+                                        if (!fileStem.equals(newFileStem)) {
+                                            renameFiles(file.getParent(), fileStem, newFileStem);
+                                        }
+                                    } else {
+                                        LOGGER.error("Bad properties file " + fileName);
+                                    }
                                 }
-                            } else {
-                                LOGGER.error("Bad properties file " + fileName);
+                            } catch (final RuntimeException | IOException e) {
+                                LOGGER.error(e.getMessage(), e);
                             }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException | IOException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -97,20 +102,24 @@ public class ContentMigration {
     private void processLegacyContent(final Path dir) {
         // If we don't have node files then this is legacy content.
         try {
-            Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    try {
-                        final String fileName = file.getFileName().toString();
-                        if (fileName.matches("([^.]*\\.){2,}xml") && fileName.matches(".*\\.[A-Z][A-Za-z]+\\.xml$")) {
-                            process(dir, file);
+            Files.walkFileTree(dir,
+                    EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE,
+                    new AbstractFileVisitor() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                            try {
+                                final String fileName = file.getFileName().toString();
+                                if (fileName.matches("([^.]*\\.){2,}xml") && fileName.matches(
+                                        ".*\\.[A-Z][A-Za-z]+\\.xml$")) {
+                                    process(dir, file);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                            return super.visitFile(file, attrs);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                    return super.visitFile(file, attrs);
-                }
-            });
+                    });
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -120,7 +129,8 @@ public class ContentMigration {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, fileStem + ".*")) {
             stream.forEach(file -> {
                 try {
-                    final String newFileName = file.getFileName().toString().replaceAll(fileStem + ".", newFileStem + ".");
+                    final String newFileName = file.getFileName().toString().replaceAll(fileStem + ".",
+                            newFileStem + ".");
                     LOGGER.info("Renaming file: '" + file.getFileName().toString() + "' to '" + newFileName);
                     Files.move(file, file.getParent().resolve(newFileName));
                 } catch (final IOException e) {
@@ -167,23 +177,26 @@ public class ContentMigration {
 
             // Rename related files.
             try {
-                Files.walkFileTree(path.getParent(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                        try {
-                            final String fileName = file.getFileName().toString();
-                            if (fileName.startsWith(fileStem + ".") && !fileName.startsWith(newFileStem)) {
-                                final String extension = fileName.substring(fileStem.length());
-                                final String newFileName = newFileStem + extension;
-                                Files.move(file, file.getParent().resolve(newFileName));
-                            }
-                        } catch (final RuntimeException | IOException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
+                Files.walkFileTree(path.getParent(),
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                                try {
+                                    final String fileName = file.getFileName().toString();
+                                    if (fileName.startsWith(fileStem + ".") && !fileName.startsWith(newFileStem)) {
+                                        final String extension = fileName.substring(fileStem.length());
+                                        final String newFileName = newFileStem + extension;
+                                        Files.move(file, file.getParent().resolve(newFileName));
+                                    }
+                                } catch (final RuntimeException | IOException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
 
-                        return super.visitFile(file, attrs);
-                    }
-                });
+                                return super.visitFile(file, attrs);
+                            }
+                        });
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

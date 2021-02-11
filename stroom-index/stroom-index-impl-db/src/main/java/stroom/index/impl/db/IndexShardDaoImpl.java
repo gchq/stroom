@@ -21,7 +21,6 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import javax.inject.Inject;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
@@ -72,7 +72,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         return record;
     };
 
-    private static Map<String, Field<?>> FIELD_MAP = new HashMap<>();
+    private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
 
     static {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
@@ -149,7 +149,9 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, Selection.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
+                        Selection.convert(criteria.getIndexShardStatusSet(),
+                                IndexShard.IndexShardStatus::getPrimitiveValue)),
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
         );
 
@@ -201,8 +203,10 @@ class IndexShardDaoImpl implements IndexShardDao {
             //Check again.
             if (indexVolumes == null || indexVolumes.size() == 0) {
                 throw new IndexException("Unable to find any index volumes for group with name " + volumeGroupName +
-                        ((groupNames == null || groupNames.size() == 0) ? " No index groups defined." :
-                                " Available index volume groups: " + String.join(", ", groupNames)));
+                        ((groupNames == null || groupNames.size() == 0)
+                                ? " No index groups defined."
+                                :
+                                        " Available index volume groups: " + String.join(", ", groupNames)));
             }
         }
 

@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 class JobNodeResourceImpl implements JobNodeResource {
+
     private final JobNodeService jobNodeService;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;

@@ -11,6 +11,10 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.GET;
@@ -19,14 +23,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Set;
 
 @Api(value = "export - /v1")
 @Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
+
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
     private final transient ExportConfig exportConfig;
@@ -67,7 +68,8 @@ public class ExportConfigResource implements RestResource {
 
                 return Response
                         .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                        .header("Content-Disposition", "attachment; filename=\"" + tempFile.getFileName().toString() + "\"")
+                        .header("Content-Disposition",
+                                "attachment; filename=\"" + tempFile.getFileName().toString() + "\"")
                         .build();
 
             } catch (final EntityServiceException e) {

@@ -1,16 +1,16 @@
 package stroom.legacy.db.migration;
 
-import org.flywaydb.core.api.migration.BaseJavaMigration;
-import org.flywaydb.core.api.migration.Context;
-import org.jooq.DSLContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.JooqUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
+
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,9 +33,9 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
     // The mapping funcs are held as variables to save using the fully qualified name
     private static final Function<String, String> MSU_2_DURATION =
-        V07_00_00_1202__property_rename::modelStringDurationToDuration;
+            V07_00_00_1202__property_rename::modelStringDurationToDuration;
     private static final Function<String, String> MSU_2_STROOM_DURATION =
-        V07_00_00_1202__property_rename::modelStringDurationToStroomDuration;
+            V07_00_00_1202__property_rename::modelStringDurationToStroomDuration;
 
     static void map(final String oldName,
                     final String newName,
@@ -66,7 +66,8 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
         map("stroom.advertisedUrl", "stroom.ui.url.ui");
         map("stroom.auth.authentication.service.url", "stroom.security.authentication.authenticationServiceUrl");
-        map("stroom.auth.jwt.enabletokenrevocationcheck", "stroom.security.authentication.jwt.enableTokenRevocationCheck");
+        map("stroom.auth.jwt.enabletokenrevocationcheck",
+                "stroom.security.authentication.jwt.enableTokenRevocationCheck");
         map("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
         map("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
         map("stroom.authentication.required", "stroom.security.authentication.authenticationRequired");
@@ -116,11 +117,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
         map("stroom.internalstatistics.cpu.docRefs", "stroom.statistics.internal.cpu");
         map("stroom.internalstatistics.eventsPerSecond.docRefs", "stroom.statistics.internal.eventsPerSecond");
         map("stroom.internalstatistics.heapHistogramBytes.docRefs", "stroom.statistics.internal.heapHistogramBytes");
-        map("stroom.internalstatistics.heapHistogramInstances.docRefs", "stroom.statistics.internal.heapHistogramInstances");
+        map("stroom.internalstatistics.heapHistogramInstances.docRefs",
+                "stroom.statistics.internal.heapHistogramInstances");
         map("stroom.internalstatistics.memory.docRefs", "stroom.statistics.internal.memory");
         map("stroom.internalstatistics.metaDataStreamSize.docRefs", "stroom.statistics.internal.metaDataStreamSize");
-        map("stroom.internalstatistics.metaDataStreamsReceived.docRefs", "stroom.statistics.internal.metaDataStreamsReceived");
-        map("stroom.internalstatistics.pipelineStreamProcessor.docRefs", "stroom.statistics.internal.pipelineStreamProcessor");
+        map("stroom.internalstatistics.metaDataStreamsReceived.docRefs",
+                "stroom.statistics.internal.metaDataStreamsReceived");
+        map("stroom.internalstatistics.pipelineStreamProcessor.docRefs",
+                "stroom.statistics.internal.pipelineStreamProcessor");
         map("stroom.internalstatistics.streamTaskQueueSize.docRefs", "stroom.statistics.internal.streamTaskQueueSize");
         map("stroom.internalstatistics.volumes.docRefs", "stroom.statistics.internal.volumes");
         map("stroom.jdbcDriverClassName", "stroom.core.db.connection.jdbcDriverClassName");
@@ -315,7 +319,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                                 String newValue = mapping.serialisationMappingFunc.apply(oldValue);
                                 if (!oldValue.equals(newValue)) {
                                     LOGGER.info("  Changing value of DB property {} from [{}] to [{}]",
-                                        mapping.getOldName(), oldValue, newValue);
+                                            mapping.getOldName(), oldValue, newValue);
                                     rec.setVal(newValue);
                                 }
                             }
@@ -367,11 +371,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
     }
 
     private static class Mapping {
+
         private final String oldName;
         private final String newName;
         private final Function<String, String> serialisationMappingFunc;
 
-        private Mapping(final String oldName, final String newName, final Function<String, String> serialisationMappingFunc) {
+        private Mapping(final String oldName,
+                        final String newName,
+                        final Function<String, String> serialisationMappingFunc) {
             this.oldName = oldName;
             this.newName = newName;
             this.serialisationMappingFunc = serialisationMappingFunc;
@@ -399,13 +406,13 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
      */
     static String modelStringDurationToDuration(final String oldValue) {
         if (oldValue == null) {
-           return null;
+            return null;
         } else if (oldValue.isBlank()) {
             return "";
         } else if (oldValue.matches("^[0-9]+[dD]$")) {
             // special case for days to stop Duration turning them into hours
             // e.g. 30d becomes PT720H rather than P30D
-            String daysPart = oldValue.replaceAll("[dD]$","");
+            String daysPart = oldValue.replaceAll("[dD]$", "");
             return Duration.parse("P" + daysPart + "D").toString();
         } else {
             final Long durationMs = ModelStringUtil.parseDurationString(oldValue);

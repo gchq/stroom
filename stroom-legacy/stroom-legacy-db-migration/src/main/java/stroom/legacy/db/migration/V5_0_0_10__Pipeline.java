@@ -32,6 +32,7 @@ import java.sql.Statement;
 
 @Deprecated
 public class V5_0_0_10__Pipeline extends BaseJavaMigration {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_10__Pipeline.class);
 
 //    private static final String[] TABLES = {"FOLDER","TXT_CONV","XSLT","XML_SCHEMA","PIPE","FD","IDX","STAT_DAT_SRC","ANAL_OUT_DAT_SRC","DASH","SCRIPT","VIS","DICT","QUERY"};
@@ -90,7 +91,8 @@ public class V5_0_0_10__Pipeline extends BaseJavaMigration {
             statement.executeUpdate("ALTER TABLE PIPE ADD COLUMN PARNT_PIPE longtext;");
         }
         try (final Statement statement = connection.createStatement()) {
-            try (final ResultSet resultSet = statement.executeQuery("SELECT p.ID, pp.UUID, pp.NAME FROM PIPE p JOIN PIPE pp ON (p.FK_PIPE_ID = pp.ID);")) {
+            try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT p.ID, pp.UUID, pp.NAME FROM PIPE p JOIN PIPE pp ON (p.FK_PIPE_ID = pp.ID);")) {
                 while (resultSet.next()) {
                     final long id = resultSet.getLong(1);
                     final String parentUUID = resultSet.getString(2);
@@ -98,7 +100,8 @@ public class V5_0_0_10__Pipeline extends BaseJavaMigration {
                     final DocRef docRef = new DocRef("Pipeline", parentUUID, parentName);
                     final String refXML = objectMarshaller.marshal(docRef);
 
-                    try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE PIPE SET PARNT_PIPE = ? WHERE ID = ?")) {
+                    try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                            "UPDATE PIPE SET PARNT_PIPE = ? WHERE ID = ?")) {
                         preparedStatement.setString(1, refXML);
                         preparedStatement.setLong(2, id);
                         preparedStatement.executeUpdate();
@@ -168,7 +171,8 @@ public class V5_0_0_10__Pipeline extends BaseJavaMigration {
                         if (!newData.equals(data)) {
                             LOGGER.info("Modifying pipeline");
 
-                            try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
+                            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                                    "UPDATE PIPE SET DAT = ? WHERE ID = ?")) {
                                 preparedStatement.setString(1, newData);
                                 preparedStatement.setLong(2, id);
                                 preparedStatement.executeUpdate();

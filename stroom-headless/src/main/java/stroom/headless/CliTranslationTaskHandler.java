@@ -47,14 +47,15 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.List;
+import javax.inject.Inject;
 
 
 class CliTranslationTaskHandler {
+
     private final PipelineFactory pipelineFactory;
     private final FeedProperties feedProperties;
     private final PipelineStore pipelineStore;
@@ -165,12 +166,18 @@ class CliTranslationTaskHandler {
                     // Add stream providers for lookups etc.
                     final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
                     inputStreamProvider.put(null, new IgnoreCloseInputStream(dataStream), dataStream.available());
-                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS,
+                            new IgnoreCloseInputStream(dataStream),
+                            dataStream.available());
                     if (metaStream != null) {
-                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(metaStream), metaStream.available());
+                        inputStreamProvider.put(StreamTypeNames.META,
+                                new IgnoreCloseInputStream(metaStream),
+                                metaStream.available());
                     }
                     if (contextStream != null) {
-                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(contextStream), contextStream.available());
+                        inputStreamProvider.put(StreamTypeNames.CONTEXT,
+                                new IgnoreCloseInputStream(contextStream),
+                                contextStream.available());
                     }
 
                     metaHolder.setMeta(meta);

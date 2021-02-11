@@ -12,14 +12,15 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import javax.inject.Inject;
 
 public class KafkaConfigResourceImpl implements KafkaConfigResource {
+
     private final KafkaConfigStore kafkaConfigStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -28,10 +29,10 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource {
 
     @Inject
     KafkaConfigResourceImpl(final KafkaConfigStore kafkaConfigStore,
-                           final DocumentResourceHelper documentResourceHelper,
-                           final ResourceStore resourceStore,
-                           final DocumentEventLog documentEventLog,
-                           final SecurityContext securityContext) {
+                            final DocumentResourceHelper documentResourceHelper,
+                            final ResourceStore resourceStore,
+                            final DocumentEventLog documentEventLog,
+                            final SecurityContext securityContext) {
         this.kafkaConfigStore = kafkaConfigStore;
         this.documentResourceHelper = documentResourceHelper;
         this.resourceStore = resourceStore;

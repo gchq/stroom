@@ -5,8 +5,8 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import java.util.List;
+import javax.inject.Singleton;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {

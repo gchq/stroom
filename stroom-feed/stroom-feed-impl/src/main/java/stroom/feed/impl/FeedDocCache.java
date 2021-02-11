@@ -31,6 +31,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FeedDocCache implements Clearable {
+
     private static final String CACHE_NAME = "Feed Doc Cache";
 
     private final ICache<String, Optional<FeedDoc>> cache;

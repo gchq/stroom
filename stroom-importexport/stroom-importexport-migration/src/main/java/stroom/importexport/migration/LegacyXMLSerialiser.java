@@ -19,6 +19,7 @@ package stroom.importexport.migration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import stroom.util.shared.EntityServiceException;
 import stroom.util.string.EncodingUtil;
 
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class LegacyXMLSerialiser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacyXMLSerialiser.class);
 
     @SuppressWarnings("unchecked")

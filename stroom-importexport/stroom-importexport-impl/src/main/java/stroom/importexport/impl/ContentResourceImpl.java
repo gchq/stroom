@@ -43,15 +43,16 @@ import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 
 class ContentResourceImpl implements ContentResource {
+
     private final ImportExportService importExportService;
     private final StroomEventLoggingService stroomEventLoggingService;
     private final ResourceStore resourceStore;

@@ -39,6 +39,7 @@ public class ImportExportModule extends AbstractModule {
     }
 
     private static class ContentPackImportStartup extends RunnableWrapper {
+
         @Inject
         ContentPackImportStartup(final ContentPackImport contentPackImport) {
             super(contentPackImport::startup);

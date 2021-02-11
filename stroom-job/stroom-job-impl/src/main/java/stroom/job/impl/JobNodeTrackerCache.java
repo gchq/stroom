@@ -37,6 +37,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class JobNodeTrackerCache {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.
     private static final long DEFAULT_REFRESH_INTERVAL = 10000;
@@ -112,6 +113,7 @@ class JobNodeTrackerCache {
     }
 
     static class Trackers {
+
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();

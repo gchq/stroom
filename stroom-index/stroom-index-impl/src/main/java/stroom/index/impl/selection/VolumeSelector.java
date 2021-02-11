@@ -21,6 +21,7 @@ import stroom.index.shared.IndexVolume;
 import java.util.List;
 
 public interface VolumeSelector {
+
     String getName();
 
     IndexVolume select(List<IndexVolume> list);

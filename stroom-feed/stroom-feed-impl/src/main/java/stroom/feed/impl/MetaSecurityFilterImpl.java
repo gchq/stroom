@@ -17,6 +17,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class MetaSecurityFilterImpl implements MetaSecurityFilter {
+
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
 

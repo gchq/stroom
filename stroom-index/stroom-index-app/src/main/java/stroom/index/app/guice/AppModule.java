@@ -1,10 +1,12 @@
 package stroom.index.app.guice;
 
-import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
 import stroom.index.app.Config;
 
+import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
+
 public class AppModule extends AbstractModule {
+
     private final Config configuration;
     private final Environment environment;
 

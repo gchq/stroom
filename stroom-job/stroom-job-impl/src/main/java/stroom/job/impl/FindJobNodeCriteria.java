@@ -33,12 +33,13 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindJobNodeCriteria extends BaseCriteria {
+
     public static final String FIELD_ID = "Id";
 
     @JsonProperty
-    private StringCriteria jobName;
+    private final StringCriteria jobName;
     @JsonProperty
-    private StringCriteria nodeName;
+    private final StringCriteria nodeName;
 
     public FindJobNodeCriteria() {
         jobName = new StringCriteria();

@@ -41,6 +41,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class JobBootstrap {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
 
@@ -125,7 +126,9 @@ class JobBootstrap {
                     if (existingJobNode == null) {
                         LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                                 "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                                (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                                (newJobNode.isEnabled()
+                                        ? "ENABLED"
+                                        : "DISABLED") + ")");
 
                         AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                         jobNodeDao.create(newJobNode);
@@ -164,7 +167,9 @@ class JobBootstrap {
 
                     LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
                             "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+                            (newJobNode.isEnabled()
+                                    ? "ENABLED"
+                                    : "DISABLED") + ")");
 
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);

@@ -24,13 +24,18 @@ import java.lang.reflect.Method;
 import java.util.Comparator;
 
 public class Property {
+
     private final String name;
     private final boolean externalFile;
     private final ExtensionProvider extensionProvider;
     private final Method getMethod;
     private final Method setMethod;
 
-    public Property(final String name, final boolean externalFile, final ExtensionProvider extensionProvider, final Method getMethod, final Method setMethod) {
+    public Property(final String name,
+                    final boolean externalFile,
+                    final ExtensionProvider extensionProvider,
+                    final Method getMethod,
+                    final Method setMethod) {
         this.name = name;
         this.externalFile = externalFile;
         this.extensionProvider = extensionProvider;
@@ -76,6 +81,7 @@ public class Property {
     }
 
     public static final class NameComparator implements Comparator<Property>, Serializable {
+
         private static final long serialVersionUID = -7544586669631049101L;
 
         @Override

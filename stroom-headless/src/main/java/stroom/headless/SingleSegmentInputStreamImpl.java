@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 class SingleSegmentInputStreamImpl extends SegmentInputStream {
+
     private final InputStream inputStream;
     private final long size;
 

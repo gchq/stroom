@@ -39,11 +39,6 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,11 +52,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Command line tool to process some files from a proxy stroom.
  */
 public class Cli extends AbstractCommandLineTool {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
     private String input;
@@ -235,19 +236,22 @@ public class Cli extends AbstractCommandLineTool {
         try {
             // Loop over all of the data files in the repository.
             try {
-                Files.walkFileTree(inputDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                    @Override
-                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                        try {
-                            if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
-                                process(errorWriter, file);
+                Files.walkFileTree(inputDir,
+                        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                        Integer.MAX_VALUE,
+                        new AbstractFileVisitor() {
+                            @Override
+                            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                                try {
+                                    if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                        process(errorWriter, file);
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
+                                return super.visitFile(file, attrs);
                             }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-                        return super.visitFile(file, attrs);
-                    }
-                });
+                        });
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

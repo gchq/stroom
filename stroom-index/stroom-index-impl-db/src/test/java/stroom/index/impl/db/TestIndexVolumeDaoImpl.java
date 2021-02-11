@@ -1,15 +1,16 @@
 package stroom.index.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.jooq.exception.DataAccessException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.jooq.exception.DataAccessException;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexVolumeDaoImpl {
+
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
 

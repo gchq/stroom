@@ -1,9 +1,5 @@
 package stroom.index.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
@@ -15,11 +11,17 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexShardDaoImpl {
+
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
     private static IndexShardDao indexShardDao;

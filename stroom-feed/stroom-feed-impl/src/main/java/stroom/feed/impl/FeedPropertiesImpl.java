@@ -14,6 +14,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 public class FeedPropertiesImpl implements FeedProperties {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedPropertiesImpl.class);
 
     private final FeedDocCache feedDocCache;
@@ -38,7 +39,7 @@ public class FeedPropertiesImpl implements FeedProperties {
 
     /**
      * @param feedName
-     * @param streamTypeName The name of the stream type, e.g. Raw Reference
+     * @param streamTypeName      The name of the stream type, e.g. Raw Reference
      * @param childStreamTypeName The name of the child stream type, e.g. Context, or null for the data child stream
      *                            or if not applicable
      * @return The applicable encoding
@@ -76,7 +77,7 @@ public class FeedPropertiesImpl implements FeedProperties {
             LOGGER.error("Unsupported charset '" + encoding
                     + "'. Using default '" + StreamUtil.DEFAULT_CHARSET_NAME + "'.");
         }
-        return  isSupported;
+        return isSupported;
     }
 
     @Override

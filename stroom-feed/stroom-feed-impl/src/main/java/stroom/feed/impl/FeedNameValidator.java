@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FeedNameValidator {
+
     private final FeedConfig config;
     private Pattern pattern;
     private String lastRegex;

@@ -21,6 +21,7 @@ import stroom.index.shared.IndexVolume;
 import java.util.List;
 
 public class RoundRobinIgnoreLeastFreePercentVolumeSelector implements VolumeSelector {
+
     public static final String NAME = "RoundRobinIgnoreLeastFreePercent";
 
     private final RoundRobinVolumeSelector roundRobinVolumeSelector = new RoundRobinVolumeSelector();

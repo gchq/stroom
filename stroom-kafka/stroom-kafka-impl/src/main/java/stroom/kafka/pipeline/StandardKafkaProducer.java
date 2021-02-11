@@ -44,12 +44,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -60,6 +54,12 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Pipeline filter element that expects XML documents that conform to kafka-records:1 format and creates corresponding
@@ -250,7 +250,9 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                     } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
                         Long timestamp = createTimestamp(atts.getValue(i));
                         if (timestamp == null) {
-                            log(Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i), null);
+                            log(Severity.ERROR,
+                                    "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i),
+                                    null);
                         } else {
                             state.timestamp = timestamp;
                         }

@@ -32,6 +32,7 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 @Deprecated
 public class V07_00_00_011__Xslt extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
         final XsltSerialiser serialiser = new XsltSerialiser(new Serialiser2FactoryImpl());

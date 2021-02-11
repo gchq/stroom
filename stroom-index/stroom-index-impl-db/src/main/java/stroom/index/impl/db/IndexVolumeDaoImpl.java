@@ -13,14 +13,12 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -28,11 +26,13 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 class IndexVolumeDaoImpl implements IndexVolumeDao {
+
     static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setId(record.get(INDEX_VOLUME.ID));

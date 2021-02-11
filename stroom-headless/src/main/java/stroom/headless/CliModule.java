@@ -50,6 +50,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class CliModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new MockActivityModule());

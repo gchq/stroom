@@ -34,6 +34,7 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.AbstractModule;
 
 public class MockIndexModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new IndexElementModule());

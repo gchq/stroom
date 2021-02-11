@@ -33,6 +33,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindJobCriteria extends FindNamedEntityCriteria {
+
     public static final String FIELD_ID = "Id";
     public static final String FIELD_ADVANCED = "Advanced";
 

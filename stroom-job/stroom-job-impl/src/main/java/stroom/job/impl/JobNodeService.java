@@ -37,6 +37,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class JobNodeService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
@@ -70,8 +71,8 @@ class JobNodeService {
 
     JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(
-            PermissionNames.MANAGE_JOBS_PERMISSION,
-            () -> jobNodeDao.find(findJobNodeCriteria));
+                PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> jobNodeDao.find(findJobNodeCriteria));
     }
 
     JobNodeInfo getInfo(final String jobName) {

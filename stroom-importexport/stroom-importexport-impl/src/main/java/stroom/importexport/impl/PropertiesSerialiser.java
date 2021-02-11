@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public final class PropertiesSerialiser {
+
     /**
      * A table of hex digits
      */
@@ -41,9 +42,9 @@ public final class PropertiesSerialiser {
                 String val = properties.getProperty(key);
                 if (val != null) {
                     key = saveConvert(key, true, true);
-                /* No need to escape embedded and trailing spaces for value, hence
-                 * pass false to flag.
-                 */
+                    /* No need to escape embedded and trailing spaces for value, hence
+                     * pass false to flag.
+                     */
                     val = saveConvert(val, false, true);
                     bw.write(key + "=" + val);
                     bw.newLine();
@@ -57,8 +58,8 @@ public final class PropertiesSerialiser {
      * special characters with a preceding slash
      */
     private static String saveConvert(String theString,
-                               boolean escapeSpace,
-                               boolean escapeUnicode) {
+                                      boolean escapeSpace,
+                                      boolean escapeUnicode) {
         int len = theString.length();
         int bufLen = len * 2;
         if (bufLen < 0) {

@@ -38,6 +38,7 @@ import javax.inject.Singleton;
 
 @Singleton
 class JobService {
+
     private final JobDao jobDao;
     private final SecurityContext securityContext;
 
@@ -64,7 +65,8 @@ class JobService {
 
         // Distributed Jobs done a different way
         distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
-            final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
+            final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(
+                    DistributedTaskFactoryDescription.class);
             jobDescriptionMap.put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
         });
     }
@@ -83,7 +85,8 @@ class JobService {
     }
 
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
-        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
+        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> jobDao.find(findJobCriteria));
         results.getValues().forEach(this::decorate);
 
         if (findJobCriteria.getSortList().size() > 0) {

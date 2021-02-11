@@ -19,7 +19,10 @@ public interface ImportExportActionHandler extends HasDependencies {
      * @param importMode
      * @return a tuple containing the imported DocRef and a String location where it is imported to
      */
-    ImpexDetails importDocument(DocRef docRef, Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode);
+    ImpexDetails importDocument(DocRef docRef,
+                                Map<String, byte[]> dataMap,
+                                final ImportState importState,
+                                final ImportMode importMode);
 
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
