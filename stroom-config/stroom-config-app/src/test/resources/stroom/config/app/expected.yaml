@@ -593,7 +593,6 @@ appConfig:
           transport: "plain"
           username: "username"
           password: "password"
-          transportStrategy: "SMTP_PLAIN"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
