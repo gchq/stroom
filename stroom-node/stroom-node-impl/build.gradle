@@ -26,6 +26,7 @@ dependencies {
     compile libs.validation_api
     
     testCompile project(':stroom-test-common')
+    testCompile project(':stroom-security:stroom-security-mock')
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
