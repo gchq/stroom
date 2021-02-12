@@ -28,7 +28,6 @@ import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.impl.validation.ValidationModule;
-import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -91,8 +90,6 @@ public class App extends Application<Config> {
     private Servlets servlets;
     @Inject
     private SessionListeners sessionListeners;
-    @Inject
-    private DelegatingExceptionMapper delegatingExceptionMapper;
     @Inject
     private RestResources restResources;
     @Inject
@@ -224,9 +221,6 @@ public class App extends Application<Config> {
 
         Guice.createInjector(appModule).injectMembers(this);
 
-        //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
-        environment.jersey().register(resourceAutoLogger);
-
         // Add health checks
         healthChecks.register();
 
@@ -242,8 +236,8 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Add jersey exception mappers.
-        environment.jersey().register(delegatingExceptionMapper);
+        // Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
+        environment.jersey().register(resourceAutoLogger);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();

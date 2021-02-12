@@ -16,6 +16,7 @@
 
 package stroom.event.logging.rs.impl;
 
+import stroom.dropwizard.common.BasicExceptionMapper;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
@@ -59,63 +60,52 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRestResourceAutoLogger {
 
+    RestResourceAutoLoggerImpl filter;
+    ObjectMapper objectMapper;
+    Random random = new Random();
     private final HttpServletRequest request = new MockHttpServletRequest();
-
     private final MockContainerRequestContext requestContext = new MockContainerRequestContext();
-
     private final SecurityContext securityContext = new MockSecurityContext();
-
     @Mock
     private DocumentEventLog documentEventLog;
-
     private RequestEventLog requestEventLog;
-
     private final StroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
-
     @Mock
     private ResourceInfo resourceInfo;
-
     @Mock
     private WriterInterceptorContext writerInterceptorContext;
-
     private final RequestLoggingConfig config = new RequestLoggingConfig();
-
     @Captor
     private ArgumentCaptor<Object> objectCaptor;
-
     @Captor
     private ArgumentCaptor<Object> outcomeObjectCaptor;
-
     @Captor
     private ArgumentCaptor<String> listContentCaptor;
-
     @Captor
     private ArgumentCaptor<String> eventTypeIdCaptor;
-
     @Captor
     private ArgumentCaptor<String> verbCaptor;
-
     @Captor
     private ArgumentCaptor<Throwable> throwableCaptor;
-
     @Captor
     private ArgumentCaptor<Query> queryCaptor;
-
     @Captor
     private ArgumentCaptor<PageResponse> pageResponseCaptor;
-
-    RestResourceAutoLoggerImpl filter;
-
-    ObjectMapper objectMapper;
-
-    Random random = new Random();
-
-    private final Injector injector;
+    private Injector injector;
 
     private AutoCloseable closeable;
 
     TestRestResourceAutoLogger() {
         injector = Guice.createInjector(new MockRsLoggingModule());
+    }
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
     }
 
     @Test
@@ -399,7 +389,12 @@ public class TestRestResourceAutoLogger {
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(config, documentEventLog, securityContext, eventLoggingService);
 
-        filter = new RestResourceAutoLoggerImpl(requestEventLog, config, resourceInfo, request);
+        filter = new RestResourceAutoLoggerImpl(
+                requestEventLog,
+                config,
+                resourceInfo,
+                request,
+                new BasicExceptionMapper());
     }
 
     @AfterEach
@@ -407,16 +402,6 @@ public class TestRestResourceAutoLogger {
         if (closeable != null) {
             closeable.close();
         }
-    }
-
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     public static class TestObj implements Serializable {

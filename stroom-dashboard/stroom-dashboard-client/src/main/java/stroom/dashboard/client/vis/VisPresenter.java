@@ -33,7 +33,6 @@ import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -75,7 +74,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
-    private static final int MAX_RESULTS = 1000;
+    //    private static final int MAX_RESULTS = 1000;
     private static final long UPDATE_INTERVAL = 2000;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
@@ -408,7 +407,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                             }
                         }
                     } else {
-                        failure(function, "No visualisaton found for: " + getVisSettings().getVisualisation());
+                        failure(function,
+                                "No visualisation found for: " + getVisSettings().getVisualisation());
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
@@ -586,7 +586,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
-                .requestedRange(new OffsetRange(0, MAX_RESULTS))
+//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(fetch)
                 .build();
     }
@@ -599,7 +599,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
-                .requestedRange(new OffsetRange(0, MAX_RESULTS))
+//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(Fetch.ALL)
                 .build();
     }

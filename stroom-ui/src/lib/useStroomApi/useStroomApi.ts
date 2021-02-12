@@ -10,14 +10,14 @@ import { HttpError } from "../ErrorTypes";
 const apiPath = process.env.REACT_APP_API_PATH;
 
 export const baseApiParams: RequestParams = {
-  credentials: "same-origin",
+  // credentials: "same-origin",
   headers: {
     "Content-Type": "application/json",
   },
   redirect: "follow",
   referrerPolicy: "no-referrer",
-  // mode: "cors",
-  // credentials: "include",
+  mode: "cors",
+  credentials: "include",
 };
 
 export const apiConfig = {
@@ -102,8 +102,13 @@ export const useStroomApi = <T>(): StroomApi<T> => {
 
   const catchImpl = React.useCallback(
     (error: any) => {
+      while (error.error) {
+        error = error.error;
+      }
+
       const msg = `Error, Status ${error.status}, Msg: ${error.message}`;
       console.log(msg);
+
       if (error.message !== undefined) {
         try {
           const json = JSON.parse(error.message);
