@@ -66,10 +66,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ImportConfigConfirmPresenter extends
-        MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView, ImportConfigConfirmPresenter.ImportConfirmProxy>
+        MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
+                ImportConfigConfirmPresenter.ImportConfirmProxy>
         implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
 
-    private static final ContentResource CONTENT_RESOURCE = com.google.gwt.core.client.GWT.create(ContentResource.class);
+    private static final ContentResource CONTENT_RESOURCE =
+            com.google.gwt.core.client.GWT.create(ContentResource.class);
 
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
@@ -79,8 +81,10 @@ public class ImportConfigConfirmPresenter extends
     private List<ImportState> confirmList;
 
     @Inject
-    public ImportConfigConfirmPresenter(final EventBus eventBus, final ImportConfigConfirmView view,
-                                        final ImportConfirmProxy proxy, final TooltipPresenter tooltipPresenter,
+    public ImportConfigConfirmPresenter(final EventBus eventBus,
+                                        final ImportConfigConfirmView view,
+                                        final ImportConfirmProxy proxy,
+                                        final TooltipPresenter tooltipPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
 
@@ -115,14 +119,30 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Confirm Import", this);
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
+
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Confirm Import",
+                this);
     }
 
     @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         // Disable the popup ok/cancel buttons before we attempt import.
-        DisablePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this);
+        DisablePopupEvent.fire(
+                ImportConfigConfirmPresenter.this,
+                ImportConfigConfirmPresenter.this);
 
         if (ok) {
             boolean warnings = false;
@@ -139,11 +159,13 @@ public class ImportConfigConfirmPresenter extends
             }
 
             if (count == 0) {
-                AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "No items are selected for import", () -> {
-                    // Re-enable popup buttons.
-                    EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                            ImportConfigConfirmPresenter.this);
-                });
+                AlertEvent.fireWarn(
+                        ImportConfigConfirmPresenter.this,
+                        "No items are selected for import", () -> {
+                            // Re-enable popup buttons.
+                            EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                                    ImportConfigConfirmPresenter.this);
+                        });
             } else if (warnings) {
                 ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "There are warnings in the items selected.  Are you sure you want to import?.",
@@ -376,15 +398,20 @@ public class ImportConfigConfirmPresenter extends
     public void importData() {
         final Rest<ResourceKey> rest = restFactory.create();
         rest
-                .onSuccess(result2 -> AlertEvent.fireInfo(ImportConfigConfirmPresenter.this, "Import Complete", () -> {
-                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false,
-                            true);
-                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
+                .onSuccess(result2 ->
+                        AlertEvent.fireInfo(
+                                ImportConfigConfirmPresenter.this,
+                                "Import Complete", () -> {
+                                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                                            ImportConfigConfirmPresenter.this,
+                                            false,
+                                            true);
+                                    RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
-                    // We might have loaded a new visualisation or updated
-                    // an existing one.
-                    clearCaches();
-                }))
+                                    // We might have loaded a new visualisation or updated
+                                    // an existing one.
+                                    clearCaches();
+                                }))
                 .onFailure(caught -> {
                     HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
                             ImportConfigConfirmPresenter.this,

@@ -49,7 +49,8 @@ import java.util.stream.Collectors;
 public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
         implements IndexSettingsUiHandlers {
 
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final RestFactory restFactory;
 

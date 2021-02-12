@@ -41,6 +41,7 @@ import javax.inject.Inject;
  * Task to clean the stream store.
  */
 class FsCleanSubTaskHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanSubTaskHandler.class);
 
     private final DataStoreMaintenanceService streamMaintenanceService;
@@ -62,9 +63,15 @@ class FsCleanSubTaskHandler {
         this.config = config;
     }
 
-    public void exec(final TaskContext taskContext, final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
+    public void exec(final TaskContext taskContext,
+                     final FsCleanSubTask task,
+                     final Consumer<List<String>> deleteListConsumer) {
         securityContext.secure(PermissionNames.DELETE_DATA_PERMISSION, () -> {
-            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
+            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#",
+                    1,
+                    1,
+                    config.getFileSystemCleanBatchSize(),
+                    Integer.MAX_VALUE);
             final Executor executor = executorProvider.get(threadPool);
 
             taskContext.info(() -> "Cleaning: " + task.getVolume().getPath() + " - " + task.getPath());
@@ -88,7 +95,8 @@ class FsCleanSubTaskHandler {
 
                 // Add a log line to indicate progress 1/3,44/100
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("createRunnableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() + ".  Scanned "
+                    LOGGER.debug("createRunnableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() +
+                            ".  Scanned "
                             + ModelStringUtil.formatCsv(result.getFileCount()) + " files, deleted "
                             + ModelStringUtil.formatCsv(result.getDeleteList().size()) + ", too new to delete "
                             + ModelStringUtil.formatCsv(result.getTooNewToDeleteCount()) + ".  Totals "
@@ -106,7 +114,12 @@ class FsCleanSubTaskHandler {
 
                         final CountDownLatch countDownLatch = new CountDownLatch(childDirectoryList.size());
                         for (final String subPath : childDirectoryList) {
-                            final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix(), task.getOldAge(), task.isDelete());
+                            final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(),
+                                    task.getVolume(),
+                                    subPath,
+                                    task.getLogPrefix(),
+                                    task.getOldAge(),
+                                    task.isDelete());
                             final Runnable runnable = taskContextFactory
                                     .context(taskContext, "File system clean", tc ->
                                             exec(tc, subTask, deleteListConsumer));

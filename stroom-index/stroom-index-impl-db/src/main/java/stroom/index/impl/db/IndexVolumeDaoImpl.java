@@ -56,27 +56,28 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return indexVolume;
     };
 
-    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER = (indexVolume, record) -> {
-        record.from(indexVolume);
-        record.set(INDEX_VOLUME.ID, indexVolume.getId());
-        record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());
-        record.set(INDEX_VOLUME.CREATE_TIME_MS, indexVolume.getCreateTimeMs());
-        record.set(INDEX_VOLUME.CREATE_USER, indexVolume.getCreateUser());
-        record.set(INDEX_VOLUME.UPDATE_TIME_MS, indexVolume.getUpdateTimeMs());
-        record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
-        record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
-        record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
-        record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
-        if (indexVolume.getState() != null) {
-            record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
-        }
-        record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
-        record.set(INDEX_VOLUME.BYTES_USED, indexVolume.getBytesUsed());
-        record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());
-        record.set(INDEX_VOLUME.BYTES_TOTAL, indexVolume.getBytesTotal());
-        record.set(INDEX_VOLUME.STATUS_MS, indexVolume.getStatusMs());
-        return record;
-    };
+    private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER =
+            (indexVolume, record) -> {
+                record.from(indexVolume);
+                record.set(INDEX_VOLUME.ID, indexVolume.getId());
+                record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());
+                record.set(INDEX_VOLUME.CREATE_TIME_MS, indexVolume.getCreateTimeMs());
+                record.set(INDEX_VOLUME.CREATE_USER, indexVolume.getCreateUser());
+                record.set(INDEX_VOLUME.UPDATE_TIME_MS, indexVolume.getUpdateTimeMs());
+                record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
+                record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
+                record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
+                record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
+                if (indexVolume.getState() != null) {
+                    record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
+                }
+                record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
+                record.set(INDEX_VOLUME.BYTES_USED, indexVolume.getBytesUsed());
+                record.set(INDEX_VOLUME.BYTES_FREE, indexVolume.getBytesFree());
+                record.set(INDEX_VOLUME.BYTES_TOTAL, indexVolume.getBytesTotal());
+                record.set(INDEX_VOLUME.STATUS_MS, indexVolume.getStatusMs());
+                return record;
+            };
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeRecord, IndexVolume, Integer> genericDao;

@@ -102,7 +102,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     @Override
     public IndexVolumeGroup get(final int id) {
         ensureDefaultVolumes();
-        return securityContext.secureResult(() -> indexVolumeGroupDao.get(id));
+        return securityContext.secureResult(() ->
+                indexVolumeGroupDao.get(id));
     }
 
     @Override
@@ -114,7 +115,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .collect(Collectors.toList());
-                    indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
+                    indexVolumesInGroup.forEach(indexVolume ->
+                            indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
                 });
     }
@@ -132,7 +134,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
-                        List<String> allVolGroups = getNames();
+                        final List<String> allVolGroups = getNames();
 
                         if (allVolGroups == null || allVolGroups.size() == 0) {
                             if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
@@ -154,16 +156,17 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                     if (nodes.size() == paths.size()) {
                                         int i = 0;
                                         for (String path : paths) {
-                                            Path resolvedPath = Paths.get(
+                                            final Path resolvedPath = Paths.get(
                                                     pathCreator.makeAbsolute(
                                                             pathCreator.replaceSystemProperties(path)));
 
                                             LOGGER.info("Creating index volume with path {}",
                                                     resolvedPath.toAbsolutePath().normalize());
 
-                                            OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath.toString());
+                                            final OptionalLong byteLimitOption = getDefaultVolumeLimit(
+                                                    resolvedPath.toString());
 
-                                            IndexVolume indexVolume = new IndexVolume();
+                                            final IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
                                             indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
                                             indexVolume.setNodeName(nodes.get(i++));
@@ -208,7 +211,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
     private OptionalLong getDefaultVolumeLimit(final String path) {
         try {
-            File parentDir = new File(path);
+            final File parentDir = new File(path);
             parentDir.mkdirs();
             long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
             // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the

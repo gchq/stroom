@@ -328,8 +328,8 @@ public class IndexShard {
         // Corrupt - Used to mark shard has been corrupted
         CORRUPT("Corrupt", 100);
 
-        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                values());
+        public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER =
+                new PrimitiveValueConverter<>(values());
 
         private final String displayValue;
         private final byte primitiveValue;

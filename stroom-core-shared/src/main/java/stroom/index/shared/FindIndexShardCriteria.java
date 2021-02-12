@@ -80,15 +80,17 @@ public class FindIndexShardCriteria extends BaseCriteria {
     }
 
     @JsonCreator
-    public FindIndexShardCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                  @JsonProperty("documentCountRange") final Range<Integer> documentCountRange,
-                                  @JsonProperty("nodeNameSet") final Selection<String> nodeNameSet,
-                                  @JsonProperty("volumeIdSet") final Selection<Integer> volumeIdSet,
-                                  @JsonProperty("indexUuidSet") final Selection<String> indexUuidSet,
-                                  @JsonProperty("indexShardIdSet") final Selection<Long> indexShardIdSet,
-                                  @JsonProperty("indexShardStatusSet") final Selection<IndexShardStatus> indexShardStatusSet,
-                                  @JsonProperty("partition") final StringCriteria partition) {
+    public FindIndexShardCriteria(
+            @JsonProperty("pageRequest") final PageRequest pageRequest,
+            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+            @JsonProperty("documentCountRange") final Range<Integer> documentCountRange,
+            @JsonProperty("nodeNameSet") final Selection<String> nodeNameSet,
+            @JsonProperty("volumeIdSet") final Selection<Integer> volumeIdSet,
+            @JsonProperty("indexUuidSet") final Selection<String> indexUuidSet,
+            @JsonProperty("indexShardIdSet") final Selection<Long> indexShardIdSet,
+            @JsonProperty("indexShardStatusSet") final Selection<IndexShardStatus> indexShardStatusSet,
+            @JsonProperty("partition") final StringCriteria partition) {
+
         super(pageRequest, sortList);
         this.documentCountRange = documentCountRange;
         this.nodeNameSet = nodeNameSet;

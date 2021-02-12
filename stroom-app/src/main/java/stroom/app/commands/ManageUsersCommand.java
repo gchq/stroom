@@ -33,7 +33,11 @@ import javax.inject.Inject;
 /**
  * Creates an account in the internal identity provider
  * <p>
- * e.g manage_users ../local.yml --createUser admin --createGroup Administrators --addToGroup admin Administrators --grantPermission Administrators Administrator
+ * e.g manage_users ../local.yml
+ * --createUser admin
+ * --createGroup Administrators
+ * --addToGroup admin Administrators
+ * --grantPermission Administrators Administrator
  */
 public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 

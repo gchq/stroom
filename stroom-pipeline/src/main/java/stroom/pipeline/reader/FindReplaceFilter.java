@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FindReplaceFilter extends FilterReader {
+
     private static final int MIN_SIZE = 1000;
 
     private final Pattern pattern;
@@ -111,15 +112,22 @@ public class FindReplaceFilter extends FilterReader {
                 final boolean matchedBufferEnd = end == charSequence.length() && !inBuffer.isEof();
 
                 if (matchedBufferStart && matchedBufferEnd) {
-                    // If we matched all text in the buffer but aren't actually at the start of the stream or at the end then this is not likely to be correct.
-                    error("The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
+                    // If we matched all text in the buffer but aren't actually at the start of the stream or
+                    // at the end then this is not likely to be correct.
+                    error("The pattern matched all text in the buffer. Consider changing your match expression " +
+                            "or making the buffer bigger.");
                 } else if (matchedBufferEnd) {
                     if (!inBuffer.isEof()) {
-                        // If we matched to the end of the buffer and we are not at the end of the stream then this is not likely to be correct.
-                        error("The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+                        // If we matched to the end of the buffer and we are not at the end of the stream then
+                        // this is not likely to be correct.
+                        error("The pattern matched text at the end of the buffer when we are not at the end of " +
+                                "the stream. Consider changing your match expression or making the buffer bigger");
                     }
                 } else {
-                    // Append the replacement. Note that we do this with a separate buffer as we don't actually want to keep the start of the string that occurs before the `lastPosition` that is added by appendReplacement. We are using `lastPosition` in our matches so that matches after the first do not match a start anchor.
+                    // Append the replacement. Note that we do this with a separate buffer as we don't actually
+                    // want to keep the start of the string that occurs before the `lastPosition` that is added
+                    // by appendReplacement. We are using `lastPosition` in our matches so that matches after
+                    // the first do not match a start anchor.
                     matcher.appendReplacement(replacementBuffer, replacement);
                     outBuffer.append(replacementBuffer, inputOffset, replacementBuffer.length());
                     replacementBuffer.setLength(0);
@@ -129,7 +137,8 @@ public class FindReplaceFilter extends FilterReader {
                     if (advance > 0) {
                         move(Math.min(inBuffer.length(), advance));
                     } else {
-                        // Copy a single char to at least advance rather than getting stuck at this position. This mimics the behaviour of`replaceAll()`.
+                        // Copy a single char to at least advance rather than getting stuck at this position.
+                        // This mimics the behaviour of`replaceAll()`.
                         copyBuffer(Math.min(inBuffer.length(), 1));
                     }
 
@@ -137,8 +146,10 @@ public class FindReplaceFilter extends FilterReader {
                     replacementCount++;
                     totalReplacementCount++;
 
-                    // Stop any further replacements if we got to our max replacement count or didn't advance and are at the end of the input.
-                    if (replacementCount == maxReplacements || (advance == 0 && inBuffer.isEof() && inBuffer.length() == 0)) {
+                    // Stop any further replacements if we got to our max replacement count or didn't advance
+                    // and are at the end of the input.
+                    if (replacementCount == maxReplacements
+                            || (advance == 0 && inBuffer.isEof() && inBuffer.length() == 0)) {
                         allowReplacement = false;
                     }
                 }
@@ -252,7 +263,8 @@ public class FindReplaceFilter extends FilterReader {
             boolean doneReplacement = false;
             if (outBuffer.length() == 0) {
                 if (allowReplacement) {
-                    // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
+                    // Read text into the input buffer, replace the first match if possible and copy replaced
+                    // text to the output buffer.
                     doneReplacement = performReplacement();
 
                 } else {
@@ -267,13 +279,17 @@ public class FindReplaceFilter extends FilterReader {
                 }
             }
 
-            // Copy text from the output buffer to the supplied char array up to the requested length or length of the output buffer.
+            // Copy text from the output buffer to the supplied char array up to the requested length or
+            // length of the output buffer.
             len = Math.min(length, outBuffer.length());
             outBuffer.getChars(0, len, cbuf, offset);
 
-            // If there was nothing left in the output buffer, we didn't return any content and we are EOF then return -1.
+            // If there was nothing left in the output buffer, we didn't return any content and we are
+            // EOF then return -1.
             if (len == 0 && inBuffer.isEof()) {
-                len = doneReplacement ? 0 : -1;
+                len = doneReplacement
+                        ? 0
+                        : -1;
             } else {
                 // Move the offset in the output buffer ready for the next read operation.
                 outBuffer.move(len);
@@ -317,6 +333,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     static class PaddingWrapper implements CharSequence {
+
         private static final char PADDING = (char) 0;
 
         private final CharSequence charSequence;
@@ -370,6 +387,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     static class SubSequence implements CharSequence {
+
         private final CharSequence charSequence;
         private final int start;
         private final int end;
@@ -402,6 +420,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     private static class InBuffer extends CharBuffer {
+
         private final int initialSize;
         private final int capacity;
         private final int halfCapacity;
@@ -484,6 +503,7 @@ public class FindReplaceFilter extends FilterReader {
 
 
     private static class OutBuffer {
+
         private StringBuilder sb = new StringBuilder();
         private int offset;
 
@@ -531,6 +551,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     static final class Builder {
+
         private Reader reader;
         private String find;
         private String replacement = "";
@@ -598,7 +619,16 @@ public class FindReplaceFilter extends FilterReader {
         }
 
         public FindReplaceFilter build() {
-            return new FindReplaceFilter(reader, find, replacement, maxReplacements, regex, dotAll, bufferSize, locationFactory, errorReceiver, elementId);
+            return new FindReplaceFilter(reader,
+                    find,
+                    replacement,
+                    maxReplacements,
+                    regex,
+                    dotAll,
+                    bufferSize,
+                    locationFactory,
+                    errorReceiver,
+                    elementId);
         }
     }
 }

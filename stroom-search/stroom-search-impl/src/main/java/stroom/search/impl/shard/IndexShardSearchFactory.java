@@ -122,11 +122,13 @@ public class IndexShardSearchFactory {
         receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
-    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task,
-                                                                final ExpressionOperator expression,
-                                                                final IndexFieldsMap indexFieldsMap,
-                                                                final Map<Version, Optional<SearchExpressionQuery>> queryMap,
-                                                                final Consumer<Throwable> errorConsumer) {
+    private IndexShardQueryFactory createIndexShardQueryFactory(
+            final ClusterSearchTask task,
+            final ExpressionOperator expression,
+            final IndexFieldsMap indexFieldsMap,
+            final Map<Version, Optional<SearchExpressionQuery>> queryMap,
+            final Consumer<Throwable> errorConsumer) {
+
         return new IndexShardQueryFactory() {
             @Override
             public Query getQuery(final Version luceneVersion) {
@@ -137,7 +139,8 @@ public class IndexShardSearchFactory {
                 return optional.map(SearchExpressionQuery::getQuery).orElse(null);
             }
 
-            private Optional<SearchExpressionQuery> getQuery(final Version version, final ExpressionOperator expression,
+            private Optional<SearchExpressionQuery> getQuery(final Version version,
+                                                             final ExpressionOperator expression,
                                                              final IndexFieldsMap indexFieldsMap) {
                 try {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(

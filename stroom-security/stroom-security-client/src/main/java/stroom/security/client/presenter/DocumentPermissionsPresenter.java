@@ -115,7 +115,8 @@ public class DocumentPermissionsPresenter
                 final Rest<DocumentPermissions> rest = restFactory.create();
                 rest
                         .onSuccess(documentPermissions -> {
-                            // We want to wipe existing permissions, which means updating the removeSet on the changeSet.
+                            // We want to wipe existing permissions, which means updating the removeSet on the
+                            // changeSet.
                             final Map<String, Set<String>> permissionsToRemove = new HashMap<>();
                             permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getPermissions());
                             permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getPermissions());

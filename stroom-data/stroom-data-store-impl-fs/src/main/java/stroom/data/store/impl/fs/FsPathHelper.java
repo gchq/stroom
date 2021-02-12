@@ -346,12 +346,13 @@ class FsPathHelper {
     }
 
     boolean isStreamTypeLazy(final String streamTypeName) {
-        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(
-                streamTypeName);
+        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)
+                || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 //
 //    static boolean isStreamTypeSegment(final String streamTypeName) {
-//        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+//        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)
+//        || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
 //    }
 
     /**

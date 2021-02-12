@@ -53,7 +53,8 @@ class HeapHistogramStatisticsExecutor {
         try {
             Instant startTme = Instant.now();
             LOGGER.info("Java Heap Histogram Statistics job started");
-            List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries = heapHistogramService.generateHeapHistogram();
+            final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries =
+                    heapHistogramService.generateHeapHistogram();
             processHistogramEntries(heapHistogramEntries);
             LOGGER.info("Java Heap Histogram Statistics job completed in {}",
                     Duration.between(startTme, Instant.now()).toString());
@@ -82,11 +83,12 @@ class HeapHistogramStatisticsExecutor {
                 "Instances");
     }
 
-    private void mapToStatEventAndSend(final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
-                                       final Function<HeapHistogramService.HeapHistogramEntry, InternalStatisticEvent> mapper,
-                                       final String type) {
+    private void mapToStatEventAndSend(
+            final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries,
+            final Function<HeapHistogramService.HeapHistogramEntry, InternalStatisticEvent> mapper,
+            final String type) {
 
-        List<InternalStatisticEvent> statisticEvents = heapHistogramEntries.stream()
+        final List<InternalStatisticEvent> statisticEvents = heapHistogramEntries.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
 
@@ -95,9 +97,11 @@ class HeapHistogramStatisticsExecutor {
         internalStatisticsReceiver.putEvents(statisticEvents);
     }
 
-    private static InternalStatisticEvent buildBytesEvent(final long statTimeMs,
-                                                          final Map.Entry<String, String> nodeTag,
-                                                          final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+    private static InternalStatisticEvent buildBytesEvent(
+            final long statTimeMs,
+            final Map.Entry<String, String> nodeTag,
+            final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+
         return InternalStatisticEvent.createValueStat(
                 InternalStatisticKey.HEAP_HISTOGRAM_BYTES,
                 statTimeMs,
@@ -105,9 +109,11 @@ class HeapHistogramStatisticsExecutor {
                 (double) heapHistogramEntry.getBytes());
     }
 
-    private static InternalStatisticEvent buildInstancesEvent(final long statTimeMs,
-                                                              final Map.Entry<String, String> nodeTag,
-                                                              final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+    private static InternalStatisticEvent buildInstancesEvent(
+            final long statTimeMs,
+            final Map.Entry<String, String> nodeTag,
+            final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
+
         return InternalStatisticEvent.createValueStat(
                 InternalStatisticKey.HEAP_HISTOGRAM_INSTANCES,
                 statTimeMs,

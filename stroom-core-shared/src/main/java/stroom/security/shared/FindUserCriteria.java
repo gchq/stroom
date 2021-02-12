@@ -41,7 +41,8 @@ public class FindUserCriteria extends BaseCriteria {
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
 
-    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(FIELD_DEF_NAME);
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(
+            FIELD_DEF_NAME);
 
     /**
      * Find user groups

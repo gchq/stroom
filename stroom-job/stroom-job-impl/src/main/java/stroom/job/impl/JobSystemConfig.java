@@ -54,8 +54,8 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
     }
 
     @JsonPropertyDescription("On boot Stroom will ensure all distributed " +
-            "jobs are created. If this property is set to true the distributed jobs will be set to enabled on creation, " +
-            "else they will be disabled. Data Processing is one such job. " +
+            "jobs are created. If this property is set to true the distributed jobs will be set to enabled " +
+            "on creation, else they will be disabled. Data Processing is one such job. " +
             "This only applies to a fresh install, an upgrade or the addition of a new node to the cluster." +
             "This property should be set to false " +
             "for production systems to avoid the risk of processing starting immediately after an upgrade.")

@@ -253,7 +253,8 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
     /**
-     * Parsing dates that use week fields has to be done differently as week based parsing does not seem to cope with conflicting default values for fields.
+     * Parsing dates that use week fields has to be done differently as week based parsing does not seem to
+     * cope with conflicting default values for fields.
      */
     private Function<String, Long> createWeekBasedParser(final FieldSet fieldSet,
                                                          final DateTimeFormatterBuilder builder,
@@ -312,7 +313,9 @@ class FormatDate extends StroomExtensionFunctionCall {
 //        ZonedDateTime dateTime;
 //
 //        // Don't use the defaulting formatter if we can help it.
-//        if (pattern.contains(FULL_YEAR_PATTERN) && pattern.contains(FULL_MONTH_PATTERN) && pattern.contains(FULL_DAY_PATTERN)) {
+//        if (pattern.contains(FULL_YEAR_PATTERN)
+//        && pattern.contains(FULL_MONTH_PATTERN)
+//        && pattern.contains(FULL_DAY_PATTERN)) {
 //            final DateTimeFormatter formatter = DateFormatterCache.getFormatter(pattern);
 //            final ZoneId zoneId = getTimeZone(context, timeZone);
 //

@@ -59,8 +59,10 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         this.contentManager = contentManager;
 
 //        clientPropertyCache.get()
-//                .onSuccess(result -> namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
-//                .onFailure(caught -> AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
+//                .onSuccess(result ->
+//                namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
+//                .onFailure(caught ->
+//                AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
 
         registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
     }

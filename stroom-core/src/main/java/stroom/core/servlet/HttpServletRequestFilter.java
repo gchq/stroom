@@ -55,7 +55,8 @@ public class HttpServletRequestFilter implements Filter {
                 // Continue the chain
                 chain.doFilter(request, response);
             } finally {
-                // Clear the held request in case the thread holding the thread scoped holder is re-used for something else
+                // Clear the held request in case the thread holding the thread scoped holder is re-used
+                // for something else
                 httpServletRequestHolder.set(null);
             }
         } else {

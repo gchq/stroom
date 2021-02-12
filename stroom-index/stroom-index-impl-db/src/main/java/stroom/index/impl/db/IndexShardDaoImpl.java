@@ -45,7 +45,8 @@ class IndexShardDaoImpl implements IndexShardDao {
         indexShard.setCommitMs(record.get(INDEX_SHARD.COMMIT_MS));
         indexShard.setCommitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS));
         indexShard.setCommitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT));
-        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(INDEX_SHARD.STATUS)));
+        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                record.get(INDEX_SHARD.STATUS)));
         indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
         indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
         indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
@@ -53,24 +54,25 @@ class IndexShardDaoImpl implements IndexShardDao {
         return indexShard;
     };
 
-    private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER = (indexShard, record) -> {
-        record.from(indexShard);
-        record.set(INDEX_SHARD.ID, indexShard.getId());
-        record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
-        record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());
-        record.set(INDEX_SHARD.PARTITION_TO_MS, indexShard.getPartitionToTime());
-        record.set(INDEX_SHARD.DOCUMENT_COUNT, indexShard.getDocumentCount());
-        record.set(INDEX_SHARD.COMMIT_MS, indexShard.getCommitMs());
-        record.set(INDEX_SHARD.COMMIT_DURATION_MS, indexShard.getCommitDurationMs());
-        record.set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, indexShard.getCommitDocumentCount());
-        record.set(INDEX_SHARD.STATUS, indexShard.getStatus().getPrimitiveValue());
-        record.set(INDEX_SHARD.FILE_SIZE, indexShard.getFileSize());
-        record.set(INDEX_SHARD.INDEX_VERSION, indexShard.getIndexVersion());
-        record.set(INDEX_SHARD.FK_VOLUME_ID, indexShard.getVolume().getId());
-        record.set(INDEX_SHARD.NODE_NAME, indexShard.getNodeName());
-        record.set(INDEX_SHARD.INDEX_UUID, indexShard.getIndexUuid());
-        return record;
-    };
+    private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER =
+            (indexShard, record) -> {
+                record.from(indexShard);
+                record.set(INDEX_SHARD.ID, indexShard.getId());
+                record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
+                record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());
+                record.set(INDEX_SHARD.PARTITION_TO_MS, indexShard.getPartitionToTime());
+                record.set(INDEX_SHARD.DOCUMENT_COUNT, indexShard.getDocumentCount());
+                record.set(INDEX_SHARD.COMMIT_MS, indexShard.getCommitMs());
+                record.set(INDEX_SHARD.COMMIT_DURATION_MS, indexShard.getCommitDurationMs());
+                record.set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, indexShard.getCommitDocumentCount());
+                record.set(INDEX_SHARD.STATUS, indexShard.getStatus().getPrimitiveValue());
+                record.set(INDEX_SHARD.FILE_SIZE, indexShard.getFileSize());
+                record.set(INDEX_SHARD.INDEX_VERSION, indexShard.getIndexVersion());
+                record.set(INDEX_SHARD.FK_VOLUME_ID, indexShard.getVolume().getId());
+                record.set(INDEX_SHARD.NODE_NAME, indexShard.getNodeName());
+                record.set(INDEX_SHARD.INDEX_UUID, indexShard.getIndexUuid());
+                return record;
+            };
 
     private static final Map<String, Field<?>> FIELD_MAP = new HashMap<>();
 

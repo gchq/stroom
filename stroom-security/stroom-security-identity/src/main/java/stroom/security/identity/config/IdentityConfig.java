@@ -80,8 +80,8 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     @JsonProperty
     @JsonPropertyDescription("The regular expression pattern that represents the Common Name (CN) value in an X509 " +
             "certificate. The pattern should include a capture group for extracting the user identity from the " +
-            "CN value. For example the CN may be of the form 'Joe Bloggs [jbloggs]' in which case the pattern would be " +
-            "'.*?\\[([^]]*)\\].*'. The only capture group surrounds the user identity part.")
+            "CN value. For example the CN may be of the form 'Joe Bloggs [jbloggs]' in which case the pattern " +
+            "would be '.*?\\[([^]]*)\\].*'. The only capture group surrounds the user identity part.")
     public final String getCertificateCnPattern() {
         return this.certificateCnPattern;
     }
@@ -120,8 +120,8 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
 
     @Nullable
     @JsonProperty
-    @JsonPropertyDescription("If the number of failed logins is greater than or equal to this value then the account " +
-            " will be locked.")
+    @JsonPropertyDescription("If the number of failed logins is greater than or equal to this value then the " +
+            "account  will be locked.")
     @Min(1)
     public Integer getFailedLoginLockThreshold() {
         return this.failedLoginLockThreshold;

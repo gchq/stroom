@@ -48,7 +48,8 @@ class ImportExportActionHandlers {
 
                 final ImportExportActionHandler existingActionHandler = map.putIfAbsent(type, handler);
                 if (existingActionHandler != null) {
-                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" +
+                            existingActionHandler + "} new {" + handler + "}");
                 }
             }
             handlers = map;

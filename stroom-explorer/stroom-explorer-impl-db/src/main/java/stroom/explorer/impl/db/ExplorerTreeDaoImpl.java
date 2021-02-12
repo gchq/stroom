@@ -738,7 +738,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //        }
 //
 //        for (final ExplorerTreePath pathToCopy : pathsToCopy) {
-//            ExplorerTreePath clonedPath = new ExplorerTreePath(pathToCopy.getAncestor(), pathToCopy.getDescendant(), pathToCopy.getDepth(), pathToCopy.getOrderIndex());
+//            ExplorerTreePath clonedPath = new ExplorerTreePath(pathToCopy.getAncestor(),
+//            pathToCopy.getDescendant(), pathToCopy.getDepth(), pathToCopy.getOrderIndex());
 //            ExplorerTreePath mergedClonedPath = create(clonedPath);
 //            if (Objects.equals(pathToCopy.getAncestor(), node.getId())) {
 //                childPaths.add(mergedClonedPath);

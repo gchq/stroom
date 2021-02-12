@@ -67,10 +67,14 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         }
     }
 
-    public SelectJoinStep<?> addJoins(SelectJoinStep<?> query, final Field metaIdField,
-                                      final Set<Integer> usedValKeys) {
+    public SelectJoinStep<?> addJoins(
+            SelectJoinStep<?> query,
+            final Field metaIdField,
+            final Set<Integer> usedValKeys) {
+
         for (Integer id : usedValKeys) {
-            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id)).on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id))
+                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
     }

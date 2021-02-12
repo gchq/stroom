@@ -39,7 +39,14 @@ import javax.xml.bind.annotation.XmlType;
  * </p>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed", "stored", "termPositions"})
+@XmlType(name = "indexField", propOrder = {
+        "analyzerType",
+        "caseSensitive",
+        "fieldName",
+        "fieldType",
+        "indexed",
+        "stored",
+        "termPositions"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
 

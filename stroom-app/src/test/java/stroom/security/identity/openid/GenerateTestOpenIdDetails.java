@@ -128,14 +128,16 @@ public class GenerateTestOpenIdDetails {
                 "\n    // ALL the content between these dashed lines was generated and inserted using" +
                 "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
-                "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_SECRET = \"" + oAuth2Client.getClientSecret() + "\";" +
-                "\n    private static final String OAUTH2_CLIENT_URI_PATTERN = \"" + oAuth2Client.getUriPattern() + "\";" +
-
+                "\n    private static final String OAUTH2_CLIENT_ID = \"" +
+                oAuth2Client.getClientId() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_NAME = \"" +
+                oAuth2Client.getName() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_SECRET = \"" +
+                oAuth2Client.getClientSecret() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_URI_PATTERN = \"" +
+                oAuth2Client.getUriPattern() + "\";" +
                 "\n    private static final String PUBLIC_KEY_ID = \"" + publicJsonWebKey.getKeyId() + "\";" +
                 "\n    private static final String PUBLIC_KEY_JSON = \"" + escapedPublicKeyAsJsonStr + "\";" +
-
                 "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
                 "\n    private static final String API_KEY = \"" + apiKey + "\";" +
                 "\n    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--";

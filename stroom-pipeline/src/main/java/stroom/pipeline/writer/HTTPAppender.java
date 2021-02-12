@@ -44,7 +44,8 @@ import javax.net.ssl.SSLSocketFactory;
 @ConfigurableElement(
         type = "HTTPAppender",
         category = Category.DESTINATION,
-        roles = {PipelineElementType.ROLE_TARGET,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
@@ -261,7 +262,8 @@ public class HTTPAppender extends AbstractAppender {
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
-    @PipelineProperty(description = "When the current output exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output exceeds this size it will be closed and a " +
+            "new one created.",
             displayPriority = 2)
     public void setRollSize(final String size) {
         super.setRollSize(size);

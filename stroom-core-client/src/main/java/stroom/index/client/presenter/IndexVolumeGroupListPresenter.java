@@ -40,7 +40,8 @@ import java.util.function.Consumer;
 
 public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridView<IndexVolumeGroup>> {
 
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>> dataProvider;
 

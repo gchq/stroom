@@ -297,8 +297,8 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
         INACTIVE("Inactive", 1), // No longer being written to but still accessible for reading.
         CLOSED("Closed", 3); // Data has been removed and the volume is closed.
 
-        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                VolumeUseState.values());
+        public static final PrimitiveValueConverter<VolumeUseState> PRIMITIVE_VALUE_CONVERTER =
+                new PrimitiveValueConverter<>(VolumeUseState.values());
 
         private final String displayValue;
         private final byte primitiveValue;

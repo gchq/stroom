@@ -286,13 +286,15 @@ public class HDFSFileAppender extends AbstractAppender {
      * @param outputPaths the outputPaths to set
      */
     @PipelineProperty(
-            description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            description = "One or more destination paths for output files separated with commas. Replacement " +
+                    "variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
-    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. hdfs://mynamenode.mydomain.com:8020",
+    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. " +
+            "hdfs://mynamenode.mydomain.com:8020",
             displayPriority = 2)
     public void setFileSystemUri(final String hdfsUri) {
         this.hdfsUri = hdfsUri;
@@ -305,7 +307,8 @@ public class HDFSFileAppender extends AbstractAppender {
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed " +
+            "and a new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);

@@ -66,15 +66,16 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return jobNode;
     };
 
-    private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER = (jobNode, record) -> {
-        record.from(jobNode);
-        record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
-        record.set(JOB_NODE.JOB_TYPE,
-                jobNode.getJobType() != null
-                        ? jobNode.getJobType().getPrimitiveValue()
-                        : JobType.UNKNOWN.getPrimitiveValue());
-        return record;
-    };
+    private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER =
+            (jobNode, record) -> {
+                record.from(jobNode);
+                record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
+                record.set(JOB_NODE.JOB_TYPE,
+                        jobNode.getJobType() != null
+                                ? jobNode.getJobType().getPrimitiveValue()
+                                : JobType.UNKNOWN.getPrimitiveValue());
+                return record;
+            };
 
     private final JobDbConnProvider jobDbConnProvider;
     private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;

@@ -119,7 +119,8 @@ public final class JooqUtil {
         return result;
     }
 
-//    public static void contextResultWithOptimisticLocking(final DataSource dataSource, final Consumer<DSLContext> consumer) {
+//    public static void contextResultWithOptimisticLocking(
+//    final DataSource dataSource, final Consumer<DSLContext> consumer) {
 //        try (final Connection connection = dataSource.getConnection()) {
 //            final DSLContext context = createContextWithOptimisticLocking(connection);
 //            consumer.accept(context);
@@ -291,7 +292,9 @@ public final class JooqUtil {
         }
 
         // Combine conditions.
-        final Optional<Condition> condition = fromCondition.map(c1 -> toCondition.map(c1::and).orElse(c1)).or(() -> toCondition);
+        final Optional<Condition> condition = fromCondition.map(c1 ->
+                toCondition.map(c1::and).orElse(c1))
+                .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
 

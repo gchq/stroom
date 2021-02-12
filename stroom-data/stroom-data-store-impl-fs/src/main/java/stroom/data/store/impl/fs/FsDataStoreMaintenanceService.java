@@ -61,6 +61,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FsDataStoreMaintenanceService.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -159,7 +160,13 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             if (repoPath != null && !repoPath.isEmpty()) {
                 buildStreamsKeyedByBaseName(volume, repoPath, streamsKeyedByBaseName);
 
-                deleteUnknownFiles(result, doDelete, directory, oldFileTime, filesKeyedByBaseName, streamsKeyedByBaseName);
+                deleteUnknownFiles(
+                        result,
+                        doDelete,
+                        directory,
+                        oldFileTime,
+                        filesKeyedByBaseName,
+                        streamsKeyedByBaseName);
             }
 
             return result;
@@ -248,7 +255,9 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);
             final String toDateString = localDate.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
+            builder.addTerm(MetaFields.CREATE_TIME,
+                    Condition.GREATER_THAN_OR_EQUAL_TO,
+                    fromDateString + "T00:00:00.000Z");
             builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
 
             final StringBuilder numberPart = new StringBuilder();

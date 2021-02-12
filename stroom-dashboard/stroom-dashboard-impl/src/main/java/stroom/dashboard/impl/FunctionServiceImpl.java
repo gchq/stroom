@@ -108,8 +108,9 @@ public class FunctionServiceImpl implements FunctionService {
         }
     }
 
-    private static List<String> buildCategoryPath(final FunctionDef functionDef,
-                                                  final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
+    private static List<String> buildCategoryPath(
+            final FunctionDef functionDef,
+            final stroom.dashboard.expression.v1.FunctionSignature functionSignature) {
 
         final String category = functionSignature.category().length > 0
                 ? convertCategory(functionSignature.category())

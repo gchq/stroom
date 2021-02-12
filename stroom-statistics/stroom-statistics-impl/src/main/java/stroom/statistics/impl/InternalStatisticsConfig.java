@@ -151,7 +151,8 @@ public class InternalStatisticsConfig extends AbstractConfig {
         this.eventsPerSecondDocRefs = eventsPerSecondDocRefs;
     }
 
-    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of bytes used by each class.")
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
+            "bytes used by each class.")
     @JsonProperty("heapHistogramBytes")
     public List<DocRef> getHeapHistogramBytesDocRefs() {
         return heapHistogramBytesDocRefs;
@@ -162,7 +163,8 @@ public class InternalStatisticsConfig extends AbstractConfig {
         this.heapHistogramBytesDocRefs = heapHistogramBytesDocRefs;
     }
 
-    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of instances used by each class.")
+    @JsonPropertyDescription(DESCRIPTION_PREFIX + "values from a Java heap histogram based on the number of " +
+            "instances used by each class.")
     @JsonProperty("heapHistogramInstances")
     public List<DocRef> getHeapHistogramInstancesDocRefs() {
         return heapHistogramInstancesDocRefs;

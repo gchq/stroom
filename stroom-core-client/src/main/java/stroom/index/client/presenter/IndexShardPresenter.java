@@ -447,7 +447,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             ConfirmEvent.fire(this, "Are you sure you want to flush all index shards?", result -> {
                 if (result) {
                     ConfirmEvent.fire(IndexShardPresenter.this,
-                            "You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?",
+                            "You have selected to flush all filtered index shards! Are you absolutely " +
+                                    "sure you want to do this?",
                             result1 -> {
                                 if (result1) {
                                     doFlush();
@@ -456,14 +457,20 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
             });
         } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
-            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
-                if (result) {
-                    doFlush();
-                }
-            });
+            ConfirmEvent.fire(
+                    this,
+                    "Are you sure you want to flush the selected index shards?",
+                    result -> {
+                        if (result) {
+                            doFlush();
+                        }
+                    });
 
         } else {
-            AlertEvent.fireWarn(this, "No index shards have been selected for flushing!", null);
+            AlertEvent.fireWarn(
+                    this,
+                    "No index shards have been selected for flushing!",
+                    null);
         }
     }
 
@@ -473,7 +480,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     result -> {
                         if (result) {
                             ConfirmEvent.fire(IndexShardPresenter.this,
-                                    "You have selected to delete all filtered index shards! Are you absolutely sure you want to do this?",
+                                    "You have selected to delete all filtered index shards! Are you " +
+                                            "absolutely sure you want to do this?",
                                     result1 -> {
                                         if (result1) {
                                             doDelete();
@@ -490,7 +498,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                     });
 
         } else {
-            AlertEvent.fireWarn(this, "No index shards have been selected for deletion!", null);
+            AlertEvent.fireWarn(
+                    this,
+                    "No index shards have been selected for deletion!",
+                    null);
         }
     }
 

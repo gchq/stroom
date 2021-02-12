@@ -73,16 +73,16 @@ public class GlobalConfigService {
                     GlobalConfigResource.FIELD_DEF_DESCRIPTION,
                     ConfigProperty::getDescription));
 
-    private static final Comparator<ConfigProperty> com = Comparator.comparing(configProperty -> configProperty.getEffectiveValueMasked().orElse(
-            ""));
+//    private static final Comparator<ConfigProperty> com = Comparator.comparing(configProperty ->
+//    configProperty.getEffectiveValueMasked().orElse(""));
 
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
                     ConfigProperty::getNameAsString, String::compareToIgnoreCase),
             GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(), Comparator.comparing(
-                    (ConfigProperty prop) -> prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
-            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(
-                    ConfigProperty::getSource));
+                    (ConfigProperty prop) ->
+                            prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
+            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(ConfigProperty::getSource));
 
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
@@ -163,8 +163,10 @@ public class GlobalConfigService {
             //   update the config props.
             updateConfigFromDb();
 
-            final Predicate<ConfigProperty> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    criteria.getQuickFilterInput(), FIELD_MAPPERS);
+            final Predicate<ConfigProperty> quickFilterPredicate =
+                    QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS);
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()

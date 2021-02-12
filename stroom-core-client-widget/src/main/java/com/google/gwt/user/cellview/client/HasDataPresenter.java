@@ -898,7 +898,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
                 // START OF INSERTED CODE
                 // ----------------------------------------------------------------------------------------
                 if (rowValue != null && selectionModel != null && selectionModel instanceof HasSelection) {
-                    @SuppressWarnings("unchecked") final HasSelection<T> hasSelection = (HasSelection<T>) selectionModel;
+                    @SuppressWarnings("unchecked") final HasSelection<T> hasSelection =
+                            (HasSelection<T>) selectionModel;
                     final boolean selectionChanged = hasSelection.hasSelectionChanged(rowValue);
                     if (selectionChanged) {
                         modifiedRows.push(i);

@@ -378,7 +378,8 @@ public class FlatResultCreator implements ResultCreator {
                     for (int i = 0; i < parentFieldIndices.length; i++) {
                         final int index = parentFieldIndices[i];
                         if (index != -1) {
-                            final Val val = item.getValue(index); // TODO : @66 Currently evaluating more values than will be needed.
+                            // TODO : @66 Currently evaluating more values than will be needed.
+                            final Val val = item.getValue(index);
                             values[i] = val;
                         }
                     }

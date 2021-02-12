@@ -68,7 +68,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     private final ConcurrentMap<String, SharedKafkaProducerImpl> currentSharedProducersMap = new ConcurrentHashMap<>();
     // Keyed on uuid|version so can hold one or more KPs for each uuid if the config has changed over
     // time. Once clients are no longer using the superseded KPs they will be removed.
-    private final ConcurrentMap<SharedKafkaProducerIdentity, SharedKafkaProducerImpl> allSharedProducersMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<SharedKafkaProducerIdentity, SharedKafkaProducerImpl> allSharedProducersMap =
+            new ConcurrentHashMap<>();
 
     @Inject
     KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache) {
@@ -90,7 +91,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
             final SharedKafkaProducerIdentity desiredKey = new SharedKafkaProducerIdentity(kafkaConfigDoc);
 
             // Optimistically assume the map will have the latest SharedKafkaProducer
-            final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(desiredKey.getConfigUuid());
+            final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(
+                    desiredKey.getConfigUuid());
             if (activeSharedProducer != null
                     && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
                 // This is the latest SharedKafkaProducer so use it

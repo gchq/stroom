@@ -102,16 +102,16 @@ public class IndexShardWriterImpl implements IndexShardWriter {
      * Convenience constructor used in tests.
      */
     public IndexShardWriterImpl(final IndexShardManager indexShardManager,
-            final IndexStructure indexStructure,
-            final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
+                                final IndexStructure indexStructure,
+                                final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
         this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
     IndexShardWriterImpl(final IndexShardManager indexShardManager,
-            final IndexStructure indexStructure,
-            final IndexShardKey indexShardKey,
-            final IndexShard indexShard,
-            final int ramBufferSizeMB) throws IOException {
+                         final IndexStructure indexStructure,
+                         final IndexShardKey indexShardKey,
+                         final IndexShard indexShard,
+                         final int ramBufferSizeMB) throws IOException {
         this.indexShardManager = indexShardManager;
         this.indexShardKey = indexShardKey;
         this.indexShardId = indexShard.getId();
@@ -189,7 +189,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         final AtomicInteger documentCount = new AtomicInteger(numDocs);
 
         if (indexShard.getDocumentCount() != numDocs) {
-            LAMBDA_LOGGER.error(() -> "Mismatch document count. Index says " + numDocs + " DB says " + indexShard.getDocumentCount());
+            LAMBDA_LOGGER.error(() ->
+                    "Mismatch document count. Index says " + numDocs + " DB says " + indexShard.getDocumentCount());
         }
 
         this.directory = directory;
@@ -215,7 +216,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 indexWriter.addDocument(document);
                 final long duration = System.currentTimeMillis() - now;
                 if (duration > 1000) {
-                    LAMBDA_LOGGER.warn(() -> "addDocument() - took " + ModelStringUtil.formatDurationString(duration) + " " + toString());
+                    LAMBDA_LOGGER.warn(() ->
+                            "addDocument() - took " + ModelStringUtil.formatDurationString(duration) +
+                                    " " + toString());
                 }
 
             } catch (final RuntimeException e) {
@@ -262,8 +265,9 @@ public class IndexShardWriterImpl implements IndexShardWriter {
             }
 
             LAMBDA_LOGGER.debug(() ->
-                    "Finished flush in "
-                            + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime) + ") " + toString());
+                    "Finished flush in " +
+                            ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime) +
+                            ") " + toString());
         }
     }
 
@@ -279,7 +283,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 // Wait for us to stop adding docs.
                 try {
                     while (adding.get() > 0) {
-                        LAMBDA_LOGGER.debug(() -> "Waiting for " + adding.get() + " docs to finish being added before we can close this shard");
+                        LAMBDA_LOGGER.debug(() -> "Waiting for " + adding.get() +
+                                " docs to finish being added before we can close this shard");
                         Thread.sleep(1000);
                     }
                 } catch (final InterruptedException e) {
@@ -311,7 +316,8 @@ public class IndexShardWriterImpl implements IndexShardWriter {
                 updateShardInfo(startTime);
             }
 
-            LAMBDA_LOGGER.debug(() -> "Finished close in " + ModelStringUtil.formatDurationString((System.currentTimeMillis() - startTime)) + ") " + toString());
+            LAMBDA_LOGGER.debug(() -> "Finished close in " +
+                    ModelStringUtil.formatDurationString((System.currentTimeMillis() - startTime)) + ") " + toString());
         }
     }
 
@@ -372,10 +378,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     private void update(final long indexShardId,
-            final Integer documentCount,
-            final Long commitDurationMs,
-            final Long commitMs,
-            final Long fileSize) {
+                        final Integer documentCount,
+                        final Long commitDurationMs,
+                        final Long commitMs,
+                        final Long fileSize) {
         if (indexShardManager != null) {
             indexShardManager.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
         }

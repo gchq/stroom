@@ -142,7 +142,10 @@ public class IndexShardManager {
                                                     shard.getId());
                                             try {
                                                 if (writer != null) {
-                                                    LOGGER.debug(() -> "deleteLogicallyDeleted() - Unable to delete index shard " + shard.getId() + " as it is currently in use");
+                                                    LOGGER.debug(() ->
+                                                            "deleteLogicallyDeleted() - Unable to delete index " +
+                                                                    "shard " + shard.getId() + " as it is currently " +
+                                                                    "in use");
                                                 } else {
                                                     deleteFromDisk(shard);
                                                 }
@@ -215,7 +218,10 @@ public class IndexShardManager {
             // Create a scheduled executor for us to continually log index shard writer action progress.
             final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             // Start logging action progress.
-            executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+            executor.scheduleAtFixedRate(
+                    () ->
+                            LOGGER.info(() ->
+                                    "Waiting for " + remaining.get() + " index shards to " + action.getName()),
                     10,
                     10,
                     TimeUnit.SECONDS);

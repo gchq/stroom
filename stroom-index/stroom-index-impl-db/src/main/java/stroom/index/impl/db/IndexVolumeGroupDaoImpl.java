@@ -30,17 +30,19 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         return indexVolumeGroup;
     };
 
-    private static final BiFunction<IndexVolumeGroup, IndexVolumeGroupRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_TO_RECORD_MAPPER = (indexVolumeGroup, record) -> {
-        record.from(indexVolumeGroup);
-        record.set(INDEX_VOLUME_GROUP.ID, indexVolumeGroup.getId());
-        record.set(INDEX_VOLUME_GROUP.VERSION, indexVolumeGroup.getVersion());
-        record.set(INDEX_VOLUME_GROUP.CREATE_TIME_MS, indexVolumeGroup.getCreateTimeMs());
-        record.set(INDEX_VOLUME_GROUP.CREATE_USER, indexVolumeGroup.getCreateUser());
-        record.set(INDEX_VOLUME_GROUP.UPDATE_TIME_MS, indexVolumeGroup.getUpdateTimeMs());
-        record.set(INDEX_VOLUME_GROUP.UPDATE_USER, indexVolumeGroup.getUpdateUser());
-        record.set(INDEX_VOLUME_GROUP.NAME, indexVolumeGroup.getName());
-        return record;
-    };
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final BiFunction<IndexVolumeGroup, IndexVolumeGroupRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_TO_RECORD_MAPPER =
+            (indexVolumeGroup, record) -> {
+                record.from(indexVolumeGroup);
+                record.set(INDEX_VOLUME_GROUP.ID, indexVolumeGroup.getId());
+                record.set(INDEX_VOLUME_GROUP.VERSION, indexVolumeGroup.getVersion());
+                record.set(INDEX_VOLUME_GROUP.CREATE_TIME_MS, indexVolumeGroup.getCreateTimeMs());
+                record.set(INDEX_VOLUME_GROUP.CREATE_USER, indexVolumeGroup.getCreateUser());
+                record.set(INDEX_VOLUME_GROUP.UPDATE_TIME_MS, indexVolumeGroup.getUpdateTimeMs());
+                record.set(INDEX_VOLUME_GROUP.UPDATE_USER, indexVolumeGroup.getUpdateUser());
+                record.set(INDEX_VOLUME_GROUP.NAME, indexVolumeGroup.getName());
+                return record;
+            };
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeGroupRecord, IndexVolumeGroup, Integer> genericDao;

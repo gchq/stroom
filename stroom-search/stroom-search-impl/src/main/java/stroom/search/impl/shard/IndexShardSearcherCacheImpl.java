@@ -187,7 +187,10 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 // Create a scheduled executor for us to continually log close progress.
                 executor = Executors.newSingleThreadScheduledExecutor();
                 // Start logging action progress.
-                executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + closing.get() + " readers to close"),
+                executor.scheduleAtFixedRate(
+                        () ->
+                                LOGGER.info(() ->
+                                        "Waiting for " + closing.get() + " readers to close"),
                         10,
                         10,
                         TimeUnit.SECONDS);
@@ -233,7 +236,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
 //    }
 
     /**
-     * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU items that exceed the capacity.
+     * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU
+     * items that exceed the capacity.
      */
     @Override
     public void refresh() {

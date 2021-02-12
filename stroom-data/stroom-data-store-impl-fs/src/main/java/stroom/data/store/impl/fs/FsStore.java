@@ -157,7 +157,8 @@ class FsStore implements Store, AttributeMapFactory {
 //
 //                // Does the manifest exist ... overwrite it
 //                if (FileSystemUtil.isAllFile(childFile)) {
-//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
+//                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+//                    InternalStreamTypeNames.MANIFEST, childFile)) {
 //                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
 //                    }
 //                    doneManifest = true;
@@ -166,8 +167,10 @@ class FsStore implements Store, AttributeMapFactory {
 //
 //            if (!doneManifest) {
 //                // No manifest done yet ... output one if the parent dir's exist
-//                if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
+//                if (FileSystemUtil.isAllParentDirectoryExist(
+//                ((FileSystemStreamTarget) streamTarget).getFiles(false))) {
+//                    try (final OutputStream outputStream = fileSystemStreamTarget.add(
+//                    InternalStreamTypeNames.MANIFEST).getOutputStream()) {
 //                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
 //                    }
 //                } else {
@@ -245,7 +248,8 @@ class FsStore implements Store, AttributeMapFactory {
                 throw new DataException(message);
             }
 //            final Node node = nodeInfo.getThisNode();
-//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+//            final DataVolume streamVolume = dataVolumeService.pickBestVolume(
+//            volumeSet, node.getId(), node.getRack().getId());
 //            if (streamVolume == null) {
 //                final String message = "Unable to access any volume for " + meta
 //                        + " perhaps the data is on a private volume";
@@ -274,7 +278,8 @@ class FsStore implements Store, AttributeMapFactory {
 //        final Set<DataVolume> volumeSet = dataVolumeService.findDataVolume(meta.getId());
 //        if (volumeSet != null && volumeSet.size() > 0) {
 //            final DataVolume streamVolume = volumeSet.iterator().next();
-//            final Path manifest = fileSystemStreamPathHelper.getChildPath(meta, streamVolume, InternalStreamTypeNames.MANIFEST);
+//            final Path manifest = fileSystemStreamPathHelper.getChildPath(
+//            meta, streamVolume, InternalStreamTypeNames.MANIFEST);
 //
 //            if (Files.isRegularFile(manifest)) {
 //                final AttributeMap attributeMap = new AttributeMap();
@@ -299,7 +304,9 @@ class FsStore implements Store, AttributeMapFactory {
 //                            meta, meta.getTypeName());
 //
 //                    final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-//                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
+//                    attributeMap.put("Files", allFiles.stream()
+//                    .map(FileUtil::getCanonicalPath)
+//                    .collect(Collectors.joining(",")));
 //
 //
 //                    //                streamAttributeMap.setFileNameList(new ArrayList<>());

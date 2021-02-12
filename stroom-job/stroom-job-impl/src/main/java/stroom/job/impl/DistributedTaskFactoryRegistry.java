@@ -50,8 +50,8 @@ class DistributedTaskFactoryRegistry {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("postProcessAfterInitialization() - registering task factory " + distributedTaskFactory + " for job "
-                        + jobName);
+                LOGGER.debug("postProcessAfterInitialization() - registering task factory " +
+                        distributedTaskFactory + " for job " + jobName);
             }
         }
     }

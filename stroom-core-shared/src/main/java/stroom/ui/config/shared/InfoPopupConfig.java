@@ -19,7 +19,8 @@ import javax.inject.Singleton;
 public class InfoPopupConfig extends AbstractConfig {
 
     @JsonProperty
-    @JsonPropertyDescription("If you would like users to provide some query info when performing a query set this property to true.")
+    @JsonPropertyDescription("If you would like users to provide some query info when performing a query " +
+            "set this property to true.")
     private boolean enabled;
     @JsonProperty
     @JsonPropertyDescription("The title of the query info popup.")

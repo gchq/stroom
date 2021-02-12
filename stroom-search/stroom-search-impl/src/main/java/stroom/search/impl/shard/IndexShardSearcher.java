@@ -96,8 +96,8 @@ public class IndexShardSearcher {
                         // may still have been written to since we got this
                         // reference.
                         if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                            LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount + " DB says "
-                                    + indexShard.getDocumentCount());
+                            LOGGER.warn("open() - Mismatch document count.  Index says " + actualDocumentCount +
+                                    " DB says " + indexShard.getDocumentCount());
                         } else if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("open() - Mismatch document count.  Index says " + actualDocumentCount
                                     + " DB says " + indexShard.getDocumentCount());
@@ -120,7 +120,10 @@ public class IndexShardSearcher {
     }
 
     private SearcherManager openWithWriter(final IndexWriter indexWriter) throws IOException {
-        final SearcherManager searcherManager = new SearcherManager(indexWriter, false, new SearcherFactory());
+        final SearcherManager searcherManager = new SearcherManager(
+                indexWriter,
+                false,
+                new SearcherFactory());
 
         // Check the document count in the index matches the DB. We are using
         // the writer so chances are there is a mismatch.

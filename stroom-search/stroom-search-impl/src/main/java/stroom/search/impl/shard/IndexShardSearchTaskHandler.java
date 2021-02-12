@@ -77,8 +77,9 @@ public class IndexShardSearchTaskHandler {
 
                     try {
                         if (!Thread.currentThread().isInterrupted()) {
-                            taskContext.info(() -> "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
-                                    + task.getIndexShardId() + ")");
+                            taskContext.info(() ->
+                                    "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() +
+                                            " (id=" + task.getIndexShardId() + ")");
 
 
                             final IndexWriter indexWriter = getWriter(indexShardId);

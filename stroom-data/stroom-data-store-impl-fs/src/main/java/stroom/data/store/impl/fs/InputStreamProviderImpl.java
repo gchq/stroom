@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 public class InputStreamProviderImpl implements InputStreamProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
 
     private final Meta meta;
@@ -65,7 +66,8 @@ public class InputStreamProviderImpl implements InputStreamProvider {
             logDebug("get() - " + streamTypeName);
         }
 
-        final SegmentInputStreamProvider segmentInputStreamProvider = factory.getSegmentInputStreamProvider(streamTypeName);
+        final SegmentInputStreamProvider segmentInputStreamProvider = factory.getSegmentInputStreamProvider(
+                streamTypeName);
         if (segmentInputStreamProvider == null) {
             return null;
         }

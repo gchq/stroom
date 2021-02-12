@@ -339,7 +339,8 @@ class JobBootstrap {
 //        }
 //
 //        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql, final String alias, final FindJobNodeCriteria criteria) {
+//        protected void appendBasicCriteria(final HqlBuilder sql,
+//        final String alias, final FindJobNodeCriteria criteria) {
 //            super.appendBasicCriteria(sql, alias, criteria);
 //            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
 //            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());

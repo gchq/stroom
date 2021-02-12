@@ -68,14 +68,18 @@ public class ImportConfigPresenter
     protected void onBind() {
         super.onBind();
 
-        final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Import", this) {
+        final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler(
+                "Import",
+                this) {
+
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 final Rest<List<ImportState>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
                             if (result.isEmpty()) {
-                                warning("The import package contains nothing that can be imported into this version of Stroom.");
+                                warning("The import package contains nothing that can be imported into " +
+                                        "this version of Stroom.");
                             } else {
                                 hide();
                                 ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
@@ -116,8 +120,22 @@ public class ImportConfigPresenter
         };
 
         EnablePopupEvent.fire(this, this);
-        final PopupSize popupSize = new PopupSize(350, 98, 350, 98, 2000, 98, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Import", popupUiHandlers);
+        final PopupSize popupSize = new PopupSize(
+                350,
+                98,
+                350,
+                98,
+                2000,
+                98,
+                true);
+
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Import",
+                popupUiHandlers);
     }
 
     private void hide() {

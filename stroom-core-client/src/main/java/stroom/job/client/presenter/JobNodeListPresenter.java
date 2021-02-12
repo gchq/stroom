@@ -298,8 +298,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                     final String schedule = schedulePresenter.getScheduleString();
                     jobNode.setSchedule(schedule);
                     final Rest<JobNode> rest = restFactory.create();
-                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(),
-                            schedule);
+                    rest
+                            .onSuccess(result ->
+                                    dataProvider.refresh())
+                            .call(JOB_NODE_RESOURCE)
+                            .setSchedule(jobNode.getId(), schedule);
                 }
             }
         };

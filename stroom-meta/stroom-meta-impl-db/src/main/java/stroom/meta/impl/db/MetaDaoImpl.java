@@ -248,8 +248,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     ZoneOffset.UTC.getId(),
                     System.currentTimeMillis());
 
-            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+            return optional.orElseThrow(() ->
+                    new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                            + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
                     + "\" but was given string \"" + value + "\"", e);
@@ -493,7 +494,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 }
             } else {
                 //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " " +
+                        "unable to optimise meta query");
                 //Allow search to succeed without optimisation
                 return true;
             }
@@ -598,7 +600,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         detailTable.field(ruleNoFieldName),
                                         DSL.count())
                                 .from(detailTable)
-                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not impacted by a rule
+                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not hit by a rule
                                 .groupBy(
                                         detailTable.field(ruleNoFieldName),
                                         detailTable.field(feedNameFieldName),
@@ -765,8 +767,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 if (min == null || max == null) {
                                     return Optional.empty();
                                 } else {
+                                    // Add one to make it exclusive
                                     return Optional.of(
-                                            TimePeriod.between((long) min, (long) max + 1)); // Add one to make it exclusive
+                                            TimePeriod.between((long) min, (long) max + 1));
                                 }
                             }),
                     () -> LogUtil.message("Selecting time slice starting at {}, with batch size {}",
@@ -888,7 +891,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE_NAME));
         final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
         final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
-//        final int extendedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.getExtendedFields());
+//        final int extendedTermCount = ExpressionUtil.termCount(
+//        criteria.getExpression(), MetaFields.getExtendedFields());
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
@@ -1061,7 +1065,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
             } else {
                 //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
+                        " unable to optimise meta query");
                 //Allow search to succeed without optimisation
                 return IntStream.range(metaKeyDao.getMinId(),
                         metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());

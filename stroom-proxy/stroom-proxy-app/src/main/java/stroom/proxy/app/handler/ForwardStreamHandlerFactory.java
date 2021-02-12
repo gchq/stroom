@@ -58,7 +58,8 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
         if (forwardStreamConfig.isForwardingEnabled()) {
             if (forwardStreamConfig.getForwardDestinations().isEmpty()) {
-                throw new RuntimeException("Forward is enabled but no forward URLs have been configured in 'forwardUrl'");
+                throw new RuntimeException("Forward is enabled but no forward URLs have been configured " +
+                        "in 'forwardUrl'");
             }
             LOGGER.info("Initialising ForwardStreamHandlerFactory with user agent string [{}]", userAgentString);
 

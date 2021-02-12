@@ -44,7 +44,8 @@ package stroom.dashboard.expression.v1;
                                         argType = ValString.class)
                         }),
                 @FunctionSignature(
-                        description = "Creates a stroom syntax hyperlink string using the supplied link text, URL and type.",
+                        description = "Creates a stroom syntax hyperlink string using the supplied link text, " +
+                                "URL and type.",
                         args = {
                                 @FunctionArg(
                                         name = "text",
@@ -60,7 +61,8 @@ package stroom.dashboard.expression.v1;
                                                 "being opened, append the title to the type, e.g. 'dialog|My Title'.",
                                         argType = ValString.class,
                                         // taken from HyperLinkType
-                                        allowedValues = {"tab", "dialog", "dashboard", "stepping", "data",
+                                        allowedValues = {
+                                                "tab", "dialog", "dashboard", "stepping", "data",
                                                 "annotation", "browser"})})})
 class Link extends AbstractLink {
 

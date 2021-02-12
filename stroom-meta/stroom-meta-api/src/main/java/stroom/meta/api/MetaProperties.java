@@ -97,7 +97,8 @@ public class MetaProperties {
         }
 
         /**
-         * This is a utility method to perform common parent association behaviour, e.g. setting the effective time from the parent.
+         * This is a utility method to perform common parent association behaviour, e.g.
+         * setting the effective time from the parent.
          *
          * @param parent The parent to set.
          * @return The builder.

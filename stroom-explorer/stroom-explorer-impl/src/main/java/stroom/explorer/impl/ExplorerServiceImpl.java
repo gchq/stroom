@@ -747,7 +747,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // Check to see if we still have children.
                 children = explorerNodeService.getChildren(docRef);
                 if (children != null && children.size() > 0) {
-                    final String message = "Unable to delete '" + docRef.getName() + "' because the folder is not empty";
+                    final String message = "Unable to delete '" + docRef.getName() +
+                            "' because the folder is not empty";
                     resultMessage.append(message);
                     resultMessage.append("\n");
                     explorerEventLog.delete(docRef, new RuntimeException(message));

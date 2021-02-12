@@ -140,8 +140,8 @@ public class FindTaskProgressCriteria extends BaseCriteria {
                         FindTaskProgressCriteria.FIELD_NODE,
                         FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                         FindTaskProgressCriteria.FIELD_USER).contains(sort.getId())) {
-                    throw new IllegalArgumentException(
-                            "A sort field of " + sort.getId() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
+                    throw new IllegalArgumentException("A sort field of " + sort.getId() +
+                            " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
                 }
             }
         }

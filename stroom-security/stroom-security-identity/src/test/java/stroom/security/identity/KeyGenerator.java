@@ -31,7 +31,7 @@ public class KeyGenerator {
 
     RsaJsonWebKey rsaJwk = RsaJwkGenerator.generateJwk(2048);
 
-    @SuppressWarnings("checklstyle:linelength")
+    @SuppressWarnings("checkstyle:linelength")
     private static final String JWK = "{" +
             "\"kty\":\"RSA\"," +
             "\"kid\":\"1ec7a983-317d-46ce-ae93-ce42bc217e52\"," +
@@ -75,7 +75,8 @@ public class KeyGenerator {
         PublicJsonWebKey publicJwk = PublicJsonWebKey.Factory.newPublicJwk(getPublic());
         JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime() // the JWT must have an expiration time
-                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
+                // to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setExpectedIssuer("stroom") // whom the JWT needs to have been issued by
                 .setExpectedAudience("PZnJr8kHRKqnlJRQThSI") // to whom the JWT is intended for

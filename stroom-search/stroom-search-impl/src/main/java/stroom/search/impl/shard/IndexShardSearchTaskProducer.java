@@ -86,7 +86,8 @@ class IndexShardSearchTaskProducer extends TaskProducer {
         IndexShardSearchRunnable task = null;
 
         if (!isComplete()) {
-            // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
+            // If there are no open shards that can be used for any tasks then just get the task at the
+            // head of the queue.
             task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();

@@ -156,7 +156,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {
         if (sourceUuid != null) {
-            final stroom.security.shared.DocumentPermissions documentPermissions = getPermissionsForDocument(sourceUuid);
+            final stroom.security.shared.DocumentPermissions documentPermissions =
+                    getPermissionsForDocument(sourceUuid);
             if (documentPermissions != null) {
                 final Map<String, Set<String>> userPermissions = documentPermissions.getPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {

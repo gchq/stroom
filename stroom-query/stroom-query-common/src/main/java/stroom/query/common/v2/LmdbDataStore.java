@@ -599,7 +599,8 @@ public class LmdbDataStore implements DataStore {
                             KeyPart lastPart = key.getLast();
                             if (lastPart != null && !lastPart.isGrouped()) {
                                 // Ensure sequence numbers are unique for this data store.
-                                ((UngroupedKeyPart) lastPart).setSequenceNumber(ungroupedItemSequenceNumber.incrementAndGet());
+                                ((UngroupedKeyPart) lastPart).setSequenceNumber(
+                                        ungroupedItemSequenceNumber.incrementAndGet());
                             }
 
                             put(key, value);

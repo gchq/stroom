@@ -147,7 +147,8 @@ class JobNodeService {
 //            for (final JobNode jobNode : jobNodes) {
 //                JobNodeInfo jobNodeInfo = null;
 //
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
+//                collector.getResponse(jobNode.getNodeName());
 //
 //                if (response == null) {
 //                    LOGGER.debug("No response for: {}", jobNode);
@@ -192,7 +193,8 @@ class JobNodeService {
 //            for (final JobNode jobNode : jobNodes) {
 //                JobNodeInfo jobNodeInfo = null;
 //
-//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response =
+//                collector.getResponse(jobNode.getNodeName());
 //
 //                if (response == null) {
 //                    LOGGER.debug("No response for: {}", jobNode);

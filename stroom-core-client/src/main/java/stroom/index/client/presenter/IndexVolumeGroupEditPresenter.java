@@ -52,7 +52,8 @@ import java.util.function.Consumer;
 public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView> {
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
-    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
+            GWT.create(IndexVolumeGroupResource.class);
 
     private final IndexVolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeEditPresenter> editProvider;
@@ -193,7 +194,10 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
                                         .update(volumeGroup.getId(), volumeGroup);
 
                             } catch (final RuntimeException e) {
-                                AlertEvent.fireError(IndexVolumeGroupEditPresenter.this, e.getMessage(), null);
+                                AlertEvent.fireError(
+                                        IndexVolumeGroupEditPresenter.this,
+                                        e.getMessage(),
+                                        null);
                             }
                         } else {
                             consumer.accept(null);

@@ -145,7 +145,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         fileVolume.setUpdateTimeMs(record.get(FS_VOLUME.UPDATE_TIME_MS));
         fileVolume.setUpdateUser(record.get(FS_VOLUME.UPDATE_USER));
         fileVolume.setPath(record.get(FS_VOLUME.PATH));
-        fileVolume.setStatus(VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
+        fileVolume.setStatus(
+                VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
         fileVolume.setByteLimit(record.get(FS_VOLUME.BYTE_LIMIT));
         fileVolume.setVolumeState(fileSystemVolumeState);
         return fileVolume;

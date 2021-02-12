@@ -36,7 +36,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class LoginManager implements HasHandlers {
 
-    private static final InvalidateSessionResource STROOM_SESSION_RESOURCE = GWT.create(InvalidateSessionResource.class);
+    private static final InvalidateSessionResource STROOM_SESSION_RESOURCE =
+            GWT.create(InvalidateSessionResource.class);
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final EventBus eventBus;

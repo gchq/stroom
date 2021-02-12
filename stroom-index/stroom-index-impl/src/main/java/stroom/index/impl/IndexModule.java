@@ -80,8 +80,8 @@ public class IndexModule extends AbstractModule {
                         .schedule(CRON, "0 0 *"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
-                        .description(
-                                "Job to set index shards to have a status of deleted that have past their retention period")
+                        .description("Job to set index shards to have a status of deleted that have past their " +
+                                "retention period")
                         .schedule(PERIODIC, "10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")

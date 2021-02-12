@@ -14,7 +14,8 @@ import java.util.List;
 
 /**
  * This stand-alone class can be used to run Flyway migrations when run from a fat jar. E.g.
- * java -cp stroom-app-all.jar stroom.db.migration.FlywayHelper info --url=jdbc:mysql... --username=root --password=my-secret-pw
+ * java -cp stroom-app-all.jar stroom.db.migration.FlywayHelper info
+ * --url=jdbc:mysql... --username=root --password=my-secret-pw
  * <p>
  * It currently only supports 'info' and 'migrate'.
  * <p>

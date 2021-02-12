@@ -29,8 +29,8 @@ import java.text.ParseException;
         commonReturnType = ValInteger.class,
         commonReturnDescription = "The first position of subString.",
         signatures = @FunctionSignature(
-                description = "Finds the first position (zero based) of subString in inputString or -1 if it cannot be found. " +
-                        "Uses a simple literal match.",
+                description = "Finds the first position (zero based) of subString in inputString or -1 if " +
+                        "it cannot be found. Uses a simple literal match.",
                 args = {
                         @FunctionArg(
                                 name = "inputString",
