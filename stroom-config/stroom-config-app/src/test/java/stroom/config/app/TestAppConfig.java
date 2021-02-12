@@ -20,8 +20,6 @@ class TestAppConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
 
-    private static final String STROOM_PACKAGE_PREFIX = "stroom.";
-
     private static final Set<Class<?>> WHITE_LISTED_CLASSES = Set.of(
             Logger.class,
             LambdaLogger.class,
@@ -76,7 +74,6 @@ class TestAppConfig {
         }
     }
 
-
     @Test
     void showPropsWithNullValues() {
         // list any config values that are null.  This may be valid so no assertions used.
@@ -85,7 +82,7 @@ class TestAppConfig {
                 prop -> true,
                 prop -> {
                     if (prop.getValueFromConfigObject() == null) {
-                        LOGGER.warn("{}.{} is null",
+                        LOGGER.warn("{} => {} is null",
                                 prop.getParentObject().getClass().getSimpleName(),
                                 prop.getName());
                     }

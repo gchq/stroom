@@ -26,7 +26,7 @@ public class ResultPageFactory {
      * @param <T>         The type of list item.
      * @return A list limited to a result page from a full list of results.
      */
-    public static <T, T_RESULT_PAGE> T_RESULT_PAGE createPageLimitedList(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createPageLimitedList(
             final List<T> fullList,
             final PageRequest pageRequest,
             final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
@@ -70,7 +70,7 @@ public class ResultPageFactory {
     /**
      * Used for full queries (not bounded).
      */
-    public static <T, T_RESULT_PAGE> T_RESULT_PAGE createUnboundedList(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createUnboundedList(
             final List<T> realList,
             final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
 
@@ -101,7 +101,7 @@ public class ResultPageFactory {
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T, T_RESULT_PAGE> T_RESULT_PAGE createCriterialBasedList(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createCriterialBasedList(
             final List<T> realList,
             final BaseCriteria baseCriteria,
             final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
@@ -112,7 +112,7 @@ public class ResultPageFactory {
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T, T_RESULT_PAGE> T_RESULT_PAGE createCriterialBasedList(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createCriterialBasedList(
             final List<T> realList,
             final BaseCriteria baseCriteria, final Long totalSize,
             final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> function) {
@@ -123,7 +123,7 @@ public class ResultPageFactory {
     /**
      * Used for filter queries (maybe bounded).
      */
-    private static <T, T_RESULT_PAGE> T_RESULT_PAGE createPageResultList(
+    private static <T, T_RESULT_PAGE extends ResultPage<T>> T_RESULT_PAGE createPageResultList(
             final List<T> realList,
             final PageRequest pageRequest,
             final Long totalSize,
@@ -173,12 +173,12 @@ public class ResultPageFactory {
     }
 
 
-    private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
+    private static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> createCollector(
             final PageRequest pageRequest,
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         // Explicit typing needed for GWT
-        return new Collector<T, List<T>, R>() {
+        return new Collector<T, List<T>, T_RESULT_PAGE>() {
             long counter = 0L;
 
             @Override
@@ -209,7 +209,7 @@ public class ResultPageFactory {
             }
 
             @Override
-            public Function<List<T>, R> finisher() {
+            public Function<List<T>, T_RESULT_PAGE> finisher() {
                 return accumulator ->
                         resultPageFactory.apply(
                                 accumulator,
@@ -233,9 +233,9 @@ public class ResultPageFactory {
      * Creates a collector that builds a sub class of a ResultPage, e.g.
      * .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
      */
-    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> collector(
             final PageRequest pageRequest,
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         return createCollector(pageRequest, resultPageFactory);
     }
@@ -244,8 +244,8 @@ public class ResultPageFactory {
      * Creates a collector that builds a sub class of a ResultPage, e.g.
      * .collect(ListConfigResponse.collector(ListConfigResponse::new));
      */
-    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
-            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> Collector<T, List<T>, T_RESULT_PAGE> collector(
+            final BiFunction<List<T>, PageResponse, T_RESULT_PAGE> resultPageFactory) {
 
         return createCollector(null, resultPageFactory);
     }
@@ -254,9 +254,11 @@ public class ResultPageFactory {
         return createCollector(pageRequest, ResultPage::new);
     }
 
-    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(final Function<List<T>, R> resultPageFactory,
-                                                                         final Class<T> itemType) {
-        return (final R resultPage1, final R resultPage2) -> {
+    public static <T, T_RESULT_PAGE extends ResultPage<T>> BinaryOperator<T_RESULT_PAGE> reducer(
+            final Function<List<T>, T_RESULT_PAGE> resultPageFactory,
+            final Class<T> itemType) {
+
+        return (final T_RESULT_PAGE resultPage1, final T_RESULT_PAGE resultPage2) -> {
             final List<T> combinedList = new ArrayList<>();
             combinedList.addAll(resultPage1.getValues());
             combinedList.addAll(resultPage2.getValues());

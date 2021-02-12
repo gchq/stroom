@@ -62,8 +62,18 @@ class TestPropertyUtil {
                 .collect(Collectors.toList()))
                 .containsExactly(System.identityHashCode(annosOnFields));
 
-        testProp(propMap, "includedField", "yes", "yes2", annosOnFields::getIncludedField, String.class);
-        testProp(propMap, "readOnlyField", "cheese", "cheese2", annosOnFields::getReadOnlyField, String.class);
+        testProp(propMap,
+                "includedField",
+                "yes",
+                "yes2",
+                annosOnFields::getIncludedField,
+                String.class);
+        testProp(propMap,
+                "readOnlyField",
+                "cheese",
+                "cheese2",
+                annosOnFields::getReadOnlyField,
+                String.class);
 
         PropertyUtil.Prop includedFieldProp = propMap.get("includedField");
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonProperty.class))

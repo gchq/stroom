@@ -347,10 +347,20 @@ public class ConfigMapper {
 
             final Class<?> valueType = prop.getValueClass();
 
+            // Ignore the dropwiz jersey config in our config
             if (valueType != JerseyClientConfiguration.class) {
 
                 final Object value = prop.getValueFromConfigObject();
+//                if (isSupportedPropertyType(valueType) && !prop.hasAnnotation(JsonIgnore.class)) {
                 if (isSupportedPropertyType(valueType)) {
+
+                    if (!prop.hasSetter()) {
+                        throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
+                                prop.getName(),
+                                (prop.getParentObject() != null
+                                        ? prop.getParentObject().getClass().getName()
+                                        : "null")));
+                    }
                     // This is a leaf, i.e. a property so add it to our map
                     propertyMap.put(fullPath, prop);
 
@@ -361,7 +371,10 @@ public class ConfigMapper {
                     if (value != null) {
                         AbstractConfig childConfigObject = (AbstractConfig) value;
                         addConfigObjectMethods(
-                                childConfigObject, fullPath, propertyMap, propConsumer);
+                                childConfigObject,
+                                fullPath,
+                                propertyMap,
+                                propConsumer);
                     }
                 } else {
                     // This is not expected

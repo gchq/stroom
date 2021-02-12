@@ -18,12 +18,13 @@
 package stroom.util.config;
 
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.CaseFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -31,7 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 public final class PropertyUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PropertyUtil.class);
 
     private PropertyUtil() {
         // Utility class.
@@ -65,6 +65,7 @@ public final class PropertyUtil {
                                        final Consumer<Prop> propConsumer,
                                        final String indent) {
 
+        // Only care about stroom pojos
         final Map<String, Prop> propMap = getProperties(object);
 
         propMap.values().stream()
@@ -74,12 +75,16 @@ public final class PropertyUtil {
 
                     // process the prop
                     propConsumer.accept(prop);
-                    Object childValue = prop.getValueFromConfigObject();
+                    final Object childValue = prop.getValueFromConfigObject();
                     if (childValue == null) {
                         LOGGER.trace("{}Null value", indent + "  ");
                     } else {
                         // descend into the prop, which may or may not have its own props
-                        walkObjectTree(prop.getValueFromConfigObject(), propFilter, propConsumer, indent + "  ");
+                        walkObjectTree(
+                                prop.getValueFromConfigObject(),
+                                propFilter,
+                                propConsumer,
+                                indent + "  ");
                     }
                 });
     }
@@ -94,19 +99,37 @@ public final class PropertyUtil {
         final Map<String, Prop> propMap = new HashMap<>();
         final Class<?> clazz = object.getClass();
 
+        // Scan all the fields and methods on the object to build up a map of possible props
         getPropsFromFields(object, propMap);
-
         getPropsFromMethods(object, propMap);
 
+        // Now filter out all the prop objects that are not pojo props with getter+setter
         return propMap
                 .entrySet()
                 .stream()
                 .filter(e -> {
-                    if (e.getValue().getter == null || e.getValue().setter == null) {
-                        LOGGER.trace("Invalid property " + e.getKey() + " on " + clazz.getName());
+                    final String name = e.getKey();
+                    final Prop prop = e.getValue();
+                    final boolean hasJsonPropertyAnno = prop.hasAnnotation(JsonProperty.class);
+
+                    LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
+                            " hasJsonProperty: " + hasJsonPropertyAnno +
+                            " hasSetter:" + prop.hasSetter());
+
+                    if (prop.hasGetter() && !prop.hasSetter() && hasJsonPropertyAnno) {
+                        // Need to check for the jsonProperty anno to ignore props of non-pojo classes,
+                        // e.g when it recurses into TreeMap or something like that.
+                        throw new RuntimeException("Property " + name + " on " + clazz.getName() +
+                                " has no setter. Either add a setter or remove @JsonProperty from its " +
+                                "getter/field");
+                    } else if (prop.getter == null || prop.setter == null) {
+                        // could be a static field for internal use
+                        LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
+                                " has no getter or setter, ignoring.");
                         return false;
+                    } else {
+                        return true;
                     }
-                    return true;
                 })
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
@@ -173,29 +196,6 @@ public final class PropertyUtil {
                 }
             }
         }
-        // Now ensure we have matched getters and setters. At the moment we rely
-        // on setters so the objects must be mutable.
-        if (propsWithGetter.size() != propsWithSetter.size()) {
-            propsWithGetter.sort(Comparator.naturalOrder());
-            propsWithSetter.sort(Comparator.naturalOrder());
-            if (!propsWithGetter.equals(propsWithSetter)) {
-                final List<String> gettersWithNoSetter = propsWithGetter.stream()
-                        .filter(getter -> !propsWithSetter.contains(getter))
-                        .collect(Collectors.toList());
-
-                final List<String> settersWithNoGetter = propsWithSetter.stream()
-                        .filter(setter -> !propsWithGetter.contains(setter))
-                        .collect(Collectors.toList());
-
-                throw new RuntimeException(LogUtil.message(
-                        "Mismatch in getters and setters on class {}\n" +
-                                "Getters with no setter: {}\n" +
-                                "Setters with no getter: {}",
-                        clazz.getName(),
-                        gettersWithNoSetter,
-                        settersWithNoGetter));
-            }
-        }
     }
 
     private static String getPropertyName(final String methodName, final int len) {
@@ -237,6 +237,10 @@ public final class PropertyUtil {
             return getter;
         }
 
+        public boolean hasGetter() {
+            return getter != null;
+        }
+
         void setGetter(final Method getter) {
             this.getter = Objects.requireNonNull(getter);
 
@@ -247,6 +251,10 @@ public final class PropertyUtil {
 
         public Method getSetter() {
             return setter;
+        }
+
+        public boolean hasSetter() {
+            return setter != null;
         }
 
         void setSetter(final Method setter) {
