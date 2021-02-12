@@ -74,7 +74,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
-    private static final int MAX_RESULTS = 1000;
+//    private static final int MAX_RESULTS = 1000;
     private static final long UPDATE_INTERVAL = 2000;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
@@ -584,7 +584,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
-                .requestedRange(new OffsetRange(0, MAX_RESULTS))
+//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(fetch)
                 .build();
     }
@@ -597,7 +597,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 .builder()
                 .componentId(getId())
                 .visDashboardSettings(getVisSettings())
-                .requestedRange(new OffsetRange(0, MAX_RESULTS))
+//                .requestedRange(new OffsetRange(0, MAX_RESULTS))
                 .fetch(Fetch.ALL)
                 .build();
     }
