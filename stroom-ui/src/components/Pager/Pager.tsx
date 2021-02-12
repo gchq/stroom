@@ -1,7 +1,7 @@
 import * as React from "react";
 import Button from "components/Button/Button";
 import { useEffect, useState } from "react";
-import { PageRequest } from "../Account/api/types";
+import { PageRequest } from "api/stroom";
 
 interface Page {
   from: number;

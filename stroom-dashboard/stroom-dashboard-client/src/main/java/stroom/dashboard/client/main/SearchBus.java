@@ -19,8 +19,8 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -105,20 +105,20 @@ public class SearchBus {
 
     private void doPoll() {
         polling = true;
-        final Set<SearchRequest> searchRequests = new HashSet<>();
+        final Set<DashboardSearchRequest> searchRequests = new HashSet<>();
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
             final SearchModel searchModel = entry.getValue();
-            final SearchRequest searchRequest = searchModel.getCurrentRequest();
+            final DashboardSearchRequest searchRequest = searchModel.getCurrentRequest();
             if (searchRequest != null) {
                 searchRequests.add(searchRequest);
             }
         }
 
-        final Rest<Set<SearchResponse>> rest = restFactory.create();
+        final Rest<Set<DashboardSearchResponse>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     try {
-                        for (final SearchResponse searchResponse : result) {
+                        for (final DashboardSearchResponse searchResponse : result) {
                             final DashboardQueryKey queryKey = searchResponse.getQueryKey();
                             final SearchModel searchModel = activeSearchMap.get(queryKey);
                             if (searchModel != null) {

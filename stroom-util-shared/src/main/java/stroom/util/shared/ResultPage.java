@@ -90,7 +90,8 @@ public class ResultPage<T> implements Serializable {
                     limited.add(fullList.get(i));
                 }
 
-                final PageResponse pageResponse = new PageResponse(offset,
+                final PageResponse pageResponse = new PageResponse(
+                        offset,
                         limited.size(),
                         (long) fullList.size(),
                         true);
@@ -191,60 +192,6 @@ public class ResultPage<T> implements Serializable {
         return new ResultPage<>(realList, pageResponse);
     }
 
-    public PageResponse getPageResponse() {
-        return pageResponse;
-    }
-
-    public List<T> getValues() {
-        return values;
-    }
-
-    public int size() {
-        return values.size();
-    }
-
-    /**
-     * @return the first item or null if the list is empty
-     */
-    @JsonIgnore
-    public T getFirst() {
-        if (values.size() > 0) {
-            return values.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    @JsonIgnore
-    public int getPageStart() {
-        return (int) pageResponse.getOffset();
-    }
-
-    @JsonIgnore
-    public int getPageSize() {
-        if (pageResponse.getTotal() == null) {
-            return getPageStart() + values.size();
-        }
-        return pageResponse.getTotal().intValue();
-    }
-
-    @JsonIgnore
-    public boolean isExact() {
-        return pageResponse.isExact();
-    }
-
-    public Stream<T> stream() {
-        return values.stream();
-    }
-
-    public Stream<T> parallelStream() {
-        return values.parallelStream();
-    }
-
-    public void forEach(final Consumer<? super T> action) {
-        values.forEach(action);
-    }
-
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
             final PageRequest pageRequest,
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -334,6 +281,60 @@ public class ResultPage<T> implements Serializable {
             combinedList.addAll(resultPage2.getValues());
             return resultPageFactory.apply(combinedList);
         };
+    }
+
+    public PageResponse getPageResponse() {
+        return pageResponse;
+    }
+
+    public List<T> getValues() {
+        return values;
+    }
+
+    public int size() {
+        return values.size();
+    }
+
+    /**
+     * @return the first item or null if the list is empty
+     */
+    @JsonIgnore
+    public T getFirst() {
+        if (values.size() > 0) {
+            return values.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    @JsonIgnore
+    public int getPageStart() {
+        return (int) pageResponse.getOffset();
+    }
+
+    @JsonIgnore
+    public int getPageSize() {
+        if (pageResponse.getTotal() == null) {
+            return getPageStart() + values.size();
+        }
+        return pageResponse.getTotal().intValue();
+    }
+
+    @JsonIgnore
+    public boolean isExact() {
+        return pageResponse.isExact();
+    }
+
+    public Stream<T> stream() {
+        return values.stream();
+    }
+
+    public Stream<T> parallelStream() {
+        return values.parallelStream();
+    }
+
+    public void forEach(final Consumer<? super T> action) {
+        values.forEach(action);
     }
 
     @SuppressWarnings("checkstyle:needbraces")

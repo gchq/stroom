@@ -47,7 +47,7 @@ public class SourceLocation {
     // TODO @AT Change to an OffsetRange to support error segments
     @JsonProperty
     private final long segmentNo; // optional for segmented data only (segment aka record), zero based
-    //    private final OffsetRange<Long> segmentNoRange;
+    //    private final OffsetRange segmentNoRange;
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty

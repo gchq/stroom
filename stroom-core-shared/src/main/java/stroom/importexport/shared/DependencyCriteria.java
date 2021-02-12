@@ -2,7 +2,7 @@ package stroom.importexport.shared;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -65,7 +65,7 @@ public class DependencyCriteria extends BaseCriteria {
 
     @JsonCreator
     public DependencyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                              @JsonProperty("sortList") final List<Sort> sortList,
+                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                               @JsonProperty("partialName") final String partialName) {
         super(pageRequest, sortList);
         this.partialName = partialName;

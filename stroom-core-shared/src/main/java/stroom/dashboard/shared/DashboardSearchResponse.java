@@ -31,7 +31,7 @@ import java.util.Set;
 
 @JsonPropertyOrder({"queryKey", "highlights", "errors", "complete", "results"})
 @JsonInclude(Include.NON_NULL)
-public class SearchResponse {
+public class DashboardSearchResponse {
 
     /**
      * The dashboard component that this search response is for.
@@ -63,11 +63,11 @@ public class SearchResponse {
     private final List<Result> results;
 
     @JsonCreator
-    public SearchResponse(@JsonProperty("queryKey") final DashboardQueryKey queryKey,
-                          @JsonProperty("highlights") final Set<String> highlights,
-                          @JsonProperty("errors") final String errors,
-                          @JsonProperty("complete") final boolean complete,
-                          @JsonProperty("results") final List<Result> results) {
+    public DashboardSearchResponse(@JsonProperty("queryKey") final DashboardQueryKey queryKey,
+                                   @JsonProperty("highlights") final Set<String> highlights,
+                                   @JsonProperty("errors") final String errors,
+                                   @JsonProperty("complete") final boolean complete,
+                                   @JsonProperty("results") final List<Result> results) {
         this.queryKey = queryKey;
         this.highlights = highlights;
         this.errors = errors;
@@ -104,7 +104,6 @@ public class SearchResponse {
         return builder.toString();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -113,7 +112,7 @@ public class SearchResponse {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final SearchResponse that = (SearchResponse) o;
+        final DashboardSearchResponse that = (DashboardSearchResponse) o;
         return complete == that.complete &&
                 Objects.equals(queryKey, that.queryKey) &&
                 Objects.equals(highlights, that.highlights) &&

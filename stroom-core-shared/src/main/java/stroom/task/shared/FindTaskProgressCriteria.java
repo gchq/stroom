@@ -18,7 +18,7 @@ package stroom.task.shared;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -68,7 +68,7 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindTaskProgressCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                    @JsonProperty("sortList") final List<Sort> sortList,
+                                    @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                     @JsonProperty("expandedTasks") final Set<TaskProgress> expandedTasks,
                                     @JsonProperty("nameFilter") final String nameFilter,
                                     @JsonProperty("sessionId") final String sessionId) {
@@ -127,10 +127,10 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
-            Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false, true);
+            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false, true);
             this.getSortList().add(defaultSort);
         } else {
-            for (Sort sort : this.getSortList()) {
+            for (CriteriaFieldSort sort : this.getSortList()) {
                 if (!Arrays.asList(
                         FindTaskProgressCriteria.FIELD_AGE,
                         FindTaskProgressCriteria.FIELD_INFO,

@@ -19,7 +19,6 @@
 package stroom.security.identity.token;
 
 import stroom.security.identity.config.TokenConfig;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -40,14 +39,14 @@ public class TokenResourceImpl implements TokenResource {
     }
 
     @Override
-    public ResultPage<Token> list(final HttpServletRequest httpServletRequest) {
+    public TokenResultPage list(final HttpServletRequest httpServletRequest) {
         return null;
     }
 
     @Override
-    public ResultPage<Token> search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
+    public TokenResultPage search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
         try {
-            final ResultPage<Token> result = serviceProvider.get().search(request);
+            final TokenResultPage result = serviceProvider.get().search(request);
             tokenEventLog.search(request, result, null);
             return result;
         } catch (final RuntimeException e) {
@@ -95,8 +94,8 @@ public class TokenResourceImpl implements TokenResource {
     }
 
     @Override
-    public final Integer delete(final HttpServletRequest httpServletRequest,
-                                final String data) {
+    public final Integer deleteByToken(final HttpServletRequest httpServletRequest,
+                                       final String data) {
         try {
             final int result = serviceProvider.get().delete(data);
             tokenEventLog.delete(data, result, null);

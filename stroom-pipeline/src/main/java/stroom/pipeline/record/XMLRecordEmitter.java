@@ -204,7 +204,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
             final ByteSlice footerBytes = StreamUtil.getByteSlice(footer);
             final ByteSlice bodyBytes = StreamUtil.getByteSlice(body);
 
-            final Record record = new Record(headerBytes, footerBytes, bodyBytes);
+            final Rec record = new Rec(headerBytes, footerBytes, bodyBytes);
 
             /// Reset
             header = null;

@@ -90,8 +90,8 @@ class DataResourceImpl implements DataResource {
 //                                              final Long pageOffset,
 //                                              final Long pageSize) {
 //
-//        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
-//        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
+//        final OffsetRange pageRange = new OffsetRange(pageOffset, pageSize);
+//        final OffsetRange streamRange = new OffsetRange(streamsOffset, streamsLength);
 //
 //        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
 //        final boolean showAsHtml = false; // Used for dashboards so false here.

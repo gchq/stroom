@@ -35,10 +35,10 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
@@ -426,7 +426,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
-                            final SearchRequest searchRequest = new SearchRequest(queryKey,
+                            final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
+                                    queryKey,
                                     search,
                                     requests,
                                     timeZones.getTimeZone());

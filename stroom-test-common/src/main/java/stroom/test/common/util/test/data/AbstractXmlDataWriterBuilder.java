@@ -31,7 +31,7 @@ public abstract class AbstractXmlDataWriterBuilder {
         return this::mapRecords;
     }
 
-    private Function<Record, String> getDataMapper(final List<Field> fields) {
+    private Function<Rec, String> getDataMapper(final List<Field> fields) {
         final String recordFormatStr = buildRecordFormatString(fields);
 
         return record -> {
@@ -42,8 +42,8 @@ public abstract class AbstractXmlDataWriterBuilder {
 
     protected abstract String buildRecordFormatString(List<Field> fields);
 
-    Stream<String> mapRecords(List<Field> fields, Stream<Record> recordStream) {
-        final Function<Record, String> dataMapper = getDataMapper(fields);
+    Stream<String> mapRecords(List<Field> fields, Stream<Rec> recordStream) {
+        final Function<Rec, String> dataMapper = getDataMapper(fields);
 
         final Stream<String> dataStream = recordStream.map(dataMapper);
         final String namespaceAtr = namespace

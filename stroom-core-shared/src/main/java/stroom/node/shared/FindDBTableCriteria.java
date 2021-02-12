@@ -17,8 +17,8 @@
 package stroom.node.shared;
 
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,7 +35,7 @@ public class FindDBTableCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindDBTableCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                               @JsonProperty("sortList") final List<Sort> sortList) {
+                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList) {
         super(pageRequest, sortList);
     }
 }

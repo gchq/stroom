@@ -10,15 +10,15 @@ export const createFormFieldState = (
     setFieldValue,
     errors,
     touched,
-    setFieldTouched,
+    // setFieldTouched,
   } = formikProps;
 
   return {
     onChange: (val) => {
-      setFieldTouched(controlId, true, false);
+      // setFieldTouched(controlId, true, false);
       setFieldValue(controlId, val, true);
     },
-    onBlur: () => setFieldTouched(controlId, true, true),
+    onBlur: () => undefined, //setFieldTouched(controlId, true, true),
     value: values[controlId],
     error: touched[controlId] ? errors[controlId] : undefined,
     touched: touched[controlId],

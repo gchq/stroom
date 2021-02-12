@@ -20,7 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.shared.Record;
+import stroom.pipeline.shared.Rec;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
@@ -237,7 +237,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
 
                                     // See if we previously found a matching record
                                     // for this filter.
-                                    Record record = xPathFilter.getUniqueRecord(value);
+                                    Rec record = xPathFilter.getUniqueRecord(value);
                                     if (record != null) {
                                         // We did so see if this is the same record.
                                         // If it is then we can return this record
@@ -247,7 +247,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                         }
 
                                     } else {
-                                        record = new Record(streamId, recordNo);
+                                        record = new Rec(streamId, recordNo);
                                         xPathFilter.addUniqueValue(value, record);
                                         return true;
                                     }

@@ -18,7 +18,7 @@ package stroom.node.api;
 
 import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,7 +47,7 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
 
     @JsonCreator
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("name") final StringCriteria name,
                             @JsonProperty("isEnabled") final Boolean isEnabled) {
         super(pageRequest, sortList, name);

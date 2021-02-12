@@ -38,7 +38,7 @@ public class XPathFilter {
     @JsonProperty
     private Boolean ignoreCase;
     @JsonProperty
-    private Map<String, Record> uniqueValues;
+    private Map<String, Rec> uniqueValues;
 
     public XPathFilter() {
     }
@@ -48,7 +48,7 @@ public class XPathFilter {
                        @JsonProperty("matchType") final MatchType matchType,
                        @JsonProperty("value") final String value,
                        @JsonProperty("ignoreCase") final Boolean ignoreCase,
-                       @JsonProperty("uniqueValues") final Map<String, Record> uniqueValues) {
+                       @JsonProperty("uniqueValues") final Map<String, Rec> uniqueValues) {
         this.path = path;
         this.matchType = matchType;
         this.value = value;
@@ -88,7 +88,7 @@ public class XPathFilter {
         this.ignoreCase = ignoreCase;
     }
 
-    public Record getUniqueRecord(final String value) {
+    public Rec getUniqueRecord(final String value) {
         if (uniqueValues == null) {
             return null;
         }
@@ -96,7 +96,7 @@ public class XPathFilter {
         return uniqueValues.get(value);
     }
 
-    public void addUniqueValue(final String value, final Record record) {
+    public void addUniqueValue(final String value, final Rec record) {
         if (uniqueValues == null) {
             uniqueValues = new HashMap<>();
         }

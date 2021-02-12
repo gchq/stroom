@@ -201,7 +201,7 @@ public class DataFetcher {
                 if (source == null) {
                     final String msg = "## Stream has been deleted ## ";
                     final Count<Long> totalItemCount = new Count<>(0L, true);
-                    final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
+                    final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
                     final Count<Long> totalCharCount = new Count<>((long) msg.length(), true);
 
                     writeEventLog(
@@ -253,7 +253,7 @@ public class DataFetcher {
                         if (partCount > 1) {
                             eventId += ":" + partNo;
                         }
-//                        final OffsetRange<Long> pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
+//                        final OffsetRange pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
                         if (sourceLocation.getOptSegmentNo().isPresent()) {
                             eventId = ":" + sourceLocation.getOptSegmentNo().getAsLong();
                         }
@@ -354,7 +354,7 @@ public class DataFetcher {
         }
 
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> itemRange = new OffsetRange<>(
+        final OffsetRange itemRange = new OffsetRange(
                 sourceLocation.getSegmentNo(),
                 (long) resultList.size());
         final Count<Long> totalItemCount = new Count<>(totalResults, true);
@@ -484,7 +484,7 @@ public class DataFetcher {
                 StreamTypeNames.RAW_EVENTS,
                 null,
                 sourceLocation,
-                OffsetRange.of(0L, 0L),
+                new OffsetRange(0L, 0L),
                 Count.of(0L, true),
                 Count.of(0L, true),
                 0L,
@@ -553,7 +553,7 @@ public class DataFetcher {
                 segmentInputStream.size());
 
         // Override the page items range/total as we are dealing in segments/records
-        rawResult.setItemRange(OffsetRange.of(segmentNumber, 1L));
+        rawResult.setItemRange(new OffsetRange(segmentNumber, 1L));
         rawResult.setTotalItemCount(Count.of(segmentInputStream.count() - 2, true));
         return rawResult;
     }
@@ -570,7 +570,7 @@ public class DataFetcher {
 
 
         // Non-segmented data exists within parts so set the item info
-        rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
+        rawResult.setItemRange(new OffsetRange(sourceLocation.getPartNo(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
         return rawResult;
     }
@@ -1053,7 +1053,7 @@ public class DataFetcher {
         private final String rawData;
         private final int byteOrderMarkLength;
 
-        private OffsetRange<Long> itemRange; // part/segment/marker
+        private OffsetRange itemRange; // part/segment/marker
         private Count<Long> totalItemCount; // part/segment/marker
         private Count<Long> totalCharacterCount; // Total chars in part/segment
         private long totalBytes;
@@ -1081,11 +1081,11 @@ public class DataFetcher {
             return byteOrderMarkLength;
         }
 
-        public OffsetRange<Long> getItemRange() {
+        public OffsetRange getItemRange() {
             return itemRange;
         }
 
-        public void setItemRange(final OffsetRange<Long> itemRange) {
+        public void setItemRange(final OffsetRange itemRange) {
             this.itemRange = itemRange;
         }
 

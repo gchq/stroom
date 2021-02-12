@@ -20,10 +20,12 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.SearchRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,13 +80,12 @@ class TestSearchRequestMapper {
     @Test
     void testSearchRequestMapper() {
         // Given
-        stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
+        DashboardSearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
-        stroom.query.api.v2.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(
-                "test",
-                "ttest",
-                "test"), dashboardSearchRequest);
+        SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(
+                new DashboardQueryKey("test", "ttest", "test"),
+                dashboardSearchRequest);
 
         // Then
         verify_Search_to_Query_mapping(

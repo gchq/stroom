@@ -2,15 +2,14 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.account.Account;
 import stroom.security.identity.config.TokenConfig;
-import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
 
 public interface TokenService {
 
-    ResultPage<Token> list();
+    TokenResultPage list();
 
-    ResultPage<Token> search(SearchTokenRequest request);
+    TokenResultPage search(SearchTokenRequest request);
 
     Token create(CreateTokenRequest createTokenRequest);
 

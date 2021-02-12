@@ -13,7 +13,7 @@ public interface HasItems {
      *
      * @return The range of items on the page, zero based.
      */
-    OffsetRange<Long> getItemRange();
+    OffsetRange getItemRange();
 
     /**
      * Called when the navigator needs the item from offset.

@@ -57,7 +57,7 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
             builder.setLength(0);
 
             final ByteSlice body = StreamUtil.getByteSlice(content);
-            final Record record = new Record(null, null, body);
+            final Rec record = new Rec(null, null, body);
             for (final DestinationProvider destinationProvider : destinationProviders) {
                 try {
                     final Destination destination = destinationProvider.borrowDestination();

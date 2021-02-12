@@ -25,16 +25,16 @@ import stroom.security.identity.token.SearchTokenRequest;
 import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenDao;
 import stroom.security.identity.token.TokenResource;
+import stroom.security.identity.token.TokenResultPage;
 import stroom.security.identity.token.TokenType;
 import stroom.security.identity.token.TokenTypeDao;
-import stroom.util.collections.ResultPageCollector;
+import stroom.util.ResultPageFactory;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -150,7 +150,7 @@ class TokenDaoImpl implements TokenDao {
     }
 
     @Override
-    public ResultPage<Token> list() {
+    public TokenResultPage list() {
         final List<Token> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(tokenTypeDao.getTokenTypeId(
@@ -158,11 +158,11 @@ class TokenDaoImpl implements TokenDao {
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
-        return ResultPage.createUnboundedList(list);
+        return ResultPageFactory.createUnboundedList(list, TokenResultPage::new);
     }
 
     @Override
-    public ResultPage<Token> search(final SearchTokenRequest request) {
+    public TokenResultPage search(final SearchTokenRequest request) {
         final Condition condition = createCondition(request);
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
@@ -208,7 +208,7 @@ class TokenDaoImpl implements TokenDao {
                         .map(Record1::value1)
                         .orElse(0);
 
-                return ResultPage.createCriterialBasedList(list, request, (long) count);
+                return ResultPageFactory.createCriterialBasedList(list, request, (long) count, TokenResultPage::new);
 
             } else {
                 // Create the predicate for the current filter value
@@ -241,8 +241,7 @@ class TokenDaoImpl implements TokenDao {
                     return stream
                             .map(RECORD_TO_TOKEN_MAPPER)
                             .filter(fuzzyMatchPredicate)
-                            .collect(ResultPageCollector.create(request.getPageRequest()))
-                            .build();
+                            .collect(ResultPageFactory.collector(request.getPageRequest(), TokenResultPage::new));
                 }
             }
         });

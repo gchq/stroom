@@ -1057,8 +1057,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         @Override
-        public OffsetRange<Long> getItemRange() {
-            return OffsetRange.of(0L, 1L);
+        public OffsetRange getItemRange() {
+            return new OffsetRange(0L, 1L);
         }
 
         @Override
@@ -1107,7 +1107,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         private Count<Long> totalItemCount = Count.of(0L, false);
         private Consumer<Long> itemNoFromConsumer = null;
-        private Supplier<OffsetRange<Long>> itemRangeSupplier = null;
+        private Supplier<OffsetRange> itemRangeSupplier = null;
         private String name = "";
         private int maxItemsPerPage = 1;
 
@@ -1117,7 +1117,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                                                   final String name) {
             this.totalItemCount = totalItemCount;
             this.itemNoFromConsumer = itemNoConsumer;
-            this.itemRangeSupplier = () -> OffsetRange.of(itemOffsetSupplier.get(), 1L);
+            this.itemRangeSupplier = () -> new OffsetRange(itemOffsetSupplier.get(), 1L);
             this.name = name;
             this.maxItemsPerPage = 1;
         }
@@ -1126,7 +1126,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.itemNoFromConsumer = itemNoFromConsumer;
         }
 
-        public void setItemRangeSupplier(final Supplier<OffsetRange<Long>> itemRangeSupplier) {
+        public void setItemRangeSupplier(final Supplier<OffsetRange> itemRangeSupplier) {
             this.itemRangeSupplier = itemRangeSupplier;
         }
 
@@ -1136,7 +1136,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         @Override
-        public OffsetRange<Long> getItemRange() {
+        public OffsetRange getItemRange() {
             return itemRangeSupplier.get();
         }
 

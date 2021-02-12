@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,45 +14,33 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
-
 @JsonInclude(Include.NON_NULL)
-public class Sort implements Serializable {
-
-    private static final long serialVersionUID = -5994197736743037915L;
+public class Rec {
 
     @JsonProperty
-    private final String id;
+    private final long streamId;
     @JsonProperty
-    private final boolean desc;
-    @JsonProperty
-    private final boolean ignoreCase;
+    private final long recordNo;
 
     @JsonCreator
-    public Sort(@JsonProperty("id") final String id,
-                @JsonProperty("desc") final boolean desc,
-                @JsonProperty("ignoreCase") final boolean ignoreCase) {
-        this.id = id;
-        this.desc = desc;
-        this.ignoreCase = ignoreCase;
+    public Rec(@JsonProperty("streamId") final long streamId,
+               @JsonProperty("recordNo") final long recordNo) {
+        this.streamId = streamId;
+        this.recordNo = recordNo;
     }
 
-    public String getId() {
-        return id;
+    public long getStreamId() {
+        return streamId;
     }
 
-    public boolean isDesc() {
-        return desc;
-    }
-
-    public boolean isIgnoreCase() {
-        return ignoreCase;
+    public long getRecordNo() {
+        return recordNo;
     }
 }

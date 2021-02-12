@@ -18,7 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -52,7 +52,7 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
 
     @JsonCreator
     public FindStoredQueryCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                   @JsonProperty("sortList") final List<Sort> sortList,
+                                   @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                    @JsonProperty("name") final StringCriteria name,
                                    @JsonProperty("requiredPermission") final String requiredPermission,
                                    @JsonProperty("userId") final String userId,

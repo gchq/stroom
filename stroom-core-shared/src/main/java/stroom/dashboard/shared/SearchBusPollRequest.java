@@ -29,11 +29,11 @@ public class SearchBusPollRequest {
     @JsonProperty
     private final String applicationInstanceId;
     @JsonProperty
-    private final Set<SearchRequest> searchRequests;
+    private final Set<DashboardSearchRequest> searchRequests;
 
     @JsonCreator
     public SearchBusPollRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
-                                @JsonProperty("searchRequests") final Set<SearchRequest> searchRequests) {
+                                @JsonProperty("searchRequests") final Set<DashboardSearchRequest> searchRequests) {
         this.applicationInstanceId = applicationInstanceId;
         this.searchRequests = searchRequests;
     }
@@ -42,7 +42,7 @@ public class SearchBusPollRequest {
         return applicationInstanceId;
     }
 
-    public Set<SearchRequest> getSearchRequests() {
+    public Set<DashboardSearchRequest> getSearchRequests() {
         return searchRequests;
     }
 }

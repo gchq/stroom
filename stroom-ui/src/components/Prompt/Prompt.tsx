@@ -18,12 +18,14 @@ import * as React from "react";
 import Button from "../Button/Button";
 import { Form, Modal } from "react-bootstrap";
 import { Dialog } from "components/Dialog/Dialog";
+import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
 
 export enum PromptType {
   INFO,
   WARNING,
   ERROR,
   FATAL,
+  QUESTION,
 }
 
 export interface ContentProps {
@@ -38,6 +40,11 @@ export interface PromptProps extends ContentProps {
 interface Props {
   promptProps: PromptProps;
   onCloseDialog: () => void;
+}
+
+interface ConfirmProps {
+  promptProps: PromptProps;
+  okCancelProps: OkCancelProps;
 }
 
 interface ImageProps {
@@ -89,6 +96,14 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
         />
       );
     }
+    case PromptType.QUESTION: {
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/prompt/question.svg")}
+          text={prompt.title}
+        />
+      );
+    }
     default: {
       return (
         <ImageHeader
@@ -130,6 +145,23 @@ export const Prompt: React.FunctionComponent<Props> = ({
           </Button>
         </Modal.Footer>
       </Form>
+    </Dialog>
+  );
+};
+
+export const Confirm: React.FunctionComponent<ConfirmProps> = ({
+  promptProps,
+  okCancelProps,
+}) => {
+  return (
+    <Dialog>
+      <Modal.Header closeButton={false}>
+        <PromptHeader {...promptProps} />
+      </Modal.Header>
+      <Modal.Body>{promptProps && promptProps.message} </Modal.Body>
+      <Modal.Footer>
+        <OkCancelButtons {...okCancelProps} />
+      </Modal.Footer>
     </Dialog>
   );
 };

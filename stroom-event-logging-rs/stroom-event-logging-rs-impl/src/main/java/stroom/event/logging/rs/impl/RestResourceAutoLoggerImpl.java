@@ -23,11 +23,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.gwt.thirdparty.json.JSONException;
-import com.google.gwt.thirdparty.json.JSONObject;
 import org.glassfish.jersey.message.MessageUtils;
 
 import java.io.IOException;
@@ -76,6 +75,15 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.objectMapper = createObjectMapper();
     }
 
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
     @Override
     public Response toResponse(final Exception exception) {
         if (request != null) {
@@ -119,15 +127,15 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         }
     }
 
-    private static String createExceptionJSON(Response.Status status, Exception ex) throws JSONException {
-        final JSONObject json = new JSONObject();
-        json.put("code", status.ordinal());
-        json.put("message", ex.getMessage());
-        json.put("details", status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
-                + ((ex.getCause() != null)
-                ? " cause: " + ex.getCause().getMessage()
-                : ""));
-        return json.toString();
+    private String createExceptionJSON(Response.Status status, Exception ex) throws JsonProcessingException {
+        final JsonException jsonException = new JsonException(
+                status.ordinal(),
+                ex.getMessage(),
+                status.getReasonPhrase() + " " + ex.getClass() + ex.getMessage()
+                        + ((ex.getCause() != null)
+                        ? " cause: " + ex.getCause().getMessage()
+                        : ""));
+        return objectMapper.writeValueAsString(jsonException);
     }
 
     @Override
@@ -160,15 +168,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo));
             }
         }
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
 }

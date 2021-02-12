@@ -82,7 +82,7 @@ public interface DashboardResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Poll for new search results",
             response = Set.class)
-    Set<SearchResponse> poll(@ApiParam("request") SearchBusPollRequest request);
+    Set<DashboardSearchResponse> poll(@ApiParam("request") SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")

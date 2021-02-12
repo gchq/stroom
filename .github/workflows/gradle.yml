@@ -78,7 +78,7 @@ jobs:
         -Pversion="${{ steps.set_env_var.outputs.version }}" \
         build \
         -x shadowJar \
-        -x generateSwaggerDocumentation \
+        -x resolve \
         -x copyFilesForStroomDockerBuild \
         -x copyFilesForProxyDockerBuild \
         -x buildDistribution

@@ -24,7 +24,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -90,7 +90,7 @@ class JobService {
         results.getValues().forEach(this::decorate);
 
         if (findJobCriteria.getSortList().size() > 0) {
-            final Sort sort = findJobCriteria.getSortList().get(0);
+            final CriteriaFieldSort sort = findJobCriteria.getSortList().get(0);
             if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }

@@ -1,14 +1,12 @@
 package stroom.security.identity.account;
 
-import stroom.util.shared.ResultPage;
-
 import java.util.Optional;
 
 public interface AccountService {
 
-    ResultPage<Account> list();
+    AccountResultPage list();
 
-    ResultPage<Account> search(SearchAccountRequest request);
+    AccountResultPage search(SearchAccountRequest request);
 
     Account create(CreateAccountRequest request);
 

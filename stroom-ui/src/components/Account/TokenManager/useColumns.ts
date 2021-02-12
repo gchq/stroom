@@ -1,4 +1,4 @@
-import { Token } from "../types";
+import { Token } from "api/stroom";
 import { useMemo } from "react";
 import { Column } from "react-table";
 import useDateUtil from "../../../lib/useDateUtil";

@@ -5,7 +5,6 @@ import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 
@@ -28,13 +27,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public ResultPage<Account> list() {
+    public AccountResultPage list() {
         checkPermission();
         return accountDao.list();
     }
 
     @Override
-    public ResultPage<Account> search(final SearchAccountRequest request) {
+    public AccountResultPage search(final SearchAccountRequest request) {
         checkPermission();
         return accountDao.search(request);
     }

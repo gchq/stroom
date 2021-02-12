@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useHttpClient2 } from "lib/useHttpClient";
-import * as React from "react";
-import { UiConfig } from "./types";
-import { useUrlFactory } from "../../lib/useUrlFactory";
 import { useEffect, useState } from "react";
+import { useStroomApi } from "lib/useStroomApi";
+import { UiConfig } from "api/stroom";
 
 export interface Api {
   config: UiConfig;
 }
 
 const useGlobalConfigResource = (): Api => {
-  const { httpGet } = useHttpClient2();
-  const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/config/v1");
   const [config, setConfig] = useState<UiConfig>();
-
-  const fetchUiConfig = React.useCallback(() => {
-    return httpGet(`${resource}/noauth/fetchUiConfig`);
-  }, [httpGet, resource]);
+  const { exec } = useStroomApi();
 
   useEffect(() => {
     console.log("Fetching config");
-    fetchUiConfig().then((c) => {
-      console.log("Setting config to " + JSON.stringify(c));
-      setConfig(c);
-    });
-  }, [fetchUiConfig]);
+    exec(
+      (api) => api.config.fetchUiConfig(),
+      (response: UiConfig) => {
+        console.log("Setting config to " + JSON.stringify(response));
+        setConfig(response);
+      },
+    );
+  }, [exec]);
 
   return { config };
 };

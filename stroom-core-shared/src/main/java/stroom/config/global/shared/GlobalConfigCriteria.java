@@ -2,7 +2,7 @@ package stroom.config.global.shared;
 
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,7 +21,7 @@ public class GlobalConfigCriteria extends BaseCriteria {
 
     @JsonCreator
     public GlobalConfigCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                @JsonProperty("sortList") final List<Sort> sortList,
+                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                 @JsonProperty("quickFilterInput") final String quickFilterInput) {
         super(pageRequest, sortList);
         this.quickFilterInput = quickFilterInput;

@@ -30,14 +30,14 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchRequest;
-import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -47,8 +47,12 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -171,8 +175,8 @@ class DashboardResourceImpl implements DashboardResource {
                     throw new EntityServiceException("Query is empty");
                 }
 
-                final SearchRequest searchRequest = request.getSearchRequest();
-                final SearchRequest.Builder builder = searchRequest.copy();
+                final DashboardSearchRequest searchRequest = request.getSearchRequest();
+                final DashboardSearchRequest.Builder builder = searchRequest.copy();
                 final List<ComponentResultRequest> componentResultRequests = new ArrayList<>();
 
                 // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
@@ -204,7 +208,7 @@ class DashboardResourceImpl implements DashboardResource {
                 builder.componentResultRequests(componentResultRequests);
 
                 // Convert our internal model to the model used by the api
-                stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
+                SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                         request.getDashboardQueryKey(),
                         builder.build());
 
@@ -235,7 +239,7 @@ class DashboardResourceImpl implements DashboardResource {
         return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
-            final stroom.dashboard.shared.SearchRequest searchRequest = request.getSearchRequest();
+            final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
             final Search search = searchRequest.getSearch();
 
@@ -261,18 +265,18 @@ class DashboardResourceImpl implements DashboardResource {
                 final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                         .getDataSourceProvider(dataSourceRef)
                         .orElseThrow(() ->
-                                new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
+                                new RuntimeException(
+                                        "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
-                stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey,
-                        searchRequest);
-                stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+                SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
+                SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
 
                 if (searchResponse == null || searchResponse.getResults() == null) {
                     throw new EntityServiceException("No results can be found");
                 }
 
-                stroom.query.api.v2.Result result = null;
-                for (final stroom.query.api.v2.Result res : searchResponse.getResults()) {
+                Result result = null;
+                for (final Result res : searchResponse.getResults()) {
                     if (res.getComponentId().equals(request.getComponentId())) {
                         result = res;
                         break;
@@ -283,11 +287,11 @@ class DashboardResourceImpl implements DashboardResource {
                     throw new EntityServiceException("No result for component can be found");
                 }
 
-                if (!(result instanceof stroom.query.api.v2.TableResult)) {
+                if (!(result instanceof TableResult)) {
                     throw new EntityServiceException("Result is not a table");
                 }
 
-                final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
+                final TableResult tableResult = (TableResult) result;
 
                 // Import file.
                 String fileName = queryKey.toString();
@@ -361,7 +365,7 @@ class DashboardResourceImpl implements DashboardResource {
     }
 
     @Override
-    public Set<SearchResponse> poll(final SearchBusPollRequest request) {
+    public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
             return securityContext.useAsReadResult(() -> {
@@ -371,16 +375,17 @@ class DashboardResourceImpl implements DashboardResource {
                     sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(),
                             request.getApplicationInstanceId()));
                     sb.append("'\n");
-                    for (final SearchRequest searchRequest : request.getSearchRequests()) {
+                    for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
                         sb.append("\t");
                         sb.append(searchRequest.getDashboardQueryKey().toString());
                     }
                     LOGGER.debug(sb.toString());
                 }
 
-                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(),
-                        request.getApplicationInstanceId());
-                final Set<SearchResponse> searchResults = Collections.newSetFromMap(new ConcurrentHashMap<>());
+                final ActiveQueries activeQueries = activeQueriesManager.get(
+                        securityContext.getUserIdentity(), request.getApplicationInstanceId());
+                final Set<DashboardSearchResponse> searchResults = Collections.newSetFromMap(
+                        new ConcurrentHashMap<>());
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
@@ -391,22 +396,21 @@ class DashboardResourceImpl implements DashboardResource {
 
                 // Kill off any queries that are no longer required by the UI.
                 final Set<DashboardQueryKey> keys = request.getSearchRequests().stream()
-                        .map(SearchRequest::getDashboardQueryKey).collect(Collectors.toSet());
+                        .map(DashboardSearchRequest::getDashboardQueryKey).collect(Collectors.toSet());
                 activeQueries.destroyUnusedQueries(keys);
 
                 // Get query results for every active query.
                 final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
                 final Executor executor = executorProvider.get();
                 final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
-                for (final SearchRequest searchRequest : request.getSearchRequests()) {
+                for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
                     Runnable runnable = taskContextFactory.context("Search", taskContext -> {
                         try {
                             httpServletRequestHolder.set(httpServletRequest);
                             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
                             if (searchRequest.getSearch() != null) {
-                                final SearchResponse searchResponse = processRequest(activeQueries,
-                                        queryKey,
-                                        searchRequest);
+                                final DashboardSearchResponse searchResponse = processRequest(
+                                        activeQueries, queryKey, searchRequest);
                                 if (searchResponse != null) {
                                     searchResults.add(searchResponse);
                                 }
@@ -432,13 +436,13 @@ class DashboardResourceImpl implements DashboardResource {
         });
     }
 
-    private SearchResponse processRequest(final ActiveQueries activeQueries,
-                                          final DashboardQueryKey queryKey,
-                                          final SearchRequest searchRequest) {
-        SearchResponse result;
+    private DashboardSearchResponse processRequest(final ActiveQueries activeQueries,
+                                                   final DashboardQueryKey queryKey,
+                                                   final DashboardSearchRequest searchRequest) {
+        DashboardSearchResponse result;
 
         boolean newSearch = false;
-        SearchRequest updatedSearchRequest = searchRequest;
+        DashboardSearchRequest updatedSearchRequest = searchRequest;
         Search search = updatedSearchRequest.getSearch();
 
         try {
@@ -486,9 +490,8 @@ class DashboardResourceImpl implements DashboardResource {
             search = search.copy().params(params).build();
             updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
 
-            stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey,
-                    updatedSearchRequest);
-            stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+            SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, updatedSearchRequest);
+            SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
             if (newSearch) {
@@ -507,7 +510,7 @@ class DashboardResourceImpl implements DashboardResource {
                     ? e.getMessage()
                     : e.getClass().getName();
 
-            result = new SearchResponse(queryKey, null, errors, true, null);
+            result = new DashboardSearchResponse(queryKey, null, errors, true, null);
         }
 
         return result;

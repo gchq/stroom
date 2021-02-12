@@ -23,7 +23,7 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
+import stroom.util.shared.CriteriaFieldSort;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -286,7 +286,7 @@ class TaskProgressUtil {
         @Override
         public int compare(final TaskProgress o1, final TaskProgress o2) {
             if (criteria.getSortList() != null) {
-                for (final Sort sort : criteria.getSortList()) {
+                for (final CriteriaFieldSort sort : criteria.getSortList()) {
                     final String field = sort.getId();
 
                     int compare = 0;

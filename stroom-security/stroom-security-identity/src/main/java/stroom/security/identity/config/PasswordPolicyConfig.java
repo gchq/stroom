@@ -68,6 +68,10 @@ public class PasswordPolicyConfig extends AbstractConfig {
     @JsonPropertyDescription("The minimum number of characters that new passwords need to contain.")
     private Integer minimumPasswordLength;
 
+    @JsonProperty
+    @JsonPropertyDescription("A message informing users of the password policy")
+    private String passwordPolicyMessage;
+
     public PasswordPolicyConfig() {
         setDefaults();
     }
@@ -80,7 +84,8 @@ public class PasswordPolicyConfig extends AbstractConfig {
                                 @JsonProperty("forcePasswordChangeOnFirstLogin") final Boolean forcePasswordChangeOnFirstLogin,
                                 @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
                                 @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
-                                @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength) {
+                                @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
+                                @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
         this.allowPasswordResets = allowPasswordResets;
         this.neverUsedAccountDeactivationThreshold = neverUsedAccountDeactivationThreshold;
         this.unusedAccountDeactivationThreshold = unusedAccountDeactivationThreshold;
@@ -89,6 +94,7 @@ public class PasswordPolicyConfig extends AbstractConfig {
         this.passwordComplexityRegex = passwordComplexityRegex;
         this.minimumPasswordStrength = minimumPasswordStrength;
         this.minimumPasswordLength = minimumPasswordLength;
+        this.passwordPolicyMessage = passwordPolicyMessage;
 
         setDefaults();
     }
@@ -117,6 +123,12 @@ public class PasswordPolicyConfig extends AbstractConfig {
         }
         if (minimumPasswordLength == null) {
             minimumPasswordLength = 8;
+        }
+        if (passwordPolicyMessage == null) {
+            passwordPolicyMessage = "To conform with our Strong Password policy, you are required to use" +
+                    " a sufficiently strong password. Password must be more than " +
+                    minimumPasswordLength +
+                    " characters.";
         }
     }
 
@@ -188,5 +200,13 @@ public class PasswordPolicyConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setMinimumPasswordLength(final int minimumPasswordLength) {
         this.minimumPasswordLength = minimumPasswordLength;
+    }
+
+    public String getPasswordPolicyMessage() {
+        return passwordPolicyMessage;
+    }
+
+    public void setPasswordPolicyMessage(final String passwordPolicyMessage) {
+        this.passwordPolicyMessage = passwordPolicyMessage;
     }
 }

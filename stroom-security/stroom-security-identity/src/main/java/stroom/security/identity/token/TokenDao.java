@@ -1,16 +1,15 @@
 package stroom.security.identity.token;
 
 import stroom.security.identity.account.Account;
-import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TokenDao {
 
-    ResultPage<Token> list();
+    TokenResultPage list();
 
-    ResultPage<Token> search(SearchTokenRequest request);
+    TokenResultPage search(SearchTokenRequest request);
 
     Token create(int accountId, Token token);
 

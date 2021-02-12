@@ -22,12 +22,14 @@ dependencies {
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api
-    compile libs.vavr
+//    compile libs.vavr
+    compile libs.validation_api
     compile libs.ws_rs_api
 
     testCompile libs.assertj_core
     testCompile libs.commons_lang
     testCompile libs.junit_jupiter_api
+    testCompile libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

@@ -120,7 +120,7 @@ public final class CompareUtil {
 
         Comparator<T> comparator = Comparator.comparingInt(dbTableStatus -> 1);
 
-        for (final Sort sort : criteria.getSortList()) {
+        for (final CriteriaFieldSort sort : criteria.getSortList()) {
             final String field = sort.getId();
 
             Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
