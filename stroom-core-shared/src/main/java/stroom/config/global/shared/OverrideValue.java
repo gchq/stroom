@@ -52,7 +52,7 @@ public class OverrideValue<T> {
         return hasOverride;
     }
 
-    T getValue() {
+    public T getValue() {
         return value;
     }
 

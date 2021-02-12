@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-db-util')
+    compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
 //    compile project(':stroom-task:stroom-task-api')

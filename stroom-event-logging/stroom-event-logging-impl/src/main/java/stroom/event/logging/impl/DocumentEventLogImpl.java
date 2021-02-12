@@ -19,6 +19,7 @@ package stroom.event.logging.impl;
 
 import stroom.docref.DocRef;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -469,7 +470,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void process(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+    public void process(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex,
+                        final EventActionDecorator<ProcessEventAction> actionDecorator) {
         securityContext.insecure(() -> {
             try {
                 ProcessEventAction.Builder<Void> builder = ProcessEventAction.builder().withOutcome(EventLoggingUtil.createOutcome(ex));
@@ -477,16 +479,22 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                     builder = builder.withInput(MultiObject.builder().addObjects(createBaseObject(object)).build());
                 }
 
+                final ProcessEventAction action = builder.build();
                 eventLoggingService.log(
                         eventTypeId,
                         createEventDescription(descriptionVerb, "Processing", object),
-                        builder.build());
+                        actionDecorator != null ? actionDecorator.decorate(action) : action);
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
     }
+
+        @Override
+    public void process(final java.lang.Object object, final String eventTypeId, final String descriptionVerb, final Throwable ex) {
+            process(object, eventTypeId, descriptionVerb, ex, null);
+        }
 
     @Override
     public void process(final java.lang.Object object, final String eventTypeId, final Throwable ex) {
@@ -514,8 +522,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-    @Override
-    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String descriptionVerb, final Throwable ex) {
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse,
+                       final String descriptionVerb, final Throwable ex,
+                       final EventActionDecorator<SearchEventAction> actionDecorator) {
         securityContext.insecure(() -> {
             try {
                 final SearchEventAction.Builder<Void> searchBuilder = SearchEventAction.builder()
@@ -529,15 +538,24 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                     }
                 }
 
+                SearchEventAction action = searchBuilder.build();
+
                 eventLoggingService.log(
                         typeId != null ? typeId : "Search",
                         createEventDescription(descriptionVerb, "Finding", resultType),
-                        searchBuilder.build());
+                        actionDecorator != null ? actionDecorator.decorate(action) : action);
 
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to log search event!", e);
             }
         });
+
+    }
+
+    @Override
+    public void search(final String typeId, final Query query, final String resultType,
+                       final PageResponse pageResponse, final String descriptionVerb, final Throwable ex) {
+        search(typeId, query, resultType, pageResponse, descriptionVerb, ex, null);
     }
 
     @Override

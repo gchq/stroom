@@ -43,7 +43,7 @@ import javax.ws.rs.core.MediaType;
 @Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(tags = {"Authentication"})
+@Api(tags = "Authentication")
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
@@ -51,7 +51,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/getAuthenticationState")
     @Timed
     @NotNull
-    @ApiOperation(value = "Get the current authentication state")
+    @ApiOperation("Get the current authentication state")
     AuthenticationState getAuthenticationState(@Context @NotNull HttpServletRequest request);
 
     /**
@@ -63,7 +63,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/login")
     @Timed
     @NotNull
-    @ApiOperation(value = "Handle a login request made using username and password credentials.")
+    @ApiOperation("Handle a login request made using username and password credentials.")
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
@@ -72,7 +72,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/logout")
     @Timed
     @NotNull
-    @ApiOperation(value = "Log a user out of their session")
+    @ApiOperation("Log a user out of their session")
     Boolean logout(
             @Context @NotNull HttpServletRequest request,
             @QueryParam(OpenId.REDIRECT_URI) @NotNull String redirectUri);
@@ -81,7 +81,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/confirmPassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Confirm an authenticated users current password.")
+    @ApiOperation("Confirm an authenticated users current password.")
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
@@ -91,7 +91,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/changePassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Change a user's password.")
+    @ApiOperation("Change a user's password.")
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
@@ -100,7 +100,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("/noauth/reset/{email}")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset a user account using an email address.")
+    @ApiOperation("Reset a user account using an email address.")
     Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
             @PathParam("email") String emailAddress);
@@ -109,7 +109,7 @@ public interface AuthenticationResource extends RestResource {
     @Path("resetPassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset an authenticated user's password.")
+    @ApiOperation("Reset an authenticated user's password.")
     ChangePasswordResponse resetPassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
@@ -118,13 +118,13 @@ public interface AuthenticationResource extends RestResource {
     @Path("needsPasswordChange")
     @Timed
     @NotNull
-    @ApiOperation(value = "Check if a user's password needs changing.")
+    @ApiOperation("Check if a user's password needs changing.")
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @GET
     @Path("/noauth/fetchPasswordPolicy")
     @Timed
     @NotNull
-    @ApiOperation(value = "Get the password policy")
+    @ApiOperation("Get the password policy")
     PasswordPolicyConfig fetchPasswordPolicy();
 }

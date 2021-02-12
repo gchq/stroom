@@ -16,15 +16,16 @@
 
 package stroom.dictionary.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -36,34 +37,32 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
-@Api(value = "dictionary - /v1")
+@Api(tags = "Dictionaries (v1)")
 @Path("/dictionary" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService {
+
+    // TODO @AT No idea why we have this and NewUiDictionaryResource2 if this one has react endpoints
+    //   in it
+
     ///////////////////////
     // GWT UI end points //
     ///////////////////////
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a dictionary doc",
-            response = DictionaryDoc.class)
+    @ApiOperation("Get a dictionary doc")
     DictionaryDoc read(DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a dictionary doc",
-            response = DictionaryDoc.class)
+    @ApiOperation("Update a dictionary doc")
     DictionaryDoc update(DictionaryDoc xslt);
 
     @POST
     @Path("/download")
-    @ApiOperation(
-            value = "Download a dictionary doc",
-            response = ResourceGeneration.class)
+    @ApiOperation("Download a dictionary doc")
     ResourceGeneration download(DocRef dictionaryRef);
 
 
@@ -74,31 +73,27 @@ public interface DictionaryResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/list")
-    @ApiOperation(
-            value = "Submit a request for a list of doc refs held by this service",
-            response = Set.class)
+    @ApiOperation("Submit a request for a list of doc refs held by this service")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @ApiOperation(
-            value = "Submit an import request",
-            response = DocRef.class)
+    @ApiOperation("Submit an import request")
     DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData);
 
     @POST
     @Path("/export")
-    @ApiOperation(
-            value = "Submit an export request",
-            response = Base64EncodedDocumentData.class)
+    @ApiOperation("Submit an export request")
     Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef);
 
     @GET
     @Path("/{dictionaryUuid}")
+    @ApiOperation("Fetch a dictionary by its UUID")
     DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid);
 
     @POST
     @Path("/{dictionaryUuid}")
+    @ApiOperation("Save the supplied dictionary")
     void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
                          final DictionaryDTO updates);
 }

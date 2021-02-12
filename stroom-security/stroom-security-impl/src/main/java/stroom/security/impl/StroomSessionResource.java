@@ -18,19 +18,20 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroomSession - /v1")
+@Api(tags = "Stroom Sessions")
 @Path("/stroomSession" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StroomSessionResource extends RestResource, InvalidateSessionResource {
+
     @GET
     @Path("/noauth/validateSession")
-    @ApiOperation(value = "Validate the current session, return a redirect Uri if invalid.")
+    @ApiOperation("Validate the current session, return a redirect Uri if invalid.")
     ValidateSessionResponse validateSession(@Context @NotNull HttpServletRequest request,
                                             @QueryParam("redirect_uri") @NotNull String redirectUri);
 
     @GET
     @Path("invalidate")
-    @ApiOperation(value = "Invalidate the current session")
+    @ApiOperation("Invalidate the current session")
     Boolean invalidate();
 }

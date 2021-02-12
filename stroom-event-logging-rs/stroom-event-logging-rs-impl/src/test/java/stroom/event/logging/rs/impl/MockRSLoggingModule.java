@@ -15,17 +15,18 @@
  */
 package stroom.event.logging.rs.impl;
 
+import stroom.event.logging.impl.LoggingConfig;
+
 import com.google.inject.AbstractModule;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.container.ResourceInfo;
 
 public class MockRSLoggingModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(RequestLoggingConfig.class).toInstance(new RequestLoggingConfig());
+        bind(LoggingConfig.class).toInstance(new LoggingConfig());
         bind(HttpServletRequest.class).to(MockHttpServletRequest.class);
-        bind(ResourceInfo.class).to(MockResourceInfo.class);
+//        bind(ResourceInfo.class).to(MockResourceInfo.class);
     }
 }
 

@@ -33,7 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "dataSource - /v1")
+@Api(tags = "Data Sources")
 @Path("/dataSource" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,8 +41,6 @@ public interface DataSourceResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchFields")
-    @ApiOperation(
-            value = "Fetch data source fields",
-            response = List.class)
+    @ApiOperation(value = "Fetch data source fields")
     List<AbstractField> fetchFields(@ApiParam("dataSourceRef") DocRef dataSourceRef);
 }

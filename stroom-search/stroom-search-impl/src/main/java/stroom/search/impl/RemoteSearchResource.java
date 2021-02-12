@@ -27,13 +27,12 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(value = "remoteSearch - /v1")
+@Api(tags = "Remote Search")
 @Path(RemoteSearchResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,21 +45,18 @@ public interface RemoteSearchResource extends RestResource {
     @POST
     @Path(START_PATH_PART)
     @Timed
-    @ApiOperation(
-            value = "Start a search",
-            response = Boolean.class)
+    @ApiOperation("Start a search")
     Boolean start(ClusterSearchTask clusterSearchTask);
 
     @GET
     @Path(POLL_PATH_PART)
     @Produces("application/octet-stream")
+    @ApiOperation("Poll the server for search results for the supplied queryKey")
     StreamingOutput poll(@QueryParam("queryKey") String queryKey);
 
     @GET
     @Path(DESTROY_PATH_PART)
     @Timed
-    @ApiOperation(
-            value = "Destroy search results",
-            response = Boolean.class)
+    @ApiOperation("Destroy search results")
     Boolean destroy(@QueryParam("queryKey") String queryKey);
 }

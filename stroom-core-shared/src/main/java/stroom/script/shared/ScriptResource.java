@@ -16,13 +16,14 @@
 
 package stroom.script.shared;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.docref.DocRef;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -32,7 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "script - /v1")
+@Api(tags = "Scripts")
 @Path("/script" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,22 +41,16 @@ public interface ScriptResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Get a script doc")
     ScriptDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Update a script doc")
     ScriptDoc update(@ApiParam("xslt") ScriptDoc xslt);
 
     @POST
     @Path("/fetchLinkedScripts")
-    @ApiOperation(
-            value = "Fetch related scripts",
-            response = ScriptDoc.class)
+    @ApiOperation("Fetch related scripts")
     List<ScriptDoc> fetchLinkedScripts(@ApiParam("request") FetchLinkedScriptRequest request);
 }

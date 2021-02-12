@@ -32,22 +32,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "textConverter - /v1")
+@Api(tags = "Text Converters")
 @Path("/textConverter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface TextConverterResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a text converter doc",
-            response = TextConverterDoc.class)
+    @ApiOperation("Get a text converter doc")
     TextConverterDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a text converter doc",
-            response = TextConverterDoc.class)
+    @ApiOperation("Update a text converter doc")
     TextConverterDoc update(@ApiParam("xslt") TextConverterDoc xslt);
 }

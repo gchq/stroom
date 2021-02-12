@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.util.shared;
+package stroom.event.logging.rs.api;
+
+import stroom.event.logging.api.EventActionDecorator;
+
+import event.logging.EventAction;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -79,6 +83,13 @@ public @interface AutoLogged {
     String verb() default ALLOCATE_AUTOMATICALLY;
 
     /**
+     * An optional {@link EventActionDecorator} that should be used to decorate the automatically generated {@link EventAction}
+     * The default value is {@link EventActionDecorator} itself (the baseclass) which is taken to mean "no decorator".
+     * @return the decorated {@link EventAction}
+     */
+    Class<? extends EventActionDecorator> decorator() default EventActionDecorator.class;
+
+    /**
      * Enumeration of all recognised event types.
      *
      * Most values relate to types of event defeined in event-logging XML schema (refer to event-logging schema).
@@ -87,10 +98,19 @@ public @interface AutoLogged {
      *  ALLOCATE_AUTOMATICALLY - the system should determine event type based on resource method name and HTTP method.
      */
     enum OperationType {
-        //Special type - don't log at all
+        /**
+         * Special type - don't log at all
+         */
         UNLOGGED,
 
-        //Special type - system should determine event type based on resource method name and HTTP method
+        /**
+         * Special type - logging will be done via some other means, not the auto logger
+         */
+        MANUALLY_LOGGED,
+
+        /**
+         * Special type - system should determine event type based on resource method name and HTTP method
+         */
         ALLOCATE_AUTOMATICALLY,
 
         //Standard event types follow

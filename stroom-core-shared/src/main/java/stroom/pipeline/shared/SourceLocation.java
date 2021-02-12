@@ -174,6 +174,15 @@ public class SourceLocation {
         }
     }
 
+    /**
+     * @return The identifier i.e. strm:part:segment (one based for human use)
+     */
+    @JsonIgnore
+    public String getIdentifierString() {
+        // Convert to one-based
+        return id + ":" + (partNo + 1) + ":" + (segmentNo + 1);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

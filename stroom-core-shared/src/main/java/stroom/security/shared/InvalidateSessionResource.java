@@ -13,15 +13,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroomSession - /v1")
+@Api(tags = "Stroom Sessions")
 @Path("/stroomSession" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface InvalidateSessionResource extends RestResource, DirectRestService {
+
     @GET
     @Path("invalidate")
-    @ApiOperation(
-            value = "Invalidate the current session",
-            response = Boolean.class)
+    @ApiOperation("Invalidate the current session")
     Boolean invalidate();
 }

@@ -11,6 +11,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
@@ -22,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+@AutoLogged
 class IndexResourceImpl implements IndexResource {
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;

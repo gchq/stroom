@@ -36,7 +36,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "content - /v1")
+@Api(tags = "Content")
 @Path("/content" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,29 +44,21 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("import")
-    @ApiOperation(
-            value = "Import content",
-            response = ResourceGeneration.class)
+    @ApiOperation("Import content")
     ResourceKey importContent(@NotNull @ApiParam("request") ImportConfigRequest request);
 
     @POST
     @Path("confirmImport")
-    @ApiOperation(
-            value = "Get import confirmation state",
-            response = List.class)
+    @ApiOperation("Get import confirmation state")
     List<ImportState> confirmImport(@ApiParam("resourceKey") ResourceKey resourceKey);
 
     @POST
     @Path("export")
-    @ApiOperation(
-            value = "Export content",
-            response = ResourceGeneration.class)
+    @ApiOperation("Export content")
     ResourceGeneration exportContent(@NotNull @ApiParam("docRefs") DocRefs docRefs);
 
     @POST
     @Path("fetchDependencies")
-    @ApiOperation(
-            value = "Fetch content dependencies",
-            response = ResultPage.class)
+    @ApiOperation("Fetch content dependencies")
     ResultPage<Dependency> fetchDependencies(@ApiParam("criteria") DependencyCriteria criteria);
 }

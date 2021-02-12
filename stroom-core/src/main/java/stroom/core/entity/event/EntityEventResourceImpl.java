@@ -21,6 +21,8 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
@@ -31,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Objects;
 
+@AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;

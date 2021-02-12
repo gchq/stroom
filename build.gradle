@@ -1,6 +1,3 @@
-import java.nio.file.Files
-import java.nio.file.Paths
-
 buildscript {
     repositories {
         mavenLocal()
@@ -118,7 +115,7 @@ ext.versions = [
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '3.6.28',
-        swagger           : '1.5.21',
+        swagger           : '1.6.2',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'

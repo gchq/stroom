@@ -17,10 +17,6 @@
 
 package stroom.xmlschema.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -32,6 +28,11 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
@@ -64,7 +65,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(XML_SCHEMA_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override

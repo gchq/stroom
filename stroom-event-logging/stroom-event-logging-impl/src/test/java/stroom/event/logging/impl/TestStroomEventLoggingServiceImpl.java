@@ -63,6 +63,7 @@ class TestStroomEventLoggingServiceImpl {
         objectInfoProviderMap.put(new ObjectType(TestObj.class), () -> new TestObjInfoProvider());
 
         stroomEventLoggingService = new StroomEventLoggingServiceImpl(
+                new LoggingConfig(),
                 securityContext,
                 () -> httpServletRequest,
                 objectInfoProviderMap,

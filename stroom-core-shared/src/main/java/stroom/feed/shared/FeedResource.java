@@ -16,13 +16,14 @@
 
 package stroom.feed.shared;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.docref.DocRef;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -33,7 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "feed - /v1")
+@Api(tags = "Feeds")
 @Path("/feed" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,22 +42,16 @@ public interface FeedResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Get a feed doc")
     FeedDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Update a feed doc")
     FeedDoc update(@ApiParam("xslt") FeedDoc xslt);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @ApiOperation(
-            value = "Fetch supported encodings",
-            response = List.class)
+    @ApiOperation("Fetch supported encodings")
     List<String> fetchSupportedEncodings();
 }

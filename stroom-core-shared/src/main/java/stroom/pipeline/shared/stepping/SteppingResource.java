@@ -32,11 +32,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stepping - /v1")
+@Api(tags = "Stepping")
 @Path("/stepping" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SteppingResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/getPipelineForStepping")
     @ApiOperation(

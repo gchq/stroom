@@ -18,6 +18,7 @@
 package stroom.config.global.impl;
 
 
+import stroom.config.app.AppConfig;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -143,6 +144,11 @@ public class GlobalConfigService {
         updateConfigFromDb();
     }
 
+    void updateConfigObjects(final AppConfig newAppConfig) {
+        configMapper.refreshPropertyMap(newAppConfig);
+        updateConfigFromDb();
+    }
+
 //    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
 //        if (criteria.getName() != null) {
 //            return list(configProperty ->
@@ -201,9 +207,12 @@ public class GlobalConfigService {
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(propertyPath.toString())
-                    .map(configMapper::decorateDbConfigProperty)
-                    .or(() ->
-                            configMapper.getGlobalProperty(propertyPath));
+                    .map(configProp ->
+                            configMapper.decorateDbConfigProperty(configProp))
+                    .or(() -> {
+
+                        return configMapper.getGlobalProperty(propertyPath);
+                    });
         });
     }
 

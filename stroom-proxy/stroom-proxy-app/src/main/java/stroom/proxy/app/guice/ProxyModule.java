@@ -14,6 +14,7 @@ import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
+import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.proxy.app.BufferFactoryImpl;
@@ -152,7 +153,8 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(ProxyLifecycle.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
-                .addBinding(PermissionExceptionMapper.class);
+                .addBinding(PermissionExceptionMapper.class)
+                .addBinding(TokenExceptionMapper.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ReceiveDataRuleSetService.class)

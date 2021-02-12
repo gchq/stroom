@@ -27,15 +27,16 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
-import stroom.util.logging.LogUtil;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
@@ -47,36 +48,39 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Comparator.comparingInt;
 import static stroom.processor.impl.SearchKeywords.SORT_NEXT;
 import static stroom.processor.impl.SearchKeywords.addFiltering;
 import static stroom.processor.impl.SearchKeywords.addSorting;
 
-@Api(value = "stream task - /v1")
+@Api(tags = "Stream Tasks")
 @Path("/streamtasks" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
-    private static final String FIELD_PROGRESS = "progress";
 
-    private final ProcessorFilterService processorFilterService;
-    private final SecurityContext securityContext;
+    private static final String FIELD_PROGRESS = "progress";
+    private static final int DEFAULT_PAGE_SIZE = 100;
+
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    public StreamTaskResource(
-            ProcessorFilterService processorFilterService,
-            SecurityContext securityContext) {
-        this.processorFilterService = processorFilterService;
-        this.securityContext = securityContext;
+    public StreamTaskResource(final Provider<ProcessorFilterService> processorFilterServiceProvider,
+                              final Provider<SecurityContext> securityContextProvider) {
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @PATCH
     @Path("/{filterId}")
-    public Response enable(
-            @PathParam("filterId") int filterId,
-            StreamTaskPatch patch) {
+    @ApiOperation("Update the stream processor filter with id filterId. " +
+            "E.g. op=replace, path=enabled, enabled=false")
+    public Response enable(@PathParam("filterId") final int filterId, final StreamTaskPatch patch) {
 
+        final ProcessorFilterService processorFilterService = processorFilterServiceProvider.get();
         return processorFilterService.fetch(filterId)
                 .map(processorFilter -> {
                     boolean patchApplied = false;
@@ -93,21 +97,19 @@ public class StreamTaskResource implements RestResource {
                                 .ok()
                                 .build();
                     } else {
-                        return Response
-                                .status(Response.Status.BAD_REQUEST)
-                                .entity("Unable to apply the requested patch. See server logs for details.")
-                                .build();
+                        return RestUtil.badRequest(
+                                "Unable to apply the requested patch. See server logs for details.");
                     }
                 })
                 .orElseGet(() ->
-                        Response
-                                .status(Response.Status.NOT_FOUND)
-                                .entity(LogUtil.message("Filter with ID {} could not be found", filterId))
-                                .build());
+                        RestUtil.notFound("Filter with ID {} could not be found", filterId));
     }
 
     @GET
-    public Response fetch(
+    @ApiOperation(
+            value = "Find stream tasks using the supplied criteria",
+            response = StreamTasks.class)
+    public Response find(
             @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
             @QueryParam("sortBy") String sortBy,
@@ -127,16 +129,16 @@ public class StreamTaskResource implements RestResource {
                 // Percentage is a calculated variable so it has to be done after retrieval.
                 // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
+                return RestUtil.badRequest("Invalid sortBy field");
             }
         }
 
         // PAGING
         if (offset < 0) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Page offset must be greater than 0").build();
+            RestUtil.badRequest("Page offset must be greater than 0");
         }
         if (pageSize != null && pageSize < 1) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
+            return RestUtil.badRequest("Page size, if used, must be greater than 1");
         }
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
@@ -144,6 +146,7 @@ public class StreamTaskResource implements RestResource {
 
         addSorting(filter, criteria);
 
+        final SecurityContext securityContext = securityContextProvider.get();
         if (!securityContext.isAdmin()) {
             builder.addTerm(ProcessorFilterFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId());
         }
@@ -164,8 +167,9 @@ public class StreamTaskResource implements RestResource {
             }
         }
 
-        int from = offset * pageSize;
-        int to = (offset * pageSize) + pageSize;
+        final int effectivePageSize = Objects.requireNonNullElse(pageSize, DEFAULT_PAGE_SIZE);
+        final int from = offset * effectivePageSize;
+        int to = (offset * effectivePageSize) + effectivePageSize;
         if (values.size() <= to) {
             to = values.size();
         }
@@ -179,12 +183,10 @@ public class StreamTaskResource implements RestResource {
 
     private List<StreamTask> find(final ExpressionCriteria criteria) {
 
-        final ResultPage<ProcessorFilter> processorFilters = processorFilterService
+        final ResultPage<ProcessorFilter> processorFilters = processorFilterServiceProvider.get()
                 .find(criteria);
 
-
-        List<StreamTask> streamTasks = new ArrayList<>();
-        ObjectMapper mapper = new ObjectMapper();
+        final List<StreamTask> streamTasks = new ArrayList<>();
         for (ProcessorFilter filter : processorFilters.getValues()) {
             StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
 

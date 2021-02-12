@@ -16,11 +16,17 @@
 
 package stroom.event.logging.api;
 
+import stroom.entity.shared.ExpressionCriteria;
+
 import event.logging.BaseObject;
+import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.EventLoggingService;
+import event.logging.MultiObject;
+import event.logging.UpdateEventAction;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface StroomEventLoggingService extends EventLoggingService {
 
@@ -135,9 +141,60 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
      * @param object POJO
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
      */
-    BaseObject convert(final Object object);
+    BaseObject convert(final Object object, final boolean useInfoProviders);
+
+    default BaseObject convert(final Object object) {
+        return convert(object, true);
+    }
+
+    /**
+     * Convert the supplied POJO into a {@link BaseObject} for logging
+     * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
+     * actual conversion.
+     * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
+     * @param objectSupplier Supplier of the POJO. get() will be called as the processing user
+     * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
+     * @return BaseObject
+     */
+    BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders);
+
+    default BaseObject convert(final Supplier<?> objectSupplier) {
+        return convert(objectSupplier, true);
+    }
+
+    default MultiObject convertToMulti(final Supplier<?> objectSupplier) {
+        return MultiObject.builder()
+                .withObjects(convert(objectSupplier))
+                .build();
+    }
+
+    default MultiObject convertToMulti(final Object object) {
+        return MultiObject.builder()
+                .withObjects(convert(object))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final Supplier<T> beforeSupplier,
+                                                         final Supplier<T> afterSupplier) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(beforeSupplier))
+                .withAfter(convertToMulti(afterSupplier))
+                .build();
+    }
+
+    default <T> UpdateEventAction buildUpdateEventAction(final Object before,
+                                                         final Object after) {
+        return UpdateEventAction.builder()
+                .withBefore(convertToMulti(before))
+                .withAfter(convertToMulti(after))
+                .build();
+    }
+
+    Criteria convertExpressionCriteria(final String type,
+                                       final ExpressionCriteria expressionCriteria);
 
     /**
      * Provide a textual summary of the supplied POJO as a string.

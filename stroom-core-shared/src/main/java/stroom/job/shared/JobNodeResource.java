@@ -16,13 +16,14 @@
 
 package stroom.job.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -33,11 +34,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "jobNode - /v1")
+@Api(tags = "Jobs (Node)")
 @Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
+
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
     String INFO_PATH_PART = "/info";
     String SCHEDULE_PATH_PART = "/schedule";
@@ -46,17 +48,13 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @ApiOperation(
-            value = "Lists job nodes",
-            response = ResultPage.class)
+    @ApiOperation("Lists job nodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO_PATH_PART)
-    @ApiOperation(
-            value = "Gets current info for a job node",
-            response = JobNodeInfo.class)
+    @ApiOperation("Gets current info for a job node")
     JobNodeInfo info(@QueryParam("jobName") String jobName,
                      @QueryParam("nodeName") String nodeName);
 

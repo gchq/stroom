@@ -64,7 +64,10 @@ public class SearchKeywords {
                     .collect(joining());
 
             if (!Strings.isNullOrEmpty(plainOldFilter)) {
-                builder.addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
+                builder.addTerm(
+                        ProcessorFields.PIPELINE,
+                        Condition.EQUALS,
+                        new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
             }
         }
     }

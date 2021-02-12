@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -34,31 +33,25 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "xslt - /v1")
+@Api(tags = "XSLTs")
 @Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface XsltResource extends RestResource, DirectRestService {
-    @POST
-    @Path("/read")
-    @ApiOperation(
-            value = "Get an xslt doc",
-            response = XsltDoc.class)
-    XsltDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
-    @Path("/update")
-    @ApiOperation(
-            value = "Update an xslt doc",
-            response = XsltDoc.class)
+    @Path("/")
+    @ApiOperation("Update an xslt doc")
     XsltDoc update(XsltDoc xslt);
 
     @GET
     @Path("/{xsltId}")
+    @ApiOperation("Fetch an xslt doc by its UUID")
     XsltDoc fetch(@PathParam("xsltId") final String xsltId);
 
     @POST
     @Path("/{xsltId}")
+    @ApiOperation("Update an xslt doc")
     void save(@PathParam("xsltId") final String xsltId,
               @ApiParam("xsltDto") final XsltDTO xsltDto);
 }

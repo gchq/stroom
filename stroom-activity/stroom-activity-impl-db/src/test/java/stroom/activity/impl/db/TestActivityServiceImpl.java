@@ -24,6 +24,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.shared.ResultPage;
 
@@ -31,8 +32,6 @@ import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -45,14 +44,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestActivityServiceImpl {
     private ActivityService activityService;
 
-    @Mock
-    private SecurityContext securityContext;
+    private SecurityContext securityContext = new MockSecurityContext();
 
     @BeforeEach
     void before() {
-        Mockito.when(securityContext.getUserId()).thenReturn("testUser");
-        Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
-
         final ActivityDbConnProvider activityDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new ActivityDbModule(), new ActivityConfig());
 

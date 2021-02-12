@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1765** : Added confirmation dialog when deleting users and API keys.
 
+* Issue **#2036** : Autologger now delegates exception handling.
+
+* Issue **#2039** : Limit the amount of text data output by autologger.
+
+* Issue **#2037** : Add config prop to ensure every REST call is logged
+
+* Issue **#2038** : Allow autologger action to be modified (search and process)
+
+* Issue **#2027** : Fix autologger update operation
+
 * Issue **#1764** : The create API key page now loads users to select on open.
 
 * Issue **#1766** : Removed comment from token.

@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -33,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "statistic - /v1")
+@Api(tags = "SQL Statistics Stores")
 @Path("/statistic" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,15 +40,11 @@ public interface StatisticResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a statistic doc",
-            response = XsltDoc.class)
+    @ApiOperation("Get a statistic doc")
     StatisticStoreDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a statistic doc",
-            response = StatisticStoreDoc.class)
+    @ApiOperation("Update a statistic doc")
     StatisticStoreDoc update(@ApiParam("statisticStoreDoc") StatisticStoreDoc statisticStoreDoc);
 }

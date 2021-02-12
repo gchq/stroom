@@ -34,9 +34,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
-@Api(value = "fsVolume - /v1")
+@Api(tags = "Filesystem Volumes")
 @Path("/fsVolume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,9 +43,7 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    @ApiOperation(
-            value = "Finds volumes",
-            response = List.class)
+    @ApiOperation(value = "Finds volumes")
     ResultPage<FsVolume> find(@ApiParam("criteria") FindFsVolumeCriteria criteria);
 
     @POST
@@ -54,30 +51,22 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/{id}")
-    @ApiOperation(
-            value = "Get a volume",
-            response = FsVolume.class)
+    @ApiOperation(value = "Get a volume")
     FsVolume read(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
-    @ApiOperation(
-            value = "Update a volume",
-            response = FsVolume.class)
+    @ApiOperation(value = "Update a volume")
     FsVolume update(@PathParam("id") Integer id,
                     @ApiParam("volume") FsVolume volume);
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Delete a volume",
-            response = Boolean.class)
+    @ApiOperation(value = "Delete a volume")
     Boolean delete(@PathParam("id") Integer id);
 
     @GET
     @Path("/rescan")
-    @ApiOperation(
-            value = "Rescans volumes",
-            response = Boolean.class)
+    @ApiOperation(value = "Rescans volumes")
     Boolean rescan();
 }

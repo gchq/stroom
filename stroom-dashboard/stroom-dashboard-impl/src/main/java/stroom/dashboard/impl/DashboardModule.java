@@ -31,6 +31,7 @@ public class DashboardModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DashboardStore.class).to(DashboardStoreImpl.class);
+        bind(DashboardService.class).to(DashboardServiceImpl.class);
         bind(FunctionFactory.class).asEagerSingleton();
         bind(FunctionService.class).to(FunctionServiceImpl.class).asEagerSingleton();
 

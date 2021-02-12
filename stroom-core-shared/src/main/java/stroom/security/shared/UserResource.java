@@ -1,12 +1,13 @@
 package stroom.security.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,28 +19,29 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(
-        value = "authorisation - /v1",
-        description = "Stroom Authorisation API")
+@Api(tags = "Authorisation")
 @Path("/users" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface UserResource extends RestResource, DirectRestService {
+
     @GET
-    List<User> get(@QueryParam("name") String name,
-                   @QueryParam("isGroup") Boolean isGroup,
-                   @QueryParam("uuid") String uuid);
+    @ApiOperation("Find the users matching the supplied criteria")
+    List<User> find(@QueryParam("name") String name,
+                    @QueryParam("isGroup") Boolean isGroup,
+                    @QueryParam("uuid") String uuid);
 
     @POST
     @Path("/find")
+    @ApiOperation("Find the users matching the supplied criteria")
     ResultPage<User> find(@ApiParam("criteria") FindUserCriteria criteria);
 
     @GET
     @Path("/{userUuid}")
-    User get(@PathParam("userUuid") String userUuid);
+    @ApiOperation("Fetches the user with the supplied UUID")
+    User fetch(@PathParam("userUuid") String userUuid);
 
 //    @GET
 //    @Path("/usersInGroup/{groupUuid}")
@@ -55,32 +57,35 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/create/{name}/{isGroup}")
+    @ApiOperation("Creates a user or group with the supplied name")
     User create(@PathParam("name") String name,
                 @PathParam("isGroup") Boolean isGroup);
 
     @DELETE
     @Path("/{uuid}")
+    @ApiOperation("Deletes the user with the supplied UUID")
     Boolean deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userName}/status")
-    Boolean setStatus(@PathParam("userName") String userName, 
+    @ApiOperation("Enables/disables the Stroom user with the supplied username")
+    Boolean setStatus(@PathParam("userName") String userName,
                       @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
+    @ApiOperation("Adds user with UUID userUuid to the group with UUID groupUuid")
     Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
                            @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
+    @ApiOperation("Removes user with UUID userUuid from the group with UUID groupUuid")
     Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
                                 @PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("associates")
-    @ApiOperation(
-            value = "Gets a list of associated users",
-            response = Response.class)
+    @ApiOperation("Gets a list of associated users")
     List<String> getAssociates(@QueryParam("filter") String filter);
 }

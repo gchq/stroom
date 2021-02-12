@@ -15,24 +15,48 @@
  */
 package stroom.event.logging.rs.impl;
 
-import stroom.util.shared.AutoLogged;
-import stroom.util.shared.AutoLogged.OperationType;
+import stroom.event.logging.api.EventActionDecorator;
+import stroom.event.logging.impl.LoggingConfig;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
 public class ContainerResourceInfo {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContainerResourceInfo.class);
+
+    private final ResourceContext resourceContext;
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
+    private final Class<? extends EventActionDecorator> eventActionDecoratorClass;
+    private final boolean autologgerAnnotationPresent;
 
-    public ContainerResourceInfo(final ResourceInfo resourceInfo, final ContainerRequestContext requestContext) {
+    public ContainerResourceInfo(final ResourceContext resourceContext,
+                                 final ResourceInfo resourceInfo,
+                                 final ContainerRequestContext requestContext) {
+        this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
-        this.operationType = findOperationType(getMethod(), getResourceClass(), requestContext.getMethod());
+        final Optional<OperationType> operationType = getOperationTypeFromAnnotations(getMethod(), getResourceClass());
+        this.autologgerAnnotationPresent = operationType.isPresent();
+        this.operationType = findOperationType (operationType, getMethod().getName(), requestContext.getMethod());
+        this.eventActionDecoratorClass = findEventActionDecorator(getMethod(), getResourceClass());
+    }
+
+    public Object getResource() {
+        if (resourceContext == null) {
+            return null; //Possible in some unit tests
+        }
+        return resourceContext.getResource(getResourceClass());
     }
 
     public ContainerRequestContext getRequestContext() {
@@ -53,6 +77,14 @@ public class ContainerResourceInfo {
 
     public OperationType getOperationType(){
         return operationType;
+    }
+
+    public boolean isAutologgerAnnotationPresent() {
+        return autologgerAnnotationPresent;
+    }
+
+    public Class<? extends EventActionDecorator> getEventActionDecoratorClass() {
+        return eventActionDecoratorClass;
     }
 
     public String getTypeId(){
@@ -78,6 +110,23 @@ public class ContainerResourceInfo {
         return null;
     }
 
+    private static Class <? extends EventActionDecorator> findEventActionDecorator(final Method method, final Class<?> resourceClass){
+        final Class<? extends EventActionDecorator> decoratorClass;
+        if (method.getAnnotation(AutoLogged.class) != null){
+            decoratorClass = method.getAnnotation(AutoLogged.class).decorator();
+        } else if (resourceClass.getAnnotation(AutoLogged.class) != null){
+            decoratorClass = resourceClass.getAnnotation(AutoLogged.class).decorator();
+        } else {
+            decoratorClass = EventActionDecorator.class;
+        }
+
+        if (decoratorClass.equals(EventActionDecorator.class)){
+            return null; // Default is no implementation
+        }
+
+        return decoratorClass;
+    }
+
     private static Optional<OperationType> getOperationTypeFromAnnotations(final Method method,
                                                                            final Class<?> resourceClass){
         if (method.getAnnotation(AutoLogged.class) != null){
@@ -92,58 +141,84 @@ public class ContainerResourceInfo {
         return getOperationTypeFromAnnotations(getMethod(), getResourceClass());
     }
 
-    public boolean shouldLog (boolean logByDefault){
 
-        Optional<OperationType> specifiedOperation = getOperationTypeFromAnnotations();
-        if (specifiedOperation.isPresent()){
-            return !specifiedOperation.get().equals(OperationType.UNLOGGED);
+    /**
+     * "lowerCamel" => "lower"
+     * "UpperCamel" => ""
+     */
+    private String getFirstCamelCasePart(final String camelCaseWord) {
+        final int len = camelCaseWord.length();
+        int firstUpperIdx = -1;
+        for (int i = 0; i < len; i++) {
+            if (Character.isUpperCase(camelCaseWord.charAt(i))) {
+                firstUpperIdx = i;
+                break;
+            }
         }
-
-        return logByDefault;
+        if (firstUpperIdx != -1) {
+            return camelCaseWord.substring(0, firstUpperIdx);
+        } else {
+            return camelCaseWord;
+        }
     }
 
-    private OperationType findOperationType(final Method method,
-                                            final Class<?> resourceClass,
-                                            final String httpMethod) {
-        Optional<OperationType> type = getOperationTypeFromAnnotations(method, resourceClass);
-        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())){
+    private OperationType findOperationType(final Optional<OperationType> type,
+                                            final String methodName,
+                                            final String httpMethod){
+
+        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
             return type.get();
-        } else if (HttpMethod.DELETE.equals(httpMethod)){
+        } else if (HttpMethod.DELETE.equals(httpMethod)) {
             return OperationType.DELETE;
-        } else if (method.getName().startsWith("get")){
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("fetch")) {
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("read")){
-            return OperationType.VIEW;
-        } else if (method.getName().startsWith("create")){
-            return OperationType.CREATE;
-        } else if (method.getName().startsWith("delete")){
-            return OperationType.DELETE;
-        } else if (method.getName().startsWith("update")){
-            return OperationType.UPDATE;
-        }  else if (method.getName().startsWith("save")){
-            return OperationType.UPDATE;
-        } else if (method.getName().startsWith("find")){
-            return OperationType.SEARCH;
-        } else if (method.getName().startsWith("search")){
-            return OperationType.SEARCH;
-        }  else if (method.getName().startsWith("list")){
-            return OperationType.SEARCH;
-        } else if (method.getName().startsWith("import")){
-            return OperationType.IMPORT;
-        } else if (method.getName().startsWith("export")){
-            return OperationType.EXPORT;
-        } else if (method.getName().startsWith("upload")){
-            return OperationType.IMPORT;
-        } else if (method.getName().startsWith("download")){
-            return OperationType.EXPORT;
-        } else if (method.getName().startsWith("set")){
-            return OperationType.UPDATE;
-        } else if (method.getName().startsWith("copy")){
-            return OperationType.COPY;
+        } else {
+            final String firstCamelCasePart = getFirstCamelCasePart(methodName);
+
+            LOGGER.debug(() -> LogUtil.message("methodName: {}, firstCamelCasePart: {}",
+                    methodName, firstCamelCasePart));
+
+            if ("get".equals(firstCamelCasePart)
+                    || "fetch".equals(firstCamelCasePart)
+                    || "read".equals(firstCamelCasePart)
+                    || "view".equals(firstCamelCasePart)) {
+                return OperationType.VIEW;
+            } else if ("create".equals(firstCamelCasePart)) {
+                return OperationType.CREATE;
+            } else if ("delete".equals(firstCamelCasePart)) {
+                return OperationType.DELETE;
+            } else if ("update".equals(firstCamelCasePart)
+                    || "save".equals(firstCamelCasePart)
+                    || "set".equals(firstCamelCasePart)) {
+                return OperationType.UPDATE;
+            } else if ("find".equals(firstCamelCasePart)
+                    || "search".equals(firstCamelCasePart)
+                    || "list".equals(firstCamelCasePart)) {
+                return OperationType.SEARCH;
+            } else if ("import".equals(firstCamelCasePart)
+                    || "upload".equals(firstCamelCasePart)) {
+                return OperationType.IMPORT;
+            } else if ("export".equals(firstCamelCasePart)
+                    || "download".equals(firstCamelCasePart)) {
+                return OperationType.EXPORT;
+            } else if ("copy".equals(firstCamelCasePart)) {
+                return OperationType.COPY;
+            } else {
+                return OperationType.UNKNOWN;
+            }
         }
-        return OperationType.UNKNOWN;
     }
 
+    public boolean shouldLog (LoggingConfig config){
+        OperationType op = getOperationType();
+        if (OperationType.MANUALLY_LOGGED.equals(op)){
+            return false;
+        } else if (config.isLogEveryRestCallEnabled()){
+            return true;
+        } else if (OperationType.UNLOGGED.equals(op)){
+            return false;
+        } else if (isAutologgerAnnotationPresent()){
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

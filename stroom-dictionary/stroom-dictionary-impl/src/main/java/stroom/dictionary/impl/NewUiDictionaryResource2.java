@@ -31,6 +31,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,55 +42,54 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-@Api(value = "dictionary - /v2")
+@Api(tags = "Dictionaries (v2)")
 @Path(NewUiDictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUiDictionaryResource2 implements RestResource {
     public static final String BASE_RESOURCE_PATH = "/dictionary" + ResourcePaths.V2;
 
-    private final DictionaryStore dictionaryStore;
+    private final Provider<DictionaryStore> dictionaryStoreProvider;
 
     @Inject
-    NewUiDictionaryResource2(final DictionaryStore dictionaryStore) {
-        this.dictionaryStore = dictionaryStore;
+    NewUiDictionaryResource2(final Provider<DictionaryStore> dictionaryStoreProvider) {
+        this.dictionaryStoreProvider = dictionaryStoreProvider;
     }
 
     @GET
     @Path("/list")
     @Timed
-    @ApiOperation(
-            value = "Submit a request for a list of doc refs held by this service",
-            response = Set.class)
+    @ApiOperation("Submit a request for a list of doc refs held by this service")
     public Set<DocRef> listDocuments() {
-        return dictionaryStore.listDocuments();
+        return dictionaryStoreProvider.get().listDocuments();
     }
 
     @POST
     @Path("/import")
     @Timed
-    @ApiOperation(
-            value = "Submit an import request",
-            response = DocRef.class)
+    @ApiOperation("Submit an import request")
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result =  dictionaryStoreProvider.get()
+                .importDocument(
+                        documentData.getDocRef(),
+                        documentData.getDataMap(),
+                        importState,
+                        ImportMode.IGNORE_CONFIRMATION);
 
         if (result != null)
             return result.getDocRef();
         else
             return null;
     }
-
     @POST
     @Path("/export")
     @Timed
-    @ApiOperation(
-            value = "Submit an export request",
-            response = Base64EncodedDocumentData.class)
+    @ApiOperation("Submit an export request")
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
-        final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
+        final Map<String, byte[]> map = dictionaryStoreProvider.get()
+                .exportDocument(docRef, true, new ArrayList<>());
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 }

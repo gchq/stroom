@@ -23,13 +23,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasType;
 import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc implements HasAuditInfo, HasUuid {
+public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
     @JsonProperty
     private String type;
     @JsonProperty

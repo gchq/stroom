@@ -233,7 +233,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                     // Update the config objects using the DB as the removal of a yaml value may trigger
                     // a DB value to be effective
                     LOGGER.info("Completed updating application config from file. Changes: {}", updateCount.get());
-                    globalConfigService.updateConfigObjects();
+                    globalConfigService.updateConfigObjects(newAppConfig);
 
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad

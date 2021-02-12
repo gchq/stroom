@@ -36,7 +36,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Set;
 
-@Api(value = "dashboard - /v1")
+@Api(tags = "Dashboards")
 @Path("/dashboard" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,57 +44,41 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a dashboard doc",
-            response = DashboardDoc.class)
+    @ApiOperation(value = "Get a dashboard doc")
     DashboardDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a dashboard doc",
-            response = DashboardDoc.class)
+    @ApiOperation(value = "Update a dashboard doc")
     DashboardDoc update(DashboardDoc doc);
 
     @POST
     @Path("/validateExpression")
-    @ApiOperation(
-            value = "Validate an expression",
-            response = ValidateExpressionResult.class)
+    @ApiOperation(value = "Validate an expression")
     ValidateExpressionResult validateExpression(@ApiParam("expression") String expression);
 
     @POST
     @Path("/downloadQuery")
-    @ApiOperation(
-            value = "Download a query",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Download a query")
     ResourceGeneration downloadQuery(@ApiParam("downloadQueryRequest") DownloadQueryRequest downloadQueryRequest);
 
     @POST
     @Path("/downloadSearchResults")
-    @ApiOperation(
-            value = "Download search results",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Download search results")
     ResourceGeneration downloadSearchResults(@ApiParam("request") DownloadSearchResultsRequest request);
 
     @POST
     @Path("/poll")
-    @ApiOperation(
-            value = "Poll for new search results",
-            response = Set.class)
+    @ApiOperation("Poll for new search results")
     Set<DashboardSearchResponse> poll(@ApiParam("request") SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")
-    @ApiOperation(
-            value = "Fetch time zone data from the server",
-            response = List.class)
+    @ApiOperation(value = "Fetch time zone data from the server")
     List<String> fetchTimeZones();
 
     @GET
     @Path("/functions")
-    @ApiOperation(
-            value = "Fetch all expression functions",
-            response = List.class)
+    @ApiOperation(value = "Fetch all expression functions")
     List<FunctionSignature> fetchFunctions();
 }

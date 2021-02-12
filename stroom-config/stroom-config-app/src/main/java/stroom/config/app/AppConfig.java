@@ -13,6 +13,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -27,7 +28,6 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.util.ByteBufferPoolConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.event.logging.rs.impl.RequestLoggingConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -81,7 +81,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
-    public static final String PROP_NAME_REQUEST_LOGGING = "requestLogging";
+    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -123,7 +123,7 @@ public class AppConfig extends AbstractConfig {
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
-    private RequestLoggingConfig requestLoggingConfig = new RequestLoggingConfig();
+    private LoggingConfig loggingConfig = new LoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -452,14 +452,14 @@ public class AppConfig extends AbstractConfig {
         this.receiveDataConfig = receiveDataConfig;
     }
 
-    @JsonProperty(PROP_NAME_REQUEST_LOGGING)
-    public RequestLoggingConfig getRequestLoggingConfig() {
-        return requestLoggingConfig;
+    @JsonProperty(PROP_NAME_LOGGING)
+    public LoggingConfig getRequestLoggingConfig() {
+        return loggingConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setRequestLoggingConfig(final RequestLoggingConfig requestLoggingConfig) {
-        this.requestLoggingConfig = requestLoggingConfig;
+    public void setRequestLoggingConfig(final LoggingConfig loggingConfig) {
+        this.loggingConfig = loggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)

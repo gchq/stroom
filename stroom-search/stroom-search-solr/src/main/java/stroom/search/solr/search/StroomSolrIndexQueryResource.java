@@ -49,9 +49,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.stream.Collectors;
 
-@Api(
-        value = "stroom-solr-index query - /v2",
-        description = "Stroom Solr Index Query API")
+@Api(tags = "Solr Queries")
 @Path("/stroom-solr-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

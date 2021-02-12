@@ -459,8 +459,6 @@ appConfig:
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
-  requestLogging:
-    globalLoggingEnabled: false
   search:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
@@ -860,3 +858,7 @@ appConfig:
     defaultIndexVolumeGroupNodes:
     - "node1a"
     defaultIndexVolumeFilesystemUtilisation: 0.9
+  logging:
+    logEveryRestCallEnabled: false
+    maxListElements: 5
+    maxDataElementStringLength: 500
