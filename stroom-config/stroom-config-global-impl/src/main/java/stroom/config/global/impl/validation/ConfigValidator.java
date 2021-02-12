@@ -156,7 +156,9 @@ public class ConfigValidator {
             }
         }
 
-        public static Result of(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+        public static Result of(
+                final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+
             if (constraintViolations == null || constraintViolations.isEmpty()) {
                 return empty();
             } else {
@@ -193,13 +195,13 @@ public class ConfigValidator {
          * errors or warnings the consumer will not be called.
          */
         public void handleViolations(
-                final BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> constraintViolationConsumer) {
+                final BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> consumer) {
 
             for (final ConstraintViolation<? extends AbstractConfig> constraintViolation : constraintViolations) {
                 final ValidationSeverity severity = ValidationSeverity.fromPayloads(
                         constraintViolation.getConstraintDescriptor().getPayload());
 
-                constraintViolationConsumer.accept(constraintViolation, severity);
+                consumer.accept(constraintViolation, severity);
             }
         }
 

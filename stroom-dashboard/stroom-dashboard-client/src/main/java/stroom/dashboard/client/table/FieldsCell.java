@@ -43,7 +43,12 @@ public class FieldsCell extends AbstractCell<Boolean> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"><div class=\"{1}\">Name:</div><div class=\"{1}\">Sort:</div><div class=\"{1}\">Filter:</div><div class=\"{1}\">Function:</div></div>")
+        @Template("<div class=\"{0}\">" +
+                "<div class=\"{1}\">Name:</div>" +
+                "<div class=\"{1}\">Sort:</div>" +
+                "<div class=\"{1}\">Filter:</div>" +
+                "<div class=\"{1}\">Function:</div>" +
+                "</div>")
         SafeHtml optionsVisible(String labelsClassName, String labelClassName);
     }
 }

@@ -24,8 +24,8 @@ package stroom.dashboard.expression.v1;
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The value of arg1 divided by arg2.",
         commonDescription = "The value of arg1 divided by arg2. If more than two arguments are supplied then " +
-                "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. Can be expressed as " +
-                "'${field1}/${field2}'.",
+                "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. " +
+                "Can be expressed as '${field1}/${field2}'.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",

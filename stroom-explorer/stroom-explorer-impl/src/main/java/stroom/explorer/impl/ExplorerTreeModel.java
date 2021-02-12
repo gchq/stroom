@@ -66,7 +66,8 @@ class ExplorerTreeModel {
             done.set(ensureModelExists(oneHourAgo));
         }
 
-        // Force synchronous rebuild of the tree model if it is older than the minimum build time for the current session.
+        // Force synchronous rebuild of the tree model if it is older than the minimum build time
+        // for the current session.
         if (!done.get()) {
             explorerSession.getMinExplorerTreeModelBuildTime().ifPresent(buildTime -> {
                 if (buildTime > currentModel.getCreationTime()) {

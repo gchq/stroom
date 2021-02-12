@@ -63,7 +63,8 @@ import java.util.UUID;
 public class DataRetentionImpactPresenter
         extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>> {
 
-    private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
+    private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE =
+            GWT.create(DataRetentionRulesResource.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
 
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";

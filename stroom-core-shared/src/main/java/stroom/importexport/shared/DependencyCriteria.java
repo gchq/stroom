@@ -1,8 +1,8 @@
 package stroom.importexport.shared;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

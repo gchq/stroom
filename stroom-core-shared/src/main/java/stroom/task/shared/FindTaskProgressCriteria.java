@@ -17,8 +17,8 @@
 package stroom.task.shared;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -127,7 +127,9 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
-            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false, true);
+            CriteriaFieldSort defaultSort = new CriteriaFieldSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+                    false,
+                    true);
             this.getSortList().add(defaultSort);
         } else {
             for (CriteriaFieldSort sort : this.getSortList()) {

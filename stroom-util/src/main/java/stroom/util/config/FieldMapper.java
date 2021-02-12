@@ -149,7 +149,10 @@ public class FieldMapper {
                     }
                 }
             }
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | InstantiationException e) {
+        } catch (InvocationTargetException
+                | IllegalAccessException
+                | NoSuchMethodException
+                | InstantiationException e) {
             throw new RuntimeException(LogUtil.message("Error copying fields from [{}] to [{}]", source, dest), e);
         }
     }

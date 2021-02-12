@@ -218,7 +218,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             if (dashboardConfig != null) {
                 if (null == currentParams) {
                     currentParams = "";
-                    if (dashboardConfig.getParameters() != null && dashboardConfig.getParameters().trim().length() > 0) {
+                    if (dashboardConfig.getParameters() != null
+                            && dashboardConfig.getParameters().trim().length() > 0) {
                         currentParams = dashboardConfig.getParameters().trim();
                     }
                 }

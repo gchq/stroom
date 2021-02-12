@@ -42,7 +42,8 @@ public class ElementResource implements RestResource {
         Set<PipelineElementType> result = new HashSet<>();
 
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get().getPropertyTypes();
+            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get()
+                    .getPropertyTypes();
             result.addAll(pts.keySet());
         });
 
@@ -55,7 +56,8 @@ public class ElementResource implements RestResource {
         Map<PipelineElementType, Map<String, PipelinePropertyType>> result = new HashMap<>();
 
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get().getPropertyTypes();
+            Map<PipelineElementType, Map<String, PipelinePropertyType>> pts = pipelineElementRegistryFactory.get()
+                    .getPropertyTypes();
             result.putAll(pts);
         });
 

@@ -83,7 +83,8 @@ public abstract class DatabaseIT {
 //            database.insertInto(TOKENS)
 //                    // This is the long-lived token from Flyway
 //                    .set(TOKENS.TOKEN,
-//                            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSJ9.NLTH0YNedtKsco0E6jWTcPYV3AW2mLlgLf5TVxXVa-I")
+//                            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSJ9." +
+//                            "NLTH0YNedtKsco0E6jWTcPYV3AW2mLlgLf5TVxXVa-I")
 //                    .set(TOKENS.TOKEN_TYPE_ID, apiTokenTypeID)
 //                    .set(TOKENS.USER_ID, adminUserId)
 //                    .set(TOKENS.ISSUED_ON, Timestamp.from(Instant.now()))

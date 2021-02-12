@@ -149,8 +149,9 @@ class DataServiceImpl implements DataService {
 
     @Override
     public List<DataInfoSection> info(final long id) {
-        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(
-                id)));
+        final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(
+                new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(
+                        id)));
         final MetaRow metaRow = metaRows.getFirst();
 
 //        final Meta meta = metaService.getMeta(id, true);

@@ -164,7 +164,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                 // Add special permissions for folders to control creation of sub items.
                 if (DocumentTypes.isFolder(docRef.getType())) {
                     for (final DocumentType documentType : explorerService.getNonSystemTypes()) {
-                        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
+                        final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(
+                                documentType.getType());
                         if (securityContext.hasDocumentPermission(docRef.getUuid(),
                                 permissionName)) {
                             createPermissions.add(documentType.getType());

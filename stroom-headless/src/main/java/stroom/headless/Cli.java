@@ -141,17 +141,20 @@ public class Cli extends AbstractCommandLineTool {
         tmpDir = getPath(tmp);
 
         if (!Files.isDirectory(inputDir)) {
-            throw new RuntimeException("Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
+            throw new RuntimeException(
+                    "Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
         }
         if (!Files.isDirectory(errorFile.getParent())) {
             throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(errorFile.getParent())
                     + "\" parent directory cannot be found!");
         }
 //        if (!Files.isRegularFile(configFile)) {
-//            throw new RuntimeException("Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
+//            throw new RuntimeException(
+//            "Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
 //        }
         if (!Files.isDirectory(contentDir)) {
-            throw new RuntimeException("Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
+            throw new RuntimeException(
+                    "Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
         }
 
         // Make sure tmp dir exists and is empty.

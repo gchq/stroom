@@ -23,11 +23,14 @@ import java.util.List;
 import java.util.Map;
 
 public class CachedSolrIndex {
+
     private final SolrIndexDoc index;
     private final List<SolrIndexField> fields;
     private final Map<String, SolrIndexField> fieldsMap;
 
-    CachedSolrIndex(final SolrIndexDoc index, final List<SolrIndexField> fields, final Map<String, SolrIndexField> fieldsMap) {
+    CachedSolrIndex(final SolrIndexDoc index,
+                    final List<SolrIndexField> fields,
+                    final Map<String, SolrIndexField> fieldsMap) {
         this.index = index;
         this.fields = fields;
         this.fieldsMap = fieldsMap;

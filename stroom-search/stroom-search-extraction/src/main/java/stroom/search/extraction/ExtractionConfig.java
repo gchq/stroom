@@ -25,7 +25,8 @@ public class ExtractionConfig extends AbstractConfig {
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
     private int maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
 
-    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
+    @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
+            "shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
         return maxStoredDataQueueSize;
     }
@@ -34,7 +35,8 @@ public class ExtractionConfig extends AbstractConfig {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
     }
 
-    @JsonPropertyDescription("The absolute maximum number of threads per node, used to extract search results from streams using a pipeline")
+    @JsonPropertyDescription("The absolute maximum number of threads per node, used to extract search results " +
+            "from streams using a pipeline")
     public int getMaxThreads() {
         return maxThreads;
     }
@@ -43,7 +45,8 @@ public class ExtractionConfig extends AbstractConfig {
         this.maxThreads = maxThreads;
     }
 
-    @JsonPropertyDescription("The maximum number of threads per search, per node, used to extract search results from streams using a pipeline")
+    @JsonPropertyDescription("The maximum number of threads per search, per node, used to extract search results " +
+            "from streams using a pipeline")
     public int getMaxThreadsPerTask() {
         return maxThreadsPerTask;
     }

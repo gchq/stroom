@@ -29,7 +29,23 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "status"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "classification",
+        "encoding",
+        "contextEncoding",
+        "retentionDayAge",
+        "reference",
+        "streamType",
+        "status"})
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends Doc {
 
@@ -173,8 +189,8 @@ public class FeedDoc extends Doc {
         REJECT("Reject", 2),
         DROP("Drop", 3);
 
-        public static final PrimitiveValueConverter<FeedStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                FeedStatus.values());
+        public static final PrimitiveValueConverter<FeedStatus> PRIMITIVE_VALUE_CONVERTER =
+                new PrimitiveValueConverter<>(FeedStatus.values());
         private final String displayValue;
         private final byte primitiveValue;
 

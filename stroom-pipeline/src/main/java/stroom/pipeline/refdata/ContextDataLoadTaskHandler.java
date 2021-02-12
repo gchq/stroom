@@ -96,7 +96,8 @@ class ContextDataLoadTaskHandler {
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
         securityContext.secure(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use'
+            // permission on can be read.
             securityContext.useAsRead(() -> {
                 final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);

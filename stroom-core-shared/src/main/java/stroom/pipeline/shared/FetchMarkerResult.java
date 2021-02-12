@@ -50,7 +50,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
-//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+//        super(streamTypeName, classification, streamRange,
+//        streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(feedName,
                 streamTypeName,
                 classification,

@@ -109,7 +109,8 @@ class ExtractionTaskHandler {
                         () -> {
                             if (!Thread.currentThread().isInterrupted()) {
                                 final String streamId = String.valueOf(task.getStreamId());
-                                taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
+                                taskContext.info(() ->
+                                        "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
                                 extract(task);
                             }
@@ -220,23 +221,23 @@ class ExtractionTaskHandler {
                     } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
                         // stream.
-                        throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
-                                e);
+                        throw new ExtractionException("Unable to extract data from stream source with id: " +
+                                streamId + " - " + e.getMessage(), e);
                     }
                 } catch (final ExtractionException e) {
                     throw e;
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
-                    throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
-                            e);
+                    throw new ExtractionException("Unable to extract data from stream source with id: " +
+                            streamId + " - " + e.getMessage(), e);
                 }
             }
         } catch (final ExtractionException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
-            throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
-                    e);
+            throw new ExtractionException("Unable to extract data from stream source with id: " +
+                    streamId + " - " + e.getMessage(), e);
         }
     }
 

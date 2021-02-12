@@ -114,9 +114,10 @@ class FileMetaGrep extends AbstractCommandLineTool {
                 int segment = 0;
                 boolean done = false;
                 while (!done) {
-                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(new BlockGZIPInputFile(
-                            file),
+                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(
+                            new BlockGZIPInputFile(file),
                             new UncompressedInputStream(Paths.get(bdyPath), true))) {
+
                         if (segmentInputStream.count() <= segment - 1) {
                             done = true;
                         } else {

@@ -68,7 +68,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    /**
 //     * 1. This method will create a new document and show it in the content pane.
 //     */
-//    void createDocument(final Presenter<?, ?> popup, final DocRef folder, final String name, final PermissionInheritance permissionInheritance) {
+//    void createDocument(final Presenter<?, ?> popup,
+//    final DocRef folder,
+//    final String name,
+//    final PermissionInheritance permissionInheritance) {
 //        create(getType(), name, folder, permissionInheritance).onSuccess(docRef -> {
 //            // Hide the create document presenter.
 //            HidePopupEvent.fire(DocumentPlugin.this, popup);
@@ -305,7 +308,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //     * 8.2. This method will move an document.
 //     */
 //    @SuppressWarnings("unchecked")
-//    void moveDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance) {
+//    void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    final DocRef folder, final PermissionInheritance permissionInheritance) {
 //        // Find out if we currently have the document open.
 //        final DocumentTabData tabData = documentToTabDataMap.get(document);
 //        if (tabData != null && tabData instanceof EntityEditPresenter<?, ?>) {
@@ -330,7 +334,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //        }
 //    }
 //
-//    private void moveDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder, final PermissionInheritance permissionInheritance,
+//    private void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    final DocRef folder, final PermissionInheritance permissionInheritance,
 //                              final EntityEditPresenter<?, D> editPresenter) {
 //        move(document, folder, permissionInheritance).onSuccess(newDocRef -> {
 //            // Hide the copy document presenter.

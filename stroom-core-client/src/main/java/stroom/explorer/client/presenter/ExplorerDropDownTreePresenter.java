@@ -68,7 +68,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                        final boolean initial) {
         // Is the selection type valid?
         if (isSelectionAllowed(selectedItem)) {
-            // Drop down presenters need to know what the initial selection was so that they can update the name of their selected item properly.
+            // Drop down presenters need to know what the initial selection was so that they can
+            // update the name of their selected item properly.
             if (initial) {
                 DataSelectionEvent.fire(this, selectedItem, false);
             } else if (selectionType.isDoubleSelect()) {

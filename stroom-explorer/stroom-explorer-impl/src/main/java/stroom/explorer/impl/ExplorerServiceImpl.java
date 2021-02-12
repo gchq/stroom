@@ -325,7 +325,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // We don't want to filter child items if the parent folder matches the name filter.
                 final boolean ignoreChildNameFilter = filterPredicate.test(child.getDocRef());
 
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
+                // Recurse right down to find out if a descendant is being added and therefore if we need to
+                // include this as an ancestor.
                 final boolean hasChildren = addDescendants(
                         child,
                         treeModelIn,
@@ -737,7 +738,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
                 if (children != null && children.size() > 0) {
                     // Recursive delete.
-                    final List<DocRef> childDocRefs = children.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+                    final List<DocRef> childDocRefs = children.stream()
+                            .map(ExplorerNode::getDocRef)
+                            .collect(Collectors.toList());
                     recursiveDelete(childDocRefs, deleted, resultDocRefs, resultMessage);
                 }
 
@@ -812,7 +815,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final List<ExplorerNode> children = treeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
+                // Recurse right down to find out if a descendant is being added and therefore if we need to
+                // include this type as it is an ancestor.
                 final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
                 if (hasChildren) {
                     types.add(child.getType());

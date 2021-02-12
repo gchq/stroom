@@ -218,7 +218,9 @@ class BlockGZIPFileVerifier {
     private void readHeaderMarker() throws IOException {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
-            throw new IOException("Does not look like a Block GZIP V1 Stream \"" + FileUtil.getCanonicalPath(path) + "\"");
+            throw new IOException("Does not look like a Block GZIP V1 Stream \"" +
+                    FileUtil.getCanonicalPath(path) +
+                    "\"");
         }
     }
 

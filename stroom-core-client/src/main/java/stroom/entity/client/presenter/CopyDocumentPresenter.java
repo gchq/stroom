@@ -100,9 +100,16 @@ public class CopyDocumentPresenter
                 destinationFolderRef = folder.getDocRef();
             }
 
-            final List<DocRef> docRefs = explorerNodeList.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+            final List<DocRef> docRefs = explorerNodeList.stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
 
-            CopyDocumentEvent.fire(this, this, docRefs, destinationFolderRef, getView().getPermissionInheritance());
+            CopyDocumentEvent.fire(
+                    this,
+                    this,
+                    docRefs,
+                    destinationFolderRef,
+                    getView().getPermissionInheritance());
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);
         }

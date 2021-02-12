@@ -77,7 +77,8 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                         .stream()
                         .map(processorTask -> {
                             final Runnable runnable = () -> {
-                                final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+                                final DataProcessorTaskHandler dataProcessorTaskHandler =
+                                        dataProcessorTaskHandlerProvider.get();
                                 dataProcessorTaskHandler.exec(processorTask);
                             };
                             return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,

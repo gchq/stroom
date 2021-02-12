@@ -29,37 +29,39 @@ public final class DateFormatterCache {
     // Create cache
     private static final int MAX_ENTRIES = 1000;
 
-    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(
-            MAX_ENTRIES + 1,
-            .75F,
-            true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+    private static final Map<CachedFormatterKey, CachedFormatterValue> FORMATTER_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old formatter: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
-    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(new LinkedHashMap<>(
-            MAX_ENTRIES + 1,
-            .75F,
-            true) {
-        // This method is called just after a new entry has been added
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            if (size() > MAX_ENTRIES) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+    private static final Map<String, CachedZoneIdValue> ZONEID_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(
+                    MAX_ENTRIES + 1,
+                    .75F,
+                    true) {
+                // This method is called just after a new entry has been added
+                public boolean removeEldestEntry(Map.Entry eldest) {
+                    if (size() > MAX_ENTRIES) {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Evicting old zone id: " + eldest.getKey());
+                        }
+                        return true;
+                    }
+                    return false;
                 }
-                return true;
-            }
-            return false;
-        }
-    });
+            });
 
     private DateFormatterCache() {
         // Utility

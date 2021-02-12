@@ -27,8 +27,8 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
-        "both can be supplied")
+@ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
+        "Either or both can be supplied")
 public final class Filter {
 
     @ApiModelProperty(

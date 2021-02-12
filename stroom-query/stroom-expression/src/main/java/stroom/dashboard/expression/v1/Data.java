@@ -37,8 +37,8 @@ package stroom.dashboard.expression.v1;
                                 argType = ValLong.class),
                         @FunctionArg(
                                 name = Data.ARG_RECORD_NO,
-                                description = "The record number (one based). The record number is only applicable for " +
-                                        "segmented streams (i.e. cooked streams). Its value will be ignored for " +
+                                description = "The record number (one based). The record number is only applicable " +
+                                        "for segmented streams (i.e. cooked streams). Its value will be ignored for " +
                                         "non-segmented streams.",
                                 isOptional = true,
                                 argType = ValLong.class),
@@ -68,8 +68,8 @@ package stroom.dashboard.expression.v1;
                                 argType = ValInteger.class),
                         @FunctionArg(
                                 name = Data.ARG_VIEW_TYPE,
-                                description = "The view of the data to display. 'preview' shows a formatted portion of " +
-                                        "the data starting, 'source' shows the un-formatted raw view of the data. " +
+                                description = "The view of the data to display. 'preview' shows a formatted portion " +
+                                        "of the data starting, 'source' shows the un-formatted raw view of the data. " +
                                         "Defaults to 'preview'.",
                                 isOptional = true,
                                 allowedValues = {"preview", "source"},

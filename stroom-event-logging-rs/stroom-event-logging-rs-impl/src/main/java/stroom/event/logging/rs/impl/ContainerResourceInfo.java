@@ -59,31 +59,36 @@ public class ContainerResourceInfo {
 
     public String getTypeId() {
         //If method annotation provided use that on its own
-        if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
-            return getMethod().getAnnotation(AutoLogged.class).typeId();
+        final AutoLogged methodAnno = getMethod().getAnnotation(AutoLogged.class);
+
+        if ((methodAnno != null) &&
+                (!methodAnno.typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            return methodAnno.typeId();
         }
         String resourcePrefix = getResourceClass().getSimpleName();
-        if ((getResourceClass().getAnnotation(AutoLogged.class) != null) &&
-                (!getResourceClass().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
-            resourcePrefix = getResourceClass().getAnnotation(AutoLogged.class).typeId();
+        final AutoLogged resourceAnno = getResourceClass().getAnnotation(AutoLogged.class);
+        if ((resourceAnno != null) &&
+                (!resourceAnno.typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            resourcePrefix = resourceAnno.typeId();
         }
 
         return resourcePrefix + "." + getMethod().getName();
     }
 
     public String getVerbFromAnnotations() {
-        if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
-            return getMethod().getAnnotation(AutoLogged.class).verb();
+        final AutoLogged methodAnno = getMethod().getAnnotation(AutoLogged.class);
+        if ((methodAnno != null) &&
+                (!methodAnno.verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            return methodAnno.verb();
         }
         return null;
     }
 
     private static Optional<OperationType> getOperationTypeFromAnnotations(final Method method,
                                                                            final Class<?> resourceClass) {
-        if (method.getAnnotation(AutoLogged.class) != null) {
-            return Optional.of(method.getAnnotation(AutoLogged.class).value());
+        final AutoLogged methodAnno = method.getAnnotation(AutoLogged.class);
+        if (methodAnno != null) {
+            return Optional.of(methodAnno.value());
         } else if (resourceClass.getAnnotation(AutoLogged.class) != null) {
             return Optional.of(resourceClass.getAnnotation(AutoLogged.class).value());
         }

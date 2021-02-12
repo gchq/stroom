@@ -27,12 +27,12 @@ import stroom.meta.shared.MetaRow;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaFieldSort;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;

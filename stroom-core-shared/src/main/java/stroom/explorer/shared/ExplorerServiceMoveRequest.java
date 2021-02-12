@@ -37,9 +37,11 @@ public class ExplorerServiceMoveRequest {
     private final PermissionInheritance permissionInheritance;
 
     @JsonCreator
-    public ExplorerServiceMoveRequest(@JsonProperty("docRefs") final List<DocRef> docRefs,
-                                      @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
-                                      @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+    public ExplorerServiceMoveRequest(
+            @JsonProperty("docRefs") final List<DocRef> docRefs,
+            @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+            @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+
         this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;

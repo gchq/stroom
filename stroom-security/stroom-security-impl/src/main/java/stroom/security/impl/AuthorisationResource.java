@@ -62,10 +62,13 @@ public class AuthorisationResource implements RestResource {
     @POST
     @Path("hasPermission")
     public Response hasPermission(UserPermissionRequest userPermissionRequest) {
-        // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
+        // TODO what happens if the permission is bad? What's the result of this method call and how
+        //  should we handle it?
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.
-        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+        return result
+                ? Response.ok().build()
+                : Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     /**

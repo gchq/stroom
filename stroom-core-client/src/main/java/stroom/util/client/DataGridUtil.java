@@ -276,7 +276,8 @@ public class DataGridUtil {
     // There ought to be a better way of doing this so we don't have to have so many
     // methods to initiate the builder
 
-    public static <T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> columnBuilder(
+    public static <T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<
+            T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> columnBuilder(
             final Function<T_ROW, T_RAW_VAL> valueExtractor,
             final Function<T_RAW_VAL, T_CELL_VAL> formatter,
             final Supplier<T_CELL> cellSupplier) {
@@ -284,7 +285,8 @@ public class DataGridUtil {
         return new ColumnBuilder<>(valueExtractor, formatter, cellSupplier);
     }
 
-    public static <T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL_VAL, T_CELL> columnBuilder(
+    public static <T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<
+            T_ROW, T_CELL_VAL, T_CELL_VAL, T_CELL> columnBuilder(
             final Function<T_ROW, T_CELL_VAL> valueExtractor,
             final Supplier<T_CELL> cellSupplier) {
 
@@ -371,8 +373,10 @@ public class DataGridUtil {
             return this;
         }
 
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(final String fieldName,
-                                                                               final BooleanSupplier isSortableSupplier) {
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
+                final String fieldName,
+                final BooleanSupplier isSortableSupplier) {
+
             this.isSorted = true;
             this.isSortableSupplier = isSortableSupplier;
             this.fieldName = Objects.requireNonNull(fieldName);

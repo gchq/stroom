@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
  * @see BlockGZIPConstants
  */
 class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
+
     // We have in built locking while open
     private final Path finalFile;
     private final Path lockFile;
@@ -88,7 +89,11 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         FileUtil.deleteFile(finalFile);
         FileUtil.deleteFile(lockFile);
 
-        this.raFile = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+        this.raFile = FileChannel.open(
+                lockFile,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.READ,
+                StandardOpenOption.WRITE);
         try {
             // Write a marker
             mainBuffer.write(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER);

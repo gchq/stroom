@@ -35,8 +35,10 @@ public class FetchPropertyTypesResult {
     private final Map<String, PipelinePropertyType> propertyTypes;
 
     @JsonCreator
-    public FetchPropertyTypesResult(@JsonProperty("pipelineElementType") final PipelineElementType pipelineElementType,
-                                    @JsonProperty("propertyTypes") final Map<String, PipelinePropertyType> propertyTypes) {
+    public FetchPropertyTypesResult(
+            @JsonProperty("pipelineElementType") final PipelineElementType pipelineElementType,
+            @JsonProperty("propertyTypes") final Map<String, PipelinePropertyType> propertyTypes) {
+
         this.pipelineElementType = pipelineElementType;
         this.propertyTypes = propertyTypes;
     }

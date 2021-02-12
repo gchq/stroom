@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Stack;
 
 class ExpressionValidator {
+
     public void validate(final List<ExpressionTokeniser.Token> tokens) throws ParseException {
         // Ensure there are no unidentified tokens.
         for (final ExpressionTokeniser.Token token : tokens) {
@@ -45,7 +46,8 @@ class ExpressionValidator {
 
         if (functionStack.size() > 0) {
             final ExpressionTokeniser.Token token = functionStack.pop();
-            throw new ParseException("No close bracket found for function '" + token.toString() + "'", token.getStart());
+            throw new ParseException(
+                    "No close bracket found for function '" + token.toString() + "'", token.getStart());
         }
     }
 }

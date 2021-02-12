@@ -32,8 +32,8 @@ class DoNothingInternalStatisticsReceiver implements InternalStatisticsReceiver 
         final long now = System.currentTimeMillis();
         if (lastLog < now - 600000) {
             lastLog = now;
-            LOGGER.warn(method +
-                    " called when internalStatisticsReceiver has not been initialised. The statistics will not be recorded");
+            LOGGER.warn(method + " called when internalStatisticsReceiver has not been initialised. " +
+                    "The statistics will not be recorded");
         }
     }
 }

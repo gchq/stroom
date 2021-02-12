@@ -40,10 +40,12 @@ public class ExplorerServiceCreateRequest {
     }
 
     @JsonCreator
-    public ExplorerServiceCreateRequest(@JsonProperty("docType") final String docType,
-                                        @JsonProperty("docName") final String docName,
-                                        @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
-                                        @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+    public ExplorerServiceCreateRequest(
+            @JsonProperty("docType") final String docType,
+            @JsonProperty("docName") final String docName,
+            @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+            @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+
         this.docType = docType;
         this.docName = docName;
         this.destinationFolderRef = destinationFolderRef;

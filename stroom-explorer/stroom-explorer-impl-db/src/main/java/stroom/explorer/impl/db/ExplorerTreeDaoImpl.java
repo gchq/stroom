@@ -86,13 +86,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                    .and(p.DESCENDANT.eq(node.getId()))
 //                    .fetch()
 //                    .stream()
-//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+//                    .map(r -> new ExplorerTreePath(
+//                    r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
 //                    .collect(Collectors.toList());
 //
 //            if (result.size() <= 0) {
 //                return null;
 //            } else if (result.size() > 1) {
-//                throw new IllegalStateException("Found more than one path for node " + node + ", paths are: " + result);
+//                throw new IllegalStateException(
+//                "Found more than one path for node " + node + ", paths are: " + result);
 //            } else {
 //                return result.get(0);
 //            }
@@ -424,7 +426,9 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                        .fetchOne(0, int.class);
 //
 //                if (count > 1) {
-//                    throw new IllegalStateException("Ambiguous ancestor/descendant, found " + count + " paths for parent " + parent + " and child " + child);
+//                    throw new IllegalStateException(
+//                    "Ambiguous ancestor/descendant, found " + count +
+//                    " paths for parent " + parent + " and child " + child);
 //                } else {
 //                    return count == 1;
 //                }
@@ -510,7 +514,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                    .where(condition)
 //                    .fetch()
 //                    .stream()
-//                    .map(r -> new ExplorerTreeNode(r.component1(), r.component2(), r.component3(), r.component4(), r.component5()))
+//                    .map(r -> new ExplorerTreeNode(
+//                    r.component1(), r.component2(), r.component3(), r.component4(), r.component5()))
 //                    .collect(Collectors.toList());
 //
 //        } catch (final SQLException e) {
@@ -680,7 +685,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .collect(Collectors.toList()));
     }
 
-//    private ExplorerTreeNode copy(ExplorerTreeNode node, ExplorerTreeNode newParent, int position, ExplorerTreeNode sibling) {
+//    private ExplorerTreeNode copy(
+//    ExplorerTreeNode node, ExplorerTreeNode newParent, int position, ExplorerTreeNode sibling) {
 //        assertCopyOrMoveParameters(node, newParent, position, sibling);
 //        List<ExplorerTreePath> pathsToCopy = getSubTreePathsToCopy(node);
 //        List<ExplorerTreePath> childPaths = new ArrayList<>();
@@ -706,7 +712,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                            .where(p2.ANCESTOR.eq(parent.getId()))))
 //                    .fetch()
 //                    .stream()
-//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
+//                    .map(r -> new ExplorerTreePath(
+//                    r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
 //                    .collect(Collectors.toList());
 //        } catch (final SQLException e) {
 //            LOGGER.error(e.getMessage(), e);
@@ -714,7 +721,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //        }
 //    }
 //
-//    private ExplorerTreeNode copySubTree(List<ExplorerTreePath> pathsToCopy, ExplorerTreeNode node, List<ExplorerTreePath> childPaths) {
+//    private ExplorerTreeNode copySubTree(
+//    List<ExplorerTreePath> pathsToCopy, ExplorerTreeNode node, List<ExplorerTreePath> childPaths) {
 //        Map<Integer, ExplorerTreeNode> cloneMap = new HashMap<>();
 //        ExplorerTreeNode copiedNode = node;
 //        Map<Integer, ExplorerTreeNode> mergedCloneMap = new HashMap<>();

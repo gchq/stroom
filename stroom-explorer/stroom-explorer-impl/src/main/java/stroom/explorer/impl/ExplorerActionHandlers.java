@@ -94,12 +94,14 @@ class ExplorerActionHandlers {
 
             final ExplorerActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
             if (existingActionHandler != null) {
-                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                throw new RuntimeException("A handler already exists for '" + type +
+                        "' existing {" + existingActionHandler + "} new {" + handler + "}");
             }
 
             final DocumentType existingDocumentType = allTypes.putIfAbsent(type, handler.getDocumentType());
             if (existingDocumentType != null) {
-                throw new RuntimeException("A document type already exists for '" + type + "' existing {" + existingDocumentType + "} new {" + handler.getDocumentType() + "}");
+                throw new RuntimeException("A document type already exists for '" + type + "' existing {" +
+                        existingDocumentType + "} new {" + handler.getDocumentType() + "}");
             }
         }
     }

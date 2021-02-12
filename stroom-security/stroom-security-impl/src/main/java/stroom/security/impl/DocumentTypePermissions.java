@@ -50,7 +50,8 @@ class DocumentTypePermissions {
             try {
                 final List<DocumentType> documentTypes = explorerService.getNonSystemTypes();
                 permissionList.addAll(documentTypes.stream()
-                        .map(documentType -> DocumentPermissionNames.getDocumentCreatePermission(documentType.getType()))
+                        .map(documentType -> DocumentPermissionNames.getDocumentCreatePermission(
+                                documentType.getType()))
                         .sorted()
                         .collect(Collectors.toList()));
             } catch (final RuntimeException e) {

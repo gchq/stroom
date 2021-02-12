@@ -63,7 +63,8 @@ public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(
-            description = "A comma separated list of XML elements between which non-escaped characters will be escaped.",
+            description = "A comma separated list of XML elements between which non-escaped characters " +
+                    "will be escaped.",
             displayPriority = 1)
     public void setTags(final String leafList) {
         if (leafList != null) {

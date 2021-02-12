@@ -49,11 +49,13 @@ public class CommonTranslationTestHelper {
     public static final String FEED_NAME = "TEST_FEED";
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTestHelper.class);
     private static final String DIR = "CommonTranslationTest/";
-    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
+    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(
+            DIR + "Invalid.in");
     private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     //    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
-    private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
+    private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(
+            DIR + "CSVWithHeading.ds");
     private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.xsl");
     private static final Path XSLT_HOST_NAME_TO_IP = StroomPipelineTestFileUtil

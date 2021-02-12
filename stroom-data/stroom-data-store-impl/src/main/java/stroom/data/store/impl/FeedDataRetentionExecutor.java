@@ -119,12 +119,14 @@ public class FeedDataRetentionExecutor {
 //        if (period != null) {
 //            if (period.getFromMs() != null && period.getToMs() != null) {
 //                builder
-//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
+//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO,
+//                        DateUtil.createNormalDateTimeString(period.getFromMs()))
 //                        .addTerm(field, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
 //            }
 //            if (period.getFromMs() != null) {
 //                builder
-//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()));
+//                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO,
+//                        DateUtil.createNormalDateTimeString(period.getFromMs()));
 //            }
 //            if (period.getToMs() != null) {
 //                builder

@@ -95,19 +95,23 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         try {
             switch (perms) {
                 case NONE:
-                    // Ignore original permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    // Ignore original permissions, ignore permissions of the destination folder,
+                    // just make the new item owned by the current user.
                     addDocumentPermissions(null, destDocRef, true, true);
                     break;
                 case SOURCE:
-                    // Copy permissions from the original, ignore permissions of the destination folder, and make the new item owned by the current user.
+                    // Copy permissions from the original, ignore permissions of the destination
+                    // folder, and make the new item owned by the current user.
                     addDocumentPermissions(sourceDocRef, destDocRef, true, true);
                     break;
                 case DESTINATION:
-                    // Ignore permissions of the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Ignore permissions of the original, add permissions of the destination folder,
+                    // and make the new item owned by the current user.
                     addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
                 case COMBINED:
-                    // Copy permissions from the original, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Copy permissions from the original, add permissions of the destination folder,
+                    // and make the new item owned by the current user.
                     addDocumentPermissions(sourceDocRef, destDocRef, true, true);
                     addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
@@ -137,7 +141,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         try {
             switch (perms) {
                 case NONE:
-                    // Remove all current permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
+                    // Remove all current permissions, ignore permissions of the destination folder, just make the
+                    // new item owned by the current user.
                     clearDocumentPermissions(docRef);
                     addDocumentPermissions(null, docRef, true, true);
                     break;
@@ -145,12 +150,14 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     // We are keeping the permissions that we already have so do nothing.
                     break;
                 case DESTINATION:
-                    // Remove all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Remove all current permissions, add permissions of the destination folder, and make the new
+                    // item owned by the current user.
                     clearDocumentPermissions(docRef);
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
-                    // Keep all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
+                    // Keep all current permissions, add permissions of the destination folder, and make the new
+                    // item owned by the current user.
                     addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 default:

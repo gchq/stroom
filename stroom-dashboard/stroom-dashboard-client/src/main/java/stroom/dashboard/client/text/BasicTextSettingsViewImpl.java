@@ -111,7 +111,10 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
         this.table.clear();
         this.table.addItem(ANY);
 
-        final List<HasDisplayValue> newList = tableList.stream().map(e -> (HasDisplayValue) e).collect(Collectors.toList());
+        final List<HasDisplayValue> newList = tableList.stream()
+                .map(e ->
+                        (HasDisplayValue) e)
+                .collect(Collectors.toList());
         this.table.addItems(newList);
 
         // Reselect table id.

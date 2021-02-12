@@ -41,7 +41,9 @@ public class ExpressionModel {
         final Item item = tree.getRoot();
         if (item instanceof Operator) {
             final Operator source = (Operator) item;
-            final ExpressionOperator.Builder dest = ExpressionOperator.builder().enabled(source.isEnabled()).op(source.getOp());
+            final ExpressionOperator.Builder dest = ExpressionOperator.builder()
+                    .enabled(source.isEnabled())
+                    .op(source.getOp());
             addChildrenFromTree(source, dest, tree);
             return dest.build();
         }

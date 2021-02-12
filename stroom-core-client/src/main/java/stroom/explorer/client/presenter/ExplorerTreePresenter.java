@@ -140,9 +140,10 @@ public class ExplorerTreePresenter
                 typeFilterPresenter.getIncludedTypes())));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(
-                explorerTree.getSelectionModel(),
-                event.getSelectionType()))));
+        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event ->
+                getEventBus().fireEvent(new ExplorerTreeSelectEvent(
+                        explorerTree.getSelectionModel(),
+                        event.getSelectionType()))));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
 
         registerHandler(activityContainer.addClickHandler(event -> currentActivity.showActivityChooser()));
@@ -198,7 +199,13 @@ public class ExplorerTreePresenter
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
                 target.getAbsoluteTop() + target.getClientHeight() + 2);
-        ShowPopupEvent.fire(this, typeFilterPresenter, PopupType.POPUP, popupPosition, null, target);
+        ShowPopupEvent.fire(
+                this,
+                typeFilterPresenter,
+                PopupType.POPUP,
+                popupPosition,
+                null,
+                target);
     }
 
     @ProxyEvent

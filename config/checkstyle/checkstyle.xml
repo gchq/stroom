@@ -431,7 +431,7 @@
       <property name="tokens" value="IMPORT, STATIC_IMPORT, PACKAGE_DEF"/>
 
       <!-- TODO set it to error when we have managed to run auto format on all classes. -->
-      <property name="severity" value="warning"/>
+      <!--<property name="severity" value="warning"/>-->
     </module>
 
     <module name="MethodParamPad">

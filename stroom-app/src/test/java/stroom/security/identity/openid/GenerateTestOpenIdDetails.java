@@ -125,7 +125,7 @@ public class GenerateTestOpenIdDetails {
 
         final String generatedCode = "" +
                 "    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--" +
-                "\n    // ALL the content between these dashed lines was generated inserted using" +
+                "\n    // ALL the content between these dashed lines was generated and inserted using" +
                 "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
                 "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +

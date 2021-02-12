@@ -80,7 +80,11 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * Convenience constructor, using a default for the alignmentInLevel.
      * <p>
      * see
-     * {@link #DefaultConfiguration(double, double, stroom.widget.htree.client.treelayout.Configuration.Location, stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
+     * {@link #DefaultConfiguration(
+     *double,
+     * double,
+     * stroom.widget.htree.client.treelayout.Configuration.Location,
+     * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
     public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location) {
         this(gapBetweenLevels, gapBetweenNodes, location, AlignmentInLevel.Center);
@@ -91,7 +95,11 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * alignmentInLevel.
      * <p>
      * see
-     * {@link #DefaultConfiguration(double, double, stroom.widget.htree.client.treelayout.Configuration.Location, stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
+     * {@link #DefaultConfiguration(
+     *double,
+     * double,
+     * stroom.widget.htree.client.treelayout.Configuration.Location,
+     * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
     public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes) {
         this(gapBetweenLevels, gapBetweenNodes, Location.Top, AlignmentInLevel.Center);

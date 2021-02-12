@@ -80,7 +80,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     private void addColumn(final String name,
                            final int width,
                            final Function<DataRetentionRule, String> valueFunc) {
-        final Column<DataRetentionRule, SafeHtml> expressionColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
+
+        final Column<DataRetentionRule, SafeHtml> expressionColumn = new Column<DataRetentionRule, SafeHtml>(
+                new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final DataRetentionRule rule) {
                 return getSafeHtml(valueFunc.apply(rule), rule);
@@ -92,8 +94,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     private void addButtonColumn(final String name,
                                  final int width,
                                  final SvgPreset svgPreset) {
-        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(new SvgCell(
-                true)) {
+        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(
+                new SvgCell(true)) {
 
             @Override
             public SvgPreset getValue(final DataRetentionRule object) {

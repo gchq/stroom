@@ -195,8 +195,9 @@ public final class ComparisonHelper {
         final List<Path> inFiles = list(in);
         final List<Path> outFiles = list(out);
 
-        assertThat(outFiles.size()).as("Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
-                + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
+        assertThat(outFiles.size()).as(
+                "Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
+                        + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
 
         for (final Path inFile : inFiles) {
             Path outFile = null;
@@ -210,16 +211,19 @@ public final class ComparisonHelper {
             }
 
             // Make sure we found the file.
-            assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
-                    + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
+            assertThat(outFile)
+                    .as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
+                            + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"")
+                    .isNotNull();
 
-            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(
-                    outFile) + "\"");
+            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" +
+                    FileUtil.getCanonicalPath(outFile) + "\"");
 
             if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
-                assertThat(Files.isDirectory(outFile)).as("Output file is not a directory for: " + FileUtil.getCanonicalPath(
-                        inFile)).isTrue();
+                assertThat(Files.isDirectory(outFile))
+                        .as("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile))
+                        .isTrue();
 
                 // Recurse.
                 compareDirs(inFile, outFile);

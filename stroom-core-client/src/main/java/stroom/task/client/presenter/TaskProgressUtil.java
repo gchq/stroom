@@ -20,10 +20,10 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaFieldSort;
 
 import java.util.ArrayList;
 import java.util.Collection;

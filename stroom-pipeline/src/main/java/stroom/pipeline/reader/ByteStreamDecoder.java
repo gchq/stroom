@@ -84,7 +84,8 @@ public class ByteStreamDecoder {
                     true);
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("coderResult: {}, loopCnt: {}, inPos: {}, inLimit: {}, inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
+                LOGGER.trace("coderResult: {}, loopCnt: {}, inPos: {}, inLimit: {}, " +
+                                "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
                         coderResult,
                         loopCnt,
                         inputBuffer.position(),

@@ -138,9 +138,13 @@ public class DbTestUtil {
                     connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
                     int result = 0;
-                    result = statement.executeUpdate("CREATE DATABASE `" + dbName + "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" + connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" + connectionConfig.getJdbcDriverUsername() + "';");
-                    result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" + connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
+                    result = statement.executeUpdate("CREATE DATABASE `" + dbName +
+                            "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+//                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+//                        connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
+//                        connectionConfig.getJdbcDriverUsername() + "';");
+                    result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+                            connectionConfig.getUser() + "'@'%' WITH GRANT OPTION;");
                 }
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -231,9 +235,13 @@ public class DbTestUtil {
 //        try (final Connection connection = DriverManager.getConnection(url, connectionProps)) {
 //            try (final Statement statement = connection.createStatement()) {
 //                int result = 0;
-//                result = statement.executeUpdate("CREATE DATABASE `" + dbName + "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-////                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" + connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" + connectionConfig.getJdbcDriverUsername() + "';");
-//                result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" + EMBEDDED_MYSQL_DB_USERNAME + "'@'%' WITH GRANT OPTION;");
+//                result = statement.executeUpdate("CREATE DATABASE `" + dbName +
+//                "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+////                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
+// connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
+// connectionConfig.getJdbcDriverUsername() + "';");
+//                result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
+//                EMBEDDED_MYSQL_DB_USERNAME + "'@'%' WITH GRANT OPTION;");
 //            }
 //        } catch (final SQLException e) {
 //            throw new RuntimeException(e.getMessage(), e);
@@ -341,7 +349,8 @@ public class DbTestUtil {
             String packageRoot;
             try {
                 final String thisClass = c.getResource(c.getSimpleName() + ".class").toString();
-                final String classPath = Pattern.quote(c.getName().replaceAll("\\.", "/") + ".class");
+                final String classPath = Pattern.quote(c.getName()
+                        .replaceAll("\\.", "/") + ".class");
                 packageRoot = thisClass.replaceAll(classPath, "");
                 packageRoot = packageRoot.replaceAll("!/$", "");
                 packageRoot = packageRoot.replaceAll("[^/\\\\]*$", "");
@@ -394,7 +403,8 @@ public class DbTestUtil {
         executeStatementsWithNoConstraints(connection, deleteStatements);
     }
 
-    private static void executeStatementsWithNoConstraints(final Connection connection, final List<String> statements) {
+    private static void executeStatementsWithNoConstraints(final Connection connection,
+                                                           final List<String> statements) {
         final List<String> allStatements = new ArrayList<>();
         allStatements.add("SET FOREIGN_KEY_CHECKS=0");
         allStatements.addAll(statements);

@@ -18,9 +18,11 @@ public class DataRetentionDeleteSummaryRequest {
     private final FindDataRetentionImpactCriteria criteria;
 
     @JsonCreator
-    public DataRetentionDeleteSummaryRequest(@JsonProperty("queryId") final String queryId,
-                                             @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
-                                             @JsonProperty("criteria") final FindDataRetentionImpactCriteria criteria) {
+    public DataRetentionDeleteSummaryRequest(
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
+            @JsonProperty("criteria") final FindDataRetentionImpactCriteria criteria) {
+
         this.queryId = queryId;
         this.dataRetentionRules = dataRetentionRules;
         this.criteria = criteria;

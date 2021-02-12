@@ -229,7 +229,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     private void checkInnerData(final long streamId, final boolean text) throws IOException {
         if (text) {
-            final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+            @SuppressWarnings("checkstyle:LineLength") final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
                     "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
 
             checkInnerData(streamId, 143, innerRef);

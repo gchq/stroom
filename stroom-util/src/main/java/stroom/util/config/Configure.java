@@ -53,7 +53,9 @@ public class Configure extends AbstractCommandLineTool {
 
     public static void printUsage() {
         System.out.println(
-                "java stroom.util.config.Configure parameterFile=<parameter file> processFile=<comma delimited files to process>");
+                "java stroom.util.config.Configure " +
+                        "parameterFile=<parameter file> " +
+                        "processFile=<comma delimited files to process>");
     }
 
     public static void main(String[] args) {
@@ -188,8 +190,9 @@ public class Configure extends AbstractCommandLineTool {
                     if (line.contains(parameter.getName())) {
                         line = line.replace(parameter.getName(), parameter.getValue());
                         replaceCount++;
-                        System.out.println(FileUtil.getCanonicalPath(file) + ": Replaced " + parameter.getName() + " with "
-                                + parameter.getValue() + " at line " + lineCount);
+                        System.out.println(FileUtil.getCanonicalPath(file) +
+                                ": Replaced " + parameter.getName() + " with " + parameter.getValue() +
+                                " at line " + lineCount);
                     }
                 }
                 buffWriter.write(line);

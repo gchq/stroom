@@ -89,7 +89,8 @@ public class CoprocessorsFactory {
 
                     if (coprocessor instanceof TableCoprocessor) {
                         final TableCoprocessor tableCoprocessor = (TableCoprocessor) coprocessor;
-                        final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) coprocessorSettings;
+                        final TableCoprocessorSettings tableCoprocessorSettings =
+                                (TableCoprocessorSettings) coprocessorSettings;
                         for (final String componentId : tableCoprocessorSettings.getComponentIds()) {
                             componentIdCoprocessorMap.put(componentId, tableCoprocessor);
                         }

@@ -11,6 +11,7 @@ package stroom.util.authentication;
  * These default values will only be used if the following prop is set to true
  * {@link stroom.authentication.config.AuthenticationConfig#isUseDefaultOpenIdCredentials()}
  */
+@SuppressWarnings("checkstyle:LineLength")
 public class DefaultOpenIdCredentials {
 
     // Made with a public ctor so it is injectable and mockable, if required.

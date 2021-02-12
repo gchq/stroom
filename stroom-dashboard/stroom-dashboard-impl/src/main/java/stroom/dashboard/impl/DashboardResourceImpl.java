@@ -186,7 +186,8 @@ class DashboardResourceImpl implements DashboardResource {
 
                                 ComponentResultRequest newRequest = null;
                                 if (componentResultRequest instanceof TableResultRequest) {
-                                    final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
+                                    final TableResultRequest tableResultRequest =
+                                            (TableResultRequest) componentResultRequest;
                                     // Remove special fields.
                                     tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
                                     newRequest = tableResultRequest
@@ -367,7 +368,8 @@ class DashboardResourceImpl implements DashboardResource {
     @Override
     public Set<DashboardSearchResponse> poll(final SearchBusPollRequest request) {
         return securityContext.secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
+            // Elevate the users permissions for the duration of this task so they can read the index if they
+            // have 'use' permission.
             return securityContext.useAsReadResult(() -> {
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(

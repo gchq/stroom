@@ -221,7 +221,8 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         } else {
                             sb.append("#");
                         }
-                        if (numberFormatSettings.getDecimalPlaces() != null && numberFormatSettings.getDecimalPlaces() > 0) {
+                        if (numberFormatSettings.getDecimalPlaces() != null
+                                && numberFormatSettings.getDecimalPlaces() > 0) {
                             sb.append(".");
                             for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
                                 sb.append("0");

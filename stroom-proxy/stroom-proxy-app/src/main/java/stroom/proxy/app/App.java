@@ -131,7 +131,8 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   These should only be used in test/demo environments. " +
-                    "\n   Set useDefaultOpenIdCredentials to false for production environments. The API key in use is:" +
+                    "\n   Set useDefaultOpenIdCredentials to false for production environments. " +
+                    "The API key in use is:" +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +
                     "\n  ---------------------------------------------------------------------------------------" +

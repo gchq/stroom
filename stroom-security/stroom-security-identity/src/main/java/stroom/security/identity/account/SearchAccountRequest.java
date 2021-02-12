@@ -1,8 +1,8 @@
 package stroom.security.identity.account;
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

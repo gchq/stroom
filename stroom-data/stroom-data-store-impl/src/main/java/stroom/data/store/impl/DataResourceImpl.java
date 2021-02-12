@@ -74,7 +74,8 @@ class DataResourceImpl implements DataResource {
         List<DataInfoSection> result;
         try {
             result = dataServiceProvider.get().info(id);
-//            streamEventLog.viewStream(streamId + ":" + streamsOffsetrequest.getFeedName(), request.getFileName(), null);
+//            streamEventLog.viewStream(
+//            streamId + ":" + streamsOffsetrequest.getFeedName(), request.getFileName(), null);
         } catch (final RuntimeException e) {
 //            streamEventLog.importStream(request.getFeedName(), request.getFileName(), e);
             throw EntityServiceExceptionUtil.create(e);
@@ -93,9 +94,11 @@ class DataResourceImpl implements DataResource {
 //        final OffsetRange pageRange = new OffsetRange(pageOffset, pageSize);
 //        final OffsetRange streamRange = new OffsetRange(streamsOffset, streamsLength);
 //
-//        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
+//        // Used for organising errors but only relevant when the data is in fact errors
+//        final boolean isMarkerMode = true;
 //        final boolean showAsHtml = false; // Used for dashboards so false here.
-//        final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
+//        final Severity[] expandedSeverities = new Severity[]{
+//        Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
 //
 //        //TODO Used for child streams. Needs implementing.
 //        String childStreamTypeName = null;

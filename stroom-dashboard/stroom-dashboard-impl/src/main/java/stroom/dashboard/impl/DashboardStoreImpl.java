@@ -160,21 +160,25 @@ class DashboardStoreImpl implements DashboardStore {
                         ComponentSettings componentSettings = componentConfig.getSettings();
                         if (componentSettings != null) {
                             if (componentSettings instanceof QueryComponentSettings) {
-                                final QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentSettings;
+                                final QueryComponentSettings queryComponentSettings =
+                                        (QueryComponentSettings) componentSettings;
                                 componentSettings = remapQueryComponentSettings(queryComponentSettings,
                                         dependencyRemapper);
 
                             } else if (componentSettings instanceof TableComponentSettings) {
-                                final TableComponentSettings tableComponentSettings = (TableComponentSettings) componentSettings;
+                                final TableComponentSettings tableComponentSettings =
+                                        (TableComponentSettings) componentSettings;
                                 componentSettings = remapTableComponentSettings(tableComponentSettings,
                                         dependencyRemapper);
 
                             } else if (componentSettings instanceof VisComponentSettings) {
-                                final VisComponentSettings visComponentSettings = (VisComponentSettings) componentSettings;
+                                final VisComponentSettings visComponentSettings =
+                                        (VisComponentSettings) componentSettings;
                                 componentSettings = remapVisComponentSettings(visComponentSettings, dependencyRemapper);
 
                             } else if (componentSettings instanceof TextComponentSettings) {
-                                final TextComponentSettings textComponentSettings = (TextComponentSettings) componentSettings;
+                                final TextComponentSettings textComponentSettings =
+                                        (TextComponentSettings) componentSettings;
                                 componentSettings = remapTextComponentSettings(textComponentSettings,
                                         dependencyRemapper);
                             }

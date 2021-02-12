@@ -42,7 +42,8 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> changeSelection(event.getSelectedItem())));
+        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event ->
+                changeSelection(event.getSelectedItem())));
     }
 
     public void setIncludedTypes(final String... includedTypes) {

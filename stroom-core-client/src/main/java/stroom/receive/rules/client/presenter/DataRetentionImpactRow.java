@@ -38,9 +38,9 @@ public class DataRetentionImpactRow {
             DataRetentionImpactRow::getRuleNumber);
     public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = Comparator.comparing(
             DataRetentionImpactRow::getRuleName);
-    public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR = Comparator.comparingLong(row -> timeUnitToMillis(
-            row.ruleAge,
-            row.timeUnit));
+    public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR =
+            Comparator.comparingLong(row ->
+                    timeUnitToMillis(row.ruleAge, row.timeUnit));
 
     public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
 
@@ -249,10 +249,11 @@ public class DataRetentionImpactRow {
                         // probably relatively small (in the 1000s), and the DB query is potentially VERY slow
 
                         // Sub-group the data by meta type
-                        final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType = summariesForRule.stream()
-                                .collect(Collectors.groupingBy(
-                                        DataRetentionDeleteSummary::getMetaType,
-                                        Collectors.toSet()));
+                        final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType =
+                                summariesForRule.stream()
+                                        .collect(Collectors.groupingBy(
+                                                DataRetentionDeleteSummary::getMetaType,
+                                                Collectors.toSet()));
 
                         summariesByRuleAndType.keySet().stream()
                                 .map(metaType ->
@@ -269,10 +270,11 @@ public class DataRetentionImpactRow {
                                 .forEach(metaTypeRow -> {
                                     rows.add(metaTypeRow);
 
-                                    final Set<DataRetentionDeleteSummary> summariesForRuleAndType = summariesByRuleAndType.get(
-                                            metaTypeRow.getMetaType());
+                                    final Set<DataRetentionDeleteSummary> summariesForRuleAndType =
+                                            summariesByRuleAndType.get(metaTypeRow.getMetaType());
 
-                                    if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
+                                    if (isExpanded(treeAction, metaTypeRow, 1)
+                                            && summariesForRuleAndType != null) {
 
                                         Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
                                                 criteria,

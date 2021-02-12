@@ -153,8 +153,9 @@ public class App extends Application<Config> {
                 "index.html",
                 "ui"));
 
-        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
-        // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
+        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React
+        // BrowserRouter. This always needs the root page to be served regardless of the path requested so we
+        // need to use a special asset bundle to achieve this.
         bootstrap.addBundle(new BrowserRouterAssetsBundle(
                 "/new-ui",
                 "/",

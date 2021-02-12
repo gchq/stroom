@@ -92,7 +92,8 @@ public class DashboardMainPresenter
         dashboardPresenter.addDirtyHandler(event -> Window.setTitle(dashboardPresenter.getLabel()));
         Window.addWindowClosingHandler(event -> {
             if (dashboardPresenter.isDirty()) {
-                event.setMessage("Dashboard '" + dashboardPresenter.getTitle() + "' has unsaved changes. Are you sure you want to close it?");
+                event.setMessage("Dashboard '" + dashboardPresenter.getTitle() + "' " +
+                        "has unsaved changes. Are you sure you want to close it?");
             }
         });
     }

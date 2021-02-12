@@ -29,7 +29,8 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateAccountCommand.class);
     private static final String COMMAND_NAME = "create_account";
-    private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity provider";
+    private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity " +
+            "provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";

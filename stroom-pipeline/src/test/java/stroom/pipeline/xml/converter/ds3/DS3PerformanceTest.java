@@ -155,7 +155,9 @@ class DS3PerformanceTest {
         ds3ParserFactory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
-        assertThat(errorReceiver.isAllOk()).as("Configuration of parser failed: " + errorReceiver.getMessage()).isTrue();
+        assertThat(errorReceiver.isAllOk())
+                .as("Configuration of parser failed: " + errorReceiver.getMessage())
+                .isTrue();
 
         final XMLReader reader = ds3ParserFactory.getParser();
         reader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, errorReceiver));
@@ -164,11 +166,13 @@ class DS3PerformanceTest {
 
     private void compareFiles(final Path input, final Path actualFile, final Path expectedFile) throws IOException {
         // Make sure the file exists.
-        assertThat(Files.isRegularFile(actualFile)).as("Cannot find actual output file " + FileUtil.getCanonicalPath(
-                actualFile)).isTrue();
+        assertThat(Files.isRegularFile(actualFile))
+                .as("Cannot find actual output file " + FileUtil.getCanonicalPath(actualFile))
+                .isTrue();
         // Make sure the file exists.
-        assertThat(Files.isRegularFile(expectedFile)).as("Cannot find expected output file " + FileUtil.getCanonicalPath(
-                expectedFile)).isTrue();
+        assertThat(Files.isRegularFile(expectedFile))
+                .as("Cannot find expected output file " + FileUtil.getCanonicalPath(expectedFile))
+                .isTrue();
 
         // Normalise both files.
         normalise(actualFile);
@@ -183,13 +187,17 @@ class DS3PerformanceTest {
             int a = 0;
             int b = 0;
             while (a != -1 && b != -1) {
-                assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(
-                        a);
+                assertThat(b)
+                        .as("Expected and actual files do not match for: " +
+                                FileUtil.getCanonicalPath(actualFile))
+                        .isEqualTo(a);
                 a = actualIS.read();
                 b = expectedIS.read();
             }
-            assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(
-                    a);
+            assertThat(b)
+                    .as("Expected and actual files do not match for: " +
+                            FileUtil.getCanonicalPath(actualFile))
+                    .isEqualTo(a);
 
             success = true;
         } finally {

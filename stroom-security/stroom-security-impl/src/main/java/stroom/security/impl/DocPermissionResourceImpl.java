@@ -244,7 +244,12 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 //        }
 //    }
 //
-//    private void changeChildPermissions(final DocRef folder, final ChangeSet<UserPermission> changeSet, final Set<DocRef> affectedDocRefs, final Set<User> affectedUsers, final boolean clear) {
+//    private void changeChildPermissions(
+//    final DocRef folder,
+//    final ChangeSet<UserPermission> changeSet,
+//    final Set<DocRef> affectedDocRefs,
+//    final Set<User> affectedUsers,
+//    final boolean clear) {
 //        final List<String> types = getTypeList();
 //        for (final String type : types) {
 //            final List<DocumentEntity> children = genericEntityService.findByFolder(type, folder, null);
@@ -274,7 +279,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                     break;
 
                 case ALL:
-                    // We are replicating the permissions of the parent folder on all children so create a change set from the parent folder.
+                    // We are replicating the permissions of the parent folder on all children so create a change
+                    // set from the parent folder.
                     final DocumentPermissions parentPermissions = documentPermissionService.getPermissionsForDocument(
                             docRef.getUuid());
                     final Map<String, Set<String>> add = new HashMap<>();
@@ -287,7 +293,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
                     final Changes fullChangeSet = new Changes(add, new HashMap<>());
 
-                    // Set child permissions to that of the parent folder after clearing all permissions from child documents.
+                    // Set child permissions to that of the parent folder after clearing all permissions from
+                    // child documents.
                     changeDescendantPermissions(docRef, fullChangeSet, affectedDocRefs, affectedUserUuids, true);
 
                     break;

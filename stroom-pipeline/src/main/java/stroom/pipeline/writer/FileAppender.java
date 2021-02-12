@@ -44,7 +44,8 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "FileAppender",
         category = Category.DESTINATION,
-        roles = {PipelineElementType.ROLE_TARGET,
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILE)
@@ -101,15 +102,18 @@ public class FileAppender extends AbstractAppender {
             // Make sure we can create both output files without overwriting
             // another file.
             if (Files.exists(lockFile)) {
-                throw new ProcessException("Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
+                throw new ProcessException(
+                        "Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
             }
             if (Files.exists(outFile)) {
-                throw new ProcessException("Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
+                throw new ProcessException(
+                        "Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
             }
             LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            byteCountOutputStream = new ByteCountOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(lockFile)));
             return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
@@ -131,27 +135,31 @@ public class FileAppender extends AbstractAppender {
      * @param outputPaths the outputPaths to set
      */
     @PipelineProperty(
-            description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            description = "One or more destination paths for output files separated with commas. " +
+                    "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(
+            description = "When the current output file exceeds this size it will be closed and a new one created.",
             displayPriority = 2)
     public void setRollSize(final String size) {
         super.setRollSize(size);
     }
 
-    @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output files.",
+    @PipelineProperty(
+            description = "Choose if you want to split aggregated streams into separate output files.",
             defaultValue = "false",
             displayPriority = 3)
     public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
-    @PipelineProperty(description = "Choose if you want to split individual records into separate output files.",
+    @PipelineProperty(
+            description = "Choose if you want to split individual records into separate output files.",
             defaultValue = "false",
             displayPriority = 4)
     public void setSplitRecords(final boolean splitRecords) {

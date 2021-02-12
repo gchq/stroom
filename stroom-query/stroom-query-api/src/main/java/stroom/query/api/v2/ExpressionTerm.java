@@ -54,19 +54,22 @@ public final class ExpressionTerm extends ExpressionItem {
             value = "The condition of the predicate term",
             required = true)
     @JsonProperty
-    private Condition condition; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private Condition condition;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The value that the field value is being evaluated against. Not required if a dictionary is supplied")
+    @ApiModelProperty("The value that the field value is being evaluated against. Not required if a " +
+            "dictionary is supplied")
     @JsonProperty
-    private String value; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private String value;
 
     @XmlElement
-    @ApiModelProperty(
-            value = "The DocRef that the field value is being evaluated against if the condition is IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
+    @ApiModelProperty("The DocRef that the field value is being evaluated against if the condition is " +
+            "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
-    private DocRef docRef; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private DocRef docRef;
 
     public ExpressionTerm() {
         // TODO : XML serilisation still requires no-arg constructor and mutable fields
@@ -250,7 +253,8 @@ public final class ExpressionTerm extends ExpressionItem {
         }
 
         /**
-         * @param value The value that the field value is being evaluated against. Not required if a dictionary is supplied
+         * @param value The value that the field value is being evaluated against. Not required if a
+         *              dictionary is supplied
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder value(final String value) {

@@ -35,7 +35,15 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
+@XmlType(name = "DataRetentionRule", propOrder = {
+        "ruleNumber",
+        "creationTime",
+        "name",
+        "enabled",
+        "expression",
+        "age",
+        "timeUnit",
+        "forever"})
 @XmlRootElement(name = "dataRetentionRule")
 @JsonInclude(Include.NON_NULL)
 public class DataRetentionRule {

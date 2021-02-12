@@ -148,7 +148,8 @@ class CacheResourceImpl implements CacheResource {
                                             failedNodes.add(nodeName);
                                             exception.set(throwable);
                                             LOGGER.error(
-                                                    "Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for stacktrace",
+                                                    "Error clearing cache [{}] on node [{}]: {}. " +
+                                                            "Enable DEBUG for stacktrace",
                                                     cacheName,
                                                     nodeName,
                                                     throwable.getMessage());

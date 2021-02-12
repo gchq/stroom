@@ -156,8 +156,14 @@ public class DataLoader {
             try {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
-                final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName), false);
+                final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler =
+                        new StreamTargetStroomStreamHandler(
+                                streamStore,
+                                feedProperties,
+                                null,
+                                feedName,
+                                feedProperties.getStreamTypeName(feedName),
+                                false);
 
                 final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");

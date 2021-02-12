@@ -153,7 +153,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //                        LOGGER.debug("The user identified by the certificate is not enabled!");
 //                        stroomEventLoggingService.createAction(
 //                                "Logon",
-//                                "User attempted to log in but failed because the account is " + User.UserState.LOCKED.getStateText() + ".");
+//                                "User attempted to log in but failed because the account is " +
+//                                User.UserState.LOCKED.getStateText() + ".");
 //                        String failureUrl = this.config.getUnauthorisedUrl() + "?reason=account_locked";
 //                        responseBuilder = seeOther(UriBuilder.fromUri(failureUrl).build());
 //                    }
@@ -230,7 +231,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
             Optional<String> optionalSubject = getIdFromCertificate(cn);
 
             if (optionalSubject.isEmpty()) {
-                throw new RuntimeException("User is presenting a certificate but this certificate cannot be processed!");
+                throw new RuntimeException(
+                        "User is presenting a certificate but this certificate cannot be processed!");
 
             } else {
                 final String subject = optionalSubject.get();
@@ -448,7 +450,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //        final String username = account.getEmail();
 //
 //        boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
-//                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
+//                username,
+//                config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
 //                config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
 //
 //        URI result;
@@ -514,7 +517,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     //    private String getPostAuthenticationCheckUrl(final String redirectUri) {
 //        final URI uri = UriBuilder
-//                .fromUri(uriFactory.publicUri(ResourcePaths.API_ROOT_PATH + AuthenticationResource.BASE_PATH + AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
+//                .fromUri(uriFactory.publicUri(
+//                    ResourcePaths.API_ROOT_PATH +
+//                    AuthenticationResource.BASE_PATH +
+//                    AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
 //                .queryParam(OIDC.REDIRECT_URI, redirectUri)
 //                .build();
 //        return uri.toString();
@@ -580,7 +586,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
             return true;
         }
         if (authState.isRequirePasswordChange()) {
-            return authState.getLastCredentialCheckMs() < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
+            return authState.getLastCredentialCheckMs()
+                    < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
         }
         return false;
     }

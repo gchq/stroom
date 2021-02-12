@@ -25,13 +25,13 @@ import java.util.regex.Pattern;
         name = Decode.NAME,
         commonCategory = FunctionCategory.STRING,
         commonReturnType = ValString.class,
-        commonReturnDescription = "One of the result arguments, if matched, or the value of the otherwise argument if " +
-                "no match is found.",
+        commonReturnDescription = "One of the result arguments, if matched, or the value of the otherwise " +
+                "argument if no match is found.",
         signatures = @FunctionSignature(
                 description = "Similar to a switch/case statement. The arguments are split into 3 parts: " +
                         "the input value to test, pairs of regex patterns with their respective output values " +
-                        "and a default result if no matches are found. It must always have an even number of arguments " +
-                        "and can have any number of pattern/result pairs.",
+                        "and a default result if no matches are found. It must always have an even number " +
+                        "of arguments and can have any number of pattern/result pairs.",
                 args = {
                         @FunctionArg(
                                 name = "input",
@@ -93,8 +93,8 @@ class Decode extends AbstractManyChildFunction implements Serializable {
             for (int i = 1; i < params.length - 1; i += 2) {
                 final String regex = params[i].toString();
                 if (regex.length() == 0) {
-                    throw new ParseException("An empty regex has been defined for argument of '" + name + "' function",
-                            0);
+                    throw new ParseException(
+                            "An empty regex has been defined for argument of '" + name + "' function", 0);
                 }
 
                 final Pattern pattern = PatternCache.get(regex);
@@ -112,8 +112,8 @@ class Decode extends AbstractManyChildFunction implements Serializable {
                     // Test regex is valid.
                     final String regex = params[i].toString();
                     if (regex.length() == 0) {
-                        throw new ParseException("An empty regex has been defined for argument of '" + name + "' function",
-                                0);
+                        throw new ParseException(
+                                "An empty regex has been defined for argument of '" + name + "' function", 0);
                     }
                     PatternCache.get(regex);
                 }

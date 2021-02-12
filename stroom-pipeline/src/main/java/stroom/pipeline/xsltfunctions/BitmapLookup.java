@@ -32,6 +32,7 @@ import net.sf.saxon.trans.XPathException;
 import javax.inject.Inject;
 
 class BitmapLookup extends AbstractLookup {
+
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
@@ -89,7 +90,8 @@ class BitmapLookup extends AbstractLookup {
                         // When multiple values are consumed they appear to be separated with a ' '.
                         // Not really sure why as it is not something we are doing explicitly.  May be something to
                         // do with how we call characters() on the TinyBuilder deeper down.
-                        // receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+                        // receiver.characters(
+                        // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
                         wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
 
                         if (trace && wasFound) {

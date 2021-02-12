@@ -696,13 +696,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    + " Length: " + dataPagerLength
 //                    + " Total: " + dataPagerCount
 //                    + " Exact: " + (dataPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
+//                    + " type: " + (result instanceof FetchDataResult
+//                    ? ((FetchDataResult) result).getDataType()
+//                    : "-"));
 //
 //            GWT.log("Data Pager Offset: " + commonPagerOffset
 //                    + " Length: " + commonPagerLength
 //                    + " Total: " + commonPagerCount
 //                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
-//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
+//                    + " type: " + (result instanceof FetchDataResult
+//                    ? ((FetchDataResult) result).getDataType()
+//                    : "-"));
     }
 
     long getCurrentErrorsPageOffset() {

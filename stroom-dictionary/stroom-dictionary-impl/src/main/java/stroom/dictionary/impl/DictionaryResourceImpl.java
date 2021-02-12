@@ -139,7 +139,8 @@ class DictionaryResourceImpl implements DictionaryResource {
     }
 
     public DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        // A user should be allowed to read pipelines that they are inheriting from as
+        // long as they have 'use' permission on them.
         return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
     }
 
@@ -153,7 +154,8 @@ class DictionaryResourceImpl implements DictionaryResource {
     public void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
                      final DictionaryDTO updates) {
         System.out.println("DEBUG in save");
-        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        // A user should be allowed to read pipelines that they are inheriting from as long as
+        // they have 'use' permission on them.
         securityContext.useAsRead(() -> {
             final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
 

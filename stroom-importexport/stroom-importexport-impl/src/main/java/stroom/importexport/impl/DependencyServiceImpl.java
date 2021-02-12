@@ -10,9 +10,9 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaFieldSort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,11 @@ public class DependencyServiceImpl implements DependencyService {
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_TYPE, Dependency::getTo, DocRef::getType),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_NAME, Dependency::getTo, DocRef::getName),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_UUID, Dependency::getTo, DocRef::getUuid),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS, Dependency::isOk, bool -> bool ? "OK" : "Missing")
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS,
+                    Dependency::isOk,
+                    bool -> bool
+                            ? "OK"
+                            : "Missing")
     );
 
     //todo maybe better to introduce dependencies between packages in order to avoid this duplication

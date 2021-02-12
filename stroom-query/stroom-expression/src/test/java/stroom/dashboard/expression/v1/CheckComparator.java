@@ -40,7 +40,8 @@ class CheckComparator {
         if (smallerThan != null) {
             for (final T o : smallerThan) {
                 if (o == o2) {
-                    throw new IllegalStateException(o2 + "  cannot be smaller than " + o1 + " if it's supposed to be vice versa.");
+                    throw new IllegalStateException(
+                            o2 + "  cannot be smaller than " + o1 + " if it's supposed to be vice versa.");
                 }
                 checkConsistency(objectMapSmallerOnes, o, o2);
             }

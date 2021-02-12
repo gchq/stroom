@@ -44,7 +44,8 @@ class DocPermissionDaoImplTest {
 
         // When
         documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE");
-//        assertThrows(SecurityException.class, () -> documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE"));
+//        assertThrows(SecurityException.class,
+//        () -> documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE"));
     }
 
     private User createUser(final String name) {
@@ -80,7 +81,8 @@ class DocPermissionDaoImplTest {
                 });
 
         // Get the permissions for all users to this document
-        final Map<String, Set<String>> permissionsFound1 = documentPermissionDao.getPermissionsForDocument(docRef1.getUuid());
+        final Map<String, Set<String>> permissionsFound1 = documentPermissionDao.getPermissionsForDocument(
+                docRef1.getUuid());
 //        assertThat(permissionsFound1.getDocUuid()).isEqualTo(docRef1.getUuid());
 
         final Set<String> permissionsFound1_user1 = permissionsFound1.get(user1.getUuid());
@@ -93,7 +95,8 @@ class DocPermissionDaoImplTest {
         assertThat(permissionsFound1_user3).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
 
         // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_1 = documentPermissionDao.getPermissionsForDocumentForUser(docRef2.getUuid(),
+        final Set<String> permissionsUser3Doc2_1 = documentPermissionDao.getPermissionsForDocumentForUser(
+                docRef2.getUuid(),
                 user3.getUuid());
         assertThat(permissionsUser3Doc2_1).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
 
@@ -102,7 +105,8 @@ class DocPermissionDaoImplTest {
         documentPermissionDao.removePermission(docRef1.getUuid(), user3.getUuid(), PERMISSION_UPDATE);
 
         // Get the permissions for all users to this document again
-        final Map<String, Set<String>> permissionsFound2 = documentPermissionDao.getPermissionsForDocument(docRef1.getUuid());
+        final Map<String, Set<String>> permissionsFound2 = documentPermissionDao.getPermissionsForDocument(
+                docRef1.getUuid());
 //        assertThat(permissionsFound2.getDocUuid()).isEqualTo(docRef1.getUuid());
 
         final Set<String> permissionsFound2_user1 = permissionsFound2.get(user1.getUuid());
@@ -115,11 +119,13 @@ class DocPermissionDaoImplTest {
         assertThat(permissionsFound2_user3).isEqualTo(Set.of(PERMISSION_USE));
 
         // Check permissions per user per document
-        final Set<String> permissionsUser3Doc2_2 = documentPermissionDao.getPermissionsForDocumentForUser(docRef2.getUuid(),
+        final Set<String> permissionsUser3Doc2_2 = documentPermissionDao.getPermissionsForDocumentForUser(
+                docRef2.getUuid(),
                 user3.getUuid());
         assertThat(permissionsUser3Doc2_2).isEqualTo(Set.of(PERMISSION_USE, PERMISSION_UPDATE));
 
-        final Set<String> permissionsUser3Doc1_2 = documentPermissionDao.getPermissionsForDocumentForUser(docRef1.getUuid(),
+        final Set<String> permissionsUser3Doc1_2 = documentPermissionDao.getPermissionsForDocumentForUser(
+                docRef1.getUuid(),
                 user3.getUuid());
         assertThat(permissionsUser3Doc1_2).isEqualTo(Set.of(PERMISSION_USE));
     }
@@ -142,7 +148,8 @@ class DocPermissionDaoImplTest {
                 });
 
         Stream.of(docRef1, docRef2).forEach(d -> {
-            final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(docRef1.getUuid(),
+            final Set<String> permissionsBefore = documentPermissionDao.getPermissionsForDocumentForUser(
+                    docRef1.getUuid(),
                     user1.getUuid());
             assertThat(permissionsBefore).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
         });
@@ -152,11 +159,13 @@ class DocPermissionDaoImplTest {
 
         // Then
         // The two documents will now have different permissions
-        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef1.getUuid(),
+        final Set<String> user1Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(
+                docRef1.getUuid(),
                 user1.getUuid());
         assertThat(user1Doc1After).isEmpty();
 
-        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(docRef2.getUuid(),
+        final Set<String> user2Doc1After = documentPermissionDao.getPermissionsForDocumentForUser(
+                docRef2.getUuid(),
                 user1.getUuid());
         assertThat(user2Doc1After).isEqualTo(Set.of(PERMISSION_READ, PERMISSION_USE));
     }

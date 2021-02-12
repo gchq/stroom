@@ -104,7 +104,8 @@ class CliTranslationTaskHandler {
                      final InputStream contextStream,
                      final Writer errorWriter) {
         securityContext.secure(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
+            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on
+            // can be read.
             securityContext.useAsRead(() -> {
                 try {
                     // Setup the error handler and receiver.

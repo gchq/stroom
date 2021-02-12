@@ -16,9 +16,9 @@
 
 package stroom.job.impl;
 
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.FindNamedEntityCriteria;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.StringCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

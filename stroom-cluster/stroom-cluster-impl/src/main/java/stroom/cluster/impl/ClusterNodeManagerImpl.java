@@ -256,7 +256,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     if (!enabledActiveNodes.contains(sourceNode)) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug(
-                                    "ping() - Just had a ping from a node that was not in our ping list.  Next cluster call we will re-discover");
+                                    "ping() - Just had a ping from a node that was not in our ping list.  " +
+                                            "Next cluster call we will re-discover");
                         }
                         updateClusterStateAsync(REQUERY_DELAY, true);
                     }

@@ -94,15 +94,17 @@ public class DateExpressionParser {
             if (part != null) {
                 if (part.getObject() instanceof ZonedDateTime) {
                     if (time != null) {
-                        throw new DateTimeException("Attempt to set the date and time twice with '" + part.toString().trim() + "'. You cannot have more than one declaration of date and time.");
+                        throw new DateTimeException("Attempt to set the date and time twice with '" +
+                                part.toString().trim() +
+                                "'. You cannot have more than one declaration of date and time.");
                     }
 
                     time = (ZonedDateTime) part.getObject();
 
                 } else if (part.getObject() instanceof TimeFunction) {
                     if (time == null) {
-                        throw new DateTimeException(
-                                "You must specify a time or time constant before adding or subtracting duration '" + part.toString().trim() + "'.");
+                        throw new DateTimeException("You must specify a time or time constant before adding or " +
+                                "subtracting duration '" + part.toString().trim() + "'.");
                     }
                     final TimeFunction duration = (TimeFunction) part.getObject();
                     time = duration.apply(time);

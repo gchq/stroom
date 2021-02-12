@@ -106,7 +106,8 @@ public class F2XTestUtil {
         feedHolder.setFeedName(feed.getName());
 
 //        // Setup the meta data holder.
-//        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//        metaHolder, streamProcessorService, pipelineStore));
 
         // Persist the text converter.
         final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
@@ -162,13 +163,24 @@ public class F2XTestUtil {
         testAppender.setOutputStream(out);
 
         pipeline.process(dataStream);
-        assertThat(recordCount.getRead() > 0).as(errorReceiverProxy.toString()).isTrue();
-        assertThat(recordCount.getWritten() > 0).as(errorReceiverProxy.toString()).isTrue();
-        assertThat(recordCount.getWritten()).as(errorReceiverProxy.toString()).isEqualTo(recordCount.getRead());
-        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiverProxy.toString()).isEqualTo(
-                expectedWarnings);
-        assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
-        assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
+        assertThat(recordCount.getRead() > 0)
+                .as(errorReceiverProxy.toString())
+                .isTrue();
+        assertThat(recordCount.getWritten() > 0)
+                .as(errorReceiverProxy.toString())
+                .isTrue();
+        assertThat(recordCount.getWritten())
+                .as(errorReceiverProxy.toString())
+                .isEqualTo(recordCount.getRead());
+        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING))
+                .as(errorReceiverProxy.toString())
+                .isEqualTo(expectedWarnings);
+        assertThat(loggingErrorReceiver.getRecords(Severity.ERROR))
+                .as(errorReceiverProxy.toString())
+                .isEqualTo(0);
+        assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR))
+                .as(errorReceiverProxy.toString())
+                .isEqualTo(0);
 
         if (!loggingErrorReceiver.isAllOk()) {
             fail(errorReceiverProxy.toString());
@@ -208,7 +220,8 @@ public class F2XTestUtil {
         // "SchemaFilter");
         // final PropertyType schemaGroupPropertyType = new PropertyType(
         // schemaFilterElementType, "schemaGroup", "String", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "RECORDS"));
+        pipelineData.addProperty(PipelineDataUtil.createProperty(
+                "schemaFilter", "schemaGroup", "RECORDS"));
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 

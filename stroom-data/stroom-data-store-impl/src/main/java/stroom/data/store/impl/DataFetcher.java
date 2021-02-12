@@ -247,7 +247,9 @@ public class DataFetcher {
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
                     String requestedChildStreamType = sourceLocation.getOptChildType().orElse(null);
-                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(requestedChildStreamType)) {
+                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
+                            requestedChildStreamType)) {
+
                         // Get the event id.
                         eventId = String.valueOf(meta.getId());
                         if (partCount > 1) {

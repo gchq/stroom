@@ -23,8 +23,8 @@ import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.ResultPage;
 
 import java.util.Comparator;
 import java.util.HashMap;

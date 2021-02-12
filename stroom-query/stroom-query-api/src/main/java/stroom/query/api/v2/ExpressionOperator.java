@@ -74,7 +74,8 @@ public final class ExpressionOperator extends ExpressionItem {
             @XmlElement(name = "term", type = ExpressionTerm.class)
     })
     @JsonProperty
-    private List<ExpressionItem> children; // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    // TODO : XML serilisation still requires no-arg constructor and mutable fields
+    private List<ExpressionItem> children;
 
     public ExpressionOperator() {
         // TODO : XML serilisation still requires no-arg constructor and mutable fields

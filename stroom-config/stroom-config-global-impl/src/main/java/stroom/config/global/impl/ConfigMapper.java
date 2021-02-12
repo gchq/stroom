@@ -392,7 +392,8 @@ public class ConfigMapper {
 //        if (yamlValueAsStr == null && defaultValue == null) {
 //
 //        }
-//        if (configProperty.getDefaultValue() != null && configProperty.getDefaultValue().orElse(null).equals(yamlValueAsStr)) {
+//        if (configProperty.getDefaultValue() != null
+//        && configProperty.getDefaultValue().orElse(null).equals(yamlValueAsStr)) {
 //            configProperty.setYamlValue(null);
 //        } else {
 //            configProperty.setYamlValue(yamlValueAsStr);

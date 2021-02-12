@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class CoreSqlBuilder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreSqlBuilder.class);
 
     private static final boolean VALIDATE = true;
@@ -74,19 +75,40 @@ public abstract class CoreSqlBuilder {
         return this;
     }
 
-    public void join(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+    public void join(final String table,
+                     final String alias,
+                     final String aliasLeft,
+                     final String fieldLeft,
+                     final String aliasRight,
+                     final String fieldRight) {
         join(" JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
     }
 
-    public void leftOuterJoin(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+    public void leftOuterJoin(final String table,
+                              final String alias,
+                              final String aliasLeft,
+                              final String fieldLeft,
+                              final String aliasRight,
+                              final String fieldRight) {
         join(" LEFT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
     }
 
-    public void rightOuterJoin(final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+    public void rightOuterJoin(final String table,
+                               final String alias,
+                               final String aliasLeft,
+                               final String fieldLeft,
+                               final String aliasRight,
+                               final String fieldRight) {
         join(" RIGHT OUTER JOIN ", table, alias, aliasLeft, fieldLeft, aliasRight, fieldRight);
     }
 
-    private void join(final String joinType, final String table, final String alias, final String aliasLeft, final String fieldLeft, final String aliasRight, final String fieldRight) {
+    private void join(final String joinType,
+                      final String table,
+                      final String alias,
+                      final String aliasLeft,
+                      final String fieldLeft,
+                      final String aliasRight,
+                      final String fieldRight) {
         sql.append(joinType);
         sql.append(table);
         sql.append(" ");
@@ -202,13 +224,18 @@ public abstract class CoreSqlBuilder {
                         final char c2 = string.charAt(0);
 
                         if (c2 == ',' || c2 == '.') {
-                            if (c1 != '\'' && c1 != ')' && c1 != '?' && !Character.isDigit(c1) && !Character.isLetter(c1)) {
+                            if (c1 != '\''
+                                    && c1 != ')'
+                                    && c1 != '?'
+                                    && !Character.isDigit(c1)
+                                    && !Character.isLetter(c1)) {
                                 throw new MalformedSqlException(
                                         "Previous character should be alphanumeric - " + info("v" + string));
                             }
                         } else if (c1 != ' ' && c1 != '(' && c1 != '.' && c1 != ',' && c2 != ' ' && c2 != ')') {
                             throw new MalformedSqlException(
-                                    "Previous character should be space, bracket or dot - " + info("v" + string));
+                                    "Previous character should be space, bracket or dot - " +
+                                            info("v" + string));
                         }
 
                         if (c1 == ' ' && c2 == ' ') {

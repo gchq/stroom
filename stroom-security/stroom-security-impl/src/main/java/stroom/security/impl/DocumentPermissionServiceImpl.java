@@ -50,9 +50,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-            final UserDao userDao,
-            final PermissionChangeEventBus permissionChangeEventBus,
-            final SecurityContextImpl securityContext) {
+                                  final UserDao userDao,
+                                  final PermissionChangeEventBus permissionChangeEventBus,
+                                  final SecurityContextImpl securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
@@ -60,7 +60,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     public Set<String> getPermissionsForDocumentForUser(final String docUuid,
-            final String userUuid) {
+                                                        final String userUuid) {
         return documentPermissionDao.getPermissionsForDocumentForUser(docUuid, userUuid);
     }
 
@@ -70,7 +70,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final Map<String, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(docUuid);
+            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(
+                    docUuid);
 
             documentPermission.forEach((userUuid, permissions) -> {
                 userDao.getByUuid(userUuid)
@@ -92,21 +93,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     public void addPermission(final String docUuid,
-            final String userUuid,
-            final String permission) {
+                              final String userUuid,
+                              final String permission) {
         documentPermissionDao.addPermission(docUuid, userUuid, permission);
         AddPermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     public void removePermission(final String docUuid,
-            final String userUuid,
-            final String permission) {
+                                 final String userUuid,
+                                 final String permission) {
         documentPermissionDao.removePermission(docUuid, userUuid, permission);
         RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     void clearDocumentPermissionsForUser(final String docUuid,
-            final String userUuid) {
+                                         final String userUuid) {
         documentPermissionDao.clearDocumentPermissionsForUser(docUuid, userUuid);
         RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, null);
     }
