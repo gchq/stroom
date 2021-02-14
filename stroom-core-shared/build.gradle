@@ -22,6 +22,7 @@ dependencies {
 
     compile libs.stroomQueryApi
 
+    compile libs.elasticsearch_rest_high_level_client
     compile libs.gwt_servlet
     compile libs.hibernate_core
     permitUnusedDeclared libs.hibernate_core
