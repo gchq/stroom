@@ -429,7 +429,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             try {
                 // We want to find all processors that need reprocessing filters.
-                final List<String> processorUuidList = metaService.getProcessorUuidList(new FindMetaCriteria(queryData.getExpression()));
+                final List<String> processorUuidList = metaService.getProcessorUuidList(
+                        new FindMetaCriteria(queryData.getExpression()));
                 processorUuidList.forEach(processorUuid -> {
                     try {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
@@ -491,7 +492,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
                 .addTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
-        final List<ProcessorFilter> list = processorFilterDao.find(new ExpressionCriteria(filterExpression)).getValues();
+        final List<ProcessorFilter> list = processorFilterDao.find(
+                new ExpressionCriteria(filterExpression)).getValues();
         for (final ProcessorFilter filter : list) {
             // Ignore reprocess filters.
             if (!filter.isReprocess()) {

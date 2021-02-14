@@ -57,6 +57,7 @@ import java.util.function.Supplier;
 import javax.inject.Inject;
 
 public class PhysicalDeleteExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PhysicalDeleteExecutor.class);
 
     private static final String TASK_NAME = "Fs Delete Executor";
@@ -127,7 +128,12 @@ public class PhysicalDeleteExecutor {
 
             long minId = 0;
             if (!Thread.currentThread().isInterrupted()) {
-                final ThreadPool threadPool = new ThreadPoolImpl("Data Delete#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
+                final ThreadPool threadPool = new ThreadPoolImpl(
+                        "Data Delete#",
+                        1,
+                        1,
+                        config.getFileSystemCleanBatchSize(),
+                        Integer.MAX_VALUE);
                 final Executor executor = executorProvider.get(threadPool);
 
                 do {
@@ -165,7 +171,10 @@ public class PhysicalDeleteExecutor {
         }
     }
 
-    private void deleteCurrentBatch(final TaskContext taskContext, final List<Meta> metaList, final long deleteThresholdEpochMs, final Executor executor) {
+    private void deleteCurrentBatch(final TaskContext taskContext,
+                                    final List<Meta> metaList,
+                                    final long deleteThresholdEpochMs,
+                                    final Executor executor) {
         try {
             final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
             final Map<Path, Path> directoryMap = new ConcurrentHashMap<>();

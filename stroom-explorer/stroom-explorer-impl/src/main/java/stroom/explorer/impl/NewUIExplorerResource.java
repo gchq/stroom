@@ -344,7 +344,8 @@ public class NewUIExplorerResource implements RestResource {
         if (children != null) {
 
             for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
+                // Recurse right down to find out if a descendant is being added and therefore if we need
+                // to include this as an ancestor.
                 final boolean hasChildren = filterDescendants(child,
                         treeModelIn,
                         treeModelOut,

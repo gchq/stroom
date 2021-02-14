@@ -49,21 +49,23 @@ public class OpenIdConfigurationResponse {
     private final String userinfoEndpoint;
 
     @JsonCreator
-    OpenIdConfigurationResponse(@JsonProperty("authorization_endpoint") final String authorizationEndpoint,
-                                @JsonProperty("claims_supported") final String[] claimsSupported,
-                                @JsonProperty("code_challenge_methods_supported") final String[] codeChallengeMethodsSupported,
-                                @JsonProperty("device_authorization_endpoint") final String deviceAuthorizationEndpoint,
-                                @JsonProperty("grant_types_supported") final String[] grantTypesSupported,
-                                @JsonProperty("id_token_signing_alg_values_supported") final String[] idTokenSigningSlgValuesSupported,
-                                @JsonProperty("issuer") final String issuer,
-                                @JsonProperty("jwks_uri") final String jwksUri,
-                                @JsonProperty("response_types_supported") final String[] responseTypesSupported,
-                                @JsonProperty("revocation_endpoint") final String revocationEndpoint,
-                                @JsonProperty("scopes_supported") final String[] scopesSupported,
-                                @JsonProperty("subject_types_supported") final String[] subjectTypesSupported,
-                                @JsonProperty("token_endpoint") final String tokenEndpoint,
-                                @JsonProperty("token_endpoint_auth_methods_supported") final String[] tokenEndpointAuthMethodsSupported,
-                                @JsonProperty("userinfo_endpoint") final String userinfoEndpoint) {
+    OpenIdConfigurationResponse(
+            @JsonProperty("authorization_endpoint") final String authorizationEndpoint,
+            @JsonProperty("claims_supported") final String[] claimsSupported,
+            @JsonProperty("code_challenge_methods_supported") final String[] codeChallengeMethodsSupported,
+            @JsonProperty("device_authorization_endpoint") final String deviceAuthorizationEndpoint,
+            @JsonProperty("grant_types_supported") final String[] grantTypesSupported,
+            @JsonProperty("id_token_signing_alg_values_supported") final String[] idTokenSigningSlgValuesSupported,
+            @JsonProperty("issuer") final String issuer,
+            @JsonProperty("jwks_uri") final String jwksUri,
+            @JsonProperty("response_types_supported") final String[] responseTypesSupported,
+            @JsonProperty("revocation_endpoint") final String revocationEndpoint,
+            @JsonProperty("scopes_supported") final String[] scopesSupported,
+            @JsonProperty("subject_types_supported") final String[] subjectTypesSupported,
+            @JsonProperty("token_endpoint") final String tokenEndpoint,
+            @JsonProperty("token_endpoint_auth_methods_supported") final String[] tokenEndpointAuthMethodsSupported,
+            @JsonProperty("userinfo_endpoint") final String userinfoEndpoint) {
+
         this.authorizationEndpoint = authorizationEndpoint;
         this.claimsSupported = claimsSupported;
         this.codeChallengeMethodsSupported = codeChallengeMethodsSupported;

@@ -146,7 +146,8 @@ public class PipelineStoreImpl implements PipelineStore {
         if (pipelineProperties != null) {
             pipelineProperties.forEach(pipelineProperty -> {
                 if (pipelineProperty.getValue() != null) {
-                    pipelineProperty.getValue().setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
+                    pipelineProperty.getValue()
+                            .setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
                 }
             });
         }

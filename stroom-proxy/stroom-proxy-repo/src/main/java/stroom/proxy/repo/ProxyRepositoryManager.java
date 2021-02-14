@@ -146,8 +146,8 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                         final String fileName = file.getFileName().toString();
                         final String baseName = FileNameUtil.getBaseName(fileName);
 
-                        // Rolled repositories start with a date and we are only rolling repositories if somebody has set
-                        // the rollCron property which creates a scheduler.
+                        // Rolled repositories start with a date and we are only rolling repositories if somebody
+                        // has set the rollCron property which creates a scheduler.
                         if (this.scheduler != null) {
                             // Looks like a date
                             if (DateUtil.looksLikeDate(baseName)) {
@@ -156,8 +156,8 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                                     // Is this directory name an ISO 8601 compliant date?
                                     millis = DateUtil.parseFileDateTimeString(baseName);
                                 } catch (final RuntimeException e) {
-                                    LOGGER.warn(
-                                            "Failed to parse directory that looked like it should be rolled repository: " + file);
+                                    LOGGER.warn("Failed to parse directory that looked like it should be " +
+                                            "rolled repository: " + file);
                                 }
 
                                 // Only proceed if we managed to parse the dir name as a ISO 8601 date.

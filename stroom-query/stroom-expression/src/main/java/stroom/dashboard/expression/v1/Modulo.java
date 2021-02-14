@@ -27,8 +27,8 @@ package stroom.dashboard.expression.v1;
         signatures = @FunctionSignature(
                 description = "Calculates the modulus after dividing the dividend by the divisor. If more than one " +
                         "divisor is provided then the each subsequent divisor will be used to calculate the modulus " +
-                        "using the previous result as the dividend, e.g. " + Modulo.ALIAS2 + "(100, 30, 4) returns 2, " +
-                        "i.e. (100 % 30) % 4.",
+                        "using the previous result as the dividend, e.g. " + Modulo.ALIAS2 + "(100, 30, 4) " +
+                        "returns 2, i.e. (100 % 30) % 4.",
                 returnDescription = "The remainder (modulus) after dividing the dividend by the divisor.",
                 args = {
                         @FunctionArg(

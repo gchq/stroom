@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OutputStreamProviderImpl implements OutputStreamProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProviderImpl.class);
 
     private final Meta meta;
@@ -32,8 +33,8 @@ public class OutputStreamProviderImpl implements OutputStreamProvider {
     private final long index;
 
     public OutputStreamProviderImpl(final Meta meta,
-                             final SegmentOutputStreamProviderFactory factory,
-                             final long index) {
+                                    final SegmentOutputStreamProviderFactory factory,
+                                    final long index) {
         this.meta = meta;
         this.factory = factory;
         this.index = index;
@@ -63,7 +64,8 @@ public class OutputStreamProviderImpl implements OutputStreamProvider {
             logDebug("get() - " + streamTypeName);
         }
 
-        final SegmentOutputStreamProvider segmentOutputStreamProvider = factory.getSegmentOutputStreamProvider(streamTypeName);
+        final SegmentOutputStreamProvider segmentOutputStreamProvider = factory.getSegmentOutputStreamProvider(
+                streamTypeName);
         if (segmentOutputStreamProvider == null) {
             return null;
         }

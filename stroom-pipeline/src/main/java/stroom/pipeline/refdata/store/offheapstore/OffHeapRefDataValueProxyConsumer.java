@@ -26,6 +26,7 @@ public class OffHeapRefDataValueProxyConsumer
     // injected map of typeId to the appropriate bytebuffer consumer factory
     private final Map<ByteBufferConsumerId, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @Inject
     public OffHeapRefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
@@ -48,8 +49,8 @@ public class OffHeapRefDataValueProxyConsumer
             final int typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(new ByteBufferConsumerId(
-                    typeId));
+            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(
+                    new ByteBufferConsumerId(typeId));
 
             Objects.requireNonNull(consumerFactory, () -> LogUtil.message("No factory found for typeId {}", typeId));
             final RefDataValueByteBufferConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);

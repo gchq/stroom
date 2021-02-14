@@ -29,7 +29,8 @@ public class ParserConfig extends AbstractConfig {
         this.cacheConfig = cacheConfig;
     }
 
-    @JsonPropertyDescription("Instructs the implementation to process XML securely. This may set limits on XML constructs to avoid conditions such as denial of service attacks.")
+    @JsonPropertyDescription("Instructs the implementation to process XML securely. This may set limits on XML " +
+            "constructs to avoid conditions such as denial of service attacks.")
     public boolean isSecureProcessing() {
         return secureProcessing;
     }

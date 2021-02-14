@@ -145,7 +145,8 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     @Override
     public void deleteOldValues() {
-        // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a single node do the job.
+        // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a
+        // single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
             final Long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfig.getDeleteBatchSize();

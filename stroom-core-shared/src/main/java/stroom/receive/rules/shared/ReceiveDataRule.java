@@ -34,7 +34,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
+@XmlType(name = "DataReceiptRule", propOrder = {
+        "ruleNumber",
+        "creationTime",
+        "name",
+        "enabled",
+        "expression",
+        "action"})
 @XmlRootElement(name = "dataReceiptRule")
 @JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @JsonInclude(Include.NON_NULL)

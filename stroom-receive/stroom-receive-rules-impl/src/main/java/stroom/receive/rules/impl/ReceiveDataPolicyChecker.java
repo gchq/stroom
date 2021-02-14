@@ -88,7 +88,9 @@ class ReceiveDataPolicyChecker {
                 LOGGER.error("Error reading rule set {}. The default receive all policy will be applied",
                         policyRef, e);
             }
-            if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
+            if (dataReceiptPolicy != null
+                    && dataReceiptPolicy.getRules() != null
+                    && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
                 final Map<String, AbstractField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()

@@ -124,7 +124,8 @@ public class MyScriptInjector {
     function clearCallbacks() {
         scriptElement.onerror = scriptElement.onreadystatechange = scriptElement.onload = null;
         if (removeTag) {
-            @com.google.gwt.core.client.ScriptInjector::nativeRemove(Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
+            @com.google.gwt.core.client.ScriptInjector::nativeRemove(
+                Lcom/google/gwt/core/client/JavaScriptObject;)(scriptElement);
         }
     }
     scriptElement.onload = $entry(function() {

@@ -100,9 +100,16 @@ public class MoveDocumentPresenter
                 destinationFolderRef = folder.getDocRef();
             }
 
-            final List<DocRef> docRefs = explorerNodeList.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+            final List<DocRef> docRefs = explorerNodeList.stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
 
-            MoveDocumentEvent.fire(this, this, docRefs, destinationFolderRef, getView().getPermissionInheritance());
+            MoveDocumentEvent.fire(
+                    this,
+                    this,
+                    docRefs,
+                    destinationFolderRef,
+                    getView().getPermissionInheritance());
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);
         }

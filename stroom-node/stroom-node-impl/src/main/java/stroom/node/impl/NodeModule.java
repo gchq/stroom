@@ -60,8 +60,8 @@ public class NodeModule extends AbstractModule {
                 .bindJobTo(JavaHeapHistogramStatistics.class, jobBuilder -> jobBuilder
                         .name("Java Heap Histogram Statistics")
                         .description("Generate Java heap map histogram and record statistic events " +
-                                "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
-                                "consequences!")
+                                "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
+                                "understand the consequences!")
                         .schedule(Schedule.ScheduleType.CRON, "0 * *")
                         .enabled(false))
                 .bindJobTo(NodeStatus.class, jobBuilder -> jobBuilder

@@ -107,7 +107,9 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                     ExpressionOperator lastExpression = null;
                     final List<StoredQuery> dedupedList = new ArrayList<>(result.size());
                     for (final StoredQuery queryEntity : result.getValues()) {
-                        if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
+                        if (queryEntity != null
+                                && queryEntity.getQuery() != null
+                                && queryEntity.getQuery().getExpression() != null) {
                             final ExpressionOperator expression = queryEntity.getQuery().getExpression();
                             if (lastExpression == null || !lastExpression.equals(expression)) {
                                 dedupedList.add(queryEntity);
@@ -133,8 +135,14 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                         };
 
                         final PopupSize popupSize = new PopupSize(500, 400, true);
-                        ShowPopupEvent.fire(queryPresenter, QueryHistoryPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                                popupSize, "Query History", popupUiHandlers);
+
+                        ShowPopupEvent.fire(
+                                queryPresenter,
+                                QueryHistoryPresenter.this,
+                                PopupType.OK_CANCEL_DIALOG,
+                                popupSize,
+                                "Query History",
+                                popupUiHandlers);
                     }
                 })
                 .call(STORED_QUERY_RESOURCE)

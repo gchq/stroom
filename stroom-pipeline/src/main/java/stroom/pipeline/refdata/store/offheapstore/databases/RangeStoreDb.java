@@ -126,8 +126,9 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                 "found the required value after " + cnt.get() + " iterations");
 
                         // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
-                        // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
-                        // buffer into the actual value bytebuffer from the valueStoreDb. This would save a buffer copy.
+                        //  Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the
+                        //  valueStoreKey buffer into the actual value bytebuffer from the valueStoreDb.
+                        //  This would save a buffer copy.
                         return Optional.of(keyVal.val());
                     }
                 }

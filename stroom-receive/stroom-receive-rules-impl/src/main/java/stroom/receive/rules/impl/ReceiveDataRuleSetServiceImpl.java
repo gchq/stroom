@@ -48,7 +48,8 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Inject
     public ReceiveDataRuleSetServiceImpl(final StoreFactory storeFactory,
                                          final Serialiser2Factory serialiser2Factory) {
-        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(ReceiveDataRules.class);
+        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
+                ReceiveDataRules.class);
         this.store = storeFactory.createStore(serialiser, ReceiveDataRules.DOCUMENT_TYPE, ReceiveDataRules.class);
     }
 

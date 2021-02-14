@@ -125,7 +125,8 @@ public class QuickFilterPredicateFactory {
         final Collection<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.getDefaultFieldMappers();
 
         if (defaultFieldMappers.isEmpty()) {
-            throw new RuntimeException("No default field mappers(s) has/have been defined, fieldMappers" + fieldMappers);
+            throw new RuntimeException(
+                    "No default field mappers(s) has/have been defined, fieldMappers" + fieldMappers);
         }
         return defaultFieldMappers;
     }

@@ -467,12 +467,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //        if (timestampMs == null)
 //            return null;
 //        final ExpressionOperator expression = ExpressionOperator.builder()
-//                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
+//                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
+//                DateUtil.createNormalDateTimeString(timestampMs))
 //                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
 //                .build();
 //
-//        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
-//        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() -> new NullPointerException("No current id exists"));
+//        final ExpressionOperator secureExpression = addPermissionConstraints(
+//        expression, DocumentPermissionNames.READ);
+//        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() ->
+//        new NullPointerException("No current id exists"));
 //    }
 
     @Override
@@ -524,7 +527,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //            if (resultPage.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
 //                final List<StreamDataRow> result = securityContext.asProcessingUserResult(() -> {
-//                    // Create a data retention rule decorator for adding data retention information to returned data attribute maps.
+//                    // Create a data retention rule decorator for adding data retention
+//                    information to returned data attribute maps.
 //                    List<DataRetentionRule> rules = Collections.emptyList();
 //
 //                    final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
@@ -533,7 +537,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
 //                            rules = dataRetentionPolicy.getRules();
 //                        }
-//                        final AttributeMapRetentionRuleDecorator ruleDecorator = new AttributeMapRetentionRuleDecorator(dictionaryStore, rules);
+//                        final AttributeMapRetentionRuleDecorator ruleDecorator =
+//                        new AttributeMapRetentionRuleDecorator(dictionaryStore, rules);
 
             // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {
@@ -736,20 +741,21 @@ public class MetaServiceImpl implements MetaService, Searchable {
             List<DataRetentionDeleteSummary> summaries;
             try {
                 final CompletableFuture<List<DataRetentionDeleteSummary>> future = CompletableFuture.supplyAsync(
-                        taskContextFactory.contextResult("Data retention Delete Summary Query", taskContext -> {
+                        taskContextFactory.contextResult(
+                                "Data retention Delete Summary Query", taskContext -> {
 
-                            LOGGER.debug("Starting task {}", taskContext.getTaskId());
-                            userQueryRegistry.registerQuery(userId, queryId, taskContext.getTaskId());
+                                    LOGGER.debug("Starting task {}", taskContext.getTaskId());
+                                    userQueryRegistry.registerQuery(userId, queryId, taskContext.getTaskId());
 
-                            // TODO remove, here for dev testing to add a big delay for cancellation testing
+                                    // TODO remove, here for dev testing to add a big delay for cancellation testing
 //                            try {
 //                                Thread.sleep(10_000_000);
 //                            } catch (InterruptedException e) {
 //                                Thread.currentThread().interrupt();
 //                            }
 
-                            return metaDao.getRetentionDeletionSummary(rules, criteria);
-                        }));
+                                    return metaDao.getRetentionDeletionSummary(rules, criteria);
+                                }));
 
                 try {
                     // Wait for completion

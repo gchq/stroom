@@ -561,7 +561,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void init() {
         if (!initialised) {
             initialised = true;
-            // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
+            // An auto search can only commence if the UI has fully loaded and the data source has also
+            // loaded from the server.
             final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);

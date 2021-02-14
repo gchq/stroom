@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
+@SuppressWarnings("checkstyle:LineLength")
 public class NetworkMonitoringDataGenerator {
 
     //Date, Time, EventType, Device, UserName, ID, ErrorCode, IPAddress, Server, Message
@@ -16,8 +17,10 @@ public class NetworkMonitoringDataGenerator {
 
     public static void generate(final int rowCount, final Path filePath) {
 
-        final LocalDateTime startInc = LocalDateTime.of(2016, 1, 1, 0, 0, 0);
-        final LocalDateTime endExc = LocalDateTime.of(2018, 1, 1, 0, 0, 0);
+        final LocalDateTime startInc = LocalDateTime.of(
+                2016, 1, 1, 0, 0, 0);
+        final LocalDateTime endExc = LocalDateTime.of(
+                2018, 1, 1, 0, 0, 0);
 
         TestDataGenerator.buildDefinition()
                 .addFieldDefinition(TestDataGenerator.randomDateTimeField(

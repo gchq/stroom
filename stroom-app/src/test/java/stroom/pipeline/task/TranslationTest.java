@@ -250,7 +250,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                             final Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
 //                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
-//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
+//                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(
+//                                inputStreamProvider.get());
                             LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
                                     meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
@@ -288,7 +289,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final Path actualFile = outputDir.resolve(stem + num + ".out_tmp");
                     final Path expectedFile = outputDir.resolve(stem + num + ".out");
 
-                    try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(actualFile))) {
+                    try (final OutputStream outputStream = new BufferedOutputStream(
+                            Files.newOutputStream(actualFile))) {
                         copyStream(meta, outputStream);
                     }
 

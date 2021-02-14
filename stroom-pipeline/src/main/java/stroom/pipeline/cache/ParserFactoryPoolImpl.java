@@ -97,7 +97,8 @@ class ParserFactoryPoolImpl
             } else {
                 parserFactory = dsChooser.configure(textConverter.getData(), errorHandler);
 
-//                    final String message = "Unknown text converter type: " + textConverter.getConverterType().toString();
+//                    final String message = "Unknown text converter type: " +
+//                    textConverter.getConverterType().toString();
 //                    throw new ProcessException(message);
             }
 

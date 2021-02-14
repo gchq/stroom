@@ -239,7 +239,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 userService.getUserByName(groupArgs.userOrGroupId)
                         .ifPresentOrElse(
                                 userOrGroup -> {
-                                    stroom.security.shared.User targetGroup = userService.getUserByName(groupArgs.targetGroupId)
+                                    stroom.security.shared.User targetGroup = userService.getUserByName(
+                                            groupArgs.targetGroupId)
                                             .orElseThrow(() ->
                                                     new RuntimeException("Target group " +
                                                             groupArgs.targetGroupId +
@@ -282,7 +283,8 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                 userService.getUserByName(groupArgs.userOrGroupId)
                         .ifPresentOrElse(
                                 userOrGroup -> {
-                                    final stroom.security.shared.User targetGroup = userService.getUserByName(groupArgs.targetGroupId)
+                                    final stroom.security.shared.User targetGroup = userService.getUserByName(
+                                            groupArgs.targetGroupId)
                                             .orElseThrow(() ->
                                                     new RuntimeException("Target group '" +
                                                             groupArgs.targetGroupId +

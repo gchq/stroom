@@ -30,7 +30,8 @@ public interface ImportExportSerializer {
     /**
      * Read all the serialized DocRef items from the supplied path
      *
-     * @param dir             directory containing serialized DocRef items, e.g. files created by ImportExportSerializer.write()
+     * @param dir             directory containing serialized DocRef items, e.g. files created by
+     *                        ImportExportSerializer.write()
      * @param importStateList
      * @param importMode
      * @return The set of all DocRef roots, typically this is the Explorer root DocRef plus any DocRefs

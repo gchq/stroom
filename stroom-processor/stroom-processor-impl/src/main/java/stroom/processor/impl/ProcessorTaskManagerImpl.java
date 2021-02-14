@@ -522,7 +522,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
             // The filter might have been deleted since we found it.
             optionalProcessorFilter.ifPresent(loadedFilter -> {
-                // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
+                // Set the current user to be the one who created the filter so that only streams that that user
+                // has access to are processed.
                 securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
 
@@ -554,8 +555,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
-                                final boolean isStreamStoreSearch = queryData.getDataSource() != null && queryData.getDataSource().getType().equals(
-                                        MetaFields.STREAM_STORE_TYPE);
+                                final boolean isStreamStoreSearch = queryData.getDataSource() != null
+                                        && queryData.getDataSource().getType().equals(MetaFields.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -1058,7 +1059,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             final int queueSize = getTaskQueueSize();
             if (queueSize != lastQueueSizeForStats) {
                 try {
-                    final InternalStatisticsReceiver internalStatisticsReceiver = internalStatisticsReceiverProvider.get();
+                    final InternalStatisticsReceiver internalStatisticsReceiver =
+                            internalStatisticsReceiverProvider.get();
                     if (internalStatisticsReceiver != null) {
                         // Value type event as the queue size is not additive
                         internalStatisticsReceiver.putEvent(InternalStatisticEvent.createValueStat(

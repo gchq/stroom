@@ -576,8 +576,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         getView().setAddEnabled(!readOnly && addMenuItems != null && addMenuItems.size() > 0);
         getView().setRestoreEnabled(!readOnly && restoreMenuItems != null && restoreMenuItems.size() > 0);
-        getView().setRemoveEnabled(!readOnly && advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(
-                selectedElement));
+        getView().setRemoveEnabled(!readOnly
+                && advancedMode
+                && selectedElement != null
+                && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
     }
 
     @Override
@@ -622,7 +624,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                         try {
                             pipelineModel.build();
                         } catch (final PipelineModelException e) {
-                            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                            AlertEvent.fireError(
+                                    PipelineStructurePresenter.this,
+                                    e.getMessage(),
+                                    null);
                         }
                     })
                     .call(PIPELINE_RESOURCE)
@@ -674,7 +679,10 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                 pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
                                 setDirty(true);
                             } catch (final RuntimeException e) {
-                                AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                                AlertEvent.fireError(
+                                        PipelineStructurePresenter.this,
+                                        e.getMessage(),
+                                        null);
                             }
                         }
 

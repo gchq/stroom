@@ -212,7 +212,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                 }
             }
 
-            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before
+            // layout/paint occurs, we'll only update once.
             if (doLayout) {
                 isResizing = true;
                 forceLayout();
@@ -272,7 +273,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     private Splitter getAssociatedSplitter(final Widget child) {
-        // If a widget has a next sibling, it must be a splitter, because the only widget that *isn't* followed by a splitter must be the CENTER, which has no associated splitter.
+        // If a widget has a next sibling, it must be a splitter, because the only widget that *isn't* followed
+        // by a splitter must be the CENTER, which has no associated splitter.
         final int idx = getWidgetIndex(child);
         if (idx > -1 && idx < getWidgetCount() - 1) {
             final Widget splitter = getWidget(idx + 1);
@@ -318,7 +320,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
             glassElem.getStyle().setBorderWidth(0, Unit.PX);
             glassElem.getStyle().setZIndex(2);
 
-            // We need to set the background color or mouse events will go right through the glassElem. If the SplitPanel contains an iframe, the iframe will capture the event and the slider will stop moving.
+            // We need to set the background color or mouse events will go right through the glassElem. If the
+            // SplitPanel contains an iframe, the iframe will capture the event and the slider will stop moving.
             glassElem.getStyle().setBackgroundColor("white");
             glassElem.getStyle().setOpacity(0);
             glassElem.getStyle().setProperty("filter", "alpha(opacity=0)");
@@ -499,7 +502,8 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
 
             layout.size = size;
 
-            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint occurs, we'll only update once.
+            // Defer actually updating the layout, so that if we receive many mouse events before layout/paint
+            // occurs, we'll only update once.
             if (layoutCommand == null) {
                 layoutCommand = () -> {
                     layoutCommand = null;

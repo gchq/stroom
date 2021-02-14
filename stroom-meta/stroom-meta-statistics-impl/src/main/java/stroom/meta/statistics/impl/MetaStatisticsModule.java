@@ -35,7 +35,9 @@ public class MetaStatisticsModule extends AbstractModule {
     }
 
     @Provides
-    public MetaStatisticsImpl metaStatistics(final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+    public MetaStatisticsImpl metaStatistics(
+            final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+
         final MetaStatisticsImpl metaDataStatistic = new MetaStatisticsImpl(internalStatisticsReceiverProvider);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaStatisticsTemplate(

@@ -49,7 +49,8 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     //    @Override
-//    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
+//    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority,
+//    boolean enabled, Long trackerStartMs) {
 //        return create (pipelineRef, queryData, priority, enabled, null);
 //    }
 //

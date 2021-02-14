@@ -154,8 +154,9 @@ public class PipelineDataValidator {
                 final PipelinePropertyType propertyType = registry.getPropertyType(elementType,
                         pipelineReference.getName());
                 if (propertyType == null) {
-                    throw new PipelineFactoryException("Attempt to set pipeline reference \"" + pipelineReference.getName()
-                            + "\" on element \"" + pipelineReference.getElement() + "\" but property is unknown.");
+                    throw new PipelineFactoryException("Attempt to set pipeline reference \"" +
+                            pipelineReference.getName() + "\" on element \"" + pipelineReference.getElement() +
+                            "\" but property is unknown.");
                 }
 
                 pipelineReference.setSourcePipeline(sourcePipeline);

@@ -102,7 +102,8 @@ public final class ProxyFileHandler {
 //        }
 //
 //        if (LOGGER.isDebugEnabled()) {
-//            LOGGER.debug("Raw content size for  '" + FileUtil.getCanonicalPath(file) + "' is " + ModelStringUtil.formatIECByteSizeString(totalSize));
+//            LOGGER.debug("Raw content size for  '" + FileUtil.getCanonicalPath(file) + "' is " +
+//            ModelStringUtil.formatIECByteSizeString(totalSize));
 //        }
 //
 //        return totalSize;

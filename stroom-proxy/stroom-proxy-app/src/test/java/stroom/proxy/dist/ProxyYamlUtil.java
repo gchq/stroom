@@ -56,7 +56,8 @@ public class ProxyYamlUtil {
                 new FileConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false));
 
-        final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
+                new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(

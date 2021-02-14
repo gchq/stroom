@@ -49,7 +49,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
     private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
-            new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
+            new String[]{
+                    PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},
             ElementIcons.STREAM);
 
@@ -106,7 +107,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                     }
 
                     if (!allFrom.contains(SOURCE)) {
-                        // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
+                        // If there is no source provided then we need to attach a parser to source
+                        // as this is an old pipeline config.
                         final Optional<String> optionalParserId = pipelineData.getAddedElements()
                                 .stream()
                                 .filter(e -> e.getType().toLowerCase().contains("parser"))
@@ -318,8 +320,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             element = PipelineDataUtil.createElement(id, elementType.getType());
             element.setElementType(elementType);
             if (pipelineData.getRemovedElements().contains(element)) {
-                throw new PipelineModelException(
-                        "Attempt to add an element with an id that matches a hidden element. Restore the existing element if required or change the element id.");
+                throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
+                        "element. Restore the existing element if required or change the element id.");
             }
 
             pipelineData.addElement(element);

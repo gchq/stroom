@@ -81,7 +81,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
                     if (filter != null) {
                         ConfirmEvent.fire(ProcessorEditPresenter.this,
-                                "You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?",
+                                "You are about to update an existing filter. Any streams that might now be " +
+                                        "included by this filter but are older than the current tracker position " +
+                                        "will not be processed. Are you sure you wish to do this?",
                                 result -> {
                                     if (result) {
                                         validateFeed(filter, queryData);
@@ -103,19 +105,34 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         };
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
+        final PopupSize popupSize = new PopupSize(
+                800, 600, 400, 400, true);
         if (filter != null) {
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
+            ShowPopupEvent.fire(
+                    this,
+                    this,
+                    PopupType.OK_CANCEL_DIALOG,
+                    popupSize,
+                    "Edit Filter",
                     popupUiHandlers);
         } else {
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
+            ShowPopupEvent.fire(
+                    this,
+                    this,
+                    PopupType.OK_CANCEL_DIALOG,
+                    popupSize,
+                    "Add Filter",
                     popupUiHandlers);
         }
     }
 
     private void hide(final ProcessorFilter result) {
         consumer.accept(result);
-        HidePopupEvent.fire(ProcessorEditPresenter.this, ProcessorEditPresenter.this, false, result != null);
+        HidePopupEvent.fire(
+                ProcessorEditPresenter.this,
+                ProcessorEditPresenter.this,
+                false,
+                result != null);
     }
 
     private QueryData getOrCreateQueryData(final ProcessorFilter filter) {
@@ -200,7 +217,8 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
 //    private void addOrEditProcessor(final ProcessorFilter filter) {
 //        final QueryData queryData = getOrCreateQueryData(filter);
-//        filterPresenter.read(queryData.getExpression(), MetaDataSource.STREAM_STORE_DOC_REF, MetaDataSource.getFields());
+//        filterPresenter.read(
+//        queryData.getExpression(), MetaDataSource.STREAM_STORE_DOC_REF, MetaDataSource.getFields());
 //
 //        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
 //            @Override
@@ -212,7 +230,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 //
 //                    if (filter != null) {
 //                        ConfirmEvent.fire(ProcessorPresenter.this,
-//                                "You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?",
+//                                "You are about to update an existing filter. Any streams that might now be
+//                                included by this filter but are older than the current tracker position will
+//                                not be processed. Are you sure you wish to do this?",
 //                                result -> {
 //                                    if (result) {
 //                                        validateFeed(filter, queryData);

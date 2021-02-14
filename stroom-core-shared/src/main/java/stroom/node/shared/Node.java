@@ -31,7 +31,17 @@ import java.util.Objects;
 /**
  * Represents a node for storage and processing.
  */
-@JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
+@JsonPropertyOrder({
+        "id",
+        "version",
+        "createTimeMs",
+        "createUser",
+        "updateTimeMs",
+        "updateUser",
+        "name",
+        "url",
+        "priority",
+        "enabled"})
 @JsonInclude(Include.NON_NULL)
 public class Node implements HasAuditInfo, HasIntegerId {
 

@@ -112,7 +112,8 @@ class PipelineResourceImpl implements PipelineResource {
             try {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
 
-                // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+                // A user should be allowed to read pipelines that they are inheriting from as
+                // long as they have 'use' permission on them.
                 return securityContext.useAsReadResult(() -> {
                     final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
                     final List<PipelineData> result = new ArrayList<>(pipelines.size());

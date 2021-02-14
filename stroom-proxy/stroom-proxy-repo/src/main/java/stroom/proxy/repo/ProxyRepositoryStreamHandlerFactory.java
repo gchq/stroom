@@ -14,8 +14,10 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
     private final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider;
 
     @Inject
-    public ProxyRepositoryStreamHandlerFactory(final ProxyRepositoryConfig proxyRepositoryConfig,
-                                               final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider) {
+    public ProxyRepositoryStreamHandlerFactory(
+            final ProxyRepositoryConfig proxyRepositoryConfig,
+            final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider) {
+
         this.proxyRepositoryConfig = proxyRepositoryConfig;
         this.proxyRepositoryStreamHandlerProvider = proxyRepositoryStreamHandlerProvider;
 

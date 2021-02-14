@@ -240,7 +240,8 @@ public class PipelineFactory {
                                     final String code = request.getCode().get(id);
                                     if (code != null) {
                                         if (elementInstance instanceof SupportsCodeInjection) {
-                                            final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
+                                            final SupportsCodeInjection supportsCodeInjection =
+                                                    (SupportsCodeInjection) elementInstance;
                                             supportsCodeInjection.setInjectedCode(code);
                                         }
                                     }

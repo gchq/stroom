@@ -123,7 +123,8 @@ import com.google.gwt.user.client.Event;
  * html body. For example:
  * <p>
  * <pre>
- * &lt;ui:image field='downButton'/> &lt;!-- define an {@link com.google.gwt.resources.client.ImageResource ImageResource} -->
+ * &lt;ui:image field='downButton'/> &lt;!-- define an
+ * {@link com.google.gwt.resources.client.ImageResource ImageResource} -->
  *
  * &lt;g:PushButton ui:field='pushButton' enabled='true'>
  *   &lt;g:upFace>

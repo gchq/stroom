@@ -28,7 +28,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elementType", "name", "type", "description", "defaultValue", "pipelineReference", "docRefTypes", "displayPriority"})
+@JsonPropertyOrder({
+        "elementType",
+        "name",
+        "type",
+        "description",
+        "defaultValue",
+        "pipelineReference",
+        "docRefTypes",
+        "displayPriority"})
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType {
 
     @JsonProperty

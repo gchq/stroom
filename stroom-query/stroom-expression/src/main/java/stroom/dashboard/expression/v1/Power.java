@@ -23,9 +23,9 @@ package stroom.dashboard.expression.v1;
         commonCategory = FunctionCategory.MATHEMATICS,
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The value of arg1 raised to the power of arg2.",
-        commonDescription = "The value of arg1 raised to the power of arg2. If more than two arguments are supplied then " +
-                "it will each argument to the power of the next, e.g. power(2, 4, 3) returns 4096. Can be expressed as " +
-                "'${field1}^${field2}'.",
+        commonDescription = "The value of arg1 raised to the power of arg2. If more than two arguments are " +
+                "supplied then it will each argument to the power of the next, e.g. power(2, 4, 3) returns 4096. " +
+                "Can be expressed as '${field1}^${field2}'.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",

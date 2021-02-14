@@ -179,7 +179,8 @@ public class NewUiPipelineResource implements RestResource {
     @Path("/{pipelineId}")
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
         return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as
+            // they have 'use' permission on them.
             return securityContext.useAsReadResult(() -> fetchInScope(pipelineId));
         }));
     }
@@ -234,13 +235,16 @@ public class NewUiPipelineResource implements RestResource {
     public Response save(@PathParam("pipelineId") final String pipelineId,
                          @ApiParam("pipelineDocUpdates") final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as
+            // they have 'use' permission on them.
             securityContext.useAsRead(() -> {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
 
                 if (pipelineDoc != null) {
                     pipelineDoc.setDescription(pipelineDocUpdates.getDescription());
-                    pipelineDocUpdates.getConfigStack().forEach(pipelineDoc::setPipelineData); // will have the effect of setting last one
+                    // will have the effect of setting last one
+                    pipelineDocUpdates.getConfigStack()
+                            .forEach(pipelineDoc::setPipelineData);
                     pipelineStore.writeDocument(pipelineDoc);
                 }
             });

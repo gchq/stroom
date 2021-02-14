@@ -229,7 +229,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 //                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
 //                    if (result) {
 //                        final Rest<Processor> rest = restFactory.create();
-//                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_RESOURCE).delete(streamProcessorRow.getProcessor().getId());
+//                        rest
+//                        .onSuccess(res ->
+//                        processorListPresenter.refresh())
+//                        .call(PROCESSOR_RESOURCE)
+//                        .delete(streamProcessorRow.getProcessor().getId());
 //                    }
 //                });
 //            } else

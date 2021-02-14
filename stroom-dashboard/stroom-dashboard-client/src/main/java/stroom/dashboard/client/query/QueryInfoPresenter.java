@@ -83,7 +83,8 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
                                 if (ok) {
                                     boolean valid = true;
-                                    if (queryInfoPopupValidationRegex != null && !queryInfoPopupValidationRegex.isEmpty()) {
+                                    if (queryInfoPopupValidationRegex != null
+                                            && !queryInfoPopupValidationRegex.isEmpty()) {
                                         valid = false;
                                         try {
                                             valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
@@ -93,7 +94,9 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                     }
 
                                     if (valid) {
-                                        HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                        HidePopupEvent.fire(
+                                                QueryInfoPresenter.this,
+                                                QueryInfoPresenter.this);
                                         consumer.accept(new State(getView().getQueryInfo(), true));
                                     } else {
                                         AlertEvent.fireWarn(QueryInfoPresenter.this,
@@ -101,7 +104,9 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                                 null);
                                     }
                                 } else {
-                                    HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                    HidePopupEvent.fire(
+                                            QueryInfoPresenter.this,
+                                            QueryInfoPresenter.this);
                                     consumer.accept(new State(getView().getQueryInfo(), false));
                                 }
                             }

@@ -420,7 +420,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 final PipelineProperty removed = getActualProperty(
                         pipelineModel.getPipelineData().getRemovedProperties(), property);
                 if (removed == null) {
-                    // Get the inherited property as we haven't set the property or removed (shadowed) the parent property.
+                    // Get the inherited property as we haven't set the property or removed (shadowed) the
+                    // parent property.
                     final PipelineProperty inherited = getInheritedProperty(property);
                     if (inherited != null) {
                         property = inherited;
@@ -430,7 +431,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             // Add the property.
             propertyList.add(property);
 
-            // If the property is a doc ref then we will have to look it up on the server to get the current name for the entity.
+            // If the property is a doc ref then we will have to look it up on the server to get the current
+            // name for the entity.
             if (property.getValue() != null && property.getValue().getEntity() != null) {
                 docRefs.add(property.getValue().getEntity());
             }
