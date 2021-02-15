@@ -3,7 +3,7 @@
 
   <!-- -->
   <xsl:template match="/">
-      <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.1.xsd" version="2.0.1">
+    <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.1.xsd event-logging:3 file://event-logging-v3.0.0.xsd" version="2.0.1">
       <xsl:apply-templates />
     </referenceData>
   </xsl:template>

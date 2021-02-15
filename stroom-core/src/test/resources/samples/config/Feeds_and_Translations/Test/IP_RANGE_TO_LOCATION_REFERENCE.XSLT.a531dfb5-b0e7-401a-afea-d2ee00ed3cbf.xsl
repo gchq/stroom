@@ -3,7 +3,7 @@
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="2.0">
   <xsl:template match="records">
-      <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.xsd" version="2.0.1">
+    <referenceData xsi:schemaLocation="reference-data:2 file://reference-data-v2.0.xsd event-logging:3 file://event-logging-v3.0.0.xsd" version="2.0.1">
       <xsl:apply-templates />
     </referenceData>
   </xsl:template>
