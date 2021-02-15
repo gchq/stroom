@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2017 Crown Copyright
  *
@@ -16,6 +17,7 @@
 
 package stroom.core.db;
 
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
@@ -24,7 +26,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-// TODO : @66 add event logging
+@AutoLogged
 class DbStatusResourceImpl implements DbStatusResource {
 
     private final Provider<DBTableService> dbTableServiceProvider;

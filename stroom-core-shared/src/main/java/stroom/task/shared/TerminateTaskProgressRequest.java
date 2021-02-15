@@ -42,4 +42,12 @@ public class TerminateTaskProgressRequest {
     public boolean isKill() {
         return kill;
     }
+
+    @Override
+    public String toString() {
+        return "TerminateTaskProgressRequest{" +
+                "criteria=" + criteria +
+                ", kill=" + kill +
+                '}';
+    }
 }

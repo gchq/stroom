@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "solrIndex - /v1")
+@Api(tags = "Solr Indices")
 @Path("/solrIndex" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,29 +41,21 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a solr index doc",
-            response = SolrIndexDoc.class)
+    @ApiOperation("Get a solr index doc")
     SolrIndexDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a solr index doc",
-            response = SolrIndexDoc.class)
+    @ApiOperation("Update a solr index doc")
     SolrIndexDoc update(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/fetchSolrTypes")
-    @ApiOperation(
-            value = "Fetch Solr types",
-            response = List.class)
+    @ApiOperation("Fetch Solr types")
     List<String> fetchSolrTypes(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/solrConnectionTest")
-    @ApiOperation(
-            value = "Test connection to Solr",
-            response = String.class)
+    @ApiOperation("Test connection to Solr")
     SolrConnectionTestResponse solrConnectionTest(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 }

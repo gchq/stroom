@@ -18,6 +18,7 @@
 package stroom.docstore.shared;
 
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasType;
 import stroom.util.shared.HasUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +31,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc implements HasAuditInfo, HasUuid {
+public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
 
     @JsonProperty
     private String type;
@@ -150,7 +151,6 @@ public abstract class Doc implements HasAuditInfo, HasUuid {
         this.updateUser = updateUser;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

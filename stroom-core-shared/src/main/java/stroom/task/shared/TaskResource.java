@@ -32,7 +32,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "task - /v1")
+@Api(tags = "Tasks")
 @Path(TaskResource.BASE_PATH)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -47,30 +47,23 @@ public interface TaskResource extends RestResource, DirectRestService {
 
     @GET
     @Path(LIST_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Lists tasks for a node",
-            response = TaskProgressResponse.class)
+    @ApiOperation("Lists tasks for a node")
     TaskProgressResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
     @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Finds tasks for a node",
-            response = TaskProgressResponse.class)
+    @ApiOperation("Finds tasks for a node")
     TaskProgressResponse find(@PathParam("nodeName") String nodeName,
                               @ApiParam("request") FindTaskProgressRequest request);
 
     @GET
     @Path(USER_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Lists tasks for a node",
-            response = TaskProgressResponse.class)
+    @ApiOperation("Lists tasks for a node")
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Terminates tasks for a node")
+    @ApiOperation("Terminates tasks for a node")
     Boolean terminate(@PathParam("nodeName") String nodeName,
                       @ApiParam("request") TerminateTaskProgressRequest request);
 }

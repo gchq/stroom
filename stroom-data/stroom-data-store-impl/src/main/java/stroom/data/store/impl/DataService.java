@@ -19,10 +19,13 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.UploadDataRequest;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import java.util.List;
+import java.util.Set;
 
 interface DataService {
 
@@ -31,4 +34,8 @@ interface DataService {
     ResourceKey upload(UploadDataRequest request);
 
     List<DataInfoSection> info(long id);
+
+    AbstractFetchDataResult fetch(final FetchDataRequest request);
+
+    Set<String> getChildStreamTypes(final long id, final long partNo);
 }

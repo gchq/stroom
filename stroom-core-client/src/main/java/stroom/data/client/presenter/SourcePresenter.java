@@ -4,6 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
@@ -12,7 +13,6 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers {
 
-    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
@@ -336,7 +336,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .call(VIEW_DATA_RESOURCE)
+                .call(DATA_RESOURCE)
                 .fetch(request);
     }
 

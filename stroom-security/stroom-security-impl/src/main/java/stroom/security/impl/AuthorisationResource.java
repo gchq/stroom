@@ -21,9 +21,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "authorisation - /v1",
-        description = "Stroom Authorisation API")
+@Api(tags = "Authorisation (New UI)")
 @Path("/authorisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -47,26 +45,25 @@ public class AuthorisationResource implements RestResource {
      */
     @POST
     @Path("isAuthorised")
-    @ApiOperation(
-            value = "Submit a request to verify if the user has the requested permission on a 'document'",
-            response = Response.class)
+    @ApiOperation("Submit a request to verify if the user has the requested application permission")
     public Response isAuthorised(@ApiParam("permission") final String permission) {
 
-        boolean result = securityContext.hasAppPermission(permission);
+        boolean hasAppPermission = securityContext.hasAppPermission(permission);
 
-        return result
+        return hasAppPermission
                 ? Response.ok().build()
                 : Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     @POST
     @Path("hasPermission")
+    @ApiOperation("Submit a request to verify if the user has the requested application permission")
     public Response hasPermission(UserPermissionRequest userPermissionRequest) {
         // TODO what happens if the permission is bad? What's the result of this method call and how
         //  should we handle it?
-        boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
+        boolean hasAppPermission = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.
-        return result
+        return hasAppPermission
                 ? Response.ok().build()
                 : Response.status(Response.Status.UNAUTHORIZED).build();
     }

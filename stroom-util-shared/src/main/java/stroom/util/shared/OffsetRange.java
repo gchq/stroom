@@ -46,6 +46,13 @@ public final class OffsetRange {
     @JsonProperty
     private final Long length;
 
+    public static OffsetRange zero() {
+        return new OffsetRange(Long.valueOf(0), Long.valueOf(0));
+    }
+
+    public static OffsetRange of(final Long offset, final Long length) {
+        return new OffsetRange(offset, length);
+    }
 
     public OffsetRange(final Integer offset, final Integer length) {
         this.offset = offset.longValue();

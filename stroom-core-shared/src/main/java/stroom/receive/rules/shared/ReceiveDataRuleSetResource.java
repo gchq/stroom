@@ -35,7 +35,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "ruleset - /v2")
+@Api(tags = "Rule Set")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -45,36 +45,26 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a rules doc",
-            response = ReceiveDataRules.class)
+    @ApiOperation("Get a rules doc")
     ReceiveDataRules read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a rules doc",
-            response = ReceiveDataRules.class)
+    @ApiOperation("Update a rules doc")
     ReceiveDataRules update(@ApiParam("receiveDataRules") ReceiveDataRules receiveDataRules);
 
     @GET
     @Path("/list")
-    @ApiOperation(
-            value = "Submit a request for a list of doc refs held by this service",
-            response = Set.class)
+    @ApiOperation("Submit a request for a list of doc refs held by this service")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @ApiOperation(
-            value = "Submit an import request",
-            response = DocRef.class)
+    @ApiOperation("Submit an import request")
     DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
 
     @POST
     @Path("/export")
-    @ApiOperation(
-            value = "Submit an export request",
-            response = Base64EncodedDocumentData.class)
+    @ApiOperation("Submit an export request")
     Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
 }

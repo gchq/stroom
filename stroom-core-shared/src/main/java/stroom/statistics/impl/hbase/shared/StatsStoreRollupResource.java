@@ -32,7 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "statsStore/rollUp - /v1")
+@Api(tags = "Stroom Stats RollUps")
 @Path("/statsStore/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,22 +40,16 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @ApiOperation(
-            value = "Create rollup bit mask",
-            response = List.class)
+    @ApiOperation("Create rollup bit mask")
     ResultPage<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @ApiOperation(
-            value = "Get rollup bit mask",
-            response = List.class)
+    @ApiOperation("Get rollup bit mask")
     ResultPage<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @ApiOperation(
-            value = "Change fields",
-            response = StroomStatsStoreEntityData.class)
+    @ApiOperation("Change fields")
     StroomStatsStoreEntityData fieldChange(@ApiParam("request") StroomStatsStoreFieldChangeRequest request);
 }

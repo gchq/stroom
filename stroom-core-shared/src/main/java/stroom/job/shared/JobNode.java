@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
 
 import java.util.Objects;
 
@@ -189,10 +190,11 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.enabled = enabled;
     }
 
+    @ApiModel
     public enum JobType implements HasPrimitiveValue {
         UNKNOWN("UNKNOWN", 0),
         CRON("Cron", 1),
-        FREQUENCY("Fequency", 2),
+        FREQUENCY("Frequency", 2),
         DISTRIBUTED("Distributed", 3);
 
         public static final PrimitiveValueConverter<JobType> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
@@ -233,7 +235,6 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

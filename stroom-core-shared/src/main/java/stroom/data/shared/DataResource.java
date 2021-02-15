@@ -17,6 +17,8 @@
 package stroom.data.shared;
 
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
@@ -28,6 +30,7 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
+import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -36,7 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "data - /v1")
+@Api(tags = "Data")
 @Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,22 +47,27 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("download")
-    @ApiOperation(
-            value = "Download matching data",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Download matching data")
     ResourceGeneration download(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
-    @ApiOperation(
-            value = "Upload data",
-            response = ResourceGeneration.class)
+    @ApiOperation(value = "Upload data")
     ResourceKey upload(@ApiParam("request") UploadDataRequest request);
 
     @GET
-    @Path("info/{id}")
-    @ApiOperation(
-            value = "Find full info about a data item",
-            response = DataInfoSection.class)
-    List<DataInfoSection> info(@PathParam("id") long id);
+    @Path("{id}/info")
+    @ApiOperation(value = "Find full info about a data item")
+    List<DataInfoSection> viewInfo(@PathParam("id") long id);
+
+    @POST
+    @Path("fetch")
+    @ApiOperation("Fetch matching data")
+    AbstractFetchDataResult fetch(@ApiParam("request") FetchDataRequest request);
+
+    @GET
+    @Path("{id}/parts/{partNo}/child-types")
+    @ApiOperation("List child types for a stream")
+    Set<String> getChildStreamTypes(@PathParam("id") final long id,
+                                    @PathParam("partNo") final long partNo);
 }

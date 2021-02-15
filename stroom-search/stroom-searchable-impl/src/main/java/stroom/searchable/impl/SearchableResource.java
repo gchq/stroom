@@ -39,7 +39,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "searchable - /v2")
+@Api(tags = "Searchable")
 @Path("/searchable" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -57,9 +57,7 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/dataSource")
     @Timed
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
+    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(docRef);
@@ -71,9 +69,7 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/search")
     @Timed
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
+    @ApiOperation("Submit a search request")
     public SearchResponse search(@ApiParam("SearchRequest") final SearchRequest request) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(request);
@@ -86,9 +82,7 @@ public class SearchableResource implements RestResource {
     @POST
     @Path("/destroy")
     @Timed
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
+    @ApiOperation("Destroy a running query")
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);

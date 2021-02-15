@@ -13,7 +13,6 @@ dependencies {
 
     compile libs.eventLogging
 
-    compile libs.commons_beanutils
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.jackson_databind

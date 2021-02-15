@@ -68,7 +68,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
-                .read(docRef);
+                .fetch(docRef.getUuid());
     }
 
     @Override

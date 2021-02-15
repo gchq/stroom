@@ -1,5 +1,5 @@
-/* tslint:disable */
-/* eslint-disable */
+/* eslint:disable */
+/* tslint-disable */
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -3141,39 +3141,58 @@ export interface XsltDoc {
   version?: string;
 }
 
-export type RequestParams = Omit<RequestInit, "body" | "method"> & {
+export type QueryParamsType = Record<string | number, any>;
+export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
+
+export interface FullRequestParams extends Omit<RequestInit, "body"> {
+  /** set parameter to `true` for call `securityWorker` for this request */
   secure?: boolean;
-};
-
-export type RequestQueryParamsType = Record<string | number, any>;
-
-interface ApiConfig<SecurityDataType> {
+  /** request path */
+  path: string;
+  /** content type of request body */
+  type?: ContentType;
+  /** query params */
+  query?: QueryParamsType;
+  /** format of response (i.e. response.json() -> format: "json") */
+  format?: keyof Omit<Body, "body" | "bodyUsed">;
+  /** request body */
+  body?: unknown;
+  /** base url */
   baseUrl?: string;
-  baseApiParams?: RequestParams;
-  securityWorker?: (securityData: SecurityDataType) => RequestParams;
+  /** request cancellation token */
+  cancelToken?: CancelToken;
 }
 
-interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
+export type RequestParams = Omit<FullRequestParams, "body" | "method" | "query" | "path">;
+
+export interface ApiConfig<SecurityDataType = unknown> {
+  baseUrl?: string;
+  baseApiParams?: Omit<RequestParams, "baseUrl" | "cancelToken" | "signal">;
+  securityWorker?: (securityData: SecurityDataType) => RequestParams | void;
+}
+
+export interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
   data: D;
   error: E;
 }
 
-enum BodyType {
-  Json,
-  FormData,
-  UrlEncoded,
+type CancelToken = Symbol | string | number;
+
+export enum ContentType {
+  Json = "application/json",
+  FormData = "multipart/form-data",
+  UrlEncoded = "application/x-www-form-urlencoded",
 }
 
 export class HttpClient<SecurityDataType = unknown> {
   public baseUrl: string = "/api";
   private securityData: SecurityDataType = null as any;
   private securityWorker: null | ApiConfig<SecurityDataType>["securityWorker"] = null;
+  private abortControllers = new Map<CancelToken, AbortController>();
 
   private baseApiParams: RequestParams = {
     credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: {},
     redirect: "follow",
     referrerPolicy: "no-referrer",
   };
@@ -3186,92 +3205,126 @@ export class HttpClient<SecurityDataType = unknown> {
     this.securityData = data;
   };
 
-  private addQueryParam(query: RequestQueryParamsType, key: string) {
+  private addQueryParam(query: QueryParamsType, key: string) {
+    const value = query[key];
+
     return (
-      encodeURIComponent(key) + "=" + encodeURIComponent(Array.isArray(query[key]) ? query[key].join(",") : query[key])
+      encodeURIComponent(key) +
+      "=" +
+      encodeURIComponent(Array.isArray(value) ? value.join(",") : typeof value === "number" ? value : `${value}`)
     );
   }
 
-  protected toQueryString(rawQuery?: RequestQueryParamsType): string {
+  protected toQueryString(rawQuery?: QueryParamsType): string {
     const query = rawQuery || {};
     const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
     return keys
       .map((key) =>
         typeof query[key] === "object" && !Array.isArray(query[key])
-          ? this.toQueryString(query[key] as object)
+          ? this.toQueryString(query[key] as QueryParamsType)
           : this.addQueryParam(query, key),
       )
       .join("&");
   }
 
-  protected addQueryParams(rawQuery?: RequestQueryParamsType): string {
+  protected addQueryParams(rawQuery?: QueryParamsType): string {
     const queryString = this.toQueryString(rawQuery);
     return queryString ? `?${queryString}` : "";
   }
 
-  private bodyFormatters: Record<BodyType, (input: any) => any> = {
-    [BodyType.Json]: JSON.stringify,
-    [BodyType.FormData]: (input: any) =>
-      Object.keys(input).reduce((data, key) => {
+  private contentFormatters: Record<ContentType, (input: any) => any> = {
+    [ContentType.Json]: (input: any) => (input !== null && typeof input === "object" ? JSON.stringify(input) : input),
+    [ContentType.FormData]: (input: any) =>
+      Object.keys(input || {}).reduce((data, key) => {
         data.append(key, input[key]);
         return data;
       }, new FormData()),
-    [BodyType.UrlEncoded]: (input: any) => this.toQueryString(input),
+    [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
   };
 
-  private mergeRequestOptions(params: RequestParams, securityParams?: RequestParams): RequestParams {
+  private mergeRequestParams(params1: RequestParams, params2?: RequestParams): RequestParams {
     return {
       ...this.baseApiParams,
-      ...params,
-      ...(securityParams || {}),
+      ...params1,
+      ...(params2 || {}),
       headers: {
         ...(this.baseApiParams.headers || {}),
-        ...(params.headers || {}),
-        ...((securityParams && securityParams.headers) || {}),
+        ...(params1.headers || {}),
+        ...((params2 && params2.headers) || {}),
       },
     };
   }
 
-  private safeParseResponse = <T = any, E = any>(response: Response): Promise<HttpResponse<T, E>> => {
-    const r = response as HttpResponse<T, E>;
-    r.data = (null as unknown) as T;
-    r.error = (null as unknown) as E;
+  private createAbortSignal = (cancelToken: CancelToken): AbortSignal | undefined => {
+    if (this.abortControllers.has(cancelToken)) {
+      const abortController = this.abortControllers.get(cancelToken);
+      if (abortController) {
+        return abortController.signal;
+      }
+      return void 0;
+    }
 
-    return response
-      .json()
-      .then((data) => {
-        if (r.ok) {
-          r.data = data;
-        } else {
-          r.error = data;
-        }
-        return r;
-      })
-      .catch((e) => {
-        r.error = e;
-        return r;
-      });
+    const abortController = new AbortController();
+    this.abortControllers.set(cancelToken, abortController);
+    return abortController.signal;
   };
 
-  public request = <T = any, E = any>(
-    path: string,
-    method: string,
-    { secure, ...params }: RequestParams = {},
-    body?: any,
-    bodyType?: BodyType,
-    secureByDefault?: boolean,
-  ): Promise<HttpResponse<T>> => {
-    const requestUrl = `${this.baseUrl}${path}`;
-    const secureOptions =
-      (secureByDefault || secure) && this.securityWorker ? this.securityWorker(this.securityData) : {};
-    const requestOptions = {
-      ...this.mergeRequestOptions(params, secureOptions),
-      method,
-      body: body ? this.bodyFormatters[bodyType || BodyType.Json](body) : null,
-    };
+  public abortRequest = (cancelToken: CancelToken) => {
+    const abortController = this.abortControllers.get(cancelToken);
 
-    return fetch(requestUrl, requestOptions).then(async (response) => {
-      const data = await this.safeParseResponse<T, E>(response);
+    if (abortController) {
+      abortController.abort();
+      this.abortControllers.delete(cancelToken);
+    }
+  };
+
+  public request = <T = any, E = any>({
+    body,
+    secure,
+    path,
+    type,
+    query,
+    format = "json",
+    baseUrl,
+    cancelToken,
+    ...params
+  }: FullRequestParams): Promise<HttpResponse<T, E>> => {
+    const secureParams = (secure && this.securityWorker && this.securityWorker(this.securityData)) || {};
+    const requestParams = this.mergeRequestParams(params, secureParams);
+    const queryString = query && this.toQueryString(query);
+    const payloadFormatter = this.contentFormatters[type || ContentType.Json];
+
+    return fetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
+      headers: {
+        ...(type ? { "Content-Type": type } : {}),
+        ...(requestParams.headers || {}),
+      },
+      ...requestParams,
+      signal: cancelToken ? this.createAbortSignal(cancelToken) : void 0,
+      body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
+    }).then(async (response) => {
+      const r = response as HttpResponse<T, E>;
+      r.data = (null as unknown) as T;
+      r.error = (null as unknown) as E;
+
+      const data = await response[format]()
+        .then((data) => {
+          if (r.ok) {
+            r.data = data;
+          } else {
+            r.error = data;
+          }
+          return r;
+        })
+        .catch((e) => {
+          r.error = e;
+          return r;
+        });
+
+      if (cancelToken) {
+        this.abortControllers.delete(cancelToken);
+      }
+
       if (!response.ok) throw data;
       return data;
     });
@@ -3284,7 +3337,7 @@ export class HttpClient<SecurityDataType = unknown> {
  * @baseUrl /api
  * Various APIs for interacting with Stroom and its data
  */
-export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
+export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   account = {
     /**
      * No description
@@ -3295,8 +3348,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/account/v1
      * @secure
      */
-    list: (params?: RequestParams) =>
-      this.request<AccountResultPage, any>(`/account/v1`, "GET", params, null, BodyType.Json, true),
+    list: (params: RequestParams = {}) =>
+      this.request<AccountResultPage, any>({
+        path: `/account/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3307,8 +3367,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/account/v1
      * @secure
      */
-    create: (body: CreateAccountRequest, params?: RequestParams) =>
-      this.request<number, any>(`/account/v1`, "POST", params, body, BodyType.Json, true),
+    create: (body: CreateAccountRequest, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/account/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3319,8 +3387,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/account/v1/search
      * @secure
      */
-    search: (body: SearchAccountRequest, params?: RequestParams) =>
-      this.request<AccountResultPage, any>(`/account/v1/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchAccountRequest, params: RequestParams = {}) =>
+      this.request<AccountResultPage, any>({
+        path: `/account/v1/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3331,8 +3407,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/account/v1/{id}
      * @secure
      */
-    read: (id: number, params?: RequestParams) =>
-      this.request<Account, any>(`/account/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    read: (id: number, params: RequestParams = {}) =>
+      this.request<Account, any>({
+        path: `/account/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3343,8 +3426,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/account/v1/{id}
      * @secure
      */
-    update: (id: number, body: UpdateAccountRequest, params?: RequestParams) =>
-      this.request<boolean, any>(`/account/v1/${id}`, "PUT", params, body, BodyType.Json, true),
+    update: (id: number, body: UpdateAccountRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/account/v1/${id}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3355,8 +3446,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/account/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<boolean, any>(`/account/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/account/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   activity = {
     /**
@@ -3368,15 +3466,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/activity/v1
      * @secure
      */
-    list: (query?: { filter?: string }, params?: RequestParams) =>
-      this.request<ResultPage, any>(
-        `/activity/v1${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    list: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/activity/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3387,8 +3486,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/activity/v1
      * @secure
      */
-    create: (params?: RequestParams) =>
-      this.request<Activity, any>(`/activity/v1`, "POST", params, null, BodyType.Json, true),
+    create: (params: RequestParams = {}) =>
+      this.request<Activity, any>({
+        path: `/activity/v1`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3399,8 +3505,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/activity/v1/acknowledge
      * @secure
      */
-    acknowledgeSplash: (body: AcknowledgeSplashRequest, params?: RequestParams) =>
-      this.request<boolean, any>(`/activity/v1/acknowledge`, "POST", params, body, BodyType.Json, true),
+    acknowledgeSplash: (body: AcknowledgeSplashRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/activity/v1/acknowledge`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3411,8 +3525,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/activity/v1/current
      * @secure
      */
-    getCurrentActivity: (params?: RequestParams) =>
-      this.request<Activity, any>(`/activity/v1/current`, "GET", params, null, BodyType.Json, true),
+    getCurrentActivity: (params: RequestParams = {}) =>
+      this.request<Activity, any>({
+        path: `/activity/v1/current`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3423,8 +3544,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/activity/v1/current
      * @secure
      */
-    setCurrentActivity: (params?: RequestParams) =>
-      this.request<Activity, any>(`/activity/v1/current`, "PUT", params, null, BodyType.Json, true),
+    setCurrentActivity: (params: RequestParams = {}) =>
+      this.request<Activity, any>({
+        path: `/activity/v1/current`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3435,8 +3563,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/activity/v1/fields
      * @secure
      */
-    listFieldDefinitions: (params?: RequestParams) =>
-      this.request<object[], any>(`/activity/v1/fields`, "GET", params, null, BodyType.Json, true),
+    listFieldDefinitions: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/activity/v1/fields`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3447,8 +3582,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/activity/v1/validate
      * @secure
      */
-    validate: (body: Activity, params?: RequestParams) =>
-      this.request<ActivityValidationResult, any>(`/activity/v1/validate`, "POST", params, body, BodyType.Json, true),
+    validate: (body: Activity, params: RequestParams = {}) =>
+      this.request<ActivityValidationResult, any>({
+        path: `/activity/v1/validate`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3459,8 +3602,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/activity/v1/{id}
      * @secure
      */
-    read: (id: number, params?: RequestParams) =>
-      this.request<Activity, any>(`/activity/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    read: (id: number, params: RequestParams = {}) =>
+      this.request<Activity, any>({
+        path: `/activity/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3471,8 +3621,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/activity/v1/{id}
      * @secure
      */
-    update: (id: number, params?: RequestParams) =>
-      this.request<Activity, any>(`/activity/v1/${id}`, "PUT", params, null, BodyType.Json, true),
+    update: (id: number, params: RequestParams = {}) =>
+      this.request<Activity, any>({
+        path: `/activity/v1/${id}`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3483,8 +3640,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/activity/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<boolean, any>(`/activity/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/activity/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   annotation = {
     /**
@@ -3496,8 +3660,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/annotation/v1
      * @secure
      */
-    get: (query?: { annotationId?: number }, params?: RequestParams) =>
-      this.request<any, any>(`/annotation/v1${this.addQueryParams(query)}`, "GET", params, null, BodyType.Json, true),
+    get: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3507,8 +3678,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/annotation/v1
      * @secure
      */
-    createEntry: (body: CreateEntryRequest, params?: RequestParams) =>
-      this.request<AnnotationDetail, any>(`/annotation/v1`, "POST", params, body, BodyType.Json, true),
+    createEntry: (body: CreateEntryRequest, params: RequestParams = {}) =>
+      this.request<AnnotationDetail, any>({
+        path: `/annotation/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3519,15 +3698,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/annotation/v1/comment
      * @secure
      */
-    getComment: (query?: { filter?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/annotation/v1/comment${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getComment: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/comment`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3538,8 +3717,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/annotation/v1/link
      * @secure
      */
-    link: (body: EventLink, params?: RequestParams) =>
-      this.request<any, any>(`/annotation/v1/link`, "POST", params, body, BodyType.Json, true),
+    link: (body: EventLink, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/link`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3550,15 +3736,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/annotation/v1/linkedEvents
      * @secure
      */
-    getLinkedEvents: (query?: { annotationId?: number }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/annotation/v1/linkedEvents${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getLinkedEvents: (query?: { annotationId?: number }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/linkedEvents`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3569,8 +3755,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/annotation/v1/setAssignedTo
      * @secure
      */
-    setAssignedTo: (body: SetAssignedToRequest, params?: RequestParams) =>
-      this.request<any, any>(`/annotation/v1/setAssignedTo`, "POST", params, body, BodyType.Json, true),
+    setAssignedTo: (body: SetAssignedToRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/setAssignedTo`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3581,8 +3774,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/annotation/v1/setStatus
      * @secure
      */
-    setStatus: (body: SetStatusRequest, params?: RequestParams) =>
-      this.request<any, any>(`/annotation/v1/setStatus`, "POST", params, body, BodyType.Json, true),
+    setStatus: (body: SetStatusRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/setStatus`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3593,15 +3793,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/annotation/v1/status
      * @secure
      */
-    getStatus: (query?: { filter?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/annotation/v1/status${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getStatus: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/status`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -3612,8 +3812,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/annotation/v1/unlink
      * @secure
      */
-    unlink: (body: EventLink, params?: RequestParams) =>
-      this.request<any, any>(`/annotation/v1/unlink`, "POST", params, body, BodyType.Json, true),
+    unlink: (body: EventLink, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/annotation/v1/unlink`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   appPermissions = {
     /**
@@ -3624,8 +3831,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/appPermissions/v1
      * @secure
      */
-    getAllPermissionNames: (params?: RequestParams) =>
-      this.request<any, any>(`/appPermissions/v1`, "GET", params, null, BodyType.Json, true),
+    getAllPermissionNames: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/appPermissions/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Application Permissions API
@@ -3635,8 +3848,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/appPermissions/v1/byName/{userName}
      * @secure
      */
-    getPermissionNamesForUserName: (userName: string, params?: RequestParams) =>
-      this.request<any, any>(`/appPermissions/v1/byName/${userName}`, "GET", params, null, BodyType.Json, true),
+    getPermissionNamesForUserName: (userName: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/appPermissions/v1/byName/${userName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Application Permissions API
@@ -3646,8 +3865,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/appPermissions/v1/{userUuid}
      * @secure
      */
-    getPermissionNamesForUser: (userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/appPermissions/v1/${userUuid}`, "GET", params, null, BodyType.Json, true),
+    getPermissionNamesForUser: (userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/appPermissions/v1/${userUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Application Permissions API
@@ -3657,8 +3882,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/appPermissions/v1/{userUuid}/{permission}
      * @secure
      */
-    addPermission: (permission: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/appPermissions/v1/${userUuid}/${permission}`, "POST", params, null, BodyType.Json, true),
+    addPermission: (permission: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/appPermissions/v1/${userUuid}/${permission}`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Application Permissions API
@@ -3668,15 +3899,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/appPermissions/v1/{userUuid}/{permission}
      * @secure
      */
-    removePermission: (permission: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(
-        `/appPermissions/v1/${userUuid}/${permission}`,
-        "DELETE",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    removePermission: (permission: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/appPermissions/v1/${userUuid}/${permission}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   authentication = {
     /**
@@ -3688,15 +3918,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authentication/v1/logout
      * @secure
      */
-    logout: (query: { redirect_uri: string }, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/authentication/v1/logout${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/authentication/v1/logout`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3707,15 +3938,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authentication/v1/needsPasswordChange
      * @secure
      */
-    needsPasswordChange: (query?: { email?: string }, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/authentication/v1/needsPasswordChange${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    needsPasswordChange: (query?: { email?: string }, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/authentication/v1/needsPasswordChange`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3726,15 +3958,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authentication/v1/noauth/changePassword
      * @secure
      */
-    changePassword: (body: ChangePasswordRequest, params?: RequestParams) =>
-      this.request<ChangePasswordResponse, any>(
-        `/authentication/v1/noauth/changePassword`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    changePassword: (body: ChangePasswordRequest, params: RequestParams = {}) =>
+      this.request<ChangePasswordResponse, any>({
+        path: `/authentication/v1/noauth/changePassword`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3745,15 +3978,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authentication/v1/noauth/confirmPassword
      * @secure
      */
-    confirmPassword: (body: ConfirmPasswordRequest, params?: RequestParams) =>
-      this.request<ConfirmPasswordResponse, any>(
-        `/authentication/v1/noauth/confirmPassword`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    confirmPassword: (body: ConfirmPasswordRequest, params: RequestParams = {}) =>
+      this.request<ConfirmPasswordResponse, any>({
+        path: `/authentication/v1/noauth/confirmPassword`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3764,15 +3998,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authentication/v1/noauth/fetchPasswordPolicy
      * @secure
      */
-    fetchPasswordPolicy: (params?: RequestParams) =>
-      this.request<PasswordPolicyConfig, any>(
-        `/authentication/v1/noauth/fetchPasswordPolicy`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    fetchPasswordPolicy: (params: RequestParams = {}) =>
+      this.request<PasswordPolicyConfig, any>({
+        path: `/authentication/v1/noauth/fetchPasswordPolicy`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3783,15 +4017,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authentication/v1/noauth/getAuthenticationState
      * @secure
      */
-    getAuthenticationState: (params?: RequestParams) =>
-      this.request<AuthenticationState, any>(
-        `/authentication/v1/noauth/getAuthenticationState`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getAuthenticationState: (params: RequestParams = {}) =>
+      this.request<AuthenticationState, any>({
+        path: `/authentication/v1/noauth/getAuthenticationState`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3802,8 +4036,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authentication/v1/noauth/login
      * @secure
      */
-    login: (body: LoginRequest, params?: RequestParams) =>
-      this.request<LoginResponse, any>(`/authentication/v1/noauth/login`, "POST", params, body, BodyType.Json, true),
+    login: (body: LoginRequest, params: RequestParams = {}) =>
+      this.request<LoginResponse, any>({
+        path: `/authentication/v1/noauth/login`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3814,8 +4056,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authentication/v1/noauth/reset/{email}
      * @secure
      */
-    resetEmail: (email: string, params?: RequestParams) =>
-      this.request<boolean, any>(`/authentication/v1/noauth/reset/${email}`, "GET", params, null, BodyType.Json, true),
+    resetEmail: (email: string, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/authentication/v1/noauth/reset/${email}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3826,15 +4075,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authentication/v1/resetPassword
      * @secure
      */
-    resetPassword: (body: ResetPasswordRequest, params?: RequestParams) =>
-      this.request<ChangePasswordResponse, any>(
-        `/authentication/v1/resetPassword`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    resetPassword: (body: ResetPasswordRequest, params: RequestParams = {}) =>
+      this.request<ChangePasswordResponse, any>({
+        path: `/authentication/v1/resetPassword`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   authorisation = {
     /**
@@ -3845,15 +4095,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authorisation/v1/createUser
      * @secure
      */
-    createUser: (query?: { id?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/authorisation/v1/createUser${this.addQueryParams(query)}`,
-        "POST",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    createUser: (query?: { id?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/authorisation/v1/createUser`,
+        method: "POST",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -3863,8 +4113,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authorisation/v1/hasPermission
      * @secure
      */
-    hasPermission: (params?: RequestParams) =>
-      this.request<any, any>(`/authorisation/v1/hasPermission`, "POST", params, null, BodyType.Json, true),
+    hasPermission: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/authorisation/v1/hasPermission`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -3875,8 +4131,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/authorisation/v1/isAuthorised
      * @secure
      */
-    isAuthorised: (body: string, params?: RequestParams) =>
-      this.request<any, any>(`/authorisation/v1/isAuthorised`, "POST", params, body, BodyType.Json, true),
+    isAuthorised: (body: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/authorisation/v1/isAuthorised`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -3886,15 +4149,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/authorisation/v1/setUserStatus
      * @secure
      */
-    setUserStatus: (query?: { status?: string; userId?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/authorisation/v1/setUserStatus${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    setUserStatus: (query?: { status?: string; userId?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/authorisation/v1/setUserStatus`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   cache = {
     /**
@@ -3906,8 +4169,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/cache/v1
      * @secure
      */
-    list: (params?: RequestParams) =>
-      this.request<object[], any>(`/cache/v1`, "GET", params, null, BodyType.Json, true),
+    list: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/cache/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3918,8 +4188,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/cache/v1
      * @secure
      */
-    clear: (query?: { cacheName?: string; nodeName?: string }, params?: RequestParams) =>
-      this.request<number, any>(`/cache/v1${this.addQueryParams(query)}`, "DELETE", params, null, BodyType.Json, true),
+    clear: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/cache/v1`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3930,15 +4208,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/cache/v1/info
      * @secure
      */
-    info: (query?: { cacheName?: string; nodeName?: string }, params?: RequestParams) =>
-      this.request<CacheInfo, any>(
-        `/cache/v1/info${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    info: (query?: { cacheName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<CacheInfo, any>({
+        path: `/cache/v1/info`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   cluster = {
     /**
@@ -3950,8 +4229,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/cluster/lock/v1/keepALive/{nodeName}
      * @secure
      */
-    keepLockAlive: (nodeName: string, body: ClusterLockKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/cluster/lock/v1/keepALive/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    keepLockAlive: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/cluster/lock/v1/keepALive/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3962,8 +4249,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/cluster/lock/v1/release/{nodeName}
      * @secure
      */
-    releaseLock: (nodeName: string, body: ClusterLockKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/cluster/lock/v1/release/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    releaseLock: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/cluster/lock/v1/release/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3974,8 +4269,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/cluster/lock/v1/try/{nodeName}
      * @secure
      */
-    tryLock: (nodeName: string, body: ClusterLockKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/cluster/lock/v1/try/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    tryLock: (nodeName: string, body: ClusterLockKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/cluster/lock/v1/try/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   config = {
     /**
@@ -3987,8 +4290,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/config/v1
      * @secure
      */
-    create: (body: ConfigProperty, params?: RequestParams) =>
-      this.request<ConfigProperty, any>(`/config/v1`, "POST", params, body, BodyType.Json, true),
+    create: (body: ConfigProperty, params: RequestParams = {}) =>
+      this.request<ConfigProperty, any>({
+        path: `/config/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -3999,15 +4310,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/config/v1/clusterProperties/{propertyName}/dbOverrideValue
      * @secure
      */
-    update: (propertyName: string, body: ConfigProperty, params?: RequestParams) =>
-      this.request<ConfigProperty, any>(
-        `/config/v1/clusterProperties/${propertyName}/dbOverrideValue`,
-        "PUT",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    update: (propertyName: string, body: ConfigProperty, params: RequestParams = {}) =>
+      this.request<ConfigProperty, any>({
+        path: `/config/v1/clusterProperties/${propertyName}/dbOverrideValue`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4017,15 +4329,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/config/v1/clusterProperties/{propertyName}/yamlOverrideValue/{nodeName}
      * @secure
      */
-    getYamlValueByNodeAndName: (nodeName: string, propertyName: string, params?: RequestParams) =>
-      this.request<OverrideValueString, any>(
-        `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getYamlValueByNodeAndName: (nodeName: string, propertyName: string, params: RequestParams = {}) =>
+      this.request<OverrideValueString, any>({
+        path: `/config/v1/clusterProperties/${propertyName}/yamlOverrideValue/${nodeName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4036,8 +4348,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/config/v1/noauth/fetchUiConfig
      * @secure
      */
-    fetchUiConfig: (params?: RequestParams) =>
-      this.request<UiConfig, any>(`/config/v1/noauth/fetchUiConfig`, "GET", params, null, BodyType.Json, true),
+    fetchUiConfig: (params: RequestParams = {}) =>
+      this.request<UiConfig, any>({
+        path: `/config/v1/noauth/fetchUiConfig`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4047,15 +4366,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/config/v1/nodeProperties/{nodeName}
      * @secure
      */
-    listByNode: (nodeName: string, body: GlobalConfigCriteria, params?: RequestParams) =>
-      this.request<ListConfigResponse, any>(
-        `/config/v1/nodeProperties/${nodeName}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    listByNode: (nodeName: string, body: GlobalConfigCriteria, params: RequestParams = {}) =>
+      this.request<ListConfigResponse, any>({
+        path: `/config/v1/nodeProperties/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4066,8 +4386,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/config/v1/properties
      * @secure
      */
-    list: (body: GlobalConfigCriteria, params?: RequestParams) =>
-      this.request<ListConfigResponse, any>(`/config/v1/properties`, "POST", params, body, BodyType.Json, true),
+    list: (body: GlobalConfigCriteria, params: RequestParams = {}) =>
+      this.request<ListConfigResponse, any>({
+        path: `/config/v1/properties`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4077,15 +4405,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/config/v1/properties/{propertyName}
      * @secure
      */
-    getPropertyByName: (propertyName: string, params?: RequestParams) =>
-      this.request<ConfigProperty, any>(
-        `/config/v1/properties/${propertyName}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getPropertyByName: (propertyName: string, params: RequestParams = {}) =>
+      this.request<ConfigProperty, any>({
+        path: `/config/v1/properties/${propertyName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   content = {
     /**
@@ -4097,8 +4425,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/content/v1/confirmImport
      * @secure
      */
-    confirmImport: (body: ResourceKey, params?: RequestParams) =>
-      this.request<object[], any>(`/content/v1/confirmImport`, "POST", params, body, BodyType.Json, true),
+    confirmImport: (body: ResourceKey, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/content/v1/confirmImport`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4109,8 +4445,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/content/v1/export
      * @secure
      */
-    exportContent: (body: DocRefs, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/content/v1/export`, "POST", params, body, BodyType.Json, true),
+    exportContent: (body: DocRefs, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/content/v1/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4121,8 +4465,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/content/v1/fetchDependencies
      * @secure
      */
-    fetchDependencies: (body: DependencyCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/content/v1/fetchDependencies`, "POST", params, body, BodyType.Json, true),
+    fetchDependencies: (body: DependencyCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/content/v1/fetchDependencies`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4133,8 +4485,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/content/v1/import
      * @secure
      */
-    importContent: (body: ImportConfigRequest, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/content/v1/import`, "POST", params, body, BodyType.Json, true),
+    importContent: (body: ImportConfigRequest, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/content/v1/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   dashboard = {
     /**
@@ -4146,8 +4506,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dashboard/v1/downloadQuery
      * @secure
      */
-    downloadQuery: (body: DownloadQueryRequest, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/dashboard/v1/downloadQuery`, "POST", params, body, BodyType.Json, true),
+    downloadQuery: (body: DownloadQueryRequest, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/dashboard/v1/downloadQuery`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4158,15 +4526,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dashboard/v1/downloadSearchResults
      * @secure
      */
-    downloadSearchResults: (body: DownloadSearchResultsRequest, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(
-        `/dashboard/v1/downloadSearchResults`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    downloadSearchResults: (body: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/dashboard/v1/downloadSearchResults`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4177,8 +4546,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/dashboard/v1/fetchTimeZones
      * @secure
      */
-    fetchTimeZones: (params?: RequestParams) =>
-      this.request<object[], any>(`/dashboard/v1/fetchTimeZones`, "GET", params, null, BodyType.Json, true),
+    fetchTimeZones: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dashboard/v1/fetchTimeZones`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4189,8 +4565,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/dashboard/v1/functions
      * @secure
      */
-    fetchFunctions: (params?: RequestParams) =>
-      this.request<object[], any>(`/dashboard/v1/functions`, "GET", params, null, BodyType.Json, true),
+    fetchFunctions: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dashboard/v1/functions`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4201,8 +4584,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dashboard/v1/poll
      * @secure
      */
-    poll: (body: SearchBusPollRequest, params?: RequestParams) =>
-      this.request<object[], any>(`/dashboard/v1/poll`, "POST", params, body, BodyType.Json, true),
+    poll: (body: SearchBusPollRequest, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dashboard/v1/poll`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4213,8 +4604,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dashboard/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<DashboardDoc, any>(`/dashboard/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DashboardDoc, any>({
+        path: `/dashboard/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4225,8 +4624,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/dashboard/v1/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<DashboardDoc, any>(`/dashboard/v1/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<DashboardDoc, any>({
+        path: `/dashboard/v1/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4237,15 +4643,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dashboard/v1/validateExpression
      * @secure
      */
-    validateExpression: (body: string, params?: RequestParams) =>
-      this.request<ValidateExpressionResult, any>(
-        `/dashboard/v1/validateExpression`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    validateExpression: (body: string, params: RequestParams = {}) =>
+      this.request<ValidateExpressionResult, any>({
+        path: `/dashboard/v1/validateExpression`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   data = {
     /**
@@ -4257,8 +4664,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/data/v1/download
      * @secure
      */
-    download: (body: FindMetaCriteria, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/data/v1/download`, "POST", params, body, BodyType.Json, true),
+    download: (body: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/data/v1/download`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4269,8 +4684,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/data/v1/info/{id}
      * @secure
      */
-    info: (id: number, params?: RequestParams) =>
-      this.request<DataInfoSection, any>(`/data/v1/info/${id}`, "GET", params, null, BodyType.Json, true),
+    info: (id: number, params: RequestParams = {}) =>
+      this.request<DataInfoSection, any>({
+        path: `/data/v1/info/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4281,8 +4703,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/data/v1/upload
      * @secure
      */
-    upload: (body: UploadDataRequest, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/data/v1/upload`, "POST", params, body, BodyType.Json, true),
+    upload: (body: UploadDataRequest, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/data/v1/upload`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   dataRetentionRules = {
     /**
@@ -4294,15 +4724,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dataRetentionRules/v1/impactSummary
      * @secure
      */
-    getRetentionDeletionSummary: (body: DataRetentionDeleteSummaryRequest, params?: RequestParams) =>
-      this.request<DataRetentionDeleteSummary, any>(
-        `/dataRetentionRules/v1/impactSummary`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    getRetentionDeletionSummary: (body: DataRetentionDeleteSummaryRequest, params: RequestParams = {}) =>
+      this.request<DataRetentionDeleteSummary, any>({
+        path: `/dataRetentionRules/v1/impactSummary`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4313,15 +4744,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/dataRetentionRules/v1/impactSummary/{queryId}
      * @secure
      */
-    cancelQuery: (queryId: string, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/dataRetentionRules/v1/impactSummary/${queryId}`,
-        "DELETE",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    cancelQuery: (queryId: string, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/dataRetentionRules/v1/impactSummary/${queryId}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4332,8 +4763,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dataRetentionRules/v1/read
      * @secure
      */
-    read: (params?: RequestParams) =>
-      this.request<DataRetentionRules, any>(`/dataRetentionRules/v1/read`, "POST", params, null, BodyType.Json, true),
+    read: (params: RequestParams = {}) =>
+      this.request<DataRetentionRules, any>({
+        path: `/dataRetentionRules/v1/read`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4344,8 +4782,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/dataRetentionRules/v1/update
      * @secure
      */
-    update: (body: DataRetentionRules, params?: RequestParams) =>
-      this.request<DataRetentionRules, any>(`/dataRetentionRules/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: DataRetentionRules, params: RequestParams = {}) =>
+      this.request<DataRetentionRules, any>({
+        path: `/dataRetentionRules/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   dataSource = {
     /**
@@ -4357,8 +4803,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dataSource/v1/fetchFields
      * @secure
      */
-    fetchFields: (body: DocRef, params?: RequestParams) =>
-      this.request<object[], any>(`/dataSource/v1/fetchFields`, "POST", params, body, BodyType.Json, true),
+    fetchFields: (body: DocRef, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dataSource/v1/fetchFields`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   dbStatus = {
     /**
@@ -4370,8 +4824,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/dbStatus/v1
      * @secure
      */
-    getSystemTableStatus: (params?: RequestParams) =>
-      this.request<ResultPageDBTableStatus, any>(`/dbStatus/v1`, "GET", params, null, BodyType.Json, true),
+    getSystemTableStatus: (params: RequestParams = {}) =>
+      this.request<ResultPageDBTableStatus, any>({
+        path: `/dbStatus/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4382,8 +4843,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dbStatus/v1
      * @secure
      */
-    findSystemTableStatus: (body: FindDBTableCriteria, params?: RequestParams) =>
-      this.request<ResultPageDBTableStatus, any>(`/dbStatus/v1`, "POST", params, body, BodyType.Json, true),
+    findSystemTableStatus: (body: FindDBTableCriteria, params: RequestParams = {}) =>
+      this.request<ResultPageDBTableStatus, any>({
+        path: `/dbStatus/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   dictionary = {
     /**
@@ -4395,8 +4864,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dictionary/v1/download
      * @secure
      */
-    download: (params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/dictionary/v1/download`, "POST", params, null, BodyType.Json, true),
+    download: (params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/dictionary/v1/download`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4407,8 +4883,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dictionary/v1/export
      * @secure
      */
-    exportDocument: (body: DocRef, params?: RequestParams) =>
-      this.request<Base64EncodedDocumentData, any>(`/dictionary/v1/export`, "POST", params, body, BodyType.Json, true),
+    exportDocument: (body: DocRef, params: RequestParams = {}) =>
+      this.request<Base64EncodedDocumentData, any>({
+        path: `/dictionary/v1/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4419,8 +4903,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dictionary/v1/import
      * @secure
      */
-    importDocument: (body: Base64EncodedDocumentData, params?: RequestParams) =>
-      this.request<DocRef, any>(`/dictionary/v1/import`, "POST", params, body, BodyType.Json, true),
+    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/dictionary/v1/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4431,8 +4923,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/dictionary/v1/list
      * @secure
      */
-    listDocuments: (params?: RequestParams) =>
-      this.request<object[], any>(`/dictionary/v1/list`, "GET", params, null, BodyType.Json, true),
+    listDocuments: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dictionary/v1/list`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4443,8 +4942,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dictionary/v1/read
      * @secure
      */
-    read: (params?: RequestParams) =>
-      this.request<DictionaryDoc, any>(`/dictionary/v1/read`, "POST", params, null, BodyType.Json, true),
+    read: (params: RequestParams = {}) =>
+      this.request<DictionaryDoc, any>({
+        path: `/dictionary/v1/read`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4455,8 +4961,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/dictionary/v1/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<DictionaryDoc, any>(`/dictionary/v1/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<DictionaryDoc, any>({
+        path: `/dictionary/v1/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4466,8 +4979,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/dictionary/v1/{dictionaryUuid}
      * @secure
      */
-    fetch: (dictionaryUuid: string, params?: RequestParams) =>
-      this.request<DictionaryDTO, any>(`/dictionary/v1/${dictionaryUuid}`, "GET", params, null, BodyType.Json, true),
+    fetch: (dictionaryUuid: string, params: RequestParams = {}) =>
+      this.request<DictionaryDTO, any>({
+        path: `/dictionary/v1/${dictionaryUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4477,8 +4997,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/dictionary/v1/{dictionaryUuid}
      * @secure
      */
-    save: (dictionaryUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/dictionary/v1/${dictionaryUuid}`, "POST", params, null, BodyType.Json, true),
+    save: (dictionaryUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/dictionary/v1/${dictionaryUuid}`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4491,8 +5017,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    exportDocument2: (body: DocRef, params?: RequestParams) =>
-      this.request<Base64EncodedDocumentData, any>(`/dictionary/v2/export`, "POST", params, body, BodyType.Json, true),
+    exportDocument2: (body: DocRef, params: RequestParams = {}) =>
+      this.request<Base64EncodedDocumentData, any>({
+        path: `/dictionary/v2/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4505,8 +5039,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    importDocument2: (body: Base64EncodedDocumentData, params?: RequestParams) =>
-      this.request<DocRef, any>(`/dictionary/v2/import`, "POST", params, body, BodyType.Json, true),
+    importDocument2: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/dictionary/v2/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4519,8 +5061,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    listDocuments2: (params?: RequestParams) =>
-      this.request<object[], any>(`/dictionary/v2/list`, "GET", params, null, BodyType.Json, true),
+    listDocuments2: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/dictionary/v2/list`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   docPermissions = {
     /**
@@ -4531,8 +5080,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/docPermissions/v1/forDoc/{docUuid}
      * @secure
      */
-    getPermissionsForDocument: (docUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/docPermissions/v1/forDoc/${docUuid}`, "GET", params, null, BodyType.Json, true),
+    getPermissionsForDocument: (docUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDoc/${docUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4542,8 +5097,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/docPermissions/v1/forDoc/{docUuid}
      * @secure
      */
-    clearDocumentPermissions: (docUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/docPermissions/v1/forDoc/${docUuid}`, "DELETE", params, null, BodyType.Json, true),
+    clearDocumentPermissions: (docUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDoc/${docUuid}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4553,15 +5114,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}
      * @secure
      */
-    getPermissionsForDocumentForUser: (docUuid: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(
-        `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getPermissionsForDocumentForUser: (docUuid: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4571,15 +5131,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}
      * @secure
      */
-    removePermissionForDocumentForUser: (docUuid: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(
-        `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
-        "DELETE",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    removePermissionForDocumentForUser: (docUuid: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4589,15 +5148,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}/{permissionName}
      * @secure
      */
-    addPermission: (docUuid: string, permissionName: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(
-        `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
-        "POST",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    addPermission: (docUuid: string, permissionName: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4607,15 +5165,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/docPermissions/v1/forDocForUser/{docUuid}/{userUuid}/{permissionName}
      * @secure
      */
-    removePermission: (docUuid: string, permissionName: string, userUuid: string, params?: RequestParams) =>
-      this.request<any, any>(
-        `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
-        "DELETE",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    removePermission: (docUuid: string, permissionName: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDocForUser/${docUuid}/${userUuid}/${permissionName}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Document Permissions API
@@ -4625,8 +5182,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/docPermissions/v1/forDocType/{docType}
      * @secure
      */
-    getPermissionForDocType: (docType: string, params?: RequestParams) =>
-      this.request<any, any>(`/docPermissions/v1/forDocType/${docType}`, "GET", params, null, BodyType.Json, true),
+    getPermissionForDocType: (docType: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docPermissions/v1/forDocType/${docType}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   elements = {
     /**
@@ -4637,8 +5200,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/elements/v1/elementProperties
      * @secure
      */
-    getElementProperties: (params?: RequestParams) =>
-      this.request<any, any>(`/elements/v1/elementProperties`, "GET", params, null, BodyType.Json, true),
+    getElementProperties: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/elements/v1/elementProperties`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4648,8 +5217,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/elements/v1/elements
      * @secure
      */
-    getElements: (params?: RequestParams) =>
-      this.request<any, any>(`/elements/v1/elements`, "GET", params, null, BodyType.Json, true),
+    getElements: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/elements/v1/elements`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   entityEvent = {
     /**
@@ -4661,8 +5236,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/entityEvent/v1/{nodeName}
      * @secure
      */
-    fireEvent: (nodeName: string, body: EntityEvent, params?: RequestParams) =>
-      this.request<boolean, any>(`/entityEvent/v1/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    fireEvent: (nodeName: string, body: EntityEvent, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/entityEvent/v1/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   explorer = {
     /**
@@ -4673,8 +5256,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/explorer/v1/all
      * @secure
      */
-    getExplorerTree: (params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/all`, "GET", params, null, BodyType.Json, true),
+    getExplorerTree: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/all`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4684,8 +5273,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v1/copy
      * @secure
      */
-    copyDocument: (body: CopyOp, params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/copy`, "POST", params, body, BodyType.Json, true),
+    copyDocument: (body: CopyOp, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/copy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4695,8 +5291,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v1/create
      * @secure
      */
-    createDocument: (body: CreateOp, params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/create`, "POST", params, body, BodyType.Json, true),
+    createDocument: (body: CreateOp, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/create`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4706,8 +5309,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/explorer/v1/delete
      * @secure
      */
-    deleteDocument: (params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/delete`, "DELETE", params, null, BodyType.Json, true),
+    deleteDocument: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/delete`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4717,8 +5326,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/explorer/v1/docRefTypes
      * @secure
      */
-    getDocRefTypes: (params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/docRefTypes`, "GET", params, null, BodyType.Json, true),
+    getDocRefTypes: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/docRefTypes`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4728,8 +5343,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/explorer/v1/info/{type}/{uuid}
      * @secure
      */
-    getDocInfo: (type: string, uuid: string, params?: RequestParams) =>
-      this.request<DocRefInfo, any>(`/explorer/v1/info/${type}/${uuid}`, "GET", params, null, BodyType.Json, true),
+    getDocInfo: (type: string, uuid: string, params: RequestParams = {}) =>
+      this.request<DocRefInfo, any>({
+        path: `/explorer/v1/info/${type}/${uuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4739,8 +5361,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/explorer/v1/move
      * @secure
      */
-    moveDocument: (params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/move`, "PUT", params, null, BodyType.Json, true),
+    moveDocument: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/move`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4750,8 +5378,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/explorer/v1/rename
      * @secure
      */
-    renameDocument: (params?: RequestParams) =>
-      this.request<any, any>(`/explorer/v1/rename`, "PUT", params, null, BodyType.Json, true),
+    renameDocument: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/rename`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4761,15 +5395,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/explorer/v1/search
      * @secure
      */
-    search: (query?: { pageOffset?: number; pageSize?: number; searchTerm?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/explorer/v1/search${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    search: (query?: { pageOffset?: number; pageSize?: number; searchTerm?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v1/search`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -4780,8 +5414,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/copy
      * @secure
      */
-    copy: (body: ExplorerServiceCopyRequest, params?: RequestParams) =>
-      this.request<BulkActionResult, any>(`/explorer/v2/copy`, "POST", params, body, BodyType.Json, true),
+    copy: (body: ExplorerServiceCopyRequest, params: RequestParams = {}) =>
+      this.request<BulkActionResult, any>({
+        path: `/explorer/v2/copy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4792,8 +5434,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/create
      * @secure
      */
-    create: (body: ExplorerServiceCreateRequest, params?: RequestParams) =>
-      this.request<DocRef, any>(`/explorer/v2/create`, "POST", params, body, BodyType.Json, true),
+    create: (body: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/explorer/v2/create`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4804,8 +5454,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/explorer/v2/delete
      * @secure
      */
-    delete: (body: ExplorerServiceDeleteRequest, params?: RequestParams) =>
-      this.request<BulkActionResult, any>(`/explorer/v2/delete`, "DELETE", params, body, BodyType.Json, true),
+    delete: (body: ExplorerServiceDeleteRequest, params: RequestParams = {}) =>
+      this.request<BulkActionResult, any>({
+        path: `/explorer/v2/delete`,
+        method: "DELETE",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4816,8 +5474,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/fetchDocRefs
      * @secure
      */
-    fetchDocRefs: (body: DocRef[], params?: RequestParams) =>
-      this.request<object[], any>(`/explorer/v2/fetchDocRefs`, "POST", params, body, BodyType.Json, true),
+    fetchDocRefs: (body: DocRef[], params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/explorer/v2/fetchDocRefs`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4828,8 +5494,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/explorer/v2/fetchDocumentTypes
      * @secure
      */
-    fetchDocumentTypes: (params?: RequestParams) =>
-      this.request<DocumentTypes, any>(`/explorer/v2/fetchDocumentTypes`, "GET", params, null, BodyType.Json, true),
+    fetchDocumentTypes: (params: RequestParams = {}) =>
+      this.request<DocumentTypes, any>({
+        path: `/explorer/v2/fetchDocumentTypes`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4840,15 +5513,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/fetchExplorerNodes
      * @secure
      */
-    fetch: (body: FindExplorerNodeCriteria, params?: RequestParams) =>
-      this.request<FetchExplorerNodeResult, any>(
-        `/explorer/v2/fetchExplorerNodes`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fetch: (body: FindExplorerNodeCriteria, params: RequestParams = {}) =>
+      this.request<FetchExplorerNodeResult, any>({
+        path: `/explorer/v2/fetchExplorerNodes`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4859,15 +5533,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/fetchExplorerPermissions
      * @secure
      */
-    fetchExplorerPermissions: (body: ExplorerNode[], params?: RequestParams) =>
-      this.request<Record<string, object>, any>(
-        `/explorer/v2/fetchExplorerPermissions`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fetchExplorerPermissions: (body: ExplorerNode[], params: RequestParams = {}) =>
+      this.request<Record<string, object>, any>({
+        path: `/explorer/v2/fetchExplorerPermissions`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4878,8 +5553,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/explorer/v2/info
      * @secure
      */
-    info: (body: DocRef, params?: RequestParams) =>
-      this.request<DocRefInfo, any>(`/explorer/v2/info`, "POST", params, body, BodyType.Json, true),
+    info: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DocRefInfo, any>({
+        path: `/explorer/v2/info`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4890,8 +5573,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/explorer/v2/move
      * @secure
      */
-    move: (body: ExplorerServiceMoveRequest, params?: RequestParams) =>
-      this.request<BulkActionResult, any>(`/explorer/v2/move`, "PUT", params, body, BodyType.Json, true),
+    move: (body: ExplorerServiceMoveRequest, params: RequestParams = {}) =>
+      this.request<BulkActionResult, any>({
+        path: `/explorer/v2/move`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4902,8 +5593,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/explorer/v2/rename
      * @secure
      */
-    rename: (body: ExplorerServiceRenameRequest, params?: RequestParams) =>
-      this.request<DocRef, any>(`/explorer/v2/rename`, "PUT", params, body, BodyType.Json, true),
+    rename: (body: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/explorer/v2/rename`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   export = {
     /**
@@ -4914,7 +5613,13 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/export/v1
      * @secure
      */
-    export: (params?: RequestParams) => this.request<any, any>(`/export/v1`, "GET", params, null, BodyType.Json, true),
+    export: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/export/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
   };
   feed = {
     /**
@@ -4926,8 +5631,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/feed/v1/fetchSupportedEncodings
      * @secure
      */
-    fetchSupportedEncodings: (params?: RequestParams) =>
-      this.request<object[], any>(`/feed/v1/fetchSupportedEncodings`, "GET", params, null, BodyType.Json, true),
+    fetchSupportedEncodings: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/feed/v1/fetchSupportedEncodings`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4938,8 +5650,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/feed/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<FeedDoc, any>(`/feed/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<FeedDoc, any>({
+        path: `/feed/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4950,8 +5670,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/feed/v1/update
      * @secure
      */
-    update: (body: FeedDoc, params?: RequestParams) =>
-      this.request<FeedDoc, any>(`/feed/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: FeedDoc, params: RequestParams = {}) =>
+      this.request<FeedDoc, any>({
+        path: `/feed/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   feedStatus = {
     /**
@@ -4963,15 +5691,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/feedStatus/v1/getFeedStatus
      * @secure
      */
-    getFeedStatus: (body: GetFeedStatusRequest, params?: RequestParams) =>
-      this.request<GetFeedStatusResponse, any>(
-        `/feedStatus/v1/getFeedStatus`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    getFeedStatus: (body: GetFeedStatusRequest, params: RequestParams = {}) =>
+      this.request<GetFeedStatusResponse, any>({
+        path: `/feedStatus/v1/getFeedStatus`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   fsVolume = {
     /**
@@ -4982,8 +5711,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/fsVolume/v1
      * @secure
      */
-    create: (params?: RequestParams) =>
-      this.request<FsVolume, any>(`/fsVolume/v1`, "POST", params, null, BodyType.Json, true),
+    create: (params: RequestParams = {}) =>
+      this.request<FsVolume, any>({
+        path: `/fsVolume/v1`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -4994,8 +5730,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/fsVolume/v1/find
      * @secure
      */
-    find: (body: FindFsVolumeCriteria, params?: RequestParams) =>
-      this.request<object[], any>(`/fsVolume/v1/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: FindFsVolumeCriteria, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/fsVolume/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5006,8 +5750,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/fsVolume/v1/rescan
      * @secure
      */
-    rescan: (params?: RequestParams) =>
-      this.request<boolean, any>(`/fsVolume/v1/rescan`, "GET", params, null, BodyType.Json, true),
+    rescan: (params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/fsVolume/v1/rescan`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5018,8 +5769,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/fsVolume/v1/{id}
      * @secure
      */
-    read: (id: number, params?: RequestParams) =>
-      this.request<FsVolume, any>(`/fsVolume/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    read: (id: number, params: RequestParams = {}) =>
+      this.request<FsVolume, any>({
+        path: `/fsVolume/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5030,8 +5788,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/fsVolume/v1/{id}
      * @secure
      */
-    update: (id: number, body: FsVolume, params?: RequestParams) =>
-      this.request<FsVolume, any>(`/fsVolume/v1/${id}`, "PUT", params, body, BodyType.Json, true),
+    update: (id: number, body: FsVolume, params: RequestParams = {}) =>
+      this.request<FsVolume, any>({
+        path: `/fsVolume/v1/${id}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5042,8 +5808,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/fsVolume/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<boolean, any>(`/fsVolume/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/fsVolume/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   index = {
     /**
@@ -5055,8 +5828,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v1/export
      * @secure
      */
-    exportDocument: (body: DocRef, params?: RequestParams) =>
-      this.request<Base64EncodedDocumentData, any>(`/index/v1/export`, "POST", params, body, BodyType.Json, true),
+    exportDocument: (body: DocRef, params: RequestParams = {}) =>
+      this.request<Base64EncodedDocumentData, any>({
+        path: `/index/v1/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5067,8 +5848,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v1/import
      * @secure
      */
-    importDocument: (body: Base64EncodedDocumentData, params?: RequestParams) =>
-      this.request<DocRef, any>(`/index/v1/import`, "POST", params, body, BodyType.Json, true),
+    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/index/v1/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5079,8 +5868,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/index/v1/list
      * @secure
      */
-    listDocuments: (params?: RequestParams) =>
-      this.request<object[], any>(`/index/v1/list`, "GET", params, null, BodyType.Json, true),
+    listDocuments: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/index/v1/list`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5090,8 +5886,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/index/v1/{indexUuid}
      * @secure
      */
-    fetch: (indexUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/index/v1/${indexUuid}`, "GET", params, null, BodyType.Json, true),
+    fetch: (indexUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/index/v1/${indexUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5101,8 +5903,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v1/{indexUuid}
      * @secure
      */
-    save: (indexUuid: string, params?: RequestParams) =>
-      this.request<any, any>(`/index/v1/${indexUuid}`, "POST", params, null, BodyType.Json, true),
+    save: (indexUuid: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/index/v1/${indexUuid}`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5113,8 +5921,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v2/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<IndexDoc, any>(`/index/v2/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<IndexDoc, any>({
+        path: `/index/v2/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5125,15 +5941,17 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v2/shard/delete
      * @secure
      */
-    deleteIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params?: RequestParams) =>
-      this.request<number, any>(
-        `/index/v2/shard/delete${this.addQueryParams(query)}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    deleteIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/index/v2/shard/delete`,
+        method: "POST",
+        query: query,
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5144,8 +5962,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v2/shard/find
      * @secure
      */
-    findIndexShards: (body: FindIndexShardCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/index/v2/shard/find`, "POST", params, body, BodyType.Json, true),
+    findIndexShards: (body: FindIndexShardCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/index/v2/shard/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5156,15 +5982,17 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/v2/shard/flush
      * @secure
      */
-    flushIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params?: RequestParams) =>
-      this.request<number, any>(
-        `/index/v2/shard/flush${this.addQueryParams(query)}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    flushIndexShards: (body: FindIndexShardCriteria, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/index/v2/shard/flush`,
+        method: "POST",
+        query: query,
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5175,8 +6003,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/index/v2/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<IndexDoc, any>(`/index/v2/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<IndexDoc, any>({
+        path: `/index/v2/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5187,8 +6022,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/volume/v2
      * @secure
      */
-    create: (body: IndexVolume, params?: RequestParams) =>
-      this.request<IndexVolume, any>(`/index/volume/v2`, "POST", params, body, BodyType.Json, true),
+    create: (body: IndexVolume, params: RequestParams = {}) =>
+      this.request<IndexVolume, any>({
+        path: `/index/volume/v2`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5199,8 +6042,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/index/volume/v2/find
      * @secure
      */
-    find: (body: ExpressionCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/index/volume/v2/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/index/volume/v2/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5211,15 +6062,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/index/volume/v2/rescan
      * @secure
      */
-    rescan: (query?: { nodeName?: string }, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/index/volume/v2/rescan${this.addQueryParams(query)}`,
-        "DELETE",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    rescan: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/index/volume/v2/rescan`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5232,8 +6084,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    read2: (id: number, params?: RequestParams) =>
-      this.request<IndexVolume, any>(`/index/volume/v2/${id}`, "GET", params, null, BodyType.Json, true),
+    read2: (id: number, params: RequestParams = {}) =>
+      this.request<IndexVolume, any>({
+        path: `/index/volume/v2/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5246,8 +6105,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    update2: (id: number, body: IndexVolume, params?: RequestParams) =>
-      this.request<IndexVolume, any>(`/index/volume/v2/${id}`, "PUT", params, body, BodyType.Json, true),
+    update2: (id: number, body: IndexVolume, params: RequestParams = {}) =>
+      this.request<IndexVolume, any>({
+        path: `/index/volume/v2/${id}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5258,8 +6125,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/index/volume/v2/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<boolean, any>(`/index/volume/v2/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/index/volume/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5272,8 +6146,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    create2: (body: string, params?: RequestParams) =>
-      this.request<IndexVolumeGroup, any>(`/index/volumeGroup/v2`, "POST", params, body, BodyType.Json, true),
+    create2: (body: string, params: RequestParams = {}) =>
+      this.request<IndexVolumeGroup, any>({
+        path: `/index/volumeGroup/v2`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5286,8 +6168,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    find2: (body: ExpressionCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/index/volumeGroup/v2/find`, "POST", params, body, BodyType.Json, true),
+    find2: (body: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/index/volumeGroup/v2/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5300,8 +6190,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    read3: (id: number, params?: RequestParams) =>
-      this.request<IndexVolumeGroup, any>(`/index/volumeGroup/v2/${id}`, "GET", params, null, BodyType.Json, true),
+    read3: (id: number, params: RequestParams = {}) =>
+      this.request<IndexVolumeGroup, any>({
+        path: `/index/volumeGroup/v2/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5314,8 +6211,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    update3: (id: number, params?: RequestParams) =>
-      this.request<IndexVolumeGroup, any>(`/index/volumeGroup/v2/${id}`, "PUT", params, null, BodyType.Json, true),
+    update3: (id: number, params: RequestParams = {}) =>
+      this.request<IndexVolumeGroup, any>({
+        path: `/index/volumeGroup/v2/${id}`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5328,8 +6232,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    delete2: (id: number, params?: RequestParams) =>
-      this.request<boolean, any>(`/index/volumeGroup/v2/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete2: (id: number, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/index/volumeGroup/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   job = {
     /**
@@ -5341,8 +6252,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/job/v1
      * @secure
      */
-    list: (params?: RequestParams) =>
-      this.request<ResultPage, any>(`/job/v1`, "GET", params, null, BodyType.Json, true),
+    list: (params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/job/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5353,8 +6271,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/job/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params?: RequestParams) =>
-      this.request<any, any>(`/job/v1/${id}/enabled`, "PUT", params, body, BodyType.Json, true),
+    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/job/v1/${id}/enabled`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   jobNode = {
     /**
@@ -5366,15 +6291,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/jobNode/v1
      * @secure
      */
-    list: (query?: { jobName?: string; nodeName?: string }, params?: RequestParams) =>
-      this.request<ResultPage, any>(
-        `/jobNode/v1${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    list: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/jobNode/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5385,15 +6311,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/jobNode/v1/info
      * @secure
      */
-    info: (query?: { jobName?: string; nodeName?: string }, params?: RequestParams) =>
-      this.request<JobNodeInfo, any>(
-        `/jobNode/v1/info${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    info: (query?: { jobName?: string; nodeName?: string }, params: RequestParams = {}) =>
+      this.request<JobNodeInfo, any>({
+        path: `/jobNode/v1/info`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5404,8 +6331,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/jobNode/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params?: RequestParams) =>
-      this.request<any, any>(`/jobNode/v1/${id}/enabled`, "PUT", params, body, BodyType.Json, true),
+    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/jobNode/v1/${id}/enabled`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5416,8 +6350,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/jobNode/v1/{id}/schedule
      * @secure
      */
-    setSchedule: (id: number, body: string, params?: RequestParams) =>
-      this.request<any, any>(`/jobNode/v1/${id}/schedule`, "PUT", params, body, BodyType.Json, true),
+    setSchedule: (id: number, body: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/jobNode/v1/${id}/schedule`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5428,8 +6369,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/jobNode/v1/{id}/taskLimit
      * @secure
      */
-    setTaskLimit: (id: number, body: number, params?: RequestParams) =>
-      this.request<any, any>(`/jobNode/v1/${id}/taskLimit`, "PUT", params, body, BodyType.Json, true),
+    setTaskLimit: (id: number, body: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/jobNode/v1/${id}/taskLimit`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   kafkaConfig = {
     /**
@@ -5441,8 +6389,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/kafkaConfig/v1/download
      * @secure
      */
-    download: (body: DocRef, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/kafkaConfig/v1/download`, "POST", params, body, BodyType.Json, true),
+    download: (body: DocRef, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/kafkaConfig/v1/download`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5453,8 +6409,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/kafkaConfig/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<KafkaConfigDoc, any>(`/kafkaConfig/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<KafkaConfigDoc, any>({
+        path: `/kafkaConfig/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5465,8 +6429,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/kafkaConfig/v1/update
      * @secure
      */
-    update: (body: KafkaConfigDoc, params?: RequestParams) =>
-      this.request<KafkaConfigDoc, any>(`/kafkaConfig/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: KafkaConfigDoc, params: RequestParams = {}) =>
+      this.request<KafkaConfigDoc, any>({
+        path: `/kafkaConfig/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   meta = {
     /**
@@ -5478,8 +6450,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/meta/v1/find
      * @secure
      */
-    findMetaRow: (body: FindMetaCriteria, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/meta/v1/find`, "POST", params, body, BodyType.Json, true),
+    findMetaRow: (body: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/meta/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5490,15 +6470,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/meta/v1/getReprocessSelectionSummary
      * @secure
      */
-    getReprocessSelectionSummary: (body: FindMetaCriteria, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(
-        `/meta/v1/getReprocessSelectionSummary`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    getReprocessSelectionSummary: (body: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/meta/v1/getReprocessSelectionSummary`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5509,8 +6490,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/meta/v1/getSelectionSummary
      * @secure
      */
-    getSelectionSummary: (body: FindMetaCriteria, params?: RequestParams) =>
-      this.request<ResourceGeneration, any>(`/meta/v1/getSelectionSummary`, "POST", params, body, BodyType.Json, true),
+    getSelectionSummary: (body: FindMetaCriteria, params: RequestParams = {}) =>
+      this.request<ResourceGeneration, any>({
+        path: `/meta/v1/getSelectionSummary`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5521,8 +6510,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/meta/v1/getTypes
      * @secure
      */
-    getTypes: (params?: RequestParams) =>
-      this.request<object[], any>(`/meta/v1/getTypes`, "GET", params, null, BodyType.Json, true),
+    getTypes: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/meta/v1/getTypes`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5533,8 +6529,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/meta/v1/update/status
      * @secure
      */
-    updateStatus: (params?: RequestParams) =>
-      this.request<number, any>(`/meta/v1/update/status`, "PUT", params, null, BodyType.Json, true),
+    updateStatus: (params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/meta/v1/update/status`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   node = {
     /**
@@ -5546,8 +6549,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/node/v1
      * @secure
      */
-    find: (params?: RequestParams) =>
-      this.request<FetchNodeStatusResponse, any>(`/node/v1`, "GET", params, null, BodyType.Json, true),
+    find: (params: RequestParams = {}) =>
+      this.request<FetchNodeStatusResponse, any>({
+        path: `/node/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5558,8 +6568,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/node/v1/all
      * @secure
      */
-    listAllNodes: (params?: RequestParams) =>
-      this.request<object[], any>(`/node/v1/all`, "GET", params, null, BodyType.Json, true),
+    listAllNodes: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/node/v1/all`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5570,8 +6587,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/node/v1/enabled
      * @secure
      */
-    listEnabledNodes: (params?: RequestParams) =>
-      this.request<object[], any>(`/node/v1/enabled`, "GET", params, null, BodyType.Json, true),
+    listEnabledNodes: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/node/v1/enabled`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5582,8 +6606,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/node/v1/enabled/{nodeName}
      * @secure
      */
-    setEnabled: (nodeName: string, body: boolean, params?: RequestParams) =>
-      this.request<any, any>(`/node/v1/enabled/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    setEnabled: (nodeName: string, body: boolean, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/node/v1/enabled/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5594,8 +6625,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/node/v1/info/{nodeName}
      * @secure
      */
-    info: (nodeName: string, params?: RequestParams) =>
-      this.request<number, any>(`/node/v1/info/${nodeName}`, "GET", params, null, BodyType.Json, true),
+    info: (nodeName: string, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/node/v1/info/${nodeName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5606,8 +6644,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/node/v1/ping/{nodeName}
      * @secure
      */
-    ping: (nodeName: string, params?: RequestParams) =>
-      this.request<number, any>(`/node/v1/ping/${nodeName}`, "GET", params, null, BodyType.Json, true),
+    ping: (nodeName: string, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/node/v1/ping/${nodeName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5618,8 +6663,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/node/v1/priority/{nodeName}
      * @secure
      */
-    setPriority: (nodeName: string, body: number, params?: RequestParams) =>
-      this.request<any, any>(`/node/v1/priority/${nodeName}`, "PUT", params, body, BodyType.Json, true),
+    setPriority: (nodeName: string, body: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/node/v1/priority/${nodeName}`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   oauth2 = {
     /**
@@ -5631,15 +6683,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/oauth2/v1/noauth/.well-known/openid-configuration
      * @secure
      */
-    openIdConfiguration: (params?: RequestParams) =>
-      this.request<string, any>(
-        `/oauth2/v1/noauth/.well-known/openid-configuration`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    openIdConfiguration: (params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/oauth2/v1/noauth/.well-known/openid-configuration`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5660,16 +6712,17 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
         scope: string;
         state?: string;
       },
-      params?: RequestParams,
+      params: RequestParams = {},
     ) =>
-      this.request<string, any>(
-        `/oauth2/v1/noauth/auth${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+      this.request<string, any>({
+        path: `/oauth2/v1/noauth/auth`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5680,8 +6733,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/oauth2/v1/noauth/certs
      * @secure
      */
-    certs: (params?: RequestParams) =>
-      this.request<string, any>(`/oauth2/v1/noauth/certs`, "GET", params, null, BodyType.Json, true),
+    certs: (params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/oauth2/v1/noauth/certs`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5692,8 +6752,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/oauth2/v1/noauth/token
      * @secure
      */
-    token: (body: TokenRequest, params?: RequestParams) =>
-      this.request<string, any>(`/oauth2/v1/noauth/token`, "POST", params, body, BodyType.Json, true),
+    token: (body: TokenRequest, params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/oauth2/v1/noauth/token`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   permission = {
     /**
@@ -5705,8 +6773,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/permission/app/v1
      * @secure
      */
-    getUserAndPermissions: (params?: RequestParams) =>
-      this.request<UserAndPermissions, any>(`/permission/app/v1`, "GET", params, null, BodyType.Json, true),
+    getUserAndPermissions: (params: RequestParams = {}) =>
+      this.request<UserAndPermissions, any>({
+        path: `/permission/app/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5717,8 +6792,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/app/v1/changeUser
      * @secure
      */
-    changeUser: (body: ChangeUserRequest, params?: RequestParams) =>
-      this.request<boolean, any>(`/permission/app/v1/changeUser`, "POST", params, body, BodyType.Json, true),
+    changeUser: (body: ChangeUserRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/permission/app/v1/changeUser`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5729,8 +6812,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/permission/app/v1/fetchAllPermissions
      * @secure
      */
-    fetchAllPermissions: (params?: RequestParams) =>
-      this.request<object[], any>(`/permission/app/v1/fetchAllPermissions`, "GET", params, null, BodyType.Json, true),
+    fetchAllPermissions: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/permission/app/v1/fetchAllPermissions`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5741,15 +6831,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/app/v1/fetchUserAppPermissions
      * @secure
      */
-    fetchUserAppPermissions: (body: User, params?: RequestParams) =>
-      this.request<UserAndPermissions, any>(
-        `/permission/app/v1/fetchUserAppPermissions`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fetchUserAppPermissions: (body: User, params: RequestParams = {}) =>
+      this.request<UserAndPermissions, any>({
+        path: `/permission/app/v1/fetchUserAppPermissions`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5760,15 +6851,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/changeEvent/v1/fireChange/{nodeName}
      * @secure
      */
-    fireChange: (nodeName: string, body: PermissionChangeRequest, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/permission/changeEvent/v1/fireChange/${nodeName}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fireChange: (nodeName: string, body: PermissionChangeRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/permission/changeEvent/v1/fireChange/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5779,15 +6871,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/doc/v1/changeDocumentPermissions
      * @secure
      */
-    changeDocumentPermissions: (body: ChangeDocumentPermissionsRequest, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/permission/doc/v1/changeDocumentPermissions`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    changeDocumentPermissions: (body: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/permission/doc/v1/changeDocumentPermissions`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5798,15 +6891,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/doc/v1/checkDocumentPermission
      * @secure
      */
-    checkDocumentPermission: (body: CheckDocumentPermissionRequest, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/permission/doc/v1/checkDocumentPermission`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    checkDocumentPermission: (body: CheckDocumentPermissionRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/permission/doc/v1/checkDocumentPermission`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5817,15 +6911,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/doc/v1/copyPermissionsFromParent
      * @secure
      */
-    copyPermissionFromParent: (body: CopyPermissionsFromParentRequest, params?: RequestParams) =>
-      this.request<DocumentPermissions, any>(
-        `/permission/doc/v1/copyPermissionsFromParent`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    copyPermissionFromParent: (body: CopyPermissionsFromParentRequest, params: RequestParams = {}) =>
+      this.request<DocumentPermissions, any>({
+        path: `/permission/doc/v1/copyPermissionsFromParent`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5836,15 +6931,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/doc/v1/fetchAllDocumentPermissions
      * @secure
      */
-    fetchAllDocumentPermissions: (body: FetchAllDocumentPermissionsRequest, params?: RequestParams) =>
-      this.request<DocumentPermissions, any>(
-        `/permission/doc/v1/fetchAllDocumentPermissions`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fetchAllDocumentPermissions: (body: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<DocumentPermissions, any>({
+        path: `/permission/doc/v1/fetchAllDocumentPermissions`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5855,8 +6951,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/permission/doc/v1/filterUsers
      * @secure
      */
-    filterUsers: (params?: RequestParams) =>
-      this.request<object[], any>(`/permission/doc/v1/filterUsers`, "POST", params, null, BodyType.Json, true),
+    filterUsers: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/permission/doc/v1/filterUsers`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5867,15 +6970,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/permission/doc/v1/getPermissionForDocType/${docType}
      * @secure
      */
-    getPermissionForDocType: (docType: string, params?: RequestParams) =>
-      this.request<object[], any>(
-        `/permission/doc/v1/getPermissionForDocType/$${docType}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getPermissionForDocType: (docType: string, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/permission/doc/v1/getPermissionForDocType/$${docType}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   pipeline = {
     /**
@@ -5887,8 +6990,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/pipeline/v1/fetchPipelineData
      * @secure
      */
-    fetchPipelineData: (body: DocRef, params?: RequestParams) =>
-      this.request<object[], any>(`/pipeline/v1/fetchPipelineData`, "POST", params, body, BodyType.Json, true),
+    fetchPipelineData: (body: DocRef, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/pipeline/v1/fetchPipelineData`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5899,15 +7010,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/pipeline/v1/fetchPipelineXml
      * @secure
      */
-    fetchPipelineXml: (body: DocRef, params?: RequestParams) =>
-      this.request<FetchPipelineXmlResponse, any>(
-        `/pipeline/v1/fetchPipelineXml`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fetchPipelineXml: (body: DocRef, params: RequestParams = {}) =>
+      this.request<FetchPipelineXmlResponse, any>({
+        path: `/pipeline/v1/fetchPipelineXml`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5918,8 +7030,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/pipeline/v1/propertyTypes
      * @secure
      */
-    getPropertyTypes: (params?: RequestParams) =>
-      this.request<object[], any>(`/pipeline/v1/propertyTypes`, "GET", params, null, BodyType.Json, true),
+    getPropertyTypes: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/pipeline/v1/propertyTypes`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5930,8 +7049,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/pipeline/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<PipelineDoc, any>(`/pipeline/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<PipelineDoc, any>({
+        path: `/pipeline/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5942,8 +7069,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/pipeline/v1/savePipelineXml
      * @secure
      */
-    savePipelineXml: (body: SavePipelineXmlRequest, params?: RequestParams) =>
-      this.request<boolean, any>(`/pipeline/v1/savePipelineXml`, "PUT", params, body, BodyType.Json, true),
+    savePipelineXml: (body: SavePipelineXmlRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/pipeline/v1/savePipelineXml`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -5954,8 +7089,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/pipeline/v1/update
      * @secure
      */
-    update: (body: PipelineDoc, params?: RequestParams) =>
-      this.request<PipelineDoc, any>(`/pipeline/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: PipelineDoc, params: RequestParams = {}) =>
+      this.request<PipelineDoc, any>({
+        path: `/pipeline/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   pipelines = {
     /**
@@ -5966,8 +7109,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/pipelines/v1
      * @secure
      */
-    search: (query?: { filter?: string; offset?: number; pageSize?: number }, params?: RequestParams) =>
-      this.request<any, any>(`/pipelines/v1${this.addQueryParams(query)}`, "GET", params, null, BodyType.Json, true),
+    search: (query?: { filter?: string; offset?: number; pageSize?: number }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/pipelines/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5977,8 +7127,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/pipelines/v1/{parentPipelineId}/inherit
      * @secure
      */
-    createInherited: (parentPipelineId: string, body: DocRef, params?: RequestParams) =>
-      this.request<any, any>(`/pipelines/v1/${parentPipelineId}/inherit`, "POST", params, body, BodyType.Json, true),
+    createInherited: (parentPipelineId: string, body: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/pipelines/v1/${parentPipelineId}/inherit`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5988,8 +7145,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/pipelines/v1/{pipelineId}
      * @secure
      */
-    fetch: (pipelineId: string, params?: RequestParams) =>
-      this.request<any, any>(`/pipelines/v1/${pipelineId}`, "GET", params, null, BodyType.Json, true),
+    fetch: (pipelineId: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/pipelines/v1/${pipelineId}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -5999,8 +7162,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/pipelines/v1/{pipelineId}
      * @secure
      */
-    save: (pipelineId: string, body: PipelineDTO, params?: RequestParams) =>
-      this.request<any, any>(`/pipelines/v1/${pipelineId}`, "POST", params, body, BodyType.Json, true),
+    save: (pipelineId: string, body: PipelineDTO, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/pipelines/v1/${pipelineId}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   processor = {
     /**
@@ -6012,8 +7182,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/processor/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<Processor, any>(`/processor/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<Processor, any>({
+        path: `/processor/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6024,8 +7201,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/processor/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, body: boolean, params?: RequestParams) =>
-      this.request<any, any>(`/processor/v1/${id}/enabled`, "PUT", params, body, BodyType.Json, true),
+    setEnabled: (id: number, body: boolean, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/processor/v1/${id}/enabled`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   processorFilter = {
     /**
@@ -6037,8 +7221,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorFilter/v1
      * @secure
      */
-    create: (body: CreateProcessFilterRequest, params?: RequestParams) =>
-      this.request<ProcessorFilter, any>(`/processorFilter/v1`, "POST", params, body, BodyType.Json, true),
+    create: (body: CreateProcessFilterRequest, params: RequestParams = {}) =>
+      this.request<ProcessorFilter, any>({
+        path: `/processorFilter/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6049,8 +7241,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorFilter/v1/find
      * @secure
      */
-    find: (body: FetchProcessorRequest, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/processorFilter/v1/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: FetchProcessorRequest, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/processorFilter/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6061,15 +7261,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorFilter/v1/reprocess
      * @secure
      */
-    reprocess: (body: CreateReprocessFilterRequest, params?: RequestParams) =>
-      this.request<ReprocessDataInfo[], any>(
-        `/processorFilter/v1/reprocess`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    reprocess: (body: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+      this.request<ReprocessDataInfo[], any>({
+        path: `/processorFilter/v1/reprocess`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6080,8 +7281,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/processorFilter/v1/{id}
      * @secure
      */
-    read: (id: number, params?: RequestParams) =>
-      this.request<ProcessorFilter, any>(`/processorFilter/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    read: (id: number, params: RequestParams = {}) =>
+      this.request<ProcessorFilter, any>({
+        path: `/processorFilter/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6092,8 +7300,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/processorFilter/v1/{id}
      * @secure
      */
-    update: (id: number, params?: RequestParams) =>
-      this.request<ProcessorFilter, any>(`/processorFilter/v1/${id}`, "PUT", params, null, BodyType.Json, true),
+    update: (id: number, params: RequestParams = {}) =>
+      this.request<ProcessorFilter, any>({
+        path: `/processorFilter/v1/${id}`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6104,8 +7319,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/processorFilter/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<ProcessorFilter, any>(`/processorFilter/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<ProcessorFilter, any>({
+        path: `/processorFilter/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6116,8 +7338,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/processorFilter/v1/{id}/enabled
      * @secure
      */
-    setEnabled: (id: number, params?: RequestParams) =>
-      this.request<any, any>(`/processorFilter/v1/${id}/enabled`, "PUT", params, null, BodyType.Json, true),
+    setEnabled: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/processorFilter/v1/${id}/enabled`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6128,8 +7356,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/processorFilter/v1/{id}/priority
      * @secure
      */
-    setPriority: (id: number, params?: RequestParams) =>
-      this.request<any, any>(`/processorFilter/v1/${id}/priority`, "PUT", params, null, BodyType.Json, true),
+    setPriority: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/processorFilter/v1/${id}/priority`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   processorTask = {
     /**
@@ -6141,8 +7375,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorTask/v1/abandon/{nodeName}
      * @secure
      */
-    abandonTasks: (nodeName: string, body: ProcessorTaskList, params?: RequestParams) =>
-      this.request<boolean, any>(`/processorTask/v1/abandon/${nodeName}`, "POST", params, body, BodyType.Json, true),
+    abandonTasks: (nodeName: string, body: ProcessorTaskList, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/processorTask/v1/abandon/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6153,15 +7395,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorTask/v1/assign/{nodeName}
      * @secure
      */
-    assignTasks: (nodeName: string, body: AssignTasksRequest, params?: RequestParams) =>
-      this.request<ProcessorTaskList, any>(
-        `/processorTask/v1/assign/${nodeName}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    assignTasks: (nodeName: string, body: AssignTasksRequest, params: RequestParams = {}) =>
+      this.request<ProcessorTaskList, any>({
+        path: `/processorTask/v1/assign/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6172,8 +7415,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorTask/v1/find
      * @secure
      */
-    find: (body: ExpressionCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/processorTask/v1/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/processorTask/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6184,8 +7435,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/processorTask/v1/summary
      * @secure
      */
-    findSummary: (body: ExpressionCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/processorTask/v1/summary`, "POST", params, body, BodyType.Json, true),
+    findSummary: (body: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/processorTask/v1/summary`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   refData = {
     /**
@@ -6196,15 +7455,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/refData/v1/entries
      * @secure
      */
-    entries: (query?: { limit?: number }, params?: RequestParams) =>
-      this.request<RefStoreEntry[], any>(
-        `/refData/v1/entries${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    entries: (query?: { limit?: number }, params: RequestParams = {}) =>
+      this.request<RefStoreEntry[], any>({
+        path: `/refData/v1/entries`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6214,8 +7474,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/refData/v1/lookup
      * @secure
      */
-    lookup: (params?: RequestParams) =>
-      this.request<string, any>(`/refData/v1/lookup`, "POST", params, null, BodyType.Json, true),
+    lookup: (params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/refData/v1/lookup`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6225,8 +7492,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/refData/v1/purge/{purgeAge}
      * @secure
      */
-    purge: (purgeAge: string, params?: RequestParams) =>
-      this.request<any, any>(`/refData/v1/purge/${purgeAge}`, "DELETE", params, null, BodyType.Json, true),
+    purge: (purgeAge: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/refData/v1/purge/${purgeAge}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   remoteSearch = {
     /**
@@ -6238,15 +7511,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/remoteSearch/v1/destroy
      * @secure
      */
-    destroy: (query?: { queryKey?: string }, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/remoteSearch/v1/destroy${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    destroy: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/remoteSearch/v1/destroy`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6256,15 +7530,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/remoteSearch/v1/poll
      * @secure
      */
-    poll: (query?: { queryKey?: string }, params?: RequestParams) =>
-      this.request<StreamingOutput, any>(
-        `/remoteSearch/v1/poll${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    poll: (query?: { queryKey?: string }, params: RequestParams = {}) =>
+      this.request<StreamingOutput, any>({
+        path: `/remoteSearch/v1/poll`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6275,8 +7549,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/remoteSearch/v1/start
      * @secure
      */
-    start: (params?: RequestParams) =>
-      this.request<boolean, any>(`/remoteSearch/v1/start`, "POST", params, null, BodyType.Json, true),
+    start: (params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/remoteSearch/v1/start`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   ruleset = {
     /**
@@ -6288,8 +7569,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/ruleset/v2/export
      * @secure
      */
-    exportDocument: (body: DocRef, params?: RequestParams) =>
-      this.request<Base64EncodedDocumentData, any>(`/ruleset/v2/export`, "POST", params, body, BodyType.Json, true),
+    exportDocument: (body: DocRef, params: RequestParams = {}) =>
+      this.request<Base64EncodedDocumentData, any>({
+        path: `/ruleset/v2/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6300,8 +7589,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/ruleset/v2/import
      * @secure
      */
-    importDocument: (body: Base64EncodedDocumentData, params?: RequestParams) =>
-      this.request<DocRef, any>(`/ruleset/v2/import`, "POST", params, body, BodyType.Json, true),
+    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/ruleset/v2/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6312,8 +7609,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/ruleset/v2/list
      * @secure
      */
-    listDocuments: (params?: RequestParams) =>
-      this.request<object[], any>(`/ruleset/v2/list`, "GET", params, null, BodyType.Json, true),
+    listDocuments: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/ruleset/v2/list`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6324,8 +7628,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/ruleset/v2/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<ReceiveDataRules, any>(`/ruleset/v2/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<ReceiveDataRules, any>({
+        path: `/ruleset/v2/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6336,8 +7648,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/ruleset/v2/update
      * @secure
      */
-    update: (body: ReceiveDataRules, params?: RequestParams) =>
-      this.request<ReceiveDataRules, any>(`/ruleset/v2/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: ReceiveDataRules, params: RequestParams = {}) =>
+      this.request<ReceiveDataRules, any>({
+        path: `/ruleset/v2/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   scheduledTime = {
     /**
@@ -6349,8 +7669,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/scheduledTime/v1
      * @secure
      */
-    get: (body: GetScheduledTimesRequest, params?: RequestParams) =>
-      this.request<ScheduledTimes, any>(`/scheduledTime/v1`, "POST", params, body, BodyType.Json, true),
+    get: (body: GetScheduledTimesRequest, params: RequestParams = {}) =>
+      this.request<ScheduledTimes, any>({
+        path: `/scheduledTime/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   script = {
     /**
@@ -6362,8 +7690,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/script/v1/fetchLinkedScripts
      * @secure
      */
-    fetchLinkedScripts: (body: FetchLinkedScriptRequest, params?: RequestParams) =>
-      this.request<ScriptDoc, any>(`/script/v1/fetchLinkedScripts`, "POST", params, body, BodyType.Json, true),
+    fetchLinkedScripts: (body: FetchLinkedScriptRequest, params: RequestParams = {}) =>
+      this.request<ScriptDoc, any>({
+        path: `/script/v1/fetchLinkedScripts`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6374,8 +7710,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/script/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<ScriptDoc, any>(`/script/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<ScriptDoc, any>({
+        path: `/script/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6386,8 +7730,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/script/v1/update
      * @secure
      */
-    update: (body: ScriptDoc, params?: RequestParams) =>
-      this.request<ScriptDoc, any>(`/script/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: ScriptDoc, params: RequestParams = {}) =>
+      this.request<ScriptDoc, any>({
+        path: `/script/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   searchable = {
     /**
@@ -6399,8 +7751,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/searchable/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params?: RequestParams) =>
-      this.request<DataSource, any>(`/searchable/v2/dataSource`, "POST", params, body, BodyType.Json, true),
+    getDataSource: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DataSource, any>({
+        path: `/searchable/v2/dataSource`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6411,8 +7771,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/searchable/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/searchable/v2/destroy`, "POST", params, body, BodyType.Json, true),
+    destroy: (body: QueryKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/searchable/v2/destroy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6423,8 +7791,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/searchable/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params?: RequestParams) =>
-      this.request<SearchResponse, any>(`/searchable/v2/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchRequest, params: RequestParams = {}) =>
+      this.request<SearchResponse, any>({
+        path: `/searchable/v2/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   session = {
     /**
@@ -6436,15 +7812,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/session/v1/list
      * @secure
      */
-    list: (query?: { nodeName?: string }, params?: RequestParams) =>
-      this.request<SessionDetails, any>(
-        `/session/v1/list${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    list: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<SessionDetails, any>({
+        path: `/session/v1/list`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6455,8 +7832,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/session/v1/logout/{sessionId}
      * @secure
      */
-    logout: (sessionId: string, params?: RequestParams) =>
-      this.request<string, any>(`/session/v1/logout/${sessionId}`, "GET", params, null, BodyType.Json, true),
+    logout: (sessionId: string, params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/session/v1/logout/${sessionId}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6467,15 +7851,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/session/v1/noauth/login
      * @secure
      */
-    login: (query?: { redirect_uri?: string }, params?: RequestParams) =>
-      this.request<string, any>(
-        `/session/v1/noauth/login${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    login: (query?: { redirect_uri?: string }, params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/session/v1/noauth/login`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   sessionInfo = {
     /**
@@ -6486,8 +7871,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/sessionInfo/v1
      * @secure
      */
-    get: (params?: RequestParams) =>
-      this.request<SessionInfo, any>(`/sessionInfo/v1`, "GET", params, null, BodyType.Json, true),
+    get: (params: RequestParams = {}) =>
+      this.request<SessionInfo, any>({
+        path: `/sessionInfo/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   solr = {
     /**
@@ -6499,8 +7891,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/solr/index/v1/export
      * @secure
      */
-    exportDocument: (body: DocRef, params?: RequestParams) =>
-      this.request<Base64EncodedDocumentData, any>(`/solr/index/v1/export`, "POST", params, body, BodyType.Json, true),
+    exportDocument: (body: DocRef, params: RequestParams = {}) =>
+      this.request<Base64EncodedDocumentData, any>({
+        path: `/solr/index/v1/export`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Solr Index API
@@ -6511,8 +7911,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/solr/index/v1/import
      * @secure
      */
-    importDocument: (body: Base64EncodedDocumentData, params?: RequestParams) =>
-      this.request<DocRef, any>(`/solr/index/v1/import`, "POST", params, body, BodyType.Json, true),
+    importDocument: (body: Base64EncodedDocumentData, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/solr/index/v1/import`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Solr Index API
@@ -6523,8 +7931,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/solr/index/v1/list
      * @secure
      */
-    listDocuments: (params?: RequestParams) =>
-      this.request<object[], any>(`/solr/index/v1/list`, "GET", params, null, BodyType.Json, true),
+    listDocuments: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/solr/index/v1/list`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   solrIndex = {
     /**
@@ -6536,8 +7951,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/solrIndex/v1/fetchSolrTypes
      * @secure
      */
-    fetchSolrTypes: (body: SolrIndexDoc, params?: RequestParams) =>
-      this.request<object[], any>(`/solrIndex/v1/fetchSolrTypes`, "POST", params, body, BodyType.Json, true),
+    fetchSolrTypes: (body: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/solrIndex/v1/fetchSolrTypes`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6548,8 +7971,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/solrIndex/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<SolrIndexDoc, any>(`/solrIndex/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<SolrIndexDoc, any>({
+        path: `/solrIndex/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6560,8 +7991,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/solrIndex/v1/solrConnectionTest
      * @secure
      */
-    solrConnectionTest: (body: SolrIndexDoc, params?: RequestParams) =>
-      this.request<string, any>(`/solrIndex/v1/solrConnectionTest`, "POST", params, body, BodyType.Json, true),
+    solrConnectionTest: (body: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/solrIndex/v1/solrConnectionTest`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6572,8 +8011,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/solrIndex/v1/update
      * @secure
      */
-    update: (body: SolrIndexDoc, params?: RequestParams) =>
-      this.request<SolrIndexDoc, any>(`/solrIndex/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: SolrIndexDoc, params: RequestParams = {}) =>
+      this.request<SolrIndexDoc, any>({
+        path: `/solrIndex/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   sqlstatistics = {
     /**
@@ -6585,8 +8032,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/sqlstatistics/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params?: RequestParams) =>
-      this.request<DataSource, any>(`/sqlstatistics/v2/dataSource`, "POST", params, body, BodyType.Json, true),
+    getDataSource: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DataSource, any>({
+        path: `/sqlstatistics/v2/dataSource`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6597,8 +8052,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/sqlstatistics/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/sqlstatistics/v2/destroy`, "POST", params, body, BodyType.Json, true),
+    destroy: (body: QueryKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/sqlstatistics/v2/destroy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6609,8 +8072,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/sqlstatistics/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params?: RequestParams) =>
-      this.request<SearchResponse, any>(`/sqlstatistics/v2/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchRequest, params: RequestParams = {}) =>
+      this.request<SearchResponse, any>({
+        path: `/sqlstatistics/v2/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   statistic = {
     /**
@@ -6622,8 +8093,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statistic/rollUp/v1/bitMaskConversion
      * @secure
      */
-    bitMaskConversion: (body: number[], params?: RequestParams) =>
-      this.request<object[], any>(`/statistic/rollUp/v1/bitMaskConversion`, "POST", params, body, BodyType.Json, true),
+    bitMaskConversion: (body: number[], params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/statistic/rollUp/v1/bitMaskConversion`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6634,15 +8113,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statistic/rollUp/v1/bitMaskPermGeneration
      * @secure
      */
-    bitMaskPermGeneration: (body: number, params?: RequestParams) =>
-      this.request<object[], any>(
-        `/statistic/rollUp/v1/bitMaskPermGeneration`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    bitMaskPermGeneration: (body: number, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/statistic/rollUp/v1/bitMaskPermGeneration`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6653,15 +8133,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statistic/rollUp/v1/dataSourceFieldChange
      * @secure
      */
-    fieldChange: (body: StatisticsDataSourceFieldChangeRequest, params?: RequestParams) =>
-      this.request<StatisticsDataSourceData, any>(
-        `/statistic/rollUp/v1/dataSourceFieldChange`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fieldChange: (body: StatisticsDataSourceFieldChangeRequest, params: RequestParams = {}) =>
+      this.request<StatisticsDataSourceData, any>({
+        path: `/statistic/rollUp/v1/dataSourceFieldChange`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6672,8 +8153,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statistic/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<XsltDoc, any>(`/statistic/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<XsltDoc, any>({
+        path: `/statistic/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6684,8 +8173,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/statistic/v1/update
      * @secure
      */
-    update: (body: StatisticStoreDoc, params?: RequestParams) =>
-      this.request<StatisticStoreDoc, any>(`/statistic/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: StatisticStoreDoc, params: RequestParams = {}) =>
+      this.request<StatisticStoreDoc, any>({
+        path: `/statistic/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   statsStore = {
     /**
@@ -6697,8 +8194,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statsStore/rollUp/v1/bitMaskConversion
      * @secure
      */
-    bitMaskConversion: (body: number[], params?: RequestParams) =>
-      this.request<object[], any>(`/statsStore/rollUp/v1/bitMaskConversion`, "POST", params, body, BodyType.Json, true),
+    bitMaskConversion: (body: number[], params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/statsStore/rollUp/v1/bitMaskConversion`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6709,15 +8214,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statsStore/rollUp/v1/bitMaskPermGeneration
      * @secure
      */
-    bitMaskPermGeneration: (body: number, params?: RequestParams) =>
-      this.request<object[], any>(
-        `/statsStore/rollUp/v1/bitMaskPermGeneration`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    bitMaskPermGeneration: (body: number, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/statsStore/rollUp/v1/bitMaskPermGeneration`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6728,15 +8234,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statsStore/rollUp/v1/dataSourceFieldChange
      * @secure
      */
-    fieldChange: (body: StroomStatsStoreFieldChangeRequest, params?: RequestParams) =>
-      this.request<StroomStatsStoreEntityData, any>(
-        `/statsStore/rollUp/v1/dataSourceFieldChange`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    fieldChange: (body: StroomStatsStoreFieldChangeRequest, params: RequestParams = {}) =>
+      this.request<StroomStatsStoreEntityData, any>({
+        path: `/statsStore/rollUp/v1/dataSourceFieldChange`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6747,8 +8254,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/statsStore/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<DictionaryDoc, any>(`/statsStore/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DictionaryDoc, any>({
+        path: `/statsStore/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6759,8 +8274,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/statsStore/v1/update
      * @secure
      */
-    update: (body: StroomStatsStoreDoc, params?: RequestParams) =>
-      this.request<StroomStatsStoreDoc, any>(`/statsStore/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: StroomStatsStoreDoc, params: RequestParams = {}) =>
+      this.request<StroomStatsStoreDoc, any>({
+        path: `/statsStore/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   stepping = {
     /**
@@ -6772,8 +8295,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stepping/v1/findElementDoc
      * @secure
      */
-    findElementDoc: (params?: RequestParams) =>
-      this.request<Doc, any>(`/stepping/v1/findElementDoc`, "POST", params, null, BodyType.Json, true),
+    findElementDoc: (params: RequestParams = {}) =>
+      this.request<Doc, any>({
+        path: `/stepping/v1/findElementDoc`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6784,8 +8314,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stepping/v1/getPipelineForStepping
      * @secure
      */
-    getPipelineForStepping: (body: GetPipelineForMetaRequest, params?: RequestParams) =>
-      this.request<DocRef, any>(`/stepping/v1/getPipelineForStepping`, "POST", params, body, BodyType.Json, true),
+    getPipelineForStepping: (body: GetPipelineForMetaRequest, params: RequestParams = {}) =>
+      this.request<DocRef, any>({
+        path: `/stepping/v1/getPipelineForStepping`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6796,8 +8334,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stepping/v1/step
      * @secure
      */
-    step: (body: PipelineStepRequest, params?: RequestParams) =>
-      this.request<SteppingResult, any>(`/stepping/v1/step`, "POST", params, body, BodyType.Json, true),
+    step: (body: PipelineStepRequest, params: RequestParams = {}) =>
+      this.request<SteppingResult, any>({
+        path: `/stepping/v1/step`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   storedQuery = {
     /**
@@ -6809,8 +8355,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/storedQuery/v1/create
      * @secure
      */
-    create: (body: StoredQuery, params?: RequestParams) =>
-      this.request<StoredQuery, any>(`/storedQuery/v1/create`, "POST", params, body, BodyType.Json, true),
+    create: (body: StoredQuery, params: RequestParams = {}) =>
+      this.request<StoredQuery, any>({
+        path: `/storedQuery/v1/create`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6821,8 +8375,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/storedQuery/v1/delete
      * @secure
      */
-    delete: (params?: RequestParams) =>
-      this.request<StoredQuery, any>(`/storedQuery/v1/delete`, "DELETE", params, null, BodyType.Json, true),
+    delete: (params: RequestParams = {}) =>
+      this.request<StoredQuery, any>({
+        path: `/storedQuery/v1/delete`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6833,8 +8394,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/storedQuery/v1/find
      * @secure
      */
-    find: (body: FindStoredQueryCriteria, params?: RequestParams) =>
-      this.request<ResultPage, any>(`/storedQuery/v1/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: FindStoredQueryCriteria, params: RequestParams = {}) =>
+      this.request<ResultPage, any>({
+        path: `/storedQuery/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6845,8 +8414,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/storedQuery/v1/read
      * @secure
      */
-    read: (body: StoredQuery, params?: RequestParams) =>
-      this.request<StoredQuery, any>(`/storedQuery/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: StoredQuery, params: RequestParams = {}) =>
+      this.request<StoredQuery, any>({
+        path: `/storedQuery/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6857,8 +8434,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/storedQuery/v1/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<StoredQuery, any>(`/storedQuery/v1/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<StoredQuery, any>({
+        path: `/storedQuery/v1/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   streamattributemap = {
     /**
@@ -6869,15 +8453,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/streamattributemap/v1
      * @secure
      */
-    page: (query?: { pageOffset?: number; pageSize?: number }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/streamattributemap/v1${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    page: (query?: { pageOffset?: number; pageSize?: number }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/streamattributemap/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6887,15 +8471,20 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/streamattributemap/v1
      * @secure
      */
-    search: (body: ExpressionOperator, query?: { pageOffset?: number; pageSize?: number }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/streamattributemap/v1${this.addQueryParams(query)}`,
-        "POST",
-        params,
-        body,
-        BodyType.Json,
-        true,
-      ),
+    search: (
+      body: ExpressionOperator,
+      query?: { pageOffset?: number; pageSize?: number },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, void>({
+        path: `/streamattributemap/v1`,
+        method: "POST",
+        query: query,
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6905,8 +8494,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/streamattributemap/v1/dataSource
      * @secure
      */
-    dataSource: (params?: RequestParams) =>
-      this.request<any, any>(`/streamattributemap/v1/dataSource`, "GET", params, null, BodyType.Json, true),
+    dataSource: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/streamattributemap/v1/dataSource`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6918,8 +8513,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    search2: (id: number, params?: RequestParams) =>
-      this.request<any, any>(`/streamattributemap/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    search2: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/streamattributemap/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6929,15 +8530,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/streamattributemap/v1/{id}/{anyStatus}/relations
      * @secure
      */
-    getRelations: (anyStatus: boolean, id: number, params?: RequestParams) =>
-      this.request<any, any>(
-        `/streamattributemap/v1/${id}/${anyStatus}/relations`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getRelations: (anyStatus: boolean, id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/streamattributemap/v1/${id}/${anyStatus}/relations`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   streamtasks = {
     /**
@@ -6950,9 +8550,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      */
     fetch: (
       query?: { desc?: boolean; filter?: string; offset?: number; pageSize?: number; sortBy?: string },
-      params?: RequestParams,
+      params: RequestParams = {},
     ) =>
-      this.request<any, any>(`/streamtasks/v1${this.addQueryParams(query)}`, "GET", params, null, BodyType.Json, true),
+      this.request<any, void>({
+        path: `/streamtasks/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -6962,8 +8569,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PATCH:/streamtasks/v1/{filterId}
      * @secure
      */
-    enable: (filterId: number, params?: RequestParams) =>
-      this.request<any, any>(`/streamtasks/v1/${filterId}`, "PATCH", params, null, BodyType.Json, true),
+    enable: (filterId: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/streamtasks/v1/${filterId}`,
+        method: "PATCH",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   stroomIndex = {
     /**
@@ -6975,8 +8588,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-index/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params?: RequestParams) =>
-      this.request<DataSource, any>(`/stroom-index/v2/dataSource`, "POST", params, body, BodyType.Json, true),
+    getDataSource: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DataSource, any>({
+        path: `/stroom-index/v2/dataSource`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6987,8 +8608,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-index/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/stroom-index/v2/destroy`, "POST", params, body, BodyType.Json, true),
+    destroy: (body: QueryKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/stroom-index/v2/destroy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -6999,8 +8628,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-index/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params?: RequestParams) =>
-      this.request<SearchResponse, any>(`/stroom-index/v2/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchRequest, params: RequestParams = {}) =>
+      this.request<SearchResponse, any>({
+        path: `/stroom-index/v2/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7010,8 +8647,13 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroom-index/volume/v1
      * @secure
      */
-    getAll: (params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volume/v1`, "GET", params, null, BodyType.Json, true),
+    getAll: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volume/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7021,8 +8663,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-index/volume/v1
      * @secure
      */
-    create: (body: IndexVolume, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volume/v1`, "POST", params, body, BodyType.Json, true),
+    create: (body: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volume/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7032,8 +8680,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/stroom-index/volume/v1
      * @secure
      */
-    update: (body: IndexVolume, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volume/v1`, "PUT", params, body, BodyType.Json, true),
+    update: (body: IndexVolume, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volume/v1`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7043,8 +8697,13 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroom-index/volume/v1/{id}
      * @secure
      */
-    getById: (id: number, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volume/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    getById: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volume/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7054,8 +8713,13 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/stroom-index/volume/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volume/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volume/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7067,8 +8731,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    getAll2: (params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1`, "GET", params, null, BodyType.Json, true),
+    getAll2: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7080,8 +8750,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    create2: (params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1`, "POST", params, null, BodyType.Json, true),
+    create2: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7093,8 +8769,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    update2: (body: IndexVolumeGroup, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1`, "PUT", params, body, BodyType.Json, true),
+    update2: (body: IndexVolumeGroup, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7104,8 +8787,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroom-index/volumeGroup/v1/names
      * @secure
      */
-    getNames: (params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1/names`, "GET", params, null, BodyType.Json, true),
+    getNames: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1/names`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7115,8 +8804,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroom-index/volumeGroup/v1/{id}
      * @secure
      */
-    get: (id: string, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    get: (id: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * No description
@@ -7128,8 +8823,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    delete2: (id: string, params?: RequestParams) =>
-      this.request<any, any>(`/stroom-index/volumeGroup/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete2: (id: string, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/stroom-index/volumeGroup/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   stroomSolrIndex = {
     /**
@@ -7141,8 +8842,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-solr-index/v2/dataSource
      * @secure
      */
-    getDataSource: (body: DocRef, params?: RequestParams) =>
-      this.request<DataSource, any>(`/stroom-solr-index/v2/dataSource`, "POST", params, body, BodyType.Json, true),
+    getDataSource: (body: DocRef, params: RequestParams = {}) =>
+      this.request<DataSource, any>({
+        path: `/stroom-solr-index/v2/dataSource`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Solr Index Query API
@@ -7153,8 +8862,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-solr-index/v2/destroy
      * @secure
      */
-    destroy: (body: QueryKey, params?: RequestParams) =>
-      this.request<boolean, any>(`/stroom-solr-index/v2/destroy`, "POST", params, body, BodyType.Json, true),
+    destroy: (body: QueryKey, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/stroom-solr-index/v2/destroy`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Solr Index Query API
@@ -7165,8 +8882,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/stroom-solr-index/v2/search
      * @secure
      */
-    search: (body: SearchRequest, params?: RequestParams) =>
-      this.request<SearchResponse, any>(`/stroom-solr-index/v2/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchRequest, params: RequestParams = {}) =>
+      this.request<SearchResponse, any>({
+        path: `/stroom-solr-index/v2/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   stroomSession = {
     /**
@@ -7178,8 +8903,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroomSession/v1/invalidate
      * @secure
      */
-    invalidate: (params?: RequestParams) =>
-      this.request<boolean, any>(`/stroomSession/v1/invalidate`, "GET", params, null, BodyType.Json, true),
+    invalidate: (params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/stroomSession/v1/invalidate`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7190,15 +8922,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/stroomSession/v1/noauth/validateSession
      * @secure
      */
-    validateSession: (query: { redirect_uri: string }, params?: RequestParams) =>
-      this.request<ValidateSessionResponse, any>(
-        `/stroomSession/v1/noauth/validateSession${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    validateSession: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+      this.request<ValidateSessionResponse, any>({
+        path: `/stroomSession/v1/noauth/validateSession`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   suggest = {
     /**
@@ -7210,8 +8943,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/suggest/v1
      * @secure
      */
-    fetch: (body: FetchSuggestionsRequest, params?: RequestParams) =>
-      this.request<object[], any>(`/suggest/v1`, "POST", params, body, BodyType.Json, true),
+    fetch: (body: FetchSuggestionsRequest, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/suggest/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   systemInfo = {
     /**
@@ -7223,8 +8964,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/systemInfo/v1
      * @secure
      */
-    getAll: (params?: RequestParams) =>
-      this.request<SystemInfoResult, any>(`/systemInfo/v1`, "GET", params, null, BodyType.Json, true),
+    getAll: (params: RequestParams = {}) =>
+      this.request<SystemInfoResult, any>({
+        path: `/systemInfo/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7235,8 +8983,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/systemInfo/v1/names
      * @secure
      */
-    getNames: (params?: RequestParams) =>
-      this.request<object[], any>(`/systemInfo/v1/names`, "GET", params, null, BodyType.Json, true),
+    getNames: (params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/systemInfo/v1/names`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7247,8 +9002,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/systemInfo/v1/{name}
      * @secure
      */
-    get: (name: string, params?: RequestParams) =>
-      this.request<object[], any>(`/systemInfo/v1/${name}`, "GET", params, null, BodyType.Json, true),
+    get: (name: string, params: RequestParams = {}) =>
+      this.request<object[], any>({
+        path: `/systemInfo/v1/${name}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   task = {
     /**
@@ -7260,8 +9022,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/task/v1/find/{nodeName}
      * @secure
      */
-    find: (nodeName: string, body: FindTaskProgressRequest, params?: RequestParams) =>
-      this.request<TaskProgressResponse, any>(`/task/v1/find/${nodeName}`, "POST", params, body, BodyType.Json, true),
+    find: (nodeName: string, body: FindTaskProgressRequest, params: RequestParams = {}) =>
+      this.request<TaskProgressResponse, any>({
+        path: `/task/v1/find/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7272,8 +9042,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/task/v1/list/{nodeName}
      * @secure
      */
-    list: (nodeName: string, params?: RequestParams) =>
-      this.request<TaskProgressResponse, any>(`/task/v1/list/${nodeName}`, "GET", params, null, BodyType.Json, true),
+    list: (nodeName: string, params: RequestParams = {}) =>
+      this.request<TaskProgressResponse, any>({
+        path: `/task/v1/list/${nodeName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7284,8 +9061,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/task/v1/terminate/{nodeName}
      * @secure
      */
-    terminate: (nodeName: string, body: TerminateTaskProgressRequest, params?: RequestParams) =>
-      this.request<boolean, any>(`/task/v1/terminate/${nodeName}`, "POST", params, body, BodyType.Json, true),
+    terminate: (nodeName: string, body: TerminateTaskProgressRequest, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/task/v1/terminate/${nodeName}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7296,8 +9081,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/task/v1/user/{nodeName}
      * @secure
      */
-    userTasks: (nodeName: string, params?: RequestParams) =>
-      this.request<TaskProgressResponse, any>(`/task/v1/user/${nodeName}`, "GET", params, null, BodyType.Json, true),
+    userTasks: (nodeName: string, params: RequestParams = {}) =>
+      this.request<TaskProgressResponse, any>({
+        path: `/task/v1/user/${nodeName}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   textConverter = {
     /**
@@ -7309,8 +9101,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/textConverter/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<TextConverterDoc, any>(`/textConverter/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<TextConverterDoc, any>({
+        path: `/textConverter/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7321,8 +9121,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/textConverter/v1/update
      * @secure
      */
-    update: (body: TextConverterDoc, params?: RequestParams) =>
-      this.request<TextConverterDoc, any>(`/textConverter/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: TextConverterDoc, params: RequestParams = {}) =>
+      this.request<TextConverterDoc, any>({
+        path: `/textConverter/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   token = {
     /**
@@ -7334,8 +9142,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/token/v1
      * @secure
      */
-    list: (params?: RequestParams) =>
-      this.request<TokenResultPage, any>(`/token/v1`, "GET", params, null, BodyType.Json, true),
+    list: (params: RequestParams = {}) =>
+      this.request<TokenResultPage, any>({
+        path: `/token/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7346,8 +9161,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/token/v1
      * @secure
      */
-    create: (body: CreateTokenRequest, params?: RequestParams) =>
-      this.request<Token, any>(`/token/v1`, "POST", params, body, BodyType.Json, true),
+    create: (body: CreateTokenRequest, params: RequestParams = {}) =>
+      this.request<Token, any>({
+        path: `/token/v1`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7358,8 +9181,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/token/v1
      * @secure
      */
-    deleteAll: (params?: RequestParams) =>
-      this.request<number, any>(`/token/v1`, "DELETE", params, null, BodyType.Json, true),
+    deleteAll: (params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/token/v1`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7370,8 +9200,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/token/v1/byToken/{token}
      * @secure
      */
-    read: (token: string, params?: RequestParams) =>
-      this.request<Token, any>(`/token/v1/byToken/${token}`, "GET", params, null, BodyType.Json, true),
+    read: (token: string, params: RequestParams = {}) =>
+      this.request<Token, any>({
+        path: `/token/v1/byToken/${token}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7382,8 +9219,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/token/v1/byToken/{token}
      * @secure
      */
-    deleteByToken: (token: string, params?: RequestParams) =>
-      this.request<number, any>(`/token/v1/byToken/${token}`, "DELETE", params, null, BodyType.Json, true),
+    deleteByToken: (token: string, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/token/v1/byToken/${token}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7394,8 +9238,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/token/v1/noauth/fetchTokenConfig
      * @secure
      */
-    fetchTokenConfig: (params?: RequestParams) =>
-      this.request<TokenConfig, any>(`/token/v1/noauth/fetchTokenConfig`, "GET", params, null, BodyType.Json, true),
+    fetchTokenConfig: (params: RequestParams = {}) =>
+      this.request<TokenConfig, any>({
+        path: `/token/v1/noauth/fetchTokenConfig`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7406,8 +9257,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/token/v1/publickey
      * @secure
      */
-    getPublicKey: (params?: RequestParams) =>
-      this.request<string, any>(`/token/v1/publickey`, "GET", params, null, BodyType.Json, true),
+    getPublicKey: (params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/token/v1/publickey`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7418,8 +9276,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/token/v1/search
      * @secure
      */
-    search: (body: SearchTokenRequest, params?: RequestParams) =>
-      this.request<TokenResultPage, any>(`/token/v1/search`, "POST", params, body, BodyType.Json, true),
+    search: (body: SearchTokenRequest, params: RequestParams = {}) =>
+      this.request<TokenResultPage, any>({
+        path: `/token/v1/search`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7432,8 +9298,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    read2: (id: number, params?: RequestParams) =>
-      this.request<Token, any>(`/token/v1/${id}`, "GET", params, null, BodyType.Json, true),
+    read2: (id: number, params: RequestParams = {}) =>
+      this.request<Token, any>({
+        path: `/token/v1/${id}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7444,8 +9317,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/token/v1/{id}
      * @secure
      */
-    delete: (id: number, params?: RequestParams) =>
-      this.request<number, any>(`/token/v1/${id}`, "DELETE", params, null, BodyType.Json, true),
+    delete: (id: number, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/token/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7456,15 +9336,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/token/v1/{id}/enabled
      * @secure
      */
-    toggleEnabled: (id: number, query: { enabled: boolean }, params?: RequestParams) =>
-      this.request<number, any>(
-        `/token/v1/${id}/enabled${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    toggleEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
+      this.request<number, any>({
+        path: `/token/v1/${id}/enabled`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   users = {
     /**
@@ -7475,8 +9356,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/users/v1
      * @secure
      */
-    get: (query?: { isGroup?: boolean; name?: string; uuid?: string }, params?: RequestParams) =>
-      this.request<User[], any>(`/users/v1${this.addQueryParams(query)}`, "GET", params, null, BodyType.Json, true),
+    get: (query?: { isGroup?: boolean; name?: string; uuid?: string }, params: RequestParams = {}) =>
+      this.request<User[], any>({
+        path: `/users/v1`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7487,15 +9376,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/users/v1/associates
      * @secure
      */
-    getAssociates: (query?: { filter?: string }, params?: RequestParams) =>
-      this.request<any, any>(
-        `/users/v1/associates${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getAssociates: (query?: { filter?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/users/v1/associates`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7505,8 +9394,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/users/v1/create/{name}/{isGroup}
      * @secure
      */
-    create: (isGroup: boolean, name: string, params?: RequestParams) =>
-      this.request<User, any>(`/users/v1/create/${name}/${isGroup}`, "POST", params, null, BodyType.Json, true),
+    create: (isGroup: boolean, name: string, params: RequestParams = {}) =>
+      this.request<User, any>({
+        path: `/users/v1/create/${name}/${isGroup}`,
+        method: "POST",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7516,8 +9412,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/users/v1/find
      * @secure
      */
-    find: (body: FindUserCriteria, params?: RequestParams) =>
-      this.request<ResultPageUser, any>(`/users/v1/find`, "POST", params, body, BodyType.Json, true),
+    find: (body: FindUserCriteria, params: RequestParams = {}) =>
+      this.request<ResultPageUser, any>({
+        path: `/users/v1/find`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7527,15 +9431,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/users/v1/{userName}/status
      * @secure
      */
-    setStatus: (userName: string, query?: { enabled?: boolean }, params?: RequestParams) =>
-      this.request<boolean, any>(
-        `/users/v1/${userName}/status${this.addQueryParams(query)}`,
-        "PUT",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    setStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/users/v1/${userName}/status`,
+        method: "PUT",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7547,8 +9452,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @duplicate
      * @secure
      */
-    get2: (userUuid: string, params?: RequestParams) =>
-      this.request<User, any>(`/users/v1/${userUuid}`, "GET", params, null, BodyType.Json, true),
+    get2: (userUuid: string, params: RequestParams = {}) =>
+      this.request<User, any>({
+        path: `/users/v1/${userUuid}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7558,8 +9470,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/users/v1/{userUuid}/{groupUuid}
      * @secure
      */
-    addUserToGroup: (groupUuid: string, userUuid: string, params?: RequestParams) =>
-      this.request<boolean, any>(`/users/v1/${userUuid}/${groupUuid}`, "PUT", params, null, BodyType.Json, true),
+    addUserToGroup: (groupUuid: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/users/v1/${userUuid}/${groupUuid}`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7569,8 +9488,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/users/v1/{userUuid}/{groupUuid}
      * @secure
      */
-    removeUserFromGroup: (groupUuid: string, userUuid: string, params?: RequestParams) =>
-      this.request<boolean, any>(`/users/v1/${userUuid}/${groupUuid}`, "DELETE", params, null, BodyType.Json, true),
+    removeUserFromGroup: (groupUuid: string, userUuid: string, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/users/v1/${userUuid}/${groupUuid}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * @description Stroom Authorisation API
@@ -7580,8 +9506,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request DELETE:/users/v1/{uuid}
      * @secure
      */
-    deleteUser: (uuid: string, params?: RequestParams) =>
-      this.request<boolean, any>(`/users/v1/${uuid}`, "DELETE", params, null, BodyType.Json, true),
+    deleteUser: (uuid: string, params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/users/v1/${uuid}`,
+        method: "DELETE",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   viewData = {
     /**
@@ -7593,8 +9526,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/viewData/v1/fetch
      * @secure
      */
-    fetch: (body: FetchDataRequest, params?: RequestParams) =>
-      this.request<AbstractFetchDataResult, any>(`/viewData/v1/fetch`, "POST", params, body, BodyType.Json, true),
+    fetch: (body: FetchDataRequest, params: RequestParams = {}) =>
+      this.request<AbstractFetchDataResult, any>({
+        path: `/viewData/v1/fetch`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7605,15 +9546,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/viewData/v1/listChildTypes
      * @secure
      */
-    getChildStreamTypes: (query?: { id?: number; partNo?: number }, params?: RequestParams) =>
-      this.request<AbstractFetchDataResult, any>(
-        `/viewData/v1/listChildTypes${this.addQueryParams(query)}`,
-        "GET",
-        params,
-        null,
-        BodyType.Json,
-        true,
-      ),
+    getChildStreamTypes: (query?: { id?: number; partNo?: number }, params: RequestParams = {}) =>
+      this.request<AbstractFetchDataResult, any>({
+        path: `/viewData/v1/listChildTypes`,
+        method: "GET",
+        query: query,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   visualisation = {
     /**
@@ -7625,8 +9567,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/visualisation/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<VisualisationDoc, any>(`/visualisation/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<VisualisationDoc, any>({
+        path: `/visualisation/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7637,8 +9587,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/visualisation/v1/update
      * @secure
      */
-    update: (body: VisualisationDoc, params?: RequestParams) =>
-      this.request<VisualisationDoc, any>(`/visualisation/v1/update`, "PUT", params, body, BodyType.Json, true),
+    update: (body: VisualisationDoc, params: RequestParams = {}) =>
+      this.request<VisualisationDoc, any>({
+        path: `/visualisation/v1/update`,
+        method: "PUT",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   welcome = {
     /**
@@ -7649,8 +9607,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/welcome/v1
      * @secure
      */
-    welcome: (params?: RequestParams) =>
-      this.request<any, any>(`/welcome/v1`, "GET", params, null, BodyType.Json, true),
+    welcome: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/welcome/v1`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   xmlSchema = {
     /**
@@ -7662,8 +9626,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/xmlSchema/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<XmlSchemaDoc, any>(`/xmlSchema/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<XmlSchemaDoc, any>({
+        path: `/xmlSchema/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7674,8 +9646,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/xmlSchema/v1/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<XmlSchemaDoc, any>(`/xmlSchema/v1/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<XmlSchemaDoc, any>({
+        path: `/xmlSchema/v1/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   xslt = {
     /**
@@ -7687,8 +9666,16 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/xslt/v1/read
      * @secure
      */
-    read: (body: DocRef, params?: RequestParams) =>
-      this.request<XsltDoc, any>(`/xslt/v1/read`, "POST", params, body, BodyType.Json, true),
+    read: (body: DocRef, params: RequestParams = {}) =>
+      this.request<XsltDoc, any>({
+        path: `/xslt/v1/read`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7699,8 +9686,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request PUT:/xslt/v1/update
      * @secure
      */
-    update: (params?: RequestParams) =>
-      this.request<XsltDoc, any>(`/xslt/v1/update`, "PUT", params, null, BodyType.Json, true),
+    update: (params: RequestParams = {}) =>
+      this.request<XsltDoc, any>({
+        path: `/xslt/v1/update`,
+        method: "PUT",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7710,8 +9704,15 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request GET:/xslt/v1/{xsltId}
      * @secure
      */
-    fetch: (xsltId: string, params?: RequestParams) =>
-      this.request<XsltDoc, any>(`/xslt/v1/${xsltId}`, "GET", params, null, BodyType.Json, true),
+    fetch: (xsltId: string, params: RequestParams = {}) =>
+      this.request<XsltDoc, any>({
+        path: `/xslt/v1/${xsltId}`,
+        method: "GET",
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
 
     /**
      * No description
@@ -7721,7 +9722,14 @@ export class Api<SecurityDataType = any> extends HttpClient<SecurityDataType> {
      * @request POST:/xslt/v1/{xsltId}
      * @secure
      */
-    save: (xsltId: string, body: XsltDTO, params?: RequestParams) =>
-      this.request<any, any>(`/xslt/v1/${xsltId}`, "POST", params, body, BodyType.Json, true),
+    save: (xsltId: string, body: XsltDTO, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/xslt/v1/${xsltId}`,
+        method: "POST",
+        body: body,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
 }

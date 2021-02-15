@@ -39,7 +39,7 @@ public class MetaInfoPresenter extends MyPresenterWidget<MetaInfoView> {
         rest
                 .onSuccess(this::handleResult)
                 .call(DATA_RESOURCE)
-                .info(metaId);
+                .viewInfo(metaId);
     }
 
     private void handleResult(final List<DataInfoSection> dataInfoSections) {

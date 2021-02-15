@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "script - /v1")
+@Api(tags = "Scripts")
 @Path("/script" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,22 +41,16 @@ public interface ScriptResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Get a script doc")
     ScriptDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a script doc",
-            response = ScriptDoc.class)
+    @ApiOperation("Update a script doc")
     ScriptDoc update(@ApiParam("xslt") ScriptDoc xslt);
 
     @POST
     @Path("/fetchLinkedScripts")
-    @ApiOperation(
-            value = "Fetch related scripts",
-            response = ScriptDoc.class)
+    @ApiOperation("Fetch related scripts")
     List<ScriptDoc> fetchLinkedScripts(@ApiParam("request") FetchLinkedScriptRequest request);
 }

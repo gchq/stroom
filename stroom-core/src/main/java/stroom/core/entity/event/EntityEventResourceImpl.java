@@ -16,6 +16,8 @@
 
 package stroom.core.entity.event;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -31,6 +33,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {
 
     private final Provider<NodeService> nodeServiceProvider;

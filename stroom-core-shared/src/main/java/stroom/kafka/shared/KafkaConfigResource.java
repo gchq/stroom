@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "kafkaConfig - /v1")
+@Api(tags = "Kafka Config")
 @Path("/kafkaConfig" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -41,22 +41,16 @@ public interface KafkaConfigResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a kafkaConfig doc",
-            response = KafkaConfigDoc.class)
+    @ApiOperation("Get a kafkaConfig doc")
     KafkaConfigDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a kafkaConfig doc",
-            response = KafkaConfigDoc.class)
+    @ApiOperation("Update a kafkaConfig doc")
     KafkaConfigDoc update(@ApiParam("updated") KafkaConfigDoc updated);
 
     @POST
     @Path("/download")
-    @ApiOperation(
-            value = "Download a kafkaConfig doc",
-            response = ResourceGeneration.class)
+    @ApiOperation("Download a kafkaConfig doc")
     ResourceGeneration download(@ApiParam("docRef") DocRef docRef);
 }

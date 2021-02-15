@@ -16,6 +16,8 @@
 
 package stroom.core.query;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 
@@ -23,6 +25,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+@AutoLogged(OperationType.UNLOGGED)
 class SuggestionsResourceImpl implements SuggestionsResource {
 
     private final Provider<SuggestionsService> suggestionsServiceProvider;

@@ -19,6 +19,8 @@ package stroom.cache.impl;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -39,27 +41,28 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-// TODO : @66 add event logging
+@AutoLogged
 class CacheResourceImpl implements CacheResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final CacheManagerService cacheManagerService;
-    private final TaskContextFactory taskContextFactory;
+    private final Provider<NodeService> nodeService;
+    private final Provider<NodeInfo> nodeInfo;
+    private final Provider<WebTargetFactory> webTargetFactory;
+    private final Provider<CacheManagerService> cacheManagerService;
+    private final Provider<TaskContextFactory> taskContextFactory;
 
     @Inject
-    CacheResourceImpl(final NodeService nodeService,
-                      final NodeInfo nodeInfo,
-                      final WebTargetFactory webTargetFactory,
-                      final CacheManagerService cacheManagerService,
-                      final TaskContextFactory taskContextFactory) {
+    CacheResourceImpl(final Provider<NodeService> nodeService,
+                      final Provider<NodeInfo> nodeInfo,
+                      final Provider<WebTargetFactory> webTargetFactory,
+                      final Provider<CacheManagerService> cacheManagerService,
+                      final Provider<TaskContextFactory> taskContextFactory) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
@@ -68,26 +71,28 @@ class CacheResourceImpl implements CacheResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public List<String> list() {
-        return cacheManagerService.getCacheNames();
+        return cacheManagerService.get().getCacheNames();
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public CacheInfoResponse info(final String cacheName, final String nodeName) {
         CacheInfoResponse result;
         // If this is the node that was contacted then just return our local info.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
-            final List<CacheInfo> list = cacheManagerService.find(criteria);
+            final List<CacheInfo> list = cacheManagerService.get().find(criteria);
             result = new CacheInfoResponse(list);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
                 final Response response = webTargetFactory
-                        .create(url)
+                        .get().create(url)
                         .queryParam("cacheName", cacheName)
                         .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)
@@ -113,6 +118,7 @@ class CacheResourceImpl implements CacheResource {
     }
 
     @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Clearing cache")
     public Long clear(final String cacheName, final String nodeName) {
         final Long result;
         if (nodeName == null) {
@@ -127,16 +133,17 @@ class CacheResourceImpl implements CacheResource {
 
         final FindNodeCriteria criteria = new FindNodeCriteria();
         criteria.setEnabled(true);
-        final List<String> allNodes = nodeService.findNodeNames(FindNodeCriteria.allEnabled());
+        final List<String> allNodes = nodeService.get().findNodeNames(FindNodeCriteria.allEnabled());
 
         final Set<String> failedNodes = new ConcurrentSkipListSet<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
 
-        return taskContextFactory.contextResult(LogUtil.message("Clear cache [{}] on all active nodes", cacheName),
+        return taskContextFactory.get().contextResult(
+                LogUtil.message("Clear cache [{}] on all active nodes", cacheName),
                 parentContext -> {
                     final Long count = allNodes.stream()
                             .map(nodeName -> {
-                                final Supplier<Long> supplier = taskContextFactory.contextResult(parentContext,
+                                final Supplier<Long> supplier = taskContextFactory.get().contextResult(parentContext,
                                         LogUtil.message("Clearing cache [{}] on node [{}]",
                                                 cacheName, nodeName),
                                         taskContext ->
@@ -148,8 +155,8 @@ class CacheResourceImpl implements CacheResource {
                                             failedNodes.add(nodeName);
                                             exception.set(throwable);
                                             LOGGER.error(
-                                                    "Error clearing cache [{}] on node [{}]: {}. " +
-                                                            "Enable DEBUG for stacktrace",
+                                                    "Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for " +
+                                                            "stacktrace",
                                                     cacheName,
                                                     nodeName,
                                                     throwable.getMessage());
@@ -176,18 +183,18 @@ class CacheResourceImpl implements CacheResource {
         Objects.requireNonNull(nodeName);
 
         final Long result;
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
             // local node
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
-            result = cacheManagerService.clear(criteria);
+            result = cacheManagerService.get().clear(criteria);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {
-                final Response response = webTargetFactory
+                final Response response = webTargetFactory.get()
                         .create(url)
                         .queryParam("cacheName", cacheName)
                         .queryParam("nodeName", nodeName)

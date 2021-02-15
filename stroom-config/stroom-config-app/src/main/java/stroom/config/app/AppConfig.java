@@ -13,7 +13,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.event.logging.rs.impl.RequestLoggingConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -82,7 +82,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
-    public static final String PROP_NAME_REQUEST_LOGGING = "requestLogging";
+    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -124,7 +124,7 @@ public class AppConfig extends AbstractConfig {
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
-    private RequestLoggingConfig requestLoggingConfig = new RequestLoggingConfig();
+    private LoggingConfig loggingConfig = new LoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -205,9 +205,9 @@ public class AppConfig extends AbstractConfig {
     }
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
-    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection " +
-            "details are defined for a service area in stroom, e.g. core or config. This means you can have " +
-            "all service areas running in a single database, have each in their own database or a mixture.")
+    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details " +
+            "are defined for a service area in stroom, e.g. core or config. This means you can have all service " +
+            "areas running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }
@@ -423,8 +423,8 @@ public class AppConfig extends AbstractConfig {
         this.proxyAggregationConfig = proxyAggregationConfig;
     }
 
-    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host " +
-            "if behind a proxy")
+    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +
+            "behind a proxy")
     @JsonProperty(PROP_NAME_PUBLIC_URI)
     public PublicUriConfig getPublicUri() {
         return publicUri;
@@ -454,14 +454,14 @@ public class AppConfig extends AbstractConfig {
         this.receiveDataConfig = receiveDataConfig;
     }
 
-    @JsonProperty(PROP_NAME_REQUEST_LOGGING)
-    public RequestLoggingConfig getRequestLoggingConfig() {
-        return requestLoggingConfig;
+    @JsonProperty(PROP_NAME_LOGGING)
+    public LoggingConfig getRequestLoggingConfig() {
+        return loggingConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setRequestLoggingConfig(final RequestLoggingConfig requestLoggingConfig) {
-        this.requestLoggingConfig = requestLoggingConfig;
+    public void setRequestLoggingConfig(final LoggingConfig loggingConfig) {
+        this.loggingConfig = loggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)
@@ -545,8 +545,8 @@ public class AppConfig extends AbstractConfig {
         this.uiConfig = uiConfig;
     }
 
-    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of " +
-            "the server, e.g. during development or some other deployments")
+    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the " +
+            "server, e.g. during development or some other deployments")
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;

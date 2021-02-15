@@ -31,7 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "statistic/rollUp - /v1")
+@Api(tags = "SQL Statistics RollUps")
 @Path("/statistic/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -39,22 +39,16 @@ public interface StatisticRollupResource extends RestResource, DirectRestService
 
     @POST
     @Path("/bitMaskPermGeneration")
-    @ApiOperation(
-            value = "Create rollup bit mask",
-            response = List.class)
+    @ApiOperation("Create rollup bit mask")
     List<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
-    @ApiOperation(
-            value = "Get rollup bit mask",
-            response = List.class)
+    @ApiOperation("Get rollup bit mask")
     List<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
-    @ApiOperation(
-            value = "Change fields",
-            response = StatisticsDataSourceData.class)
+    @ApiOperation("Change fields")
     StatisticsDataSourceData fieldChange(@ApiParam("request") StatisticsDataSourceFieldChangeRequest request);
 }

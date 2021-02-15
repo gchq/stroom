@@ -44,7 +44,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/token/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Api(tags = {"ApiKey"})
+@Api(tags = "Api Keys")
 public interface TokenResource extends RestResource {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
@@ -115,7 +115,7 @@ public interface TokenResource extends RestResource {
 
 
     @ApiOperation(value = "Provides access to this service's current public key. " +
-            "A client may use these keys to verify JWTs issued by this service.")
+                    "A client may use these keys to verify JWTs issued by this service.")
     @GET
     @Path("/publickey")
     @Timed

@@ -371,7 +371,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return settings;
     }
 
-    private void loadVisualisation(final VisFunction function, final DocRef visualisation) {
+    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         final Rest<VisualisationDoc> rest = restFactory.create();
@@ -413,7 +413,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
                 .call(VISUALISATION_RESOURCE)
-                .read(visualisation);
+                .fetch(visualisationDocRef.getUuid());
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {

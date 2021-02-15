@@ -18,16 +18,20 @@ package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasName;
 import stroom.util.shared.HasUuid;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -35,8 +39,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import event.logging.BaseObject;
+import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Device;
 import event.logging.Event;
@@ -55,10 +61,13 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -92,12 +101,16 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private final ObjectMapper objectMapper;
 
+    private final LoggingConfig loggingConfig;
+
     @Inject
-    StroomEventLoggingServiceImpl(final SecurityContext securityContext,
+    StroomEventLoggingServiceImpl(final LoggingConfig loggingConfig,
+                                  final SecurityContext securityContext,
                                   final Provider<HttpServletRequest> httpServletRequestProvider,
                                   final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                   final CurrentActivity currentActivity,
                                   final Provider<BuildInfo> buildInfoProvider) {
+        this.loggingConfig = loggingConfig;
         this.securityContext = securityContext;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.objectInfoProviderMap = objectInfoProviderMap;
@@ -153,12 +166,12 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * Shallow merge of the two Purpose objects
      */
     private Purpose mergePurposes(final Purpose base, final Purpose override) {
-        if (base == null && override == null) {
-            return null;
-        } else if (base != null && override == null) {
-            return base;
-        } else if (override != null && base == null) {
-            return override;
+        if (base == null || override == null) {
+            if (base == null && override == null) {
+                return null;
+            }
+
+            return Objects.requireNonNullElse(override, base);
         } else {
             final Purpose purpose = base.newCopyBuilder().build();
             mergeValue(override::getAuthorisations, purpose::setAuthorisations);
@@ -183,52 +196,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
     }
 
-
-//    public Event createSkeletonEvent(final String typeId, final String description) {
-//        return createSkeletonEvent(typeId, description, null);
-//    }
-//
-//    @Override
-//    public Event createSkeletonEvent(final String typeId,
-//                                     final String description,
-//                                     final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//        final Builder<Void> eventDetailBuilder = EventDetail.builder()
-//                .withTypeId(typeId)
-//                .withDescription(description)
-//                .withPurpose(PurposeUtil.create(currentActivity.getActivity()));
-//
-//        if (eventDetailBuilderConsumer != null) {
-//            eventDetailBuilderConsumer.accept(eventDetailBuilder);
-//        }
-//
-//        return buildEvent()
-//                .withEventDetail(eventDetailBuilder.build())
-//                .build();
-//    }
-
-//    @Override
-//    public void log(final String typeId,
-//                    final String description,
-//                    final Consumer<Builder<Void>> eventDetailBuilderConsumer) {
-//
-//        super.log(typeId, description, eventDetailBuilderConsumer);
-//    }
-
-
-    private Device getDevice(final HttpServletRequest request) {
-        // Get stored device info.
-        final Device storedDevice = obtainStoredDevice(request);
-
-        // We need to copy the stored device as users may make changes to the
-        // returned object that might not be thread safe.
-        Device device = null;
-        if (storedDevice != null) {
-            device = copyDevice(storedDevice, new Device());
-        }
-
-        return device;
-    }
-
     private Device getClient(final HttpServletRequest request) {
         if (request != null) {
             try {
@@ -243,7 +210,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         LOGGER.warn("Problem getting client InetAddress", e);
                     }
 
-                    Device client = null;
+                    final Device client;
                     if (inetAddress != null) {
                         client = DeviceUtil.createDeviceFromInetAddress(inetAddress);
                     } else {
@@ -323,7 +290,6 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     }
                 }
             }
-
             obtainedDevice = true;
         }
 
@@ -345,9 +311,27 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     @Override
-    public BaseObject convert(final Object object) {
+    public BaseObject convert(final Supplier<?> objectSupplier, final boolean useInfoProviders) {
+        if (objectSupplier != null) {
+            // Run as proc user in case we are logging a user trying to access a thing they
+            // don't have perms for
+            final Object object = securityContext.asProcessingUserResult(objectSupplier);
+            return convert(object, useInfoProviders);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public BaseObject convert(final Object object, final boolean useInfoProviders) {
+        if (object == null) {
+            return null;
+        }
+
         final BaseObject baseObj;
-        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
+        final ObjectInfoProvider objectInfoAppender = useInfoProviders
+                ? getInfoAppender(object.getClass())
+                : null;
         if (objectInfoAppender != null) {
             baseObj = objectInfoAppender.createBaseObject(object);
         } else {
@@ -365,7 +349,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return baseObj;
     }
 
-    private String getObjectType(final java.lang.Object object) {
+    private String getObjectType(final Object object) {
         if (object instanceof DocRef) {
             return String.valueOf(((DocRef) object).getType());
         }
@@ -373,11 +357,11 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
         if (objectInfoProvider == null) {
             if (object instanceof Collection) {
-                Collection collection = (Collection) object;
+                Collection<?> collection = (Collection<?>) object;
                 if (collection.isEmpty()) {
                     return "Empty collection";
                 } else {
-                    return "Collection containing " + collection.stream().count()
+                    return "Collection containing " + (long) collection.size() + " "
                             + collection.stream().findFirst().get().getClass().getSimpleName() +
                             " and possibly other objects";
                 }
@@ -388,6 +372,9 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
     private ObjectInfoProvider getInfoAppender(final Class<?> type) {
+        if (type == null) {
+            return null;
+        }
         ObjectInfoProvider appender = null;
 
         if (String.class.equals(type)) {
@@ -405,8 +392,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }
             };
         } else {
-            // Some providers exist for superclasses and not subclass types so keep looking through the class
-            // hierarchy to find a provider.
+            // Some providers exist for superclasses and not subclass types so keep looking through the
+            // class hierarchy to find a provider.
             Class<?> currentType = type;
             Provider<ObjectInfoProvider> provider = null;
             while (currentType != null && provider == null) {
@@ -420,7 +407,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
 
         if (appender == null) {
-            LOGGER.error("No appender found for " + type.getName());
+            LOGGER.debug("No ObjectInfoProvider found for " + type.getName());
         }
 
         return appender;
@@ -454,7 +441,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     }
 
 
-    private String getObjectName(final java.lang.Object object) {
+    private String getObjectName(final Object object) {
         if (object instanceof DocRef) {
             return ((DocRef) object).getName();
         } else if (object instanceof HasName) {
@@ -464,7 +451,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private String getObjectId(final java.lang.Object object) {
+    private String getObjectId(final Object object) {
         if (object instanceof HasUuid) {
             return ((HasUuid) object).getUuid();
         }
@@ -484,38 +471,21 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         return null;
     }
 
-    private Map<String, String> findPropsForDataItems(final Object obj) {
-        // Construct a Jackson JavaType for your class
-        JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
-
-        // Introspect the given type
-        BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
-
-        // Find properties
-        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
-
-        // Get class level ignored properties
-        // Filter properties removing the class level ignored ones
-        Set<String> ignoredProperties = objectMapper.getSerializationConfig().getAnnotationIntrospector()
-                .findPropertyIgnorals(beanDescription.getClassInfo()).getIgnored();
-
-        List<BeanPropertyDefinition> availableProperties = properties.stream()
-                .filter(property -> !ignoredProperties.contains(property.getName()))
-                .collect(Collectors.toList());
-
-        return availableProperties.stream().collect(Collectors.toMap(
-                BeanPropertyDefinition::getName, p -> {
-                    if (shouldRedact(p.getName().toLowerCase(), p.getRawPrimaryType())) {
-                        return "********";
-                    } else {
-                        Object object = p.getAccessor().getValue(obj);
-                        if (object == null) {
-                            return "<null>";
-                        } else {
-                            return object.toString();
-                        }
-                    }
-                }));
+    @Override
+    public Criteria convertExpressionCriteria(final String type,
+                                              final ExpressionCriteria expressionCriteria) {
+        return Criteria.builder()
+                .withType(type)
+                .withQuery(StroomEventLoggingUtil.convertExpression(expressionCriteria.getExpression()))
+                .withData(Data.builder()
+                        .withName("pageRequest")
+                        .addData(getDataItems(expressionCriteria.getPageRequest()))
+                        .build())
+                .withData(Data.builder()
+                        .withName("sortList")
+                        .addData(getDataItems(expressionCriteria.getSortList()))
+                        .build())
+                .build();
     }
 
     /**
@@ -524,31 +494,132 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
-    public List<Data> getDataItems(java.lang.Object obj) {
-        if (obj == null) {
-            return List.of();
+    public List<Data> getDataItems(Object obj) {
+        if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
+            return null;
         }
-        try {
-            Map<String, String> allProps = findPropsForDataItems(obj);
+        // Construct a Jackson JavaType for the class
+        final JavaType javaType = objectMapper.getTypeFactory().constructType(obj.getClass());
 
-            return allProps.keySet().stream().map(propName -> {
-                java.lang.Object val = allProps.get(propName);
+        // Introspect the given type
+        final BeanDescription beanDescription = objectMapper.getSerializationConfig().introspect(javaType);
 
-                if (val == null) {
-                    return null;
-                }
+        // Find properties
+        final List<BeanPropertyDefinition> properties = beanDescription.findProperties();
 
-                Data d = new Data();
-                d.setName(propName);
-                d.setValue(val.toString());
+        // Get class level ignored properties
+        final Set<String> ignoredProperties = objectMapper.getSerializationConfig()
+                .getAnnotationIntrospector()
+                .findPropertyIgnorals(beanDescription.getClassInfo())
+                .getIgnored(); // Filter properties removing the class level ignored ones
 
-                return d;
-            }).filter(data -> data != null).collect(Collectors.toList());
-        } catch (Exception ex) {
-            return List.of();
-        }
+        final List<BeanPropertyDefinition> availableProperties = properties.stream()
+                .filter(property -> !ignoredProperties.contains(property.getName()))
+                .collect(Collectors.toList());
+
+        return availableProperties.stream().map(
+                beanPropDef -> {
+                    final Data.Builder<?> builder = Data.builder().withName(beanPropDef.getName());
+                    final Object valObj = extractPropVal(beanPropDef, obj);
+                    if (valObj != null) {
+                        if (valObj instanceof Collection<?>) {
+                            Collection<?> collection = (Collection<?>) valObj;
+
+                            if (loggingConfig.getMaxListElements() >= 0
+                                    && collection.size() > loggingConfig.getMaxListElements()) {
+                                final String collectionValue = collection.stream()
+                                        .limit(loggingConfig.getMaxListElements())
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
+                                builder.withValue(collectionValue + "...(" + collection.size() +
+                                        " elements in total).");
+                            } else {
+                                final String collectionValue = collection.stream()
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(", "));
+                                builder.withValue(collectionValue);
+                            }
+                        } else if (isLeafPropertyType(valObj.getClass())) {
+                            final String value;
+                            if (shouldRedact(beanPropDef.getName().toLowerCase(), valObj.getClass())) {
+                                value = "********";
+                            } else {
+                                if (loggingConfig.getMaxDataElementStringLength() > 0) {
+                                    final String stringVal = valObj.toString();
+                                    if (stringVal.length() > loggingConfig.getMaxDataElementStringLength()) {
+                                        value = stringVal.substring(0,
+                                                loggingConfig.getMaxDataElementStringLength() - 1)
+                                                + "...";
+                                    } else {
+                                        value = stringVal;
+                                    }
+                                } else {
+                                    value = valObj.toString();
+                                }
+                            }
+                            builder.withValue(value);
+                        } else {
+                            getDataItems(valObj).stream().forEach(d -> builder.addData(d));
+                        }
+                    }
+                    return builder.build();
+                }).collect(Collectors.toList());
     }
 
+    private static boolean isLeafPropertyType(final Class<?> type) {
+
+        boolean isLeaf = type.equals(String.class) ||
+                type.equals(Byte.class) ||
+                type.equals(byte.class) ||
+                type.equals(Integer.class) ||
+                type.equals(int.class) ||
+                type.equals(Long.class) ||
+                type.equals(long.class) ||
+                type.equals(Short.class) ||
+                type.equals(short.class) ||
+                type.equals(Float.class) ||
+                type.equals(float.class) ||
+                type.equals(Double.class) ||
+                type.equals(double.class) ||
+                type.equals(Boolean.class) ||
+                type.equals(boolean.class) ||
+                type.equals(Character.class) ||
+                type.equals(char.class) ||
+
+                DocRef.class.isAssignableFrom(type) ||
+                Enum.class.isAssignableFrom(type) ||
+                Path.class.isAssignableFrom(type) ||
+                StroomDuration.class.isAssignableFrom(type) ||
+                ByteSize.class.isAssignableFrom(type) ||
+                Date.class.isAssignableFrom(type) ||
+                Instant.class.isAssignableFrom(type) ||
+                (type.isArray() &&
+                        (type.getComponentType().equals(Byte.class) ||
+                                type.getComponentType().equals(byte.class) ||
+                                type.getComponentType().equals(Character.class) ||
+                                type.getComponentType().equals(char.class)));
+
+        LOGGER.trace("isLeafPropertyType({}), returning: {}", type, isLeaf);
+        return isLeaf;
+    }
+
+    private static Object extractPropVal(final BeanPropertyDefinition beanPropDef, final Object obj) {
+        final AnnotatedMethod method = beanPropDef.getGetter();
+
+        if (method != null) {
+            try {
+                return method.callOn(obj);
+            } catch (Exception e) {
+                LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " +
+                        obj.getClass().getSimpleName(), e);
+            }
+        } else {
+            LOGGER.debug("No getter for property " + beanPropDef.getName() + " of class " +
+                    obj.getClass().getSimpleName());
+        }
+
+        return null;
+    }
 
     //It is possible for a resource to be annotated to prevent it being logged at all, even when the resource
     //itself is logged, e.g. due to configuration settings

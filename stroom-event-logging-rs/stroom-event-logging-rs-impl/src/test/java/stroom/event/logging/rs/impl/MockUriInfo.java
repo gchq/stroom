@@ -79,8 +79,14 @@ public class MockUriInfo implements UriInfo {
 
     private Integer id;
 
+    private String uuid;
+
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
     }
 
     @Override
@@ -89,6 +95,9 @@ public class MockUriInfo implements UriInfo {
 
         if (id != null) {
             pathParameterMap.putSingle("id", id.toString());
+        }
+        if (uuid != null) {
+            pathParameterMap.putSingle("uuid", uuid);
         }
 
         return pathParameterMap;

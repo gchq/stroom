@@ -28,6 +28,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.data.shared.DataResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -38,7 +39,6 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
@@ -68,7 +68,7 @@ import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
 
-    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
 
@@ -320,8 +320,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
                         message = "No stream id found in selection";
 
-                    } else if (getTextSettings().getRecordNoField() == null &&
-                            !(getTextSettings().getLineFromField() != null
+                    } else if (getTextSettings().getRecordNoField() == null
+                            && !(
+                            getTextSettings().getLineFromField() != null
                                     && getTextSettings().getLineToField() != null)) { // Allow just line positions to
                         //                                                               be used rather than record no.
                         message = "No record number field is configured";
@@ -555,7 +556,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                     showData(data, classification, currentHighlightStrings, isHtml);
                                 }
                             })
-                            .call(VIEW_DATA_RESOURCE)
+                            .call(DATA_RESOURCE)
                             .fetch(request);
                 }
             };

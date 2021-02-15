@@ -155,9 +155,10 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public Account read(final HttpServletRequest httpServletRequest,
-                        final int userId) {
-
+    public Account read(final Integer userId) {
+        if (userId == null) {
+            return null;
+        }
         return stroomEventLoggingService.loggedResult(
                 "GetAccountById",
                 "Get a user by ID",

@@ -34,7 +34,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "feed - /v1")
+@Api(tags = "Feeds")
 @Path("/feed" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,22 +42,16 @@ public interface FeedResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @ApiOperation(
-            value = "Get a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Get a feed doc")
     FeedDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
-    @ApiOperation(
-            value = "Update a feed doc",
-            response = FeedDoc.class)
+    @ApiOperation("Update a feed doc")
     FeedDoc update(@ApiParam("xslt") FeedDoc xslt);
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @ApiOperation(
-            value = "Fetch supported encodings",
-            response = List.class)
+    @ApiOperation("Fetch supported encodings")
     List<String> fetchSupportedEncodings();
 }

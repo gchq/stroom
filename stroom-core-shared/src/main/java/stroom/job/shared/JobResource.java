@@ -33,16 +33,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "job - /v1")
+@Api(tags = "Jobs")
 @Path("/job" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
 
     @GET
-    @ApiOperation(
-            value = "Lists jobs",
-            response = ResultPage.class)
+    @ApiOperation("Lists jobs")
     ResultPage<Job> list();
 
     @PUT

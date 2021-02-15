@@ -72,6 +72,7 @@ public class ManageActivityPresenter extends
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private Supplier<SafeHtml> quickFilterTooltipSupplier;
+    private boolean isFirstShow = true;
 
     @Inject
     public ManageActivityPresenter(final EventBus eventBus,
@@ -186,7 +187,13 @@ public class ManageActivityPresenter extends
 
     private void show(final Activity activity, final Consumer<Activity> consumer) {
         setSelected(activity);
-        listPresenter.refresh();
+
+        if (isFirstShow) {
+            // Avoid the refresh on first show as this causes the data to be fetched twice
+            isFirstShow = false;
+        } else {
+            listPresenter.refresh();
+        }
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
@@ -257,7 +264,8 @@ public class ManageActivityPresenter extends
     private void onDelete() {
         final Activity entity = getSelected();
         if (entity != null) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
+            ConfirmEvent.fire(this, "Are you sure you want to delete the selected " +
+                            getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
                             // Delete the activity

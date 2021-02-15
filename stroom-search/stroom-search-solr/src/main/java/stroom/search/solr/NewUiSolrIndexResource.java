@@ -41,9 +41,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(
-        value = "solr index - /v1",
-        description = "Solr Index API")
+@Api(tags = "Solr Indices (New UI)")
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -61,9 +59,7 @@ public class NewUiSolrIndexResource implements RestResource {
     @GET
     @Path("/list")
     @Timed
-    @ApiOperation(
-            value = "Submit a request for a list of doc refs held by this service",
-            response = Set.class)
+    @ApiOperation("Submit a request for a list of doc refs held by this service")
     public Set<DocRef> listDocuments() {
         return solrIndexStore.listDocuments();
     }
@@ -71,9 +67,7 @@ public class NewUiSolrIndexResource implements RestResource {
     @POST
     @Path("/import")
     @Timed
-    @ApiOperation(
-            value = "Submit an import request",
-            response = DocRef.class)
+    @ApiOperation("Submit an import request")
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData base64EncodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(base64EncodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
@@ -91,9 +85,7 @@ public class NewUiSolrIndexResource implements RestResource {
     @POST
     @Path("/export")
     @Timed
-    @ApiOperation(
-            value = "Submit an export request",
-            response = Base64EncodedDocumentData.class)
+    @ApiOperation("Submit an export request")
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = solrIndexStore.exportDocument(docRef, true, new ArrayList<>());
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));

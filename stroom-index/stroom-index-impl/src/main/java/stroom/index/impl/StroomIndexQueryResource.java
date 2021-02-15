@@ -34,7 +34,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "stroom-index query - /v2")
+@Api(tags = "Stroom-Index Queries")
 @Path("/stroom-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,22 +42,16 @@ public interface StroomIndexQueryResource extends RestResource {
 
     @POST
     @Path("/dataSource")
-    @ApiOperation(
-            value = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            response = DataSource.class)
+    @ApiOperation("Submit a request for a data source definition, supplying the DocRef for the data source")
     DataSource getDataSource(@ApiParam("DocRef") DocRef docRef);
 
     @POST
     @Path("/search")
-    @ApiOperation(
-            value = "Submit a search request",
-            response = SearchResponse.class)
+    @ApiOperation("Submit a search request")
     SearchResponse search(@ApiParam("SearchRequest") SearchRequest request);
 
     @POST
     @Path("/destroy")
-    @ApiOperation(
-            value = "Destroy a running query",
-            response = Boolean.class)
+    @ApiOperation("Destroy a running query")
     Boolean destroy(@ApiParam("QueryKey") QueryKey queryKey);
 }

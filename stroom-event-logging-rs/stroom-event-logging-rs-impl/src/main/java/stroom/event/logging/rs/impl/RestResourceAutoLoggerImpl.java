@@ -17,7 +17,9 @@
 package stroom.event.logging.rs.impl;
 
 import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -32,10 +34,10 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.WriterInterceptorContext;
 
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
@@ -46,8 +48,10 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     private final RequestEventLog requestEventLog;
     private final ObjectMapper objectMapper;
-    private final RequestLoggingConfig config;
-    private final ExceptionMapper<Throwable> childExceptionMapper;
+    private final LoggingConfig config;
+    private final SecurityContext securityContext;
+
+    private final DelegatingExceptionMapper delegatingExceptionMapper;
 
     @Context
     private HttpServletRequest request;
@@ -55,28 +59,35 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     @Context
     private ResourceInfo resourceInfo;
 
+    @Context
+    private ResourceContext resourceContext;
+
 
     @Inject
-    RestResourceAutoLoggerImpl(final RequestEventLog requestEventLog,
-                               final RequestLoggingConfig config,
-                               final DelegatingExceptionMapper childExceptionMapper) {
+    RestResourceAutoLoggerImpl(final SecurityContext securityContext,
+                               final RequestEventLog requestEventLog,
+                               final LoggingConfig config,
+                               final DelegatingExceptionMapper delegatingExceptionMapper) {
+        this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.objectMapper = createObjectMapper();
-        this.childExceptionMapper = childExceptionMapper;
+        this.delegatingExceptionMapper = delegatingExceptionMapper;
     }
 
-    RestResourceAutoLoggerImpl(final RequestEventLog requestEventLog,
-                               final RequestLoggingConfig config,
+    //For unit test use
+    RestResourceAutoLoggerImpl(final SecurityContext securityContext, final RequestEventLog requestEventLog,
+                               final LoggingConfig config,
                                final ResourceInfo resourceInfo,
                                final HttpServletRequest request,
-                               final ExceptionMapper<Throwable> childExceptionMapper) {
+                               final DelegatingExceptionMapper delegatingExceptionMapper) {
+        this.securityContext = securityContext;
         this.requestEventLog = requestEventLog;
         this.config = config;
         this.resourceInfo = resourceInfo;
         this.request = request;
         this.objectMapper = createObjectMapper();
-        this.childExceptionMapper = childExceptionMapper;
+        this.delegatingExceptionMapper = delegatingExceptionMapper;
     }
 
     private static ObjectMapper createObjectMapper() {
@@ -89,7 +100,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
     }
 
     @Override
-    public Response toResponse(final Exception exception) {
+    public Response toResponse(final Throwable exception) {
         if (request != null) {
             final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
             if (object != null) {
@@ -100,13 +111,22 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             LOGGER.warn("Unable to create audit log for exception, request is null", exception);
         }
 
-        return childExceptionMapper.toResponse(exception);
+        if (exception instanceof WebApplicationException) {
+            WebApplicationException wae = (WebApplicationException) exception;
+            return wae.getResponse();
+        } else {
+            return delegatingExceptionMapper.toResponse(exception);
+        }
     }
 
     @Override
     public void aroundWriteTo(final WriterInterceptorContext writerInterceptorContext)
             throws IOException, WebApplicationException {
-        writerInterceptorContext.proceed();
+        try {
+            writerInterceptorContext.proceed();
+        } catch (Exception ex) {
+            LOGGER.error("Error in Java RS filter chain processing.", ex);
+        }
 
         final Object object = request.getAttribute(REQUEST_LOG_INFO_PROPERTY);
 
@@ -118,21 +138,29 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        final ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceInfo, context);
+        ContainerResourceInfo containerResourceInfo = new ContainerResourceInfo(resourceContext, resourceInfo, context);
 
-        if (containerResourceInfo.shouldLog(config.isGlobalLoggingEnabled())) {
+        if (containerResourceInfo.shouldLog(config)) {
             if (context.hasEntity()) {
-                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(
-                        resourceInfo, context.getEntityStream(),
-                        objectMapper, MessageUtils.getCharset(context.getMediaType()));
+                final RequestEntityCapturingInputStream stream = new RequestEntityCapturingInputStream(resourceInfo,
+                        context.getEntityStream(),
+                        objectMapper,
+                        MessageUtils.getCharset(context.getMediaType()));
                 context.setEntityStream(stream);
 
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(
-                        containerResourceInfo, stream.getRequestEntity()));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
+                        new RequestInfo(securityContext, containerResourceInfo, stream.getRequestEntity()));
             } else {
-                request.setAttribute(REQUEST_LOG_INFO_PROPERTY, new RequestInfo(containerResourceInfo));
+                request.setAttribute(REQUEST_LOG_INFO_PROPERTY,
+                        new RequestInfo(securityContext, containerResourceInfo));
             }
         }
+    }
+
+
+    //Needed for some unit tests
+    void setResourceContext(final ResourceContext resourceContext) {
+        this.resourceContext = resourceContext;
     }
 
 }

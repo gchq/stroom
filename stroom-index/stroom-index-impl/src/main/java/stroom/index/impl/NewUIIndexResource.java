@@ -20,7 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(value = "index - /v1")
+@Api(tags = "Index (v1)")
 @Path("/index" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -28,30 +28,30 @@ public interface NewUIIndexResource extends RestResource {
 
     @GET
     @Path("/list")
-    @ApiOperation(
-            value = "Submit a request for a list of doc refs held by this service",
-            response = Set.class)
+    @ApiOperation("Submit a request for a list of doc refs held by this service")
     Set<DocRef> listDocuments();
 
     @POST
     @Path("/import")
-    @ApiOperation(
-            value = "Submit an import request",
-            response = DocRef.class)
+    @ApiOperation("Submit an import request")
     DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
 
     @POST
     @Path("/export")
-    @ApiOperation(
-            value = "Submit an export request",
-            response = Base64EncodedDocumentData.class)
+    @ApiOperation("Submit an export request")
     Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
 
     @GET
     @Path("/{indexUuid}")
+    @ApiOperation(
+            value = "Fetch the index document with the supplied UUID",
+            response = IndexDoc.class)
     Response fetch(@PathParam("indexUuid") String indexUuid);
 
     @POST
     @Path("/{indexUuid}")
+    @ApiOperation(
+            value = "Update the supplied index document",
+            response = IndexDoc.class)
     Response save(@PathParam("indexUuid") String indexUuid, IndexDoc updates);
 }

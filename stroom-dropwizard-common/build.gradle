@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.dropwizard.common'
 
 dependencies {
     compile project(':stroom-util')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util-shared')
 
     compile(libs.dropwizard_core) {

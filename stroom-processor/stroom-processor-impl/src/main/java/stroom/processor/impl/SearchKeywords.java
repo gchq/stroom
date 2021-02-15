@@ -38,7 +38,6 @@ import static java.util.stream.Collectors.joining;
  * available and maps them to options on the the criteria.
  */
 public class SearchKeywords {
-
     private static final String DELIMITER = ":";
 
     private static final String IS = "is";
@@ -65,7 +64,8 @@ public class SearchKeywords {
                     .collect(joining());
 
             if (!Strings.isNullOrEmpty(plainOldFilter)) {
-                builder.addTerm(ProcessorFields.PIPELINE,
+                builder.addTerm(
+                        ProcessorFields.PIPELINE,
                         Condition.EQUALS,
                         new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
             }

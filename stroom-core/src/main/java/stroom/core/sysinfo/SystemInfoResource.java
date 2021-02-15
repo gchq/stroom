@@ -16,7 +16,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "system info - /v1")
+@Api(tags = "System Info")
 @Path(SystemInfoResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -26,22 +26,16 @@ public interface SystemInfoResource extends RestResource {
     String NAMES_PATH_PART = "/names";
 
     @GET
-    @ApiOperation(
-            value = "Get all system info results",
-            response = SystemInfoResult.class)
+    @ApiOperation(value = "Get all system info results")
     SystemInfoResultList getAll();
 
     @GET
     @Path(NAMES_PATH_PART)
-    @ApiOperation(
-            value = "Get all system info result names",
-            response = List.class)
+    @ApiOperation(value = "Get all system info result names")
     List<String> getNames();
 
     @GET
     @Path("/{name}")
-    @ApiOperation(
-            value = "Get a system info result by name",
-            response = List.class)
+    @ApiOperation(value = "Get a system info result by name")
     SystemInfoResult get(@PathParam("name") final String name);
 }

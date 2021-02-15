@@ -33,7 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "node - /v1")
+@Api(tags = "Nodes")
 @Path(NodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,36 +48,26 @@ public interface NodeResource extends RestResource, DirectRestService {
 
     @GET
     @Path(INFO_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Gets detailed information about a node",
-            response = Long.class)
+    @ApiOperation("Gets detailed information about a node")
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
 
     @GET
     @Path("/all")
-    @ApiOperation(
-            value = "Lists all nodes",
-            response = List.class)
+    @ApiOperation("Lists all nodes")
     List<String> listAllNodes();
 
     @GET
     @Path("/enabled")
-    @ApiOperation(
-            value = "Lists enabled nodes",
-            response = List.class)
+    @ApiOperation("Lists enabled nodes")
     List<String> listEnabledNodes();
 
     @GET
-    @ApiOperation(
-            value = "Lists nodes",
-            response = FetchNodeStatusResponse.class)
+    @ApiOperation("Lists nodes")
     FetchNodeStatusResponse find();
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(
-            value = "Gets a ping time for a node",
-            response = Long.class)
+    @ApiOperation("Gets a ping time for a node")
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT

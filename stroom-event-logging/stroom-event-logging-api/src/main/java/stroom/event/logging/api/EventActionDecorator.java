@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.event.logging.rs.impl;
+package stroom.event.logging.api;
 
-import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import event.logging.EventAction;
 
-import com.google.inject.AbstractModule;
+/**
+ * Interface for simple classes that modify {@link EventAction} instances to improve quality of Autologger logging.
+ *
+ * @param <A> the type of event action that this EventActionDecorator works for
+ */
 
-public class RestResourceAutoSLoggerModule extends AbstractModule {
+public interface EventActionDecorator<A extends EventAction> {
 
-    @Override
-    protected void configure() {
-        bind(RestResourceAutoLogger.class).to(RestResourceAutoLoggerImpl.class);
-        bind(RequestEventLog.class).to(RequestEventLogImpl.class);
-    }
+    /**
+     * Decorate this event action
+     *
+     * @param eventAction the basic (automatically assigned) event action
+     * @return a decorated version of the supplied eventAction
+     */
+    A decorate(final A eventAction);
+
 }

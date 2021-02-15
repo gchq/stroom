@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.impl.session.SessionDetails;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -26,7 +25,7 @@ import javax.ws.rs.core.Response;
  * needs to ask all relying parties to log out. This is the back-channel resource that allows this to
  * happen.
  */
-@Api(value = "session - /v1")
+@Api(tags = "Sessions")
 @Path(SessionResource.BASE_PATH)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -38,9 +37,7 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/noauth/login")
-    @ApiOperation(
-            value = "Checks if the current session is authenticated and redirects to an auth flow if it is not",
-            response = String.class)
+    @ApiOperation("Checks if the current session is authenticated and redirects to an auth flow if it is not")
     LoginResponse login(@Context @NotNull HttpServletRequest httpServletRequest,
                         @QueryParam("redirect_uri") String redirectUri);
 
@@ -53,8 +50,6 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     @GET
     @Path(LIST_PATH_PART)
-    @ApiOperation(
-            value = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
-            response = SessionDetails.class)
+    @ApiOperation("Lists user sessions for a node, or all nodes in the cluster if nodeName is null")
     SessionListResponse list(@QueryParam(NODE_NAME_PARAM) String nodeName);
 }

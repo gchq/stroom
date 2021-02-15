@@ -37,7 +37,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(value = "pipeline - /v1")
+@Api(tags = "Pipelines")
 @Path("/pipelines" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -142,7 +142,6 @@ public class NewUiPipelineResource implements RestResource {
             // TODO: The below isn't very efficient because it grabs and processes on all the pipelines. Better to
             // do paging on the database. But this sort of paging is done like this elsewhere so it's a general issue.
             List<DocRef> pipelines = pipelineStore.list();
-            final int totalPipelines = pipelines.size();
 
             // Filter
             if (!Strings.isNullOrEmpty(filter)) {
@@ -167,6 +166,7 @@ public class NewUiPipelineResource implements RestResource {
 
             // Produce response
             final List<DocRef> results = pipelines;
+            int totalPipelines = pipelines.size();
             Object response = new Object() {
                 public int total = totalPipelines;
                 public List<DocRef> pipelines = results;
@@ -179,8 +179,8 @@ public class NewUiPipelineResource implements RestResource {
     @Path("/{pipelineId}")
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
         return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as
-            // they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have
+            // 'use' permission on them.
             return securityContext.useAsReadResult(() -> fetchInScope(pipelineId));
         }));
     }
@@ -235,16 +235,15 @@ public class NewUiPipelineResource implements RestResource {
     public Response save(@PathParam("pipelineId") final String pipelineId,
                          @ApiParam("pipelineDocUpdates") final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            // A user should be allowed to read pipelines that they are inheriting from as long as
-            // they have 'use' permission on them.
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have
+            // 'use' permission on them.
             securityContext.useAsRead(() -> {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
 
                 if (pipelineDoc != null) {
                     pipelineDoc.setDescription(pipelineDocUpdates.getDescription());
                     // will have the effect of setting last one
-                    pipelineDocUpdates.getConfigStack()
-                            .forEach(pipelineDoc::setPipelineData);
+                    pipelineDocUpdates.getConfigStack().forEach(pipelineDoc::setPipelineData);
                     pipelineStore.writeDocument(pipelineDoc);
                 }
             });

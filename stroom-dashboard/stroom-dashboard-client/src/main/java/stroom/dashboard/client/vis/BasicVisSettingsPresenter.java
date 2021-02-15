@@ -128,7 +128,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         readSettings(settings, dynamicSettings);
                     })
                     .call(VISUALISATION_RESOURCE)
-                    .read(docRef);
+                    .fetch(docRef.getUuid());
         }
     }
 

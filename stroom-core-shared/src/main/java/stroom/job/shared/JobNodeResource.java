@@ -34,7 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "jobNode - /v1")
+@Api(tags = "Jobs (Node)")
 @Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,17 +48,13 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @ApiOperation(
-            value = "Lists job nodes",
-            response = ResultPage.class)
+    @ApiOperation("Lists job nodes")
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
                              @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path(INFO_PATH_PART)
-    @ApiOperation(
-            value = "Gets current info for a job node",
-            response = JobNodeInfo.class)
+    @ApiOperation("Gets current info for a job node")
     JobNodeInfo info(@QueryParam("jobName") String jobName,
                      @QueryParam("nodeName") String nodeName);
 

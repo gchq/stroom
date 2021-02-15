@@ -10,53 +10,62 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
-@Api(value = "export - /v1")
+@Api(tags = "Export")
 @Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
 
-    private final transient ImportExportService importExportService;
-    private final transient ResourceStore resourceStore;
-    private final transient ExportConfig exportConfig;
-    private final transient SecurityContext securityContext;
+    private final transient Provider<ImportExportService> importExportServiceProvider;
+    private final transient Provider<ResourceStore> resourceStoreProvider;
+    private final transient Provider<ExportConfig> exportConfigProvider;
+    private final transient Provider<SecurityContext> securityContextProvider;
 
     @Inject
-    public ExportConfigResource(final ImportExportService importExportService,
-                                final ResourceStore resourceStore,
-                                final ExportConfig exportConfig,
-                                final SecurityContext securityContext) {
-        this.importExportService = importExportService;
-        this.resourceStore = resourceStore;
-        this.exportConfig = exportConfig;
-        this.securityContext = securityContext;
+    public ExportConfigResource(final Provider<ImportExportService> importExportServiceProvider,
+                                final Provider<ResourceStore> resourceStoreProvider,
+                                final Provider<ExportConfig> exportConfigProvider,
+                                final Provider<SecurityContext> securityContextProvider) {
+        this.importExportServiceProvider = importExportServiceProvider;
+        this.resourceStoreProvider = resourceStoreProvider;
+        this.exportConfigProvider = exportConfigProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @GET
+    @ApiOperation(
+            value = "Exports all configuration to a file.",
+            response = Void.class)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response export() {
-        if (!securityContext.hasAppPermission("Export Configuration")) {
+        final ResourceStore resourceStore = resourceStoreProvider.get();
+        if (!securityContextProvider.get().hasAppPermission("Export Configuration")) {
             throw new ClientErrorException("You do not have permission", Status.FORBIDDEN);
         }
 
-        final boolean enabled = exportConfig.isEnabled();
+        final boolean enabled = exportConfigProvider.get().isEnabled();
         if (enabled) {
             final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
 
             try {
                 final java.nio.file.Path tempFile = resourceStore.getTempFile(tempResourceKey);
-                importExportService.exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
+                importExportServiceProvider.get()
+                        .exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
 
                 final StreamingOutput streamingOutput = output -> {
                     try (final InputStream is = Files.newInputStream(tempFile)) {
@@ -68,8 +77,8 @@ public class ExportConfigResource implements RestResource {
 
                 return Response
                         .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                        .header("Content-Disposition",
-                                "attachment; filename=\"" + tempFile.getFileName().toString() + "\"")
+                        .header("Content-Disposition", "attachment; filename=\"" +
+                                tempFile.getFileName().toString() + "\"")
                         .build();
 
             } catch (final EntityServiceException e) {

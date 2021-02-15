@@ -24,6 +24,8 @@ import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
@@ -33,21 +35,23 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
     private static final FilterFieldMappers<String> FILTER_FIELD_MAPPERS = FilterFieldMappers.singleStringField();
 
-    private final AnnotationService annotationService;
-    private final DocumentEventLog documentEventLog;
-    private final AnnotationConfig annotationConfig;
+    private final Provider<AnnotationService> annotationService;
+    private final Provider<DocumentEventLog> documentEventLog;
+    private final Provider<AnnotationConfig> annotationConfig;
 
     @Inject
-    AnnotationResourceImpl(final AnnotationService annotationService,
-                           final DocumentEventLog documentEventLog,
-                           final AnnotationConfig annotationConfig) {
+    AnnotationResourceImpl(final Provider<AnnotationService> annotationService,
+                           final Provider<DocumentEventLog> documentEventLog,
+                           final Provider<AnnotationConfig> annotationConfig) {
         this.annotationService = annotationService;
         this.documentEventLog = documentEventLog;
         this.annotationConfig = annotationConfig;
@@ -60,12 +64,12 @@ class AnnotationResourceImpl implements AnnotationResource {
 //        if (annotationId != null) {
         LOGGER.info(() -> "Getting annotation " + annotationId);
         try {
-            annotationDetail = annotationService.getDetail(annotationId);
+            annotationDetail = annotationService.get().getDetail(annotationId);
             if (annotationDetail != null) {
-                documentEventLog.view(annotationDetail, null);
+                documentEventLog.get().view(annotationDetail, null);
             }
         } catch (final RuntimeException e) {
-            documentEventLog.view("Annotation " + annotationId, e);
+            documentEventLog.get().view("Annotation " + annotationId, e);
         }
 //        } else {
 //            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
@@ -88,10 +92,10 @@ class AnnotationResourceImpl implements AnnotationResource {
 
         LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
         try {
-            annotationDetail = annotationService.createEntry(request);
-            documentEventLog.create(annotationDetail, null);
+            annotationDetail = annotationService.get().createEntry(request);
+            documentEventLog.get().create(annotationDetail, null);
         } catch (final RuntimeException e) {
-            documentEventLog.create("Annotation entry " + request.getAnnotation(), e);
+            documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
         }
 
         return annotationDetail;
@@ -99,37 +103,37 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public List<String> getStatus(final String filter) {
-        return filterValues(annotationConfig.getStatusValues(), filter);
+        return filterValues(annotationConfig.get().getStatusValues(), filter);
     }
 
     @Override
     public List<String> getComment(final String filter) {
-        return filterValues(annotationConfig.getStandardComments(), filter);
+        return filterValues(annotationConfig.get().getStandardComments(), filter);
     }
 
     @Override
     public List<EventId> getLinkedEvents(final Long annotationId) {
-        return annotationService.getLinkedEvents(annotationId);
+        return annotationService.get().getLinkedEvents(annotationId);
     }
 
     @Override
     public List<EventId> link(final EventLink eventLink) {
-        return annotationService.link(eventLink);
+        return annotationService.get().link(eventLink);
     }
 
     @Override
     public List<EventId> unlink(final EventLink eventLink) {
-        return annotationService.unlink(eventLink);
+        return annotationService.get().unlink(eventLink);
     }
 
     @Override
     public Integer setStatus(final SetStatusRequest request) {
-        return annotationService.setStatus(request);
+        return annotationService.get().setStatus(request);
     }
 
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request) {
-        return annotationService.setAssignedTo(request);
+        return annotationService.get().setAssignedTo(request);
     }
 
     private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {

@@ -14,7 +14,7 @@ import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.event.logging.rs.impl.RequestLoggingConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -204,7 +204,7 @@ public class AppConfigModule extends AbstractModule {
                 ProxyAggregationConfig.class);
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
-        bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, RequestLoggingConfig.class);
+        bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, LoggingConfig.class);
         bindConfig(AppConfig::getSearchConfig, AppConfig::setSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig,
                     SearchConfig::getExtractionConfig,

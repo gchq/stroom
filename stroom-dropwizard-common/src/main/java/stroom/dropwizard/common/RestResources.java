@@ -94,7 +94,8 @@ public class RestResources {
                     StringUtils.rightPad(name, maxNameLength, " "),
                     resourceProvider.getResourcePath(),
                     ConsoleColour.red("**Duplicate path**"));
-            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}",
+            throw new RuntimeException(LogUtil.message(
+                    "Duplicate REST resource path {}",
                     resourceProvider.getResourcePath()));
         } else {
             LOGGER.info("\t{} => {}",

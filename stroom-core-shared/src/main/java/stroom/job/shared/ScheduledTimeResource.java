@@ -30,16 +30,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "scheduledTime - /v1")
+@Api(tags = "Scheduled Time")
 @Path("/scheduledTime" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ScheduledTimeResource extends RestResource, DirectRestService {
 
-    @
-            POST
-    @ApiOperation(
-            value = "Gets scheduled time info",
-            response = ScheduledTimes.class)
+    @POST
+    @ApiOperation("Gets scheduled time info")
     ScheduledTimes get(@ApiParam("request") GetScheduledTimesRequest request);
 }

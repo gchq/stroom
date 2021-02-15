@@ -21,7 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "config - /v1")
+@Api(tags = "Global Config")
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -51,59 +51,41 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             FIELD_DEF_SOURCE,
             FIELD_DEF_DESCRIPTION);
 
-
-    // TODO do we need this if the method returns a type?
-    @ApiOperation(
-            value = "TODO",
-            response = ListConfigResponse.class)
     @POST
     @Path(PROPERTIES_SUB_PATH)
-    ListConfigResponse list(@ApiParam("criteria") final GlobalConfigCriteria criteria);
+    @ApiOperation(value = "List all properties matching the criteria on the current node.")
+    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @ApiOperation(value = "List all properties matching the criteria on the requested node.")
     ListConfigResponse listByNode(
-            @PathParam("nodeName") final String nodeName,
-            @ApiParam("criteria") final GlobalConfigCriteria criteria);
+            final @PathParam("nodeName") String nodeName,
+            final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
-    ConfigProperty getPropertyByName(@PathParam("propertyName") final String propertyName);
-
-//    @GET
-//    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-//    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
+    @ApiOperation(value = "Fetch a property by its name, e.g. 'stroom.path.home'")
+    ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
-    OverrideValue<String> getYamlValueByNodeAndName(@PathParam("propertyName") final String propertyName,
-                                                    @PathParam("nodeName") final String nodeName);
-
-//    @POST
-//    @Path("/find")
-//    @ApiOperation(
-//            value = "Get global config properties",
-//            response = ResultPage.class)
-//    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
+    @ApiOperation(value = "Get the property value from the YAML configuration in the specified node.")
+    OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
+                                                    final @PathParam("nodeName") String nodeName);
 
     @POST
-    @ApiOperation(
-            value = "Update a ConfigProperty",
-            response = ConfigProperty.class)
+    @ApiOperation(value = "Create a configuration property")
     ConfigProperty create(@ApiParam("configProperty") final ConfigProperty configProperty);
 
     @PUT
-    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + DB_OVERRIDE_VALUE_SUB_PATH)
-    @ApiOperation(
-            value = "Update a ConfigProperty",
-            response = ConfigProperty.class)
-    ConfigProperty update(@PathParam("propertyName") final String propertyName,
-                          @ApiParam("configProperty") final ConfigProperty configProperty);
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
+    @ApiOperation(value = "Update a configuration property")
+    ConfigProperty update(final @PathParam("propertyName") String propertyName,
+                          final @ApiParam("configProperty") ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)
-    @ApiOperation(
-            value = "Get config property",
-            response = UiConfig.class)
+    @ApiOperation(value = "Fetch the UI configuration")
     UiConfig fetchUiConfig();
 }

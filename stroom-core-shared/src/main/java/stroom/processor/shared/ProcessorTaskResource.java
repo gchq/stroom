@@ -33,7 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "processorTask - /v1")
+@Api(tags = "Processor Tasks")
 @Path(ProcessorTaskResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,29 +46,23 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @ApiOperation(
-            value = "Finds processors tasks",
-            response = ResultPage.class)
+    @ApiOperation("Finds processors tasks")
     ResultPage<ProcessorTask> find(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
 
     @POST
     @Path("summary")
-    @ApiOperation(
-            value = "Finds processor task summaries",
-            response = ResultPage.class)
+    @ApiOperation("Finds processor task summaries")
     ResultPage<ProcessorTaskSummary> findSummary(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
 
     @POST
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Assign some tasks",
-            response = ProcessorTaskList.class)
+    @ApiOperation("Assign some tasks")
     ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName,
                                   @ApiParam("request") AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @ApiOperation(value = "Abandon some tasks",
-            response = Boolean.class)
+    @ApiOperation("Abandon some tasks")
     Boolean abandonTasks(@PathParam("nodeName") String nodeName,
                          @ApiParam("request") ProcessorTaskList request);
 }

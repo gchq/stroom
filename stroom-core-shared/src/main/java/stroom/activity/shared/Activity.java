@@ -176,7 +176,11 @@ public class Activity implements HasAuditInfo, HasIntegerId {
 
     @Override
     public String toString() {
-        return details.toString();
+        if (details != null) {
+            return details.toString();
+        } else {
+            return "Undefined Activity Details";
+        }
     }
 
     @JsonInclude(Include.NON_NULL)

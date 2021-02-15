@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
+import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
@@ -22,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+@AutoLogged
 class IndexResourceImpl implements IndexResource {
 
     private final IndexStore indexStore;

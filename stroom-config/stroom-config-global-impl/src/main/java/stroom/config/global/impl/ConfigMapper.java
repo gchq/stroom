@@ -180,7 +180,7 @@ public class ConfigMapper {
      * and update the globalPropertiesMap.
      * It will also apply common database config to all other database config objects.
      */
-    private void updateConfigFromYaml(final AppConfig newAppConfig) {
+    public void updateConfigFromYaml(final AppConfig newAppConfig) {
         synchronized (this) {
             // The object will be different when we are re-reading the yaml into AppConfig
             // as part of AppConfigMonitor
@@ -191,6 +191,12 @@ public class ConfigMapper {
                 FieldMapper.copy(newAppConfig, appConfig);
             }
 
+            refreshPropertyMap(newAppConfig);
+        }
+    }
+
+    public void refreshPropertyMap(final AppConfig newAppConfig) {
+        synchronized (this) {
             // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap with the
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");

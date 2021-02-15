@@ -32,33 +32,30 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "cache - /v1")
+@Api(tags = "Caches")
 @Path(CacheResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface CacheResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/cache" + ResourcePaths.V1;
-
     String INFO = "/info";
     String INFO_PATH = BASE_PATH + INFO;
 
     @GET
-    @ApiOperation(
-            value = "Lists caches",
-            response = List.class)
+    @ApiOperation(value = "Lists caches")
     List<String> list();
 
     @GET
     @Path(INFO)
-    @ApiOperation(
-            value = "Gets cache info",
-            response = CacheInfo.class)
-    CacheInfoResponse info(@QueryParam("cacheName") String cacheName, @QueryParam("nodeName") String nodeName);
+    @ApiOperation(value = "Gets cache info")
+    CacheInfoResponse info(
+            @QueryParam("cacheName") String cacheName,
+            @QueryParam("nodeName") String nodeName);
 
     @DELETE
-    @ApiOperation(
-            value = "Clears a cache",
-            response = Long.class)
-    Long clear(@QueryParam("cacheName") String cacheName, @QueryParam("nodeName") String nodeName);
+    @ApiOperation(value = "Clears a cache")
+    Long clear(
+            @QueryParam("cacheName") String cacheName,
+            @QueryParam("nodeName") String nodeName);
 }

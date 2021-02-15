@@ -15,9 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "application permissions - /v1",
-        description = "Stroom Application Permissions API")
+@Api(tags = "Application Permissions (New UI)")
 @Path("/appPermissions" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

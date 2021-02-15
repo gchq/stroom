@@ -27,7 +27,6 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -38,7 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "explorer - /v2")
+@Api(tags = "Explorer (v2)")
 @Path("/explorer" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -46,71 +45,51 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/create")
-    @ApiOperation(
-            value = "Create explorer item",
-            response = DocRef.class)
+    @ApiOperation("Create explorer item")
     DocRef create(@ApiParam("request") ExplorerServiceCreateRequest request);
 
     @DELETE
     @Path("/delete")
-    @ApiOperation(
-            value = "Delete explorer items",
-            response = BulkActionResult.class)
+    @ApiOperation("Delete explorer items")
     BulkActionResult delete(@ApiParam("request") ExplorerServiceDeleteRequest request);
 
     @POST
     @Path("/copy")
-    @ApiOperation(
-            value = "Copy explorer items",
-            response = BulkActionResult.class)
+    @ApiOperation("Copy explorer items")
     BulkActionResult copy(@ApiParam("request") ExplorerServiceCopyRequest request);
 
     @PUT
     @Path("/move")
-    @ApiOperation(
-            value = "Move explorer items",
-            response = BulkActionResult.class)
+    @ApiOperation("Move explorer items")
     BulkActionResult move(@ApiParam("request") ExplorerServiceMoveRequest request);
 
     @PUT
     @Path("/rename")
-    @ApiOperation(
-            value = "Rename explorer items",
-            response = DocRef.class)
+    @ApiOperation("Rename explorer items")
     DocRef rename(@ApiParam("request") ExplorerServiceRenameRequest request);
 
     @POST
     @Path("/info")
-    @ApiOperation(
-            value = "Get document info",
-            response = DocRefInfo.class)
+    @ApiOperation("Get document info")
     DocRefInfo info(@ApiParam("docRef") DocRef docRef);
 
     @POST
     @Path("/fetchDocRefs")
-    @ApiOperation(
-            value = "Fetch document references",
-            response = Set.class)
+    @ApiOperation("Fetch document references")
     Set<DocRef> fetchDocRefs(@ApiParam("docRefs") Set<DocRef> docRefs);
 
     @GET
     @Path("/fetchDocumentTypes")
-    @ApiOperation(
-            value = "Fetch document types",
-            response = DocumentTypes.class)
+    @ApiOperation("Fetch document types")
     DocumentTypes fetchDocumentTypes();
 
     @POST
     @Path("/fetchExplorerPermissions")
-    @ApiOperation(
-            value = "Fetch permissions for explorer items",
-            response = Map.class)
+    @ApiOperation("Fetch permissions for explorer items")
     Set<ExplorerNodePermissions> fetchExplorerPermissions(@ApiParam("explorerNodes") List<ExplorerNode> explorerNodes);
 
     @POST
     @Path("/fetchExplorerNodes")
-    @ApiOperation(
-            value = "Fetch explorer nodes",
-            response = FetchExplorerNodeResult.class)
+    @ApiOperation("Fetch explorer nodes")
     FetchExplorerNodeResult fetch(@ApiParam("request") FindExplorerNodeCriteria request);
 }

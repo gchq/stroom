@@ -32,7 +32,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "processor - /v1")
+@Api(tags = "Processors")
 @Path("/processor" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,14 +40,12 @@ public interface ProcessorResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(
-            value = "Deletes a processor",
-            response = Processor.class)
+    @ApiOperation("Deletes a processor")
     void delete(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}/enabled")
-    @ApiOperation(value = "Sets the enabled/disabled state for a processor")
+    @ApiOperation("Sets the enabled/disabled state for a processor")
     void setEnabled(@PathParam("id") Integer id,
                     @ApiParam("enabled") Boolean enabled);
 }

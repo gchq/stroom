@@ -6,6 +6,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.DELETE;
@@ -18,26 +19,42 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(value = "stroom-index volumes - /v1")
+@Api(tags = "Stroom-Index Volumes (New UI)")
 @Path("/stroom-index/volume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface NewUIIndexVolumeResource extends RestResource {
 
     @GET
+    @ApiOperation(
+            value = "Get all index volumes",
+            response = IndexVolume.class,
+            responseContainer = "List")
     Response getAll();
 
     @GET
     @Path("{id}")
+    @ApiOperation(
+            value = "Get an index volume identified by the supplied ID",
+            response = IndexVolume.class)
     Response getById(@PathParam("id") int id);
 
     @POST
+    @ApiOperation(
+            value = "Create a new index volume",
+            response = IndexVolume.class)
     Response create(@ApiParam("indexVolume") IndexVolume indexVolume);
 
     @PUT
+    @ApiOperation(
+            value = "Update an index volume",
+            response = IndexVolume.class)
     Response update(@ApiParam("indexVolume") IndexVolume indexVolume);
 
     @DELETE
     @Path("{id}")
+    @ApiOperation(
+            value = "Delete an index volume identified by the supplied ID",
+            response = IndexVolume.class)
     Response delete(@PathParam("id") int id);
 
 //    /**

@@ -17,7 +17,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "application permissions - /v1")
+@Api(tags = "Doc Permissions")
 @Path("/permission/doc" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -25,45 +25,33 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/changeDocumentPermissions")
-    @ApiOperation(
-            value = "Change document permissions",
-            response = Boolean.class)
+    @ApiOperation("Change document permissions")
     Boolean changeDocumentPermissions(@ApiParam("request") ChangeDocumentPermissionsRequest request);
 
     @POST
     @Path("/copyPermissionsFromParent")
-    @ApiOperation(
-            value = "Copy permissions from parent",
-            response = DocumentPermissions.class)
+    @ApiOperation("Copy permissions from parent")
     DocumentPermissions copyPermissionFromParent(@ApiParam("request") CopyPermissionsFromParentRequest request);
 
 
     @POST
     @Path("/fetchAllDocumentPermissions")
-    @ApiOperation(
-            value = "Fetch document permissions",
-            response = DocumentPermissions.class)
+    @ApiOperation("Fetch document permissions")
     DocumentPermissions fetchAllDocumentPermissions(@ApiParam("request") FetchAllDocumentPermissionsRequest request);
 
     @POST
     @Path("/checkDocumentPermission")
-    @ApiOperation(
-            value = "Check document permission",
-            response = Boolean.class)
+    @ApiOperation("Check document permission")
     Boolean checkDocumentPermission(@ApiParam("request") CheckDocumentPermissionRequest request);
 
     @GET
     @Path("/getPermissionForDocType/${docType}")
-    @ApiOperation(
-            value = "Get all permissions for a given document type",
-            response = List.class)
+    @ApiOperation("Get all permissions for a given document type")
     List<String> getPermissionForDocType(@PathParam("docType") String docType);
 
     @POST
     @Path("/filterUsers")
-    @ApiOperation(
-            value = "Get all permissions for a given document type",
-            response = List.class)
+    @ApiOperation("Get all permissions for a given document type")
     List<User> filterUsers(final FilterUsersRequest filterUsersRequest);
 
 }

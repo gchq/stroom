@@ -95,10 +95,10 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         // Now create the service
 
         return new CacheResourceImpl(
-                nodeService,
-                nodeInfo,
-                webTargetFactory(),
-                cacheManagerService,
+                () -> nodeService,
+                () -> nodeInfo,
+                AbstractMultiNodeResourceTest::webTargetFactory,
+                () -> cacheManagerService,
                 null);
     }
 

@@ -31,15 +31,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "suggest - /v1")
+@Api(tags = "Suggestions")
 @Path("/suggest" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SuggestionsResource extends RestResource, DirectRestService {
 
     @POST
-    @ApiOperation(
-            value = "Fetch some suggestions",
-            response = List.class)
+    @ApiOperation("Fetch some suggestions")
     List<String> fetch(@ApiParam("request") FetchSuggestionsRequest request);
 }
