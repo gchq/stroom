@@ -105,7 +105,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             TAG1, 3,
             TAG2, 5);
 
-//    private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
+//    private static final DocRef DOC_REF = new DocRef(
+//    StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
 
     @Inject
@@ -317,10 +318,10 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 .forEach(tableResult -> {
                     String id = tableResult.getComponentId();
                     LOGGER.debug("id: {}", id);
-                    tableResult.getRows().forEach(row -> LOGGER.debug(row.getValues().stream().collect(Collectors.joining(
-                            ","))));
+                    tableResult.getRows().forEach(row -> LOGGER.debug(String.join(",", row.getValues())));
 
-                    assertThat(tableResult.getTotalResults()).isEqualTo(expectedRowCount);
+                    assertThat(tableResult.getTotalResults())
+                            .isEqualTo(expectedRowCount);
 
                     List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(id);
                     assertThat(fields).isNotNull();
@@ -465,14 +466,17 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         sqlStatisticAggregationManager.aggregate();
 
-        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)).isEqualTo(3);
-        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME)).isEqualTo(3);
+        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME))
+                .isEqualTo(3);
+        assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME))
+                .isEqualTo(3);
     }
 
     private int getRowCount(final String tableName) throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);

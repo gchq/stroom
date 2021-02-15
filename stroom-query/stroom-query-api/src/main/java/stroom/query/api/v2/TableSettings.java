@@ -75,9 +75,9 @@ public final class TableSettings {
     private final List<Integer> maxResults;
 
     @ApiModelProperty(
-            value = "When grouping is used a value of true indicates that the results will include the full detail of " +
-                    "any results aggregated into a group as well as their aggregates. A value of false will only " +
-                    "include the aggregated values for each group. Defaults to false.")
+            value = "When grouping is used a value of true indicates that the results will include the full " +
+                    "detail of any results aggregated into a group as well as their aggregates. A value of false " +
+                    "will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
@@ -92,15 +92,18 @@ public final class TableSettings {
     @JsonProperty("modelVersion")
     private final String modelVersion;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
-    public TableSettings(@JsonProperty("queryId") final String queryId,
-                         @JsonProperty("fields") final List<Field> fields,
-                         @JsonProperty("extractValues") final Boolean extractValues,
-                         @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-                         @JsonProperty("maxResults") final List<Integer> maxResults,
-                         @JsonProperty("showDetail") final Boolean showDetail,
-                         @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-                         @JsonProperty("modelVersion") final String modelVersion) {
+    public TableSettings(
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("extractValues") final Boolean extractValues,
+            @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
+            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("showDetail") final Boolean showDetail,
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion) {
+
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;

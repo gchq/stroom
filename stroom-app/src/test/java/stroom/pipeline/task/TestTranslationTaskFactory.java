@@ -95,25 +95,34 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         // Create a store.
         createStore(VALID_DATA, REFERENCE_DATA, SAMPLE_XSLT);
 
-        assertThat(metaService.getLockCount()).isEqualTo(0);
+        assertThat(metaService.getLockCount())
+                .isEqualTo(0);
 
         // Process the store sequentially.
         final List<ProcessorResult> results = processAll();
 
-        assertThat(results.size()).as("Check that we did the number of jobs expected").isEqualTo(NO_OF_REFERENCE_FILES + NO_OF_EVENT_FILES);
-        assertThat(metaService.getLockCount()).isEqualTo(0);
+        assertThat(results.size())
+                .as("Check that we did the number of jobs expected")
+                .isEqualTo(NO_OF_REFERENCE_FILES + NO_OF_EVENT_FILES);
+        assertThat(metaService.getLockCount())
+                .isEqualTo(0);
 
         // Check we have some raw events.
-        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
-        assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
+        assertThat(raw.size())
+                .isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all passed.
-        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS)).getValues();
-        assertThat(cooked.size()).isEqualTo(NO_OF_EVENT_FILES);
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS))
+                .getValues();
+        assertThat(cooked.size())
+                .isEqualTo(NO_OF_EVENT_FILES);
 
         // Check none failed.
         for (final ProcessorResult result : results) {
-            assertThat(result.getMarkerCount(Severity.SEVERITIES)).isEqualTo(0);
+            assertThat(result.getMarkerCount(Severity.SEVERITIES))
+                    .isEqualTo(0);
         }
     }
 
@@ -175,22 +184,28 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<ProcessorResult> results = processAll();
 
         // Check we have some raw events.
-        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
-        assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
+        assertThat(raw.size())
+                .isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS)).getValues();
-        assertThat(cooked.size()).isEqualTo(0);
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS))
+                .getValues();
+        assertThat(cooked.size())
+                .isEqualTo(0);
 
         // Make sure we got 13 results.
-        assertThat(results.size()).isEqualTo(13);
+        assertThat(results.size())
+                .isEqualTo(13);
 
         // Make sure there were errors.
         int errors = 0;
         for (final ProcessorResult result : results) {
             errors += result.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
-        assertThat(errors).isEqualTo(10);
+        assertThat(errors)
+                .isEqualTo(10);
     }
 
     /**
@@ -206,22 +221,28 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<ProcessorResult> results = processAll();
 
         // Check we have some raw events.
-        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
-        assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
+        assertThat(raw.size())
+                .isEqualTo(NO_OF_EVENT_FILES);
 
         // Check no output streams were written.
-        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS)).getValues();
-        assertThat(cooked.size()).isEqualTo(0);
+        final List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS))
+                .getValues();
+        assertThat(cooked.size())
+                .isEqualTo(0);
 
         // Make sure we got 13 results.
-        assertThat(results.size()).isEqualTo(13);
+        assertThat(results.size())
+                .isEqualTo(13);
 
         // Make sure there were no errors.
         int errors = 0;
         for (final ProcessorResult result : results) {
             errors += result.getMarkerCount(Severity.ERROR);
         }
-        assertThat(errors).isEqualTo(0);
+        assertThat(errors)
+                .isEqualTo(0);
     }
 
     /**
@@ -231,7 +252,8 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     void testInvalidXSLT() {
         // Check none passed.
         List<Meta> cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
-        assertThat(cooked.size()).isEqualTo(0);
+        assertThat(cooked.size())
+                .isEqualTo(0);
 
         // Create a store.
         createStore(INVALID_DATA, REFERENCE_DATA, INVALID_XSL);
@@ -240,20 +262,25 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<ProcessorResult> results = processAll();
 
         // Check we have some raw events.
-        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
-        assertThat(raw.size()).isEqualTo(NO_OF_EVENT_FILES);
+        final List<Meta> raw = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
+        assertThat(raw.size())
+                .isEqualTo(NO_OF_EVENT_FILES);
 
         // Check all failed.
         cooked = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.EVENTS)).getValues();
-        assertThat(cooked.size()).isEqualTo(0);
+        assertThat(cooked.size())
+                .isEqualTo(0);
 
-        assertThat(results.size()).isEqualTo(13);
+        assertThat(results.size())
+                .isEqualTo(13);
 
         int errors = 0;
         for (final ProcessorResult result : results) {
             errors += result.getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR);
         }
-        assertThat(errors).isEqualTo(10);
+        assertThat(errors)
+                .isEqualTo(10);
     }
 
     // /**
@@ -319,7 +346,13 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             referenceFeeds.add(hostNameToIP);
 
             for (int i = 0; i < NO_OF_EVENT_FILES; i++) {
-                storeCreationTool.addEventData(EVENT_FEED_NAME, null, null, xslt, data, referenceFeeds);
+                storeCreationTool.addEventData(
+                        EVENT_FEED_NAME,
+                        null,
+                        null,
+                        xslt,
+                        data,
+                        referenceFeeds);
             }
 
             // Force creation of stream tasks.

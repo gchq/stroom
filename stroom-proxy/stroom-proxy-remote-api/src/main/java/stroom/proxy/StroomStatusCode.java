@@ -32,7 +32,8 @@ public enum StroomStatusCode {
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,
             "Compressed stream invalid",
-            "The stream of data sent does not form a valid compressed file.  Maybe it terminated unexpectedly or is corrupt."),
+            "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
+                    "unexpectedly or is corrupt."),
 
     UNKNOWN_ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 999, "Unknown error",
             "An unknown unexpected error occurred");

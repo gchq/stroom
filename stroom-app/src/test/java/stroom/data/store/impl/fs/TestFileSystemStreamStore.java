@@ -390,7 +390,8 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             assertThat(streamSource.getMeta().getFeedName()).isNotNull();
         }
 
-        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
+        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS))
+                .getValues();
 
         boolean foundOne = false;
         for (final Meta result : list) {
@@ -673,14 +674,21 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private Meta buildRefData(final String feed, final int year, final int month, final String type, final boolean lock)
+    private Meta buildRefData(final String feed,
+                              final int year,
+                              final int month,
+                              final String type,
+                              final boolean lock)
             throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(type)
-                .effectiveMs(ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli())
+                .effectiveMs(
+                        ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC)
+                                .toInstant()
+                                .toEpochMilli())
                 .build();
 
         final Target streamTarget = streamStore.openTarget(metaProperties);

@@ -111,24 +111,29 @@ class TestMetaDaoImpl {
 
         ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST1_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(20);
+        assertThat(resultPage.size())
+                .isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(20);
+        assertThat(resultPage.size())
+                .isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(40);
+        assertThat(resultPage.size())
+                .isEqualTo(40);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(resultPage.size()).isEqualTo(0);
+        assertThat(resultPage.size())
+                .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.find(new FindMetaCriteria(expression));
-        assertThat(resultPage.size()).isEqualTo(10);
+        assertThat(resultPage.size())
+                .isEqualTo(10);
     }
 
     @Test
@@ -137,17 +142,21 @@ class TestMetaDaoImpl {
 
         ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST1_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(20);
+        assertThat(resultPage.size())
+                .isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(20);
+        assertThat(resultPage.size())
+                .isEqualTo(20);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(40);
+        assertThat(resultPage.size())
+                .isEqualTo(40);
 
         resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(resultPage.size()).isEqualTo(0);
+        assertThat(resultPage.size())
+                .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
@@ -161,26 +170,33 @@ class TestMetaDaoImpl {
 
         System.err.println("About to find...");
         resultPage = metaDao.find(new FindMetaCriteria(expression));
-        assertThat(resultPage.size()).isEqualTo(2);
+        assertThat(resultPage.size())
+                .isEqualTo(2);
     }
 
     @Test
     void testFindReprocess() {
         setup();
 
-        ResultPage<Meta> resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
-                TEST1_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(10);
+        ResultPage<Meta> resultPage = metaDao.findReprocess(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        assertThat(resultPage.size())
+                .isEqualTo(10);
 
-        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(10);
-
-        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
+        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST2_FEED_NAME)));
-        assertThat(resultPage.size()).isEqualTo(20);
+        assertThat(resultPage.size())
+                .isEqualTo(10);
+
+        resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
+                TEST1_FEED_NAME,
+                TEST2_FEED_NAME)));
+        assertThat(resultPage.size())
+                .isEqualTo(20);
 
         resultPage = metaDao.findReprocess(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(resultPage.size()).isEqualTo(0);
+        assertThat(resultPage.size())
+                .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
@@ -190,63 +206,76 @@ class TestMetaDaoImpl {
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.findReprocess(new FindMetaCriteria(expression));
-        assertThat(resultPage.size()).isEqualTo(0);
+        assertThat(resultPage.size())
+                .isEqualTo(0);
     }
 
     @Test
     void testGetSelectionSummary() {
         setup();
 
-        SelectionSummary selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
-                TEST1_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(20);
+        SelectionSummary selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(
+                MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(20);
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
                 TEST2_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(20);
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(20);
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
                 TEST1_FEED_NAME,
                 TEST2_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(40);
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(40);
 
-        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+        selectionSummary = metaDao.getSelectionSummary(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(expression));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(10);
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(10);
     }
 
     @Test
     void testGetReprocessSelectionSummary() {
         setup();
 
-        SelectionSummary selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
-                TEST1_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(10);
+        SelectionSummary selectionSummary = metaDao.getReprocessSelectionSummary(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
+                        TEST1_FEED_NAME)));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(10);
 
-        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
-                TEST2_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(10);
+        selectionSummary = metaDao.getReprocessSelectionSummary(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(10);
 
-        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(
-                TEST1_FEED_NAME,
-                TEST2_FEED_NAME)));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(20);
+        selectionSummary = metaDao.getReprocessSelectionSummary(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(20);
 
-        selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+        selectionSummary = metaDao.getReprocessSelectionSummary(
+                new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(0);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         selectionSummary = metaDao.getReprocessSelectionSummary(new FindMetaCriteria(expression));
-        assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+        assertThat(selectionSummary.getItemCount())
+                .isEqualTo(0);
     }
 
     private MetaProperties createRawProperties(final String feedName) {

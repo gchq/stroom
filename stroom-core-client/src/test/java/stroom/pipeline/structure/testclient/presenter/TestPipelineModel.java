@@ -447,25 +447,31 @@ class TestPipelineModel {
     private PipelineElementType createType(final String type, final Category category) {
         String[] roles = null;
         if (category == null) {
-            roles = new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE};
+            roles = new String[]{
+                    PipelineElementType.ROLE_SOURCE,
+                    PipelineElementType.ROLE_HAS_TARGETS,
+                    PipelineElementType.VISABILITY_SIMPLE};
         } else {
             switch (category) {
                 case READER:
-                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_TARGET,
                             PipelineElementType.ROLE_HAS_TARGETS,
                             PipelineElementType.ROLE_READER,
                             PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.VISABILITY_STEPPING};
                     break;
                 case PARSER:
-                    roles = new String[]{PipelineElementType.ROLE_PARSER,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_PARSER,
                             PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
                             PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.ROLE_HAS_CODE};
                     break;
 
                 case FILTER:
-                    roles = new String[]{PipelineElementType.ROLE_TARGET,
+                    roles = new String[]{
+                            PipelineElementType.ROLE_TARGET,
                             PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
                             PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
                             PipelineElementType.ROLE_HAS_CODE};
@@ -479,9 +485,15 @@ class TestPipelineModel {
                 roles, null);
     }
 
-    private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,
-                      final int removedElements, final int addedProperties, final int removedProperties,
-                      final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
+    private void test(final List<PipelineData> baseStack,
+                      final PipelineData pipelineData,
+                      final int addedElements,
+                      final int removedElements,
+                      final int addedProperties,
+                      final int removedProperties,
+                      final int addedPipelineReferences,
+                      final int removedPipelineReferences,
+                      final int addedLinks,
                       final int removedLinks) throws PipelineModelException {
         final PipelineModel pipelineModel = new PipelineModel();
         pipelineModel.setBaseStack(baseStack);

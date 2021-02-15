@@ -36,19 +36,20 @@ class TestDateUtil {
         final long date = DateUtil.parseNormalDateTimeString(dateString);
 
         // Convert Back to string
-        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo(dateString);
+        assertThat(DateUtil.createNormalDateTimeString(date))
+                .isEqualTo(dateString);
     }
 
     @Test
     void testSimple() {
-        assertThat(DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo(
-                "2010-01-01T23:59:59.000Z");
+        assertThat(DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z")))
+                .isEqualTo("2010-01-01T23:59:59.000Z");
 
     }
 
     @Test
     void testSimpleFileFormat() {
-        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo(
-                "2010-01-01T23#59#59,000Z");
+        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z")))
+                .isEqualTo("2010-01-01T23#59#59,000Z");
     }
 }

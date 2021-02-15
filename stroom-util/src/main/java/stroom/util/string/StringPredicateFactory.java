@@ -73,7 +73,8 @@ public class StringPredicateFactory {
      * Null userInput results in an always true predicate.
      * Broadly it has five match modes:
      * Regex match: "/(wo|^)man" matches "a woman", "manly"
-     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
+     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not
+     * "the cat sat on there mat"
      * Starts with: "^prefix" matches "PrefixToSomeText" (case insensitive)
      * Ends with "suffix$" matches "TextWithSuffix" (case insensitive)
      * Exact match: "^sometext$" matches "sometext" (case insensitive)

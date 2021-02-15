@@ -136,19 +136,29 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeedName("");
 //
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//            metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
             pipeline.process(input);
 
-            assertThat(recordCount.getRead()).as(errorReceiver.toString()).isEqualTo(N4);
-            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(0);
-            assertThat(recordErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiver.toString()).isEqualTo(N4);
-            assertThat(recordErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiver.toString()).isEqualTo(N4);
+            assertThat(recordCount.getRead())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(N4);
+            assertThat(recordCount.getWritten())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
+            assertThat(recordErrorReceiver.getRecords(Severity.WARNING))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(N4);
+            assertThat(recordErrorReceiver.getRecords(Severity.ERROR))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(N4);
 
             // Make sure no output file was produced.
-            assertThat(!Files.isRegularFile(outputFile)).isTrue();
+            assertThat(!Files.isRegularFile(outputFile))
+                    .isTrue();
 
             if (recordErrorReceiver.isAllOk()) {
                 fail("Expecting to fail the schema");

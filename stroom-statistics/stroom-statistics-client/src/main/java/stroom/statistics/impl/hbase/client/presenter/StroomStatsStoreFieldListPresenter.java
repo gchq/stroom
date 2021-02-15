@@ -61,8 +61,10 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     @SuppressWarnings("unchecked")
     @Inject
-    public StroomStatsStoreFieldListPresenter(final EventBus eventBus,
-                                              final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter) {
+    public StroomStatsStoreFieldListPresenter(
+            final EventBus eventBus,
+            final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter) {
+
         super(eventBus, new DataGridViewImpl<>(true, true));
         this.stroomStatsStoreFieldEditPresenter = stroomStatsStoreFieldEditPresenter;
 

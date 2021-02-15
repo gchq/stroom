@@ -57,7 +57,10 @@ public final class XMLMarshallerUtil {
 
                 try {
                     clone = clazz.getConstructor().newInstance();
-                } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                } catch (final NoSuchMethodException
+                        | InvocationTargetException
+                        | InstantiationException
+                        | IllegalAccessException e) {
                     return obj;
                 }
 

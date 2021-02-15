@@ -254,7 +254,8 @@ public class StreamAppender extends AbstractAppender {
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     @PipelineProperty(
-            description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
+            description = "The feed that output stream should be written to. If not specified the feed the input " +
+                    "stream belongs to will be used.",
             displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
         this.feed = feedRef.getName();
@@ -268,7 +269,8 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Should the output stream be marked with indexed segments to allow fast access to individual records?",
+            description = "Should the output stream be marked with indexed segments to allow fast access to " +
+                    "individual records?",
             defaultValue = "true",
             displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
@@ -276,7 +278,8 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a new one created.",
+    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a " +
+            "new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);

@@ -169,7 +169,8 @@ class TaskManagerImpl implements TaskManager {
 //        return securityContext.getUserIdentity();
 //    }
 //
-//    <R> Supplier<R> wrap(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
+//    <R> Supplier<R> wrap(
+//    final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 //        final TaskId parentTaskId = getParentTaskId(parentContext);
 //        final TaskId taskId = TaskIdFactory.create(parentTaskId);
@@ -314,7 +315,8 @@ class TaskManagerImpl implements TaskManager {
                 findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
 
         if (sessionMatch) {
-            // Always allow a user to see tasks for their own session if tasks for the current session have been requested.
+            // Always allow a user to see tasks for their own session if tasks for the current session
+            // have been requested.
             return doFind(findTaskProgressCriteria);
         } else {
             return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () ->
@@ -478,7 +480,8 @@ class TaskManagerImpl implements TaskManager {
                     taskProgress.setTimeNowMs(now.toEpochMilli());
                     taskProgress.setNodeName(nodeInfo.getThisNodeName());
 
-                    taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
+                    taskProgress.setFilterMatchState(
+                            FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
                     return taskProgress;
 
                 })

@@ -391,7 +391,9 @@ public class StroomStreamProcessor {
         handleEntryStart(stroomZipEntry);
         // Try and use the buffer
         InitialByteArrayOutputStream byteArrayOutputStream = null;
-        try (final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer)) {
+        try (final InitialByteArrayOutputStream initialByteArrayOutputStream =
+                new InitialByteArrayOutputStream(buffer)) {
+
             byteArrayOutputStream = initialByteArrayOutputStream;
             AttributeMapUtil.write(attributeMap, initialByteArrayOutputStream);
         }

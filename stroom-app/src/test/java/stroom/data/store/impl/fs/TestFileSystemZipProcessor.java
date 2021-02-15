@@ -106,9 +106,16 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedBoundaries.add(Collections.singletonMap(null, "File1\nFile1\n"));
             expectedBoundaries.add(Collections.singletonMap(null, "File1\nFile1\n"));
 
-            doTest(file, 3, new HashSet<>(
-                            Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
-                    expectedContent, expectedBoundaries);
+            doTest(file,
+                    3,
+                    new HashSet<>(Arrays.asList(
+                            "revt.bgz",
+                            "revt.bdy.dat",
+                            "revt.meta.bgz",
+                            "revt.meta.bdy.dat",
+                            "revt.mf.dat")),
+                    expectedContent,
+                    expectedBoundaries);
         } finally {
             Files.delete(file);
         }
@@ -224,9 +231,16 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedBoundaries.add(Collections.singletonMap(null, "File1\nFile1\n"));
             expectedBoundaries.add(Collections.singletonMap(null, "File2\nFile2\n"));
 
-            doTest(file, 1, new HashSet<>(
-                            Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
-                    expectedContent, expectedBoundaries);
+            doTest(file,
+                    1,
+                    new HashSet<>(Arrays.asList(
+                            "revt.bgz",
+                            "revt.bdy.dat",
+                            "revt.meta.bgz",
+                            "revt.meta.bdy.dat",
+                            "revt.mf.dat")),
+                    expectedContent,
+                    expectedBoundaries);
         } finally {
             Files.delete(file);
         }
@@ -241,7 +255,12 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS);
+                .buildSingleHandlerList(
+                        streamStore,
+                        feedProperties,
+                        null,
+                        feedName,
+                        StreamTypeNames.RAW_EVENTS);
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
                 handlerList,
@@ -267,10 +286,12 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 foundFiles.add(fileName);
             }
         }
-        assertThat(foundFiles).as("Checking expected output files").isEqualTo(expectedFiles);
+        assertThat(foundFiles).as("Checking expected output files")
+                .isEqualTo(expectedFiles);
 
 //        // Test full content
-//        try (final Source source = streamStore.openSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
+//        try (final Source source = streamStore.openSource(
+//        handlerList.get(0).getStreamSet().iterator().next().getId())) {
 //            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
 //                for (final Entry<String, String> entry : expectedContent.entrySet()) {
 //                    final String key = entry.getKey();
@@ -285,7 +306,9 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 //        }
 
         // Test boundaries
-        try (final Source source = streamStore.openSource(handlerList.get(0).getStreamSet().iterator().next().getId())) {
+        try (final Source source = streamStore.openSource(
+                handlerList.get(0).getStreamSet().iterator().next().getId())) {
+
             int index = 0;
             for (final Map<String, String> map : expectedBoundaries) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
@@ -295,14 +318,16 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                         if (key == null) {
                             try (final InputStream inputStream = inputStreamProvider.get()) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(value);
+                                assertThat(StreamUtil.streamToString(inputStream, false))
+                                        .isEqualTo(value);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }
                         } else {
                             try (final InputStream inputStream = inputStreamProvider.get(key)) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(value);
+                                assertThat(StreamUtil.streamToString(inputStream, false))
+                                        .isEqualTo(value);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }

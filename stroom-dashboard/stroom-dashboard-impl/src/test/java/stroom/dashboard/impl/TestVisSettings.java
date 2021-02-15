@@ -34,8 +34,10 @@ class TestVisSettings {
 
     @Test
     void test() throws Exception {
-        final Path jsonFile = Paths.get(getClass().getClassLoader().getResource("TestVisSettings/settings.json").toURI());
-        assertThat(Files.isRegularFile(jsonFile)).isTrue();
+        final Path jsonFile = Paths.get(
+                getClass().getClassLoader().getResource("TestVisSettings/settings.json").toURI());
+        assertThat(Files.isRegularFile(jsonFile))
+                .isTrue();
         final String json = StreamUtil.fileToString(jsonFile);
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -58,6 +60,7 @@ class TestVisSettings {
         System.out.println(in);
         System.out.println(out);
 
-        assertThat(out).isEqualTo(in);
+        assertThat(out)
+                .isEqualTo(in);
     }
 }

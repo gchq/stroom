@@ -126,18 +126,28 @@ public class StreamTaskResource implements RestResource {
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.
                 // Percentage is a calculated variable so it has to be done after retrieval.
-                // This poses a problem for paging and at the moment sorting by tracker % won't work correctly when paging.
+                // This poses a problem for paging and at the moment sorting by tracker % won't work correctly
+                // when paging.
             } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortBy field").build();
+                return Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity("Invalid sortBy field")
+                        .build();
             }
         }
 
         // PAGING
         if (offset < 0) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Page offset must be greater than 0").build();
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("Page offset must be greater than 0")
+                    .build();
         }
         if (pageSize != null && pageSize < 1) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("Page size, if used, must be greater than 1")
+                    .build();
         }
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();

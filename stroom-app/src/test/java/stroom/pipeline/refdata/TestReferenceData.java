@@ -293,10 +293,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void addRangeValueDataToMockReferenceDataLoader(final DocRef pipelineRef,
-                                                            final TreeSet<EffectiveStream> effectiveStreams,
-                                                            final List<Tuple3<String, Range<Long>, String>> mapRangeValueTuples,
-                                                            final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
+    private void addRangeValueDataToMockReferenceDataLoader(
+            final DocRef pipelineRef,
+            final TreeSet<EffectiveStream> effectiveStreams,
+            final List<Tuple3<String, Range<Long>, String>> mapRangeValueTuples,
+            final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
         for (EffectiveStream effectiveStream : effectiveStreams) {
 

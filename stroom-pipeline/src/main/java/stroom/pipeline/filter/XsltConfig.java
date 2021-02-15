@@ -30,7 +30,9 @@ public class XsltConfig extends AbstractConfig {
         this.cacheConfig = cacheConfig;
     }
 
-    @JsonPropertyDescription("The maximum number of elements that the XSLT filter will expect to receive before it errors. This protects Stroom from running out of memory in cases where an appropriate XML splitter has not been used in a pipeline.")
+    @JsonPropertyDescription("The maximum number of elements that the XSLT filter will expect to receive before " +
+            "it errors. This protects Stroom from running out of memory in cases where an appropriate XML splitter " +
+            "has not been used in a pipeline.")
     public int getMaxElements() {
         return maxElements;
     }

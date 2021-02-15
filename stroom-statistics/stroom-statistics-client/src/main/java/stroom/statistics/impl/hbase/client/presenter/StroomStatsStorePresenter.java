@@ -41,11 +41,14 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     private final TabContentProvider<StroomStatsStoreDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
-    public StroomStatsStorePresenter(final EventBus eventBus, final LinkTabPanelView view,
-                                     final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenter,
-                                     final Provider<StroomStatsStoreFieldListPresenter> stroomStatsStoreFieldListPresenter,
-                                     final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter,
-                                     final ClientSecurityContext securityContext) {
+    public StroomStatsStorePresenter(
+            final EventBus eventBus,
+            final LinkTabPanelView view,
+            final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenter,
+            final Provider<StroomStatsStoreFieldListPresenter> stroomStatsStoreFieldListPresenter,
+            final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter,
+            final ClientSecurityContext securityContext) {
+
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {

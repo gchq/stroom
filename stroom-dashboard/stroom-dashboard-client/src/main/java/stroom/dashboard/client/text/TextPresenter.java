@@ -321,7 +321,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         message = "No stream id found in selection";
 
                     } else if (getTextSettings().getRecordNoField() == null &&
-                            !(getTextSettings().getLineFromField() != null && getTextSettings().getLineToField() != null)) { // Allow just line positions to be used rather than record no.
+                            !(getTextSettings().getLineFromField() != null
+                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
+                        //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
                     } else if (getTextSettings().getRecordNoField() != null && currentRecordNo == null) {

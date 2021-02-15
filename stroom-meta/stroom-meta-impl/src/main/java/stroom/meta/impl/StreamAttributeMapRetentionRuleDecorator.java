@@ -75,7 +75,9 @@ class StreamAttributeMapRetentionRuleDecorator {
                 String keepUntil = DataRetentionRule.FOREVER;
                 if (meta != null) {
                     final long millis = meta.getCreateMs();
-                    final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
+                    final LocalDateTime createTime = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneOffset.UTC)
+                            .toLocalDateTime();
                     final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
                     if (ms != null) {
                         keepUntil = DateUtil.createNormalDateTimeString(ms);

@@ -42,6 +42,9 @@ class TestStroomStreamException {
     }
 
     private void doTest(Exception exception, StroomStatusCode stroomStatusCode, String msg) {
-        assertThatThrownBy(() -> StroomStreamException.create(exception)).hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " + stroomStatusCode.getMessage() + " - " + msg);
+        assertThatThrownBy(() ->
+                StroomStreamException.create(exception))
+                .hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " +
+                        stroomStatusCode.getMessage() + " - " + msg);
     }
 }

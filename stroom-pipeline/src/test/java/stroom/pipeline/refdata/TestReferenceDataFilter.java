@@ -169,9 +169,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -206,9 +207,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
+                            "<evt:Room>room[0-9]+<\\/evt:Room><evt:Desk>desk[0-9]+<\\/evt:Desk><\\/evt:Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -286,9 +288,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\">(.|\\n)*<Room>room[0-9]+<\\/Room>" +
+                            "<Desk>desk[0-9]+<\\/Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -322,9 +325,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"reference-data:2\">(.|\\n)*<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                            "<Room>room[0-9]+<\\/Room><Desk>desk[0-9]+<\\/Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -333,7 +337,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .map(this::deserialise)
                 .map(str -> {
                     Matcher matcher = pattern.matcher(str);
-                    assertThat(matcher.find()).isTrue();
+                    assertThat(matcher.find())
+                            .isTrue();
                     return matcher.group();
                 })
                 .collect(Collectors.toList());
@@ -358,9 +363,12 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 })
                 .forEach(fastInfosetValue -> {
 
-                    consumeFastInfoset(
-                            fastInfosetValue,
-                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?><Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room><xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
+                    consumeFastInfoset(fastInfosetValue, "" +
+                            "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                            "<Location xmlns=\"stroom\" xmlns:s=\"stroom\" xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
+                            "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
+                            "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
+                            "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
                 });
         Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -468,16 +476,18 @@ class TestReferenceDataFilter extends StroomUnitTest {
         final FastInfosetByteBufferConsumer fastInfosetByteBufferConsumer = new FastInfosetByteBufferConsumer(
                 xmlEmitter, pipelineConfiguration);
 
-        final RefDataValueByteBufferConsumer.Factory refDataValueByteBufferConsumerFactory = (receiver, pipelineConfiguration1)
-                -> fastInfosetByteBufferConsumer;
+        final RefDataValueByteBufferConsumer.Factory refDataValueByteBufferConsumerFactory =
+                (receiver, pipelineConfiguration1)
+                        -> fastInfosetByteBufferConsumer;
 
         final OffHeapRefDataValueProxyConsumer offHeapRefDataValueProxyConsumer = new OffHeapRefDataValueProxyConsumer(
                 xmlEmitter,
                 pipelineConfiguration,
                 Map.of(new ByteBufferConsumerId(FastInfosetValue.TYPE_ID), refDataValueByteBufferConsumerFactory));
 
-        final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory = (receiver, pipelineConfiguration12)
-                -> offHeapRefDataValueProxyConsumer;
+        final OffHeapRefDataValueProxyConsumer.Factory offHeapRefDataValueProxyConsumerFactory =
+                (receiver, pipelineConfiguration12)
+                        -> offHeapRefDataValueProxyConsumer;
 
         final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory = new RefDataValueProxyConsumerFactory(
                 xmlEmitter,

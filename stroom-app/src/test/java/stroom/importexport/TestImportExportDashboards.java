@@ -269,14 +269,16 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        assertThat(loadedQueryData.getDataSource()).isEqualTo(loadedIndex);
-        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(
-                loadedDictionary));
-        assertThat(loadedTableSettings.getExtractionPipeline()).isEqualTo(loadedPipeline);
+        assertThat(loadedQueryData.getDataSource())
+                .isEqualTo(loadedIndex);
+        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDocRef())
+                .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
+        assertThat(loadedTableSettings.getExtractionPipeline())
+                .isEqualTo(loadedPipeline);
 
         if (!skipVisExport || skipVisCreation) {
-            assertThat(loadedVisSettings.getVisualisation()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(
-                    loadedVisualisation));
+            assertThat(loadedVisSettings.getVisualisation())
+                    .isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
         } else {
             assertThat(loadedVisSettings.getVisualisation()).isNotNull();
             assertThat(loadedVisSettings.getVisualisation().getType()).isNotNull();

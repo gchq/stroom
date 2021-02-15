@@ -152,7 +152,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
-        if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
+        if (createPeriodFrom != null
+                && !createPeriodFrom.isEmpty()
+                && createPeriodTo != null
+                && !createPeriodTo.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
             builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
@@ -243,7 +246,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 //                try (final InputStream inputStream = inputStreamProvider.get()) {
 //                    final Path outputFile = outputDir.resolve(streamId + ".dat");
 //                    System.out.println(
-//                            "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
+//                            "Dumping stream " + count + " of " + total + " to file '" +
+//                            FileUtil.getCanonicalPath(outputFile) + "'");
 //                    StreamUtil.streamToFile(inputStream, outputFile);
 //                } catch (final RuntimeException e) {
 //                    e.printStackTrace();

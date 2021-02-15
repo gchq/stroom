@@ -204,7 +204,8 @@ public class StreamEventLog {
 //            }
 //
 //            for (long id : findMetaCriteria.getSelectedIdSet()) {
-//                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
+//                idSetOp.getAdvancedQueryItems()
+//                .add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
 //            }
 //
 //            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());

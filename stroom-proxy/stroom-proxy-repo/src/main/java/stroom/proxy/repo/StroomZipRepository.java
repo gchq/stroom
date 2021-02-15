@@ -159,7 +159,8 @@ public class StroomZipRepository {
             if (index > 0) {
                 final char c = repositoryFormat.charAt(index - 1);
                 if (c != '/' && c != '_') {
-                    throw new RuntimeException("The " + ID_VAR + " replacement variable in the proxy repository format must be proceeded by '/' or '_'");
+                    throw new RuntimeException("The " + ID_VAR + " replacement variable in the proxy repository " +
+                            "format must be proceeded by '/' or '_'");
                 }
             }
             if (index + ID_VAR.length() < repositoryFormat.length()) {
@@ -457,7 +458,8 @@ public class StroomZipRepository {
                                             Files.delete(file);
                                             LOGGER.info("Removed old lock file due to age " + file.toString());
                                         } catch (final IOException e) {
-                                            LOGGER.error("Unable to remove old lock file due to age " + file.toString());
+                                            LOGGER.error("Unable to remove old lock file due to age " +
+                                                    file.toString());
                                         }
                                     }
                                 }

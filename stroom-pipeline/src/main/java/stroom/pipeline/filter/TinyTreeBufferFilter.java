@@ -32,6 +32,7 @@ import org.xml.sax.SAXException;
  * buffered SAX events this filter can then fire them at a content handler.
  */
 public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
+
     private final Configuration configuration;
     private final PipelineConfiguration pipe;
     private final ReceivingContentHandler receivingContentHandler;
@@ -257,7 +258,8 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
-        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we receive processing instruction events before a startDocument() event, see gh-225.
+        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we
+        // receive processing instruction events before a startDocument() event, see gh-225.
         startDocument();
 
         handler.processingInstruction(target, data);

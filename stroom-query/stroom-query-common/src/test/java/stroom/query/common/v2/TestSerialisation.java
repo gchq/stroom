@@ -355,7 +355,9 @@ class TestSerialisation {
     }
 
 //    private VisResult getVisResult2() {
-//        Field[][] structure = new Field[]{new Field("key1", Type.GENERAL, new Field("key2", Type.GENERAL) , new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+//        Field[][] structure = new Field[]{new Field("key1", Type.GENERAL,
+//        new Field("key2", Type.GENERAL) , new Field("val1", Type.GENERAL),
+//        new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 //
 //        final NodeBuilder nodeBuilder = new NodeBuilder(4);
 //        nodeBuilder.addValue(new Object[]{"test0", 0.4, 234, "this0"});
@@ -392,7 +394,8 @@ class TestSerialisation {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for
+        // abstract classes
 //        mapper.enableDefaultTyping();
 
         return mapper;
@@ -543,7 +546,8 @@ class TestSerialisation {
     public static class Lst {
 
         @XmlElementWrapper(name = "list")
-        @XmlElements({@XmlElement(name = "sub1", type = Sub1.class),
+        @XmlElements({
+                @XmlElement(name = "sub1", type = Sub1.class),
                 @XmlElement(name = "sub2", type = Sub2.class)})
         private List<Base> list;
 
@@ -588,7 +592,8 @@ class TestSerialisation {
     public static class Multi {
 
         @XmlElementWrapper(name = "list")
-        @XmlElements({@XmlElement(name = "double", type = Double.class),
+        @XmlElements({
+                @XmlElement(name = "double", type = Double.class),
                 @XmlElement(name = "int", type = Integer.class),
                 @XmlElement(name = "string", type = String.class)})
         private List<Object> list;

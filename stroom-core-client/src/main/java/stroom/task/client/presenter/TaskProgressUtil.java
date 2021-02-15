@@ -176,13 +176,15 @@ class TaskProgressUtil {
                     state = true;
                 } else if (treeAction.hasExpandedState(parent)) {
                     state = treeAction.isRowExpanded(parent);
-//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
+//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
+//                    ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
                 } else {
                     // Expansion state has not been set so decide the initial state here
                     state = getDefaultExpansionState(criteria, parent, childMap);
                     treeAction.setRowExpanded(parent, state);
                 }
-//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
+//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) +
+//                ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
                 parent.setExpander(new Expander(depth, state, false));
             } else {
                 state = true;

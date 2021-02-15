@@ -263,7 +263,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
                     ConfirmEvent.fire(TablePresenter.this,
-                            "Search still in progress. Do you want to download the current results? Note that these may be incomplete.",
+                            "Search still in progress. Do you want to download the current results? " +
+                                    "Note that these may be incomplete.",
                             ok -> {
                                 if (ok) {
                                     download();
@@ -305,8 +306,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
                     if (indexFieldName.startsWith("annotation:")) {
-                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader().getDataSourceFieldsMap().get(
-                                indexFieldName);
+                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader()
+                                .getDataSourceFieldsMap().get(indexFieldName);
                         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
                             fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id})");
                         } else {
@@ -381,7 +382,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowPopupEvent.fire(this, fieldAddPresenter, PopupType.POPUP, popupPosition, popupUiHandlers, target);
+            ShowPopupEvent.fire(
+                    this,
+                    fieldAddPresenter,
+                    PopupType.POPUP,
+                    popupPosition,
+                    popupUiHandlers,
+                    target);
         }
     }
 
@@ -432,14 +439,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     requests,
                                     timeZones.getTimeZone());
 
-                            final DownloadSearchResultsRequest downloadSearchResultsRequest = new DownloadSearchResultsRequest(
-                                    applicationInstanceIdProvider.get(),
-                                    searchRequest,
-                                    getComponentConfig().getId(),
-                                    downloadPresenter.getFileType(),
-                                    downloadPresenter.isSample(),
-                                    downloadPresenter.getPercent(),
-                                    timeZones.getTimeZone());
+                            final DownloadSearchResultsRequest downloadSearchResultsRequest =
+                                    new DownloadSearchResultsRequest(
+                                            applicationInstanceIdProvider.get(),
+                                            searchRequest,
+                                            getComponentConfig().getId(),
+                                            downloadPresenter.getFileType(),
+                                            downloadPresenter.isSample(),
+                                            downloadPresenter.getPercent(),
+                                            timeZones.getTimeZone());
                             final Rest<ResourceGeneration> rest = restFactory.create();
                             rest
                                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,

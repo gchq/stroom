@@ -82,7 +82,8 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     @Override
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter = (DocumentEditPresenter<?, StroomStatsStoreDoc>) tabData;
+            final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter =
+                    (DocumentEditPresenter<?, StroomStatsStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StroomStatsStoreDoc entity = presenter.getEntity();
 
@@ -98,7 +99,8 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     }
 
     private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
-                               final StroomStatsStoreDoc entity, final StroomStatsStoreDoc entityFromDb) {
+                               final StroomStatsStoreDoc entity,
+                               final StroomStatsStoreDoc entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
@@ -117,11 +119,13 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                         !prevInterval.equals(entity.getPrecision()) ||
                         !prevFieldList.equals(entity.getStatisticFields()) ||
                         !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
-            ConfirmEvent.fireWarn(this, SafeHtmlUtils
-                            .fromTrustedString("Changes to the following attributes of a statistic data source:<br/><br/>"
-                                    + "Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>Field list<br/>Custom roll-ups<br/><br/>"
-                                    + "can potentially cause corruption of the existing statistics data. Please ensure you "
-                                    + "understand the full consequences of the change.<br/><br/>" + "Do you wish to continue?"),
+            ConfirmEvent.fireWarn(
+                    this,
+                    SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
+                            "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
+                            "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
+                            "existing statistics data. Please ensure you understand the full consequences of " +
+                            "the change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
                             doSave(presenter, entity);

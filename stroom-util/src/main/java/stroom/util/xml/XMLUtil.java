@@ -113,7 +113,10 @@ public final class XMLUtil {
             xmlReader.setContentHandler(handler);
             xmlReader.parse(new InputSource(reader));
 
-        } catch (final ParserConfigurationException | TransformerConfigurationException | IOException | SAXException e) {
+        } catch (final ParserConfigurationException
+                | TransformerConfigurationException
+                | IOException
+                | SAXException e) {
             throw new RuntimeException(e);
         }
     }

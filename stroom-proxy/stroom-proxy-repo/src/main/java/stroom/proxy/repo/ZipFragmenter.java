@@ -80,7 +80,8 @@ class ZipFragmenter {
                         errorReceiver.onError(path, "Unable to find any entry?");
 
                     } else if (baseNameSet.size() == 1) {
-                        // Remember that this zip contained a single base name as we will deal with this using a simple move.
+                        // Remember that this zip contained a single base name as we will deal with this using
+                        // a simple move.
                         moveOriginalFile = true;
 
                     } else {

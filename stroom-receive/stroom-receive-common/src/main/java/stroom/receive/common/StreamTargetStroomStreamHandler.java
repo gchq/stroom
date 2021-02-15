@@ -187,7 +187,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
      */
     private void checkLayer(final StroomZipFileType type) {
         if (currentLayer == null || currentLayer.hasType(type)) {
-            // We have either not initialised any layer or the current layer already includes this type so start a new layer.
+            // We have either not initialised any layer or the current layer already includes this type so start
+            // a new layer.
             currentLayer = new Layer();
             // Tell the new layer that it will contain the requested type.
             currentLayer.hasType(type);
@@ -253,11 +254,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
                     // Have we stored some data or context
                     if (lastDatStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastDatStroomZipEntry.getFullName()).equals(currentBaseName)) {
+                            && stroomZipNameSet.getBaseName(lastDatStroomZipEntry.getFullName())
+                            .equals(currentBaseName)) {
                         throw new IOException("Header and Data out of order for multiple feed data");
                     }
                     if (lastCtxStroomZipEntry != null
-                            && stroomZipNameSet.getBaseName(lastCtxStroomZipEntry.getFullName()).equals(currentBaseName)) {
+                            && stroomZipNameSet.getBaseName(lastCtxStroomZipEntry.getFullName())
+                            .equals(currentBaseName)) {
                         throw new IOException("Header and Data out of order for multiple feed data");
                     }
                 }

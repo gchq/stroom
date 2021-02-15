@@ -73,7 +73,8 @@ class TestJsonSerialisation {
 //        try (ScanResult scanResult =
 //                     new ClassGraph()
 //                             .enableAllInfo()             // Scan classes, methods, fields, annotations
-//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
+//                             .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to
+//                                                                      scan all packages)
 //                             .scan()) {                   // Start the scan
 //            for (ClassInfo routeClassInfo : scanResult.getClassesWithMethodAnnotation(routeAnnotation)) {
 //                try {
@@ -566,7 +567,8 @@ class TestJsonSerialisation {
                 addType(stroomClasses, arg);
             }
 
-        } else if (clazz.getName().startsWith(PACKAGE_START) && !clazz.getName().contains("StroomDuration")) { // Non POJO
+        } else if (clazz.getName().startsWith(PACKAGE_START)
+                && !clazz.getName().contains("StroomDuration")) { // Non POJO
             // IF the class references sub classes then include those too.
             final JsonSubTypes jsonSubTypes = clazz.getAnnotation(JsonSubTypes.class);
             if (jsonSubTypes != null) {
@@ -610,7 +612,7 @@ class TestJsonSerialisation {
         try (ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .whitelistPackages(PACKAGE_NAME)      // Scan com.xyz and subpackages (omit to scan all packages)
+                        .whitelistPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
             for (ClassInfo routeClassInfo : scanResult.getClassesImplementing(DirectRestService.class.getName())) {
                 final Class<?> clazz = routeClassInfo.loadClass();

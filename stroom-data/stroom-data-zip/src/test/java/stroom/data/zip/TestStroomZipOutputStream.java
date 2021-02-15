@@ -12,11 +12,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStroomZipOutputStream {
+
     private static final int TEST_SIZE = 100;
 
     @Test
     void testBigFile() throws IOException {
-        final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
+        final Path testFile = Files.createTempFile(
+                Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         try {
             String uuid;
@@ -24,13 +26,16 @@ class TestStroomZipOutputStream {
 
             for (int i = 0; i < TEST_SIZE; i++) {
                 uuid = UUID.randomUUID().toString();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Meta).getFullName());
+                stream = stroomZipOutputStream.addEntry(
+                        new StroomZipEntry(null, uuid, StroomZipFileType.Meta).getFullName());
                 stream.write("Header".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Context).getFullName());
+                stream = stroomZipOutputStream.addEntry(
+                        new StroomZipEntry(null, uuid, StroomZipFileType.Context).getFullName());
                 stream.write("Context".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
-                stream = stroomZipOutputStream.addEntry(new StroomZipEntry(null, uuid, StroomZipFileType.Data).getFullName());
+                stream = stroomZipOutputStream.addEntry(
+                        new StroomZipEntry(null, uuid, StroomZipFileType.Data).getFullName());
                 stream.write("Data".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
             }
@@ -39,19 +44,24 @@ class TestStroomZipOutputStream {
 
             final StroomZipFile stroomZipFile = new StroomZipFile(testFile);
 
-            assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet().size()).isEqualTo(TEST_SIZE);
+            assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet().size())
+                    .isEqualTo(TEST_SIZE);
 
             stroomZipFile.close();
         } finally {
-            assertThat(Files.deleteIfExists(testFile)).isTrue();
+            assertThat(Files.deleteIfExists(testFile))
+                    .isTrue();
         }
     }
 
     @Test
     void testBlankProducesNothing() throws IOException {
-        final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
+        final Path testFile = Files.createTempFile(
+                Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         stroomZipOutputStream.close();
-        assertThat(Files.isRegularFile(testFile)).as("Not expecting to write a file").isFalse();
+        assertThat(Files.isRegularFile(testFile))
+                .as("Not expecting to write a file")
+                .isFalse();
     }
 }

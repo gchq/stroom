@@ -77,7 +77,8 @@ public class TableResultCreator implements ResultCreator {
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings.getFields();
-            // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table and the default maximum sizes.
+            // Create a set of sizes that are the minimum values for the combination of user provided sizes for
+            // the table and the default maximum sizes.
             final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
 
             // Create the row creator.

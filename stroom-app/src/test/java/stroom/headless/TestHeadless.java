@@ -52,7 +52,8 @@ class TestHeadless {
 
     @Test
     void test(@TempDir Path newTempDir) throws IOException {
-//        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
         // Make sure the new temp directory is empty.
         if (Files.isDirectory(newTempDir)) {
@@ -73,7 +74,9 @@ class TestHeadless {
         Files.createDirectories(inputDirPath);
         Files.createDirectories(outputDirPath);
 
-        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
+        final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples")
+                .toAbsolutePath()
+                .normalize();
         final Path outputFilePath = outputDirPath.resolve("output");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 

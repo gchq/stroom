@@ -433,7 +433,8 @@ class TestFindReplaceFilter {
         test(builder,
                 input,
                 expected,
-                "The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
+                "The pattern matched all text in the buffer. Consider changing your match expression " +
+                        "or making the buffer bigger.");
     }
 
     @Test
@@ -453,7 +454,8 @@ class TestFindReplaceFilter {
         test(builder,
                 input,
                 expected,
-                "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+                "The pattern matched text at the end of the buffer when we are not at the end of " +
+                        "the stream. Consider changing your match expression or making the buffer bigger");
     }
 
     @Test
@@ -490,23 +492,24 @@ class TestFindReplaceFilter {
         test(builder,
                 input,
                 expected,
-                "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+                "The pattern matched text at the end of the buffer when we are not at the end of " +
+                        "the stream. Consider changing your match expression or making the buffer bigger");
     }
 
     @Test
     void testOdd() {
-        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll(
-                "a*",
-                "c");
-        assertThat(out).isEqualTo("cbcc");
+        final String out = ("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").replaceAll("a*", "c");
+        assertThat(out)
+                .isEqualTo("cbcc");
     }
 
     @Test
     void testOdd2() {
-        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll(
-                "a*$",
-                "c");
-        assertThat(out).isEqualTo("bcc");
+        final String out = ("baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").replaceAll("a*$", "c");
+        assertThat(out)
+                .isEqualTo("bcc");
     }
 
     @Test
@@ -527,6 +530,7 @@ class TestFindReplaceFilter {
         test(builder, 100000, "something\ntype=foo", "something\nmissingToken=bar type=foo", null);
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     @Test
     void testLargeReplacement() {
         final String input = "hostname=? addr=? terminal=cron res=success. \n" +
@@ -667,7 +671,8 @@ class TestFindReplaceFilter {
                 throw new ProcessException(error);
             }
 
-            assertThat(stringBuilder.toString()).isEqualTo(expectedOutput);
+            assertThat(stringBuilder.toString())
+                    .isEqualTo(expectedOutput);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

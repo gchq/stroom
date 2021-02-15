@@ -86,7 +86,8 @@ class TestSearchResponseMapper {
 //        Field[][] structure = new Field[3][];
 //        structure[0] = new Field[]{new Field("key1", Type.GENERAL)};
 //        structure[1] = new Field[]{new Field("key2", Type.GENERAL)};
-//        structure[2] = new Field[]{new Field("val1", Type.GENERAL), new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
+//        structure[2] = new Field[]{new Field("val1", Type.GENERAL),
+//        new Field("val2", Type.NUMBER), new Field("val3", Type.NUMBER), new Field("val4", Type.GENERAL)};
 //
 //        Object[][] data = new Object[8][];
 //        data[0] = new Object[]{"test0", 0.4, 234, "this0"};

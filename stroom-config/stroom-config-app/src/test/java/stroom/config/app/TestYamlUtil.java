@@ -51,8 +51,10 @@ class TestYamlUtil {
         final Consumer<List<String>> diffLinesConsumer = diffLines -> {
             LOGGER.error(
                     "\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                            "\n  If the difference is what you would expect based on the changes you have made to the config model " +
-                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml\n{}",
+                            "\n  If the difference is what you would expect based on the changes you have made to " +
+                            "the config model " +
+                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
+                            "expected yaml\n{}",
                     String.join("\n", diffLines));
 
             LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);

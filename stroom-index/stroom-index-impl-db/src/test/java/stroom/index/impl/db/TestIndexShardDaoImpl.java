@@ -61,7 +61,8 @@ class TestIndexShardDaoImpl {
 //                .partitionFromTime(shardFrom)
 //                .partitionToTime(shardTo)
 //                .build();
-//        final IndexShard createdIndexShard = indexShardDao.create(indexShardKey, volumeGroupName, nodeName, "1.0-test");
+//        final IndexShard createdIndexShard = indexShardDao.create(
+//        indexShardKey, volumeGroupName, nodeName, "1.0-test");
 //        final IndexShard byIdIndexShard = indexShardDao.fetch(createdIndexShard.getId()).orElse(null);
 //
 //        // Then

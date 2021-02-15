@@ -30,9 +30,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "statisticType",
+        "rollUpType",
+        "precision",
+        "enabled",
+        "config"})
 @JsonInclude(Include.NON_NULL)
 public class StroomStatsStoreDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "StroomStatsStore";
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
@@ -140,7 +155,9 @@ public class StroomStatsStoreDoc extends Doc {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getFields().size();
+        return config == null
+                ? 0
+                : config.getFields().size();
     }
 
     @JsonIgnore
@@ -164,9 +181,15 @@ public class StroomStatsStoreDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
         return Objects.equals(description, that.description) &&
                 statisticType == that.statisticType &&

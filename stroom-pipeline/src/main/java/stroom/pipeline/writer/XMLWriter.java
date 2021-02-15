@@ -488,8 +488,10 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
      * java.lang.String)
      */
     @Override
-    public void processingInstruction(final String target, final String data) throws SAXException {
-        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we receive processing instruction events before a startDocument() event, see gh-225.
+    public void processingInstruction(final String target,
+                                      final String data) throws SAXException {
+        // Ensure we have started a document - this avoids some unexpected behaviour in XMLParser where we
+        // receive processing instruction events before a startDocument() event, see gh-225.
         startDocument();
 
         handler.processingInstruction(target, data);
@@ -527,19 +529,26 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
 
-    @PipelineProperty(description = "A previously saved XSLT, used to modify the output via xsl:output attributes.", displayPriority = 1)
+    @PipelineProperty(
+            description = "A previously saved XSLT, used to modify the output via xsl:output attributes.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 
-    @PipelineProperty(description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via xsl:output attributes.", displayPriority = 2)
+    @PipelineProperty(
+            description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via " +
+                    "xsl:output attributes.",
+            displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
-            defaultValue = "false", displayPriority = 3)
+    @PipelineProperty(
+            description = "If XSLT cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false",
+            displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }

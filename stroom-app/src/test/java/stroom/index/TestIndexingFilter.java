@@ -178,8 +178,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         assertThat(documents.get(0).getField("f2").fieldType().stored()).isFalse();
 
-        assertThat(((documents.get(0).getField("d1")).numericValue().longValue())).isEqualTo(DateUtil.parseUnknownString(
-                "2010-01-01T12:00:00.000Z"));
+        assertThat(((documents.get(0).getField("d1")).numericValue().longValue()))
+                .isEqualTo(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"));
 
     }
 
@@ -211,7 +211,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 //            feedHolderProvider.get().setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//            metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(resourceName);

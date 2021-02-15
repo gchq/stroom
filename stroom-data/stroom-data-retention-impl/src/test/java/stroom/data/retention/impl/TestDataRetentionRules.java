@@ -36,14 +36,17 @@ class TestDataRetentionRules {
 
 //    @Test
 //    void testProgress() {
-//        final Period ageRange = new Period(DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z"), DateUtil.parseNormalDateTimeString("2010-01-02T00:00:00.000Z"));
+//        final Period ageRange = new Period(DateUtil.parseNormalDateTimeString(
+//        "2010-01-01T00:00:00.000Z"), DateUtil.parseNormalDateTimeString("2010-01-02T00:00:00.000Z"));
 //
 //        final Progress progress = new Progress(ageRange, 100);
 //        progress.nextStream(12345L, DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 //
 //        LOGGER.info("stream " + progress.toString());
 //
-//        assertThat(progress.toString()).isEqualTo("age between 2010-01-01T00:00:00.000Z and 2010-01-02T00:00:00.000Z (1 of 100), 1% complete, current stream id=12345");
+//        assertThat(progress.toString()).isEqualTo(
+//        "age between 2010-01-01T00:00:00.000Z and 2010-01-02T00:00:00.000Z
+//        (1 of 100), 1% complete, current stream id=12345");
 //    }
 
     @Test

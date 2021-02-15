@@ -213,8 +213,12 @@ class TestContentPackImport {
                 .isFalse();
 
         //File should have moved into the imported dir
-        assertThat(Files.exists(testPack1)).isFalse();
-        assertThat(Files.exists(contentPackDir.resolve(ContentPackImport.IMPORTED_DIR).resolve(testPack1.getFileName())))
+        assertThat(Files.exists(testPack1))
+                .isFalse();
+        assertThat(Files.exists(
+                contentPackDir
+                        .resolve(ContentPackImport.IMPORTED_DIR)
+                        .resolve(testPack1.getFileName())))
                 .isTrue();
     }
 

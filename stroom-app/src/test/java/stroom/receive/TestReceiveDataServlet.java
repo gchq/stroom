@@ -84,12 +84,17 @@ class TestReceiveDataServlet {
     }
 
     private void checkError(final int code, final String msg) {
-        assertThat(response.getResponseCode()).isEqualTo(code);
-        assertThat(response.getSendErrorMessage().contains(msg)).as("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'").isTrue();
+        assertThat(response.getResponseCode())
+                .isEqualTo(code);
+        assertThat(response.getSendErrorMessage().contains(msg))
+                .as("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'")
+                .isTrue();
     }
 
     private void checkOK() {
-        assertThat(response.getResponseCode()).as(response.getSendErrorMessage()).isEqualTo(HttpServletResponse.SC_OK);
+        assertThat(response.getResponseCode())
+                .as(response.getSendErrorMessage())
+                .isEqualTo(HttpServletResponse.SC_OK);
     }
 
     @Test
@@ -102,7 +107,8 @@ class TestReceiveDataServlet {
         receiveDataServlet.doPost(request, response);
 
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Unknown compression");
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
     }
 
     @Test
@@ -117,8 +123,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -133,8 +141,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -151,8 +161,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -168,8 +180,10 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
-            assertThat(store.getStreamStoreCount()).isEqualTo(1);
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
+            assertThat(store.getStreamStoreCount())
+                    .isEqualTo(1);
         }
     }
 
@@ -235,7 +249,8 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("SOME TEST DATA");
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("SOME TEST DATA");
         }
     }
 
@@ -261,7 +276,8 @@ class TestReceiveDataServlet {
         checkOK();
 
         try (final Source source = store.openSource(store.getLastMeta().getId())) {
-            assertThat(SourceUtil.readString(source)).isEqualTo("LINE1\nLINE2\n");
+            assertThat(SourceUtil.readString(source))
+                    .isEqualTo("LINE1\nLINE2\n");
         }
     }
 
@@ -305,12 +321,15 @@ class TestReceiveDataServlet {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         receiveDataServlet.doPost(request, response);
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -328,13 +347,16 @@ class TestReceiveDataServlet {
             StreamUtil.streamToStream(inputStream, gzipOutputStream);
         }
 
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         receiveDataServlet.doPost(request, response);
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
@@ -353,11 +375,14 @@ class TestReceiveDataServlet {
             StreamUtil.streamToStream(inputStream, zipOutputStream);
         }
 
-        request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
+        request.setInputStream(new CorruptInputStream(
+                new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
         receiveDataServlet.doPost(request, response);
-        assertThat(store.getStreamStoreCount()).isEqualTo(0);
+        assertThat(store.getStreamStoreCount())
+                .isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }

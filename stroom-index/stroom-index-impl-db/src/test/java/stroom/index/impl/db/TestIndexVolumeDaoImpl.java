@@ -121,12 +121,16 @@ class TestIndexVolumeDaoImpl {
         checkTheNewVolumeExists.accept(indexVolumeGroup02.getId(), 4);
         checkTheNewVolumeExists.accept(indexVolumeGroup03.getId(), 1);
 
-        // We're only going to assert that our volumes are there, because this test class doesn't clean up the DB or use a test container.
-//        final var foundIndexVolumesForGroup01 = indexVolumes.stream().filter(indexVolume -> indexVolume.getIndexVolumeGroupId() == indexVolumeGroup01.getId()).collect(Collectors.toList());
+        // We're only going to assert that our volumes are there, because this test class doesn't clean up
+        // the DB or use a test container.
+//        final var foundIndexVolumesForGroup01 = indexVolumes.stream().filter(indexVolume ->
+//        indexVolume.getIndexVolumeGroupId() == indexVolumeGroup01.getId()).collect(Collectors.toList());
 //        assertThat(foundIndexVolumesForGroup01.size()).isEqualTo(2);
-//        final var foundIndexVolumesForGroup02 = indexVolumes.stream().filter(indexVolume -> indexVolume.getId() == indexVolumeGroup02.getId()).collect(Collectors.toList());
+//        final var foundIndexVolumesForGroup02 = indexVolumes.stream().filter(indexVolume ->
+//        indexVolume.getId() == indexVolumeGroup02.getId()).collect(Collectors.toList());
 //        assertThat(foundIndexVolumesForGroup02.size()).isEqualTo(4);
-//        final var foundIndexVolumesForGroup03 = indexVolumes.stream().filter(indexVolume -> indexVolume.getId() == indexVolumeGroup03.getId()).collect(Collectors.toList());
+//        final var foundIndexVolumesForGroup03 = indexVolumes.stream().filter(indexVolume ->
+//        indexVolume.getId() == indexVolumeGroup03.getId()).collect(Collectors.toList());
 //        assertThat(foundIndexVolumesForGroup03.size()).isEqualTo(1);
     }
 

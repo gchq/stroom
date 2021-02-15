@@ -34,6 +34,7 @@ import java.util.Set;
 @JsonPropertyOrder({"fields", "customRollUpMasks"})
 @JsonInclude(Include.NON_NULL)
 public class StroomStatsStoreEntityData {
+
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
@@ -58,8 +59,10 @@ public class StroomStatsStoreEntityData {
     }
 
     @JsonCreator
-    public StroomStatsStoreEntityData(@JsonProperty("fields") final List<StatisticField> fields,
-                                      @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
+    public StroomStatsStoreEntityData(
+            @JsonProperty("fields") final List<StatisticField> fields,
+            @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
+
         this.fields = fields;
         this.customRollUpMasks = customRollUpMasks;
     }
@@ -145,15 +148,15 @@ public class StroomStatsStoreEntityData {
         }
 
         if (rolledUpFieldNames.size() > fields.size()) {
-            throw new RuntimeException(
-                    "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") than there are statistic fields (" + getCachedFieldPositions().keySet() + ")");
+            throw new RuntimeException("isRollUpCombinationSupported called with more rolled up fields (" +
+                    rolledUpFieldNames.toString() + ") than there are statistic fields (" +
+                    getCachedFieldPositions().keySet() + ")");
         }
 
         if (!getCachedFieldPositions().keySet().containsAll(rolledUpFieldNames)) {
-            throw new RuntimeException(
-                    "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") that don't exist in the statistic fields list (" + getCachedFieldPositions().keySet() + ")");
+            throw new RuntimeException("isRollUpCombinationSupported called rolled up fields (" +
+                    rolledUpFieldNames.toString() + ") that don't exist in the statistic fields list (" +
+                    getCachedFieldPositions().keySet() + ")");
         }
 
         final List<Integer> rolledUpFieldPositions = new ArrayList<>();
@@ -180,25 +183,32 @@ public class StroomStatsStoreEntityData {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
+        result = prime * result + ((fields == null)
+                ? 0
+                : fields.hashCode());
         return result;
     }
 
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
         if (fields == null) {
-            if (other.fields != null)
+            if (other.fields != null) {
                 return false;
-        } else if (!fields.equals(other.fields))
+            }
+        } else if (!fields.equals(other.fields)) {
             return false;
+        }
         return true;
     }
 

@@ -89,7 +89,8 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         try (final Target lockstreamTarget1 = streamStore.openTarget(lockfile1)) {
             TargetUtil.write(lockstreamTarget1, "MyTest");
 
-            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getMeta());
+            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(
+                    lockstreamTarget1.getMeta());
             FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
             dataVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
             // // Hack making the last access time quite old
@@ -164,16 +165,21 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         final FindDataVolumeCriteria streamVolumeCriteria = FindDataVolumeCriteria.create(meta);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+                .as("Must be saved to at least one volume")
+                .isTrue();
 
         fileSystemCleanTaskExecutor.clean();
 
         files = streamMaintenanceService.findAllStreamFile(meta);
 
-        assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
+        assertThat(files.size())
+                .as("Files have been deleted above")
+                .isEqualTo(0);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as(
-                "Volumes should still exist as they are new").isTrue();
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+                .as("Volumes should still exist as they are new")
+                .isTrue();
 
         fileSystemCleanTaskExecutor.clean();
 

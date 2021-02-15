@@ -397,7 +397,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final String message = "" +
                         "Max element count of " +
                         maxElementCount +
-                        " has been exceeded. Please ensure a split filter is present and is configured correctly for this pipeline.";
+                        " has been exceeded. Please ensure a split filter is present and is configured " +
+                        "correctly for this pipeline.";
 
                 final ProcessException exception = new ProcessException(message);
                 if (pipelineContext.isStepping()) {
@@ -552,7 +553,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(
-            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.",
+            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve " +
+                    "performance.",
             defaultValue = "true",
             displayPriority = 4)
     public void setUsePool(final boolean usePool) {

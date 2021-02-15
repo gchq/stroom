@@ -136,7 +136,8 @@ class TestDocumentPermissionsServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(docRef.getUuid());
+            final DocumentPermissions documentPermissions = documentPermissionService.getPermissionsForDocument(
+                    docRef.getUuid());
             final Set<String> userPermissions = documentPermissions.getPermissionsForUser(userRef.getUuid());
             combinedPermissions.addAll(userPermissions);
         }

@@ -89,8 +89,10 @@ class TestEventSearch extends AbstractSearchTest {
                       final List<String> componentIds,
                       final boolean extractValues) {
 //        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-//        StroomProperties.setOverrideProperty("stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-//        StroomProperties.setOverrideProperty("stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//        "stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
@@ -167,7 +169,8 @@ class TestEventSearch extends AbstractSearchTest {
                 if (extractValues) {
                     final String time = firstResult.getValues().get(1);
                     assertThat(time).as("Incorrect heading").isNotNull();
-                    assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(expectResultCount);
+                    assertThat(values.size()).as("Incorrect number of hits found")
+                            .isEqualTo(expectResultCount);
                     boolean found = false;
                     for (final Row hit : values) {
                         final String str = hit.getValues().get(1);

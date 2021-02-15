@@ -232,7 +232,8 @@ class TestIndexShardIO {
 //                            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1, writer);
 //                            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
 //                            final IndexSearcher searcher = searcherManager.acquire();
-//                            //                final Query query = NumericRangeQuery.newLongRange("Id", 3L, 100L, true, true);
+//                            //                final Query query = NumericRangeQuery.newLongRange(
+//                            "Id", 3L, 100L, true, true);
 //
 //                            final Query query = new TermQuery(new Term("Test", "Test"));
 //

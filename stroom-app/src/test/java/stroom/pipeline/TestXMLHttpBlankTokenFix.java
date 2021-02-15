@@ -136,7 +136,8 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
 //            feedHolder.setFeed(new Feed());
 
 //            // Setup the meta data holder.
-//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, streamProcessorService, pipelineStore));
+//            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(
+//            metaHolder, streamProcessorService, pipelineStore));
 
             // Set the input file to transform.
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
@@ -145,14 +146,30 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             final String xml = StreamUtil.fileToString(outputFile);
             System.out.println(xml);
 
-            assertThat(recordCount.getRead() > 0).as(errorReceiver.toString()).isTrue();
-            assertThat(recordCount.getWritten() > 0).as(errorReceiver.toString()).isTrue();
-            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(recordCount.getRead());
-            assertThat(recordCount.getRead()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
-            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
-            assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiver.toString()).isEqualTo(0);
-            assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiver.toString()).isEqualTo(0);
-            assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiver.toString()).isEqualTo(0);
+            assertThat(recordCount.getRead() > 0)
+                    .as(errorReceiver.toString())
+                    .isTrue();
+            assertThat(recordCount.getWritten() > 0)
+                    .as(errorReceiver.toString())
+                    .isTrue();
+            assertThat(recordCount.getWritten())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(recordCount.getRead());
+            assertThat(recordCount.getRead())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(EXPECTED_RESULTS);
+            assertThat(recordCount.getWritten())
+                    .as(errorReceiver.toString())
+                    .isEqualTo(EXPECTED_RESULTS);
+            assertThat(loggingErrorReceiver.getRecords(Severity.WARNING))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.ERROR))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR))
+                    .as(errorReceiver.toString())
+                    .isEqualTo(0);
 
             if (!loggingErrorReceiver.isAllOk()) {
                 fail(errorReceiver.toString());

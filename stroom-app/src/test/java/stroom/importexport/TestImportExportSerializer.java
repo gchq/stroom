@@ -239,16 +239,20 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
         final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
-        assertThat(childJson.contains("\"name\" : \"Parent\"")).as("Parent reference not serialised\n" + childJson).isTrue();
+        assertThat(childJson.contains("\"name\" : \"Parent\""))
+                .as("Parent reference not serialised\n" + childJson)
+                .isTrue();
 
         // Remove all entities from the database.
         commonTestControl.clear();
 
-        assertThat(pipelineStore.list().size()).isEqualTo(0);
+        assertThat(pipelineStore.list().size())
+                .isEqualTo(0);
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        assertThat(pipelineStore.list().size()).isEqualTo(2);
+        assertThat(pipelineStore.list().size())
+                .isEqualTo(2);
     }
 
 

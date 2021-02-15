@@ -110,7 +110,8 @@ public interface StroomEventLoggingService extends EventLoggingService {
 //     * @param loggedWork A function to perform the work that is being logged and to return the {@link EventAction}
 //     *                   and the result of the work. This allows a new {@link EventAction} to be returned
 //     *                   based on the result of the work. The skeleton {@link EventAction} is passed in
-//     *                   to allow it to be copied. The result of the work must be returned within a {@link LoggedResult}
+//     *                   to allow it to be copied. The result of the work must be returned within a
+//     {@link LoggedResult}
 //     *                   along with the desired {@link EventAction}.
 //     * @param exceptionHandler A function to allow you to provide a different {@link EventAction} based on
 //     *                         the exception. The skeleton {@link EventAction} is passed in to allow it to be

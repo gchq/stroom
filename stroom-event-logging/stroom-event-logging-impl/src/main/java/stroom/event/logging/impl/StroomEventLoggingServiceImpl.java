@@ -405,7 +405,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }
             };
         } else {
-            // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+            // Some providers exist for superclasses and not subclass types so keep looking through the class
+            // hierarchy to find a provider.
             Class<?> currentType = type;
             Provider<ObjectInfoProvider> provider = null;
             while (currentType != null && provider == null) {

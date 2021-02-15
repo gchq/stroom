@@ -46,10 +46,14 @@ class TestSearchRequestMapper {
     private SearchRequestMapper searchRequestMapper;
 
     private static void verify_Search_to_Query_mapping(Search search, Query query) {
-        assertThat(search.getDataSourceRef()).isEqualTo(query.getDataSource());
-        assertThat(search.getExpression()).isEqualTo(query.getExpression());
-        assertThat(search.getParams().size()).isEqualTo(query.getParams().size());
-        assertThat(search.getParams().get(0).getValue()).isEqualTo(query.getParams().get(0).getValue());
+        assertThat(search.getDataSourceRef())
+                .isEqualTo(query.getDataSource());
+        assertThat(search.getExpression())
+                .isEqualTo(query.getExpression());
+        assertThat(search.getParams().size())
+                .isEqualTo(query.getParams().size());
+        assertThat(search.getParams().get(0).getValue())
+                .isEqualTo(query.getParams().get(0).getValue());
         // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
     }
 
@@ -57,8 +61,10 @@ class TestSearchRequestMapper {
             List<ComponentResultRequest> componentResultRequests,
             List<ResultRequest> resultRequests) {
 
-        assertThat(componentResultRequests.size()).isEqualTo(resultRequests.size());
-        assertThat("componentSettingsMapKey").isEqualTo(resultRequests.get(0).getComponentId());
+        assertThat(componentResultRequests.size())
+                .isEqualTo(resultRequests.size());
+        assertThat("componentSettingsMapKey")
+                .isEqualTo(resultRequests.get(0).getComponentId());
 
         final Optional<ComponentResultRequest> optional = componentResultRequests
                 .stream()
@@ -66,13 +72,17 @@ class TestSearchRequestMapper {
                 .findFirst();
 
         assertThat(optional).isNotEmpty();
-        assertThat(optional.get().getFetch()).isEqualTo(resultRequests.get(0).getFetch());
+        assertThat(optional.get().getFetch())
+                .isEqualTo(resultRequests.get(0).getFetch());
 
         TableResultRequest tableResultRequest = ((TableResultRequest) optional.get());
         ResultRequest resultRequest = resultRequests.get(0);
-        assertThat(tableResultRequest.getRequestedRange().getOffset().toString()).isEqualTo(resultRequest.getRequestedRange().getOffset().toString());
-        assertThat(tableResultRequest.getRequestedRange().getLength().toString()).isEqualTo(resultRequest.getRequestedRange().getLength().toString());
-        assertThat(tableResultRequest.getOpenGroups()).isEqualTo(resultRequest.getOpenGroups());
+        assertThat(tableResultRequest.getRequestedRange().getOffset().toString())
+                .isEqualTo(resultRequest.getRequestedRange().getOffset().toString());
+        assertThat(tableResultRequest.getRequestedRange().getLength().toString())
+                .isEqualTo(resultRequest.getRequestedRange().getLength().toString());
+        assertThat(tableResultRequest.getOpenGroups())
+                .isEqualTo(resultRequest.getOpenGroups());
         // No test data for this at the moment
         //TODO many more properties to check
     }

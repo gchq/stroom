@@ -418,7 +418,9 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
     }
 
 
-    @PipelineProperty(description = "The string to delimit multiple simple values.", defaultValue = DEFAULT_MULTIPLE_STRING_DELIMITER,
+    @PipelineProperty(
+            description = "The string to delimit multiple simple values.",
+            defaultValue = DEFAULT_MULTIPLE_STRING_DELIMITER,
             displayPriority = 1)
     public void setMultipleValueDelimiter(final String delimiter) {
         this.multipleValueDelimiter = delimiter;

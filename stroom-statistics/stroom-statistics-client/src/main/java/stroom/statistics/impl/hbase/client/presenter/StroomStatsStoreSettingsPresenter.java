@@ -48,8 +48,10 @@ public class StroomStatsStoreSettingsPresenter
         StroomStatsStoreSettingsUiHandlers {
 
     @Inject
-    public StroomStatsStoreSettingsPresenter(final EventBus eventBus,
-                                             final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
+    public StroomStatsStoreSettingsPresenter(
+            final EventBus eventBus,
+            final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
+
         super(eventBus, view);
 
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {

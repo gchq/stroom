@@ -47,25 +47,33 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+            explorerService.create(
+                    FeedDoc.DOCUMENT_TYPE,
+                    FileSystemTestUtil.getUniqueTestString(),
+                    null,
+                    null);
         }
         final List<Message> msgList = new ArrayList<>();
 
-        final Path testFile = getCurrentTestDir().resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
+        final Path testFile = getCurrentTestDir()
+                .resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
         importExportService.exportConfig(null, testFile, msgList);
 
-        assertThat(msgList.size()).isEqualTo(0);
+        assertThat(msgList.size())
+                .isEqualTo(0);
 
         final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
         final int expectedSize = BATCH_SIZE * 2;
 
-        assertThat(list.size()).isEqualTo(expectedSize);
+        assertThat(list.size())
+                .isEqualTo(expectedSize);
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
-        assertThat(confirmList.size()).isEqualTo(BATCH_SIZE);
+        assertThat(confirmList.size())
+                .isEqualTo(BATCH_SIZE);
     }
 }

@@ -44,7 +44,8 @@ class TestDocStoreModule {
                 bind(EntityEventBus.class).toInstance(entityEventBus);
                 bind(SecurityContext.class).toInstance(securityContextMock);
                 bind(DocumentEventLog.class).toProvider(Providers.of(null));
-                bind(ImportConverter.class).toProvider(Providers.of((docRef, dataMap, importState, importMode, userId) -> dataMap));
+                bind(ImportConverter.class).toProvider(
+                        Providers.of((docRef, dataMap, importState, importMode, userId) -> dataMap));
                 install(new DocStoreModule());
             }
         });

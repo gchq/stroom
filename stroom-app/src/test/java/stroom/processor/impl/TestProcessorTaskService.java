@@ -68,8 +68,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         // Create all required tasks.
         createTasks();
 
-        final ProcessorTask ps1 = processorTaskService.find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(
-                file1))).getFirst();
+        final ProcessorTask ps1 = processorTaskService.find(
+                new ExpressionCriteria(ProcessorTaskExpressionUtil.createWithStream(file1)))
+                .getFirst();
         assertThat(ps1).isNotNull();
         processorTaskDao.changeTaskStatus(ps1,
                 ps1.getNodeName(),
@@ -101,15 +102,24 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
-                        Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                        Instant.ofEpochMilli(file1.getCreateMs() - 10000)
+                                .atZone(ZoneOffset.UTC).plusYears(100)
+                                .toInstant()
+                                .toEpochMilli())
                 .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
                         Condition.LESS_THAN,
-                        Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                        Instant.ofEpochMilli(file1.getCreateMs() + 10000)
+                                .atZone(ZoneOffset.UTC)
+                                .plusYears(100)
+                                .toInstant()
+                                .toEpochMilli())
                 .build();
         criteria.setExpression(expressionOperator3);
 //        criteria.setCreatePeriod(
-//                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
-//                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
+//                new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom())
+//                .atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
+//                        Instant.ofEpochMilli(criteria.getCreatePeriod().getTo())
+//                        .atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(0);
 
         assertThat(metaService.getMeta(file1.getId())).isNotNull();

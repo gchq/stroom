@@ -91,7 +91,8 @@ public class VolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("The nodes associated with the paths that are created if " +
             "the default index is created on application start." +
             "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property defaultIndexVolumeGroupNodes.")
+            "there must always be the same number of elements in this list as in property " +
+            "defaultIndexVolumeGroupNodes.")
     public List<String> getDefaultIndexVolumeGroupNodes() {
         return defaultIndexVolumeGroupNodes;
     }

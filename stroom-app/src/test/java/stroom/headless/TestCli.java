@@ -39,7 +39,8 @@ class TestCli {
     @Test
     void test() throws IOException {
 //            Path newTempDir = FileUtil.getTempDir().resolve("headless");
-//            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
+//            StroomProperties.setOverrideProperty(
+//            "stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 //
 //            // Make sure the new temp directory is empty.
 //            if (Files.isDirectory(newTempDir)) {
@@ -52,7 +53,8 @@ class TestCli {
         FileUtil.deleteDir(outputPath);
         Files.createDirectories(outputPath);
 
-//            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(outputPath), StroomProperties.Source.TEST);
+//            StroomProperties.setOverrideProperty(
+//            "stroom.temp", FileUtil.getCanonicalPath(outputPath), StroomProperties.Source.TEST);
 
         final Path contentDirPath = testPath.resolve("content");
         final Path inputDirPath = testPath.resolve("input");
@@ -60,7 +62,8 @@ class TestCli {
         Files.createDirectories(contentDirPath);
         Files.createDirectories(inputDirPath);
 
-//            final Path samplesPath = base.resolve("../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
+//            final Path samplesPath = base.resolve(
+//            "../../../../stroom-core/src/test/resources/samples").toAbsolutePath().normalize();
         final Path errorFilePath = outputPath.resolve("error.log");
         final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 

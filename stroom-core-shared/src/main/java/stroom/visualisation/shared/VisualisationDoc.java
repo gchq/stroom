@@ -27,9 +27,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef", "settings"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "functionName",
+        "scriptRef",
+        "settings"})
 @JsonInclude(Include.NON_NULL)
 public class VisualisationDoc extends Doc {
+
     public static final String DOCUMENT_TYPE = "Visualisation";
 
     @JsonProperty
@@ -99,9 +112,15 @@ public class VisualisationDoc extends Doc {
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         final VisualisationDoc that = (VisualisationDoc) o;
         return Objects.equals(description, that.description) &&
                 Objects.equals(functionName, that.functionName) &&

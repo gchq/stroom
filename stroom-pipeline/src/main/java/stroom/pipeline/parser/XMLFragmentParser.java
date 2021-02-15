@@ -51,7 +51,8 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
+@ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {
+        PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XML)
@@ -162,7 +163,8 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.namePattern = namePattern;
     }
 
-    @PipelineProperty(description = "If the text converter cannot be found to match the name pattern suppress warnings.",
+    @PipelineProperty(
+            description = "If the text converter cannot be found to match the name pattern suppress warnings.",
             defaultValue = "false", displayPriority = 3)
     public void setSuppressDocumentNotFoundWarnings(final boolean suppressDocumentNotFoundWarnings) {
         this.suppressDocumentNotFoundWarnings = suppressDocumentNotFoundWarnings;
@@ -172,7 +174,8 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         final DocRef docRef = findDoc(
                 getFeedName(),
                 getPipelineName(),
-                message -> getErrorReceiverProxy().log(Severity.WARNING, null, getElementId(), message, null));
+                message ->
+                        getErrorReceiverProxy().log(Severity.WARNING, null, getElementId(), message, null));
         if (docRef == null) {
             throw new ProcessException(
                     "No text converter is configured or can be found to match the provided name pattern");

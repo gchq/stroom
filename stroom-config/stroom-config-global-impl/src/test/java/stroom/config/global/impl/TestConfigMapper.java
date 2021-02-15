@@ -153,8 +153,8 @@ class TestConfigMapper {
 
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp ->
-                        confProp.getName()
-                                .equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
+                        confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
+                                "stroom.pipeline.referenceData.localDir")))
                 .findFirst()
                 .orElseThrow();
 

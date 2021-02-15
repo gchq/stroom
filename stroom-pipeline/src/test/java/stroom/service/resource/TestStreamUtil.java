@@ -32,7 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamUtil extends StroomUnitTest {
 
-    private static final String REF_STRING = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\r\n<test>this is a bom test</test>";
+    private static final String REF_STRING = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\r\n" +
+            "<test>this is a bom test</test>";
 
     @Test
     void printCharsets() {

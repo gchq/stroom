@@ -64,7 +64,8 @@ public class StroomStatsStoreCustomMaskListPresenter
         implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
         ReadOnlyChangeHandler {
 
-    private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE = GWT.create(StatsStoreRollupResource.class);
+    private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE =
+            GWT.create(StatsStoreRollupResource.class);
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
@@ -190,7 +191,8 @@ public class StroomStatsStoreCustomMaskListPresenter
         final StroomStatsStoreCustomMaskListPresenter thisInstance = this;
 
         ConfirmEvent.fire(this,
-                "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
+                "Are you sure you want to clear the existing roll-ups and generate all possible " +
+                        "permutations for the field list?",
                 result -> {
                     if (result) {
                         final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();

@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRandomOutputStreamProvider extends StroomUnitTest {
+
     @Test
     void testCycleDirs(@TempDir Path tempDir) throws IOException {
         final FileAppender provider = buildTestObject(tempDir);
@@ -66,8 +67,9 @@ class TestRandomOutputStreamProvider extends StroomUnitTest {
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final FileAppender provider = new FileAppender(null, pathCreator);
         provider.setOutputPaths(
-                FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir())
-                        + "/t2" + name + "," + FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t3" + name);
+                FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t1" + name + "," +
+                        FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t2" + name + "," +
+                        FileUtil.getCanonicalPath(getCurrentTestDir()) + "/t3" + name);
         return provider;
     }
 }

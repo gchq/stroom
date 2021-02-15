@@ -58,7 +58,8 @@ public class TrackersPlugin extends NodeToolsPlugin {
 //                                HyperlinkEvent.fire(this, hyperlink);
 //                            });
 //                        } else {
-//                            streamTaskMenuItem = new IconMenuItem(5, icon, icon, "Stream Tasks is not configured!", null, false, null);
+//                            streamTaskMenuItem = new IconMenuItem(
+//                            5, icon, icon, "Stream Tasks is not configured!", null, false, null);
 //                        }
 //                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, streamTaskMenuItem);
 //                    })

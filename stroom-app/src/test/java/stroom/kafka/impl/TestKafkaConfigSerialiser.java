@@ -63,7 +63,8 @@ public class TestKafkaConfigSerialiser {
 //                "  \"description\" : \"My description\",\n" +
 //                "  \"properties\" : {\n" +
 //                "    \"aStringValue\" : [ \"stringType\", \"abcdefg\" ],\n" +
-//                "    \"aGoodClass\" : [ \"classType\", \"stroom.kafka.impl.TestKafkaConfigSerialiser$GoodClass\" ]\n" +
+//                "    \"aGoodClass\" : [ \"classType\", \"" +
+//                "stroom.kafka.impl.TestKafkaConfigSerialiser$GoodClass\" ]\n" +
 //                "  },\n" +
 //                "  \"kafkaVersion\" : \"2.2.1\"\n" +
 //                "}";

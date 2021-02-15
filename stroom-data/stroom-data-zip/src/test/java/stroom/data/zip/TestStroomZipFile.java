@@ -20,7 +20,8 @@ class TestStroomZipFile {
     @Test
     void testRealZip1() throws IOException {
         Path uniqueTestDir = Files.createTempDirectory("stroom");
-        assertThat(Files.isDirectory(uniqueTestDir)).isTrue();
+        assertThat(Files.isDirectory(uniqueTestDir))
+                .isTrue();
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
         System.out.println(file.toAbsolutePath().toString());
         ZipOutputStream zipOutputStream = null;
@@ -38,7 +39,8 @@ class TestStroomZipFile {
         try {
             stroomZipFile = new StroomZipFile(file);
 
-            assertThat(new HashSet<>(Collections.singleton("test/test.dat"))).isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
+            assertThat(new HashSet<>(Collections.singleton("test/test.dat")))
+                    .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
             assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Data)).isNotNull();
             assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Context)).isNull();
@@ -73,7 +75,8 @@ class TestStroomZipFile {
         try {
             stroomZipFile = new StroomZipFile(file);
 
-            assertThat(new HashSet<>(Collections.singleton("request"))).isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
+            assertThat(new HashSet<>(Collections.singleton("request")))
+                    .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
             assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Data)).isNotNull();
             assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Meta)).isNotNull();

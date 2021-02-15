@@ -67,7 +67,8 @@ class TestReaderRecorder {
 
                 final CoderResult coderResult = charsetDecoder.decode(inputBuffer, outputBuffer, true);
 
-                LOGGER.info("coderResult: {}, out size: {}, out pos: {}", coderResult, outputBuffer.length(), outputBuffer.position());
+                LOGGER.info("coderResult: {}, out size: {}, out pos: {}",
+                        coderResult, outputBuffer.length(), outputBuffer.position());
 
                 byteCnt++;
 

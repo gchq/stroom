@@ -156,7 +156,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////        stroomEntityManager.executeNativeUpdate(new SqlBuilder("delete from insert_test3"));
 ////
 ////        SqlBuilder singleStmt = new SqlBuilder();
-////        singleStmt.append("insert into insert_test (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11)")
+////        singleStmt.append(
+// "insert into insert_test (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11)")
 ////                .append(" values (")
 ////                .arg(1).append(",")
 ////                .arg("col2 text").append(",")
@@ -191,7 +192,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////        LOGGER.info("Batch size: {}", batchSize);
 ////
 ////        SqlBuilder multiStmt = null;
-////        String header = "insert into insert_test2 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
+////        String header =
+// "insert into insert_test2 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
 ////
 ////        int qryCnt = 0;
 ////        startTime = Instant.now();
@@ -230,7 +232,8 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 ////            }
 ////        }
 ////
-////        String header3 = "insert into insert_test3 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
+////        String header3 =
+// "insert into insert_test3 (id, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11) values ";
 ////        qryCnt = 0;
 ////        StringBuilder stringBuilder = null;
 ////        List<Object> args = null;

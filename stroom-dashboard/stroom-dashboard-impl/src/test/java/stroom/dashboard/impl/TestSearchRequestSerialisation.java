@@ -39,7 +39,8 @@ class TestSearchRequestSerialisation {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for
+        // abstract classes
 //        mapper.enableDefaultTyping();
         return mapper;
     }

@@ -348,7 +348,8 @@ public class TestRestResourceAutoLogger {
                 pageResponseCaptor.capture(), verbCaptor.capture(), throwableCaptor.capture());
 
 
-//        search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final String verb, final Throwable ex);
+//        search(final String typeId, final Query query, final String resultType,
+//        final PageResponse pageResponse, final String verb, final Throwable ex);
 //                (typeId, query, listContents, pageResponse, descriptionVerb, erro
 //                (objectCaptor.capture(), eventTypeIdCaptor.capture(), verbCaptor.capture(),
 //                throwableCaptor.capture());

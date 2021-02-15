@@ -153,8 +153,8 @@ class TokenDaoImpl implements TokenDao {
     public TokenResultPage list() {
         final List<Token> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(tokenTypeDao.getTokenTypeId(
-                        TokenType.USER.getText().toLowerCase())))
+                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                        .eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
@@ -185,9 +185,11 @@ class TokenDaoImpl implements TokenDao {
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                         .from(stroom.security.identity.db.jooq.tables.Token.TOKEN
                                 .join(TOKEN_TYPE)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                        .eq(TOKEN_TYPE.ID))
                                 .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
                         .where(condition)
                         .orderBy(orderFields)
                         .offset(JooqUtil.getOffset(request.getPageRequest()))
@@ -200,9 +202,11 @@ class TokenDaoImpl implements TokenDao {
                         .selectCount()
                         .from(stroom.security.identity.db.jooq.tables.Token.TOKEN
                                 .join(TOKEN_TYPE)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                        .eq(TOKEN_TYPE.ID))
                                 .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
                         .where(condition)
                         .fetchOptional()
                         .map(Record1::value1)
@@ -215,7 +219,8 @@ class TokenDaoImpl implements TokenDao {
                 final Predicate<Token> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                         request.getQuickFilter(), FIELD_MAPPERS);
 
-                try (final Stream<Record12<Integer, Integer, Long, Long, String, String, String, String, String, Long, String, Boolean>> stream = context
+                try (final Stream<Record12<Integer, Integer, Long, Long, String, String,
+                        String, String, String, Long, String, Boolean>> stream = context
                         .select(
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
@@ -231,9 +236,11 @@ class TokenDaoImpl implements TokenDao {
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                         .from(stroom.security.identity.db.jooq.tables.Token.TOKEN
                                 .join(TOKEN_TYPE)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                        .eq(TOKEN_TYPE.ID))
                                 .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
+                                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
                         .where(condition)
                         .orderBy(orderFields)
                         .stream()) {
@@ -291,7 +298,8 @@ class TokenDaoImpl implements TokenDao {
 //        // Special cases
 //        SortField<?>[] orderByField;
 //        if (orderBy != null && orderBy.equals("userEmail")) {
-//            // Why is this a special case? Because the property on the target table is 'email' but the param is 'user_email'
+//            // Why is this a special case? Because the property on the target table is 'email'
+//            but the param is 'user_email'
 //            // 'user_email' is a clearer param
 //            if (orderDirection.equals("asc")) {
 //                orderByField = new SortField[]{ACCOUNT.USER_ID.asc()};
@@ -359,8 +367,10 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public int deleteAllTokensExceptAdmins() {
         final Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID).from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID.eq("admin"))
+                .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
+                .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID
+                        .eq("admin"))
                 .fetchOne()
                 .map(r -> r.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)));
 
@@ -373,15 +383,21 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public int deleteTokenById(int tokenId) {
         return JooqUtil.contextResult(authDbConnProvider,
-                context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(
-                        tokenId)).execute());
+                context ->
+                        context
+                                .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId))
+                                .execute());
     }
 
     @Override
     public int deleteTokenByTokenString(String token) {
         return JooqUtil.contextResult(authDbConnProvider,
-                context -> context.deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN).where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(
-                        token)).execute());
+                context ->
+                        context
+                                .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token))
+                                .execute());
     }
 
     @Override
@@ -402,9 +418,11 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                        .eq(TOKEN_TYPE.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(accountId))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID)
                 .fetch()
@@ -429,9 +447,12 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(TOKEN_TYPE)
+                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                        .eq(TOKEN_TYPE.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId))
                 .fetchOptional()
                 .map(RECORD_TO_TOKEN_MAPPER));
@@ -456,9 +477,12 @@ class TokenDaoImpl implements TokenDao {
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
                 .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                .join(TOKEN_TYPE)
+                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                        .eq(TOKEN_TYPE.ID))
+                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token))
                 .fetchOptional()
                 .map(RECORD_TO_TOKEN_MAPPER));
@@ -513,7 +537,8 @@ class TokenDaoImpl implements TokenDao {
 //                        condition = TOKEN.CREATE_USER.eq(filters.get(key));
 //                        break;
 //                    case "token":
-//                        // It didn't initially make sense that one might want to filter on token, because it's encrypted.
+//                        // It didn't initially make sense that one might want to filter on token,
+//                        because it's encrypted.
 //                        // But if someone has a token copy/pasting some or all of it into the search might be the
 //                        // fastest way to find the token.
 //                        condition = TOKEN.DATA.contains(filters.get(key));
@@ -552,7 +577,8 @@ class TokenDaoImpl implements TokenDao {
 //                    break;
 //                case "issuedOn":
 //                default:
-//                    orderByField = orderDirection.equals("asc") ? TOKEN.CREATE_TIME_MS.asc() : TOKEN.CREATE_TIME_MS.desc();
+//                    orderByField = orderDirection.equals("asc") ? TOKEN.CREATE_TIME_MS.asc()
+//                    : TOKEN.CREATE_TIME_MS.desc();
 //            }
 //        }
 //        return new SortField[]{orderByField};

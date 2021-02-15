@@ -445,7 +445,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final Instant newStartDate = startDate.minus(200, ChronoUnit.DAYS);
         LOGGER.info("Adding stats working back from: " + newStartDate);
-        //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the data loaded above
+        //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the
+        // data loaded above
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
 
         LOGGER.info("First aggregation run");
@@ -741,7 +742,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
 //    private void deleteRows(final String tableName) throws SQLException {
 //        try (final Connection connection = connectionProvider.getConnection()) {
-//            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + tableName)) {
+//            try (final PreparedStatement preparedStatement =
+//            connection.prepareStatement("delete from " + tableName)) {
 //                preparedStatement.execute();
 //            }
 //        }

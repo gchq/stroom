@@ -80,7 +80,8 @@ class TestStroomIndexQueryResource {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract
+        // classes
 //        mapper.enableDefaultTyping();
         return mapper;
     }
@@ -91,11 +92,13 @@ class TestStroomIndexQueryResource {
     }
 
     @Disabled
-    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/test/resources/searchRequest.json")));
+        String searchRequestJson = new String(Files.readAllBytes(Paths.get(
+                "src/test/resources/searchRequest.json")));
         ObjectMapper objectMapper = new ObjectMapper();
         SearchRequest searchRequest = objectMapper.readValue(searchRequestJson, SearchRequest.class);
         Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
@@ -117,7 +120,8 @@ class TestStroomIndexQueryResource {
     }
 
     @Disabled
-    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
+    // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
+    // ages to run no tests
     @Test
     void test() throws JsonProcessingException {
         // Given

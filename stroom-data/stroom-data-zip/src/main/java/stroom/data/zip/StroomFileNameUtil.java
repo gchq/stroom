@@ -62,7 +62,8 @@ public final class StroomFileNameUtil {
     }
 
     /**
-     * Clean a path so that it doesn't contain leading or trailing separators, no double separators and no invalid characters.
+     * Clean a path so that it doesn't contain leading or trailing separators, no double separators and no
+     * invalid characters.
      *
      * @param path The path to clean.
      * @return A cleaned path.

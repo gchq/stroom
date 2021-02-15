@@ -25,8 +25,8 @@ import java.io.Serializable;
         commonReturnType = ValString.class,
         commonReturnDescription = "The value as the string type.",
         signatures = @FunctionSignature(
-                description = "Converts the supplied value to a string, e.g. 1.23 becomes \"1.23\" and true() becomes " +
-                        "\"true\".",
+                description = "Converts the supplied value to a string, " +
+                        "e.g. 1.23 becomes \"1.23\" and true() becomes \"true\".",
                 args = @FunctionArg(
                         name = "value",
                         description = "Field, the result of another function or a constant.",

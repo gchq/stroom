@@ -42,6 +42,7 @@ import java.text.ParseException;
                                 argType = ValString.class),
                 }))
 class SubstringAfter extends AbstractFunction implements Serializable {
+
     static final String NAME = "substringAfter";
     private static final long serialVersionUID = -305845496003936297L;
     private Function afterFunction;
@@ -78,7 +79,8 @@ class SubstringAfter extends AbstractFunction implements Serializable {
                     if (index < 0) {
                         gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
                     } else {
-                        gen = new StaticValueFunction(ValString.create(value.substring(index + after.length()))).createGenerator();
+                        gen = new StaticValueFunction(ValString.create(value.substring(index + after.length())))
+                                .createGenerator();
                     }
                 } else {
                     gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
@@ -103,6 +105,7 @@ class SubstringAfter extends AbstractFunction implements Serializable {
     }
 
     private static final class Gen extends AbstractSingleChildGenerator {
+
         private static final long serialVersionUID = 8153777070911899616L;
 
         private final Generator stringGenerator;

@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRASegmentStreams {
+
     private static final String A = "A";
     private static final String B = "B";
     private static final String C = "C";
@@ -55,7 +56,8 @@ class TestRASegmentStreams {
         dir = tempDir;
 
         try (final OutputStream datStream = new BlockGZIPOutputFile(dir.resolve("test.dat"))) {
-            try (final SegmentOutputStream os = new RASegmentOutputStream(datStream, () -> Files.newOutputStream(dir.resolve("test.idx")))) {
+            try (final SegmentOutputStream os = new RASegmentOutputStream(datStream, () ->
+                    Files.newOutputStream(dir.resolve("test.idx")))) {
                 os.write(A.getBytes(StreamUtil.DEFAULT_CHARSET));
                 os.addSegment();
                 os.write(B.getBytes(StreamUtil.DEFAULT_CHARSET));

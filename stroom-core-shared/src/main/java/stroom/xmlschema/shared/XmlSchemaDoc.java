@@ -27,7 +27,21 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "data", "systemId", "deprecated", "schemaGroup"})
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser",
+        "description",
+        "namespaceURI",
+        "data",
+        "systemId",
+        "deprecated",
+        "schemaGroup"})
 @JsonInclude(Include.NON_NULL)
 public class XmlSchemaDoc extends Doc implements HasData {
 
