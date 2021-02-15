@@ -323,7 +323,13 @@ subprojects {
                     //libs.guava
 
                     // Need to force our version of ZK else curator 4 will bring in a newer one
-                    libs.zookeeper
+                    libs.zookeeper,
+
+                    // Force Lucene transitive deps (because of Elasticsearch high level client)
+                    libs.lucene_analyzers_common,
+                    libs.lucene_core,
+                    libs.lucene_queryparser,
+                    libs.lucene_backward_codecs
                 ]
             }
         }
